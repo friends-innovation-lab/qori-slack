@@ -2,8 +2,6 @@
 **CivicMind** is an AI-powered research assistant designed to accelerate human-centered design in civic tech—without losing the human.
 # CivicMind
 
-**CivicMind** is an AI-powered research assistant designed to accelerate human-centered design in civic tech—without losing the human.
-
 Built by [Friends From The City](https://www.friendsfromthecity.com), this open-source tool streamlines common ResearchOps and DesignOps tasks like synthesizing interviews, generating reports, managing artifacts, and pushing insights into delivery tools like Slack, GitHub, and Jira.
 
 > 🧠 “CivicMind helps you focus on designing for people—not wrestling with documentation.”
