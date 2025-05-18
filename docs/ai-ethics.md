@@ -7,7 +7,7 @@ Our AI is assistive, not authoritative.
 ## 🧠 Ethical Principles
 
 1. **Human-in-the-loop**
-   All AI-generated content (summaries, insights, tickets) must be reviewed and approved by a human.
+   - All AI-generated content (summaries, insights, tickets) must be reviewed and approved by a human.
 
 2. **Transparency**
    - AI output is labeled as such.
