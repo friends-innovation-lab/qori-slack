@@ -99,5 +99,5 @@ We welcome contributions from civic designers, developers, and researchers.
 
 ## ✨ Maintained By
 
-Built with care by [Friends From The City](https://cityfriends.tech)  
+Built with care by [Friends From The City](https://www.friendsfromthecity.com)  
 
