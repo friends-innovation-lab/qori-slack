@@ -85,7 +85,7 @@ See [`docs/ai-ethics.md`](docs/ai-ethics.md) and [`docs/privacy-governance.md`](
 
 We welcome contributions from civic designers, developers, and researchers.
 
-- 📄 See [`CONTRIBUTING.md`](CONTRIBUTING.md) to get started.
+- 📄 See [`CONTRIBUTING.md`](docs/CONTRIBUTING.md) to get started.
 - 🛠️ Open an Issue to suggest a feature or report a bug.
 - 🌐 Join our Slack to collaborate with the team.
 
