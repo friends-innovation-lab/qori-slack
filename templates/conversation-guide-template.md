@@ -13,7 +13,7 @@
 ## 🧾 Pre-Session Checklist
 
 **2–3 Days Before:**
-- [ ] Review VA Research Checklist
+- [ ] Review VA Research Checklist(https://depo-platform-documentation.scrollhelp.site/research-design/research-checklist)
 - [ ] Confirm participant availability & tech
 - [ ] Share observer guidelines
 
