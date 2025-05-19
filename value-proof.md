@@ -56,7 +56,7 @@ CivicMind automates the heavy lifting while keeping humans in control.
 ## ✅ Who It’s For
 
 - Civic tech research & design teams
-- 18F, VA, USDS, VA Product Teams, Code for America
+- USDS, VA Product Teams, Other Federal Agencies
 - Any team doing human-centered work in policy, benefits, or service design
 
 ---
