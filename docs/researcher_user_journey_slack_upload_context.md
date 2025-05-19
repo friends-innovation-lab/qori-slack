@@ -5,7 +5,7 @@ This file outlines the CivicMind researcher workflow, including Slack-based rese
 ---
 
 ## 👤 Persona
-Human-centered researcher or service designer working in civic tech (e.g., VA, 18F, Coforma).
+Human-centered researcher or service designer working in civic tech (e.g., VA).
 
 ---
 
