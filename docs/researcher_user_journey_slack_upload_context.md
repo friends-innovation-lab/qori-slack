@@ -140,5 +140,3 @@ CivicMind posts:
 - Consent forms via Google Docs
 
 ---
-
-📂 Add this file to: `/docs/researcher_user_journey_slack_upload_context.md`
