@@ -8,15 +8,14 @@ This document outlines what CivicMind pushes to Slack, who receives it, and how 
 
 These are AI-generated or researcher-approved snippets of user feedback. Shared in project-specific or design channels.
 
-### 🧾 Example Slack Message
-```markdown
+### Example Slack Message
+
 🧠 **Insight:** Veterans unsure about eligibility criteria  
 💬 *“I wasn’t sure if I even qualified.”*  
 🔍 Theme: Eligibility / Confusion  
 ✅ Suggested Action: Add yes/no screener  
 📁 Source: `interview_02.txt`  
 🔗 [View full summary](https://github.com/org/project/blob/main/summary.md)
-```
 
 ---
 
@@ -24,8 +23,8 @@ These are AI-generated or researcher-approved snippets of user feedback. Shared 
 
 These summaries roll up insights by theme, frequency, and actionability. Sent to `#product-leadership`, `#team-updates`, or other configured digest channels.
 
-### 🧾 Example Slack Message
-```markdown
+### Example Slack Message
+
 📊 **Weekly Research Summary: Benefits Navigation**
 
 - ✅ 3 major themes: Eligibility Confusion, Page Overload, Upload Friction  
@@ -34,7 +33,6 @@ These summaries roll up insights by theme, frequency, and actionability. Sent to
 - 📊 [Insights Sheet (Google)](https://docs.google.com/sheet/xyz)
 
 🧠 _AI-generated – human-reviewed by @researcher_
-```
 
 ---
 
@@ -42,18 +40,16 @@ These summaries roll up insights by theme, frequency, and actionability. Sent to
 
 Used to remind team members of upcoming deliverables, unreviewed insights, or untagged transcripts.
 
-### 🧾 PM Example
-```markdown
+### PM Example
+
 🔔 2 new research insights tagged `form UX` this week.  
 Would you like to generate Jira tasks?  
 → `/civicmind create_tickets from=benefits-nav`
-```
 
-### 🧾 Researcher Reminder
-```markdown
+### Researcher Reminder
+
 ⏰ Readout for 'Benefits Navigation' is due Friday.  
 Run `/civicmind generate_readout` or `/civicmind post_summary`
-```
 
 ---
 
@@ -72,19 +68,13 @@ Run `/civicmind generate_readout` or `/civicmind post_summary`
 ## ⚙️ Customization Options
 
 - Set a default digest channel at project creation:
-  ```bash
-  /civicmind new_project "Benefits Navigation" channel=#research-digests
-  ```
+  `/civicmind new_project "Benefits Navigation" channel=#research-digests`
 
 - Change channel for summary posts:
-  ```bash
-  /civicmind post_summary to=#product-leadership
-  ```
+  `/civicmind post_summary to=#product-leadership`
 
 - Limit post frequency by role or tag:
-  ```bash
-  /civicmind settings frequency=weekly tags=high-priority only
-  ```
+  `/civicmind settings frequency=weekly tags=high-priority only`
 
 ---
 
