@@ -77,5 +77,3 @@ Run `/civicmind generate_readout` or `/civicmind post_summary`
   `/civicmind settings frequency=weekly tags=high-priority only`
 
 ---
-
-📂 Save this file to: `/docs/slack_notification_guide.md`
