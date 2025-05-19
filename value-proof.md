@@ -62,6 +62,3 @@ CivicMind automates the heavy lifting while keeping humans in control.
 ---
 
 _CivicMind was built by civic designers, for civic designers._
-
-📂 Add this file to: `/docs/value-proof.md`  
-🔗 Include in GitHub Project Board or README
