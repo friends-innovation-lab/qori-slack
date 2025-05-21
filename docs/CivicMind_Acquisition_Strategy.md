@@ -13,7 +13,7 @@ This acquisition strategy outlines the optimal pathways for piloting and scaling
 
 ---
 
-## 🏁 Phase 1: VA Pilot (Q2–Q3 2025)
+## 🏁 Phase 1: VA Pilot 
 
 ### Objective
 Secure an initial contract award to pilot CivicMind with a VA program office, ideally through a direct or simplified acquisition pathway.
@@ -33,7 +33,7 @@ Secure an initial contract award to pilot CivicMind with a VA program office, id
 
 ---
 
-## 🛠 Phase 2: Modular VA Expansion (Q4 2025+)
+## 🛠 Phase 2: Modular VA Expansion 
 
 ### Objective
 Enable CivicMind to be deployed across multiple VA offices without repeating procurement efforts.
@@ -54,7 +54,7 @@ Enable CivicMind to be deployed across multiple VA offices without repeating pro
 
 ---
 
-## 🌐 Phase 3: Cross-Agency Expansion (2026–2027)
+## 🌐 Phase 3: Cross-Agency Expansion 
 
 ### Objective
 Position CivicMind for government-wide use beyond the VA.
