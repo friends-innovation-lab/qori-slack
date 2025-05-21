@@ -22,7 +22,7 @@ Secure an initial contract award to pilot CivicMind with a VA program office, id
 
 - Use **Vets First Contracting Program (38 U.S.C. § 8127)** authority
 - Pursue a **Simplified Acquisition Threshold (SAT)** contract under $250,000
-- Ensure registration in **SBA VetCert (VIP Verified)**
+- We are registered in **SBA VetCert (VIP Verified)**
 - Target a program like VA’s Financial Management Hub or Human-Centered Design (HCD) initiatives
 
 ### Key Advantages
