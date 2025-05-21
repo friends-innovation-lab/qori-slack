@@ -1,7 +1,7 @@
 
 # 🧠 CivicMind Slack AI Bot — Strategic Roadmap and Expansion Notes
 
-_This document outlines the strategic direction and next steps for the CivicMind Slack AI Bot, as developed in the [original GitHub repository](https://github.com/Friends-From-The-City/CivicMind-Slack-AI-Bot). These notes are meant to complement the existing README without changing its content._
+_This document outlines the strategic direction and next steps for the CivicMind Slack AI Bot, as developed in the [original GitHub repository](https://github.com/Friends-From-The-City/CivicMind-Slack-AI-Bot). These notes are meant to complement the existing README._
 
 ---
 
