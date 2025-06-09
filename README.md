@@ -1,5 +1,5 @@
 # CivicMind-Slack-AI-Bot
-**CivicMind** is an AI-powered research assistant (AI-anable Automation) designed to accelerate human-centered design in civic tech—without losing the human. 
+# CivicMind s an AI-powered research assistant (AI-anable Automation) designed to accelerate human-centered design in civic tech—without losing the human. 
 # CivicMind
 
 Built by [Friends From The City](https://www.friendsfromthecity.com), this open-source tool streamlines common ResearchOps and DesignOps tasks like synthesizing interviews, generating reports, managing artifacts, and pushing insights into delivery tools like Slack, GitHub, and Jira.
