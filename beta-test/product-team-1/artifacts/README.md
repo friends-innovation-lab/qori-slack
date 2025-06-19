@@ -44,5 +44,3 @@ and `artifacts/` as your **showroom** where results are shared.
 
 ---
 
-**Maintainer:** Lapedra Tolson  
-**Last Updated:** July 18, 2025
