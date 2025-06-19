@@ -19,7 +19,7 @@
 
 ## Intro – 5 minutes
 
-Thanks for joining us today! My name is **Lapedra** and **Michelle** is here taking notes.
+Thanks for joining us today! My name is **Trish** and **Michelle** is here taking notes.
 
 Today we're going to talk about your experience finding mental health support through VA.gov, particularly around PTSD-related resources.
 
