@@ -1,14 +1,4 @@
-# Product Team 1 / Research Study Folder Reference
+# Product Team 1 
 
-This document explains the purpose of each folder in a typical research study directory structure.
+TBD
 
-| Folder               | Purpose                                                                    |
-| -------------------- | -------------------------------------------------------------------------- |
-| **00-brief/**        | Study overview, problem framing, goals, stakeholders.                      |
-| **01-planning/**     | Methods, IRB (if applicable), timelines, research plan docs.               |
-| **02-participants/** | Recruitment plan, screeners, consent forms, demographic info (anonymized). |
-| **03-fieldwork/**    | Interview guides, usability scripts, recordings, observation notes.        |
-| **04-analysis/**     | Affinity mapping, coded transcripts, frameworks, insights mapping.         |
-| **05-findings/**     | Final reports, presentations, summary memos, quotebooks.                   |
-| **06-assets/**       | Diagrams, visuals, anonymized video clips, exportable outputs.             |
-| **README.md**        | A short description of the study: who, what, when, why.                    |
