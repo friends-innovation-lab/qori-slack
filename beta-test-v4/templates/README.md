@@ -1,3 +1,3 @@
-# Design
+# Templates
 
-This folder contains wireframes, mockups, and design assets.
+Shared forms, briefs, and reusable templates for project teams.
