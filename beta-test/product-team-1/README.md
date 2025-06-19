@@ -1,64 +1,71 @@
-# 🧭 README – VA.gov PTSD Access Improvement Project
+# 🧭 Product Overview – VA.gov PTSD Access Improvement
 
 ---
 
-## 💡 Project Overview  
-This product initiative focuses on improving how Veterans—especially women Veterans—discover and access mental health care for PTSD through VA.gov. Sparked by qualitative research conducted in Q3 2025, our work is grounded in human-centered design and trauma-informed principles.
+## 💡 Project Summary  
+This initiative improves how Veterans—especially women Veterans—access PTSD-related mental health care through VA.gov. Prompted by qualitative research in Q3 2025, the product aims to reduce barriers, increase trust, and align with trauma-informed, equity-centered care delivery.
 
 ---
 
-## 🎯 Product Mission  
-Make it easier, safer, and more intuitive for Veterans experiencing PTSD to understand their care options, feel seen in the process, and take the next step toward getting help.
+## 👥 Core Team
+
+| Name            | Role                      | Contact         |
+|-----------------|---------------------------|------------------|
+| Trish Longhorn  | Product & Research Lead   | @lapedra         |
+| Michelle Tran   | UX Researcher             | michelle@va.gov  |
+| Aaron Patel     | Content Strategist        | aaron@va.gov     |
+| Latoya Briggs   | Trust & Contact UX Design | latoya@va.gov    |
+| Chris Romero    | SEO / Metadata Dev        | chris@va.gov     |
 
 ---
 
-## 🧪 Key Research Insights Driving This Work  
-- Women Veterans struggle to find content that feels relevant to them  
-- PTSD resource pages are difficult to navigate or scan under emotional stress  
-- General contact options feel unclear and untrustworthy
+## 🗂️ Folder Structure
 
-[Read the full research summary →](executive-summary-women-veterans-ptsd.md)
-
----
-
-## 🛠️ Core Features & Work Areas  
-
-| Feature Area               | Status   | Lead      |
-|---------------------------|----------|-----------|
-| Women-Specific PTSD Entry | In Dev   | Michelle  |
-| PTSD Landing Page Rewrite | In Review| Aaron     |
-| Trust Signals + Contact UX| Planning | Latoya    |
-| SEO + Google Meta Tags    | Backlog  | Chris     |
+| Folder          | Description                                                                 |
+|-----------------|-----------------------------------------------------------------------------|
+| `research/`     | Conversation guides, transcripts, affinity maps, findings, participant docs |
+| `design/`       | Figma exports, mockups, design iterations                                   |
+| `development/`  | Frontend code, dev environment setup, API docs                              |
+| `artifacts/`    | Insight cards, briefs, executive summaries                                  |
+| `docs/`         | Weekly notes, sprint summaries, stakeholder presentations                   |
 
 ---
 
-## 📎 Artifacts & References  
+## 💬 Slack Channels
+
+- `#ptsd-access-core` – Day-to-day discussion and check-ins  
+- `#va-content-strategy` – Cross-team coordination for page rewriting  
+- `#va-research-sharing` – Archive of research updates and readouts  
+
+---
+
+## 🤝 Stakeholders & Partners
+
+| Name              | Org / Unit                     | Role         |
+|-------------------|--------------------------------|--------------|
+| Dr. Carla Simmons | VA Women’s Health Office       | Executive sponsor |
+| David Ko          | DSVA Digital Services          | Product advisor  |
+| Amanda Reyes      | Civic UX Program               | External design reviewer |
+
+---
+
+## 📎 Key Links
+
 - [Research Readout](research-readout-women-veterans-ptsd.md)  
+- [Executive Summary](executive-summary-women-veterans-ptsd.md)  
+- [Figma Prototype](https://www.figma.com/file/example)  
 - [Insight Cards](insights/)  
-- [Affinity Map](affinity-map-women-veterans-ptsd.md)  
-- [Conversation Guide](conversation-guide-women-veterans-ptsd.md)  
-- [Prototype (Figma)](https://www.figma.com/file/example)  
-- [GitHub Issues](https://github.com/org/repo/issues)
+- [GitHub Board](https://github.com/org/repo/projects/1)
 
 ---
 
-## 🤝 Collaborators  
-- VA Women’s Health Program Office  
-- VA Digital Services  
-- Civic UX Research Team  
-- Content Strategy, Trust Design Working Group
+## 📅 Current Phase & Timeline
+
+- **Status:** Alpha testing  
+- **Phase:** Iterative prototyping + content validation  
+- **Next Milestone:** Mid-August usability tests with updated copy and page layout  
+- **Delivery Goal:** September 2025 deployment to VA.gov PTSD section
 
 ---
 
-## 💬 Slack Channels  
-- `#ptsd-access-core`  
-- `#va-content-strategy`  
-- `#research-insights-dsva`
-
----
-
-## ✍️ Maintainer  
-Trish Longhorn (@trish)  
-Updated: July 18, 2025
-
-
+_Last updated: July 18, 2025_
