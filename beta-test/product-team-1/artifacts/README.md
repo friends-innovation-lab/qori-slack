@@ -31,8 +31,7 @@ The `artifacts/` folder is where we store **research outputs** that have been sy
 
 ## 💡 Analogy
 
-Think of `research/` as your **lab** where experiments happen,  
-and `artifacts/` as your **showroom** where results are shared.
+Think of `research/` as your **lab** where experiments happen, and `artifacts/` as your **showroom** where results are shared.
 
 ---
 
