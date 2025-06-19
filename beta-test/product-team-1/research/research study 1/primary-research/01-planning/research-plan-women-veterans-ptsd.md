@@ -7,7 +7,7 @@ Mental health services discovery and navigation within VA.gov
 VA Digital Services in collaboration with VA Women’s Health Program Office
 
 **👩🏽‍🔬 Researchers:**  
-Lapedra Tolson (Lead), Sara Hill (Co-Researcher), Michelle Tran (Collaborator)
+Trish Longhorn (Lead), Sara Hill (Co-Researcher), Michelle Tran (Collaborator)
 
 **🗓️ Date:**  
 July 18, 2025
@@ -97,7 +97,7 @@ Aim for 6–8 participants, at least 2 with experience using mobile
 
 | Team Member        | Role               |
 |--------------------|--------------------|
-| Lapedra Tolson     | Lead Researcher    |
+| Trish Longhorn     | Lead Researcher    |
 | Sara Hill          | Interviewer        |
 | Michelle Tran      | Note-taker         |
 | CivicMind (AI)     | Analysis & Drafts  |
