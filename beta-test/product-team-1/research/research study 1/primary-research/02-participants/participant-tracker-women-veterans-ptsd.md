@@ -36,6 +36,3 @@ All participants received digital consent forms via DocuSign and completed them 
 
 All personal identifiers have been removed from study documentation.
 
-**Prepared by:**  
-Lapedra Tolson  
-**Date:** July 18, 2025
