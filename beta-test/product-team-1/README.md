@@ -1,4 +1,4 @@
-# 🧭 Product Team README – VA.gov PTSD Access Improvement Project
+# 🧭 README – VA.gov PTSD Access Improvement Project
 
 ---
 
