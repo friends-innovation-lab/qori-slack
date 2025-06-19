@@ -11,7 +11,7 @@ This initiative improves how Veterans—especially women Veterans—access PTSD-
 
 | Name            | Role                      | Contact         |
 |-----------------|---------------------------|------------------|
-| Trish Longhorn  | Product & Research Lead   | @lapedra         |
+| Trish Longhorn  | Product & Research Lead   | trish@va.gov         |
 | Michelle Tran   | UX Researcher             | michelle@va.gov  |
 | Aaron Patel     | Content Strategist        | aaron@va.gov     |
 | Latoya Briggs   | Trust & Contact UX Design | latoya@va.gov    |
