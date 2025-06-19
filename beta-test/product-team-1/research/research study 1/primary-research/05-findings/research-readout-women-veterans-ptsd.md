@@ -3,7 +3,7 @@
 **Product Area:** VA.gov Mental Health Navigation  
 **Team:** VA Digital Services + Women's Health Collaboration  
 **Date:** 07/18/2025  
-**Research Lead:** Lapedra Tolson  
+**Research Lead:** Trish Longhorn 
 **Notetaker(s):** Michelle Tran  
 **Observers:** Sara Hill, Anthony Ramirez
 
