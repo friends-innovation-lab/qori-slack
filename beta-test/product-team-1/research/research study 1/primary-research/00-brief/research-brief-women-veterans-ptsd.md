@@ -45,5 +45,5 @@ This study investigates how women Veterans with post-traumatic stress disorder (
 ---
 
 **Prepared by:**  
-Lapedra Tolson, Civic UX Researcher  
+Trish Longhorn, UX Researcher  
 **Date:** July 18, 2025
