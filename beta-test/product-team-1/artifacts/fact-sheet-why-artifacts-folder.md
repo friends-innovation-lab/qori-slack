@@ -1,4 +1,4 @@
-# 📁 README: Why Use an `artifacts/` Folder?
+# 📁 README: How to Use an `artifacts/` Folder?
 
 ## 🎯 Purpose
 The `artifacts/` folder is your go-to space for research outputs that drive decisions, strategy, and communication across teams.
