@@ -4,7 +4,7 @@
 
 Built by [Friends From The City](https://www.friendsfromthecity.com), CivicMind is an open-source Slack-native research bot that helps civic design teams move faster without losing rigor. It supports every stage of the research cycle—from planning and fieldwork to synthesis and delivery—by automating documentation, summarization, and insight sharing.
 
-> “CivicMind keeps research moving, visible, and human.”
+> “CivicMind keeps research moving, visible, and human. CivicMind turns research into momentum.”
 
 Unlike generic productivity bots, **CivicMind is purpose-built for public service teams**:  
 - It reduces ResearchOps friction. No more cobbling together templates or folder structures.  
