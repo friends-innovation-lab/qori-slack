@@ -1,6 +1,6 @@
 # 🧠 CivicMind: Augmenting Civic Tech Research with AI
 
-**CivicMind** is a human-assist, agentic AI built specifically for civic technologists and public interest researchers. It accelerates the messy, vital work of user research without compromising the care, ethics, and context that make it human-centered.
+**CivicMind** is an agentic AI built specifically for civic technologists and public interest researchers. It accelerates the messy, vital work of user research without compromising the care, ethics, and context that make it human-centered.
 
 Built by [Friends From The City](https://www.friendsfromthecity.com), CivicMind is an open-source Slack-native research bot that helps civic design teams move faster without losing rigor. It supports every stage of the research cycle—from planning and fieldwork to synthesis and delivery—by automating documentation, summarization, and insight sharing.
 
