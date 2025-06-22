@@ -12,7 +12,7 @@ Built by [Friends From The City](https://www.friendsfromthecity.com), this open-
 - **Slack-based Q&A**  
   Ask: _“What did users say about benefits navigation?”_ and get tagged quotes, summaries, and source links.
 
-- **Folder Structure with Templates**
+- **Folder Structure with Templates**  
   Create and manage structured research folders directly from Slack, use project-based templates for interviews, readouts, or executive summaries
 
 - **Auto-report generation**  
