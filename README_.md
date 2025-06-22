@@ -25,8 +25,6 @@ Stay up-to-date with feature development by following our [CivicMind MVP GitHub 
 
 ## ✨ What It Does (MVP Features)
 
-## ✨ What It Does (MVP Features)
-
 ### 🧪 ResearchOps
 - **Folder Structure + Templates**  
   Automatically generate structured research folders in your shared drive, complete with templates for interviews, summaries, and executive readouts.
