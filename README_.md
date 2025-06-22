@@ -1,4 +1,4 @@
-# 🧠 CivicMind: The Human-Assist AI for Civic Tech Research
+# 🧠 CivicMind: Augmenting Civic Tech Research with AI
 
 **CivicMind** is a human-assist, agentic AI built specifically for civic technologists and public interest researchers. It accelerates the messy, vital work of user research without compromising the care, ethics, and context that make it human-centered.
 
