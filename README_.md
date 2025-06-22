@@ -105,7 +105,6 @@ Or start a new research study:
 ```
 /new study "Benefits Navigation Interviews"
 ```
-This command will scaffold a new research folder, apply templates, and register the study in your CivicMind workspace.
 ---
 
 ## 👐 Contributing
