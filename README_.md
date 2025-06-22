@@ -26,8 +26,8 @@ Stay up-to-date with feature development by following our [CivicMind MVP GitHub 
 ## ✨ What It Does (MVP Features)
 
 ### 🧪 ResearchOps
-- **Folder Structure + Templates**  
-  Automatically generate structured research folders in your shared drive, complete with templates for interviews, summaries, and executive readouts.
+- **Slack-Initiated Research Kickoff**
+Launch new studies with a single command like /new-study, pre-populating folders, templates, and study metadata.
 
 - **Document Summarization**  
   Drop in existing Docs, PDFs, or Markdown files to extract key themes, quotes, and pain points from previous research.
