@@ -27,7 +27,7 @@ Stay up-to-date with feature development by following our [CivicMind MVP GitHub 
 
 ### 🧪 ResearchOps
 
--  **Slack-Initiated Research Kickoff**
+- **Slack-Initiated Research Kickoff**  
   Launch new studies with a single command like `/newstudy`, pre-populating folders, templates, and study metadata.
 
 - **Document Summarization**  
