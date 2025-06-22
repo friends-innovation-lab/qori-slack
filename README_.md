@@ -7,10 +7,11 @@ Built by [Friends From The City](https://www.friendsfromthecity.com), CivicMind 
 > “CivicMind keeps research moving, visible, and human. CivicMind turns research into momentum.”
 
 Unlike generic productivity bots, **CivicMind is purpose-built for public service teams**:  
-- It reduces ResearchOps friction. No more cobbling together templates or folder structures.  
+- It reduces ResearchOps friction. No more cobbling together templates or folder structures.
+- It helps design studies, from research plans to interview guides. 
 - It supports study creation, automates transcription, and tags insights thematically.  
 - It helps synthesize and summarize findings quickly, without relying on memory or manual labor.  
-- It makes research visible by posting digests in Slack and converting quotes into GitHub issues.  
+- It makes research visible by posting digests in Slack and converting insights into GitHub issues.  
 - It ensures that **insights don’t just sit in decks. They actively shape delivery.**
 
 CivicMind is not just a research tool. It is the connective tissue between the people doing the work and the systems being built for them. With CivicMind, research becomes part of your operating system, not an afterthought.
