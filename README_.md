@@ -103,7 +103,7 @@ Or upload a file:
 
 Or start a new research study:
 ```
-/new study  Benefits Navigation Interviews
+/new study "Benefits Navigation Interviews"
 ```
 
 ---
