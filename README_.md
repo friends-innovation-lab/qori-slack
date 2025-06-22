@@ -101,6 +101,11 @@ Or upload a file:
 /upload interview_audio.mp3
 ```
 
+Or start a new research study:
+```
+/new study  Benefits Navigation Interviews
+```
+
 ---
 
 ## 👐 Contributing
