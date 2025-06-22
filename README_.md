@@ -14,7 +14,7 @@ Unlike generic productivity bots, **CivicMind is purpose-built for public servic
 - It makes research visible by posting digests in Slack and converting insights into GitHub issues.  
 - It ensures that **insights don’t just sit in decks. They actively shape delivery.**
 
-CivicMind is not just a research tool. It is the connective tissue between the people doing the work and the systems being built for them. With CivicMind, research becomes part of your operating system, not an afterthought.
+CivicMind weaves research directly into the way public interest teams build. It connects the people doing the work with the systems being designed for them, ensuring that insights flow into delivery instead of getting lost. With CivicMind, research becomes part of the team’s operating system, always present and always actionable.
 
 ---
 
