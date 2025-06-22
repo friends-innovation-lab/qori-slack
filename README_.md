@@ -25,20 +25,32 @@ Stay up-to-date with feature development by following our [CivicMind MVP GitHub 
 
 ## ✨ What It Does (MVP Features)
 
+## ✨ What It Does (MVP Features)
+
 ### 🧪 ResearchOps
-- Folder Structure + Templates  
-- Document Summarization  
+- **Folder Structure + Templates**  
+  Automatically generate structured research folders in your shared drive, complete with templates for interviews, summaries, and executive readouts.
+
+- **Document Summarization**  
+  Drop in existing Docs, PDFs, or Markdown files to extract key themes, quotes, and pain points from previous research.
 
 ### 🎙️ Fieldwork
-- Transcription + Auto-Tagging  
-- AI-Powered Slack Q&A  
+- **Transcription + Auto-Tagging**  
+  Upload interview audio to receive a full transcript with quotes tagged by theme, sentiment, and user pain points.
+
+- **AI-Powered Slack Q&A**  
+  Ask questions like “What did users say about benefits navigation?” and get instant summaries, quotes, and links to source materials.
 
 ### 🧠 Synthesis
-- Auto-Report Generation  
-- Insight-to-Issue Workflow  
+- **Auto-Report Generation**  
+  Generate insight reports in Markdown or PDF from your notes and transcripts with just a few clicks.
+
+- **Insight-to-Issue Workflow**  
+  Convert research findings into GitHub Issues that reference specific quotes, themes, and transcripts.
 
 ### 📢 Share Out
-- Weekly Slack Digests  
+- **Weekly Slack Digests**  
+  Auto-publish research summaries, tagged by theme or project, into Slack channels to keep teams informed and engaged. 
 
 ---
 
