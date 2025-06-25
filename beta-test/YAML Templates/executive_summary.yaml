@@ -3,6 +3,8 @@ label: 📊 Executive Summary
 description: Summarize research into 3 concise paragraphs 📝
 input_type: text
 input_processing: summarize_if_long
+batch_mode: true
+batch_delimiter: "---"
 precision_mode: concise | detailed
 prompt: |
   You are writing a 3-paragraph executive summary of the following research. Paragraph 1 should explain the context and what was studied. Paragraph 2 should summarize participant insights. Paragraph 3 should state what the team should take away. Use a plain, professional tone with active voice. Avoid jargon and business clichés. Write at a 10th-grade reading level. Keep it clear and structured.
