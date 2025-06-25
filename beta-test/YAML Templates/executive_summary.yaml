@@ -1,14 +1,14 @@
 id: executive_summary
 label: 📊 Executive Summary
-description: Summarize research into a polished 3-paragraph summary 📝
+description: Summarize research into 3 concise paragraphs 📝
 input_type: text
 prompt: |
-  Write a 3-paragraph summary based on the following research notes 🧾:
+  Write a high-level executive summary of the following notes 🧾:
 
   {{input}}
 output_format: |
-  🧩 Summary Part 1
+  🧩 **Paragraph 1**
 
-  🔍 Summary Part 2
+  🔍 **Paragraph 2**
 
-  📝 Summary Part 3
+  📝 **Paragraph 3**
