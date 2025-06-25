@@ -3,7 +3,7 @@ label: 📝 Interview Summary
 description: Extract key themes, pain points, and quotes from interviews 💬
 input_type: transcript
 prompt: |
-  Review the following interview transcript and identify:
+Review the following interview transcript and identify.:
   - 🧠 Key themes
   - ⚠️ User pain points
   - 💬 Notable quotes
@@ -11,11 +11,18 @@ prompt: |
   Transcript:
   {{input}}
 output_format: |
-  ## 🧠 Themes
-  - ...
+## 🧠 Key Themes
+- Theme 1: [Description]
+- Theme 2: [Description]
+- Theme 3: [Description]
 
-  ## ⚠️ Pain Points
-  - ...
+## ⚠️ Pain Points
+- Pain Point 1: [Description]
+- Pain Point 2: [Description]
+- Pain Point 3: [Description]
 
-  ## 💬 Quotes
-  - "..." – User
+## 💬 Notable Quotes
+- "Quote 1" – User
+- "Quote 2" – User
+- "Quote 3" – User
+
