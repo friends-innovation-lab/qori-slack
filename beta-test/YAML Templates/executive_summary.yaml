@@ -1,0 +1,15 @@
+id: executive_summary
+label: Executive Summary
+description: Create a 3-paragraph summary of the research content.
+input_type: text
+prompt: |
+  Write a concise, high-level 3-paragraph summary based on the input.
+
+  Research Notes:
+  {{input}}
+output_format: |
+  [Paragraph 1]
+
+  [Paragraph 2]
+
+  [Paragraph 3]

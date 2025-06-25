@@ -1,0 +1,16 @@
+id: jobs_to_be_done
+label: Jobs-To-Be-Done Extraction
+description: Identify user goals and obstacles using JTBD format.
+input_type: text
+prompt: |
+  Identify Jobs-To-Be-Done and obstacles from the following insights.
+
+  Input:
+  {{input}}
+output_format: |
+  ## Job 1
+  - **Goal:** ...
+  - **Obstacle:** ...
+
+  ## Job 2
+  ...

@@ -1,0 +1,19 @@
+id: persona_generator
+label: Persona Generator
+description: Generate a user persona from interview data or insights.
+input_type: synthesis
+prompt: |
+  Using the provided notes, create a user persona with:
+  - Name, demographics
+  - Goals, frustrations
+  - Behaviors and quotes
+
+  Notes:
+  {{input}}
+output_format: |
+  ## Name: [Name]
+  - **Demographics:** ...
+  - **Goals:** ...
+  - **Frustrations:** ...
+  - **Behaviors:** ...
+  - **Quotes:** "..."

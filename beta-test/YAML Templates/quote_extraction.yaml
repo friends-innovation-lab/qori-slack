@@ -1,0 +1,13 @@
+id: quote_extraction
+label: Quote Extraction
+description: Extract notable, emotional, or representative quotes.
+input_type: text
+prompt: |
+  Pull 5–7 strong user quotes from the input below.
+
+  Content:
+  {{input}}
+output_format: |
+  - "Quote 1"
+  - "Quote 2"
+  - ...

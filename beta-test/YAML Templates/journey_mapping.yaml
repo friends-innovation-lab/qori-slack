@@ -1,0 +1,17 @@
+id: journey_mapping
+label: Journey Mapping
+description: Map a user's experience step-by-step.
+input_type: synthesis
+prompt: |
+  Based on these notes, map the user journey including:
+  - Stages, actions, emotions
+
+  Notes:
+  {{input}}
+output_format: |
+  ## Stage 1: [Label]
+  - **Action:** ...
+  - **Emotion:** ...
+
+  ## Stage 2: [Label]
+  ...

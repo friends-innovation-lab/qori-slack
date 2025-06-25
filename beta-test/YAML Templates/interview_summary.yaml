@@ -1,0 +1,21 @@
+id: interview_summary
+label: Interview Summary
+description: Extract themes, pain points, and quotes from interview transcripts.
+input_type: transcript
+prompt: |
+  Review the following interview transcript and identify:
+  - Key themes
+  - User pain points
+  - Notable quotes
+
+  Transcript:
+  {{input}}
+output_format: |
+  ## Themes
+  - ...
+
+  ## Pain Points
+  - ...
+
+  ## Quotes
+  - "..." – User
