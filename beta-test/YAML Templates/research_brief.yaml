@@ -1,0 +1,62 @@
+id: research_brief
+label: 📄 Research Brief
+description: Generate a scoping research brief aligned with VA's approved format
+input_type: text
+input_processing: summarize_if_long
+prompt: |
+  You are drafting a VA-style research brief. Use the structure below and complete each section in plain, accessible language at a 10th-grade reading level. Write clearly and avoid em-dashes, business jargon, or vague phrases. This document is used to scope research with design and product partners, so keep it focused and actionable.
+
+  If the user provided any scoping input, integrate it into the relevant sections. Use Markdown formatting.
+
+  Input:
+  {{input}}
+
+output_format: |
+  # 📄 Research Brief
+
+  ---
+
+  ## Overview
+
+  [Brief description of the study focus, context, and motivation.]
+
+  ---
+
+  ## Objectives
+
+  1. **Identify Barriers:**  
+     [Describe the specific barriers this study aims to uncover.]
+
+  2. **Evaluate Navigation Experience:**  
+     [Outline what user flows or touchpoints will be evaluated.]
+
+  3. **Surface Insights for Design & Content Improvements:**  
+     [Explain the intended use of findings for product or service improvements.]
+
+  4. **Support Trauma-Informed Service Design:**  
+     [If relevant, explain how research contributes to equitable, trauma-aware design.]
+
+  ---
+
+  ## Initial Scoping Materials
+
+  - **Stakeholders Consulted:**  
+    [List relevant offices, partners, or experts.]
+
+  - **Initial Hypotheses:**  
+    - [Hypothesis 1]
+    - [Hypothesis 2]
+
+  - **Framing Questions:**  
+    - [Question 1]
+    - [Question 2]
+    - [Question 3]
+
+  - **Research Approach Summary:**  
+    [Methods to be used: interviews, concept testing, surveys, etc.]
+
+  ---
+
+  **Prepared by:**  
+  [Name and title of researcher or team]  
+  **Date:** [Date]
