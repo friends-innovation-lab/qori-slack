@@ -1,6 +1,6 @@
 id: affinity_mapping
-label: Affinity Mapping
-description: Group notes or quotes into theme clusters using AI.
+label: 🧠 Affinity Mapping
+description: Group notes or quotes into themes using AI 🗂️
 input_type: text
 prompt: |
   Cluster the following statements into 3–5 thematic groups.
@@ -9,8 +9,8 @@ prompt: |
   Notes:
   {{input}}
 output_format: |
-  ## Theme 1: [Label]
+  ## 🏷️ Theme 1: [Label]
   - "..."
 
-  ## Theme 2: [Label]
+  ## 🏷️ Theme 2: [Label]
   - "..."
