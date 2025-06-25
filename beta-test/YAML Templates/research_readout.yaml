@@ -1,0 +1,113 @@
+id: research_readout
+label: 📊 Research Readout
+description: Generate a structured VA-aligned usability research readout
+input_type: text
+input_processing: summarize_if_long
+prompt: |
+  You are drafting a VA-style usability research readout based on interview notes or findings. Use the full markdown structure below. Write clearly and professionally at a 10th-grade reading level. Use active voice, no em-dashes, and cite quotes and evidence when applicable.
+
+  Input:
+  {{input}}
+
+output_format: |
+  # 📊 Usability Readout – [Study Title]
+
+  **Product Area:** [e.g. Debt Letters MVP]  
+  **Team:** [Team Name or Office]  
+  **Date:** [MM/DD/YYYY]  
+  **Research Lead:** [Your Name]  
+  **Notetaker(s):** [Names]  
+  **Observers:** [Names]  
+
+  ---
+
+  ## 🔍 Key Insights Summary
+
+  1. **[Insight 1 Title]:** Short description  
+  2. **[Insight 2 Title]:** Short description  
+  3. **[Insight 3 Title]:** Short description  
+
+  ---
+
+  ## 🎯 Research Goals
+
+  - Goal 1
+  - Goal 2
+  - Goal 3
+
+  ---
+
+  ## ❓ Research Questions
+
+  - Question 1
+  - Question 2
+  - Question 3
+
+  ---
+
+  ## 🧪 Methodology
+
+  - **Type:** [e.g. Remote moderated usability testing]  
+  - **Session Length:** [e.g. 60 minutes]  
+  - **Platform:** [e.g. Zoom + CivicMind transcription]  
+  - **Tools:** [e.g. Figma, Slackbot, GitHub]  
+
+  ---
+
+  ## 👥 Participant Overview
+
+  | Participant ID | Demographics     | Tech Setup       | Notes                       |
+  |----------------|------------------|------------------|-----------------------------|
+  | P01            | [Details]        | [Device]         | [Notes]                     |
+  | P02            | [Details]        | [Device]         | [Notes]                     |
+  | P03            | [Details]        | [Device]         | [Notes]                     |
+
+  ---
+
+  ## 🧠 Detailed Findings & Recommendations
+
+  ### 🧭 Finding 1: [Title]
+
+  **Summary:**  
+  [Short summary]
+
+  **Evidence:**  
+  > “[Quote]”
+
+  **Recommendation:**  
+  [Proposed improvement]
+
+  ### 🧭 Finding 2: [Title]
+  ...
+
+  ---
+
+  ## 📊 Summary Table
+
+  | Finding Title          | Severity | Frequency | Recommendation           |
+  |------------------------|----------|-----------|--------------------------|
+  | [Title]                | [High]   | [e.g. 3/3] | [e.g. Add yes/no screener]|
+
+  ---
+
+  ## 📎 Linked Artifacts
+
+  - [Transcripts Folder](../data/transcripts)
+  - [Conversation Guide](conversation-guide.md)
+  - [Insight Cards](../insights/insight_card_template.md)
+  - [Design Files](https://www.figma.com/file/xyz)
+  - [GitHub Issues](https://github.com/org/repo/issues)
+
+  ---
+
+  ## ✅ Next Steps
+
+  - [Action 1]
+  - [Action 2]
+  - [Action 3]
+
+  ---
+
+  ## 🏷️ Tags
+
+  `va`, `usability`, `research-readout`, `ux`, `civicmind`
