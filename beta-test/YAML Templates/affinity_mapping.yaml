@@ -1,6 +1,7 @@
 id: affinity_mapping
 label: 🧠 Affinity Mapping
 description: Group notes or quotes into themes using AI 🗂️
+precision_mode: concise | detailed
 input_type: text
 prompt: |
   You are helping organize research notes. Group the following quotes into 3 themes based on what the user is talking about. Each theme should have a clear and short title. Include at least 3 quotes under each theme. Use a tone that is professional but conversational. Write at a 10th-grade reading level. Use plain language. No jargon. Use analogies if helpful to describe what connects the quotes. Avoid passive voice and em-dashes.
