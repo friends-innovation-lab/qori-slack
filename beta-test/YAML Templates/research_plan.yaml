@@ -1,0 +1,100 @@
+id: research_plan
+label: 🧭 Research Plan
+description: Draft a structured VA-aligned research plan for a civic tech study
+input_type: text
+input_processing: summarize_if_long
+prompt: |
+  You are drafting a VA-style research plan using the structure below. Fill in each section with clear, plain language. Use a conversational but professional tone at a 10th-grade reading level. Avoid jargon, em-dashes, or business speak. You may suggest realistic content where appropriate (e.g., methods, timeline, success criteria).
+
+  Use markdown for formatting. Each section should include relevant subpoints.
+
+  User Input (if provided):
+  {{input}}
+
+output_format: |
+  # 📝 Research Plan – [Project Title]
+
+  **📦 Product/Feature Area:**  
+  [e.g., Debt Letters, Benefits Navigation]
+
+  **🏛️ Team/Office:**  
+  [e.g., VA Digital Services, OCTO, 18F]
+
+  **👩🏽‍🔬 Researchers:**  
+  [Names of lead and supporting researchers]
+
+  **🗓️ Date:**  
+  [e.g., July 15, 2025]
+
+  ---
+
+  ## 🔎 Background  
+  [What decision is this research informing? Include any relevant history.]
+
+  ## 🎯 Organizational Priorities  
+  [Which VA/OCTO/agency goals does this align with?]
+
+  ## 🧭 Veteran/User Journey  
+  [Where does this fit in the user's end-to-end experience?]
+
+  ## 🎓 Research Goals  
+  [What do we hope to learn or understand?]
+
+  ## ❓ Research Questions  
+  - Question 1
+  - Question 2
+
+  ## 🧪 Hypotheses  
+  - Hypothesis 1
+  - Hypothesis 2
+
+  ## 🛠️ Methodology  
+  [e.g., Usability testing, interviews, concept testing]
+
+  ## 🧲 Recruitment Plan  
+
+  **🎯 Target Participants:**  
+  [e.g., Veterans who applied for X]
+
+  **📋 Recruitment Strategy:**  
+  [e.g., Internal panel, screener survey, CivicMind consent form]
+
+  **📅 Recruitment Timeline:**
+
+  | Date       | Activity              |
+  |------------|-----------------------|
+  | [Date]     | [e.g., Screeners sent]|
+
+  **🧍 Participant Count:**  
+  [e.g., 5–8 participants across 2 rounds]
+
+  ## ⏰ Timeline Overview
+
+  | Phase        | Dates        |
+  |--------------|--------------|
+  | Planning     | [Date range] |
+  | Recruiting   | [Date range] |
+  | Interviews   | [Date range] |
+  | Synthesis    | [Date range] |
+  | Reporting    | [Date range] |
+
+  ## 👥 Team Roles
+
+  | Team Member      | Role               |
+  |------------------|--------------------|
+  | [Name]           | [e.g., Lead Researcher] |
+  | [Name]           | [e.g., Note-taker]      |
+
+  ## 🧰 Tools & Platforms  
+  [e.g., CivicMind, Slack, GitHub, Zoom, GDrive]
+
+  ## ✅ Success Criteria  
+  - Success 1
+  - Success 2
+
+  ## 📦 Output Artifacts  
+  - Artifact 1
+  - Artifact 2
+
+  ## 🏷️ Tags  
+  `va`, `ux-research`, `research-plan`, `[project-specific-tags]`
