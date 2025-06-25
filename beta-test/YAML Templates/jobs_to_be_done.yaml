@@ -1,29 +1,20 @@
 id: jobs_to_be_done
 label: 🎯 Jobs-To-Be-Done Extraction
-description: Identify 3-5 user goals and obstacles using JTBD framework 🧰
+description: Identify user goals and obstacles using JTBD framework 🧰
 input_type: text
 prompt: |
-  From the quotes below, extract key Jobs-To-Be-Done and related barriers 🚧.
-
+  Look at the user quotes below and identify 3 clear Jobs-To-Be-Done. For each one, describe what the person is trying to do (the goal) and what’s stopping them (the obstacle). Write in clear, plain language. Avoid jargon. Use analogies to explain if needed. Use a tone that is conversational and direct. Keep each job-obstacle pair focused and grounded in user reality. Write at a 10th-grade reading level. No em-dashes.
   Quotes:
   {{input}}
 output_format: |
   ## 🎯 Job 1
-  - **Goal:** ...
-  - **Obstacle:** ...
-
+  - **Goal:** What the user is trying to get done
+  - **Obstacle:** What gets in the way
+  
   ## 🎯 Job 2
   - **Goal:** ...
   - **Obstacle:** ...
-
+  
   ## 🎯 Job 3
-  - **Goal:** ...
-  - **Obstacle:** ...
-
-  ## 🎯 Job 4
-  - **Goal:** ...
-  - **Obstacle:** ...
-
-    ## 🎯 Job 5
   - **Goal:** ...
   - **Obstacle:** ...
