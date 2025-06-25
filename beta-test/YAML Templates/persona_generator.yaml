@@ -1,19 +1,15 @@
 id: persona_generator
 label: 👤 Persona Generator
 description: Generate a user persona from research findings 🧾
-input_type: synthesis
+input_type: text
 prompt: |
-  Create a persona using the insights below, including:
-  - Name and demographics 👥
-  - Goals 🎯 and frustrations 😤
-  - Behaviors 🧍 and representative quotes 💬
-
+  Based on the insights provided, generate a fictional but realistic user persona. Give the person a name and fill in demographics, goals, frustrations, behaviors, and a representative quote. Write in plain language at a 10th-grade reading level. Use a friendly but clear and professional tone. Use everyday language — avoid business jargon. Use analogies if helpful. Write in active voice. Do not include em-dashes or overuse technical terms.
   Insights:
   {{input}}
 output_format: |
   ## 👤 Name: [Name]
-  - **Demographics:** ...
-  - **Goals:** ...
-  - **Frustrations:** ...
-  - **Behaviors:** ...
-  - **Quotes:** "..."
+  - **Demographics:** Age, background, location
+  - **Goals:** What does this person want to accomplish?
+  - **Frustrations:** What makes it difficult for them?
+  - **Behaviors:** What do they do when trying to solve the problem?
+  - **Quotes:** "Something they might say"
