@@ -1,0 +1,84 @@
+id: discussion_guide
+label: 💬 Discussion Guide
+description: Generate a VA-aligned conversation guide for moderated research sessions
+input_type: text
+input_processing: summarize_if_long
+prompt: |
+  You are drafting a VA-style conversation guide for a moderated usability or discovery research session. Use the markdown structure below, keeping all headings and checklists intact. Write in plain, professional language at a 10th-grade reading level. Avoid em-dashes and business jargon. You may populate sample tasks, warm-ups, or logistics using typical civic tech examples unless specific input is provided.
+
+  Input:
+  {{input}}
+
+output_format: |
+  # 💬 Conversation Guide – [Study Title]
+
+  ## 📋 Moderator Logistics
+
+  ### 2–3 Days Before Session
+  - [ ] Schedule and confirm sessions
+  - [ ] Review platform research checklist
+  - [ ] Complete project-specific prep tasks
+
+  ### Day of the Session
+  - [ ] Mute Slack notifications
+  - [ ] Check screen sharing permissions
+  - [ ] Send observer instructions
+  - [ ] Join feedback Slack channel
+
+  ## 🗣️ Intro – 5 Minutes
+
+  Welcome the participant. Cover:
+  - Session duration (e.g., ~60 mins)
+  - That feedback is welcome and voluntary
+  - Consent for screen/audio recording
+  - Confirmation of observer presence
+  - If applicable, explain it’s a prototype
+  - Reconfirm VA clip usage consent
+
+  > **Prompt**: Are you okay with being recorded and having observers?
+
+  ## ❄️ Warm-Up Questions – 5 Minutes
+  - Tell me a bit about your experience using VA online services.
+  - Have you ever submitted a claim or benefit form online?
+  - What was the easiest or most frustrating part?
+
+  ## 🧪 Task Sections
+
+  ### First Task: [Task Name] – X Minutes
+  - [ ] Step 1
+  - [ ] Step 2
+
+  > **Things to Watch For:**
+  > - Does the participant understand X?
+  > - Do they notice Y?
+
+  ### Second Task: [Task Name] – X Minutes
+  - [ ] Step 1
+  - [ ] Step 2
+
+  > **Things to Watch For:**
+  > - Does the participant understand X?
+  > - Do they notice Y?
+
+  ### Third Task: [Task Name] – X Minutes
+  - [ ] Step 1
+  - [ ] Step 2
+
+  > **Things to Watch For:**
+  > - Do they get confused by Z?
+
+  ## 🎤 Post-Task Interview
+  - What did you find confusing or helpful?
+  - Was anything unexpected?
+  - Would you do anything differently if doing this again?
+
+  ## 🔁 Reconfirm Clip Consent
+  - Are you still comfortable with us using a short video clip (with de-identified info) to share with internal VA teams?
+
+  ## 🙏 Thank You & Closing
+  - Thank participant
+  - Mention follow-up/thank-you note
+  - Offer opt-in for future research
+
+  ## 🚨 Emergency Exit Strategy
+  - [Paste or link to pre-defined emergency exit language]
