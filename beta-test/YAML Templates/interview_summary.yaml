@@ -2,6 +2,7 @@ id: interview_summary
 label: 📝 Interview Summary
 description: Extract key themes, pain points, and quotes from interviews 💬
 input_type: text
+input_processing: summarize_if_long
 precision_mode: concise | detailed
 prompt: |
   You are a research assistant helping synthesize qualitative data. Your task is to extract 3 key themes, 3 pain points, and 3 notable quotes from the following interview transcript. Be clear and specific. Use plain language written at a 10th-grade reading level. Use a conversational but professional tone. Avoid generic business phrases. Where helpful, explain complex ideas using everyday analogies. Use active voice, not passive. Avoid em-dashes. Do not include explanations — only the the outputs in the requested format.
