@@ -24,7 +24,6 @@ Each YAML file represents a **research tool or task**, like:
 - Slide deck outlines
 - Stakeholder summaries
 - Thematic synthesis
-- Survey Synthesis
 
 ---
 
@@ -47,7 +46,6 @@ civicmind_templates/
 ├─ design_opportunity_generator.yaml
 ├─ outcome_tracker.yaml
 └─ topline_slide_generator.yaml
-└─ survey_synthesis.yaml
 ```
 
 ---
@@ -104,7 +102,6 @@ output_format: |
 | `design_opportunity_generator.yaml`| You want “How Might We” prompts from insights          |
 | `outcome_tracker.yaml`         | You want to turn insights into tasks and owners            |
 | `topline_slide_generator.yaml` | You want a 6-slide formatted deck summary                  |
-| `survey_synthesis.yaml`        | You want to extract insights from open-ended survey responses       |
 
 ---
 
@@ -120,3 +117,11 @@ output_format: |
 ## 📌 Got Feedback?
 
 Let the CivicMind team know if you'd like to customize a template or create a new one!
+| `research_plan.yaml`            | Create a full VA-aligned research plan with timeline, roles, goals        |
+| `research_brief.yaml`           | Draft a concise, scoping brief with hypotheses and framing questions       |
+| `discussion_guide.yaml`         | Generate a VA-style moderated session guide                                |
+| `participant_tracker.yaml`      | Create a table for managing participant scheduling and notes               |
+| `insight_card.yaml`             | Capture one key insight with supporting quote and recommendation           |
+| `research_readout.yaml`         | Generate a full usability readout with quotes, findings, and next steps    |
+| `survey_synthesis.yaml`         | Analyze open-ended survey responses and extract key themes                 |
+
