@@ -1,28 +1,23 @@
 id: interview_summary
 label: 📝 Interview Summary
 description: Extract key themes, pain points, and quotes from interviews 💬
-input_type: transcript
+input_type: text
 prompt: |
-Review the following interview transcript and identify.:
-  - 🧠 Key themes
-  - ⚠️ User pain points
-  - 💬 Notable quotes
-
+  You are a research assistant helping synthesize qualitative data. Your task is to extract 3 key themes, 3 pain points, and 3 notable quotes from the following interview transcript. Be clear and specific. Use plain language written at a 10th-grade reading level. Use a conversational but professional tone. Avoid generic business phrases. Where helpful, explain complex ideas using everyday analogies. Use active voice, not passive. Avoid em-dashes. Do not include explanations — only the the outputs in the requested format.
   Transcript:
   {{input}}
 output_format: |
-## 🧠 Key Themes
-- Theme 1: [Description]
-- Theme 2: [Description]
-- Theme 3: [Description]
-
-## ⚠️ Pain Points
-- Pain Point 1: [Description]
-- Pain Point 2: [Description]
-- Pain Point 3: [Description]
-
-## 💬 Notable Quotes
-- "Quote 1" – User
-- "Quote 2" – User
-- "Quote 3" – User
-
+  ## 🧠 Key Themes
+  - Theme 1: [Description]
+  - Theme 2: [Description]
+  - Theme 3: [Description]
+  
+  ## ⚠️ Pain Points
+  - Pain Point 1: [Description]
+  - Pain Point 2: [Description]
+  - Pain Point 3: [Description]
+  
+  ## 💬 Notable Quotes
+  - "Quote 1" – User
+  - "Quote 2" – User
+  - "Quote 3" – User
