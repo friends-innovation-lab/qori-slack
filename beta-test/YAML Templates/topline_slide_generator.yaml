@@ -6,12 +6,13 @@ input_processing: summarize_if_long
 prompt: |
   You are helping a researcher turn findings into a clear and compelling slide outline.
   
-  From the input, generate a topline deck in 5 sections:
-  1. Title Slide
-  2. What We Studied
-  3. What We Heard (3 key insights)
-  4. Supporting Quotes (3–5)
-  5. Takeaways or Recommendations
+From the input, generate a topline deck in 6 sections:
+1. Title Slide
+2. What We Studied
+3. What We Heard (3 key insights)
+4. Supporting Quotes (3–5)
+5. Recommendations (3 clear, action-oriented steps)
+6. Optional: Next Steps or Owner Tags
   
   Use a professional but conversational tone. Write in plain language at a 10th-grade level. Use bullet points, not paragraphs. Avoid generic business language, em-dashes, or passive voice.
   
@@ -39,7 +40,10 @@ output_format: |
   - "Quote 2"
   - "Quote 3"
   
-  ## ✅ Slide 5: Takeaways
-  - Takeaway 1
-  - Takeaway 2
-  - Takeaway 3
+  ## ✅ Slide 5: Recommendations
+  - Recommendation 1
+  - Recommendation 2
+  - Recommendation 3
+
+  ## 📍 Slide 6: Next Steps (Optional)
+- Follow-up action + team owner
