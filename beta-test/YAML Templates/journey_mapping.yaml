@@ -1,6 +1,7 @@
 id: journey_mapping
 label: 🧭 Journey Mapping
 description: Map a user's experience across service stages 👣
+precision_mode: concise | detailed
 input_type: text
 prompt: |
   You are helping turn raw user research into a step-by-step journey map.
