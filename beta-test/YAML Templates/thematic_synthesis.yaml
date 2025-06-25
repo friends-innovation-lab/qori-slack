@@ -1,0 +1,29 @@
+id: thematic_synthesis
+label: 🧵 Thematic Synthesis
+description: Aggregate insights across multiple interviews or surveys 📚
+input_type: text
+input_processing: summarize_if_long
+batch_mode: true
+batch_delimiter: "---"
+prompt: |
+  You are a research assistant helping synthesize themes across multiple interviews or survey responses.
+  
+  For each item in the batch, identify the top 2–3 recurring themes or insights. After processing all inputs, summarize the strongest shared patterns across all entries.
+  
+  Use plain language at a 10th-grade reading level. Use a conversational but professional tone. No business jargon or em-dashes. Limit responses to 3–4 bullets per batch item and a shared summary at the end.
+  
+  Research Inputs:
+  {{input}}
+output_format: |
+  ## Summary for Item 1
+  - Theme 1
+  - Theme 2
+  - Theme 3
+  
+  ## Summary for Item 2
+  ...
+  
+  ## 🔁 Shared Patterns Across All
+  - Shared Pattern 1
+  - Shared Pattern 2
+  - Shared Pattern 3
