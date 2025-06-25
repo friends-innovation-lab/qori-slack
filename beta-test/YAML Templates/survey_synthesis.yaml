@@ -1,0 +1,38 @@
+id: survey_synthesis
+label: 📊 Survey Synthesis
+description: Analyze open-ended survey responses for key themes and supporting quotes
+input_type: text
+input_processing: summarize_if_long
+batch_mode: true
+batch_delimiter: "---"
+prompt: |
+  You are a research assistant helping synthesize insights from open-ended survey responses.
+
+  For each response in the batch:
+  - Identify 2 to 3 specific themes mentioned
+  - Extract one quote that illustrates a theme
+
+  After processing all responses:
+  - Summarize the most frequently mentioned patterns across the full set
+  - Count how often each major theme appeared (if possible)
+
+  Use plain language at a 10th-grade reading level. Avoid jargon, em-dashes, or vague business speak.
+  Be concise, clear, and structured.
+
+  Responses:
+  {{input}}
+output_format: |
+  ## 📊 Survey Synthesis
+
+  ### Response 1
+  - Theme 1: ...
+  - Theme 2: ...
+  - 💬 Quote: "..."
+
+  ### Response 2
+  ...
+
+  ## 🔁 Shared Themes Across All
+  - Trust in system (mentioned in 6 of 10)
+  - Confusion about next steps (mentioned in 4 of 10)
+  - Desire for live support (mentioned in 3 of 10)
