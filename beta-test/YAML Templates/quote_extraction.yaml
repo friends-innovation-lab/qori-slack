@@ -3,6 +3,8 @@ label: 💬 Quote Extraction
 description: Pull powerful or emotional user quotes with topic and sentiment tags 🔊
 input_type: text
 input_processing: summarize_if_long
+batch_mode: true
+batch_delimiter: "---"
 precision_mode: concise | detailed
 prompt: |
   From the notes below, extract 5 strong quotes that sound like something a real person would say.
