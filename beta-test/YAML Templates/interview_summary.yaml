@@ -2,6 +2,8 @@ id: interview_summary
 label: 📝 Interview Summary
 description: Extract key themes, pain points, and quotes from interviews 💬
 input_type: text
+batch_mode: true
+batch_delimiter: "---"
 input_processing: summarize_if_long
 precision_mode: concise | detailed
 prompt: |
