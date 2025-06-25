@@ -1,21 +1,57 @@
 id: executive_summary
 label: 📊 Executive Summary
-description: Summarize research into 3 concise paragraphs 📝
+description: Generate a VA-style executive summary with key findings and recommendations
 input_type: text
 input_processing: summarize_if_long
-batch_mode: true
-batch_delimiter: "---"
-precision_mode: concise | detailed
 prompt: |
-  You are writing a 3-paragraph executive summary of the following research. Paragraph 1 should explain the context and what was studied. Paragraph 2 should summarize participant insights. Paragraph 3 should state what the team should take away. Use a plain, professional tone with active voice. Avoid jargon and business clichés. Write at a 10th-grade reading level. Keep it clear and structured.
-  Research Notes:
+  You are creating an executive summary based on qualitative research findings. Use the structure below, written in plain, accessible language at a 10th-grade reading level. Be specific, avoid business jargon, and do not use em-dashes. Use Markdown headings and bullet points as shown.
+
+  Input:
   {{input}}
+
 output_format: |
-  🧩 **Paragraph 1**  
-  Summarize the research context and what was being explored.
-  
-  🔍 **Paragraph 2**  
-  Summarize what participants said — patterns, issues, and takeaways.
-  
-  📝 **Paragraph 3**  
-  Summarize what this means for the team going forward.
+  # 🧾 Executive Summary – [Project or Study Name]
+
+  ---
+
+  ## 🎯 Objective  
+  [Briefly summarize the purpose of the research. What were you trying to understand or solve?]
+
+  ---
+
+  ## 🔍 Key Insights  
+  1. **[Top Insight 1]** – [Short explanation]  
+  2. **[Top Insight 2]** – [Short explanation]  
+  3. **[Top Insight 3]** – [Short explanation]  
+
+  [Optional: Add 1–2 more insights depending on space and importance]
+
+  ---
+
+  ## 👤 Who We Spoke To  
+  - [#] Participants  
+  - [Participant types (e.g., Veterans, Caregivers, Clinicians)]  
+  - [Key demographic details: age range, geography, device use, etc.]
+
+  ---
+
+  ## 🛠️ Top Recommendations  
+  - [Brief, actionable recommendation #1]  
+  - [Brief, actionable recommendation #2]  
+  - [Brief, actionable recommendation #3]
+
+  ---
+
+  ## 🧠 Why It Matters  
+  [Summarize how this research supports org goals, informs design decisions, or addresses equity gaps.]
+
+  ---
+
+  ## 📎 Artifacts  
+  - [Link to full report]  
+  - [Links to transcripts, affinity map, or prototypes (if applicable)]
+
+  ---
+
+  **Prepared by:** [Name or Team]  
+  **Date:** [YYYY-MM-DD]
