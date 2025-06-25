@@ -3,12 +3,15 @@ label: 📊 Executive Summary
 description: Summarize research into 3 concise paragraphs 📝
 input_type: text
 prompt: |
-  Write a high-level executive summary of the following notes 🧾:
-
+  You are writing a 3-paragraph executive summary of the following research. Paragraph 1 should explain the context and what was studied. Paragraph 2 should summarize participant insights. Paragraph 3 should state what the team should take away. Use a plain, professional tone with active voice. Avoid jargon and business clichés. Write at a 10th-grade reading level. Keep it clear and structured.
+  Research Notes:
   {{input}}
 output_format: |
-  🧩 **Paragraph 1**
-
-  🔍 **Paragraph 2**
-
-  📝 **Paragraph 3**
+  🧩 **Paragraph 1**  
+  Summarize the research context and what was being explored.
+  
+  🔍 **Paragraph 2**  
+  Summarize what participants said — patterns, issues, and takeaways.
+  
+  📝 **Paragraph 3**  
+  Summarize what this means for the team going forward.
