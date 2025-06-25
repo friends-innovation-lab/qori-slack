@@ -1,17 +1,17 @@
 id: persona_generator
-label: Persona Generator
-description: Generate a user persona from interview data or insights.
+label: 👤 Persona Generator
+description: Generate a user persona from research findings 🧾
 input_type: synthesis
 prompt: |
-  Using the provided notes, create a user persona with:
-  - Name, demographics
-  - Goals, frustrations
-  - Behaviors and quotes
+  Create a persona using the insights below, including:
+  - Name and demographics 👥
+  - Goals 🎯 and frustrations 😤
+  - Behaviors 🧍 and representative quotes 💬
 
-  Notes:
+  Insights:
   {{input}}
 output_format: |
-  ## Name: [Name]
+  ## 👤 Name: [Name]
   - **Demographics:** ...
   - **Goals:** ...
   - **Frustrations:** ...
