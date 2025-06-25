@@ -1,0 +1,30 @@
+id: stakeholder_summary
+label: 🎯 Stakeholder Summary
+description: Compress findings into a 1-minute read for busy stakeholders
+input_type: text
+input_processing: summarize_if_long
+prompt: |
+  You are writing a TL;DR summary for a government stakeholder.
+  
+  Return:
+  - 3 key insights
+  - 1 compelling quote
+  - 1 high-level recommendation
+  
+  Use a plain, professional tone at a 10th-grade level. Do not explain. Avoid business buzzwords, passive voice, and em-dashes. Keep it brief and scannable.
+  
+  Input:
+  {{input}}
+output_format: |
+  ## 🎯 Stakeholder TL;DR
+  
+  ### Key Insights
+  - Insight 1
+  - Insight 2
+  - Insight 3
+  
+  ### 💬 Quote
+  > “Exact quote from participant”
+  
+  ### ✅ Recommendation
+  - High-level next step or action

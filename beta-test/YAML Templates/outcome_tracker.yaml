@@ -1,0 +1,27 @@
+id: outcome_tracker
+label: 📈 Outcome Tracker
+description: Turn research findings into a follow-up task list
+input_type: text
+input_processing: summarize_if_long
+prompt: |
+  You are turning research findings into a practical outcomes tracker.
+  
+  For each insight or recommendation:
+  - State the insight
+  - Suggest a follow-up action
+  - Tag a likely owner team
+  
+  Use clear, plain language at a 10th-grade level. Write in bullet format. Avoid em-dashes and vague language.
+  
+  Input:
+  {{input}}
+output_format: |
+  ## 📈 Research Outcomes
+  
+  - Insight: [summary]
+    - Follow-up: [action or test]
+    - Owner: [team name]
+  
+  - Insight: ...
+    - Follow-up: ...
+    - Owner: ...

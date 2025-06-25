@@ -1,0 +1,33 @@
+id: usability_issues_extractor
+label: 🧪 Usability Issues Extractor
+description: Identify usability issues from research notes
+input_type: text
+input_processing: summarize_if_long
+prompt: |
+  You are helping extract usability issues from research notes or transcripts.
+  
+  For each issue, identify:
+  - A clear title
+  - A short description
+  - Severity (low, medium, high)
+  - Screen or feature name (if available)
+  - A suggested fix
+  
+  Use plain language at a 10th-grade reading level. Do not include explanations. Use bullet format and be concise.
+  
+  Input:
+  {{input}}
+output_format: |
+  ## 🧪 Usability Issues
+  
+  ### Issue 1: [Title]
+  - Description: ...
+  - Severity: medium
+  - Screen: login form
+  - Recommendation: ...
+  
+  ### Issue 2: [Title]
+  - Description: ...
+  - Severity: ...
+  - Screen: ...
+  - Recommendation: ...

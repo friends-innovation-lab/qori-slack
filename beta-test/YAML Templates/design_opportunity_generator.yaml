@@ -1,0 +1,26 @@
+id: design_opportunity_generator
+label: 🎨 Design Opportunity Generator
+description: Generate design opportunities and HMWs from research themes
+input_type: text
+input_processing: summarize_if_long
+prompt: |
+  You are helping a design team identify opportunity areas from research.
+  
+  From the input:
+  - Extract 3–5 problem statements
+  - Convert each one into a "How Might We" (HMW) question
+  
+  Use plain, actionable language. Avoid jargon or em-dashes. Write clearly and briefly.
+  
+  Input:
+  {{input}}
+output_format: |
+  ## 🎨 Design Opportunities
+  
+  ### Problem 1
+  - Description: ...
+  - HMW: How might we ... ?
+  
+  ### Problem 2
+  - Description: ...
+  - HMW: How might we ... ?
