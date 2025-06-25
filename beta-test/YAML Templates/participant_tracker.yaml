@@ -1,0 +1,24 @@
+id: participant_tracker
+label: 👥 Participant Tracker
+description: Generate a participant tracker table for a VA research study
+input_type: text
+input_processing: summarize_if_long
+prompt: |
+  You are helping generate a structured participant tracker for a VA research study. Use a table format to record basic information about participants including ID, name or alias, contact info, scheduling status, and relevant notes.
+
+  Use Markdown table formatting. If no data is provided, generate a sample table with 3–5 placeholder participants as a starter.
+
+  Input:
+  {{input}}
+
+output_format: |
+  # 📋 Participant Tracker – [Study Title]
+
+  | Participant ID | Name / Alias | Contact Info   | Scheduled Date | Status     | Notes                    |
+  |----------------|--------------|----------------|----------------|------------|--------------------------|
+  | P01            | [Name]       | [Email/Phone]  | [MM/DD/YYYY]   | Confirmed  | Needs interpreter        |
+  | P02            | [Name]       | [Email/Phone]  | [MM/DD/YYYY]   | Completed  | Follow-up sent           |
+  | P03            | [Name]       | [Email/Phone]  | [MM/DD/YYYY]   | Recruited  | Awaiting confirmation    |
+  | P04            | [Name]       | [Email/Phone]  | [MM/DD/YYYY]   | Canceled   | Replaced by P05          |
+
+  _Use this table to track participant recruitment, session status, and logistics._
