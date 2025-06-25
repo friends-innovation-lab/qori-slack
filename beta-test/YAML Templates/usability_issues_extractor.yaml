@@ -4,30 +4,33 @@ description: Identify usability issues from research notes
 input_type: text
 input_processing: summarize_if_long
 prompt: |
-  You are helping extract usability issues from research notes or transcripts.
-  
-  For each issue, identify:
-  - A clear title
-  - A short description
+  You are extracting 3 to 5 usability issues from research transcripts or observation notes.
+
+  For each issue, provide:
+  - A short title
+  - Description of the problem
+  - Observed behavior (what happened)
+  - Expected behavior (what the user thought would happen)
   - Severity (low, medium, high)
-  - Screen or feature name (if available)
-  - A suggested fix
-  
-  Use plain language at a 10th-grade reading level. Do not include explanations. Use bullet format and be concise.
-  
+  - Screen or feature name
+  - Recommendation (1–2 sentences)
+
+  Be specific and actionable. Use plain language at a 10th-grade reading level.
+  Avoid em-dashes, jargon, and vague language. Do not invent details.
+
   Input:
   {{input}}
 output_format: |
   ## 🧪 Usability Issues
-  
-  ### Issue 1: [Title]
+
+  ### Issue 1: [Short Title]
   - Description: ...
+  - Observed Behavior: ...
+  - Expected Behavior: ...
   - Severity: medium
-  - Screen: login form
-  - Recommendation: ...
-  
-  ### Issue 2: [Title]
-  - Description: ...
-  - Severity: ...
   - Screen: ...
   - Recommendation: ...
+
+  ### Issue 2: ...
+  ### Issue 3: ...
+  (up to 5 issues total)
