@@ -1,6 +1,7 @@
 id: quote_extraction
 label: 💬 Quote Extraction
 description: Pull powerful or emotional user quotes with topic and sentiment tags 🔊
+precision_mode: concise | detailed
 input_type: text
 prompt: |
   From the notes below, extract 5 strong quotes that sound like something a real person would say.
