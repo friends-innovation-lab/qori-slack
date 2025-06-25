@@ -1,13 +1,23 @@
 id: quote_extraction
 label: 💬 Quote Extraction
-description: Pull powerful or emotional user quotes 🔊
+description: Pull powerful or emotional user quotes with topic and sentiment tags 🔊
 input_type: text
 prompt: |
-  Extract 5–7 compelling quotes from the input below 📄.
+  From the notes below, extract 5 strong quotes that sound like something a real person would say.
 
-  Content:
+  After each quote, assign two tags:
+  - one for the emotion or sentiment (e.g., frustration, delight, confusion, insight, expectation)
+  - one for the topic or context (e.g., scheduling, communication, process, system, technology)
+
+  Make sure each quote is clearly attributed and understandable without extra context.
+  Use plain language. No summaries or added explanation.
+  Avoid em-dashes and business jargon. Use active voice and fix grammar if needed.
+
+  Notes:
   {{input}}
 output_format: |
-  - "Quote 1"
-  - "Quote 2"
-  - ...
+  - "Quote 1" — *[frustration]* — *[system]*
+  - "Quote 2" — *[delight]* — *[process]*
+  - "Quote 3" — *[confusion]* — *[technology]*
+  - "Quote 4" — *[insight]* — *[communication]*
+  - "Quote 5" — *[expectation]* — *[scheduling]*
