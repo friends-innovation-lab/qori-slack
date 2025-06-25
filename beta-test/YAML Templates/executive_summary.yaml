@@ -1,17 +1,23 @@
-id: executive_summary
-label: 📊 Executive Summary
-description: Summarize research into 3 concise paragraphs 📝
+id: interview_summary
+label: 📝 Interview Summary
+description: Extract key themes, pain points, and quotes from interviews 💬
 input_type: text
 prompt: |
-  You are writing a 3-paragraph executive summary of the following research. Paragraph 1 should explain the context and what was studied. Paragraph 2 should summarize participant insights. Paragraph 3 should state what the team should take away. Use a plain, professional tone with active voice. Avoid jargon and business clichés. Write at a 10th-grade reading level. Keep it clear and structured.
-  Research Notes:
+  You are a research assistant helping synthesize qualitative data. Your task is to extract 3 key themes, 3 pain points, and 3 notable quotes from the following interview transcript. Be clear and specific. Use plain language written at a 10th-grade reading level. Use a conversational but professional tone. Avoid generic business phrases. Where helpful, explain complex ideas using everyday analogies. Use active voice, not passive. Avoid em-dashes. Do not include explanations - only the outputs in the requested format.
+  Transcript:
   {{input}}
 output_format: |
-  🧩 **Paragraph 1**  
-  Summarize the research context and what was being explored.
+  ## 🧠 Key Themes
+  - Theme 1: [Description]
+  - Theme 2: [Description]
+  - Theme 3: [Description]
   
-  🔍 **Paragraph 2**  
-  Summarize what participants said — patterns, issues, and takeaways.
+  ## ⚠️ Pain Points
+  - Pain Point 1: [Description]
+  - Pain Point 2: [Description]
+  - Pain Point 3: [Description]
   
-  📝 **Paragraph 3**  
-  Summarize what this means for the team going forward.
+  ## 💬 Notable Quotes
+  - "Quote 1" – User
+  - "Quote 2" – User
+  - "Quote 3" – User
