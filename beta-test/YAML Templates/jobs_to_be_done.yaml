@@ -32,6 +32,11 @@ prompt: |
   Wherever possible, include or infer the persona type (e.g., “first-time investor,” “veteran caregiver,” “government caseworker”).
   Tie the JTBD to that persona so teams can better design for their context and needs.
 
+  Expand "Why it Matters" to include one of the following:
+    - The consequence if this job remains unmet
+    - The opportunity it creates if solved
+    - The social or emotional need being addressed (e.g., dignity, safety, trust)
+
   For each JTBD, break it into 5 parts:
     1. 🧍 Persona: Who is this job about? Use a brief description like “Black first-time investor” or “rural benefits navigator”
     2. 🎯 Job: What is the person trying to do?
@@ -78,12 +83,16 @@ output_format: |
   💡 Why it Matters: [string]  
   🏷️ Tags: [optional list of strings]
 
+
+
   🛠️ Job 2  
   🧍 Persona: [string]  
   🎯 Job: [string]  
   ⛔ Obstacle: [string]  
   💡 Why it Matters: [string]  
   🏷️ Tags: [optional list of strings]
+
+
 
   🛠️ Job 3  
   🧍 Persona: [string]  
