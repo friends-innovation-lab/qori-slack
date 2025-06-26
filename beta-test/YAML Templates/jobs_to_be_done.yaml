@@ -7,7 +7,7 @@ batch_mode: true
 batch_delimiter: "---"
 precision_mode: concise | detailed
 prompt: |
-  Look at the user quotes below and identify 3 clear Jobs-To-Be-Done. For each one, describe what the person is trying to do (the goal) and what’s stopping them (the obstacle). Write in clear, plain language. Avoid jargon. Use analogies to explain if needed. Use a tone that is conversational and direct. Keep each job-obstacle pair focused and grounded in user reality. Write at a 10th-grade reading level. No em-dashes.
+  Look at the user quotes below and identify 3 clear Jobs-To-Be-Done. For each one, describe what the person is trying to do (the goal) and what’s stopping them (the obstacle). Write in clear, plain language. Avoid jargon. Use analogies to explain if needed. Use a tone that is conversational and direct. Keep each job-obstacle pair focused and grounded in user reality. Write at a 10th-grade reading level. No em-dashes. Do not use words like "aim."
   Quotes:
   {{input}}
 output_format: |
