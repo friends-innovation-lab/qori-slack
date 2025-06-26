@@ -64,7 +64,7 @@ persona_hinting: |
 # - Opportunity: optional string
 # - Source: optional string
 
-output_example: |
+output_format: |
   🛠️ JOB 1: Apply for public housing
 
   PERSONA: Low-income family seeking stable housing  
