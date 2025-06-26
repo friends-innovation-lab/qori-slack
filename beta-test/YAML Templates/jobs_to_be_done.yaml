@@ -56,7 +56,8 @@ persona_hinting: |
 output_format: |
   📌 *JOBS-TO-BE-DONE: {{study_name | default("SUMMARY")}}*
 
-  👋 Hi team! Here are structured JTBDs from this round of research. Each one highlights a user goal, the barrier in the way, and why it matters. Feel free to thread your thoughts, product ideas, or questions.
+  👋 Hi team! Here are structured JTBDs from this round of research. Each one highlights a user goal, the barrier in the way, and why it matters. 
+  Let’s use this thread to turn insight into action — reply below with product ideas, design questions, or next steps.
 
   ---
 
