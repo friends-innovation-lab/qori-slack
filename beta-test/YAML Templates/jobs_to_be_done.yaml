@@ -62,12 +62,11 @@ persona_hinting: |
 
 output_format: |
   
-  📌 *JOBS TO BE DONE: {{study_name | default("Summary")}}*
-
-
   👋 Here are structured JTBDs from this round of research. Each one highlights a goal, what’s preventing it, and why it matters. Feel free to reply in thread with ideas, questions, or related insights.
 
-  ---
+  📌 *JOBS TO BE DONE: {{study_name | default("Summary")}}*
+
+ 
 
   JOB 1: [Job Summary Title]
 
