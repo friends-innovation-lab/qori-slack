@@ -46,20 +46,20 @@ input_variables:
   - quotes
 
 output_format: |
-  *🛠️ *Job 1*
-  **🎯 Job:** [string]  
-  **⛔ Obstacle:** [string]  
-  **💡 Why it Matters:** [string]  
-  **🏷️ Tags:** [optional list of strings]
+    🛠️ *Job 1*  
+    🎯 **Job:** [string]  
+    ⛔ **Obstacle:** [string]  
+    💡 **Why it Matters:** [string]  
+    🏷️ **Tags:** [optional list of strings]
 
-  ## 🛠️ *Job 2*
-  **🎯 Job:** [string]  
-  **⛔ Obstacle:** [string]  
-  **💡 Why it Matters:** [string]  
-  **🏷️ Tags:** [optional list of strings]
+    🛠️ *Job 2*  
+    🎯 **Job:** [string]  
+    ⛔ **Obstacle:** [string]  
+    💡 **Why it Matters:** [string]  
+    🏷️ **Tags:** [optional list of strings]
 
-  ## 🛠️ *Job 3*
-  **🎯 Job:** [string]  
-  **⛔ Obstacle:** [string]  
-  **💡 Why it Matters:** [string]  
-  **🏷️ Tags:** [optional list of strings]
+    🛠️ *Job 3*  
+    🎯 **Job:** [string]  
+    ⛔ **Obstacle:** [string]  
+    💡 **Why it Matters:** [string]  
+    🏷️ **Tags:** [optional list of strings]
