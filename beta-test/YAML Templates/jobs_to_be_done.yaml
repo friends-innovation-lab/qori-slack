@@ -32,6 +32,7 @@ input_processing: summarize_if_long  # Summarize automatically if input exceeds 
 batch_mode: true  # Allows multiple quotes to be processed in one batch
 batch_delimiter: "---"  # Required delimiter between each quote when using batch mode
 precision_mode: concise | detailed  # Controls response richness; detailed adds context, tags, and source
+temperature: 0.4  # Controls reasoning; lower = more focused, higher = more exploratory
 
 input_variables:
   - input_text       # May include quotes, notes, summaries, observations
