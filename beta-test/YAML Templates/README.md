@@ -28,7 +28,7 @@ Each YAML file represents a **research tool or task**, like:
 Framing: “YAML is not the product — it’s how we teach the AI to think like you.
 Each file is a research method, not code. You’re codifying your craft — once — so everyone can use it.”
 
-An analogies:
+An analogy:
 - YAML = “the script for your research assistant”
 - Templates = “modules in your insight factory”
 - Slack command = “remote control for a research task”
