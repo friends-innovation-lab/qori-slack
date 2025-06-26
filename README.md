@@ -7,7 +7,7 @@ CivicMind is:
 - It posts structured output (JTBDs, summaries, insights) back into Slack
 - YAML lives in GitHub → AI runs prompt → result returns to Slack thread
 
-> “CivicMind keeps research moving, visible, and human. CivicMind turns research into momentum.”
+> We're not building a bot. We’re building a method system.
 
 Unlike generic productivity bots, **CivicMind is purpose-built for public service teams**:  
 - It reduces ResearchOps friction. No more cobbling together templates or folder structures.
