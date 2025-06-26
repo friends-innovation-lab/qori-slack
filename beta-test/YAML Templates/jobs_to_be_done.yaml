@@ -62,48 +62,30 @@ persona_hinting: |
 
 output_format: |
   
-  👋 Here are structured JTBDs from this round of research. Each one highlights a goal, what’s preventing it, and why it matters. Feel free to reply in thread with ideas, questions, or related insights.
+output_format: |
+  📌 *JOBS-TO-BE-DONE: {{study_name | default("SUMMARY")}}*
 
-  📌 *JOBS TO BE DONE: {{study_name | default("Summary")}}*
-
- 
-  JOB 1: [Job Summary Title]
-
-  PERSONA: [Short user description]  
-  JOB: [What they’re trying to do]  
-  OBSTACLE: [What’s in their way]  
-  WHY IT MATTERS: [Why this goal matters in context]  
-  TAGS: [e.g. trust, access, navigation]  
-  🔥 SIGNAL: How often this came up (e.g., “Mentioned in 4 interviews”, “Common issue across sessions”)
-  ✅ OPPORTUNITY: [What could be done — e.g., “Create simpler application checklist”] 
-  📚 SOURCE: Where the quote or theme was observed (e.g., “Session 3, Quote 7” or “Field notes, Week 2”)
- 
+  👋 Hi Team! Here are structured JTBDs from this round of research. Each one highlights a user goal, the barrier in the way, and why it matters. Feel free to thread your thoughts, product ideas, or questions.
 
   ---
 
-  JOB 2: [Job Summary Title]
+  🛠️ *JOB 1: [Job Summary Title]*
 
-  PERSONA: ...  
-  JOB: ...  
-  OBSTACLE: ...  
-  WHY IT MATTERS: ...  
-  TAGS: ...  
-  🔥 SIGNAL: ...  
-  ✅ OPPORTUNITY: ...  
-  📚 SOURCE: ...
+  *Persona:* [Short description]  
+  *Job:* [Goal the person is trying to accomplish]  
+  *Obstacle:* [What’s in their way]  
+  *Why it Matters:* [What’s at stake if unmet]
+
+  > “[Pull quote here if available]”
+
+  🔥 *Signal:* [How frequently this came up]  
+  ✅ *Opportunity:* [How the team could respond]  
+  📚 *Source:* [Session, quote, or summary]
+  *Tags:* [comma-separated keywords]  
 
   ---
 
-  JOB 3: [Job Summary Title]
-
-  PERSONA: ...  
-  JOB: ...  
-  OBSTACLE: ...  
-  WHY IT MATTERS: ...  
-  TAGS: ...  
-  🔥 SIGNAL: ...  
-  ✅ OPPORTUNITY: ...  
-  📚 SOURCE: ...
+  🛠️ *JOB 2: ...*
 
 prompt: |
   You are a senior civic tech strategist and qualitative researcher with over 10 years of experience
