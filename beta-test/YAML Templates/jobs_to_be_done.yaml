@@ -34,7 +34,8 @@ batch_delimiter: "---"  # Required delimiter between each quote when using batch
 precision_mode: concise | detailed  # Controls response richness; detailed adds context, tags, and source
 
 input_variables:
-  - quotes  # One or more user quotes to analyze and extract JTBD from
+  - input_text       # May include quotes, notes, summaries, observations
+  - max_jobs         # Optional: 1–3 max JTBDs to return
 
 output_use: |
   Output will be posted in Slack, turned into GitHub issues, and referenced in research synthesis.
@@ -102,12 +103,18 @@ output_format: |
 
 prompt: |
   You are a senior civic tech strategist and qualitative researcher with over 10 years of experience
-  turning interview data into actionable insights that inform public-interest technology, equity-focused policy,
-  and government service delivery.
+  turning messy or partial research input into structured insights.
 
-  This prompt is used to extract structured Jobs-To-Be-Done (JTBD) from user feedback, interviews, or field notes.
-  The output will be reviewed by cross-functional teams including product, design, policy, and operations,
-  so it must be clear, structured, and grounded in the lived experiences of the communities represented.
+  Based on the input provided — whether it includes direct quotes, researcher notes, field observations,
+  or thematic summaries — extract up to {{max_jobs | default(3)}} distinct Jobs-To-Be-Done (JTBD).
+
+  Only return jobs that are clearly supported by the input. If fewer than {{max_jobs | default(3)}} clear jobs exist, return only those.
+  If no useful jobs can be confidently extracted, return:
+  🛠️ No clear job could be extracted from this input.
+
+  Then, for each job:
+    - Format it clearly and consistently for use in Slack and research repositories
+    - Include persona, job, obstacle, why it matters, tags, and (if applicable) signal, opportunity, and source
 
   Before you begin writing each job:
     - Identify who the user or participant is (persona)
