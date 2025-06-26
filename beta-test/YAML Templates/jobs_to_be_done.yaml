@@ -68,7 +68,7 @@ output_format: |
 
   ---
 
-  🛠️ JOB 1: [Job Summary Title]
+  JOB 1: [Job Summary Title]
 
   PERSONA: [Short user description]  
   JOB: [What they’re trying to do]  
@@ -81,7 +81,7 @@ output_format: |
 
   ---
 
-  🛠️ JOB 2: [Job Summary Title]
+  JOB 2: [Job Summary Title]
 
   PERSONA: ...  
   JOB: ...  
@@ -94,7 +94,7 @@ output_format: |
 
   ---
 
-  🛠️ JOB 3: [Job Summary Title]
+  JOB 3: [Job Summary Title]
 
   PERSONA: ...  
   JOB: ...  
