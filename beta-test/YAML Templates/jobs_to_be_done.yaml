@@ -16,10 +16,10 @@ prompt: |
   from the provided user quotes.
 
   For each JTBD, break it into 4 parts:
-    1. **🎯 Job (Goal):** What is the user trying to get done?
-    2. **⛔ Obstacle:** What makes it hard for them to do this now?
-    3. **💡 Why it Matters:** Why is this important—emotionally, practically, or professionally?
-    4. **🏷️ Tags (optional):** Keywords like 'synthesis', 'workflow', 'communication', 'trust', etc.
+    1. 🎯 **Job (Goal):** What is the user trying to get done?
+    2. ⛔ **Obstacle:** What makes it hard for them to do this now?
+    3. 💡 **Why it Matters:** Why is this important—emotionally, practically, or professionally?
+    4. 🏷️ **Tags (optional):** Keywords like 'synthesis', 'workflow', 'communication', 'trust', etc.
 
   Write in clear, natural language. Avoid jargon or technical product speak.
   Summarize jobs in a way that helps a cross-functional team understand user needs.
@@ -33,33 +33,32 @@ prompt: |
 
   Example output:
 
- ## 🛠️ Job 1
+  🛠️ *Job 1*  
+  🎯 **Job:** Find and reuse past research insights when creating new deliverables  
+  ⛔ **Obstacle:** Insights are scattered across multiple tools with no consistent place to look  
+  💡 **Why it Matters:** So researchers don’t waste time duplicating past work or miss relevant evidence  
+  🏷️ **Tags:** synthesis, knowledge management
 
-  **🎯 Job:** Find and reuse past research insights when creating new deliverables  
-  **⛔ Obstacle:** Insights are scattered across multiple tools with no consistent place to look  
-  **💡 Why it Matters:** So researchers don’t waste time duplicating past work or miss relevant evidence  
-  **🏷️ Tags:** synthesis, knowledge management
-
-(Add a blank line between each job.)
+  (Add a blank line between each job.)
 
 input_variables:
   - quotes
 
 output_format: |
-    🛠️ *Job 1*  
-    🎯 **Job:** [string]  
-    ⛔ **Obstacle:** [string]  
-    💡 **Why it Matters:** [string]  
-    🏷️ **Tags:** [optional list of strings]
+  🛠️ *Job 1*  
+  🎯 **Job:** [string]  
+  ⛔ **Obstacle:** [string]  
+  💡 **Why it Matters:** [string]  
+  🏷️ **Tags:** [optional list of strings]
 
-    🛠️ *Job 2*  
-    🎯 **Job:** [string]  
-    ⛔ **Obstacle:** [string]  
-    💡 **Why it Matters:** [string]  
-    🏷️ **Tags:** [optional list of strings]
+  🛠️ *Job 2*  
+  🎯 **Job:** [string]  
+  ⛔ **Obstacle:** [string]  
+  💡 **Why it Matters:** [string]  
+  🏷️ **Tags:** [optional list of strings]
 
-    🛠️ *Job 3*  
-    🎯 **Job:** [string]  
-    ⛔ **Obstacle:** [string]  
-    💡 **Why it Matters:** [string]  
-    🏷️ **Tags:** [optional list of strings]
+  🛠️ *Job 3*  
+  🎯 **Job:** [string]  
+  ⛔ **Obstacle:** [string]  
+  💡 **Why it Matters:** [string]  
+  🏷️ **Tags:** [optional list of strings]
