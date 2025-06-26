@@ -85,7 +85,35 @@ output_format: |
 
   ---
 
-  🛠️ *JOB 2: ...*
+  🛠️ *JOB 2: [Job Summary Title]*
+
+  *Persona:* [Short description]  
+  *Job:* [Goal the person is trying to accomplish]  
+  *Obstacle:* [What’s in their way]  
+  *Why it Matters:* [What’s at stake if unmet]
+
+  > “[Pull quote here if available]”
+
+  🔥 *Signal:* [How frequently this came up]  
+  ✅ *Opportunity:* [How the team could respond]  
+  📚 *Source:* [Session, quote, or summary]
+  *Tags:* [comma-separated keywords]  
+
+  ---
+
+  🛠️ *JOB 3: [Job Summary Title]*
+
+  *Persona:* [Short description]  
+  *Job:* [Goal the person is trying to accomplish]  
+  *Obstacle:* [What’s in their way]  
+  *Why it Matters:* [What’s at stake if unmet]
+
+  > “[Pull quote here if available]”
+
+  🔥 *Signal:* [How frequently this came up]  
+  ✅ *Opportunity:* [How the team could respond]  
+  📚 *Source:* [Session, quote, or summary]
+  *Tags:* [comma-separated keywords]  
 
 prompt: |
   You are a senior civic tech strategist and qualitative researcher with over 10 years of experience
