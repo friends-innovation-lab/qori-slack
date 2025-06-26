@@ -52,10 +52,10 @@ output_format: |
   📌 *AFFINITY MAPPING: {{study_name | default("SUMMARY")}}*
   🔗 *Study Link:* {{study_link | default("No link provided")}}
 
-
   👋 Hi team! Here are early themes emerging from this round of research.  
   Let’s use this thread to turn insight into action — reply below with your reactions, ideas, or product implications.
 
+  
   ---
 
   🏷️ *THEME 1: [Label]*
@@ -64,11 +64,11 @@ output_format: |
   > “Quote 2”  
   > “Quote 3”
 
-  *Insight:* [What this pattern reveals about user behavior, belief, or tension]  
+  🧠 *Insight:* [What this pattern reveals about user behavior, belief, or tension]  
   ✅ *Opportunity:* [What the team could explore, build, or fix]
 
+  
   ---
-
 
   🏷️ *THEME 2: [Label]*
 
@@ -76,11 +76,11 @@ output_format: |
   > “Quote 2”  
   > “Quote 3”
 
-  *Insight:* ...  
+  🧠 *Insight:* ...  
   ✅ *Opportunity:* ...
 
+  
   ---
-
 
   🏷️ *THEME 3: [Label]*
 
@@ -88,11 +88,11 @@ output_format: |
   > “Quote 2”  
   > “Quote 3”
 
-  *Insight:* ...  
+  🧠 *Insight:* ...  
   ✅ *Opportunity:* ...
 
+  
   ---
-
 
   🏷️ *THEME 4: [Label]*
 
@@ -100,11 +100,11 @@ output_format: |
   > “Quote 2”  
   > “Quote 3”
 
-  *Insight:* ...  
+  🧠 *Insight:* ...  
   ✅ *Opportunity:* ...
 
+  
   ---
-
 
   🏷️ *THEME 5: [Label]*
 
@@ -112,7 +112,7 @@ output_format: |
   > “Quote 2”  
   > “Quote 3”
 
-  *Insight:* ...  
+  🧠 *Insight:* ...  
   ✅ *Opportunity:* ...
 
 prompt: |
