@@ -61,6 +61,7 @@ output_format: |
 
   ---
 
+
   🛠️ *JOB 1: [Job Summary Title]*
 
   *Persona:* [Short user description]  
@@ -77,6 +78,7 @@ output_format: |
 
   ---
 
+
   🛠️ *JOB 2: [Job Summary Title]*
 
   *Persona:* ...  
@@ -92,6 +94,7 @@ output_format: |
   📚 *Source:* ...
 
   ---
+
 
   🛠️ *JOB 3: [Job Summary Title]*
 
