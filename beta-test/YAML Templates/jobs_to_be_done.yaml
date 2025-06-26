@@ -1,53 +1,135 @@
-id: jobs_to_be_done
+# ===========================
+# 🧠 CivicMind JTBD Prompt Config
+# For extracting structured, high-quality Jobs-To-Be-Done from research quotes
+# Created by: CivicMind R&D
+# Author: CivicMind + Expert Prompt Engineering
+# Version: v1.3
+# Created: 2025-06-26
+# Last Updated: 2025-06-26
+# ===========================
+
+id: jobs_to_be_done                 # Internal identifier used in CivicMind workflows
+name: extract_jobs_to_be_done      # Verb-based internal task name for the prompt engine
+
 label: 🎯 Jobs-To-Be-Done Extraction
 version: "v1.3-june-2025"
 
 description: >
-  Extract high-quality, actionable Jobs-To-Be-Done (JTBD) from user research quotes.
-  This prompt is designed for civic tech and equity-focused research teams working in Slack,
-  and outputs structured, persona-aware insights tied to study outcomes.
+  Extract high-quality, structured Jobs-To-Be-Done (JTBD) from user research quotes.
+  This is optimized for civic tech and equity-centered research. Output is Slack-friendly, traceable, and designed
+  to support product, design, policy, and research synthesis workflows.
 
-input_type: text
-input_processing: summarize_if_long
-batch_mode: true
-batch_delimiter: "---"
-precision_mode: concise | detailed
-name: extract_jobs_to_be_done
+author: FFTC/CivicMind R&D
+created: 2025-06-26
+last_updated: 2025-06-26
+changelog:
+  - v1.0: Created base prompt with structured JTBD output
+  - v1.1: Added persona guidance and tags
+  - v1.2: Introduced signal, source, and opportunity fields
+  - v1.3: Final formatting and Slack readability improvements
+
+input_type: text  # Accepts raw text input such as quotes or excerpts
+input_processing: summarize_if_long  # Summarize only if input exceeds 1000 words
+batch_mode: true  # Allows multiple quotes to be processed at once
+batch_delimiter: "---"  # Delimiter used to separate multiple quote inputs
+precision_mode: concise | detailed  # 'concise' = minimal JTBD, 'detailed' = adds signal/opportunity/source
+
+input_variables:
+  - quotes  # One or more quotes or transcript snippets to analyze
+
+output_use: |
+  Output will be posted in Slack, turned into GitHub issues, and referenced in research synthesis.
+  It must be clear, structured, skimmable, and reusable in async, cross-functional workflows.
+
+output_notes: |
+  Use confident, plainspoken language. Do not hedge or speculate.
+  Avoid empty terms like "easier" or "better" without context.
+  Emphasize the consequence or opportunity of unmet needs for equity and service impact.
+
+persona_hinting: |
+  Examples of likely personas:
+    - Black first-time investor
+    - Veteran seeking housing
+    - Rural benefits navigator
+    - Caregiver supporting an elder
+    - Young adult managing student loans
+
+# Output schema:
+# - Persona: string
+# - Job: string
+# - Obstacle: string
+# - Why it Matters: string
+# - Tags: [string[]]
+# - Signal: optional string
+# - Opportunity: optional string
+# - Source: optional string
+
+output_format: |
+  🛠️ Job 1  
+  🧍 Persona: [string]  
+  🎯 Job: [string]  
+  ⛔ Obstacle: [string]  
+  💡 Why it Matters: [string]  
+  🏷️ Tags: [optional list of strings]  
+  ⚠️ Signal: [optional string]  
+  💡 Opportunity: [optional string]  
+  📎 Source: [optional string]  
+
+
+  🛠️ Job 2  
+  🧍 Persona: [string]  
+  🎯 Job: [string]  
+  ⛔ Obstacle: [string]  
+  💡 Why it Matters: [string]  
+  🏷️ Tags: [optional list of strings]  
+  ⚠️ Signal: [optional string]  
+  💡 Opportunity: [optional string]  
+  📎 Source: [optional string]  
+
+
+  🛠️ Job 3  
+  🧍 Persona: [string]  
+  🎯 Job: [string]  
+  ⛔ Obstacle: [string]  
+  💡 Why it Matters: [string]  
+  🏷️ Tags: [optional list of strings]  
+  ⚠️ Signal: [optional string]  
+  💡 Opportunity: [optional string]  
+  📎 Source: [optional string]  
 
 prompt: |
-  You are an experienced civic tech researcher and strategist with 10+ years of experience designing tools,
-  synthesizing qualitative data, and translating research into impact in the public sector.
+  You are a senior civic tech strategist and qualitative researcher with over 10 years of experience
+  turning interview data into actionable insights that inform public-interest technology, equity-focused policy,
+  and government service delivery.
 
-  You specialize in surfacing actionable insights that support social equity and systems change,
-  especially when working with historically underserved communities.
+  This prompt is used to extract structured Jobs-To-Be-Done (JTBD) from user feedback, interviews, or field notes.
+  The output will be reviewed by cross-functional teams including product, design, policy, and operations,
+  so it must be clear, structured, and grounded in the lived experiences of the communities represented.
 
-  Your task is to extract clear and precise Jobs-To-Be-Done (JTBD) from user feedback or interview quotes.
+  Before you begin writing each job:
+    - Identify who the user or participant is (persona)
+    - Infer what they are trying to accomplish (functional and emotional goals)
+    - Clarify what is preventing success (obstacles)
+    - Articulate the stakes — what happens if the job remains unmet, or what changes if it is fulfilled
 
-  Each JTBD should help a team understand:
-    - What the participant or user is trying to accomplish
-    - What barriers or conditions are preventing success
-    - And why that matters in the broader context of the study’s mission, the community being served,
-      or the real-world change the research seeks to support
+  Use confident, plainspoken language. Avoid jargon, buzzwords, or empty phrases like “to make things easier.”
+  Do not speculate or hedge. If something is unclear, leave it out rather than guessing.
 
-  Wherever possible, include or infer the persona type (e.g., “first-time investor,” “veteran caregiver,” “government caseworker”).
-  Tie the JTBD to that persona so teams can better design for their context and needs.
+  Each JTBD should contain the following fields:
 
-  Expand "Why it Matters" to include one of the following:
-    - The consequence if this job remains unmet
-    - The opportunity it creates if solved
-    - The social or emotional need being addressed (e.g., dignity, safety, trust)
+    - Persona: Who the job belongs to — a brief role or identity (e.g., “Black first-time investor”, “benefits navigator”)
+    - Job: What they are trying to do or accomplish
+    - Obstacle: What makes this hard, confusing, or inaccessible
+    - Why it Matters: Why this job matters in the context of the study's mission, public impact, or equity goals
+    - Tags: Short keywords (e.g., trust, access, navigation, communication)
+    - Signal: Optional — include if the issue was frequent, severe, or urgent
+    - Opportunity: Optional — suggest a design, content, or system opportunity (non-prescriptive)
+    - Source: Optional — include a note like “Session 2, Quote #4” to trace origin
 
-  For each JTBD, break it into 5 parts:
-    1. 🧍 Persona: Who is this job about? Use a brief description like “Black first-time investor” or “rural benefits navigator”
-    2. 🎯 Job: What is the person trying to do?
-    3. ⛔ Obstacle: What makes it hard for them to do it?
-    4. 💡 Why it Matters: Why is this important in the context of the study’s impact or goals?
-    5. 🏷️ Tags (optional): Short keywords like 'access', 'trust', 'navigation', 'communication', etc.
+  If you cannot extract a clear job from the input, return:
+  🛠️ No clear job could be extracted from this input.
 
-  Use plain, clear language. Avoid jargon or speculative language.
-  Do not hedge with phrases like “might,” “possibly,” or “to make it easier.”
-  Focus on real consequences and relevance to equity or impact.
-  Format for readability in Slack. Insert a blank line between jobs.
+  Format the output for readability in Slack. Add a full blank line between each job block.
 
   ---
   Example input:
@@ -59,60 +141,11 @@ prompt: |
   Example output:
 
   🛠️ Job 1  
-  🧍 Persona: Veteran navigating public housing application  
-  🎯 Job: Apply for housing assistance online  
-  ⛔ Obstacle: The application portal is difficult to navigate and times out unexpectedly  
-  💡 Why it Matters: Technical barriers prevent access to stable housing, putting already vulnerable individuals at further risk  
-  🏷️ Tags: access, trust, housing, digital equity
-
-  🛠️ Job 2  
-  🧍 Persona: Caseworker trying to help multiple veterans  
-  🎯 Job: Support clients in completing their housing applications  
-  ⛔ Obstacle: Limited visibility into where applicants are getting stuck in the system  
-  💡 Why it Matters: Without insight into barriers, support workers can’t effectively intervene or escalate urgent cases  
-  🏷️ Tags: communication, support tools, service delivery
-
-input_variables:
-  - quotes
-
-output_format: |
-  🛠️ Job 1  
-  🧍 Persona: [string]  
-  🎯 Job: [string]  
-  ⛔ Obstacle: [string]  
-  💡 Why it Matters: [string]  
-  🏷️ Tags: [optional list of strings]
-
-
-
-  🛠️ Job 2  
-  🧍 Persona: [string]  
-  🎯 Job: [string]  
-  ⛔ Obstacle: [string]  
-  💡 Why it Matters: [string]  
-  🏷️ Tags: [optional list of strings]
-
-
-
-  🛠️ Job 3  
-  🧍 Persona: [string]  
-  🎯 Job: [string]  
-  ⛔ Obstacle: [string]  
-  💡 Why it Matters: [string]  
-  🏷️ Tags: [optional list of strings]
-
-output_use: |
-  This output will be posted in Slack, tagged in GitHub issues, and referenced in synthesis documentation.
-  Keep it tight, skimmable, and usable in async workflows across civic tech teams.
-
-output_notes: |
-  Use plain language and impact-focused framing. Avoid generic phrases like “make it easier.”
-  Frame each “Why it Matters” in terms of research outcomes, community stakes, or policy relevance — not team productivity.
-
-persona_hinting: |
-  Common personas include:
-  - Black first-time investor
-  - Veteran seeking housing
-  - Rural caseworker
-  - Caregiver supporting an elder
-  - Young adult managing student loans
+  🧍 Persona: Veteran seeking housing assistance  
+  🎯 Job: Apply for public housing online  
+  ⛔ Obstacle: The portal is difficult to navigate and times out without saving progress  
+  💡 Why it Matters: Without stable housing access, veterans remain vulnerable to homelessness and hardship  
+  🏷️ Tags: access, digital inclusion, housing, trust  
+  ⚠️ Signal: Raised in 3 separate interviews  
+  💡 Opportunity: Offer guided step-by-step support for applicants with unstable internet or low digital literacy  
+  📎 Source: Black Veterans Study – Session 03, Quote 7
