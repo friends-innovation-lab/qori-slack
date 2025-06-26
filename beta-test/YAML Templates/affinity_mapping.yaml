@@ -1,25 +1,97 @@
 id: affinity_mapping
+name: run_affinity_mapping
+
 label: 🧠 Affinity Mapping
-description: Group notes or quotes into themes using AI 🗂️
+version: "v1.3"
+
+description: >
+  Group qualitative quotes, notes, or observations into clearly labeled themes using AI.
+  This method replaces manual affinity mapping tools (like Miro) with a faster, scalable, and sharable format.
+  Designed to support synthesis across large datasets with clean Slack/GitHub export.
+
+author: CivicMind R&D
+created: 2025-06-27
+last_updated: 2025-06-27
+
 input_type: text
 input_processing: summarize_if_long
+temperature: 0.4
 precision_mode: concise | detailed
-prompt: |
-  You are helping organize research notes. Group the following quotes into 3 themes based on what the user is talking about. Each theme should have a clear and short title. Include at least 3 quotes under each theme. Use a tone that is professional but conversational. Write at a 10th-grade reading level. Use plain language. No jargon. Use analogies if helpful to describe what connects the quotes. Avoid passive voice and em-dashes.
-  Notes:
-  {{input}}
+
+input_variables:
+  - input_text         # Quotes, observations, or notes to group
+  - max_themes         # Optional: Number of themes to return (default 5)
+  - study_name         # Optional: Title of study or Slack post context (e.g. “Q2 Onboarding Study”)
+
+output_use: |
+  Use this when you want to quickly turn raw qualitative input into structured themes for synthesis,
+  reporting, or product alignment. Output is formatted for Slack and exportable to GitHub or Notion.
+
+output_notes: |
+  This method returns up to 5 themes by default. Researchers may specify a smaller number (e.g. max_themes: 3)
+  to focus or guide the level of compression. Avoid generic or vague labels. Think like a synthesis lead preparing a readout.
+  Each theme should be relevant, human, and explain a real tension or pattern.
+
 output_format: |
+  📌 *Affinity Mapping: {{study_name | default("Summary")}}*
+
+  👋 Hi team — here are some early patterns we’re seeing across interviews and notes.  
+  These themes are emerging from qualitative data and are meant to spark discussion, alignment, or next steps.  
+  Feel free to reply in thread with reactions, questions, or anything that resonates.
+
   ## 🏷️ Theme 1: [Label]
+
   - "Quote 1"
   - "Quote 2"
   - "Quote 3"
-  
+
+
   ## 🏷️ Theme 2: [Label]
+
   - "Quote 1"
   - "Quote 2"
   - "Quote 3"
-  
+
+
   ## 🏷️ Theme 3: [Label]
+
   - "Quote 1"
   - "Quote 2"
   - "Quote 3"
+
+
+  ## 🏷️ Theme 4: [Label]
+
+  - "Quote 1"
+  - "Quote 2"
+  - "Quote 3"
+
+
+  ## 🏷️ Theme 5: [Label]
+
+  - "Quote 1"
+  - "Quote 2"
+  - "Quote 3"
+
+prompt: |
+  You are a senior qualitative researcher and synthesis facilitator. Your job is to group quotes, notes, or field observations 
+  into a small number of clearly labeled themes using affinity mapping principles.
+
+  These themes will be used by research and product teams to identify patterns, tensions, and opportunities across multiple voices.
+
+  Based on the input provided, return up to {{max_themes | default(5)}} themes.
+
+  Each theme must:
+    - Have a clear, plain-language label that describes the underlying tension, pattern, or idea
+    - Include at least 3 quotes or notes that meaningfully support that theme
+    - Show some variation in how users express the theme (not just repetition)
+
+  Avoid generic themes like “communication” or “helpfulness.” Use labels that reflect real user concerns (e.g., “I’m not sure who to trust” or “everything takes too long”).
+
+  Write at a 10th-grade reading level. Use analogies or metaphors if helpful to describe patterns. Avoid jargon, academic language, and passive voice.
+
+  Format the output as markdown with:
+    - A heading for each theme: `## 🏷️ Theme N: [Label]`
+    - A bulleted list of quotes or notes under each heading
+
+  Add spacing between themes. Use a tone that is confident, clear, and helpful for a cross-functional team reading the output in Slack.
