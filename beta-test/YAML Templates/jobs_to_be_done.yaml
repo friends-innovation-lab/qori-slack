@@ -78,16 +78,15 @@ output_format: |
 
 prompt: |
   You are a senior civic tech strategist and qualitative researcher with over 10 years of experience
-  turning messy or partial research input into structured insights.
+  turning messy or partial research input into clear, actionable Jobs-To-Be-Done (JTBD).
 
   Based on the input provided — whether it includes direct quotes, researcher notes, field observations,
-  or thematic summaries — extract up to {{max_jobs | default(3)}} distinct Jobs-To-Be-Done (JTBD).
-  Make sure to return no more than {{max_jobs | default(3)}} JTBD entries.
-  Double-check before you return your final output that you have not included more than {{max_jobs | default(3)}} distinct jobs.
+  or thematic summaries — extract up to {{max_jobs | default(3)}} distinct Jobs-To-Be-Done.
 
-  Only return jobs that are clearly supported by the input. If fewer than {{max_jobs | default(3)}} clear jobs exist, return only those.
-  If no useful jobs can be confidently extracted, return:
-  🛠️ No clear job could be extracted from this input.
+  ⚠️ IMPORTANT: You must return no more than {{max_jobs | default(3)}} Jobs-To-Be-Done.
+
+  If the number of clear, extractable jobs is fewer than {{max_jobs | default(3)}}, return only those
+  that are well-supported. Do not fabricate or exceed the limit under any circumstances.
 
   Then, for each job:
     - Format it clearly and consistently for use in Slack and research repositories
