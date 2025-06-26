@@ -29,7 +29,7 @@ output_use: |
   reporting, or product alignment. Output is formatted for Slack and exportable to GitHub or Notion.
 
 output_notes: |
-  This method returns 1-5 themes by default. Researchers may specify a smaller number (e.g. max_themes: 3)
+  This method returns 3 themes by default. Researchers may specify a smaller number (e.g. max_themes: 3)
   to focus or guide the level of compression. Avoid generic or vague labels. Think like a synthesis lead preparing a readout.
   Each theme should include quotes, a plain-language insight, and — if appropriate — a policy, design, or research opportunity.
   Use Slack formatting: bold section titles, blockquotes for quotes, spacing between blocks, and horizontal rules for clarity.
@@ -58,6 +58,7 @@ output_format: |
   
   ---
 
+
   🏷️ *THEME 1: [Label]*
 
   > “Quote 1”  
@@ -69,6 +70,7 @@ output_format: |
 
   
   ---
+
 
   🏷️ *THEME 2: [Label]*
 
@@ -82,6 +84,7 @@ output_format: |
   
   ---
 
+
   🏷️ *THEME 3: [Label]*
 
   > “Quote 1”  
@@ -94,26 +97,6 @@ output_format: |
   
   ---
 
-  🏷️ *THEME 4: [Label]*
-
-  > “Quote 1”  
-  > “Quote 2”  
-  > “Quote 3”
-
-  🧠 *Insight:* ...  
-  ✅ *Opportunity:* ...
-
-  
-  ---
-
-  🏷️ *THEME 5: [Label]*
-
-  > “Quote 1”  
-  > “Quote 2”  
-  > “Quote 3”
-
-  🧠 *Insight:* ...  
-  ✅ *Opportunity:* ...
 
 prompt: |
   You are a senior qualitative researcher and synthesis facilitator. Your job is to group quotes, notes, or field observations 
