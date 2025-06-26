@@ -64,40 +64,41 @@ persona_hinting: |
 # - Source: optional string
 
 output_format: |
-  🛠️ JOB 1: [Insert summary title here]
+  🛠️ JOB 1: Apply for public housing
 
-  🧍 Persona: [Insert short description of user]  
-  🎯 Job: [Insert what they are trying to accomplish]  
-  🚫 Obstacle: [Insert what’s in their way]  
-  💡 Why it Matters: [Explain the broader impact or risk if unmet]  
-  🏷️ Tags: [comma-separated tags]  
-  🔥 Signal: [If applicable, e.g. “Raised in 4 interviews”]  
-  ✅ Opportunity: [If applicable, describe a high-leverage opportunity]  
-  📚 Source: [e.g. “Veterans Study – Session 03, Quote 2”]  
-
-
-  🛠️ JOB 2: [Insert summary title here]
-
-  🧍 Persona: [Insert user type]  
-  🎯 Job: [Goal they’re trying to achieve]  
-  🚫 Obstacle: [Barrier in their way]  
-  💡 Why it Matters: [Why this job affects well-being, equity, outcomes]  
-  🏷️ Tags: [e.g. trust, access, equity]  
-  🔥 Signal: [Optional, if frequent or painful]  
-  ✅ Opportunity: [Optional, a product, policy, or comms suggestion]  
-  📚 Source: [Interview citation]  
+  PERSONA: Low-income family seeking stable housing  
+  JOB: Apply for public housing assistance  
+  OBSTACLE: The application process is complex and requires multiple documents that are hard to gather  
+  WHY IT MATTERS: Access to stable housing is essential for family stability and well-being, reducing the risk of homelessness  
+  TAGS: housing, access, stability, support  
+  🔥 SIGNAL: Highlighted in 5 interviews  
+  ✅ OPPORTUNITY: Develop a checklist and resource guide to help families understand required documents and steps  
+  📚 SOURCE: Housing Access Study – Session 04, Quote 6  
 
 
-  🛠️ JOB 3: [Insert summary title here]
+  🛠️ JOB 2: Access mental health services
 
-  🧍 Persona: [Insert persona description]  
-  🎯 Job: [Job to be done]  
-  🚫 Obstacle: [Barrier]  
-  💡 Why it Matters: [Consequence if unmet or benefit if solved]  
-  🏷️ Tags: [Short, searchable keywords]  
-  🔥 Signal: [Optional]  
-  ✅ Opportunity: [Optional]  
-  📚 Source: [Session + Quote reference]
+  PERSONA: Young adult experiencing mental health challenges  
+  JOB: Access affordable mental health services  
+  OBSTACLE: Limited availability of services and stigma around seeking help  
+  WHY IT MATTERS: Timely access to mental health support can significantly improve quality of life and prevent crises  
+  TAGS: mental health, access, stigma, support  
+  🔥 SIGNAL: Frequently mentioned across interviews  
+  ✅ OPPORTUNITY: Create awareness campaigns to reduce stigma and provide a directory of accessible services  
+  📚 SOURCE: Mental Health Study – Session 02, Quote 5  
+
+
+  🛠️ JOB 3: Navigate public benefits programs
+
+  PERSONA: Newly unemployed individual seeking assistance  
+  JOB: Navigate public benefits programs to secure financial support  
+  OBSTACLE: Confusing eligibility requirements and lack of clear guidance on how to apply  
+  WHY IT MATTERS: Understanding and accessing benefits is critical for individuals facing financial hardship to regain stability  
+  TAGS: benefits, navigation, financial support, equity  
+  🔥 SIGNAL: Commonly raised issue in discussions  
+  ✅ OPPORTUNITY: Implement a user-friendly online tool that guides users through eligibility and application processes  
+  📚 SOURCE: Employment Support Study – Session 03, Quote 1
+
 
 prompt: |
   You are a senior civic tech strategist and qualitative researcher with over 10 years of experience
