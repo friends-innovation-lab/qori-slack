@@ -1,17 +1,8 @@
-# ===========================
-# 🧠 CivicMind JTBD Prompt Config
-# Extracts structured, Slack-friendly Jobs-To-Be-Done from qualitative research input
-# Author: CivicMind + ChatGPT Expert Prompt Engineering
-# Version: v1.3
-# Created: 2025-06-26
-# Last Updated: 2025-06-26
-# ===========================
-
 id: jobs_to_be_done
 name: extract_jobs_to_be_done
 
 label: 🎯 Jobs-To-Be-Done Extraction
-version: "v1.4"
+version: "v1.5"
 
 description: >
   Extract clear, actionable Jobs-To-Be-Done (JTBD) from research input including quotes, notes, or observations.
@@ -28,9 +19,9 @@ temperature: 0.4
 precision_mode: concise | detailed
 
 input_variables:
-  - input_text
-  - max_jobs
-  - study_name
+  - input_text         # Raw quotes, notes, summaries, or observations
+  - max_jobs           # Optional: Number of jobs to return (default 3)
+  - study_name         # Optional: Title of study or Slack message context
 
 output_use: |
   Use this when you want to translate research into jobs that guide product decisions.
@@ -40,6 +31,7 @@ output_use: |
 output_notes: |
   Write in plain, confident language. Avoid tech jargon, filler words, or speculative statements.
   Make sure “Why it Matters” connects to the broader study or user need — not just UX ease.
+  Add line breaks and horizontal rules between jobs for readability in Slack.
 
 persona_hinting: |
   Common personas include:
@@ -59,61 +51,60 @@ persona_hinting: |
 # - Signal: optional string (e.g., how frequently this was raised in interviews or notes)
 # - Opportunity: optional string (e.g., a design, content, or system fix that might help)
 # - Source: optional string (e.g., session, quote, study reference)
+# - Pull Quote: optional string (verbatim quote that best reflects this job or obstacle)
 
-output_format: |
-  
 output_format: |
   📌 *JOBS-TO-BE-DONE: {{study_name | default("SUMMARY")}}*
 
-  👋 Hi Team! Here are structured JTBDs from this round of research. Each one highlights a user goal, the barrier in the way, and why it matters. Feel free to thread your thoughts, product ideas, or questions.
+  👋 Here are structured JTBDs from this round of research. Each one highlights a user goal, the barrier in the way, and why it matters. Feel free to thread your thoughts, product ideas, or questions.
 
   ---
 
   🛠️ *JOB 1: [Job Summary Title]*
 
-  *Persona:* [Short description]  
-  *Job:* [Goal the person is trying to accomplish]  
+  *Persona:* [Short user description]  
+  *Job:* [What they’re trying to do]  
   *Obstacle:* [What’s in their way]  
-  *Why it Matters:* [What’s at stake if unmet]
+  *Why it Matters:* [Why this goal matters in context]
 
-  > “[Pull quote here if available]”
+  > “[Pull quote that captures the tension or need]”
 
-  🔥 *Signal:* [How frequently this came up]  
-  ✅ *Opportunity:* [How the team could respond]  
-  📚 *Source:* [Session, quote, or summary]
-  *Tags:* [comma-separated keywords]  
+  *Tags:* [e.g. trust, access, navigation]  
+  🔥 *Signal:* [Mentioned in 4 interviews]  
+  ✅ *Opportunity:* [What could be built, improved, or rethought]  
+  📚 *Source:* [e.g., Study 3, Session 2, Quote 14]
 
   ---
 
   🛠️ *JOB 2: [Job Summary Title]*
 
-  *Persona:* [Short description]  
-  *Job:* [Goal the person is trying to accomplish]  
-  *Obstacle:* [What’s in their way]  
-  *Why it Matters:* [What’s at stake if unmet]
+  *Persona:* ...  
+  *Job:* ...  
+  *Obstacle:* ...  
+  *Why it Matters:* ...
 
-  > “[Pull quote here if available]”
+  > “Pull quote here if available.”
 
-  🔥 *Signal:* [How frequently this came up]  
-  ✅ *Opportunity:* [How the team could respond]  
-  📚 *Source:* [Session, quote, or summary]
-  *Tags:* [comma-separated keywords]  
+  *Tags:* ...  
+  🔥 *Signal:* ...  
+  ✅ *Opportunity:* ...  
+  📚 *Source:* ...
 
   ---
 
   🛠️ *JOB 3: [Job Summary Title]*
 
-  *Persona:* [Short description]  
-  *Job:* [Goal the person is trying to accomplish]  
-  *Obstacle:* [What’s in their way]  
-  *Why it Matters:* [What’s at stake if unmet]
+  *Persona:* ...  
+  *Job:* ...  
+  *Obstacle:* ...  
+  *Why it Matters:* ...
 
-  > “[Pull quote here if available]”
+  > “Pull quote here if available.”
 
-  🔥 *Signal:* [How frequently this came up]  
-  ✅ *Opportunity:* [How the team could respond]  
-  📚 *Source:* [Session, quote, or summary]
-  *Tags:* [comma-separated keywords]  
+  *Tags:* ...  
+  🔥 *Signal:* ...  
+  ✅ *Opportunity:* ...  
+  📚 *Source:* ...
 
 prompt: |
   You are a senior civic tech strategist and qualitative researcher with over 10 years of experience
@@ -134,14 +125,14 @@ prompt: |
     - Obstacle (barrier)
     - Why it Matters (real-world impact or stakes)
     - Tags
-    - Signal 🔥 (if applicable)
-    - Opportunity ✅ (if applicable)
-    - Source 📚 (if known)
+    - Signal 🔥 (e.g., “Mentioned in 4 interviews”, “Recurring across field notes”)
+    - Opportunity ✅ (e.g., “Simplify recertification checklist”, “Add eligibility explainer”)
+    - Source 📚 (e.g., “Session 3, Quote 12” or “Field notes – Week 2”)
+    - Pull Quote 💬 (if available): A direct quote that captures the user's tension or goal
 
   ⚠️ You must return no more than {{max_jobs | default(3)}} JTBDs.
 
   Write in clear, professional, and human language. Avoid filler phrases like “to make it easier.”
   Anchor the job in the person’s goal, and the “why it matters” in the research mission or system impact.
-  Format for Slack using markdown structure.  
-  Add spacing between each job to improve readability and visual scanning.  
-  Each job should stand on its own with clear breaks between them.
+  Format for Slack using bold headers, spacing, and horizontal rules.  
+  Add spacing between each job for visual clarity.
