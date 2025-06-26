@@ -64,38 +64,41 @@ persona_hinting: |
 # - Opportunity: optional string
 # - Source: optional string
 
-output_format: |
-  🛠️ Job 1  
-  🧍 Persona: [string]  
-  🎯 Job: [string]  
-  ⛔ Obstacle: [string]  
-  💡 Why it Matters: [string]  
-  🏷️ Tags: [optional list of strings]  
-  ⚠️ Signal: [optional string]  
-  💡 Opportunity: [optional string]  
-  📎 Source: [optional string]  
+utput_format: |
+  🛠️ Job 1: Apply for public housing online
+
+  Persona: Veteran seeking housing assistance  
+  Job: Apply for public housing online  
+  Obstacle: The portal is difficult to navigate and times out without saving progress  
+  Why it Matters: Without stable housing access, veterans remain vulnerable to homelessness and hardship  
+  Tags: access, digital inclusion, housing, trust  
+  Signal: 🔥 Raised in 3 separate interviews  
+  Opportunity: ✅ Offer guided step-by-step support for applicants with unstable internet or low digital literacy  
+  Source: Black Veterans Study – Session 03, Quote 7  
 
 
-  🛠️ Job 2  
-  🧍 Persona: [string]  
-  🎯 Job: [string]  
-  ⛔ Obstacle: [string]  
-  💡 Why it Matters: [string]  
-  🏷️ Tags: [optional list of strings]  
-  ⚠️ Signal: [optional string]  
-  💡 Opportunity: [optional string]  
-  📎 Source: [optional string]  
+  🛠️ Job 2: Secure financial assistance for childcare
+
+  Persona: Single parent applying for childcare subsidies  
+  Job: Secure financial assistance for childcare  
+  Obstacle: Confusing eligibility criteria and lengthy application process  
+  Why it Matters: Affordable childcare enables parents to support their families and reduce economic strain  
+  Tags: financial support, childcare, access, equity  
+  Signal: 🔥 Mentioned in 4 interviews  
+  Opportunity: ✅ Simplify the application process and provide clear eligibility guidelines  
+  Source: Family Support Study – Session 05, Quote 2  
 
 
-  🛠️ Job 3  
-  🧍 Persona: [string]  
-  🎯 Job: [string]  
-  ⛔ Obstacle: [string]  
-  💡 Why it Matters: [string]  
-  🏷️ Tags: [optional list of strings]  
-  ⚠️ Signal: [optional string]  
-  💡 Opportunity: [optional string]  
-  📎 Source: [optional string]  
+  🛠️ Job 3: Find affordable healthcare services
+
+  Persona: Low-income community member seeking health services  
+  Job: Find and access affordable healthcare options  
+  Obstacle: Lack of information about available services and how to navigate the healthcare system  
+  Why it Matters: Access to healthcare is crucial for maintaining health and well-being, particularly in underserved communities  
+  Tags: health access, information, community support  
+  Signal: 🔥 Common issue across multiple interviews  
+  Opportunity: ✅ Create a centralized resource hub that outlines available services and provides navigation assistance  
+  Source: Health Access Study – Session 01, Quote 3   
 
 prompt: |
   You are a senior civic tech strategist and qualitative researcher with over 10 years of experience
@@ -140,12 +143,13 @@ prompt: |
 
   Example output:
 
-  🛠️ Job 1  
-  🧍 Persona: Veteran seeking housing assistance  
-  🎯 Job: Apply for public housing online  
-  ⛔ Obstacle: The portal is difficult to navigate and times out without saving progress  
-  💡 Why it Matters: Without stable housing access, veterans remain vulnerable to homelessness and hardship  
-  🏷️ Tags: access, digital inclusion, housing, trust  
-  ⚠️ Signal: Raised in 3 separate interviews  
-  💡 Opportunity: Offer guided step-by-step support for applicants with unstable internet or low digital literacy  
-  📎 Source: Black Veterans Study – Session 03, Quote 7
+  🛠️ Job 1: Apply for public housing online
+
+  Persona: Veteran seeking housing assistance  
+  Job: Apply for public housing online  
+  Obstacle: The portal is difficult to navigate and times out without saving progress  
+  Why it Matters: Without stable housing access, veterans remain vulnerable to homelessness and hardship  
+  Tags: access, digital inclusion, housing, trust  
+  Signal: 🔥 Raised in 3 separate interviews  
+  Opportunity: ✅ Offer guided step-by-step support for applicants with unstable internet or low digital literacy  
+  Source: Black Veterans Study – Session 03, Quote 7
