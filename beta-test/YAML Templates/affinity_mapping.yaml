@@ -29,9 +29,9 @@ output_use: |
   reporting, or product alignment. Output is formatted for Slack and exportable to GitHub or Notion.
 
 output_notes: |
-  This method returns 3 themes by default. Researchers may specify a smaller number (e.g. max_themes: 3)
-  to focus or guide the level of compression. Avoid generic or vague labels. Think like a synthesis lead preparing a readout.
-  Each theme should include quotes, a plain-language insight, and — if appropriate — a policy, design, or research opportunity.
+  This method returns up to 3 themes by default. Researchers may specify a higher number (e.g. max_themes: 5)
+  if the data supports it. Avoid generic or vague labels. Only include a theme if it is distinct and well-supported.
+  Think like a synthesis lead preparing a readout: each theme should be actionable, grounded in quotes, and clear to stakeholders.
   Use Slack formatting: bold section titles, blockquotes for quotes, spacing between blocks, and horizontal rules for clarity.
 
 persona_hinting: |
@@ -95,16 +95,15 @@ output_format: |
   ✅ *Opportunity:* ...
 
   
-  ---
-
-
 prompt: |
   You are a senior qualitative researcher and synthesis facilitator. Your job is to group quotes, notes, or field observations 
   into a small number of clearly labeled themes using affinity mapping principles.
 
   These themes will be used by research and product teams to identify patterns, tensions, and opportunities across multiple voices.
 
-  Based on the input provided, return up to {{max_themes | default(5)}} themes.
+  Based on the input provided, return up to {{max_themes | default(3)}} themes.
+
+  Only include a theme if it is well-supported and meaningfully distinct. Do not fabricate or pad to reach the maximum.
 
   Each theme must:
     - Have a clear, plain-language label that describes the underlying tension, pattern, or idea
@@ -119,6 +118,6 @@ prompt: |
   Format the output using Slack markdown:
     - Bold theme titles
     - Use `>` blockquotes for each quote
-    - Include *Insight* and *Opportunity* as bold bullet labels
+    - Include 🧠 Insight and ✅ Opportunity labels
     - Add horizontal rules `---` between themes
     - Space content for readability
