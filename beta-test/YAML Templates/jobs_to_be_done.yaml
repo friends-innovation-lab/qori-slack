@@ -61,10 +61,12 @@ persona_hinting: |
 # - Source: optional string
 
 output_format: |
-  📌 *Jobs-To-Be-Done: {{study_name | default("Summary")}}*
+  
+  📌 *JOBS TO BE DONE: {{study_name | default("Summary")}}*
 
-  👋 Here are structured JTBDs from this round of research. Each one highlights a goal, what’s preventing it, and why it matters.  
-  Feel free to reply in thread with ideas, questions, or related insights.
+  👋 Here are structured JTBDs from this round of research. Each one highlights a goal, what’s preventing it, and why it matters. Feel free to reply in thread with ideas, questions, or related insights.
+
+  ---
 
   🛠️ JOB 1: [Job Summary Title]
 
@@ -77,7 +79,7 @@ output_format: |
   ✅ OPPORTUNITY: [Optional: Design, policy, or research opportunity]  
   📚 SOURCE: [Optional: Study, session, quote reference]  
 
-
+  ---
 
   🛠️ JOB 2: [Job Summary Title]
 
@@ -90,7 +92,7 @@ output_format: |
   ✅ OPPORTUNITY: ...  
   📚 SOURCE: ...
 
-
+  ---
 
   🛠️ JOB 3: [Job Summary Title]
 
