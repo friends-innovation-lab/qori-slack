@@ -67,7 +67,6 @@ output_format: |
   📌 *JOBS TO BE DONE: {{study_name | default("Summary")}}*
 
  
-
   JOB 1: [Job Summary Title]
 
   PERSONA: [Short user description]  
