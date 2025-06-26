@@ -56,9 +56,9 @@ persona_hinting: |
 # - Obstacle: string
 # - Why it Matters: string
 # - Tags: [string[]]
-# - Signal: optional string
-# - Opportunity: optional string
-# - Source: optional string
+# - Signal: optional string (e.g., how frequently this was raised in interviews or notes)
+# - Opportunity: optional string (e.g., a design, content, or system fix that might help)
+# - Source: optional string (e.g., session, quote, study reference)
 
 output_format: |
   
@@ -76,9 +76,10 @@ output_format: |
   OBSTACLE: [What’s in their way]  
   WHY IT MATTERS: [Why this goal matters in context]  
   TAGS: [e.g. trust, access, navigation]  
-  🔥 SIGNAL: [Optional: Frequency or urgency]  
-  ✅ OPPORTUNITY: [Optional: Design, policy, or research opportunity]  
-  📚 SOURCE: [Optional: Study, session, quote reference]  
+  🔥 SIGNAL: How often this came up (e.g., “Mentioned in 4 interviews”, “Common issue across sessions”)
+  ✅ OPPORTUNITY: [What could be done — e.g., “Create simpler application checklist”] 
+  📚 SOURCE: Where the quote or theme was observed (e.g., “Session 3, Quote 7” or “Field notes, Week 2”)
+ 
 
   ---
 
