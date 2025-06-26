@@ -2,7 +2,7 @@ id: affinity_mapping
 name: run_affinity_mapping
 
 label: 🧠 Affinity Mapping
-version: "v1.4"
+version: "v1.5"
 
 description: >
   Group qualitative quotes, notes, or observations into clearly labeled themes using AI.
@@ -29,10 +29,10 @@ output_use: |
   reporting, or product alignment. Output is formatted for Slack and exportable to GitHub or Notion.
 
 output_notes: |
-  This method returns up to 5 themes by default. Researchers may specify a smaller number (e.g. max_themes: 3)
+  This method returns 1-5 themes by default. Researchers may specify a smaller number (e.g. max_themes: 3)
   to focus or guide the level of compression. Avoid generic or vague labels. Think like a synthesis lead preparing a readout.
-  Each theme should be relevant, human, and explain a real tension or pattern.
-  Use Slack formatting: bold section titles, spacing between blocks, and horizontal rules for clarity.
+  Each theme should include quotes, a plain-language insight, and — if appropriate — a policy, design, or research opportunity.
+  Use Slack formatting: bold section titles, blockquotes for quotes, spacing between blocks, and horizontal rules for clarity.
 
 persona_hinting: |
   Common personas include:
@@ -45,6 +45,8 @@ persona_hinting: |
 # Output schema:
 # - Theme label: string
 # - Quotes: [string[]]
+# - Insight: string
+# - Opportunity: optional string
 
 output_format: |
   📌 *AFFINITY MAPPING: {{study_name | default("SUMMARY")}}*
@@ -62,6 +64,9 @@ output_format: |
   > “Quote 2”  
   > “Quote 3”
 
+  *Insight:* [What this pattern reveals about user behavior, belief, or tension]  
+  ✅ *Opportunity:* [What the team could explore, build, or fix]
+
   ---
 
 
@@ -70,6 +75,9 @@ output_format: |
   > “Quote 1”  
   > “Quote 2”  
   > “Quote 3”
+
+  *Insight:* ...  
+  ✅ *Opportunity:* ...
 
   ---
 
@@ -80,6 +88,9 @@ output_format: |
   > “Quote 2”  
   > “Quote 3”
 
+  *Insight:* ...  
+  ✅ *Opportunity:* ...
+
   ---
 
 
@@ -89,6 +100,9 @@ output_format: |
   > “Quote 2”  
   > “Quote 3”
 
+  *Insight:* ...  
+  ✅ *Opportunity:* ...
+
   ---
 
 
@@ -97,6 +111,9 @@ output_format: |
   > “Quote 1”  
   > “Quote 2”  
   > “Quote 3”
+
+  *Insight:* ...  
+  ✅ *Opportunity:* ...
 
 prompt: |
   You are a senior qualitative researcher and synthesis facilitator. Your job is to group quotes, notes, or field observations 
@@ -109,7 +126,8 @@ prompt: |
   Each theme must:
     - Have a clear, plain-language label that describes the underlying tension, pattern, or idea
     - Include at least 3 quotes or notes that meaningfully support that theme
-    - Show some variation in how users express the theme (not just repetition)
+    - Include one *Insight*: a short, declarative sentence that summarizes what this theme tells us
+    - Optionally include one *Opportunity*: a way the team might respond (design, content, policy, or research)
 
   Avoid generic themes like “communication” or “helpfulness.” Use labels that reflect real user concerns (e.g., “I’m not sure who to trust” or “everything takes too long”).
 
@@ -118,5 +136,6 @@ prompt: |
   Format the output using Slack markdown:
     - Bold theme titles
     - Use `>` blockquotes for each quote
+    - Include *Insight* and *Opportunity* as bold bullet labels
     - Add horizontal rules `---` between themes
     - Space content for readability
