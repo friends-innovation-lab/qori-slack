@@ -1,24 +1,48 @@
 id: jobs_to_be_done
 label: 🎯 Jobs-To-Be-Done Extraction
-description: Identify user goals and obstacles using JTBD framework 🧰
+description: >
+  Use this prompt to extract high-quality, actionable Jobs-To-Be-Done (JTBD) from user research quotes,
+  interview transcripts, or feedback notes. The JTBD framework focuses on what the user is trying to accomplish,
+  what’s standing in their way, and why it matters in their context (emotionally, socially, or practically).
 input_type: text
 input_processing: summarize_if_long
 batch_mode: true
 batch_delimiter: "---"
 precision_mode: concise | detailed
+name: extract_jobs_to_be_done
 prompt: |
-  Look at the user quotes below and identify 3 clear Jobs-To-Be-Done. For each one, describe what the person is trying to do (the goal) and what’s stopping them (the obstacle). Write in clear, plain language. Avoid jargon. Use analogies to explain if needed. Use a tone that is conversational and direct. Keep each job-obstacle pair focused and grounded in user reality. Write at a 10th-grade reading level. No em-dashes. Do not use words like "aim."
-  Quotes:
-  {{input}}
+  You are a product strategist and researcher analyzing user feedback to uncover actionable insights
+  using the Jobs-To-Be-Done (JTBD) framework. Your goal is to extract clear and concise JTBD statements
+  from the provided user quotes.
+
+  For each JTBD, break it into 4 parts:
+    1. **Job (Goal):** What is the user trying to get done?
+    2. **Obstacle:** What makes it hard for them to do this now?
+    3. **Why it Matters:** Why is this important—emotionally, practically, or professionally?
+    4. **Tags (optional):** Keywords like 'synthesis', 'workflow', 'communication', 'trust', etc.
+
+  Write in clear, natural language. Avoid jargon or technical product speak.
+  Summarize jobs in a way that helps a cross-functional team understand user needs.
+
+  ---
+  Example input:
+
+  "It’s just hard to track where all the insights go once we’re done with interviews. 
+   We’ve got things in Google Docs, Miro, and Slack, and no one knows where to look when it’s time to write up findings."
+
+  Example output:
+
+  - **Job:** Find and reuse past research insights when creating new deliverables  
+    **Obstacle:** Insights are scattered across multiple tools with no consistent place to look  
+    **Why it Matters:** So researchers don’t waste time duplicating past work or miss relevant evidence  
+    **Tags:** synthesis, knowledge management
+
+input_variables:
+  - quotes
+
 output_format: |
-  ## 🎯 Job 1
-  - **Goal:** What the user is trying to get done
-  - **Obstacle:** What gets in the way
-  
-  ## 🎯 Job 2
-  - **Goal:** ...
-  - **Obstacle:** ...
-  
-  ## 🎯 Job 3
-  - **Goal:** ...
-  - **Obstacle:** ...
+  jobs_to_be_done:
+    - job: [string]
+      obstacle: [string]
+      why_it_matters: [string]
+      tags: [optional list of strings]
