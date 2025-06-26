@@ -55,7 +55,6 @@ persona_hinting: |
 
 output_format: |
   📌 *JOBS-TO-BE-DONE: {{study_name | default("SUMMARY")}}*
-  🔗 *Study Link:* {{study_link | default("No link provided")}}
 
   👋 Hi team! Here are structured JTBDs from this round of research. Each one highlights a user goal, the barrier in the way, and why it matters. Feel free to thread your thoughts, product ideas, or questions.
 
