@@ -1,15 +1,14 @@
 # ===========================
 # 🧠 CivicMind JTBD Prompt Config
-# For extracting structured, high-quality Jobs-To-Be-Done from research quotes
-# Created by: CivicMind R&D
-# Author: CivicMind + Expert Prompt Engineering
+# Extracts structured, Slack-friendly Jobs-To-Be-Done from qualitative research input
+# Author: CivicMind + ChatGPT Expert Prompt Engineering
 # Version: v1.3
 # Created: 2025-06-26
 # Last Updated: 2025-06-26
 # ===========================
 
-id: jobs_to_be_done                 # Internal identifier used in CivicMind workflows
-name: extract_jobs_to_be_done      # Verb-based internal task name for the prompt engine
+id: jobs_to_be_done                 # Unique identifier used in prompt routing or Slackbot workflows
+name: extract_jobs_to_be_done      # Verb-based internal name of the task for clarity and reuse
 
 label: 🎯 Jobs-To-Be-Done Extraction
 version: "v1.3-june-2025"
@@ -19,7 +18,7 @@ description: >
   This is optimized for civic tech and equity-centered research. Output is Slack-friendly, traceable, and designed
   to support product, design, policy, and research synthesis workflows.
 
-author: FFTC/CivicMind R&D
+author: CivicMind R&D
 created: 2025-06-26
 last_updated: 2025-06-26
 changelog:
@@ -28,18 +27,18 @@ changelog:
   - v1.2: Introduced signal, source, and opportunity fields
   - v1.3: Final formatting and Slack readability improvements
 
-input_type: text  # Accepts raw text input such as quotes or excerpts
-input_processing: summarize_if_long  # Summarize only if input exceeds 1000 words
-batch_mode: true  # Allows multiple quotes to be processed at once
-batch_delimiter: "---"  # Delimiter used to separate multiple quote inputs
-precision_mode: concise | detailed  # 'concise' = minimal JTBD, 'detailed' = adds signal/opportunity/source
+input_type: text  # Accepts raw text input such as quotes or transcript excerpts
+input_processing: summarize_if_long  # Summarize automatically if input exceeds 1000 words
+batch_mode: true  # Allows multiple quotes to be processed in one batch
+batch_delimiter: "---"  # Required delimiter between each quote when using batch mode
+precision_mode: concise | detailed  # Controls response richness; detailed adds context, tags, and source
 
 input_variables:
-  - quotes  # One or more quotes or transcript snippets to analyze
+  - quotes  # One or more user quotes to analyze and extract JTBD from
 
 output_use: |
   Output will be posted in Slack, turned into GitHub issues, and referenced in research synthesis.
-  It must be clear, structured, skimmable, and reusable in async, cross-functional workflows.
+  It must be clear, structured, skimmable, and usable in async, cross-functional workflows.
 
 output_notes: |
   Use confident, plainspoken language. Do not hedge or speculate.
@@ -64,7 +63,7 @@ persona_hinting: |
 # - Opportunity: optional string
 # - Source: optional string
 
-utput_format: |
+output_format: |
   🛠️ Job 1: Apply for public housing online
 
   Persona: Veteran seeking housing assistance  
@@ -98,7 +97,7 @@ utput_format: |
   Tags: health access, information, community support  
   Signal: 🔥 Common issue across multiple interviews  
   Opportunity: ✅ Create a centralized resource hub that outlines available services and provides navigation assistance  
-  Source: Health Access Study – Session 01, Quote 3   
+  Source: Health Access Study – Session 01, Quote 3  
 
 prompt: |
   You are a senior civic tech strategist and qualitative researcher with over 10 years of experience
