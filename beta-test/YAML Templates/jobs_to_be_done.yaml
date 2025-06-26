@@ -78,6 +78,7 @@ output_format: |
   📚 SOURCE: [Optional: Study, session, quote reference]  
 
 
+
   🛠️ JOB 2: [Job Summary Title]
 
   PERSONA: ...  
@@ -88,6 +89,7 @@ output_format: |
   🔥 SIGNAL: ...  
   ✅ OPPORTUNITY: ...  
   📚 SOURCE: ...
+
 
 
   🛠️ JOB 3: [Job Summary Title]
@@ -128,4 +130,6 @@ prompt: |
 
   Write in clear, professional, and human language. Avoid filler phrases like “to make it easier.”
   Anchor the job in the person’s goal, and the “why it matters” in the research mission or system impact.
-  Format for Slack using markdown structure and line spacing.
+  Format for Slack using markdown structure.  
+  Add spacing between each job to improve readability and visual scanning.  
+  Each job should stand on its own with clear breaks between them.
