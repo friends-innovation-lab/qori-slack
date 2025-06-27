@@ -1,142 +1,122 @@
 id: jobs_to_be_done
 name: extract_jobs_to_be_done
-
 label: 🎯 Jobs-To-Be-Done Extraction
-version: "v1.5"
-
-description: >
-  Extract clear, actionable Jobs-To-Be-Done (JTBD) from research input including quotes, notes, or observations.
-  Each job includes a user goal, barrier, and the broader significance of that job in the context of product or service design.
-  Ideal for researchers, designers, and product teams turning raw insights into prioritized opportunities.
+version: v1.6
+description: |
+  Extract clear, actionable Jobs-To-Be-Done (JTBD) from civic tech research inputs, including quotes, notes, and observations. Each JTBD clarifies user goals, barriers, and their broader significance in public service and civic engagement contexts. Ideal for researchers, designers, stakeholders, and product teams translating insights into opportunities for improved service delivery and policy outcomes.
 
 author: CivicMind R&D
 created: 2025-06-26
 last_updated: 2025-06-27
-
 input_type: text
 input_processing: summarize_if_long
 temperature: 0.4
 precision_mode: concise | detailed
-
 input_variables:
-  - input_text         # Raw quotes, notes, summaries, or observations
-  - max_jobs           # Optional: Number of jobs to return (default 3)
-  - study_name         # Optional: Title of study or Slack message context
+  - input_text
+  - max_jobs
+  - study_name
 
 output_use: |
-  Use this when you want to translate research into jobs that guide product decisions.
-  JTBDs help product, design, and policy teams understand real user goals, tensions, and system-level blockers.
-  Output is ready for Slack, GitHub issues, or readouts.
+  Use this when translating research into clear JTBDs that inform civic tech product decisions, policy changes, or service enhancements. JTBDs help teams deeply understand user needs, barriers, and opportunities from multiple stakeholder perspectives.
 
 output_notes: |
-  Write in plain, confident language. Avoid tech jargon, filler words, or speculative statements.
-  Make sure “Why it Matters” connects to the broader study or user need — not just UX ease.
+  Write in clear, confident, plain language. Avoid technical jargon, filler words, or speculative statements. No emdashes.
+  Clearly connect “Why it Matters” to real-world civic or systemic outcomes.
   Add line breaks and horizontal rules between jobs for readability in Slack.
 
 persona_hinting: |
-  Common personas include:
-    - Black first-time investor
+  Common civic personas include:
     - Veteran applying for housing
     - Rural benefits navigator
     - Caregiver managing multiple services
-    - Young adult navigating a job loss
-    - Small business owner dealing with bureaucracy
-
-# Output schema:
-# - Persona: string
-# - Job: string
-# - Obstacle: string
-# - Why it Matters: string
-# - Tags: [string[]]
-# - Signal: optional string (e.g., how frequently this was raised in interviews or notes)
-# - Opportunity: optional string (e.g., a design, content, or system fix that might help)
-# - Source: optional string (e.g., session, quote, study reference)
-# - Pull Quote: optional string (verbatim quote that best reflects this job or obstacle)
+    - Young adult navigating job loss
+    - Small business owner navigating bureaucracy
+    - Resident seeking public assistance
+    - Community organizer advocating for local policy change
+    - Immigrant navigating citizenship processes
 
 output_format: |
+
+  👋 Hi team! Here are clearly structured JTBDs from our research, explicitly aligned with JTBD framework principles. Each job highlights a user's context, goal, measurable outcome, and broader civic significance.
+  Let’s use this thread to turn insights into actions—please reply with ideas, questions, or next steps.
+
+
+  ---
+  
+
   📌 *JOBS-TO-BE-DONE: {{study_name | default("SUMMARY")}}*
+  
 
-  👋 Hi team! Here are structured JTBDs from this round of research. Each one highlights a user goal, the barrier in the way, and why it matters. 
-  Let’s use this thread to turn insight into action — reply below with product ideas, design questions, or next steps.
+  🛠️ **JOB: [Job Summary Title]**
+
+  [Job details here]
+
+  
+  ---
+
+
+  🛠️ **JOB: [Job Summary Title]** *(if applicable)*
+
+  [Job details here]
+
 
   ---
 
 
-  🛠️ *JOB 1: [Job Summary Title]*
+  🛠️ **JOB: [Job Summary Title]** *(if applicable)*
 
-  *Persona:* [Short user description]  
-  *Job:* [What they’re trying to do]  
-  *Obstacle:* [What’s in their way]  
-  *Why it Matters:* [Why this goal matters in context]
+  [Job details here]
 
-  > “[Pull quote that captures the tension or need]”
-
-  *Tags:* [e.g. trust, access, navigation]  
-  🔥 *Signal:* [Mentioned in 4 interviews]  
-  ✅ *Opportunity:* [What could be built, improved, or rethought]  
-  📚 *Source:* [e.g., Study 3, Session 2, Quote 14]
 
   ---
-
-
-  🛠️ *JOB 2: [Job Summary Title]*
-
-  *Persona:* ...  
-  *Job:* ...  
-  *Obstacle:* ...  
-  *Why it Matters:* ...
-
-  > “Pull quote here if available.”
-
-  *Tags:* ...  
-  🔥 *Signal:* ...  
-  ✅ *Opportunity:* ...  
-  📚 *Source:* ...
-
-  ---
-
-
-  🛠️ *JOB 3: [Job Summary Title]*
-
-  *Persona:* ...  
-  *Job:* ...  
-  *Obstacle:* ...  
-  *Why it Matters:* ...
-
-  > “Pull quote here if available.”
-
-  *Tags:* ...  
-  🔥 *Signal:* ...  
-  ✅ *Opportunity:* ...  
-  📚 *Source:* ...
 
 prompt: |
-  You are a senior civic tech strategist and qualitative researcher with over 10 years of experience
-  helping teams turn raw research into clear, actionable Jobs-To-Be-Done (JTBD) that inform product and policy decisions.
+  You are a senior civic tech strategist and qualitative researcher with extensive experience applying the Jobs-To-Be-Done (JTBD) framework to civic research.
 
-  Based on the input provided — whether it includes direct quotes, researcher notes, field observations,
-  or thematic summaries — extract up to {{max_jobs | default(3)}} distinct Jobs-To-Be-Done.
+  Extract up to {{max_jobs | default(3)}} clearly differentiated Jobs-To-Be-Done (JTBD).
+  
+  Each JTBD must explicitly include these core JTBD elements:
 
-  Each JTBD should help a product or delivery team understand:
-    - What a real person is trying to accomplish
-    - What barriers or conditions are preventing success
-    - Why that job matters in the broader context of the study or service being designed
+  1. **Situation (Context)** – The precise scenario in which the job arises.
+  2. **Goal (Action)** – Exactly what the user is trying to achieve.
+  3. **Desired Outcome (Benefit)** – How success is defined or measured by the user, ideally in quantifiable terms.
 
-  Each JTBD must include:
-    - A summary title
-    - Persona
-    - Job (goal)
-    - Obstacle (barrier)
-    - Why it Matters (real-world impact or stakes)
-    - Tags
-    - Signal 🔥 (e.g., “Mentioned in 4 interviews”, “Recurring across field notes”)
-    - Opportunity ✅ (e.g., “Simplify recertification checklist”, “Add eligibility explainer”)
-    - Source 📚 (e.g., “Session 3, Quote 12” or “Field notes – Week 2”)
-    - Pull Quote 💬 (if available): A direct quote that captures the user's tension or goal
+  Clearly recognize multiple user roles:
+    - Primary users (directly performing the task)
+    - Support roles (assisting task completion)
+    - Decision-makers (defining processes or eligibility)
 
-  ⚠️ You must return no more than {{max_jobs | default(3)}} JTBDs.
+  Additionally, include:
+    - Emotional or social dimensions of the job (if evident)
+    - Specific barriers preventing task completion
+    - Broader civic or systemic significance ("Why it Matters")
+    - Actionable opportunities clearly linked to identified barriers
+    - Direct quotes illustrating user tensions or goals
+    - Evidence ("Signal") and precise research sources
 
-  Write in clear, professional, and human language. Avoid filler phrases like “to make it easier.”
-  Anchor the job in the person’s goal, and the “why it matters” in the research mission or system impact.
-  Format for Slack using bold headers, spacing, and horizontal rules.  
-  Add spacing between each job for visual clarity.
+  Format each JTBD clearly for Slack using bold headings, emojis, horizontal rules, and spacing.
+
+  ⚠️ Return no more than {{max_jobs | default(3)}} JTBDs.
+
+  **Example JTBD:**
+
+  🛠️ **JOB: Simplifying Benefit Eligibility Checks**
+
+  *JTBD Statement:* "When determining client eligibility, I want consistent, easy-to-follow guidelines so I can quickly ensure clients receive timely assistance."
+
+  *Persona:* Rural benefits navigator  
+  *Role:* Support role  
+  *Situation (Context):* Regularly assisting multiple clients in a rural office  
+  *Goal (Action):* Quickly confirm client eligibility for aid  
+  *Obstacle:* Complex, inconsistent eligibility forms  
+  *Desired Outcome (Benefit):* Eligibility checks completed correctly within one client meeting  
+  *Emotional Dimension:* Feeling confident and efficient in job performance  
+  *Why it Matters:* Timely checks directly impact resource distribution and client wellbeing.
+
+  > “I waste hours cross-checking rules, delaying support for people who urgently need it.”
+
+  *Tags:* simplicity, efficiency, navigation  
+  🔥 *Signal:* Mentioned by 7 navigators  
+  ✅ *Opportunity:* Unified eligibility checker tool  
+  📚 *Source:* Study 2, Session 5, Quote 8
