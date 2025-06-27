@@ -1,0 +1,58 @@
+id: transcribe_and_summarize
+label: 🎙️ Transcribe & Summarize Audio
+version: v1.0
+description: |
+  Transcribe a user interview or research conversation and return a structured summary.  
+  Ideal for turning audio recordings (e.g., Zoom) into usable insights.
+
+author: CivicMind R&D
+created: 2025-06-30
+last_updated: 2025-06-30
+input_type: file
+input_processing: transcribe_then_summarize
+precision_mode: concise | detailed
+
+input_variables:
+  - study_name
+  - context_notes (optional)
+
+output_use: |
+  Use this to quickly turn spoken research sessions into structured, readable summaries.  
+  Ideal for interviews, field notes, or moderated testing sessions recorded as audio.
+
+output_notes: |
+  - If multiple speakers are present, label quotes where possible.
+  - Keep summary readable, skimmable, and grounded in user goals and obstacles.
+  - Avoid filler language or speculation.
+
+output_format: |
+  📄 *Interview Summary: {{study_name | default("Untitled Session")}}*
+
+  👥 **Participants:** [Label speakers if available]
+
+  🧠 **Key Themes:**
+  - Theme 1
+  - Theme 2
+  - Theme 3
+
+  💬 **Notable Quotes:**
+  > “[Speaker] I kept trying to log in but it never told me what went wrong.”
+  > “[Speaker] I only found out I was eligible because someone told me in person.”
+
+  🚧 **Pain Points:**
+  - Frustration with [process or tool]
+  - Lack of [clarity, trust, support, etc.]
+
+  ✅ **Opportunities or Follow-Up:**
+  - Simplify [X]
+  - Clarify [Y]
+
+prompt: |
+  You are a senior civic researcher summarizing a research session.  
+  Given a transcript of a user interview or session, extract:
+    - 3–4 key themes or behavioral patterns
+    - At least 2 direct quotes that illustrate tension or insight
+    - A bulleted list of pain points or friction
+    - 1–2 actionable opportunities
+
+  Write in plain, accessible language. Format using Slack-friendly markdown. Avoid speculation — focus on what was said and what it implies.
