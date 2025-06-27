@@ -25,8 +25,12 @@ input_variables:
   - study_link           # Optional: Link to supporting doc, repo, Notion, etc.
 
 output_use: |
-  Use this when you want to quickly turn raw qualitative input into structured themes for synthesis,
-  reporting, or product alignment. Output is formatted for Slack and exportable to GitHub or Notion.
+  CivicMind Affinity Mapping is specifically designed to accelerate qualitative synthesis without sacrificing rigor or transparency. By clearly showing thematic logic, emotional insights, and actionable opportunities, researchers can confidently adopt AI-driven analysis—moving quickly from raw data to informed, trusted, and actionable insights. 
+
+  Use this method to:
+    - Clearly justify and communicate AI-driven affinity mapping to stakeholders.
+    - Visibly speed up your research synthesis workflow without losing depth or nuance.
+    - Facilitate open discussion, continuous refinement, and researcher confidence in AI-supported insights.
 
 output_notes: |
   This method returns up to 3 themes by default. Researchers may specify a higher number (e.g. max_themes: 5)
@@ -50,78 +54,99 @@ persona_hinting: |
 
 output_format: |
 
-  👋 Hi team! Here are early themes emerging from this round of research. 
-  Let’s use this thread to turn insight into action. Reply below with your reactions, ideas, or product implications.
+👋 Hi team! Here are the early themes emerging from our latest round of research, structured clearly to help us quickly see patterns, emotional insights, and opportunities.
+
+As you review, consider:
+- Which themes resonate most strongly?
+- Are there any surprises or areas needing more clarity?
+- Do you see immediate opportunities we could act on?
+
+**Reply in this thread** with your thoughts, questions, or suggestions. Let’s turn these insights into action together!
 
 
+  ---
 
   📌 *AFFINITY MAPPING: {{study_name | default("SUMMARY")}}*
-  
 
 
-  🏷️ *THEME 1: [Label]*
+  🏷️ **THEME: [Label]**
 
-  > “Quote 1”  
-  > “Quote 2”  
+  > “Quote 1”
+  > “Quote 2”
   > “Quote 3”
 
-  🧠 *Insight:* [What this pattern reveals about user behavior, belief, or tension]  
-  ✅ *Opportunity:* [What the team could explore, build, or fix]
+  🧠 *Insight:* [Concise summary revealing user behaviors or tensions]  
+  ❤️ *Emotional Dimension:* [e.g., frustration, hope, confusion]  
+  🔥 *Signal:* [Strength or frequency of evidence, e.g., "Mentioned in 4 interviews"]  
+  ✅ *Opportunity:* [Suggested actionable responses]
 
-  
-  ---
+  **🤔 Questions for Discussion:**
+    - [List any unclear areas or open questions to prompt team discussion]
 
+  **🗂️ Related Themes (if applicable):**
+    - [Mention closely related or overlapping themes]
 
-  🏷️ *THEME 2: [Label]*
+  *(Optional Tags: clarity, efficiency, trust)*
 
-  > “Quote 1”  
-  > “Quote 2”  
-  > “Quote 3”
-
-  🧠 *Insight:* ...  
-  ✅ *Opportunity:* ...
-
-  
-  ---
+ 
+ ---
 
 
-  🏷️ *THEME 3: [Label]*
+  🏷️ **THEME: [Label]**
 
-  > “Quote 1”  
-  > “Quote 2”  
+  > “Quote 1”
+  > “Quote 2”
   > “Quote 3”
 
   🧠 *Insight:* ...  
+  ❤️ *Emotional Dimension:* ...  
+  🔥 *Signal:* ...  
   ✅ *Opportunity:* ...
 
-  ---
+  **🤔 Questions for Discussion:**  
+    - ...
 
-  🔗 *Study Link:* {{study_link | default("No link provided")}}
+  **🗂️ Related Themes (if applicable):**  
+    - ...
+
+  *(Optional Tags: transparency, simplicity)*
+
+  
+  ---
 
   
 prompt: |
-  You are a senior qualitative researcher and synthesis facilitator. Your job is to group quotes, notes, or field observations 
-  into a small number of clearly labeled themes using affinity mapping principles.
-
-  These themes will be used by research and product teams to identify patterns, tensions, and opportunities across multiple voices.
-
-  Based on the input provided, return up to {{max_themes | default(3)}} themes.
-
-  Only include a theme if it is well-supported and meaningfully distinct. Do not fabricate or pad to reach the maximum.
+  You are a senior qualitative researcher and synthesis facilitator experienced in affinity mapping. Your job is to cluster quotes, notes, or field observations into meaningful themes—as if physically grouping sticky notes on a wall.
 
   Each theme must:
-    - Have a clear, plain-language label that describes the underlying tension, pattern, or idea
-    - Include at least 3 quotes or notes that meaningfully support that theme
-    - Include one *Insight*: a short, declarative sentence that summarizes what this theme tells us
-    - Optionally include one *Opportunity*: a way the team might respond (design, content, policy, or research)
+    - Have a clear, plain-language label capturing the central tension, need, or idea from the quotes.
+    - Include at least 3 supporting quotes clearly demonstrating thematic coherence.
+    - Briefly explain why these quotes naturally cluster together, explicitly highlighting shared meanings or tensions.
+    - Provide one 🧠 *Insight*: a short, declarative summary revealing user behavior, beliefs, or tensions.
+    - Explicitly indicate the ❤️ *Emotional Dimension* (e.g., frustration, confusion, confidence) clearly represented by the quotes, if applicable.
+    - Clearly indicate 🔥 *Signal* (strength or frequency of evidence for this theme, e.g., "Mentioned in multiple interviews," "Consistent across user groups").
+    - Optionally suggest one ✅ *Opportunity*: a concrete, actionable response for product, content, policy, or further research.
+    - Optionally provide *Tags* (e.g., trust, transparency, simplicity) for easier future retrieval.
+    Additionally:
+    - Present themes in a manner that encourages team discussion, highlighting any ambiguities or areas for further exploration.
+    - Use structured formatting to visually represent relationships between themes and sub-themes.
+    - Be open to revisiting and refining themes as new data emerges, supporting an iterative analysis process.
 
-  Avoid generic themes like “communication” or “helpfulness.” Use labels that reflect real user concerns (e.g., “I’m not sure who to trust” or “everything takes too long”).
+  Return up to {{max_themes | default(3)}} clearly differentiated themes. Include fewer themes if data does not support clear distinctions. Clearly note if a theme has complexity or nuance.
 
-  Write at a 10th-grade reading level. Use analogies or metaphors if helpful to describe patterns. Avoid jargon, academic language, and passive voice.
+  Avoid generic labels (e.g., "communication"). Favor labels that express real, specific user tensions (e.g., "I don’t know who to trust," "This feels endless"). Write clearly, avoiding jargon, passive voice, or overly academic language. Use Slack markdown formatting clearly for team readability.
 
-  Format the output using Slack markdown:
-    - Bold theme titles
-    - Use `>` blockquotes for each quote
-    - Include 🧠 Insight and ✅ Opportunity labels
-    - Add horizontal rules `---` between themes
-    - Space content for readability
+  **Example Theme:**
+
+  🏷️ **THEME: “Everything feels uncertain”**
+
+  > “I'm not even sure if my paperwork was received.”
+  > “Nobody can tell me how long this will actually take.”
+  > “Every person I ask gives me a different answer.”
+
+  🧠 *Insight:* Users experience frustration and anxiety due to inconsistent and unclear timelines for benefit approval.
+
+  ❤️ *Emotional Dimension:* Anxiety and frustration  
+  🔥 *Signal:* Consistent across interviews with first-time applicants  
+  ✅ *Opportunity:* Provide clear, standardized communication and real-time status updates to users awaiting benefit decisions.  
+  *Tags:* clarity, transparency, anxiety reduction *(optional but recommended)*
