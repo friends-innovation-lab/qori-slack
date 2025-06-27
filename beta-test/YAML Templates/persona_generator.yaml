@@ -1,16 +1,99 @@
 id: persona_generator
 label: 👤 Persona Generator
-description: Generate a user persona from research findings 🧾
+version: v2.0
+description: |
+  Generate realistic and actionable user personas clearly grounded in qualitative research findings. Personas help teams deeply empathize with users, prioritize product or policy decisions, and confidently communicate insights.
+
+author: CivicMind R&D
+created: 2025-06-27
+last_updated: 2025-06-27
 input_type: text
+input_processing: summarize_if_long
+temperature: 0.4
 precision_mode: concise | detailed
-prompt: |
-  Based on the insights provided, generate a fictional but realistic user persona. Give the person a name and fill in demographics, goals, frustrations, behaviors, and a representative quote. Write in plain language at a 10th-grade reading level. Use a friendly but clear and professional tone. Use everyday language — avoid business jargon. Use analogies if helpful. Write in active voice. Do not include em-dashes or overuse technical terms.
-  Insights:
-  {{input}}
+input_variables:
+  - input_text
+  - study_name
+
+output_use: |
+  CivicMind Personas rapidly transform qualitative research into clear, relatable, and actionable personas. Designed explicitly to facilitate deep empathy, user-centric decision-making, and easy adoption by research and product teams.
+
+  Use this method to:
+    - Clearly ground personas in realistic behaviors, motivations, and frustrations from research insights.
+    - Easily communicate user understanding to stakeholders, ensuring alignment on user needs and scenarios.
+    - Support confident and informed design, product, or policy decisions through believable, actionable personas.
+
+output_notes: |
+  Personas must feel real, believable, and relatable. Clearly indicate behaviors, frustrations, and motivations in plain, everyday language.
+  Explicitly anchor each persona in actual research quotes or observations.
+  Avoid business jargon, overly technical terms, and passive voice.
+  Format clearly for readability and engagement using markdown.
+
 output_format: |
-  ## 👤 Name: [Name]
-  - **Demographics:** Age, background, location
-  - **Goals:** What does this person want to accomplish?
-  - **Frustrations:** What makes it difficult for them?
-  - **Behaviors:** What do they do when trying to solve the problem?
-  - **Quotes:** "Something they might say"
+  👋 Hi team! Here’s a research-grounded persona created from recent insights. It represents a common user profile we've seen in the field.
+
+  Use this to:
+    - Build empathy with real user needs, goals, and frustrations
+    - Guide product, design, or policy decisions
+    - Spark discussion about what we might build, fix, or explore next
+
+  📣 Feel free to reply in-thread with ideas, clarifying questions, or ways you’re thinking about supporting this user.
+
+
+  ---
+
+
+  ## 👤 [Persona Name]
+
+  **Persona Type or Segment:** [Optional label like “Skeptical First-Timer,” “System-Savvy Workarounder,” or “Navigator with Support”]
+
+  **Demographics:** [Age, background, location, occupation, and relevant details clearly derived from research]
+
+  **Day-in-the-Life Snapshot (Optional):** [A brief paragraph illustrating a typical day or key moment for this persona]
+
+  **Source:** [e.g., “Study 2, Session 3, Quotes 12–17”]
+
+  **Context & Scenario:** [A realistic situation in which this persona engages with the service or product, highlighting behaviors and constraints.]
+
+  **Goals & Motivations:**
+  - Clearly state primary goals this persona aims to accomplish.
+  - Include key motivations driving these goals.
+
+  **Frustrations & Barriers:**  
+  - [What gets in their way]  
+  - [How it affects their behavior or trust]
+
+  **Top Frustration Impact:** [Describe how much this issue disrupts their ability to complete tasks or feel confident]
+
+  **Behaviors & Strategies:**
+  - Clearly articulate realistic behaviors, strategies, or workarounds this persona employs.
+
+  **Representative Quote:**
+  > “Direct, realistic quote drawn from research that encapsulates the persona’s primary attitude, challenge, or need.”
+
+  ❤️ **Emotional Dimension:** [How this person feels throughout their journey or situation]
+  
+  🔥 **Signal:** [Indicate strength or frequency of evidence from research, e.g., "Representative of 5+ participants."]
+
+  🎯 **Relevant Use Case or Scenario:** [How and where this persona informs a product, service, or policy decision]
+  
+  ✅ **Opportunity:** [Actionable recommendation for the team]
+  
+
+prompt: |
+  You are an expert qualitative researcher and human-centered designer. Generate one realistic, well-supported user persona at a time. Each persona must be realistic and actionable and clearly grounded in actual user behaviors, motivations, and frustrations.
+
+  Each persona must include:
+    - Realistic name and detailed demographics derived from the research.
+    - Clear description of context and scenario illustrating realistic user interaction.
+    - Explicitly stated user goals and motivations driving actions.
+    - Specific frustrations and barriers that realistically hinder achieving their goals.
+    - Detailed behaviors and strategies the persona realistically uses in response to these challenges.
+    - A direct, realistic representative quote clearly derived from the research insights.
+    - Emotional dimension explicitly articulated to highlight feelings, attitudes, or anxieties.
+    - Signal clearly indicating the strength or representativeness of this persona within the research.
+    - Actionable opportunities clearly recommended for the team to address this persona’s needs or frustrations.
+    - A short optional label for persona type or behavioral segment
+    - Optional: a “Top Frustration Impact” line to show how much a pain point affects success or well-being
+
+  Write clearly, empathetically, and in plain language suitable for broad stakeholder understanding. Avoid jargon, technical terms, and passive voice. Clearly format the persona using markdown for readability and team engagement.
