@@ -18,7 +18,13 @@ input_variables:
   - study_name
 
 output_use: |
-  Use this when translating research into clear JTBDs that inform civic tech product decisions, policy changes, or service enhancements. JTBDs help teams deeply understand user needs, barriers, and opportunities from multiple stakeholder perspectives.
+  CivicMind Jobs-To-Be-Done (JTBD) extraction accelerates qualitative synthesis and quickly translates user insights into clear, structured, and actionable product or policy opportunities.
+
+  Use this JTBD method to:
+    - Rapidly articulate precise user goals, obstacles, and measurable outcomes.
+    - Clearly communicate insights to stakeholders and teams, directly linking research to actionable interventions.
+    - Provide transparency around AI-driven synthesis logic, enabling trust and adoption among researchers.
+    - Facilitate quicker transitions from research insights to design or policy decisions without sacrificing rigor or clarity.
 
 output_notes: |
   Write in clear, confident, plain language. Avoid technical jargon, filler words, or speculative statements. No emdashes.
