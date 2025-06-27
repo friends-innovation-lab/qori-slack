@@ -74,7 +74,8 @@ Stay up-to-date with feature development by following our [CivicMind MVP GitHub 
 
 *Architecture diagram to be embedded or linked here once saved successfully.*
 
-![Screenshot 2025-06-09 at 12 57 29 PM](https://github.com/user-attachments/assets/9b18599d-7253-40f8-b9ec-30311178e958)
+![ChatGPT Image Jun 27, 2025, 03_08_58 PM](https://github.com/user-attachments/assets/bfca4214-0603-42d8-a571-8788d1d9efae)
+
 
 ---
 
