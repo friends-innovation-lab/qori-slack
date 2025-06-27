@@ -49,14 +49,13 @@ persona_hinting: |
 # - Opportunity: optional string
 
 output_format: |
+
+  👋 Hi team! Here are early themes emerging from this round of research. Let’s use this thread to turn insight into action. Reply below with your reactions, ideas, or product implications.
+
+  ---
+
   📌 *AFFINITY MAPPING: {{study_name | default("SUMMARY")}}*
   🔗 *Study Link:* {{study_link | default("No link provided")}}
-
-  
-  👋 Hi team! Here are early themes emerging from this round of research.  
-  Let’s use this thread to turn insight into action — reply below with your reactions, ideas, or product implications.
-
-  
 
   🏷️ *THEME 1: [Label]*
 
