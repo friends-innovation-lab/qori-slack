@@ -1,41 +1,88 @@
 id: journey_mapping
 label: 🧭 Journey Mapping
-description: Map a user's experience across service stages 👣
+version: v1.1
+description: |
+  Turn raw user research into a clear, step-by-step journey map.  
+  Map up to 7 key stages of the user’s experience—capturing actions, thoughts, emotions, opportunities, and ownership—to inform design, policy, and service improvements.
+author: CivicMind R&D
+created: 2025-06-30
+last_updated: 2025-06-30
+
 input_type: text
+input_processing: summarize_if_long
 precision_mode: concise | detailed
-prompt: |
-  You are helping turn raw user research into a step-by-step journey map.
+input_variables:
+  - input_text       # Raw notes, quotes, transcripts
+  - persona_name     # (Optional) To anchor the journey to a specific user
+  - max_steps        # (Optional) Default 5
 
-  Please break the journey into 5-9 steps. For each step, provide the following details:
-  - A **Step Label** that names what the user is doing
-  - An **Action** describing what the user is doing in plain terms
-  - A **Thought** — what the user might be thinking or feeling
-  - A single-word **Emotion tag** (e.g. confusion, stress, curiosity, optimism)
-  - A list of **Opportunities/Insights** for improving this step
-  - A suggested **Owner** or stakeholder team who might act on it
+output_use: |
+  CivicMind Journey Mapping accelerates service-blueprint creation by producing a concise, actionable map directly in Slack.  
+  Use this to:
+    - Visualize the user’s end-to-end experience
+    - Identify friction points and high-value opportunities
+    - Assign clear ownership for each stage
+    - Foster team discussion and rapid iteration
 
-  Write using plain, accessible language at a 10th-grade reading level.
-  Use a conversational but professional tone. Avoid vague summaries or corporate speak.
-  Do not use em-dashes. Keep each section short and focused.
+output_notes: |
+  - Map **one journey** at a time to maintain focus.
+  - Ground each step in actual research—cite sources or quotes.
+  - Use plain language; avoid jargon and passive voice.
+  - Invite feedback: include questions or ambiguity flags.
+  - Format for Slack readability (emojis, bold headings, spacing).
 
-  Raw input:
-  {{input}}
 output_format: |
-  ## 📍 Step 1: [Step Label]
-  - **Action:** What the user does
-  - **Thought:** What the user is thinking or feeling
-  - **Emotion:** 😕 [Tag]
-  - **Opportunities/Insights:**
-    - Opportunity 1
-    - Opportunity 2
-  - **Owner:** CX / UX / Product / Data
+  👋 Hi team! Here’s a journey map for **{{persona_name | default("Our User")}}**, broken into **{{max_steps | default(5)}}** stages.  
+  Feel free to reply with questions, refinements, or quick reactions.
 
-  ## 📍 Step 2: [Step Label]
-  - **Action:** ...
-  - **Thought:** ...
-  - **Emotion:** 😩 [Tag]
-  - **Opportunities/Insights:**
-    - ...
-  - **Owner:** ...
+  ---
 
-  (repeat up to Step 9)
+  1️⃣ **Step 1: [Label]**  
+  - **Action:** [What the user does]  
+  - **Thought:** [What they might be thinking]  
+  - ❤️ **Emotion:** [Single-word tag like confusion, relief, optimism]  
+  - 🔍 **Source:** [e.g. Study 2, Interview #4]  
+  - 🔥 **Signal:** [e.g. “Mentioned by 6/8 participants”]  
+  - 💡 **Opportunities/Insights:**  
+      • Opportunity 1  
+      • Opportunity 2  
+  - 👤 **Owner:** [Team or role]  
+  **🤔 Questions for Discussion:**  
+      • [Optional: any ambiguity or next-step queries]
+
+  ---
+
+  2️⃣ **Step 2: [Label]**  
+  … *(repeat structure)*
+
+  ---
+
+  {{#if_less_than_steps}}
+  *(Include fewer than {{max_steps}} steps if research supports tighter focus.)*
+  {{/if_less_than_steps}}
+
+prompt: |
+  You are a senior human-centered design researcher and service designer with experience turning qualitative research into structured journey maps.
+
+  Based on the input provided — which may include notes, quotes, field transcripts, or synthesis — identify and map the user’s journey as a series of key experience stages.
+
+  For each stage, generate the following:
+    - A short, descriptive **Step Label** (2–5 words max)
+    - A clear **Action** the user is taking
+    - A realistic **Thought** the user might be having
+    - A single-word **Emotion** that best reflects the experience
+    - A brief **Source** reference (e.g., “Study 2, Session 4”)
+    - A **Signal** (e.g., “Repeated by 4 participants” or “Observed in multiple notes”)
+    - One or more actionable **Opportunities or Insights** based on the step
+    - A suggested **Owner** (product, content, research, policy, etc.)
+    - (Optional) **Questions for Discussion** to invite team input or flag ambiguity
+
+  ⚠️ Do not invent steps to meet a quota. Only include stages that are clearly supported by the research.
+
+  🧠 Think like a synthesis lead presenting to a product team: clear, specific, grounded in research.
+
+  📝 Write in plain, confident language — no jargon, filler, or speculation. Use active voice and concrete phrasing.
+
+  🧵 Format output using Slack-friendly markdown:
+    - Emojis and bold headers
+    - Clear line breaks and spacing between each step
