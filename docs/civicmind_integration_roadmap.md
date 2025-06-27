@@ -9,7 +9,7 @@ This roadmap outlines the most impactful integrations to consider for CivicMind 
 ### ✅ Zoom Cloud Recordings → CivicMind AI Summarizer
 - Auto-transcribe and summarize interviews using Zoom webhooks
 - Launch Slack actions from Zoom recordings
-- Already scoped in #XX (Zoom Integration Ticket)
+- Already scoped in #2 (Zoom Integration Ticket)
 
 ### ✅ Notion Exporter → Insight Publishing
 - Push YAML outputs (personas, journey maps, summaries) to formatted Notion pages
