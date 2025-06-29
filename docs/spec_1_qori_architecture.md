@@ -154,7 +154,3 @@ Router --> GitHub : create(issue)
 - Collect feedback from researchers on output quality and workflow improvements.
 - Monitor system performance: job queue latency under peak loads, LLM call success rates, and API error rates.
 
-## Need Professional Help in Developing Your Architecture?
-
-Please contact me at [sammuti.com](https://sammuti.com) :)
-
