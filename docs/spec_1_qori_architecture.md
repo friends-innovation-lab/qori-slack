@@ -261,60 +261,42 @@ Router --> GitHub : create(issue)
 
 ## Production Hardening & Enterprise-Grade Reliability
 
-To ensure Qori delivers a dependable, secure, and compliant research-ops platform for VA stakeholders, we’ve incorporated the following infrastructure guardrails:
-
-### 1. End-to-End Observability & Service-Level Objectives  
+### 1. Observability & SLOs
 - **Distributed Tracing**  
-  Leverage OpenTelemetry across Slack Bot → Router → AI Workers for full request visibility.  
-- **Centralized Metrics & Dashboards**  
-  Monitor queue depths, latency percentiles, and error rates in real time.  
-- **Defined SLOs & Error Budgets**  
-  Guarantee “slash-command → insight posted” within target latency, with clear error budget policies.
+  Instrument the SlackBot (Bolt), Router, and Workers with OpenTelemetry so you can see one trace from `/qori` through Redis → Router → Worker → GitHub/Slack.  
+- **Metrics**  
+  - `Queue.size()`, `Queue.waitTime()` (BullMQ)  
+  - Handler latencies in the Router  
+  - Model call latencies in each AI Worker  
 
-### 2. Resilience & Failure Isolation  
+### 2. Resilience Patterns
 - **Circuit Breakers**  
-  Automatically halt calls to degraded services (Zoom, OpenAI) to prevent cascading failures.  
-- **Workload Bulkheads**  
-  Segregate transcription and synthesis pipelines so high-volume jobs don’t impact critical workflows.  
-- **Backpressure Controls**  
-  Dynamically throttle incoming jobs when BullMQ reaches capacity, maintaining system stability.
+  Wrap calls invoked by the Router (e.g. `ZoomAPI.fetch()`, OpenAI/Claude client) to prevent cascading failures.  
+- **Bulkheads**  
+  Separate Worker pools (e.g. transcription vs. synthesis) to isolate high-volume jobs.  
+- **Backpressure**  
+  Hook into BullMQ’s `queue.add()` from SlackBot to reject or delay new jobs when Redis is at capacity.  
 
-### 3. Idempotent Processing & Exactly-Once Delivery  
-- **Idempotency Keys**  
-  Ensure retries can’t produce duplicate commits or Slack posts.  
-- **Deduplication at the Source**  
-  Use BullMQ keys and GitHub SHA checks to guarantee a single, authoritative execution per request.
+### 3. Idempotency & Exactly-Once
+- Use a unique job ID (e.g. `${user}_${timestamp}_${command}`) as the BullMQ dedupe key.  
+- Before `GitHub.create(issue)` or `SlackBot.post(summary)`, check for an existing artifact with that key (via issue title or message metadata).  
 
-### 4. Safe Deployments & Rapid Rollback  
-- **Canary Releases**  
-  Validate new AI-worker versions on a subset of traffic before full rollout.  
-- **Blue/Green Deployment**  
-  Enable instant rollback to the last known good version if synthesis quality or performance slips.
+### 4. Canary / Blue-Green
+- Deploy a “v2” of your Workers behind a feature flag.  
+- Route a small percentage of `enqueue(synthesis request)` jobs to the new Worker pool and compare success/latency before full rollout.  
 
-### 5. Security, Compliance & Auditability  
-- **Least-Privilege Access**  
-  Apply fine-grained IAM roles for Slack, GitHub, and Zoom integrations.  
-- **PII Redaction Pipeline**  
-  Automatically scrub sensitive data (names, emails, phone numbers) prior to storage or GitHub commits.  
-- **Tamper-Proof Audit Log**  
-  Consolidate all user actions and system events in an append-only ledger (e.g., AWS CloudTrail) for full traceability.
+### 5. Security & Compliance
+- **Least-Privilege Scopes**  
+  - SlackBot only needs minimal scopes to post messages and receive slash-commands.  
+  - Router’s GitHub token uses a fine-grained App installation limited to `templates/` and `studies/` folders.  
+- **PII Redaction**  
+  Transcripts in Postgres pass through a redaction step in the Workers before storage or `VectorStore.embed()`.  
 
-### 6. Chaos Engineering & Scalability Testing  
-- **Failure Injection**  
-  Simulate API timeouts and rate-limits in staging to validate retry logic and dead-letter handling.  
-- **Load Spiking**  
-  Generate synthetic job floods to test autoscaling thresholds and backpressure mechanisms.
+### 6. Chaos & Load Testing
+- In staging, intercept `Queue.dequeue()` to inject artificial ZoomAPI or VectorStore failures and validate retry/DLQ behavior.  
+- Ramp up thousands of `/qori new study` or `/qori synthesize` calls to test autoscaling rules on Router and Workers.  
 
-### 7. Developer Experience & On-Prem Parity  
-- **Local Emulation**  
-  Offer Docker Compose setups for Slack events, BullMQ, and the vector store so developers can validate changes end-to-end locally.  
-- **Contract-First Testing**  
-  Maintain rigorous interface tests between the Router and AI Workers to catch integration drift before deployment.
-
----
-
-By integrating these enterprise-grade patterns, Qori meets the VA’s highest standards for resilience, security, and operational transparency—ensuring researchers can rely on the platform day in and day out.  
- 
-
-
-
+### 7. Developer DX
+- Provide a single `docker-compose.yml` that brings up:  
+  SlackBot (with an ngrok tunnel), Redis/BullMQ, Router, a mock ZoomAPI server, Postgres+pgvector, and a dummy VectorStore.  
+- Add contract tests asserting that the UML-modeled “Router → Workers → Router” JSON payload always satisfies your schema.  
