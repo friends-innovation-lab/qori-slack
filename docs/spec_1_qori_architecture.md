@@ -259,4 +259,38 @@ Router --> GitHub : create(issue)
 - Provide a connector framework to index and retrieve data from Figma, Miro, Google Docs, etc.  
 - Each connector implements a standardized CRUD interface for seamless integration.
 
+## Production Hardening & Reliability
+
+### Observability & SLOs
+- Implement distributed tracing (e.g. OpenTelemetry) across Slack Bot → Router → AI Workers.  
+- Expose metrics and dashboards for queue lengths, latency percentiles, and error rates.  
+- Define SLOs and error budgets for end-to-end flows (e.g. “slash-command → summary posted”).
+
+### Resilience Patterns
+- Add circuit breakers around downstream calls (Zoom API, OpenAI).  
+- Use bulkheads to isolate transcription and synthesis workloads.  
+- Apply backpressure on BullMQ queues—reject or delay enqueues when at capacity.
+
+### Idempotency & Exactly-Once
+- Make job handlers idempotent so retries don’t double-post or double-commit.  
+- Leverage BullMQ deduplication keys and GitHub commit SHAs to prevent duplicates.
+
+### Canary & Blue-Green Deploys
+- Route a small % of traffic to new AI Worker versions for canary testing.  
+- Automate instant rollback if synthesis quality or latency degrades.
+
+### Security & Compliance
+- Enforce least-privilege IAM roles for Slack, GitHub, and Zoom integrations.  
+- Insert PII-redaction hooks in the transcription pipeline before storage or commit.  
+- Aggregate audit logs in a tamper-proof store (e.g. AWS CloudTrail or append-only DB).
+
+### Chaos & Load Testing
+- Inject failure scenarios (API timeouts, rate-limits) in staging to validate retries and DLQ.  
+- Spike the queue with synthetic workloads to test autoscaling and backpressure.
+
+### Developer DX
+- Provide local emulators for Slack events, BullMQ, and the vector store via Docker Compose.  
+- Maintain contract tests between the Router and AI Workers to catch interface drift early.  
+
+
 
