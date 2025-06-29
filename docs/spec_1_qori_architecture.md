@@ -154,3 +154,109 @@ Router --> GitHub : create(issue)
 - Collect feedback from researchers on output quality and workflow improvements.
 - Monitor system performance: job queue latency under peak loads, LLM call success rates, and API error rates.
 
+## Onboarding & Discoverability
+
+### In-Slack Template Directory
+
+- `/qori list-templates` — lists all available YAML templates, with brief descriptions.  
+- `/qori help <command>` — shows usage examples and argument details in a Slack modal.
+
+### Interactive Modals for Complex Inputs
+
+- For multi-step workflows (e.g., multi-phase discussion guides), launch a Slack Modal rather than relying solely on long slash-command arguments.  
+- Each field in the modal validates user input (dates, required text), with inline help.
+
+---
+
+## Governance & Auditability
+
+### Role-Based Access Controls (RBAC)
+
+- Map GitHub repo permissions to user roles in Slack (e.g., “Researcher,” “PM,” “Admin”).  
+- Only authorized roles can perform sensitive actions (e.g., closing issues, deleting studies).
+
+### Immutable Audit Logs
+
+- Log every `/qori` command invocation with `user_id`, timestamp, command, and arguments.  
+- Store logs in a write-only ledger (e.g., append-only database) for compliance and traceability.
+
+---
+
+## Error Handling & Resilience
+
+### Automated Retries & Dead-Letter Queue
+
+- Configure BullMQ with an exponential backoff policy (e.g., 3 retries, doubling delay).  
+- On final failure, route the job to a Dead-Letter Queue for manual investigation.
+
+### User-Facing Error Notifications
+
+- If synthesis, transcription, or commit fails, send a Slack message with:  
+  1. A clear summary of what went wrong.  
+  2. A “Retry” button that re-enqueues the job.  
+  3. A link to view detailed logs (for admins).
+
+---
+
+## Privacy & Data Retention
+
+### PII Detection & Redaction
+
+- Run transcripts through a PII-redaction pipeline (names, emails, phone numbers) before embeddings or GitHub commits.  
+- Log redaction summaries to an audit store but never persist raw PII.
+
+### Configurable Retention Policies
+
+- Implement TTL (time-to-live) settings per data type:  
+  - Raw audio: 30 days  
+  - Transcripts & embeddings: 90 days  
+- Allow workspace admins to override defaults via `/qori config set retention`.
+
+---
+
+## Template Versioning & Governance
+
+### Schema Version Metadata
+
+- Each YAML template includes a `version:` field.  
+- `/qori migrate-study` detects outdated versions and offers migration steps.
+
+### Review & Approval Workflow
+
+- Store templates in a dedicated GitHub “templates” repository.  
+- Enforce review via pull requests and CODEOWNERS to ensure designated template owners approve changes.
+
+---
+
+## Quality Feedback & Analytics
+
+### User Feedback Buttons
+
+- Include “👍/👎” buttons on each summary post in Slack.  
+- Collect feedback to gauge LLM accuracy and inform prompt refinements.
+
+### Error & Quality Metrics Dashboard
+
+- Track:  
+  - Average synthesis latency  
+  - Failure rates per template  
+  - Feedback-weighted quality scores
+
+### Automated Reports
+
+- Send weekly email to workspace admins summarizing top-performing templates and common errors.
+
+---
+
+## Search & Extensibility
+
+### In-Slack Insight Search
+
+- `/qori search <keyword>` queries the vector store and returns relevant past insights directly in Slack.
+
+### Additional Connectors
+
+- Provide a connector framework to index and retrieve data from Figma, Miro, Google Docs, etc.  
+- Each connector implements a standardized CRUD interface for seamless integration.
+
+
