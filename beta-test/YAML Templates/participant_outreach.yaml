@@ -1,0 +1,19 @@
+id: participant_outreach
+label: "📬 Participant Outreach Message"
+description: Generates a contact message to a participant based on tone and scheduling.
+input_type: structured
+fields:
+  participant_name: ""
+  contact_method: "email | phone | sms"
+  tone: "friendly | formal | reminder"
+  date: ""
+  time: ""
+  contact_person: ""
+prompt: |
+  Write a {{tone}} outreach message confirming a research session with {{participant_name}} on {{date}} at {{time}}. Include contact instructions for {{contact_person}}. Assume communication via {{contact_method}}.
+output_format: |
+  Dear {{participant_name}},
+
+  Just confirming your research session on {{date}} at {{time}}. We'll connect by {{contact_method}}. If you have any questions, please reach out to {{contact_person}}.
+
+  Thank you!
