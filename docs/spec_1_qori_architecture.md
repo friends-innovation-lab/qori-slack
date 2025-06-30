@@ -7,7 +7,7 @@ Qori is an AI-enabled Slack bot designed to streamline research operations (rese
 Within Slack, researchers can:
 
 - **Start a Study**: Use `/qori new study <folder name>` to initialize a new research project in GitHub, creating the necessary folder structures and instantiating all required YAML templates (briefs, plans, discussion guides, method cards, and `insights_card.yaml`).
-- **Instantiate Templates**: Use `/qori create-template-study <template> <input>` to generate a new file from any YAML template (method cards, briefs, plans, discussion guides, `insights_card.yaml`), automatically filling its placeholders with provided inputs.
+- **Instantiate Templates**: Use `/qori run-template <template> <input>` to generate a new file from any YAML template (method cards, briefs, plans, discussion guides, `insights_card.yaml`), automatically filling its placeholders with provided inputs.
 - **Ingest** research artifacts (interview transcripts, notes, media links) referenced in GitHub.
 - **Import Zoom Recordings**: Automatically fetch interview video and transcript via the Zoom API for synthesis.
 - **Synthesize** insights through large-language models, using logic defined in the templates’ YAML.
@@ -21,7 +21,7 @@ Secondary stakeholders—designers, product managers, and developers—then cons
 
 - **Slack slash commands** for:
   - `/qori new study <folder name>`: initialize a new research project in GitHub, creating folder structures and instantiating all required YAML templates (briefs, plans, discussion guides, and method cards).
-  - `/qori create-template-study <template> <input>`: generate a new file from any YAML template (method cards, briefs, plans, discussion guides), automatically filling its placeholders with provided input.
+  - `/qori run-template <template> <input>`: generate a new file from any YAML template (method cards, briefs, plans, discussion guides), automatically filling its placeholders with provided input.
 
 - **YAML Template Management**: retrieve, parse, and instantiate YAML templates (including `insights_card.yaml`) from GitHub.
 - **Artifact Ingestion**: ingest research artifacts (transcripts, notes, media links) referenced in GitHub.
@@ -95,7 +95,7 @@ Router --> GitHub : create(issue)
 
 - **Slack Bot:** Implements slash commands:
   - `/qori new study <folder name>` creates a study folder and instantiates all YAML templates in GitHub.
-  - `/qori create-template-study <template> <input>` retrieves a specified YAML template, populates it with input, commits the new file, and posts a link.
+  - `/qori run-template <template> <input>` retrieves a specified YAML template, populates it with input, commits the new file, and posts a link.
   - Other commands enqueue synthesis requests.
 - **Redis/BullMQ:** Queues synthesis jobs for reliable, asynchronous processing.
 - **LangChain-JS Router:** Central orchestrator:
@@ -142,7 +142,7 @@ Router --> GitHub : create(issue)
 ## Milestones
 
 - **M1** (Weeks 1–2): Infrastructure provisioning, repo setup, basic slash commands (`/qori new study`).
-- **M2** (Weeks 3–4): Template instantiation flow (`/qori create-template-study`), YAML validation.
+- **M2** (Weeks 3–4): Template instantiation flow (`/qori run-template`), YAML validation.
 - **M3** (Weeks 5–6): Artifact ingestion, Zoom API integration, basic LLM synthesis in Slack.
 - **M4** (Week 7): GitHub issue creation, weekly digest scheduling.
 - **M5** (Week 8): Monitoring, logging, vector store integration.
