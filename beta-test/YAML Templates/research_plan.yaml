@@ -98,3 +98,9 @@ output_format: |
 
   ## 🏷️ Tags  
   `va`, `ux-research`, `research-plan`, `[project-specific-tags]`
+
+notify:
+  - role: stakeholder
+    action: "Please approve the research study"
+    slack_tag: "@jordan"
+
