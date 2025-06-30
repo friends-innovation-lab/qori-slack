@@ -1,11 +1,32 @@
 id: note_upload_handler
-label: "📝 Note Upload"
+label: "📝 Note Upload Handler"
+description: Summarizes raw research notes uploaded by the team and extracts key quotes, takeaways, and insights.
 input_type: file
 input_processing: summarize_if_long
+batch_mode: false
+
 prompt: |
-  Summarize these research notes for clarity, actionability, and structure. Tag quotes if possible.
+  You are a research assistant helping a UX researcher process raw interview or observation notes.
+
+  Carefully read the attached notes file. Then:
+  1. Summarize what the participant or situation revealed.
+  2. Identify at least 3 key takeaways or observations.
+  3. Extract and tag any quotes worth remembering.
+  4. Suggest any immediate implications for design or next steps.
+
+  Be neutral and clear. Do not speculate beyond what's in the notes.
+
 output_format: |
   ## Summary
-  ...
-  ## Key Quotes
-  ...
+  A concise overview of what was learned from this session.
+
+  ## Key Takeaways
+  - First important point
+  - Second insight
+  - Third observation
+
+  ## Quotes
+  > “Direct quote from participant.” — optional tag or theme
+
+  ## Recommendations (if any)
+  - Possible next step or design consideration
