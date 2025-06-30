@@ -1,0 +1,11 @@
+id: note_upload_handler
+label: "📝 Note Upload"
+input_type: file
+input_processing: summarize_if_long
+prompt: |
+  Summarize these research notes for clarity, actionability, and structure. Tag quotes if possible.
+output_format: |
+  ## Summary
+  ...
+  ## Key Quotes
+  ...
