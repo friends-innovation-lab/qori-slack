@@ -3,60 +3,113 @@ label: 📄 Research Brief
 description: Generate a scoping research brief aligned with VA's approved format
 input_type: text
 input_processing: summarize_if_long
+
+# Structured inputs from Slack modal
+inputs:
+  project_title: "{{project_title}}"
+  study_context: "{{study_context}}"
+  target_barriers: "{{target_barriers}}"
+  user_flows: "{{user_flows}}"
+  stakeholders: "{{stakeholders}}"
+  research_approach: "{{research_approach}}"
+  prepared_by: "{{prepared_by}}"
+  current_date: "{{current_date}}"
+  user_input: "{{input}}"
+
 prompt: |
   You are drafting a VA-style research brief. Use the structure below and complete each section in plain, accessible language at a 10th-grade reading level. Write clearly and avoid em-dashes, business jargon, or vague phrases. This document is used to scope research with design and product partners, so keep it focused and actionable.
 
-  If the user provided any scoping input, integrate it into the relevant sections. Use Markdown formatting.
+  Use the provided inputs to generate realistic, specific content for each section:
 
-  Input:
-  {{input}}
+  **Project Details:**
+  - Title/Focus: {{project_title}}
+  - Study Context: {{study_context}}
+  - Target Barriers: {{target_barriers}}
+  - User Flows to Evaluate: {{user_flows}}
+  - Stakeholders Consulted: {{stakeholders}}
+  - Research Approach: {{research_approach}}
+  - Prepared by: {{prepared_by}}
+  - Date: {{current_date}}
+
+  **Content Generation Guidelines:**
+  
+  **Overview Section:**
+  - Start with the study context provided
+  - Expand with 2-3 additional sentences about the current challenges
+  - Explain what motivated this research need
+  - Keep it concise but informative (3-4 sentences total)
+
+  **Objectives Section:**
+  - Use the target barriers and user flows provided as foundation
+  - For "Identify Barriers": Expand on the target barriers with specific details
+  - For "Evaluate Navigation Experience": Detail the user flows and touchpoints
+  - For "Surface Insights": Generate specific improvements this research will inform
+  - For "Trauma-Informed Design": Include relevant VA/government service considerations
+
+  **Initial Scoping Materials:**
+  - Use provided stakeholders list
+  - Generate 2-3 realistic hypotheses based on study context and target barriers
+  - Create 3-4 specific framing questions based on research approach and objectives
+  - Use the research approach provided and expand with specific methods
+
+  **Additional Context:**
+  If additional context is provided here, integrate it into relevant sections:
+  {{user_input}}
+
+  Use Markdown formatting throughout. Keep language clear, specific, and actionable for design and product partners.
 
 output_format: |
-  # 📄 Research Brief
+  # 📄 Research Brief – {{project_title}}
 
   ---
 
   ## Overview
 
-  [Brief description of the study focus, context, and motivation.]
+  {{study_context}}
+
+  [Generate 2-3 additional sentences expanding on the current challenges and what motivated this research need, based on the study context and target barriers provided.]
 
   ---
 
   ## Objectives
 
   1. **Identify Barriers:**  
-     [Describe the specific barriers this study aims to uncover.]
+     {{target_barriers}}
 
   2. **Evaluate Navigation Experience:**  
-     [Outline what user flows or touchpoints will be evaluated.]
+     {{user_flows}}
 
   3. **Surface Insights for Design & Content Improvements:**  
-     [Explain the intended use of findings for product or service improvements.]
+     [Generate specific improvements this research will inform, based on the research approach, user flows, and target barriers. Focus on actionable outcomes for design and product teams.]
 
   4. **Support Trauma-Informed Service Design:**  
-     [If relevant, explain how research contributes to equitable, trauma-aware design.]
+     [Generate VA-relevant trauma-informed considerations based on the project context, target users, and service area. Consider veteran experiences, mental health impacts, and equitable access.]
 
   ---
 
   ## Initial Scoping Materials
 
   - **Stakeholders Consulted:**  
-    [List relevant offices, partners, or experts.]
+    {{stakeholders}}
 
   - **Initial Hypotheses:**  
-    - [Hypothesis 1]
-    - [Hypothesis 2]
+    [Generate 2-3 realistic, testable hypotheses based on the study context, target barriers, and user flows. Format as bullet points with specific, measurable predictions.]
 
   - **Framing Questions:**  
-    - [Question 1]
-    - [Question 2]
-    - [Question 3]
+    [Generate 3-4 specific research questions based on the research approach, objectives, and target barriers. Questions should be open-ended and designed to uncover insights about user behavior, pain points, and opportunities.]
 
   - **Research Approach Summary:**  
-    [Methods to be used: interviews, concept testing, surveys, etc.]
+    {{research_approach}}
+    
+    [Expand with specific methods, timeline considerations, and participant considerations based on the approach provided.]
 
   ---
 
   **Prepared by:**  
-  [Name and title of researcher or team]  
-  **Date:** [Date]
+  {{prepared_by}}  
+  **Date:** {{current_date}}
+
+notify:
+  - role: stakeholder
+    action: "Please review the research brief"
+    slack_tag: "@{{prepared_by}}"
