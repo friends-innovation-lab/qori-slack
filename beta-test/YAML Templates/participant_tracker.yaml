@@ -1,24 +1,214 @@
 id: participant_tracker
 label: 👥 Participant Tracker
-description: Generate a participant tracker table for a VA research study
-input_type: text
-input_processing: summarize_if_long
+description: Generate and manage participant tracker for a VA research study with recruitment tracking
+input_type: structured
+input_processing: validate_and_organize
+
+# Structured inputs from Slack modal or import
+inputs:
+  study_id: "{{study_id}}"
+  study_name: "{{study_name}}"
+  participant_name: "{{participant_name}}"
+  contact_details: "{{contact_details}}"
+  recruitment_source: "{{recruitment_source}}"
+  scheduled_date: "{{scheduled_date}}"
+  scheduled_time: "{{scheduled_time}}"
+  status_select: "{{status_select}}"
+  notes_field: "{{notes_field}}"
+  demographics_info: "{{demographics_info}}"
+  current_date: "{{current_date}}"
+  added_by: "{{added_by}}"
+  import_source: "{{import_source}}" # manual, calendly, csv
+  existing_participants: "{{existing_participants}}" # for updates
+  
+# Participant status mappings
+status_mappings:
+  recruited: 
+    display: "📝 Recruited"
+    description: "Initial contact made, screening in progress"
+  confirmed:
+    display: "✅ Confirmed" 
+    description: "Session scheduled and confirmed"
+  completed:
+    display: "🎯 Completed"
+    description: "Session completed successfully"
+  pending:
+    display: "⏳ Pending"
+    description: "Awaiting response from participant"
+  rescheduling:
+    display: "🕐 Rescheduling"
+    description: "Need to reschedule session"
+  backup:
+    display: "🔄 Backup"
+    description: "Backup participant if needed"
+  canceled:
+    display: "❌ Canceled"
+    description: "Participant canceled or no-show"
+  disqualified:
+    display: "🚫 Disqualified"
+    description: "Did not meet study criteria"
+
+# Recruitment source mappings
+recruitment_sources:
+  internal_panel: "🗂️ Internal VA Panel"
+  calendly: "📅 Calendly Signup"
+  email_outreach: "📧 Email Outreach"
+  phone: "📞 Phone Recruitment"
+  referral: "🤝 Referral"
+  online: "🌐 Social/Website"
+  csv_import: "📊 CSV Import"
+  api_import: "🔗 API Import"
+
 prompt: |
-  You are helping generate a structured participant tracker for a VA research study. Use a table format to record basic information about participants including ID, name or alias, contact info, scheduling status, and relevant notes.
+  You are managing a participant tracker for a VA research study. Generate or update a comprehensive participant tracking table based on the provided participant information.
 
-  Use Markdown table formatting. If no data is provided, generate a sample table with 3–5 placeholder participants as a starter.
+  **Study Details:**
+  - Study: {{study_name}}
+  - Participant: {{participant_name}}
+  - Contact: {{contact_details}}
+  - Recruited via: {{recruitment_source}}
+  - Status: {{status_select}}
+  - Session Date: {{scheduled_date}} {{scheduled_time}}
+  - Special Notes: {{notes_field}}
+  - Demographics: {{demographics_info}}
+  - Added by: {{added_by}}
+  - Added on: {{current_date}}
 
-  Input:
-  {{input}}
+  **Instructions:**
+  
+  1. **Generate Participant ID**: Create a unique participant ID (P01, P02, etc.) based on existing participants count
+  2. **Format Contact Info**: Ensure contact information follows privacy guidelines (mask if needed for privacy)
+  3. **Status Tracking**: Use appropriate status with emoji and clear description from status_mappings
+  4. **Scheduling**: Format date/time clearly, handle TBD cases appropriately
+  5. **Notes Management**: Include accommodations, demographics, recruitment source details
+  6. **Recruitment Tracking**: Show recruitment method and track effectiveness
+
+  **Privacy Guidelines:**
+  - Use participant aliases or initials instead of full names when possible
+  - Mask email addresses if needed for privacy (j***@email.com)
+  - Include accommodation needs for accessibility planning
+  - Track demographics for diversity reporting (optional)
+
+  **Calculations:**
+  - Count total participants, confirmed sessions, pending responses, completed sessions
+  - Calculate recruitment method breakdown with percentages
+  - Generate action items based on current status and missing information
+  - Suggest next steps for recruitment and scheduling
+
+  **Existing Participants** (if updating tracker):
+  {{existing_participants}}
+
+  Generate a complete, well-organized participant tracker that includes this new participant and maintains all existing participant data.
 
 output_format: |
-  # 📋 Participant Tracker – [Study Title]
+  # 👥 Participant Tracker – {{study_name}}
 
-  | Participant ID | Name / Alias | Contact Info   | Scheduled Date | Status     | Notes                    |
-  |----------------|--------------|----------------|----------------|------------|--------------------------|
-  | P01            | [Name]       | [Email/Phone]  | [MM/DD/YYYY]   | Confirmed  | Needs interpreter        |
-  | P02            | [Name]       | [Email/Phone]  | [MM/DD/YYYY]   | Completed  | Follow-up sent           |
-  | P03            | [Name]       | [Email/Phone]  | [MM/DD/YYYY]   | Recruited  | Awaiting confirmation    |
-  | P04            | [Name]       | [Email/Phone]  | [MM/DD/YYYY]   | Canceled   | Replaced by P05          |
+  **📊 Recruitment Summary**
+  - **Total Participants:** [Calculate total count]
+  - **Confirmed Sessions:** [Count confirmed status]
+  - **Pending Responses:** [Count pending status]
+  - **Completed Sessions:** [Count completed status]
+  - **Last Updated:** {{current_date}} by {{added_by}}
 
-  _Use this table to track participant recruitment, session status, and logistics._
+  ---
+
+  ## 📋 Participant Details
+
+  | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
+  |----|-----------|---------|-----------------|-----------|--------|----------------------|
+  | [Generate participant rows including new participant with unique ID] |
+
+  ---
+
+  ## 🎯 Recruitment Progress
+
+  | Recruitment Method | Count | Percentage |
+  |--------------------|-------|------------|
+  | [Generate breakdown of recruitment sources with counts and percentages] |
+
+  **🔍 Recruitment Effectiveness:**
+  [Analyze which recruitment methods are working best and suggest improvements]
+
+  ---
+
+  ## 📅 Session Schedule
+
+  ### ✅ Confirmed Sessions
+  [List all confirmed sessions with dates, times, and participant IDs]
+
+  ### ⏳ Pending Scheduling
+  [List participants who need session scheduling]
+
+  ### 🕐 Rescheduling Needed
+  [List any participants who need rescheduling]
+
+  ---
+
+  ## 🔍 Action Items
+
+  **🚨 Immediate Actions:**
+  [Generate specific action items based on participant statuses and missing information]
+
+  **📞 Follow-up Needed:**
+  [List participants who need follow-up contact]
+
+  **📋 Recruitment Needs:**
+  [Assess if more participants are needed and suggest recruitment strategies]
+
+  ---
+
+  ## 👥 Observer Management
+
+  **Session Observers:**
+  [Space for observer assignments - to be populated when observers are added]
+
+  **Observer Guidelines:** 
+  - Review session plan before observing
+  - Stay muted unless emergency
+  - Take notes without interrupting
+  - Share feedback after session
+
+  ---
+
+  ## 📝 Accessibility & Accommodations
+
+  **Special Needs Summary:**
+  [List all accommodation requirements across participants for planning purposes]
+
+  **Preparation Checklist:**
+  - [ ] Interpreter services arranged (if needed)
+  - [ ] Accessible meeting platform confirmed
+  - [ ] Screen reader compatibility tested
+  - [ ] Alternative formats prepared
+  - [ ] Session timing accommodations noted
+
+  ---
+
+  ## 📊 Demographics Overview (Optional)
+
+  **Diversity Tracking:**
+  [If demographics provided, show age range and location distribution for diversity assessment]
+
+  ---
+
+  **📝 Tracker Management:**
+  - Use participant aliases for privacy protection
+  - Update status after each participant interaction
+  - Include accommodation needs for proper session planning
+  - Track recruitment sources to analyze effectiveness
+  - Coordinate with observers before each session
+
+  **🔄 Next Steps:**
+  [Generate specific recommendations based on current tracker status:
+  - If under target: suggest recruitment strategies
+  - If scheduling gaps: suggest scheduling optimization
+  - If accommodations needed: reminder to arrange services
+  - If observers needed: suggest adding team members]
+
+notify:
+  - role: researcher
+    action: "Participant added to tracker"
+    slack_tag: "@{{added_by}}"
+  - role: team
+    action: "Recruitment status update"
+    channel: "{{study_channel}}"
