@@ -1,0 +1,72 @@
+id: observer_guide
+label: "👀 Observer Onboarding Guide"
+description: Generate role-specific observer guidelines and prep materials for research sessions
+input_type: structured
+input_processing: validate_and_personalize
+
+# Structured inputs from observer assignment
+inputs:
+  observer_name: "{{observer_name}}"
+  observer_role: "{{observer_role}}" # note_taker, silent_observer, pm_observer, stakeholder
+  session_id: "{{session_id}}"
+  participant_name: "{{participant_name}}"
+  session_date: "{{session_date}}"
+  session_time: "{{session_time}}"
+  session_duration: "{{session_duration}}" # default: 45 minutes
+  observer_experience: "{{observer_experience}}" # first_time, experienced
+  session_type: "{{session_type}}" # remote, in_person, sensitive_topic
+  researcher_contact: "{{researcher_contact}}"
+  study_name: "{{study_name}}"
+  meeting_link: "{{meeting_link}}"
+  discussion_guide_link: "{{discussion_guide_link}}"
+  study_context: "{{study_context}}"
+
+# Role-specific content variations
+role_content:
+  note_taker:
+    primary_focus: "Take detailed, objective notes during the session"
+    key_responsibilities:
+      - "Document participant quotes and exact language"
+      - "Note emotional reactions, hesitations, and body language"
+      - "Track task completion, errors, and success patterns"
+      - "Record timestamps for key moments"
+    specific_instructions:
+      - "Use the note-taking template provided"
+      - "Focus on what participants say and do, not your interpretations"
+      - "Note when participants seem confused, frustrated, or delighted"
+      - "Backup the session recording if available"
+    tools_needed: 
+      - "Note-taking template"
+      - "Participant task list"
+      - "Session recording backup access"
+    post_session_tasks:
+      - "Share raw notes within 2 hours"
+      - "Highlight top 3 key moments"
+      - "Note any technical issues"
+
+  silent_observer:
+    primary_focus: "Observe patterns and behaviors without active documentation"
+    key_responsibilities:
+      - "Focus on overall user experience and flow"
+      - "Notice emotional journey throughout session"
+      - "Identify recurring themes and patterns"
+      - "Build empathy for user perspective"
+    specific_instructions:
+      - "Avoid visible note-taking during session"
+      - "Focus on understanding the participant's mental model"
+      - "Notice what's not being said or done"
+      - "Prepare to share insights immediately after"
+    tools_needed:
+      - "Mental observation framework"
+      - "Key questions to consider during session"
+    post_session_tasks:
+      - "Share immediate impressions in debrief"
+      - "Identify 2-3 key insights"
+      - "Note any questions for follow-up research"
+
+  pm_observer:
+    primary_focus: "Understand user needs and business impact opportunities"
+    key_responsibilities:
+      - "Connect user behaviors to product decisions"
+      - "Identify feature gaps and opportunities"
+      - "Note business implications of user pain points"
