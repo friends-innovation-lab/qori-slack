@@ -158,16 +158,54 @@ output_format: |
   ---
 
   ## 👥 Observer Management
+  
+# Observer management configuration
+observer_management:
+  capacity_per_session: 3
+  auto_approve_users: ["{{trusted_team_members}}"] # e.g. regular designers, PMs
+  approval_required_users: ["{{stakeholder_users}}"] # e.g. executives, external observers
+  
+  observer_roles:
+    note_taker:
+      label: "Note-taker"
+      description: "Take detailed notes during session"
+      auto_approve: true
+    silent_observer:
+      label: "Silent Observer"
+      description: "Observe without taking notes"  
+      auto_approve: true
+    pm_observer:
+      label: "PM Observer"
+      description: "Focus on product/business insights"
+      auto_approve: false
+    stakeholder:
+      label: "Stakeholder"
+      description: "Executive or external observer"
+      auto_approve: false
 
-  **Session Observers:**
-  [Space for observer assignments - to be populated when observers are added]
-
-  **Observer Guidelines:** 
-  - Review session plan before observing
-  - Stay muted unless emergency
-  - Take notes without interrupting
-  - Share feedback after session
-
+# Session structure template
+sessions:
+  - id: "{{participant_id}}"
+    date: "{{session_date}}"
+    time: "{{session_time}}"
+    status: "{{session_status}}"
+    observers:
+      - name: "{{slack_user_id}}"
+        role: "{{observer_role}}"
+        status: "confirmed"
+        added_by: "{{researcher_id}}"
+        added_at: "{{timestamp}}"
+    pending_observers:
+      - name: "{{requesting_user_id}}"
+        role: "{{requested_role}}"
+        requested_at: "{{request_timestamp}}"
+        reason: "{{observer_reason}}"
+        status: "pending_approval"
+    observer_feedback:
+      - observer: "{{observer_user_id}}"
+        feedback: "{{feedback_text}}"
+        themes: ["{{theme1}}", "{{theme2}}"]
+        submitted_at: "{{feedback_timestamp}}"
   ---
 
   ## 📝 Accessibility & Accommodations
