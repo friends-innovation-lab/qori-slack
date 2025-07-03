@@ -96,26 +96,42 @@ prompt: |
 
   Extract up to {{max_jobs}} clearly differentiated Jobs-To-Be-Done (JTBD).
   
-  Each JTBD must explicitly include these core JTBD elements:
+  Each JTBD must follow the classic JTBD narrative structure:
+  "*When* [context/situation], *I want to* [goal/action], *so I can* [desired outcome]."
 
-  1. *Situation (Context)* – The precise scenario in which the job arises.
-  2. *Goal (Action)* – Exactly what the user is trying to achieve.
-  3. *Desired Outcome (Benefit)* – How success is defined or measured by the user, ideally in quantifiable terms.
+  For each job, provide:
+  1. **Job Title** - Clear, descriptive name for the job
+  2. **JTBD Narrative** - The when/want/so structure  
+  3. **Current Obstacles** - What's preventing job completion
+  4. **Why This Matters** - Broader civic or systemic significance
+  5. **Supporting Quote** - Direct quote illustrating the job
+  6. **Opportunity** - Actionable response to address obstacles
+  7. **Signal** - Evidence strength (e.g., "Mentioned by 4 participants")
+  8. **Source** - Research source reference
+  9. **Tags** - Keywords for categorization
 
-  Clearly recognize multiple user roles:
-    - Primary users (directly performing the task)
-    - Support roles (assisting task completion)
-    - Decision-makers (defining processes or eligibility)
+  Focus on jobs that reveal user motivations, not just surface-level tasks. Look for emotional and functional dimensions. Recognize different user roles (primary users, support staff, decision-makers).
 
-  Additionally, include:
-    - Emotional or social dimensions of the job (if evident)
-    - Specific barriers preventing task completion
-    - Broader civic or systemic significance ("Why it Matters")
-    - Actionable opportunities clearly linked to identified barriers
-    - Direct quotes illustrating user tensions or goals
-    - Evidence ("Signal") and precise research sources
+  Format for Slack using *italics* for emphasis, **bold** for section headers, > for quotes, and proper spacing.
 
-  Format each JTBD clearly for Slack using *bold headings*, emojis, horizontal rules, and spacing.
+  **Example JTBD:**
+
+  🛠️ *JOB: "Getting Reliable Eligibility Information"*
+
+  *When* I'm helping a client determine their benefit eligibility, *I want to* access consistent, up-to-date guidelines, *so I can* give them accurate information without multiple calls or delays.
+
+  **Current Obstacles:**
+  Guidelines are scattered across different systems, some information is outdated, and different staff give conflicting answers.
+
+  **Why This Matters:**
+  Accurate eligibility information directly impacts whether people get the help they need and reduces administrative burden on staff.
+
+  > "I waste hours cross-checking rules, delaying support for people who urgently need it."
+
+  💡 *Opportunity:* Create a unified eligibility checker tool with real-time updates
+  📊 *Signal:* Mentioned by 7 out of 8 navigators
+  📚 *Source:* Study 2, Session 5
+  `Tags: efficiency, accuracy, tools`
 
   ⚠️ Return no more than {{max_jobs}} JTBDs.
 
@@ -133,67 +149,64 @@ output_format: |
 
   🛠️ *JOB: "{{job_1_title}}"*
 
-  *JTBD Statement:* "{{job_1_statement}}"
+  *When* {{job_1_context}}, *I want to* {{job_1_goal}}, *so I can* {{job_1_outcome}}.
 
-  *Persona:* {{job_1_persona}}  
-  *Role:* {{job_1_role}}  
-  *Situation (Context):* {{job_1_context}}  
-  *Goal (Action):* {{job_1_goal}}  
-  *Obstacle:* {{job_1_obstacle}}  
-  *Desired Outcome (Benefit):* {{job_1_outcome}}  
-  *Emotional Dimension:* {{job_1_emotion}}  
-  *Why it Matters:* {{job_1_significance}}
+  **Current Obstacles:**
+  {{job_1_obstacle}}
+
+  **Why This Matters:**
+  {{job_1_significance}}
 
   > "{{job_1_quote}}"
 
-  *Tags:* {{job_1_tags}}  
+  💡 *Opportunity:* {{job_1_opportunity}}
+
   📊 *Signal:* {{job_1_signal}}  
-  💡 *Opportunity:* {{job_1_opportunity}}  
   📚 *Source:* {{job_1_source}}
+
+  `Tags: {{job_1_tags}}`
 
   ---
 
   🛠️ *JOB: "{{job_2_title}}"*
 
-  *JTBD Statement:* "{{job_2_statement}}"
+  *When* {{job_2_context}}, *I want to* {{job_2_goal}}, *so I can* {{job_2_outcome}}.
 
-  *Persona:* {{job_2_persona}}  
-  *Role:* {{job_2_role}}  
-  *Situation (Context):* {{job_2_context}}  
-  *Goal (Action):* {{job_2_goal}}  
-  *Obstacle:* {{job_2_obstacle}}  
-  *Desired Outcome (Benefit):* {{job_2_outcome}}  
-  *Emotional Dimension:* {{job_2_emotion}}  
-  *Why it Matters:* {{job_2_significance}}
+  **Current Obstacles:**
+  {{job_2_obstacle}}
+
+  **Why This Matters:**
+  {{job_2_significance}}
 
   > "{{job_2_quote}}"
 
-  *Tags:* {{job_2_tags}}  
+  💡 *Opportunity:* {{job_2_opportunity}}
+
   📊 *Signal:* {{job_2_signal}}  
-  💡 *Opportunity:* {{job_2_opportunity}}  
   📚 *Source:* {{job_2_source}}
+
+  `Tags: {{job_2_tags}}`
 
   ---
 
   🛠️ *JOB: "{{job_3_title}}"*
 
-  *JTBD Statement:* "{{job_3_statement}}"
+  *When* {{job_3_context}}, *I want to* {{job_3_goal}}, *so I can* {{job_3_outcome}}.
 
-  *Persona:* {{job_3_persona}}  
-  *Role:* {{job_3_role}}  
-  *Situation (Context):* {{job_3_context}}  
-  *Goal (Action):* {{job_3_goal}}  
-  *Obstacle:* {{job_3_obstacle}}  
-  *Desired Outcome (Benefit):* {{job_3_outcome}}  
-  *Emotional Dimension:* {{job_3_emotion}}  
-  *Why it Matters:* {{job_3_significance}}
+  **Current Obstacles:**
+  {{job_3_obstacle}}
+
+  **Why This Matters:**
+  {{job_3_significance}}
 
   > "{{job_3_quote}}"
 
-  *Tags:* {{job_3_tags}}  
+  💡 *Opportunity:* {{job_3_opportunity}}
+
   📊 *Signal:* {{job_3_signal}}  
-  💡 *Opportunity:* {{job_3_opportunity}}  
   📚 *Source:* {{job_3_source}}
+
+  `Tags: {{job_3_tags}}`
 
   ---
 
