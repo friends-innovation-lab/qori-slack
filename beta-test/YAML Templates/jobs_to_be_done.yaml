@@ -73,7 +73,7 @@ output_notes: |
   Session count ({{session_count}}) estimated from input patterns and role diversity.
   Write in clear, confident, plain language. Avoid technical jargon, filler words, or speculative statements. No em-dashes.
   Clearly connect "Why it Matters" to real-world civic or systemic outcomes.
-  Use Slack formatting: *text* for bold, > for quotes, spacing between blocks, and horizontal rules for clarity.
+  Use Slack formatting: *text* for bold (single asterisks), > for quotes, `backticks` for tags, spacing between blocks, and horizontal rules for clarity.
 
 persona_hinting: |
   Common civic personas include:
@@ -112,7 +112,7 @@ prompt: |
 
   Focus on jobs that reveal user motivations, not just surface-level tasks. Look for emotional and functional dimensions. Recognize different user roles (primary users, support staff, decision-makers).
 
-  Format for Slack using *italics* for emphasis, **bold** for section headers, > for quotes, and proper spacing.
+  Format for Slack using *single asterisks* for bold, > for quotes, `backticks` for code formatting on tags, and proper spacing.
 
   **Example JTBD:**
 
@@ -120,10 +120,10 @@ prompt: |
 
   *When* I'm helping a client determine their benefit eligibility, *I want to* access consistent, up-to-date guidelines, *so I can* give them accurate information without multiple calls or delays.
 
-  **Current Obstacles:**
+  *Current Obstacles:*
   Guidelines are scattered across different systems, some information is outdated, and different staff give conflicting answers.
 
-  **Why This Matters:**
+  *Why This Matters:*
   Accurate eligibility information directly impacts whether people get the help they need and reduces administrative burden on staff.
 
   > "I waste hours cross-checking rules, delaying support for people who urgently need it."
@@ -151,10 +151,10 @@ output_format: |
 
   *When* {{job_1_context}}, *I want to* {{job_1_goal}}, *so I can* {{job_1_outcome}}.
 
-  **Current Obstacles:**
+  *Current Obstacles:*
   {{job_1_obstacle}}
 
-  **Why This Matters:**
+  *Why This Matters:*
   {{job_1_significance}}
 
   > "{{job_1_quote}}"
@@ -172,10 +172,10 @@ output_format: |
 
   *When* {{job_2_context}}, *I want to* {{job_2_goal}}, *so I can* {{job_2_outcome}}.
 
-  **Current Obstacles:**
+  *Current Obstacles:*
   {{job_2_obstacle}}
 
-  **Why This Matters:**
+  *Why This Matters:*
   {{job_2_significance}}
 
   > "{{job_2_quote}}"
@@ -193,10 +193,10 @@ output_format: |
 
   *When* {{job_3_context}}, *I want to* {{job_3_goal}}, *so I can* {{job_3_outcome}}.
 
-  **Current Obstacles:**
+  *Current Obstacles:*
   {{job_3_obstacle}}
 
-  **Why This Matters:**
+  *Why This Matters:*
   {{job_3_significance}}
 
   > "{{job_3_quote}}"
