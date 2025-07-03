@@ -15,51 +15,54 @@ temperature: 0.4
 precision_mode: concise | detailed
 
 input_variables:
-  - input_text           # Research context, objectives, barriers to investigate (REQUIRED)
-  - study_name           # Title of study (REQUIRED)
-  - researcher_contact   # Lead researcher (REQUIRED)
-  - study_channel        # Where to notify completion (REQUIRED)
-  - study_link           # Link to study folder or documentation (OPTIONAL)
-  - team_members         # Who to notify (OPTIONAL)
+  - project_title        # Project Title/Focus from UI (REQUIRED)
+  - study_context        # Study context and motivation from UI (REQUIRED)
+  - target_barriers      # Target barriers to identify from UI (REQUIRED)
+  - user_flows           # User flows/touchpoints to evaluate from UI (REQUIRED)
+  - stakeholders         # Stakeholders consulted from UI (REQUIRED)
+  - research_approach    # Research approach from UI (REQUIRED)
+  - prepared_by          # Prepared by from UI (REQUIRED)
 
 # Auto-generated/computed variables
 auto_variables:
   - project_scope: |
-      # AI identifies project scope from context
-      # Product Area, Service Area, Feature Focus
-      identify_project_scope(input_text) || "Digital Services"
-  - target_barriers: |
-      # AI extracts key barriers from research context
-      extract_barriers(input_text) || "User experience challenges"
-  - user_flows: |
-      # AI identifies user flows to evaluate
-      identify_user_flows(input_text) || "Primary service flow"
-  - research_approach: |
-      # AI suggests research methods from objectives
-      suggest_research_methods(input_text) || "Qualitative interviews and usability testing"
-  - stakeholder_groups: |
-      # AI identifies relevant stakeholders
-      identify_stakeholders(input_text) || "Product team, Design team"
+      # AI identifies broader project scope from title and context
+      identify_project_scope(project_title, study_context) || "Digital Services"
+  - design_improvements: |
+      # AI generates specific design improvements from barriers and flows
+      generate_design_improvements(target_barriers, user_flows) || "Improve user experience and reduce friction"
+  - trauma_informed_considerations: |
+      # AI creates VA-relevant trauma-informed considerations
+      generate_trauma_considerations(study_context, target_barriers) || "Consider veteran mental health and accessibility needs"
+  - research_hypotheses: |
+      # AI generates testable hypotheses from barriers and approach
+      generate_hypotheses(target_barriers, research_approach) || "Research hypotheses based on identified barriers"
+  - framing_questions: |
+      # AI creates specific research questions from approach and barriers
+      generate_framing_questions(research_approach, target_barriers, user_flows) || "Specific research questions to guide investigation"
+  - methodology_details: |
+      # AI expands on research approach with implementation details
+      expand_methodology_details(research_approach) || "Detailed methodology implementation"
   - current_date: |
       # Auto-generate current date
       new Date().toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})
   - github_file_link: |
-      # Auto-generate based on study name and date
-      generate_github_link(study_name, current_date) || null
+      # Auto-generate based on project title and date
+      generate_github_link(project_title, current_date) || null
 
 # Output configuration
 output_options:
   default_delivery: "file_only"
   slack_format: "notification_only"
   file_location: "01-planning/"
-  file_name: "research_brief_{{study_name_slug}}_{{current_date}}.md"
+  file_name: "research_brief_{{project_title | slugify}}_{{current_date}}.md"
 
 slack_output:
   post_in_channel: false
   create_thread: false
   send_notification: true
   title_format: "📄 Research Brief Created"
-  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
+  ping_team: ["{{prepared_by}}"]
   interactive_elements:
     - text: "📄 View Brief"
       url: "{{github_file_link}}"
@@ -77,17 +80,18 @@ output_use: |
     - Support trauma-informed service design considerations
 
 output_notes: |
-  Project scope ({{project_scope}}) and barriers ({{target_barriers}}) identified from research context.
-  Research approach ({{research_approach}}) and stakeholders ({{stakeholder_groups}}) determined automatically.
+  Project details collected via structured form input from research brief UI.
+  Project scope ({{project_scope}}) determined from title and context analysis.
+  Design improvements ({{design_improvements}}) generated from barriers and flow specifications.
   Brief follows VA research standards including trauma-informed design considerations.
   Write in plain, accessible language at 10th-grade reading level.
   Keep focused and actionable for design and product partners.
 
 output_format: |
-  # 📄 Research Brief – {{study_name}}
+  # 📄 Research Brief – {{project_title}}
 
   **📦 Project Area:** {{project_scope}}  
-  **👩🏽‍🔬 Prepared by:** {{researcher_contact}}  
+  **👩🏽‍🔬 Prepared by:** {{prepared_by}}  
   **🗓️ Date:** {{current_date}}
 
   ---
@@ -115,7 +119,7 @@ output_format: |
   ## Initial Scoping Materials
 
   - **Stakeholders Consulted:**  
-    {{stakeholder_groups}}
+    {{stakeholders}}
 
   - **Initial Hypotheses:**  
     {{research_hypotheses}}
@@ -128,28 +132,26 @@ output_format: |
     
     {{methodology_details}}
 
-  ---
-
-  **Study Details:** {{study_link}}
-
 prompt: |
   You are a senior UX researcher experienced in creating VA-compliant research briefs for government service design.
 
-  ANALYSIS CONTEXT:
-  - Study: {{study_name}}
-  - Project scope: {{project_scope}} (AI-identified from context)
-  - Target barriers: {{target_barriers}} (AI-extracted from objectives)
-  - Research approach: {{research_approach}} (AI-suggested from scope)
-  - Stakeholders: {{stakeholder_groups}} (AI-identified from context)
+  STRUCTURED INPUT DATA:
+  - Project title: {{project_title}}
+  - Study context: {{study_context}}
+  - Target barriers: {{target_barriers}}
+  - User flows: {{user_flows}}
+  - Stakeholders: {{stakeholders}}
+  - Research approach: {{research_approach}}
+  - Prepared by: {{prepared_by}}
 
-  Create a comprehensive research brief that includes:
+  Using this structured input data, generate comprehensive content for:
 
-  1. **Study Context** - Clear overview of current challenges and research motivation
-  2. **Design Improvements** - Specific improvements this research will inform
-  3. **Trauma-Informed Considerations** - VA-relevant considerations for veteran experiences
-  4. **Research Hypotheses** - 2-3 testable hypotheses based on barriers and objectives
-  5. **Framing Questions** - 3-4 specific research questions for investigation
-  6. **Methodology Details** - Expanded details on research approach and methods
+  1. **Project Scope** - Broader project scope identification from {{project_title}} and {{study_context}}
+  2. **Design Improvements** - Specific improvements this research will inform based on {{target_barriers}} and {{user_flows}}
+  3. **Trauma-Informed Considerations** - VA-relevant considerations for veteran experiences based on {{study_context}} and {{target_barriers}}
+  4. **Research Hypotheses** - 2-3 testable hypotheses based on {{target_barriers}} and {{research_approach}}
+  5. **Framing Questions** - 3-4 specific research questions based on {{research_approach}}, {{target_barriers}}, and {{user_flows}}
+  6. **Methodology Details** - Expanded details on {{research_approach}} with specific implementation methods
 
   Requirements:
   - Follow VA research standards and trauma-informed design principles
@@ -157,16 +159,16 @@ prompt: |
   - Focus on actionable outcomes for design and product partners
   - Consider veteran experiences, mental health impacts, and equitable access
   - Avoid business jargon, em-dashes, and complex language
-  - Connect research to specific service improvements
+  - Connect research to specific service improvements based on the provided barriers and flows
 
   Write in clear, professional language that helps stakeholders understand research value and scope.
 
 notify:
   - role: research_team
     action: "Research brief created"
-    channel: "{{study_channel}}"
-    message: "📄 Research brief for {{study_name}} has been created and saved. Ready for stakeholder review and planning phase."
+    channel: "#research-planning"
+    message: "📄 Research brief for {{project_title}} has been created and saved. Ready for stakeholder review and planning phase."
   - role: researcher
     action: "Brief ready for review"
-    slack_tag: "{{researcher_contact}}"
+    slack_tag: "{{prepared_by}}"
     message: "Your research brief has been saved to the planning folder and is ready for stakeholder review."
