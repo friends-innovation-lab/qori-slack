@@ -1,21 +1,63 @@
 id: jobs_to_be_done
 name: extract_jobs_to_be_done
 label: 🎯 Jobs-To-Be-Done Extraction
-version: v1.6
+version: v1.7
 description: |
   Extract clear, actionable Jobs-To-Be-Done (JTBD) from civic tech research inputs, including quotes, notes, and observations. Each JTBD clarifies user goals, barriers, and their broader significance in public service and civic engagement contexts. Ideal for researchers, designers, stakeholders, and product teams translating insights into opportunities for improved service delivery and policy outcomes.
 
 author: CivicMind R&D
 created: 2025-06-26
-last_updated: 2025-06-27
+last_updated: 2025-07-02
+
 input_type: text
 input_processing: summarize_if_long
 temperature: 0.4
 precision_mode: concise | detailed
+
 input_variables:
-  - input_text
-  - max_jobs
-  - study_name
+  - input_text           # Research data, quotes, observations (REQUIRED)
+  - study_name           # Title of study (REQUIRED)  
+  - researcher_contact   # Lead researcher (REQUIRED)
+  - study_channel        # Where to post results (REQUIRED)
+  - study_link           # Link to study folder or documentation (OPTIONAL)
+  - team_members         # Who to notify/tag (OPTIONAL)
+
+# Auto-generated/computed variables
+auto_variables:
+  - max_jobs: |
+      # AI analyzes input complexity to determine optimal job count
+      # Default: 3, Range: 2-5 based on data patterns and user role diversity
+      analyze_job_complexity(input_text) || 3
+  - session_count: |
+      # AI estimates session count from input patterns
+      # Looks for interview markers, participant IDs, role indicators
+      estimate_session_count(input_text) || "multiple sessions"
+  - current_date: |
+      # Auto-generate current date for file naming
+      new Date().toISOString().split('T')[0]
+  - github_file_link: |
+      # Auto-generate based on study name and date
+      generate_github_link(study_name, current_date) || null
+
+# Output configuration
+output_options:
+  default_delivery: "slack_and_file"
+  slack_format: "structured"
+  file_location: "04-analysis/"
+  file_name: "jobs_to_be_done_{{study_name_slug}}_{{current_date}}.md"
+
+slack_output:
+  post_in_channel: true
+  create_thread: true
+  title_format: "🎯 Jobs-To-Be-Done Results"
+  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
+  interactive_elements:
+    - text: "🧠 Run Affinity Mapping"
+      action: "run_affinity_mapping"
+    - text: "👤 Create Personas"
+      action: "run_persona_generator"
+    - text: "🗂️ View in GitHub"
+      url: "{{github_file_link}}"
 
 output_use: |
   CivicMind Jobs-To-Be-Done (JTBD) extraction accelerates qualitative synthesis and quickly translates user insights into clear, structured, and actionable product or policy opportunities.
@@ -27,9 +69,11 @@ output_use: |
     - Facilitate quicker transitions from research insights to design or policy decisions without sacrificing rigor or clarity.
 
 output_notes: |
-  Write in clear, confident, plain language. Avoid technical jargon, filler words, or speculative statements. No emdashes.
-  Clearly connect “Why it Matters” to real-world civic or systemic outcomes.
-  Add line breaks and horizontal rules between jobs for readability in Slack.
+  This method returns up to {{max_jobs}} jobs based on data analysis. AI automatically determines optimal job count.
+  Session count ({{session_count}}) estimated from input patterns and role diversity.
+  Write in clear, confident, plain language. Avoid technical jargon, filler words, or speculative statements. No em-dashes.
+  Clearly connect "Why it Matters" to real-world civic or systemic outcomes.
+  Use Slack formatting: *text* for bold, > for quotes, spacing between blocks, and horizontal rules for clarity.
 
 persona_hinting: |
   Common civic personas include:
@@ -42,51 +86,21 @@ persona_hinting: |
     - Community organizer advocating for local policy change
     - Immigrant navigating citizenship processes
 
-output_format: |
-
-  👋 Hi team! Here are clearly structured JTBDs from our research, explicitly aligned with JTBD framework principles. Each job highlights a user's context, goal, measurable outcome, and broader civic significance.
-  Let’s use this thread to turn insights into actions—please reply with ideas, questions, or next steps.
-
-
-  ---
-  
-
-  📌 *JOBS-TO-BE-DONE: {{study_name | default("SUMMARY")}}*
-  
-
-  🛠️ **JOB: [Job Summary Title]**
-
-  [Job details here]
-
-  
-  ---
-
-
-  🛠️ **JOB: [Job Summary Title]** *(if applicable)*
-
-  [Job details here]
-
-
-  ---
-
-
-  🛠️ **JOB: [Job Summary Title]** *(if applicable)*
-
-  [Job details here]
-
-
-  ---
-
 prompt: |
   You are a senior civic tech strategist and qualitative researcher with extensive experience applying the Jobs-To-Be-Done (JTBD) framework to civic research.
 
-  Extract up to {{max_jobs | default(3)}} clearly differentiated Jobs-To-Be-Done (JTBD).
+  ANALYSIS CONTEXT:
+  - Study: {{study_name}}
+  - Estimated sessions: {{session_count}}
+  - Target jobs: {{max_jobs}} (AI-determined based on data complexity and role diversity)
+
+  Extract up to {{max_jobs}} clearly differentiated Jobs-To-Be-Done (JTBD).
   
   Each JTBD must explicitly include these core JTBD elements:
 
-  1. **Situation (Context)** – The precise scenario in which the job arises.
-  2. **Goal (Action)** – Exactly what the user is trying to achieve.
-  3. **Desired Outcome (Benefit)** – How success is defined or measured by the user, ideally in quantifiable terms.
+  1. *Situation (Context)* – The precise scenario in which the job arises.
+  2. *Goal (Action)* – Exactly what the user is trying to achieve.
+  3. *Desired Outcome (Benefit)* – How success is defined or measured by the user, ideally in quantifiable terms.
 
   Clearly recognize multiple user roles:
     - Primary users (directly performing the task)
@@ -101,28 +115,99 @@ prompt: |
     - Direct quotes illustrating user tensions or goals
     - Evidence ("Signal") and precise research sources
 
-  Format each JTBD clearly for Slack using bold headings, emojis, horizontal rules, and spacing.
+  Format each JTBD clearly for Slack using *bold headings*, emojis, horizontal rules, and spacing.
 
-  ⚠️ Return no more than {{max_jobs | default(3)}} JTBDs.
+  ⚠️ Return no more than {{max_jobs}} JTBDs.
 
-  **Example JTBD:**
+output_format: |
+  Hi team! 👋 I just extracted the key jobs users are trying to get done from our research data. Found some really interesting patterns around what people are actually trying to accomplish and what's getting in their way.
 
-  🛠️ **JOB: Simplifying Benefit Eligibility Checks**
+  {{team_members}} - would love your thoughts on these jobs, especially which ones feel most urgent or where you see quick wins we could tackle.
 
-  *JTBD Statement:* "When determining client eligibility, I want consistent, easy-to-follow guidelines so I can quickly ensure clients receive timely assistance."
+  📂 *Study:* {{study_name}}  
+  🔗 *Full details:* {{study_link}}
 
-  *Persona:* Rural benefits navigator  
-  *Role:* Support role  
-  *Situation (Context):* Regularly assisting multiple clients in a rural office  
-  *Goal (Action):* Quickly confirm client eligibility for aid  
-  *Obstacle:* Complex, inconsistent eligibility forms  
-  *Desired Outcome (Benefit):* Eligibility checks completed correctly within one client meeting  
-  *Emotional Dimension:* Feeling confident and efficient in job performance  
-  *Why it Matters:* Timely checks directly impact resource distribution and client wellbeing.
+  ---
 
-  > “I waste hours cross-checking rules, delaying support for people who urgently need it.”
+  *🎯 JOBS-TO-BE-DONE RESULTS*
 
-  *Tags:* simplicity, efficiency, navigation  
-  🔥 *Signal:* Mentioned by 7 navigators  
-  ✅ *Opportunity:* Unified eligibility checker tool  
-  📚 *Source:* Study 2, Session 5, Quote 8
+  🛠️ *JOB: "{{job_1_title}}"*
+
+  *JTBD Statement:* "{{job_1_statement}}"
+
+  *Persona:* {{job_1_persona}}  
+  *Role:* {{job_1_role}}  
+  *Situation (Context):* {{job_1_context}}  
+  *Goal (Action):* {{job_1_goal}}  
+  *Obstacle:* {{job_1_obstacle}}  
+  *Desired Outcome (Benefit):* {{job_1_outcome}}  
+  *Emotional Dimension:* {{job_1_emotion}}  
+  *Why it Matters:* {{job_1_significance}}
+
+  > "{{job_1_quote}}"
+
+  *Tags:* {{job_1_tags}}  
+  📊 *Signal:* {{job_1_signal}}  
+  💡 *Opportunity:* {{job_1_opportunity}}  
+  📚 *Source:* {{job_1_source}}
+
+  ---
+
+  🛠️ *JOB: "{{job_2_title}}"*
+
+  *JTBD Statement:* "{{job_2_statement}}"
+
+  *Persona:* {{job_2_persona}}  
+  *Role:* {{job_2_role}}  
+  *Situation (Context):* {{job_2_context}}  
+  *Goal (Action):* {{job_2_goal}}  
+  *Obstacle:* {{job_2_obstacle}}  
+  *Desired Outcome (Benefit):* {{job_2_outcome}}  
+  *Emotional Dimension:* {{job_2_emotion}}  
+  *Why it Matters:* {{job_2_significance}}
+
+  > "{{job_2_quote}}"
+
+  *Tags:* {{job_2_tags}}  
+  📊 *Signal:* {{job_2_signal}}  
+  💡 *Opportunity:* {{job_2_opportunity}}  
+  📚 *Source:* {{job_2_source}}
+
+  ---
+
+  🛠️ *JOB: "{{job_3_title}}"*
+
+  *JTBD Statement:* "{{job_3_statement}}"
+
+  *Persona:* {{job_3_persona}}  
+  *Role:* {{job_3_role}}  
+  *Situation (Context):* {{job_3_context}}  
+  *Goal (Action):* {{job_3_goal}}  
+  *Obstacle:* {{job_3_obstacle}}  
+  *Desired Outcome (Benefit):* {{job_3_outcome}}  
+  *Emotional Dimension:* {{job_3_emotion}}  
+  *Why it Matters:* {{job_3_significance}}
+
+  > "{{job_3_quote}}"
+
+  *Tags:* {{job_3_tags}}  
+  📊 *Signal:* {{job_3_signal}}  
+  💡 *Opportunity:* {{job_3_opportunity}}  
+  📚 *Source:* {{job_3_source}}
+
+  ---
+
+  *What do you think?* Reply in thread with your thoughts:
+  • Which jobs feel most critical to address?
+  • Any jobs that need more research or validation?
+  • How do these connect to our current roadmap?
+
+notify:
+  - role: team
+    action: "Jobs-To-Be-Done extraction completed"
+    channel: "{{study_channel}}"
+    message: "{{researcher_contact}} just extracted {{max_jobs}} key jobs from {{study_name}}. Check out the actionable opportunities!"
+  - role: researcher
+    action: "Analysis saved"
+    slack_tag: "{{researcher_contact}}"
+    message: "Your Jobs-To-Be-Done results have been posted to {{study_channel}} and saved to GitHub."
