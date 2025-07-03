@@ -1,84 +1,199 @@
 id: discussion_guide
+name: run_discussion_guide
 label: 💬 Discussion Guide
-description: Generate a VA-aligned conversation guide for moderated research sessions
+version: v2.0
+description: |
+  Generate VA-aligned conversation guides for moderated research sessions. Creates structured discussion guides with timing, tasks, warm-up questions, and observer instructions following VA research standards and best practices.
+
+author: CivicMind R&D
+created: 2025-06-26
+last_updated: 2025-07-02
+
 input_type: text
 input_processing: summarize_if_long
-prompt: |
-  You are drafting a VA-style conversation guide for a moderated usability or discovery research session. Use the markdown structure below, keeping all headings and checklists intact. Write in plain, professional language at a 10th-grade reading level. Avoid em-dashes and business jargon. You may populate sample tasks, warm-ups, or logistics using typical civic tech examples unless specific input is provided.
+temperature: 0.4
+precision_mode: concise | detailed
 
-  Input:
-  {{input}}
+input_variables:
+  - input_text           # Research objectives, tasks, participant info (REQUIRED)
+  - study_name           # Title of study (REQUIRED)
+  - researcher_contact   # Lead researcher (REQUIRED)
+  - study_channel        # Where to notify completion (REQUIRED)
+  - study_link           # Link to study folder or documentation (OPTIONAL)
+  - team_members         # Who to notify (OPTIONAL)
+
+# Auto-generated/computed variables
+auto_variables:
+  - session_type: |
+      # AI identifies session type from research objectives
+      # Usability Testing, Discovery Interview, Concept Validation, etc.
+      identify_session_type(input_text) || "Discovery Interview"
+  - session_duration: |
+      # AI estimates duration based on tasks and objectives
+      # 30/45/60/90 minutes based on complexity
+      estimate_session_duration(input_text) || "60 minutes"
+  - task_count: |
+      # AI determines number of tasks from objectives
+      # 2-5 tasks based on scope and duration
+      analyze_task_complexity(input_text) || 3
+  - participant_type: |
+      # AI identifies target participant from context
+      # Veteran, Caregiver, Service Member, etc.
+      identify_participant_type(input_text) || "Veteran"
+  - current_date: |
+      # Auto-generate current date for file naming
+      new Date().toISOString().split('T')[0]
+  - github_file_link: |
+      # Auto-generate based on study name and date
+      generate_github_link(study_name, current_date) || null
+
+# Output configuration
+output_options:
+  default_delivery: "file_only"
+  slack_format: "notification_only"
+  file_location: "01-planning/"
+  file_name: "discussion_guide_{{study_name_slug}}_{{current_date}}.md"
+
+slack_output:
+  post_in_channel: false
+  create_thread: false
+  send_notification: true
+  title_format: "💬 Discussion Guide Created"
+  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
+  interactive_elements:
+    - text: "📝 View Guide"
+      url: "{{github_file_link}}"
+    - text: "✅ Create Pre-Session Reminder"
+      action: "create_calendar_reminder"
+
+output_use: |
+  CivicMind Discussion Guide generator creates VA-compliant conversation guides for research sessions. Ensures consistent structure, timing, and coverage of key research objectives while maintaining VA standards for participant consent and ethics.
+
+  Use this method to:
+    - Generate structured conversation guides following VA standards
+    - Ensure consistent session moderation across researchers
+    - Include proper consent and recording protocols
+    - Plan timing and task flow for effective sessions
+    - Create observer instructions and logistics checklists
+
+output_notes: |
+  Session type ({{session_type}}) and duration ({{session_duration}}) determined from research objectives.
+  Task count ({{task_count}}) and participant type ({{participant_type}}) identified automatically.
+  Guide follows VA research standards including consent protocols and emergency procedures.
+  Includes pre-session logistics, warm-up questions, and post-session procedures.
+  Write in plain, professional language at 10th-grade reading level.
+  Use clear task instructions and timing guidance for moderators.
 
 output_format: |
-  # 💬 Conversation Guide – [Study Title]
+  # 💬 Discussion Guide – {{study_name}}
+
+  **Session Type:** {{session_type}}  
+  **Duration:** {{session_duration}}  
+  **Participant:** {{participant_type}}  
+  **Moderator:** {{researcher_contact}}
 
   ## 📋 Moderator Logistics
 
   ### 2–3 Days Before Session
-  - [ ] Schedule and confirm sessions
+  - [ ] Schedule and confirm sessions with {{participant_type}}
   - [ ] Review platform research checklist
-  - [ ] Complete project-specific prep tasks
+  - [ ] Complete project-specific prep tasks for {{study_name}}
+  - [ ] Send calendar invites to {{team_members}}
 
   ### Day of the Session
   - [ ] Mute Slack notifications
   - [ ] Check screen sharing permissions
-  - [ ] Send observer instructions
-  - [ ] Join feedback Slack channel
+  - [ ] Send observer instructions to {{team_members}}
+  - [ ] Join feedback Slack channel: {{study_channel}}
 
   ## 🗣️ Intro – 5 Minutes
 
   Welcome the participant. Cover:
-  - Session duration (e.g., ~60 mins)
+  - Session duration (~{{session_duration}})
   - That feedback is welcome and voluntary
   - Consent for screen/audio recording
   - Confirmation of observer presence
-  - If applicable, explain it’s a prototype
+  - If applicable, explain it's a prototype
   - Reconfirm VA clip usage consent
 
-  > **Prompt**: Are you okay with being recorded and having observers?
+  > **Prompt**: "Are you okay with being recorded and having observers? This helps our team learn from your experience."
 
   ## ❄️ Warm-Up Questions – 5 Minutes
-  - Tell me a bit about your experience using VA online services.
-  - Have you ever submitted a claim or benefit form online?
-  - What was the easiest or most frustrating part?
+  {{warmup_questions}}
 
   ## 🧪 Task Sections
 
-  ### First Task: [Task Name] – X Minutes
-  - [ ] Step 1
-  - [ ] Step 2
+  {{task_1_section}}
 
-  > **Things to Watch For:**
-  > - Does the participant understand X?
-  > - Do they notice Y?
+  {{task_2_section}}
 
-  ### Second Task: [Task Name] – X Minutes
-  - [ ] Step 1
-  - [ ] Step 2
+  {{task_3_section}}
 
-  > **Things to Watch For:**
-  > - Does the participant understand X?
-  > - Do they notice Y?
-
-  ### Third Task: [Task Name] – X Minutes
-  - [ ] Step 1
-  - [ ] Step 2
-
-  > **Things to Watch For:**
-  > - Do they get confused by Z?
-
-  ## 🎤 Post-Task Interview
-  - What did you find confusing or helpful?
-  - Was anything unexpected?
-  - Would you do anything differently if doing this again?
+  ## 🎤 Post-Task Interview – 10 Minutes
+  {{post_task_questions}}
 
   ## 🔁 Reconfirm Clip Consent
-  - Are you still comfortable with us using a short video clip (with de-identified info) to share with internal VA teams?
+  "Are you still comfortable with us using a short video clip (with de-identified info) to share with internal VA teams? This helps us communicate your feedback to decision-makers."
 
-  ## 🙏 Thank You & Closing
-  - Thank participant
-  - Mention follow-up/thank-you note
-  - Offer opt-in for future research
+  ## 🙏 Thank You & Closing – 5 Minutes
+  - Thank participant for their time and insights
+  - Mention follow-up/thank-you note timeline
+  - Offer opt-in for future research opportunities
+  - Provide contact information: {{researcher_contact}}
 
   ## 🚨 Emergency Exit Strategy
-  - [Paste or link to pre-defined emergency exit language]
+  {{emergency_procedures}}
+
+  ## 📝 Observer Instructions
+  **For {{team_members}}:**
+  - Take notes on participant reactions and quotes
+  - Note technical issues or usability problems
+  - Avoid interrupting unless technical emergency
+  - Upload notes using `/upload-notes` after session
+
+  ---
+  **Guide created:** {{current_date}}  
+  **Study details:** {{study_link}}
+
+prompt: |
+  You are a senior UX researcher experienced in creating VA-compliant discussion guides for government research sessions.
+
+  ANALYSIS CONTEXT:
+  - Study: {{study_name}}
+  - Session type: {{session_type}} (AI-identified from objectives)
+  - Duration: {{session_duration}} (AI-estimated from scope)
+  - Tasks: {{task_count}} (AI-determined from complexity)
+  - Participant: {{participant_type}} (AI-identified from context)
+
+  Create a comprehensive discussion guide that includes:
+
+  1. **Warm-up Questions** - 3-4 questions relevant to {{participant_type}} and the study context
+  2. **Task Sections** - {{task_count}} structured tasks with:
+     - Clear step-by-step instructions
+     - "Things to Watch For" observer notes
+     - Estimated timing for each task
+  3. **Post-Task Questions** - 4-5 questions to gather overall feedback
+  4. **Emergency Procedures** - VA-approved language for session issues
+
+  Requirements:
+  - Follow VA research standards and ethics guidelines
+  - Use plain, professional language at 10th-grade reading level
+  - Include proper consent and recording protocols
+  - Provide clear timing guidance for moderators
+  - Create actionable observer instructions
+  - Focus on {{participant_type}} experience and needs
+  - Avoid business jargon, em-dashes, and complex language
+
+  Structure tasks to build naturally from simple to complex, allowing participants to get comfortable before tackling main objectives.
+
+  Write in clear, directive language that guides moderators through smooth session flow while gathering valuable insights.
+
+notify:
+  - role: research_team
+    action: "Discussion guide created"
+    channel: "{{study_channel}}"
+    message: "💬 Discussion guide for {{study_name}} has been created and saved. {{session_duration}} {{session_type}} guide ready for {{participant_type}} sessions."
+  - role: researcher
+    action: "Guide ready for use"
+    slack_tag: "{{researcher_contact}}"
+    message: "Your discussion guide has been saved to the planning folder and is ready for sessions."
