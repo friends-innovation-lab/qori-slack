@@ -120,7 +120,7 @@ output_format: |
 
   *🧠 AFFINITY MAPPING RESULTS*
 
-  *THEME: "{{theme_1_label}}"*
+  *THEME 1: "{{theme_1_label}}"*
 
   > "{{theme_1_quote_1}}"
   > 
@@ -148,7 +148,7 @@ output_format: |
 
   ---
 
-  *THEME: "{{theme_2_label}}"*
+  *THEME 2: "{{theme_2_label}}"*
 
   [Repeat structure for additional themes]
 
