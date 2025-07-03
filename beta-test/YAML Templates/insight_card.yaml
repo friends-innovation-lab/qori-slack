@@ -1,47 +1,184 @@
 id: insight_card
+name: run_insight_card
 label: 💡 Insight Card
-description: Generate a structured insight card for research findings and action tracking
+version: v2.0
+description: |
+  Generate structured insight cards that automatically create GitHub issues for product backlog. Transform research findings into actionable development tasks with user stories, acceptance criteria, and research evidence. Perfect for research-to-development handoff.
+
+author: CivicMind R&D
+created: 2025-06-26
+last_updated: 2025-07-02
+
 input_type: text
 input_processing: summarize_if_long
-prompt: |
-  You are helping write a structured insight card for a research study. Use the markdown format below. Write clearly and concisely using plain, professional language. Use active voice, no em-dashes, and keep each section focused and brief.
+temperature: 0.4
+precision_mode: concise | detailed
 
-  Input (notes, quotes, or summary findings):
-  {{input}}
+input_variables:
+  - input_text           # Research findings, insights, analysis results (REQUIRED)
+  - study_name           # Title of study (REQUIRED)
+  - researcher_contact   # Lead researcher (REQUIRED)
+  - study_channel        # Where to post results (REQUIRED)
+  - study_link           # Link to study folder or documentation (OPTIONAL)
+  - team_members         # Who to notify/tag (OPTIONAL)
+
+# Auto-generated/computed variables
+auto_variables:
+  - priority_level: |
+      # AI determines priority from impact and urgency indicators
+      # High/Medium/Low based on user impact and implementation complexity
+      assess_insight_priority(input_text) || "Medium"
+  - effort_estimate: |
+      # AI estimates development effort from complexity signals
+      # S/M/L/XL based on technical complexity indicators
+      estimate_effort_level(input_text) || "M"
+  - affected_users: |
+      # AI identifies user groups impacted by this insight
+      identify_affected_users(input_text) || "Primary users"
+  - github_repo: |
+      # Auto-determine target repository from study context
+      determine_target_repo(study_name) || "product-backlog"
+  - current_date: |
+      # Auto-generate current date for issue creation
+      new Date().toISOString().split('T')[0]
+
+# Output configuration
+output_options:
+  default_delivery: "slack_and_github"
+  slack_format: "structured"
+  github_integration: true
+  github_repo: "{{github_repo}}"
+  issue_labels: ["research-insight", "{{priority_level}}", "{{effort_estimate}}", "needs-grooming"]
+
+slack_output:
+  post_in_channel: true
+  create_thread: true
+  title_format: "💡 Insight Card Created"
+  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
+  interactive_elements:
+    - text: "🎯 View GitHub Issue"
+      url: "{{github_issue_url}}"
+    - text: "📋 Add to Sprint Planning"
+      action: "add_to_sprint"
+    - text: "🗂️ View Research Context"
+      url: "{{study_link}}"
+
+github_output:
+  create_issue: true
+  assign_to_pm: true
+  add_to_project: "Product Backlog"
+  milestone: "Research Insights"
+
+output_use: |
+  CivicMind Insight Cards bridge the gap between research findings and product development. They automatically create GitHub issues with proper formatting, acceptance criteria, and research context for seamless research-to-development handoff.
+
+  Use this method to:
+    - Convert research insights into actionable development tasks
+    - Provide clear user stories and acceptance criteria for developers
+    - Maintain research context and evidence in the development process
+    - Enable product managers to prioritize research-driven features
+    - Track implementation of research recommendations
+
+output_notes: |
+  Priority level ({{priority_level}}) and effort estimate ({{effort_estimate}}) determined from impact analysis.
+  Affected users ({{affected_users}}) identified from research context.
+  GitHub issue created in {{github_repo}} with appropriate labels.
+  Write in user story format suitable for development teams.
+  Include clear acceptance criteria and research evidence.
+  Use plain language accessible to both researchers and developers.
 
 output_format: |
-  # 💡 Insight Card – [Project or Study Name]
+  Hi team! 👋 I just created an insight card from our research that's ready for the product backlog. This insight has been automatically converted into a GitHub issue with user story, acceptance criteria, and research evidence.
 
-  ## 🧭 Insight  
-  [Write a clear, concise insight statement here]
+  {{team_members}} - this is ready for sprint planning and prioritization. The GitHub issue has been created and tagged appropriately.
 
-  ---
-
-  ## 📝 Description  
-  [Describe what was observed or learned. Include context about when or where it occurred.]
+  📂 *Study:* {{study_name}}  
+  🔗 *Research details:* {{study_link}}  
+  🎯 *GitHub issue:* {{github_issue_url}}
 
   ---
 
-  ## 💬 Supporting Evidence  
-  > “[Quote from participant or artifact]” — PXX  
-  > “[Optional second quote]” — PXX
+  *💡 INSIGHT CARD*
+
+  *Issue Title:* {{insight_title}}
+
+  *User Story:*
+  As a {{user_type}}, I want {{user_goal}}, so that {{user_benefit}}.
+
+  *Research Context:*
+  {{insight_description}}
+
+  *Supporting Evidence:*
+  > "{{supporting_quote_1}}"
+  > "{{supporting_quote_2}}"
+
+  *Why This Matters:*
+  {{business_impact}}
+
+  *Acceptance Criteria:*
+  ✅ {{acceptance_criteria_1}}
+  ✅ {{acceptance_criteria_2}}
+  ✅ {{acceptance_criteria_3}}
+
+  *Implementation Notes:*
+  {{implementation_guidance}}
+
+  📊 *Priority:* {{priority_level}}  
+  ⏱️ *Effort:* {{effort_estimate}}  
+  👥 *Affects:* {{affected_users}}  
+  📚 *Source:* {{study_name}}
+
+  `Labels: research-insight, {{priority_level}}, {{effort_estimate}}, needs-grooming`
 
   ---
 
-  ## 🎯 Why It Matters  
-  [Explain the relevance of this insight. Why is it important for the product, experience, or user outcomes?]
+  *Next Steps:*
+  • Review and refine acceptance criteria during grooming
+  • Estimate story points in sprint planning
+  • Consider user research validation before implementation
 
-  ---
+prompt: |
+  You are a product researcher helping translate research insights into actionable development tasks. Create a structured insight card that will become a GitHub issue in the product backlog.
 
-  ## 🛠️ Recommendation  
-  [State what action or change is recommended based on this insight.]
+  ANALYSIS CONTEXT:
+  - Study: {{study_name}}
+  - Priority: {{priority_level}} (AI-assessed based on impact)
+  - Effort: {{effort_estimate}} (AI-estimated based on complexity)
+  - Affected users: {{affected_users}} (AI-identified from research)
 
-  ---
+  Transform the research finding into:
 
-  ## 🏷️ Tags  
-  `example-tag`, `another-tag`, `team-tag`, `theme-tag`
+  1. **Issue Title** - Clear, specific title for the GitHub issue
+  2. **User Story** - Standard "As a [user], I want [goal], so that [benefit]" format
+  3. **Research Context** - Brief description of what was observed/learned
+  4. **Supporting Evidence** - 2-3 compelling quotes from research
+  5. **Business Impact** - Why this insight matters for product/user outcomes
+  6. **Acceptance Criteria** - 3-5 specific, testable criteria for completion
+  7. **Implementation Notes** - Technical considerations or constraints
 
-  ---
+  Requirements:
+  - Write for developers and product managers
+  - Make acceptance criteria specific and testable
+  - Include research evidence to justify the work
+  - Use clear, actionable language
+  - Consider technical feasibility in recommendations
+  - Focus on user outcomes and business value
 
-  **Created by:** [Your Name]  
-  **Date:** [YYYY-MM-DD]
+  The insight should be implementable within 1-2 sprints and clearly tied to user needs demonstrated in the research.
+
+  Format for Slack readability using *text* for emphasis, > for quotes, ✅ for criteria, clear spacing.
+
+notify:
+  - role: product_manager
+    action: "New insight card created"
+    channel: "{{study_channel}}"
+    message: "New research insight ready for backlog: {{insight_title}}. GitHub issue created with acceptance criteria."
+  - role: researcher
+    action: "Insight card delivered"
+    slack_tag: "{{researcher_contact}}"
+    message: "Your insight card has been created as GitHub issue #{{issue_number}} and posted to {{study_channel}}."
+  - role: github
+    action: "Issue created"
+    repo: "{{github_repo}}"
+    assignee: "product-manager"
+    labels: ["research-insight", "{{priority_level}}", "{{effort_estimate}}", "needs-grooming"]
