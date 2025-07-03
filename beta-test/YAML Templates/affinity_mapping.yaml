@@ -20,9 +20,35 @@ precision_mode: concise | detailed
 
 input_variables:
   - input_text           # Quotes, observations, or notes to group
-  - max_themes           # Optional: Number of themes to return (default 5)
-  - study_name           # Optional: Title of study or Slack post context
-  - study_link           # Optional: Link to supporting doc, repo, Notion, etc.
+  - max_themes           # Optional: Number of themes to return (default 3)
+  - study_name           # Title of study
+  - study_link           # Link to study folder or documentation
+  - team_members         # Who to notify/tag
+  - researcher_contact   # Lead researcher
+  - study_channel        # Where to post results
+  - session_count        # Number of sessions analyzed
+  - current_date         # For file naming
+  - github_file_link     # Link to saved file
+
+# Output configuration
+output_options:
+  default_delivery: "slack_and_file"  # Post to Slack AND save to GitHub
+  slack_format: "structured"          # Use the formatted output with sections
+  file_location: "04-analysis/"
+  file_name: "affinity_mapping_{{study_name_slug}}_{{current_date}}.md"
+
+slack_output:
+  post_in_channel: true
+  create_thread: true
+  title_format: "🧠 Affinity Mapping Results"
+  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
+  interactive_elements:
+    - text: "💡 Generate Insight Cards"
+      action: "run_insight_card"
+    - text: "🎯 Jobs to be Done Analysis"
+      action: "run_jobs_to_be_done"
+    - text: "🗂️ View in GitHub"
+      url: "{{github_file_link}}"
 
 output_use: |
   CivicMind Affinity Mapping is specifically designed to accelerate qualitative synthesis without sacrificing rigor or transparency. By clearly showing thematic logic, emotional insights, and actionable opportunities, researchers can confidently adopt AI-driven analysis—moving quickly from raw data to informed, trusted, and actionable insights. 
@@ -46,75 +72,6 @@ persona_hinting: |
     - Small business owner
     - Young adult navigating benefits
 
-# Output schema:
-# - Theme label: string
-# - Quotes: [string[]]
-# - Insight: string
-# - Opportunity: optional string
-
-output_format: |
-
-👋 Hi team! Here are the early themes emerging from our latest round of research, structured clearly to help us quickly see patterns, emotional insights, and opportunities.
-
-As you review, consider:
-- Which themes resonate most strongly?
-- Are there any surprises or areas needing more clarity?
-- Do you see immediate opportunities we could act on?
-
-**Reply in this thread** with your thoughts, questions, or suggestions. Let’s turn these insights into action together!
-
-
-  ---
-
-  📌 *AFFINITY MAPPING: {{study_name | default("SUMMARY")}}*
-
-
-  🏷️ **THEME: [Label]**
-
-  > “Quote 1”
-  > “Quote 2”
-  > “Quote 3”
-
-  🧠 *Insight:* [Concise summary revealing user behaviors or tensions]  
-  ❤️ *Emotional Dimension:* [e.g., frustration, hope, confusion]  
-  🔥 *Signal:* [Strength or frequency of evidence, e.g., "Mentioned in 4 interviews"]  
-  ✅ *Opportunity:* [Suggested actionable responses]
-
-  **🤔 Questions for Discussion:**
-    - [List any unclear areas or open questions to prompt team discussion]
-
-  **🗂️ Related Themes (if applicable):**
-    - [Mention closely related or overlapping themes]
-
-  *(Optional Tags: clarity, efficiency, trust)*
-
- 
- ---
-
-
-  🏷️ **THEME: [Label]**
-
-  > “Quote 1”
-  > “Quote 2”
-  > “Quote 3”
-
-  🧠 *Insight:* ...  
-  ❤️ *Emotional Dimension:* ...  
-  🔥 *Signal:* ...  
-  ✅ *Opportunity:* ...
-
-  **🤔 Questions for Discussion:**  
-    - ...
-
-  **🗂️ Related Themes (if applicable):**  
-    - ...
-
-  *(Optional Tags: transparency, simplicity)*
-
-  
-  ---
-
-  
 prompt: |
   You are a senior qualitative researcher and synthesis facilitator experienced in affinity mapping. Your job is to cluster quotes, notes, or field observations into meaningful themes—as if physically grouping sticky notes on a wall.
 
@@ -134,19 +91,113 @@ prompt: |
 
   Return up to {{max_themes | default(3)}} clearly differentiated themes. Include fewer themes if data does not support clear distinctions. Clearly note if a theme has complexity or nuance.
 
-  Avoid generic labels (e.g., "communication"). Favor labels that express real, specific user tensions (e.g., "I don’t know who to trust," "This feels endless"). Write clearly, avoiding jargon, passive voice, or overly academic language. Use Slack markdown formatting clearly for team readability.
+  Avoid generic labels (e.g., "communication"). Favor labels that express real, specific user tensions (e.g., "I don't know who to trust," "This feels endless"). Write clearly, avoiding jargon, passive voice, or overly academic language. Use Slack markdown formatting clearly for team readability.
 
   **Example Theme:**
 
-  🏷️ **THEME: “Everything feels uncertain”**
+  🏷️ **THEME: "Everything feels uncertain"**
 
-  > “I'm not even sure if my paperwork was received.”
-  > “Nobody can tell me how long this will actually take.”
-  > “Every person I ask gives me a different answer.”
+  > "I'm not even sure if my paperwork was received."
+  > "Nobody can tell me how long this will actually take."
+  > "Every person I ask gives me a different answer."
 
   🧠 *Insight:* Users experience frustration and anxiety due to inconsistent and unclear timelines for benefit approval.
 
   ❤️ *Emotional Dimension:* Anxiety and frustration  
   🔥 *Signal:* Consistent across interviews with first-time applicants  
   ✅ *Opportunity:* Provide clear, standardized communication and real-time status updates to users awaiting benefit decisions.  
-  *Tags:* clarity, transparency, anxiety reduction *(optional but recommended)*
+  *Tags:* clarity, transparency, anxiety reduction
+
+output_format: |
+  I just finished grouping our research observations into themes using affinity mapping. Found some interesting patterns in the data from {{session_count}} sessions that I think you'll want to discuss.
+
+  {{team_members}} - would love your thoughts on these themes, especially where you see opportunities or have questions about the insights.
+
+  📂 **Study:** {{study_name}}  
+  🔗 **Full details:** {{study_link}}
+
+  ---
+
+  ## 🧠 Affinity Mapping Results
+
+  🏷️ **THEME: [Label]**
+
+  > "Quote 1"
+  > "Quote 2"
+  > "Quote 3"
+
+  🧠 *Insight:* [Concise summary revealing user behaviors or tensions]  
+  ❤️ *Emotional Dimension:* [e.g., frustration, hope, confusion]  
+  🔥 *Signal:* [Strength or frequency of evidence, e.g., "Mentioned in 4 interviews"]  
+  ✅ *Opportunity:* [Suggested actionable responses]
+
+  **🤔 Questions for Discussion:**
+  - [List any unclear areas or open questions to prompt team discussion]
+
+  **🗂️ Related Themes (if applicable):**
+  - [Mention closely related or overlapping themes]
+
+  *(Tags: [relevant tags for filtering/search])*
+
+  ---
+
+  🏷️ **THEME: [Label]**
+
+  > "Quote 1"
+  > "Quote 2"
+  > "Quote 3"
+
+  🧠 *Insight:* [Concise summary revealing user behaviors or tensions]  
+  ❤️ *Emotional Dimension:* [e.g., frustration, hope, confusion]  
+  🔥 *Signal:* [Strength or frequency of evidence]  
+  ✅ *Opportunity:* [Suggested actionable responses]
+
+  **🤔 Questions for Discussion:**
+  - [List any unclear areas or open questions]
+
+  **🗂️ Related Themes (if applicable):**
+  - [Mention closely related or overlapping themes]
+
+  *(Tags: [relevant tags for filtering/search])*
+
+  ---
+
+  🏷️ **THEME: [Label]**
+
+  > "Quote 1"
+  > "Quote 2"
+  > "Quote 3"
+
+  🧠 *Insight:* [Concise summary revealing user behaviors or tensions]  
+  ❤️ *Emotional Dimension:* [e.g., frustration, hope, confusion]  
+  🔥 *Signal:* [Strength or frequency of evidence]  
+  ✅ *Opportunity:* [Suggested actionable responses]
+
+  **🤔 Questions for Discussion:**
+  - [List any unclear areas or open questions]
+
+  **🗂️ Related Themes (if applicable):**
+  - [Mention closely related or overlapping themes]
+
+  *(Tags: [relevant tags for filtering/search])*
+
+  ---
+
+  ## 💬 Next Steps
+
+  **What do you think?** Reply in thread with:
+  - Which themes feel most actionable?
+  - Any themes that need more investigation?
+  - Connections you're seeing to other research?
+
+  **Ready for deeper analysis?** Use the buttons below to dive into specific frameworks:
+
+notify:
+  - role: team
+    action: "Affinity mapping completed"
+    channel: "{{study_channel}}"
+    message: "{{researcher_contact}} just completed affinity mapping for {{study_name}}. {{session_count}} sessions clustered into key themes - check it out!"
+  - role: researcher
+    action: "Analysis saved"
+    slack_tag: "{{researcher_contact}}"
+    message: "Your affinity mapping results have been posted to {{study_channel}} and saved to GitHub."
