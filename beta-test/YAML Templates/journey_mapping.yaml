@@ -1,88 +1,237 @@
 id: journey_mapping
+name: run_journey_mapping
 label: 🧭 Journey Mapping
-version: v1.1
+version: v1.2
 description: |
   Turn raw user research into a clear, step-by-step journey map.  
-  Map up to 7 key stages of the user’s experience—capturing actions, thoughts, emotions, opportunities, and ownership—to inform design, policy, and service improvements.
+  Map up to 7 key stages of the user's experience—capturing actions, thoughts, emotions, opportunities, and ownership—to inform design, policy, and service improvements.
+
 author: CivicMind R&D
 created: 2025-06-30
-last_updated: 2025-06-30
+last_updated: 2025-07-02
 
 input_type: text
 input_processing: summarize_if_long
+temperature: 0.4
 precision_mode: concise | detailed
+
 input_variables:
-  - input_text       # Raw notes, quotes, transcripts
-  - persona_name     # (Optional) To anchor the journey to a specific user
-  - max_steps        # (Optional) Default 5
+  - input_text           # Raw notes, quotes, transcripts (REQUIRED)
+  - study_name           # Title of study (REQUIRED)
+  - researcher_contact   # Lead researcher (REQUIRED)
+  - study_channel        # Where to post results (REQUIRED)
+  - study_link           # Link to study folder or documentation (OPTIONAL)
+  - team_members         # Who to notify/tag (OPTIONAL)
+
+# Auto-generated/computed variables
+auto_variables:
+  - persona_name: |
+      # AI analyzes input to identify primary user type/persona
+      # Extracts from quotes or creates representative name
+      extract_primary_persona(input_text) || "Our User"
+  - max_steps: |
+      # AI determines optimal journey length based on complexity
+      # Default: 5, Range: 3-7 based on process complexity
+      analyze_journey_complexity(input_text) || 5
+  - session_count: |
+      # AI estimates session count from input patterns
+      estimate_session_count(input_text) || "multiple sessions"
+  - current_date: |
+      # Auto-generate current date for file naming
+      new Date().toISOString().split('T')[0]
+  - github_file_link: |
+      # Auto-generate based on study name and date
+      generate_github_link(study_name, current_date) || null
+
+# Output configuration
+output_options:
+  default_delivery: "slack_and_file"
+  slack_format: "structured"
+  file_location: "04-analysis/"
+  file_name: "journey_mapping_{{study_name_slug}}_{{current_date}}.md"
+
+slack_output:
+  post_in_channel: true
+  create_thread: true
+  title_format: "🧭 Journey Mapping Results"
+  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
+  interactive_elements:
+    - text: "🧠 Run Affinity Mapping"
+      action: "run_affinity_mapping"
+    - text: "👤 Create Personas"
+      action: "run_persona_generator"
+    - text: "🗂️ View in GitHub"
+      url: "{{github_file_link}}"
 
 output_use: |
   CivicMind Journey Mapping accelerates service-blueprint creation by producing a concise, actionable map directly in Slack.  
   Use this to:
-    - Visualize the user’s end-to-end experience
+    - Visualize the user's end-to-end experience
     - Identify friction points and high-value opportunities
     - Assign clear ownership for each stage
     - Foster team discussion and rapid iteration
 
 output_notes: |
-  - Map **one journey** at a time to maintain focus.
-  - Ground each step in actual research—cite sources or quotes.
-  - Use plain language; avoid jargon and passive voice.
-  - Invite feedback: include questions or ambiguity flags.
-  - Format for Slack readability (emojis, bold headings, spacing).
+  This method maps {{max_steps}} journey steps based on data analysis. AI automatically determines optimal step count.
+  Persona ({{persona_name}}) identified from input patterns.
+  Map one journey at a time to maintain focus.
+  Ground each step in actual research—cite sources or quotes.
+  Use plain language; avoid jargon and passive voice.
+  Format for Slack readability using *text* for bold, > for quotes, spacing between steps.
 
 output_format: |
-  👋 Hi team! Here’s a journey map for **{{persona_name | default("Our User")}}**, broken into **{{max_steps | default(5)}}** stages.  
-  Feel free to reply with questions, refinements, or quick reactions.
+  Hi team! 👋 I just mapped out the user journey for *{{persona_name}}* based on our research. Found {{max_steps}} key stages that show where users get stuck and where we have the biggest opportunities to improve their experience.
+
+  {{team_members}} - would love your thoughts on this journey, especially which stages feel most critical or where you see quick wins.
+
+  📂 *Study:* {{study_name}}  
+  🔗 *Full details:* {{study_link}}
 
   ---
 
-  1️⃣ **Step 1: [Label]**  
-  - **Action:** [What the user does]  
-  - **Thought:** [What they might be thinking]  
-  - ❤️ **Emotion:** [Single-word tag like confusion, relief, optimism]  
-  - 🔍 **Source:** [e.g. Study 2, Interview #4]  
-  - 🔥 **Signal:** [e.g. “Mentioned by 6/8 participants”]  
-  - 💡 **Opportunities/Insights:**  
-      • Opportunity 1  
-      • Opportunity 2  
-  - 👤 **Owner:** [Team or role]  
-  **🤔 Questions for Discussion:**  
-      • [Optional: any ambiguity or next-step queries]
+  *🧭 USER JOURNEY: {{persona_name}}*
+
+  1️⃣ *STEP 1: {{step_1_label}}*
+  
+  *Action:* {{step_1_action}}
+  *Thought:* {{step_1_thought}}
+  ❤️ *Emotion:* {{step_1_emotion}}
+  🔍 *Source:* {{step_1_source}}
+  📊 *Signal:* {{step_1_signal}}
+  
+  *Opportunities:*
+  • {{step_1_opportunity_1}}
+  • {{step_1_opportunity_2}}
+  
+  👤 *Owner:* {{step_1_owner}}
+  
+  *Questions for Discussion:*
+  • {{step_1_question_1}}
+  • {{step_1_question_2}}
 
   ---
 
-  2️⃣ **Step 2: [Label]**  
-  … *(repeat structure)*
+  2️⃣ *STEP 2: {{step_2_label}}*
+  
+  *Action:* {{step_2_action}}
+  *Thought:* {{step_2_thought}}
+  ❤️ *Emotion:* {{step_2_emotion}}
+  🔍 *Source:* {{step_2_source}}
+  📊 *Signal:* {{step_2_signal}}
+  
+  *Opportunities:*
+  • {{step_2_opportunity_1}}
+  • {{step_2_opportunity_2}}
+  
+  👤 *Owner:* {{step_2_owner}}
+  
+  *Questions for Discussion:*
+  • {{step_2_question_1}}
+  • {{step_2_question_2}}
 
   ---
 
-  {{#if_less_than_steps}}
-  *(Include fewer than {{max_steps}} steps if research supports tighter focus.)*
-  {{/if_less_than_steps}}
+  3️⃣ *STEP 3: {{step_3_label}}*
+  
+  *Action:* {{step_3_action}}
+  *Thought:* {{step_3_thought}}
+  ❤️ *Emotion:* {{step_3_emotion}}
+  🔍 *Source:* {{step_3_source}}
+  📊 *Signal:* {{step_3_signal}}
+  
+  *Opportunities:*
+  • {{step_3_opportunity_1}}
+  • {{step_3_opportunity_2}}
+  
+  👤 *Owner:* {{step_3_owner}}
+  
+  *Questions for Discussion:*
+  • {{step_3_question_1}}
+  • {{step_3_question_2}}
+
+  ---
+
+  4️⃣ *STEP 4: {{step_4_label}}*
+  
+  *Action:* {{step_4_action}}
+  *Thought:* {{step_4_thought}}
+  ❤️ *Emotion:* {{step_4_emotion}}
+  🔍 *Source:* {{step_4_source}}
+  📊 *Signal:* {{step_4_signal}}
+  
+  *Opportunities:*
+  • {{step_4_opportunity_1}}
+  • {{step_4_opportunity_2}}
+  
+  👤 *Owner:* {{step_4_owner}}
+  
+  *Questions for Discussion:*
+  • {{step_4_question_1}}
+  • {{step_4_question_2}}
+
+  ---
+
+  5️⃣ *STEP 5: {{step_5_label}}*
+  
+  *Action:* {{step_5_action}}
+  *Thought:* {{step_5_thought}}
+  ❤️ *Emotion:* {{step_5_emotion}}
+  🔍 *Source:* {{step_5_source}}
+  📊 *Signal:* {{step_5_signal}}
+  
+  *Opportunities:*
+  • {{step_5_opportunity_1}}
+  • {{step_5_opportunity_2}}
+  
+  👤 *Owner:* {{step_5_owner}}
+  
+  *Questions for Discussion:*
+  • {{step_5_question_1}}
+  • {{step_5_question_2}}
+
+  ---
+
+  *What do you think?* Reply in thread with your thoughts:
+  • Which steps feel like the biggest pain points?
+  • Any opportunities that could be quick wins?
+  • Who should own the next steps for improvements?
 
 prompt: |
   You are a senior human-centered design researcher and service designer with experience turning qualitative research into structured journey maps.
 
-  Based on the input provided — which may include notes, quotes, field transcripts, or synthesis — identify and map the user’s journey as a series of key experience stages.
+  ANALYSIS CONTEXT:
+  - Study: {{study_name}}
+  - Primary user: {{persona_name}} (AI-identified from data)
+  - Journey length: {{max_steps}} steps (AI-determined based on complexity)
+  - Estimated sessions: {{session_count}}
 
-  For each stage, generate the following:
-    - A short, descriptive **Step Label** (2–5 words max)
-    - A clear **Action** the user is taking
-    - A realistic **Thought** the user might be having
-    - A single-word **Emotion** that best reflects the experience
-    - A brief **Source** reference (e.g., “Study 2, Session 4”)
-    - A **Signal** (e.g., “Repeated by 4 participants” or “Observed in multiple notes”)
-    - One or more actionable **Opportunities or Insights** based on the step
-    - A suggested **Owner** (product, content, research, policy, etc.)
-    - (Optional) **Questions for Discussion** to invite team input or flag ambiguity
+  Based on the input provided — which may include notes, quotes, field transcripts, or synthesis — identify and map the user's journey as {{max_steps}} key experience stages.
 
-  ⚠️ Do not invent steps to meet a quota. Only include stages that are clearly supported by the research.
+  For each stage, generate:
+    - A short, descriptive *Step Label* (2–5 words max)
+    - A clear *Action* the user is taking
+    - A realistic *Thought* the user might be having
+    - A single-word *Emotion* that best reflects the experience
+    - A brief *Source* reference (e.g., "Study 2, Session 4")
+    - A *Signal* (e.g., "Repeated by 4 participants" or "Observed in multiple interviews")
+    - Two actionable *Opportunities* based on the step
+    - A suggested *Owner* (product, content, research, policy, etc.)
+    - Two *Questions for Discussion* to invite team input or flag ambiguity
 
-  🧠 Think like a synthesis lead presenting to a product team: clear, specific, grounded in research.
+  ⚠️ Do not invent steps to meet a quota. Only include stages that are clearly supported by the research. If data supports fewer than {{max_steps}} steps, return fewer.
 
-  📝 Write in plain, confident language — no jargon, filler, or speculation. Use active voice and concrete phrasing.
+  Think like a synthesis lead presenting to a product team: clear, specific, grounded in research.
 
-  🧵 Format output using Slack-friendly markdown:
-    - Emojis and bold headers
-    - Clear line breaks and spacing between each step
+  Write in plain, confident language — no jargon, filler, or speculation. Use active voice and concrete phrasing.
+
+  Format output using Slack-friendly formatting: *text* for bold, > for quotes, clear line breaks and spacing between each step.
+
+notify:
+  - role: team
+    action: "Journey mapping completed"
+    channel: "{{study_channel}}"
+    message: "{{researcher_contact}} just mapped the user journey for {{persona_name}} with {{max_steps}} key stages. Check out the opportunities!"
+  - role: researcher
+    action: "Analysis saved"
+    slack_tag: "{{researcher_contact}}"
+    message: "Your journey mapping results have been posted to {{study_channel}} and saved to GitHub."
