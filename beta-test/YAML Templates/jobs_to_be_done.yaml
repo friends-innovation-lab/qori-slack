@@ -116,7 +116,7 @@ prompt: |
 
   **Example JTBD:**
 
-  🛠️ *JOB: "Getting Reliable Eligibility Information"*
+  🛠️ *JOB 1: "Getting Reliable Eligibility Information"*
 
   *When* I'm helping a client determine their benefit eligibility, *I want to* access consistent, up-to-date guidelines, *so I can* give them accurate information without multiple calls or delays.
 
@@ -147,7 +147,7 @@ output_format: |
 
   *🎯 JOBS-TO-BE-DONE RESULTS*
 
-  🛠️ *JOB: "{{job_1_title}}"*
+  🛠️ *JOB 1: "{{job_1_title}}"*
 
   *When* {{job_1_context}}, *I want to* {{job_1_goal}}, *so I can* {{job_1_outcome}}.
 
@@ -168,7 +168,7 @@ output_format: |
 
   ---
 
-  🛠️ *JOB: "{{job_2_title}}"*
+  🛠️ *JOB 2: "{{job_2_title}}"*
 
   *When* {{job_2_context}}, *I want to* {{job_2_goal}}, *so I can* {{job_2_outcome}}.
 
@@ -189,7 +189,7 @@ output_format: |
 
   ---
 
-  🛠️ *JOB: "{{job_3_title}}"*
+  🛠️ *JOB 3: "{{job_3_title}}"*
 
   *When* {{job_3_context}}, *I want to* {{job_3_goal}}, *so I can* {{job_3_outcome}}.
 
@@ -211,9 +211,9 @@ output_format: |
   ---
 
   *What do you think?* Reply in thread with your thoughts:
-  • Which jobs feel most critical to address?
+  • Which jobs feel most critical to address first?
   • Any jobs that need more research or validation?
-  • How do these connect to our current roadmap?
+  • How do these connect to our current roadmap priorities?
 
 notify:
   - role: team
