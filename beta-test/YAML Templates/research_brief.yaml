@@ -1,75 +1,100 @@
 id: research_brief
+name: run_research_brief
 label: 📄 Research Brief
-description: Generate a scoping research brief aligned with VA's approved format
+version: v2.0
+description: |
+  Generate VA-aligned research briefs for scoping studies with design and product partners. Creates structured research briefs with objectives, hypotheses, and methodology following VA research standards and government service considerations.
+
+author: CivicMind R&D
+created: 2025-06-26
+last_updated: 2025-07-02
+
 input_type: text
 input_processing: summarize_if_long
+temperature: 0.4
+precision_mode: concise | detailed
 
-# Structured inputs from Slack modal
-inputs:
-  project_title: "{{project_title}}"
-  study_context: "{{study_context}}"
-  target_barriers: "{{target_barriers}}"
-  user_flows: "{{user_flows}}"
-  stakeholders: "{{stakeholders}}"
-  research_approach: "{{research_approach}}"
-  prepared_by: "{{prepared_by}}"
-  current_date: "{{current_date}}"
-  user_input: "{{input}}"
+input_variables:
+  - input_text           # Research context, objectives, barriers to investigate (REQUIRED)
+  - study_name           # Title of study (REQUIRED)
+  - researcher_contact   # Lead researcher (REQUIRED)
+  - study_channel        # Where to notify completion (REQUIRED)
+  - study_link           # Link to study folder or documentation (OPTIONAL)
+  - team_members         # Who to notify (OPTIONAL)
 
-prompt: |
-  You are drafting a VA-style research brief. Use the structure below and complete each section in plain, accessible language at a 10th-grade reading level. Write clearly and avoid em-dashes, business jargon, or vague phrases. This document is used to scope research with design and product partners, so keep it focused and actionable.
+# Auto-generated/computed variables
+auto_variables:
+  - project_scope: |
+      # AI identifies project scope from context
+      # Product Area, Service Area, Feature Focus
+      identify_project_scope(input_text) || "Digital Services"
+  - target_barriers: |
+      # AI extracts key barriers from research context
+      extract_barriers(input_text) || "User experience challenges"
+  - user_flows: |
+      # AI identifies user flows to evaluate
+      identify_user_flows(input_text) || "Primary service flow"
+  - research_approach: |
+      # AI suggests research methods from objectives
+      suggest_research_methods(input_text) || "Qualitative interviews and usability testing"
+  - stakeholder_groups: |
+      # AI identifies relevant stakeholders
+      identify_stakeholders(input_text) || "Product team, Design team"
+  - current_date: |
+      # Auto-generate current date
+      new Date().toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})
+  - github_file_link: |
+      # Auto-generate based on study name and date
+      generate_github_link(study_name, current_date) || null
 
-  Use the provided inputs to generate realistic, specific content for each section:
+# Output configuration
+output_options:
+  default_delivery: "file_only"
+  slack_format: "notification_only"
+  file_location: "01-planning/"
+  file_name: "research_brief_{{study_name_slug}}_{{current_date}}.md"
 
-  **Project Details:**
-  - Title/Focus: {{project_title}}
-  - Study Context: {{study_context}}
-  - Target Barriers: {{target_barriers}}
-  - User Flows to Evaluate: {{user_flows}}
-  - Stakeholders Consulted: {{stakeholders}}
-  - Research Approach: {{research_approach}}
-  - Prepared by: {{prepared_by}}
-  - Date: {{current_date}}
+slack_output:
+  post_in_channel: false
+  create_thread: false
+  send_notification: true
+  title_format: "📄 Research Brief Created"
+  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
+  interactive_elements:
+    - text: "📄 View Brief"
+      url: "{{github_file_link}}"
+    - text: "🧭 Create Research Plan"
+      action: "run_research_plan"
 
-  **Content Generation Guidelines:**
-  
-  **Overview Section:**
-  - Start with the study context provided
-  - Expand with 2-3 additional sentences about the current challenges
-  - Explain what motivated this research need
-  - Keep it concise but informative (3-4 sentences total)
+output_use: |
+  CivicMind Research Brief generator creates VA-compliant research scoping documents for stakeholder alignment. Ensures consistent structure and coverage of key research elements while supporting trauma-informed design principles.
 
-  **Objectives Section:**
-  - Use the target barriers and user flows provided as foundation
-  - For "Identify Barriers": Expand on the target barriers with specific details
-  - For "Evaluate Navigation Experience": Detail the user flows and touchpoints
-  - For "Surface Insights": Generate specific improvements this research will inform
-  - For "Trauma-Informed Design": Include relevant VA/government service considerations
+  Use this method to:
+    - Generate structured research briefs following VA standards
+    - Align stakeholders on research objectives and scope
+    - Document research hypotheses and framing questions
+    - Plan research approach and methodology
+    - Support trauma-informed service design considerations
 
-  **Initial Scoping Materials:**
-  - Use provided stakeholders list
-  - Generate 2-3 realistic hypotheses based on study context and target barriers
-  - Create 3-4 specific framing questions based on research approach and objectives
-  - Use the research approach provided and expand with specific methods
-
-  **Additional Context:**
-  If additional context is provided here, integrate it into relevant sections:
-  {{user_input}}
-
-  Use Markdown formatting throughout. Keep language clear, specific, and actionable for design and product partners.
+output_notes: |
+  Project scope ({{project_scope}}) and barriers ({{target_barriers}}) identified from research context.
+  Research approach ({{research_approach}}) and stakeholders ({{stakeholder_groups}}) determined automatically.
+  Brief follows VA research standards including trauma-informed design considerations.
+  Write in plain, accessible language at 10th-grade reading level.
+  Keep focused and actionable for design and product partners.
 
 output_format: |
-  # 📄 Research Brief – {{project_title}}
+  # 📄 Research Brief – {{study_name}}
+
+  **📦 Project Area:** {{project_scope}}  
+  **👩🏽‍🔬 Prepared by:** {{researcher_contact}}  
+  **🗓️ Date:** {{current_date}}
 
   ---
 
   ## Overview
 
   {{study_context}}
-
-  [Generate 2-3 additional sentences expanding on the current challenges and what motivated this research need, based on the study context and target barriers provided.]
-
-  ---
 
   ## Objectives
 
@@ -80,36 +105,68 @@ output_format: |
      {{user_flows}}
 
   3. **Surface Insights for Design & Content Improvements:**  
-     [Generate specific improvements this research will inform, based on the research approach, user flows, and target barriers. Focus on actionable outcomes for design and product teams.]
+     {{design_improvements}}
 
   4. **Support Trauma-Informed Service Design:**  
-     [Generate VA-relevant trauma-informed considerations based on the project context, target users, and service area. Consider veteran experiences, mental health impacts, and equitable access.]
+     {{trauma_informed_considerations}}
 
   ---
 
   ## Initial Scoping Materials
 
   - **Stakeholders Consulted:**  
-    {{stakeholders}}
+    {{stakeholder_groups}}
 
   - **Initial Hypotheses:**  
-    [Generate 2-3 realistic, testable hypotheses based on the study context, target barriers, and user flows. Format as bullet points with specific, measurable predictions.]
+    {{research_hypotheses}}
 
   - **Framing Questions:**  
-    [Generate 3-4 specific research questions based on the research approach, objectives, and target barriers. Questions should be open-ended and designed to uncover insights about user behavior, pain points, and opportunities.]
+    {{framing_questions}}
 
   - **Research Approach Summary:**  
     {{research_approach}}
     
-    [Expand with specific methods, timeline considerations, and participant considerations based on the approach provided.]
+    {{methodology_details}}
 
   ---
 
-  **Prepared by:**  
-  {{prepared_by}}  
-  **Date:** {{current_date}}
+  **Study Details:** {{study_link}}
+
+prompt: |
+  You are a senior UX researcher experienced in creating VA-compliant research briefs for government service design.
+
+  ANALYSIS CONTEXT:
+  - Study: {{study_name}}
+  - Project scope: {{project_scope}} (AI-identified from context)
+  - Target barriers: {{target_barriers}} (AI-extracted from objectives)
+  - Research approach: {{research_approach}} (AI-suggested from scope)
+  - Stakeholders: {{stakeholder_groups}} (AI-identified from context)
+
+  Create a comprehensive research brief that includes:
+
+  1. **Study Context** - Clear overview of current challenges and research motivation
+  2. **Design Improvements** - Specific improvements this research will inform
+  3. **Trauma-Informed Considerations** - VA-relevant considerations for veteran experiences
+  4. **Research Hypotheses** - 2-3 testable hypotheses based on barriers and objectives
+  5. **Framing Questions** - 3-4 specific research questions for investigation
+  6. **Methodology Details** - Expanded details on research approach and methods
+
+  Requirements:
+  - Follow VA research standards and trauma-informed design principles
+  - Use plain, accessible language at 10th-grade reading level
+  - Focus on actionable outcomes for design and product partners
+  - Consider veteran experiences, mental health impacts, and equitable access
+  - Avoid business jargon, em-dashes, and complex language
+  - Connect research to specific service improvements
+
+  Write in clear, professional language that helps stakeholders understand research value and scope.
 
 notify:
-  - role: stakeholder
-    action: "Please review the research brief"
-    slack_tag: "@{{prepared_by}}"
+  - role: research_team
+    action: "Research brief created"
+    channel: "{{study_channel}}"
+    message: "📄 Research brief for {{study_name}} has been created and saved. Ready for stakeholder review and planning phase."
+  - role: researcher
+    action: "Brief ready for review"
+    slack_tag: "{{researcher_contact}}"
+    message: "Your research brief has been saved to the planning folder and is ready for stakeholder review."
