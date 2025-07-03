@@ -2,7 +2,7 @@ id: affinity_mapping
 name: run_affinity_mapping
 
 label: 🧠 Affinity Mapping
-version: "v1.5"
+version: "v1.6"
 
 description: >
   Group qualitative quotes, notes, or observations into clearly labeled themes using AI.
@@ -11,7 +11,7 @@ description: >
 
 author: CivicMind R&D  
 created: 2025-06-27  
-last_updated: 2025-06-27
+last_updated: 2025-07-02
 
 input_type: text
 input_processing: summarize_if_long
@@ -19,16 +19,29 @@ temperature: 0.4
 precision_mode: concise | detailed
 
 input_variables:
-  - input_text           # Quotes, observations, or notes to group
-  - max_themes           # Optional: Number of themes to return (default 3)
-  - study_name           # Title of study
-  - study_link           # Link to study folder or documentation
-  - team_members         # Who to notify/tag
-  - researcher_contact   # Lead researcher
-  - study_channel        # Where to post results
-  - session_count        # Number of sessions analyzed
-  - current_date         # For file naming
-  - github_file_link     # Link to saved file
+  - input_text           # Quotes, observations, or notes to group (REQUIRED)
+  - study_name           # Title of study (REQUIRED)
+  - researcher_contact   # Lead researcher (REQUIRED)
+  - study_channel        # Where to post results (REQUIRED)
+  - study_link           # Link to study folder or documentation (OPTIONAL)
+  - team_members         # Who to notify/tag (OPTIONAL)
+
+# Auto-generated/computed variables
+auto_variables:
+  - max_themes: |
+      # AI analyzes input_text length and complexity to suggest optimal theme count
+      # Default: 3, Range: 2-7 based on data volume
+      analyze_theme_count(input_text) || 3
+  - session_count: |
+      # AI estimates session count from input patterns
+      # Looks for interview markers, participant IDs, session breaks
+      estimate_session_count(input_text) || "multiple sessions"
+  - current_date: |
+      # Auto-generate current date for file naming
+      new Date().toISOString().split('T')[0]
+  - github_file_link: |
+      # Auto-generate based on study name and date
+      generate_github_link(study_name, current_date) || null
 
 # Output configuration
 output_options:
@@ -59,10 +72,11 @@ output_use: |
     - Facilitate open discussion, continuous refinement, and researcher confidence in AI-supported insights.
 
 output_notes: |
-  This method returns up to 3 themes by default. Researchers may specify a higher number (e.g. max_themes: 5)
-  if the data supports it. Avoid generic or vague labels. Only include a theme if it is distinct and well-supported.
+  This method returns up to {{max_themes}} themes based on data analysis. AI automatically determines optimal theme count.
+  Session count ({{session_count}}) estimated from input patterns. 
+  Avoid generic or vague labels. Only include a theme if it is distinct and well-supported.
   Think like a synthesis lead preparing a readout: each theme should be actionable, grounded in quotes, and clear to stakeholders.
-  Use Slack formatting: bold section titles, blockquotes for quotes, spacing between blocks, and horizontal rules for clarity.
+  Use Slack formatting: *text* for bold, > for quotes, spacing between blocks, and horizontal rules for clarity.
 
 persona_hinting: |
   Common personas include:
@@ -75,41 +89,27 @@ persona_hinting: |
 prompt: |
   You are a senior qualitative researcher and synthesis facilitator experienced in affinity mapping. Your job is to cluster quotes, notes, or field observations into meaningful themes—as if physically grouping sticky notes on a wall.
 
+  ANALYSIS CONTEXT:
+  - Study: {{study_name}}
+  - Estimated sessions: {{session_count}}
+  - Target themes: {{max_themes}} (AI-determined based on data complexity)
+
   Each theme must:
     - Have a clear, plain-language label capturing the central tension, need, or idea from the quotes.
     - Include at least 3 supporting quotes clearly demonstrating thematic coherence.
     - Briefly explain why these quotes naturally cluster together, explicitly highlighting shared meanings or tensions.
-    - Provide one 🧠 *Insight*: a short, declarative summary revealing user behavior, beliefs, or tensions.
+    - Provide one 🔍 *Insight*: a short, declarative summary revealing user behavior, beliefs, or tensions.
     - Explicitly indicate the ❤️ *Emotional Dimension* (e.g., frustration, confusion, confidence) clearly represented by the quotes, if applicable.
-    - Clearly indicate 🔥 *Signal* (strength or frequency of evidence for this theme, e.g., "Mentioned in multiple interviews," "Consistent across user groups").
-    - Optionally suggest one ✅ *Opportunity*: a concrete, actionable response for product, content, policy, or further research.
+    - Clearly indicate 📊 *Signal* (strength or frequency of evidence for this theme, e.g., "Mentioned in multiple interviews," "Consistent across user groups").
+    - Optionally suggest one 💡 *Opportunity*: a concrete, actionable response for product, content, policy, or further research.
     - Optionally provide *Tags* (e.g., trust, transparency, simplicity) for easier future retrieval.
-    Additionally:
-    - Present themes in a manner that encourages team discussion, highlighting any ambiguities or areas for further exploration.
-    - Use structured formatting to visually represent relationships between themes and sub-themes.
-    - Be open to revisiting and refining themes as new data emerges, supporting an iterative analysis process.
 
-  Return up to {{max_themes | default(3)}} clearly differentiated themes. Include fewer themes if data does not support clear distinctions. Clearly note if a theme has complexity or nuance.
+  Return up to {{max_themes}} clearly differentiated themes. Include fewer themes if data does not support clear distinctions. Clearly note if a theme has complexity or nuance.
 
   Avoid generic labels (e.g., "communication"). Favor labels that express real, specific user tensions (e.g., "I don't know who to trust," "This feels endless"). Write clearly, avoiding jargon, passive voice, or overly academic language. Use Slack markdown formatting clearly for team readability.
 
-  **Example Theme:**
-
-  🏷️ **THEME: "Everything feels uncertain"**
-
-  > "I'm not even sure if my paperwork was received."
-  > "Nobody can tell me how long this will actually take."
-  > "Every person I ask gives me a different answer."
-
-  🧠 *Insight:* Users experience frustration and anxiety due to inconsistent and unclear timelines for benefit approval.
-
-  ❤️ *Emotional Dimension:* Anxiety and frustration  
-  🔥 *Signal:* Consistent across interviews with first-time applicants  
-  ✅ *Opportunity:* Provide clear, standardized communication and real-time status updates to users awaiting benefit decisions.  
-  *Tags:* clarity, transparency, anxiety reduction
-
 output_format: |
-  Hi team! 👋 I just finished grouping our research observations into themes using affinity mapping. Found some interesting patterns in the data from {{session_count}} sessions that I think you'll want to discuss.
+  Hi team! 👋 I just finished grouping our research observations into themes using affinity mapping. Found some interesting patterns in the data from {{session_count}} that I think you'll want to discuss.
 
   {{team_members}} - would love your thoughts on these themes, especially where you see opportunities or have questions about the insights.
 
@@ -150,57 +150,7 @@ output_format: |
 
   *THEME: "{{theme_2_label}}"*
 
-  > "{{theme_2_quote_1}}"
-  > 
-  > "{{theme_2_quote_2}}"
-  > 
-  > "{{theme_2_quote_3}}"
-
-  🔍 *Insight:* {{theme_2_insight}}
-
-  ❤️ *Emotional Dimension:* {{theme_2_emotion}}
-
-  📊 *Signal:* {{theme_2_signal}}
-
-  💡 *Opportunity:* {{theme_2_opportunity}}
-
-  *Questions for Discussion:*
-  • {{theme_2_question_1}}
-  • {{theme_2_question_2}}
-
-  *Related Themes:*
-  • {{theme_2_related_theme_1}}
-  • {{theme_2_related_theme_2}}
-
-  `Tags: {{theme_2_tags}}`
-
-  ---
-
-  *THEME: "{{theme_3_label}}"*
-
-  > "{{theme_3_quote_1}}"
-  > 
-  > "{{theme_3_quote_2}}"
-  > 
-  > "{{theme_3_quote_3}}"
-
-  🔍 *Insight:* {{theme_3_insight}}
-
-  ❤️ *Emotional Dimension:* {{theme_3_emotion}}
-
-  📊 *Signal:* {{theme_3_signal}}
-
-  💡 *Opportunity:* {{theme_3_opportunity}}
-
-  *Questions for Discussion:*
-  • {{theme_3_question_1}}
-  • {{theme_3_question_2}}
-
-  *Related Themes:*
-  • {{theme_3_related_theme_1}}
-  • {{theme_3_related_theme_2}}
-
-  `Tags: {{theme_3_tags}}`
+  [Repeat structure for additional themes]
 
   ---
 
@@ -213,7 +163,7 @@ notify:
   - role: team
     action: "Affinity mapping completed"
     channel: "{{study_channel}}"
-    message: "{{researcher_contact}} just completed affinity mapping for {{study_name}}. {{session_count}} sessions clustered into key themes - check it out!"
+    message: "{{researcher_contact}} just completed affinity mapping for {{study_name}}. {{session_count}} clustered into {{max_themes}} key themes - check it out!"
   - role: researcher
     action: "Analysis saved"
     slack_tag: "{{researcher_contact}}"
