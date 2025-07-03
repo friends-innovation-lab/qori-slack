@@ -1,36 +1,215 @@
 id: usability_issues_extractor
+name: run_usability_issues_extractor
 label: 🧪 Usability Issues Extractor
-description: Identify usability issues from research notes
+version: v2.0
+description: |
+  Extract and prioritize usability issues from testing sessions, user observations, and research notes. Identify specific UX problems with severity levels, user behaviors, and actionable recommendations for immediate fixes.
+
+author: CivicMind R&D
+created: 2025-06-26
+last_updated: 2025-07-02
+
 input_type: text
 input_processing: summarize_if_long
+temperature: 0.4
+precision_mode: concise | detailed
+
+input_variables:
+  - input_text           # Usability testing notes, observations, session recordings (REQUIRED)
+  - study_name           # Title of study (REQUIRED)
+  - researcher_contact   # Lead researcher (REQUIRED)
+  - study_channel        # Where to post results (REQUIRED)
+  - study_link           # Link to study folder or documentation (OPTIONAL)
+  - team_members         # Who to notify/tag (OPTIONAL)
+
+# Auto-generated/computed variables
+auto_variables:
+  - num_issues: |
+      # AI analyzes input to determine optimal issue count
+      # Default: 4, Range: 3-8 based on problem density and variety
+      analyze_usability_issues(input_text) || 4
+  - severity_overview: |
+      # AI assesses overall usability health
+      # High/Medium/Low based on issue severity distribution
+      assess_overall_severity(input_text) || "Medium"
+  - primary_problem_area: |
+      # AI identifies main problematic feature/flow
+      # e.g., "Navigation", "Form completion", "Search functionality"
+      identify_problem_area(input_text) || "User interface"
+  - session_count: |
+      # AI estimates testing session count from input patterns
+      estimate_session_count(input_text) || "multiple sessions"
+  - current_date: |
+      # Auto-generate current date for file naming
+      new Date().toISOString().split('T')[0]
+  - github_file_link: |
+      # Auto-generate based on study name and date
+      generate_github_link(study_name, current_date) || null
+
+# Output configuration
+output_options:
+  default_delivery: "slack_and_file"
+  slack_format: "structured"
+  file_location: "04-analysis/"
+  file_name: "usability_issues_{{study_name_slug}}_{{current_date}}.md"
+
+slack_output:
+  post_in_channel: true
+  create_thread: true
+  title_format: "🧪 Usability Issues"
+  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
+  interactive_elements:
+    - text: "💡 Create Fix Issues"
+      action: "run_insight_card"
+    - text: "🎨 Generate Design Opportunities"
+      action: "run_design_opportunity_generator"
+    - text: "🗂️ View in GitHub"
+      url: "{{github_file_link}}"
+
+output_use: |
+  CivicMind Usability Issues Extractor transforms testing observations into actionable UX fixes. Specifically designed for usability testing analysis, helping teams quickly identify, prioritize, and address user interface problems.
+
+  Use this method to:
+    - Extract specific usability problems from testing sessions
+    - Prioritize fixes based on severity and user impact
+    - Provide clear observed vs. expected behavior descriptions
+    - Generate actionable recommendations for immediate improvements
+    - Track usability issues through to resolution
+
+output_notes: |
+  This method extracts {{num_issues}} usability issues based on problem density analysis.
+  Overall severity ({{severity_overview}}) and primary problem area ({{primary_problem_area}}) identified from testing data.
+  Session count ({{session_count}}) estimated from input patterns.
+  Focus on specific, observable UX problems rather than general insights.
+  Include clear severity levels and actionable recommendations.
+  Use plain language accessible to designers and developers.
+  Format for immediate action and issue tracking.
+
+output_format: |
+  Hi team! 👋 I just extracted the key usability issues from our testing sessions. Found {{num_issues}} specific UX problems that are impacting users, with most issues in {{primary_problem_area}}.
+
+  {{team_members}} - these issues are ready for prioritization and fixing. The severity levels should help us tackle the most critical problems first.
+
+  📂 *Study:* {{study_name}}  
+  🔗 *Full details:* {{study_link}}
+
+  ---
+
+  *🧪 USABILITY ISSUES*
+
+  *Overall Severity:* {{severity_overview}}  
+  *Primary Problem Area:* {{primary_problem_area}}  
+  *Based on:* {{session_count}}
+
+  🚨 *ISSUE 1: {{issue_1_title}}*
+
+  *Description:* {{issue_1_description}}  
+  *Observed Behavior:* {{issue_1_observed}}  
+  *Expected Behavior:* {{issue_1_expected}}  
+  *Severity:* {{issue_1_severity}}  
+  *Screen/Feature:* {{issue_1_location}}
+
+  > "{{issue_1_quote}}"
+
+  💡 *Recommendation:* {{issue_1_recommendation}}
+
+  📊 *Signal:* {{issue_1_signal}}
+
+  ---
+
+  🔧 *ISSUE 2: {{issue_2_title}}*
+
+  *Description:* {{issue_2_description}}  
+  *Observed Behavior:* {{issue_2_observed}}  
+  *Expected Behavior:* {{issue_2_expected}}  
+  *Severity:* {{issue_2_severity}}  
+  *Screen/Feature:* {{issue_2_location}}
+
+  > "{{issue_2_quote}}"
+
+  💡 *Recommendation:* {{issue_2_recommendation}}
+
+  📊 *Signal:* {{issue_2_signal}}
+
+  ---
+
+  ⚠️ *ISSUE 3: {{issue_3_title}}*
+
+  *Description:* {{issue_3_description}}  
+  *Observed Behavior:* {{issue_3_observed}}  
+  *Expected Behavior:* {{issue_3_expected}}  
+  *Severity:* {{issue_3_severity}}  
+  *Screen/Feature:* {{issue_3_location}}
+
+  > "{{issue_3_quote}}"
+
+  💡 *Recommendation:* {{issue_3_recommendation}}
+
+  📊 *Signal:* {{issue_3_signal}}
+
+  ---
+
+  📝 *ISSUE 4: {{issue_4_title}}*
+
+  *Description:* {{issue_4_description}}  
+  *Observed Behavior:* {{issue_4_observed}}  
+  *Expected Behavior:* {{issue_4_expected}}  
+  *Severity:* {{issue_4_severity}}  
+  *Screen/Feature:* {{issue_4_location}}
+
+  > "{{issue_4_quote}}"
+
+  💡 *Recommendation:* {{issue_4_recommendation}}
+
+  📊 *Signal:* {{issue_4_signal}}
+
+  ---
+
+  *Ready to fix?* Reply in thread with your thoughts:
+  • Which issues should we tackle first?
+  • Any quick wins we can implement this sprint?
+  • Should we create GitHub issues for these fixes?
+
 prompt: |
-  You are extracting 3 to 5 usability issues from research transcripts or observation notes.
+  You are a senior UX researcher and usability expert with extensive experience analyzing user testing sessions and identifying interface problems.
+
+  ANALYSIS CONTEXT:
+  - Study: {{study_name}}
+  - Overall severity: {{severity_overview}} (AI-assessed from issue distribution)
+  - Primary problem area: {{primary_problem_area}} (AI-identified from patterns)
+  - Target issues: {{num_issues}} (AI-determined based on problem density)
+  - Testing sessions: {{session_count}}
+
+  Extract {{num_issues}} distinct usability issues from the testing observations and notes.
 
   For each issue, provide:
-  - A short title
-  - Description of the problem
-  - Observed behavior (what happened)
-  - Expected behavior (what the user thought would happen)
-  - Severity (low, medium, high)
-  - Screen or feature name
-  - Recommendation (1–2 sentences)
+  1. **Issue Title** - Clear, specific name for the usability problem
+  2. **Description** - Brief explanation of what's wrong with the interface
+  3. **Observed Behavior** - What users actually did (specific actions)
+  4. **Expected Behavior** - What users thought would happen
+  5. **Severity Level** - High/Medium/Low based on user impact and frequency
+  6. **Screen/Feature** - Specific location where problem occurs
+  7. **Supporting Quote** - Direct user quote illustrating the problem
+  8. **Recommendation** - Specific, actionable fix (1-2 sentences)
+  9. **Signal** - Evidence strength (e.g., "Affected 6 out of 8 users")
 
-  Be specific and actionable. Use plain language at a 10th-grade reading level.
-  Avoid em-dashes, jargon, and vague language. Do not invent details.
+  Severity guidelines:
+  - **High:** Prevents task completion, affects majority of users
+  - **Medium:** Causes confusion or delays, affects some users
+  - **Low:** Minor annoyance, affects few users
 
-  Input:
-  {{input}}
-output_format: |
-  ## 🧪 Usability Issues
+  Focus on specific, observable interface problems rather than general feedback. Be actionable and technical enough for designers/developers to implement fixes.
 
-  ### Issue 1: [Short Title]
-  - Description: ...
-  - Observed Behavior: ...
-  - Expected Behavior: ...
-  - Severity: medium
-  - Screen: ...
-  - Recommendation: ...
+  Write in plain, professional language. Use active voice and specific descriptions. Avoid jargon and vague statements.
 
-  ### Issue 2: ...
-  ### Issue 3: ...
-  (up to 5 issues total)
+  Format for immediate action using Slack formatting: *text* for emphasis, > for quotes, clear structure for issue tracking.
+
+notify:
+  - role: ux_team
+    action: "Usability issues extracted"
+    channel: "{{study_channel}}"
+    message: "{{researcher_contact}} identified {{num_issues}} usability issues from {{study_name}}. {{severity_overview}} severity overall - ready for prioritization."
+  - role: researcher
+    action: "Issues documented"
+    slack_tag: "{{researcher_contact}}"
+    message: "Your usability issues have been posted to {{study_channel}} and saved to GitHub."
