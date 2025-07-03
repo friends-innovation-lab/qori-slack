@@ -1,19 +1,65 @@
 id: persona_generator
+name: run_persona_generator
 label: 👤 Persona Generator
-version: v2.0
+version: v2.1
 description: |
   Generate realistic and actionable user personas clearly grounded in qualitative research findings. Personas help teams deeply empathize with users, prioritize product or policy decisions, and confidently communicate insights.
 
 author: CivicMind R&D
 created: 2025-06-27
-last_updated: 2025-06-27
+last_updated: 2025-07-02
+
 input_type: text
 input_processing: summarize_if_long
 temperature: 0.4
 precision_mode: concise | detailed
+
 input_variables:
-  - input_text
-  - study_name
+  - input_text           # Research data, quotes, observations (REQUIRED)
+  - study_name           # Title of study (REQUIRED)
+  - researcher_contact   # Lead researcher (REQUIRED)
+  - study_channel        # Where to post results (REQUIRED)
+  - study_link           # Link to study folder or documentation (OPTIONAL)
+  - team_members         # Who to notify/tag (OPTIONAL)
+
+# Auto-generated/computed variables
+auto_variables:
+  - num_personas: |
+      # AI analyzes input to determine optimal persona count
+      # Default: 1, Range: 1-3 based on user diversity in data
+      analyze_user_diversity(input_text) || 1
+  - session_count: |
+      # AI estimates session count from input patterns
+      estimate_session_count(input_text) || "multiple sessions"
+  - target_audience: |
+      # AI identifies primary user segment from data
+      identify_primary_segment(input_text) || "Primary users"
+  - current_date: |
+      # Auto-generate current date for file naming
+      new Date().toISOString().split('T')[0]
+  - github_file_link: |
+      # Auto-generate based on study name and date
+      generate_github_link(study_name, current_date) || null
+
+# Output configuration
+output_options:
+  default_delivery: "slack_and_file"
+  slack_format: "structured"
+  file_location: "04-analysis/"
+  file_name: "personas_{{study_name_slug}}_{{current_date}}.md"
+
+slack_output:
+  post_in_channel: true
+  create_thread: true
+  title_format: "👤 Persona Results"
+  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
+  interactive_elements:
+    - text: "🧭 Map User Journey"
+      action: "run_journey_mapping"
+    - text: "🎯 Extract Jobs-to-be-Done"
+      action: "run_jobs_to_be_done"
+    - text: "🗂️ View in GitHub"
+      url: "{{github_file_link}}"
 
 output_use: |
   CivicMind Personas rapidly transform qualitative research into clear, relatable, and actionable personas. Designed explicitly to facilitate deep empathy, user-centric decision-making, and easy adoption by research and product teams.
@@ -24,76 +70,109 @@ output_use: |
     - Support confident and informed design, product, or policy decisions through believable, actionable personas.
 
 output_notes: |
+  This method generates {{num_personas}} persona(s) based on user diversity analysis.
+  Target audience ({{target_audience}}) identified from input patterns.
+  Session count ({{session_count}}) estimated from research scope.
   Personas must feel real, believable, and relatable. Clearly indicate behaviors, frustrations, and motivations in plain, everyday language.
   Explicitly anchor each persona in actual research quotes or observations.
   Avoid business jargon, overly technical terms, and passive voice.
-  Format clearly for readability and engagement using markdown.
+  Use Slack formatting: *text* for bold, > for quotes, `backticks` for tags, clear spacing for readability.
 
 output_format: |
-  👋 Hi team! Here’s a research-grounded persona created from recent insights. It represents a common user profile we've seen in the field.
+  Hi team! 👋 I just created a research-grounded persona from our study data. Found some really clear patterns around user behaviors, goals, and frustrations that I think will help us make better decisions.
 
-  Use this to:
-    - Build empathy with real user needs, goals, and frustrations
-    - Guide product, design, or policy decisions
-    - Spark discussion about what we might build, fix, or explore next
+  {{team_members}} - would love your thoughts on this persona, especially how it connects to what we're building and where you see opportunities to better support these users.
 
-  📣 Feel free to reply in-thread with ideas, clarifying questions, or ways you’re thinking about supporting this user.
-
+  📂 *Study:* {{study_name}}  
+  🔗 *Full details:* {{study_link}}
 
   ---
 
+  *👤 USER PERSONA*
 
-  ## 👤 [Persona Name]
+  *{{persona_1_name}}*
 
-  **Persona Type or Segment:** [Optional label like “Skeptical First-Timer,” “System-Savvy Workarounder,” or “Navigator with Support”]
+  *Persona Type:* {{persona_1_type}}
 
-  **Demographics:** [Age, background, location, occupation, and relevant details clearly derived from research]
+  *Demographics:* {{persona_1_demographics}}
 
-  **Day-in-the-Life Snapshot (Optional):** [A brief paragraph illustrating a typical day or key moment for this persona]
+  *Context & Scenario:*
+  {{persona_1_context}}
 
-  **Source:** [e.g., “Study 2, Session 3, Quotes 12–17”]
+  *Goals & Motivations:*
+  • {{persona_1_goal_1}}
+  • {{persona_1_goal_2}}
+  • {{persona_1_goal_3}}
 
-  **Context & Scenario:** [A realistic situation in which this persona engages with the service or product, highlighting behaviors and constraints.]
+  *Frustrations & Barriers:*
+  • {{persona_1_frustration_1}}
+  • {{persona_1_frustration_2}}
+  • {{persona_1_frustration_3}}
 
-  **Goals & Motivations:**
-  - Clearly state primary goals this persona aims to accomplish.
-  - Include key motivations driving these goals.
+  *Top Frustration Impact:*
+  {{persona_1_impact}}
 
-  **Frustrations & Barriers:**  
-  - [What gets in their way]  
-  - [How it affects their behavior or trust]
+  *Behaviors & Strategies:*
+  {{persona_1_behaviors}}
 
-  **Top Frustration Impact:** [Describe how much this issue disrupts their ability to complete tasks or feel confident]
+  > "{{persona_1_quote}}"
 
-  **Behaviors & Strategies:**
-  - Clearly articulate realistic behaviors, strategies, or workarounds this persona employs.
+  ❤️ *Emotional Dimension:* {{persona_1_emotion}}
 
-  **Representative Quote:**
-  > “Direct, realistic quote drawn from research that encapsulates the persona’s primary attitude, challenge, or need.”
+  📊 *Signal:* {{persona_1_signal}}
 
-  ❤️ **Emotional Dimension:** [How this person feels throughout their journey or situation]
-  
-  🔥 **Signal:** [Indicate strength or frequency of evidence from research, e.g., "Representative of 5+ participants."]
+  🎯 *Relevant Use Case:* {{persona_1_use_case}}
 
-  🎯 **Relevant Use Case or Scenario:** [How and where this persona informs a product, service, or policy decision]
-  
-  ✅ **Opportunity:** [Actionable recommendation for the team]
-  
+  💡 *Opportunity:* {{persona_1_opportunity}}
+
+  📚 *Source:* {{persona_1_source}}
+
+  `Tags: {{persona_1_tags}}`
+
+  ---
+
+  *What do you think?* Reply in thread with your thoughts:
+  • How well does this persona match your experience with users?
+  • Which frustrations feel most urgent to address?
+  • Where do you see opportunities to support this user better?
 
 prompt: |
-  You are an expert qualitative researcher and human-centered designer. Generate one realistic, well-supported user persona at a time. Each persona must be realistic and actionable and clearly grounded in actual user behaviors, motivations, and frustrations.
+  You are an expert qualitative researcher and human-centered designer with extensive experience creating research-based personas.
+
+  ANALYSIS CONTEXT:
+  - Study: {{study_name}}
+  - Target audience: {{target_audience}} (AI-identified from data)
+  - Persona count: {{num_personas}} (AI-determined based on user diversity)
+  - Estimated sessions: {{session_count}}
+
+  Generate {{num_personas}} realistic, well-supported user persona(s). Each persona must be realistic and actionable and clearly grounded in actual user behaviors, motivations, and frustrations.
 
   Each persona must include:
-    - Realistic name and detailed demographics derived from the research.
-    - Clear description of context and scenario illustrating realistic user interaction.
-    - Explicitly stated user goals and motivations driving actions.
-    - Specific frustrations and barriers that realistically hinder achieving their goals.
-    - Detailed behaviors and strategies the persona realistically uses in response to these challenges.
-    - A direct, realistic representative quote clearly derived from the research insights.
-    - Emotional dimension explicitly articulated to highlight feelings, attitudes, or anxieties.
-    - Signal clearly indicating the strength or representativeness of this persona within the research.
-    - Actionable opportunities clearly recommended for the team to address this persona’s needs or frustrations.
-    - A short optional label for persona type or behavioral segment
-    - Optional: a “Top Frustration Impact” line to show how much a pain point affects success or well-being
+    - Realistic name and detailed demographics derived from the research
+    - Clear persona type or behavioral segment label (e.g., "Skeptical First-Timer," "System-Savvy Workarounder")
+    - Clear description of context and scenario illustrating realistic user interaction
+    - Three explicitly stated user goals and motivations driving actions
+    - Three specific frustrations and barriers that realistically hinder achieving their goals
+    - Top frustration impact showing how much a pain point affects success or well-being
+    - Detailed behaviors and strategies the persona realistically uses in response to challenges
+    - A direct, realistic representative quote clearly derived from the research insights
+    - Emotional dimension explicitly articulated to highlight feelings, attitudes, or anxieties
+    - Signal clearly indicating the strength or representativeness of this persona within the research
+    - Relevant use case showing how this persona informs product, service, or policy decisions
+    - Actionable opportunities clearly recommended for the team to address persona needs or frustrations
+    - Source reference to research data
+    - Tags for categorization and filtering
 
-  Write clearly, empathetically, and in plain language suitable for broad stakeholder understanding. Avoid jargon, technical terms, and passive voice. Clearly format the persona using markdown for readability and team engagement.
+  Write clearly, empathetically, and in plain language suitable for broad stakeholder understanding. Avoid jargon, technical terms, and passive voice.
+
+  Format the persona using Slack-friendly formatting: *text* for bold, > for quotes, `backticks` for tags, clear spacing for readability and team engagement.
+
+notify:
+  - role: team
+    action: "Persona generation completed"
+    channel: "{{study_channel}}"
+    message: "{{researcher_contact}} just created {{num_personas}} research-based persona(s) for {{study_name}}. Check out the insights!"
+  - role: researcher
+    action: "Analysis saved"
+    slack_tag: "{{researcher_contact}}"
+    message: "Your persona results have been posted to {{study_channel}} and saved to GitHub."
