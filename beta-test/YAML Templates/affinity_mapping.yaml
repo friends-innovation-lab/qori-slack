@@ -118,83 +118,89 @@ output_format: |
 
   ---
 
-  ## 🧠 Affinity Mapping Results
+  *🧠 AFFINITY MAPPING RESULTS*
 
-  ### *THEME: [Label]*
+  *THEME: "{{theme_1_label}}"*
 
-  > "Quote 1"
+  > "{{theme_1_quote_1}}"
   > 
-  > "Quote 2"
+  > "{{theme_1_quote_2}}"
   > 
-  > "Quote 3"
+  > "{{theme_1_quote_3}}"
 
-  🔍 *Insight:* [Concise summary revealing user behaviors or tensions]
+  🔍 *Insight:* {{theme_1_insight}}
 
-  ❤️ *Emotional Dimension:* [e.g., frustration, hope, confusion]
+  ❤️ *Emotional Dimension:* {{theme_1_emotion}}
 
-  📊 *Signal:* [Strength or frequency of evidence, e.g., "Mentioned in 4 interviews"]
+  📊 *Signal:* {{theme_1_signal}}
 
-  💡 *Opportunity:* [Suggested actionable responses]
+  💡 *Opportunity:* {{theme_1_opportunity}}
 
   *Questions for Discussion:*
-  • [List any unclear areas or open questions to prompt team discussion]
+  • {{theme_1_question_1}}
+  • {{theme_1_question_2}}
 
   *Related Themes:*
-  • [Mention closely related or overlapping themes]
+  • {{theme_1_related_theme_1}}
+  • {{theme_1_related_theme_2}}
 
-  `Tags: [relevant tags for filtering/search]`
+  `Tags: {{theme_1_tags}}`
 
   ---
 
-  ### *THEME: [Label]*
+  *THEME: "{{theme_2_label}}"*
 
-  > "Quote 1"
+  > "{{theme_2_quote_1}}"
   > 
-  > "Quote 2"
+  > "{{theme_2_quote_2}}"
   > 
-  > "Quote 3"
+  > "{{theme_2_quote_3}}"
 
-  🔍 *Insight:* [Concise summary revealing user behaviors or tensions]
+  🔍 *Insight:* {{theme_2_insight}}
 
-  ❤️ *Emotional Dimension:* [e.g., frustration, hope, confusion]
+  ❤️ *Emotional Dimension:* {{theme_2_emotion}}
 
-  📊 *Signal:* [Strength or frequency of evidence]
+  📊 *Signal:* {{theme_2_signal}}
 
-  💡 *Opportunity:* [Suggested actionable responses]
+  💡 *Opportunity:* {{theme_2_opportunity}}
 
   *Questions for Discussion:*
-  • [List any unclear areas or open questions]
+  • {{theme_2_question_1}}
+  • {{theme_2_question_2}}
 
   *Related Themes:*
-  • [Mention closely related or overlapping themes]
+  • {{theme_2_related_theme_1}}
+  • {{theme_2_related_theme_2}}
 
-  `Tags: [relevant tags for filtering/search]`
+  `Tags: {{theme_2_tags}}`
 
   ---
 
-  ### *THEME: [Label]*
+  *THEME: "{{theme_3_label}}"*
 
-  > "Quote 1"
+  > "{{theme_3_quote_1}}"
   > 
-  > "Quote 2"
+  > "{{theme_3_quote_2}}"
   > 
-  > "Quote 3"
+  > "{{theme_3_quote_3}}"
 
-  🔍 *Insight:* [Concise summary revealing user behaviors or tensions]
+  🔍 *Insight:* {{theme_3_insight}}
 
-  ❤️ *Emotional Dimension:* [e.g., frustration, hope, confusion]
+  ❤️ *Emotional Dimension:* {{theme_3_emotion}}
 
-  📊 *Signal:* [Strength or frequency of evidence]
+  📊 *Signal:* {{theme_3_signal}}
 
-  💡 *Opportunity:* [Suggested actionable responses]
+  💡 *Opportunity:* {{theme_3_opportunity}}
 
   *Questions for Discussion:*
-  • [List any unclear areas or open questions]
+  • {{theme_3_question_1}}
+  • {{theme_3_question_2}}
 
   *Related Themes:*
-  • [Mention closely related or overlapping themes]
+  • {{theme_3_related_theme_1}}
+  • {{theme_3_related_theme_2}}
 
-  `Tags: [relevant tags for filtering/search]`
+  `Tags: {{theme_3_tags}}`
 
   ---
 
