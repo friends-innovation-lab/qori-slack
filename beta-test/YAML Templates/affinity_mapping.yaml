@@ -109,88 +109,99 @@ prompt: |
   *Tags:* clarity, transparency, anxiety reduction
 
 output_format: |
-  I just finished grouping our research observations into themes using affinity mapping. Found some interesting patterns in the data from {{session_count}} sessions that I think you'll want to discuss.
+  Hi team! I just finished grouping our research observations into themes using affinity mapping. Found some interesting patterns in the data from {{session_count}} sessions that I think you'll want to discuss.
 
   {{team_members}} - would love your thoughts on these themes, especially where you see opportunities or have questions about the insights.
 
-  📂 **Study:** {{study_name}}  
-  🔗 **Full details:** {{study_link}}
+  📂 *Study:* {{study_name}}  
+  🔗 *Full details:* {{study_link}}
 
   ---
 
   ## 🧠 Affinity Mapping Results
 
-  🏷️ **THEME: [Label]**
+  ### **THEME: [Label]**
 
   > "Quote 1"
+  > 
   > "Quote 2"
+  > 
   > "Quote 3"
 
-  🧠 *Insight:* [Concise summary revealing user behaviors or tensions]  
-  ❤️ *Emotional Dimension:* [e.g., frustration, hope, confusion]  
-  🔥 *Signal:* [Strength or frequency of evidence, e.g., "Mentioned in 4 interviews"]  
-  ✅ *Opportunity:* [Suggested actionable responses]
+  **Insight:** [Concise summary revealing user behaviors or tensions]
 
-  **🤔 Questions for Discussion:**
-  - [List any unclear areas or open questions to prompt team discussion]
+  **Emotional Dimension:** [e.g., frustration, hope, confusion]
 
-  **🗂️ Related Themes (if applicable):**
-  - [Mention closely related or overlapping themes]
+  **Signal:** [Strength or frequency of evidence, e.g., "Mentioned in 4 interviews"]
 
-  *(Tags: [relevant tags for filtering/search])*
+  **Opportunity:** [Suggested actionable responses]
+
+  **Questions for Discussion:**
+  • [List any unclear areas or open questions to prompt team discussion]
+
+  **Related Themes:**
+  • [Mention closely related or overlapping themes]
+
+  `Tags: [relevant tags for filtering/search]`
 
   ---
 
-  🏷️ **THEME: [Label]**
+  ### **THEME: [Label]**
 
   > "Quote 1"
+  > 
   > "Quote 2"
+  > 
   > "Quote 3"
 
-  🧠 *Insight:* [Concise summary revealing user behaviors or tensions]  
-  ❤️ *Emotional Dimension:* [e.g., frustration, hope, confusion]  
-  🔥 *Signal:* [Strength or frequency of evidence]  
-  ✅ *Opportunity:* [Suggested actionable responses]
+  **Insight:** [Concise summary revealing user behaviors or tensions]
 
-  **🤔 Questions for Discussion:**
-  - [List any unclear areas or open questions]
+  **Emotional Dimension:** [e.g., frustration, hope, confusion]
 
-  **🗂️ Related Themes (if applicable):**
-  - [Mention closely related or overlapping themes]
+  **Signal:** [Strength or frequency of evidence]
 
-  *(Tags: [relevant tags for filtering/search])*
+  **Opportunity:** [Suggested actionable responses]
+
+  **Questions for Discussion:**
+  • [List any unclear areas or open questions]
+
+  **Related Themes:**
+  • [Mention closely related or overlapping themes]
+
+  `Tags: [relevant tags for filtering/search]`
 
   ---
 
-  🏷️ **THEME: [Label]**
+  ### **THEME: [Label]**
 
   > "Quote 1"
+  > 
   > "Quote 2"
+  > 
   > "Quote 3"
 
-  🧠 *Insight:* [Concise summary revealing user behaviors or tensions]  
-  ❤️ *Emotional Dimension:* [e.g., frustration, hope, confusion]  
-  🔥 *Signal:* [Strength or frequency of evidence]  
-  ✅ *Opportunity:* [Suggested actionable responses]
+  **Insight:** [Concise summary revealing user behaviors or tensions]
 
-  **🤔 Questions for Discussion:**
-  - [List any unclear areas or open questions]
+  **Emotional Dimension:** [e.g., frustration, hope, confusion]
 
-  **🗂️ Related Themes (if applicable):**
-  - [Mention closely related or overlapping themes]
+  **Signal:** [Strength or frequency of evidence]
 
-  *(Tags: [relevant tags for filtering/search])*
+  **Opportunity:** [Suggested actionable responses]
+
+  **Questions for Discussion:**
+  • [List any unclear areas or open questions]
+
+  **Related Themes:**
+  • [Mention closely related or overlapping themes]
+
+  `Tags: [relevant tags for filtering/search]`
 
   ---
 
-  ## 💬 Next Steps
-
-  **What do you think?** Reply in thread with:
-  - Which themes feel most actionable?
-  - Any themes that need more investigation?
-  - Connections you're seeing to other research?
-
-  **Ready for deeper analysis?** Use the buttons below to dive into specific frameworks:
+  **What do you think?** Reply in thread with your thoughts:
+  • Which themes feel most actionable?
+  • Any themes that need more investigation?
+  • Connections you're seeing to other research?
 
 notify:
   - role: team
