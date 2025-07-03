@@ -1,32 +1,185 @@
 id: note_upload_handler
-label: "📝 Note Upload Handler"
-description: Summarizes raw research notes uploaded by the team and extracts key quotes, takeaways, and insights.
+name: run_note_upload_handler
+label: 📝 Note Upload Handler
+version: v2.0
+description: |
+  Process raw research notes uploaded by note-takers and observers into structured session summaries. Automatically triggered when observers upload notes after research sessions. Transforms messy field notes from multiple sources into clean, organized summaries ready for lead researcher analysis and affinity mapping.
+
+author: CivicMind R&D
+created: 2025-06-26
+last_updated: 2025-07-02
+
 input_type: file
 input_processing: summarize_if_long
-batch_mode: false
+temperature: 0.4
+precision_mode: concise | detailed
 
-prompt: |
-  You are a research assistant helping a UX researcher process raw interview or observation notes.
+input_variables:
+  - uploaded_files        # Raw note files from observers/note-takers (REQUIRED)
+  - study_name           # Title of study (REQUIRED)
+  - researcher_contact   # Lead researcher (REQUIRED)
+  - study_channel        # Where to post results (REQUIRED)
+  - study_link           # Link to study folder or documentation (OPTIONAL)
+  - session_info         # Session details (participant, date, etc.) (OPTIONAL)
 
-  Carefully read the attached notes file. Then:
-  1. Summarize what the participant or situation revealed.
-  2. Identify at least 3 key takeaways or observations.
-  3. Extract and tag any quotes worth remembering.
-  4. Suggest any immediate implications for design or next steps.
+# Auto-generated/computed variables
+auto_variables:
+  - session_type: |
+      # AI identifies session type from note content
+      # Interview, Observation, Focus Group, Usability Test, etc.
+      identify_session_type(uploaded_files) || "Research Session"
+  - participant_count: |
+      # AI estimates participant count from notes
+      count_participants(uploaded_files) || 1
+  - key_themes_count: |
+      # AI determines number of key themes from content
+      analyze_theme_density(uploaded_files) || 3
+  - note_quality: |
+      # AI assesses completeness and clarity of notes
+      # High/Medium/Low based on detail level and clarity
+      assess_note_quality(uploaded_files) || "Medium"
+  - current_date: |
+      # Auto-generate current date for file naming
+      new Date().toISOString().split('T')[0]
+  - github_file_link: |
+      # Auto-generate based on study name and date
+      generate_github_link(study_name, current_date) || null
 
-  Be neutral and clear. Do not speculate beyond what's in the notes.
+# Output configuration
+output_options:
+  default_delivery: "slack_and_file"
+  slack_format: "structured"
+  file_location: "02-session-notes/"
+  file_name: "processed_notes_{{study_name_slug}}_{{current_date}}.md"
+
+slack_output:
+  post_in_channel: true
+  create_thread: true
+  title_format: "📝 Session Notes Processed"
+  ping_team: ["{{researcher_contact}}"]
+  interactive_elements:
+    - text: "🧠 Run Affinity Mapping"
+      action: "run_affinity_mapping"
+    - text: "📋 Create Interview Summary"
+      action: "run_interview_summary"
+    - text: "🗂️ View in GitHub"
+      url: "{{github_file_link}}"
+
+output_use: |
+  CivicMind Note Upload Handler transforms messy field notes into structured session summaries. Perfect for teams using dedicated note-takers or observers who need their raw notes processed into analysis-ready format.
+
+  Use this method to:
+    - Standardize note format across different note-takers
+    - Extract key insights from messy or incomplete notes
+    - Prepare observer notes for researcher analysis
+    - Create searchable, organized session documentation
+    - Bridge the gap between field observation and analysis
+
+output_notes: |
+  Session type ({{session_type}}) and participant count ({{participant_count}}) identified from note content.
+  Key themes count ({{key_themes_count}}) and note quality ({{note_quality}}) assessed automatically.
+  Focus on extracting clear, actionable insights from raw observations.
+  Maintain neutrality - don't speculate beyond what's documented.
+  Use plain language accessible to the research team.
+  Format for easy integration into broader research analysis.
 
 output_format: |
-  ## Summary
-  A concise overview of what was learned from this session.
+  Hi {{researcher_contact}}! 👋 Your note-takers just uploaded their session notes and I've processed them into a clean, organized format. All the key insights, quotes, and observations are now ready for your analysis.
 
-  ## Key Takeaways
-  - First important point
-  - Second insight
-  - Third observation
+  The notes have been standardized and are perfect for adding to your affinity mapping sessions.
 
-  ## Quotes
-  > “Direct quote from participant.” — optional tag or theme
+  📂 *Study:* {{study_name}}  
+  🔗 *Session details:* {{session_info}}  
+  📎 *Files processed:* {{uploaded_files}}
 
-  ## Recommendations (if any)
-  - Possible next step or design consideration
+  ---
+
+  *📝 PROCESSED SESSION NOTES*
+
+  *Session Type:* {{session_type}}  
+  *Participants:* {{participant_count}}  
+  *Note Sources:* Multiple observers/note-takers  
+  *Processing Quality:* {{note_quality}}
+
+  *What Happened:*
+  {{session_summary}}
+
+  *Key Insights for Analysis:*
+  • {{takeaway_1}}
+  • {{takeaway_2}}
+  • {{takeaway_3}}
+
+  *Quotes Ready for Affinity Mapping:*
+  > "{{quote_1}}"
+  > "{{quote_2}}"
+  > "{{quote_3}}"
+
+  *Observed User Behaviors:*
+  {{behavioral_observations}}
+
+  *Immediate Patterns:*
+  {{implications}}
+
+  *Questions for Follow-up:*
+  • {{followup_question_1}}
+  • {{followup_question_2}}
+
+  📊 *Note Completeness:* {{note_quality}}  
+  📁 *Original Files:* Available in study folder
+
+  ---
+
+  *Ready for analysis!* These processed notes include:
+  ✅ Clean quotes for affinity mapping  
+  ✅ Behavioral observations  
+  ✅ Key themes and patterns  
+  ✅ Standardized format across all note-takers
+
+prompt: |
+  You are a research assistant helping process raw field notes from multiple observers into a single, structured session summary.
+
+  ANALYSIS CONTEXT:
+  - Study: {{study_name}}
+  - Session type: {{session_type}} (AI-identified from content)
+  - Participants: {{participant_count}} (AI-estimated)
+  - Note quality: {{note_quality}} (AI-assessed)
+  - Multiple note sources requiring standardization
+
+  Process the uploaded raw notes from different observers and synthesize into one cohesive summary:
+
+  1. **Session Summary** - Unified overview combining all observer perspectives
+  2. **Key Insights** - {{key_themes_count}} most important insights across all notes
+  3. **Standardized Quotes** - Clean, accurate quotes ready for affinity mapping
+  4. **Behavioral Observations** - Consistent observations of user actions/reactions
+  5. **Synthesized Implications** - Clear patterns emerging across different observers
+  6. **Follow-up Questions** - Research questions raised by multiple sources
+
+  Special requirements for multiple note sources:
+  - Reconcile differences between observers (note when perspectives differ)
+  - Standardize quote formatting and attribution
+  - Merge overlapping observations into coherent insights
+  - Identify what all observers agreed on vs. unique perspectives
+  - Flag any significant discrepancies between note-takers
+  - Create quotes that are clean and ready for affinity mapping clusters
+
+  Prioritize insights that appear across multiple note sources - these are likely the strongest signals.
+
+  If notes conflict or are incomplete, note what information needs clarification rather than making assumptions.
+
+  Output should be analysis-ready: clean quotes, clear themes, standardized format perfect for the lead researcher to use in affinity mapping sessions.
+
+  Write in clear, professional language using Slack formatting: *text* for emphasis, > for quotes, • for lists.
+
+notify:
+  - role: lead_researcher
+    action: "Session notes processed and ready"
+    channel: "{{study_channel}}"
+    message: "📝 Session notes for {{study_name}} have been processed from multiple note-takers. Clean quotes and insights ready for affinity mapping."
+  - role: note_takers
+    action: "Upload processed successfully"
+    channel: "session-observers"
+    message: "✅ Your notes have been successfully processed and delivered to {{researcher_contact}} for analysis. Thanks for contributing!"
+  - role: automation
+    action: "Trigger next workflow step"
+    condition: "all_notes_uploaded"
+    message: "All session notes collected. Ready to proceed with affinity mapping if desired."
