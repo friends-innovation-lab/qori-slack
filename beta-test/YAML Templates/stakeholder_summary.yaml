@@ -1,30 +1,148 @@
 id: stakeholder_summary
+name: run_stakeholder_summary
 label: 🎯 Stakeholder Summary
-description: Compress findings into a 1-minute read for busy stakeholders
+version: v1.1
+description: |
+  Compress research findings into a 1-minute read for busy stakeholders. Transform detailed insights into clear, scannable summaries with key takeaways, compelling quotes, and actionable recommendations perfect for executives and decision-makers.
+
+author: CivicMind R&D
+created: 2025-06-26
+last_updated: 2025-07-02
+
 input_type: text
 input_processing: summarize_if_long
-prompt: |
-  You are writing a TL;DR summary for a government stakeholder.
-  
-  Return:
-  - 3 key insights
-  - 1 compelling quote
-  - 1 high-level recommendation
-  
-  Use a plain, professional tone at a 10th-grade level. Do not explain. Avoid business buzzwords, passive voice, and em-dashes. Keep it brief and scannable.
-  
-  Input:
-  {{input}}
+temperature: 0.4
+precision_mode: concise | detailed
+
+input_variables:
+  - input_text           # Synthesized findings, insights, analysis results (REQUIRED)
+  - study_name           # Title of study (REQUIRED)
+  - researcher_contact   # Lead researcher (REQUIRED)
+  - study_channel        # Where to post results (REQUIRED)
+  - study_link           # Link to study folder or documentation (OPTIONAL)
+  - team_members         # Who to notify/tag (OPTIONAL)
+
+# Auto-generated/computed variables
+auto_variables:
+  - audience_type: |
+      # AI identifies target audience from input context
+      # Looks for stakeholder indicators, formality level
+      identify_audience_type(input_text) || "stakeholders"
+  - urgency_level: |
+      # AI determines urgency from findings content
+      # Analyzes for critical issues, deadlines, impact level
+      assess_urgency_level(input_text) || "medium"
+  - current_date: |
+      # Auto-generate current date for file naming
+      new Date().toISOString().split('T')[0]
+  - github_file_link: |
+      # Auto-generate based on study name and date
+      generate_github_link(study_name, current_date) || null
+
+# Output configuration
+output_options:
+  default_delivery: "slack_and_file"
+  slack_format: "structured"
+  file_location: "05-shareouts/"
+  file_name: "stakeholder_summary_{{study_name_slug}}_{{current_date}}.md"
+
+slack_output:
+  post_in_channel: true
+  create_thread: true
+  title_format: "🎯 Stakeholder Summary"
+  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
+  interactive_elements:
+    - text: "📋 Create Executive Readout"
+      action: "run_executive_readout"
+    - text: "📊 Generate Full Report"
+      action: "run_research_report"
+    - text: "🗂️ View in GitHub"
+      url: "{{github_file_link}}"
+
+output_use: |
+  CivicMind Stakeholder Summary transforms complex research findings into executive-friendly formats that busy decision-makers can quickly scan and act upon.
+
+  Use this method to:
+    - Distill detailed research into digestible, scannable summaries
+    - Communicate key insights to executives and stakeholders efficiently
+    - Provide clear recommendations with supporting evidence
+    - Enable quick decision-making without losing research rigor
+
+output_notes: |
+  Target audience ({{audience_type}}) identified from content analysis.
+  Urgency level ({{urgency_level}}) determined from findings.
+  Write for busy stakeholders using a plain, professional tone at a 10th-grade level.
+  Do not explain methodology. Avoid business buzzwords, passive voice, and em-dashes.
+  Keep content brief and scannable with clear hierarchy.
+  Use Slack formatting: *text* for bold, > for quotes, bullet points for easy scanning.
+
 output_format: |
-  ## 🎯 Stakeholder TL;DR
-  
-  ### Key Insights
-  - Insight 1
-  - Insight 2
-  - Insight 3
-  
-  ### 💬 Quote
-  > “Exact quote from participant”
-  
-  ### ✅ Recommendation
-  - High-level next step or action
+  Hi there! 👋 Here's a quick summary of our recent research findings from {{study_name}}. We've distilled the key insights into a 1-minute read to help inform your decisions.
+
+  {{team_members}}
+
+  📂 *Study:* {{study_name}}  
+  🔗 *Full details:* {{study_link}}
+
+  ---
+
+  *🎯 RESEARCH SUMMARY*
+
+  *What We Learned*
+  • {{insight_1}}
+  • {{insight_2}}
+  • {{insight_3}}
+
+  *💬 What Users Are Telling Us*
+  > "{{compelling_quote}}"
+
+  *✅ What We Recommend*
+  {{recommendation}}
+
+  📊 *Based on:* {{evidence_strength}}  
+  📚 *Research:* {{study_name}}  
+
+  `Tags: {{summary_tags}}`
+
+  ---
+
+  *Questions about these findings?* Reply here or reach out to {{researcher_contact}} for more details.
+
+prompt: |
+  You are writing a TL;DR summary for government stakeholders and executives who need to make decisions quickly.
+
+  ANALYSIS CONTEXT:
+  - Study: {{study_name}}
+  - Target audience: {{audience_type}} (AI-identified from content)
+  - Urgency level: {{urgency_level}} (AI-determined from findings)
+
+  Transform the provided research findings into a concise stakeholder summary.
+
+  Return:
+  - 3 key insights (clear, specific, actionable)
+  - 1 compelling quote from research that illustrates user needs
+  - 1 high-level recommendation (concrete next step or action)
+  - Evidence strength indicator
+  - Relevant tags for categorization
+
+  Requirements:
+  - Use a plain, professional tone at a 10th-grade reading level
+  - Do not explain research methodology or process
+  - Avoid business buzzwords, passive voice, and em-dashes
+  - Keep insights brief and scannable
+  - Make recommendations specific and actionable
+  - Choose quotes that powerfully illustrate user experience
+
+  Focus on outcomes and impact that matter to decision-makers: user needs, business implications, policy impacts, resource requirements.
+
+  Format for Slack using *text* for bold, > for quotes, bullet points, and clear spacing.
+
+notify:
+  - role: stakeholders
+    action: "Research summary delivered"
+    channel: "{{study_channel}}"
+    message: "Research summary for {{study_name}} is now available. Key findings and recommendations included."
+  - role: researcher
+    action: "Summary delivered"
+    slack_tag: "{{researcher_contact}}"
+    message: "Your stakeholder summary has been delivered to {{study_channel}} and saved to GitHub."
