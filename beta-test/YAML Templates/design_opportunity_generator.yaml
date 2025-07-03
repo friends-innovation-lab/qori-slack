@@ -1,38 +1,212 @@
 id: design_opportunity_generator
+name: run_design_opportunity_generator
 label: 🎨 Design Opportunity Generator
-description: Generate design opportunities and HMWs from research themes
+version: v2.0
+description: |
+  Generate design opportunities and "How Might We" questions from research themes and findings. Transform user problems into creative design challenges that inspire innovative solutions and guide design exploration workshops.
+
+author: CivicMind R&D
+created: 2025-06-26
+last_updated: 2025-07-02
+
 input_type: text
 input_processing: summarize_if_long
-prompt: |
-  You are helping a design team identify opportunity areas from research.
-  
-  From the input:
-  - Extract 3–5 problem statements
-  - Convert each one into a "How Might We" (HMW) question
-  
-  Use plain, actionable language. Avoid jargon or em-dashes. Write clearly and briefly.
-  
-  Input:
-  {{input}}
+temperature: 0.4
+precision_mode: concise | detailed
+
+input_variables:
+  - input_text           # Research themes, findings, problem areas (REQUIRED)
+  - study_name           # Title of study (REQUIRED)
+  - researcher_contact   # Lead researcher (REQUIRED)
+  - study_channel        # Where to post results (REQUIRED)
+  - study_link           # Link to study folder or documentation (OPTIONAL)
+  - team_members         # Who to notify/tag (OPTIONAL)
+
+# Auto-generated/computed variables
+auto_variables:
+  - num_opportunities: |
+      # AI analyzes input complexity to determine optimal opportunity count
+      # Default: 4, Range: 3-6 based on problem diversity and scope
+      analyze_problem_diversity(input_text) || 4
+  - design_focus: |
+      # AI identifies primary design challenge area
+      # e.g., "Usability", "Trust & Transparency", "Process Simplification"
+      identify_design_focus(input_text) || "User Experience"
+  - innovation_level: |
+      # AI assesses innovation potential from problems
+      # Incremental/Significant/Breakthrough based on problem complexity
+      assess_innovation_potential(input_text) || "Significant"
+  - session_count: |
+      # AI estimates session count from input patterns
+      estimate_session_count(input_text) || "multiple sessions"
+  - current_date: |
+      # Auto-generate current date for file naming
+      new Date().toISOString().split('T')[0]
+  - github_file_link: |
+      # Auto-generate based on study name and date
+      generate_github_link(study_name, current_date) || null
+
+# Output configuration
+output_options:
+  default_delivery: "slack_and_file"
+  slack_format: "structured"
+  file_location: "04-analysis/"
+  file_name: "design_opportunities_{{study_name_slug}}_{{current_date}}.md"
+
+slack_output:
+  post_in_channel: true
+  create_thread: true
+  title_format: "🎨 Design Opportunities"
+  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
+  interactive_elements:
+    - text: "💡 Create Insight Cards"
+      action: "run_insight_card"
+    - text: "🧠 Run Affinity Mapping"
+      action: "run_affinity_mapping"
+    - text: "🗂️ View in GitHub"
+      url: "{{github_file_link}}"
+
+output_use: |
+  CivicMind Design Opportunity Generator transforms research problems into actionable design challenges. Perfect for design workshops, ideation sessions, and creative problem-solving that leads to innovative user experiences.
+
+  Use this method to:
+    - Convert research findings into creative design challenges
+    - Generate HMW questions for design workshops and ideation
+    - Identify innovation opportunities from user problems
+    - Bridge research insights with design exploration
+    - Inspire breakthrough thinking beyond incremental fixes
+
+output_notes: |
+  This method generates {{num_opportunities}} design opportunities based on problem diversity analysis.
+  Design focus ({{design_focus}}) and innovation level ({{innovation_level}}) identified from research themes.
+  Session count ({{session_count}}) estimated from input patterns.
+  Write HMW questions that inspire creative thinking, not constrain solutions.
+  Focus on user outcomes and experiences, not just feature fixes.
+  Use plain, actionable language accessible to designers and stakeholders.
+  Format for design workshop readiness using clear problem → opportunity structure.
+
 output_format: |
-  ## 🎨 Design Opportunities
-  
-  ### Problem 1
-  - Description: ...
-  - HMW: How might we ... ?
-  
-  ### Problem 2
-  - Description: ...
-  - HMW: How might we ... ?
+  Hi team! 👋 I identified some exciting design opportunities from our research findings. Found {{num_opportunities}} key problem areas that could lead to really innovative solutions for users.
 
-    ### Problem 3
-  - Description: ...
-  - HMW: How might we ... ?
+  {{team_members}} - these HMW questions are perfect for design workshops or ideation sessions. Would love your thoughts on which opportunities feel most promising.
 
-    ### Problem 4
-  - Description: ...
-  - HMW: How might we ... ?
+  📂 *Study:* {{study_name}}  
+  🔗 *Full details:* {{study_link}}
 
-    ### Problem 5
-  - Description: ...
-  - HMW: How might we ... ?
+  ---
+
+  *🎨 DESIGN OPPORTUNITIES*
+
+  *Focus Area:* {{design_focus}}  
+  *Innovation Potential:* {{innovation_level}}
+
+  1️⃣ *OPPORTUNITY: {{opportunity_1_title}}*
+
+  *Problem:* {{opportunity_1_problem}}
+
+  *HMW:* {{opportunity_1_hmw}}
+
+  *Why This Matters:* {{opportunity_1_significance}}
+
+  > "{{opportunity_1_quote}}"
+
+  📊 *Signal:* {{opportunity_1_signal}}  
+  🎯 *Design Challenge:* {{opportunity_1_challenge}}
+
+  ---
+
+  2️⃣ *OPPORTUNITY: {{opportunity_2_title}}*
+
+  *Problem:* {{opportunity_2_problem}}
+
+  *HMW:* {{opportunity_2_hmw}}
+
+  *Why This Matters:* {{opportunity_2_significance}}
+
+  > "{{opportunity_2_quote}}"
+
+  📊 *Signal:* {{opportunity_2_signal}}  
+  🎯 *Design Challenge:* {{opportunity_2_challenge}}
+
+  ---
+
+  3️⃣ *OPPORTUNITY: {{opportunity_3_title}}*
+
+  *Problem:* {{opportunity_3_problem}}
+
+  *HMW:* {{opportunity_3_hmw}}
+
+  *Why This Matters:* {{opportunity_3_significance}}
+
+  > "{{opportunity_3_quote}}"
+
+  📊 *Signal:* {{opportunity_3_signal}}  
+  🎯 *Design Challenge:* {{opportunity_3_challenge}}
+
+  ---
+
+  4️⃣ *OPPORTUNITY: {{opportunity_4_title}}*
+
+  *Problem:* {{opportunity_4_problem}}
+
+  *HMW:* {{opportunity_4_hmw}}
+
+  *Why This Matters:* {{opportunity_4_significance}}
+
+  > "{{opportunity_4_quote}}"
+
+  📊 *Signal:* {{opportunity_4_signal}}  
+  🎯 *Design Challenge:* {{opportunity_4_challenge}}
+
+  ---
+
+  *Ready for ideation?* Reply in thread with your thoughts:
+  • Which opportunities feel most exciting to explore?
+  • Any HMW questions that spark immediate ideas?
+  • Should we schedule a design workshop around these?
+
+prompt: |
+  You are a senior design strategist and innovation facilitator with extensive experience turning research insights into creative design opportunities.
+
+  ANALYSIS CONTEXT:
+  - Study: {{study_name}}
+  - Design focus: {{design_focus}} (AI-identified from themes)
+  - Innovation level: {{innovation_level}} (AI-assessed potential)
+  - Target opportunities: {{num_opportunities}} (AI-determined based on problem diversity)
+
+  Transform research findings into {{num_opportunities}} distinct design opportunities that inspire creative solutions.
+
+  For each opportunity, provide:
+  1. **Opportunity Title** - Clear, engaging name for the design challenge
+  2. **Problem Statement** - Concise description of the user problem or pain point
+  3. **How Might We Question** - Open-ended question that invites creative solutions
+  4. **Significance** - Why solving this matters for users and business outcomes
+  5. **Supporting Quote** - Research evidence illustrating the problem
+  6. **Signal** - Evidence strength from research
+  7. **Design Challenge** - Specific creative challenge for designers to tackle
+
+  Requirements for HMW questions:
+  - Start with "How might we..."
+  - Be specific enough to focus thinking but broad enough to allow creativity
+  - Avoid suggesting solutions within the question
+  - Focus on user outcomes and experiences
+  - Inspire breakthrough thinking, not just incremental fixes
+
+  Examples of good HMW questions:
+  - "How might we make government processes feel as simple as ordering coffee?"
+  - "How might we help users feel confident they're making the right choice?"
+  - "How might we turn waiting time into valuable, productive moments?"
+
+  Write in plain, inspirational language that energizes design teams. Focus on user-centered challenges that could lead to innovative solutions.
+
+  Format for design workshop readiness using Slack formatting: *text* for emphasis, > for quotes, clear spacing and structure.
+
+notify:
+  - role: design_team
+    action: "Design opportunities generated"
+    channel: "{{study_channel}}"
+    message: "{{researcher_contact}} just identified {{num_opportunities}} design opportunities from {{study_name}}. Ready for ideation!"
+  - role: researcher
+    action: "Opportunities delivered"
+    slack_tag: "{{researcher_contact}}"
+    message: "Your design opportunities have been posted to {{study_channel}} and saved to GitHub."
