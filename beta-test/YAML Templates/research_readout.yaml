@@ -1,113 +1,222 @@
 id: research_readout
+name: run_research_readout
 label: 📊 Research Readout
-description: Generate a structured VA-aligned usability research readout
+version: v2.0
+description: |
+  Generate comprehensive VA-aligned research readouts with structured findings, participant details, recommendations, and next steps. Creates formal documentation for research teams, stakeholders, and project archives.
+
+author: Qori R&D
+created: 2025-06-26
+last_updated: 2025-07-02
+
 input_type: text
 input_processing: summarize_if_long
-prompt: |
-  You are drafting a VA-style usability research readout based on interview notes or findings. Use the full markdown structure below. Write clearly and professionally at a 10th-grade reading level. Use active voice, no em-dashes, and cite quotes and evidence when applicable.
+temperature: 0.4
+precision_mode: concise | detailed
 
-  Input:
-  {{input}}
+input_variables:
+  - input_text           # Research findings, insights, session notes (REQUIRED)
+  - study_name           # Title of study (REQUIRED)
+  - researcher_contact   # Lead researcher (REQUIRED)
+  - study_channel        # Where to post results (REQUIRED)
+  - study_link           # Link to study folder or documentation (OPTIONAL)
+  - team_members         # Who to notify/tag (OPTIONAL)
+
+# Auto-generated/computed variables
+auto_variables:
+  - methodology_type: |
+      # AI identifies research methodology from input content
+      # Usability Testing, Discovery Interviews, Survey Analysis, etc.
+      identify_methodology_type(input_text) || "Usability Testing"
+  - participant_count: |
+      # AI determines number of participants from session data
+      estimate_participant_count(input_text) || "multiple participants"
+  - finding_count: |
+      # AI analyzes complexity to determine optimal finding count
+      # Default: 3, Range: 2-5 based on data richness
+      analyze_finding_complexity(input_text) || 3
+  - session_duration: |
+      # AI estimates session length from methodology and scope
+      estimate_session_duration(input_text) || "60 minutes"
+  - product_area: |
+      # AI identifies product area from study context
+      identify_product_area(input_text, study_name) || "Digital Services"
+  - current_date: |
+      # Auto-generate current date for file naming
+      new Date().toLocaleDateString('en-US', {year: 'numeric', month: '2-digit', day: '2-digit'})
+  - github_file_link: |
+      # Auto-generate based on study name and date
+      generate_github_link(study_name, current_date) || null
+
+# Output configuration
+output_options:
+  default_delivery: "slack_and_file"
+  slack_format: "structured"
+  file_location: "05-shareouts/"
+  file_name: "research_readout_{{study_name_slug}}_{{current_date}}.md"
+
+slack_output:
+  post_in_channel: true
+  create_thread: true
+  title_format: "📊 Research Readout"
+  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
+  interactive_elements:
+    - text: "📋 Create Stakeholder Summary"
+      action: "run_stakeholder_summary"
+    - text: "💡 Generate Insight Cards"
+      action: "run_insight_card"
+    - text: "🗂️ View in GitHub"
+      url: "{{github_file_link}}"
+
+output_use: |
+  Qori Research Readout generates comprehensive, VA-compliant research documentation that captures methodology, findings, recommendations, and next steps in a structured format for formal reporting and project archives.
+
+  Use this method to:
+    - Create formal research documentation following VA standards
+    - Provide detailed findings with supporting evidence and quotes
+    - Document methodology and participant details for transparency
+    - Generate actionable recommendations with clear next steps
+    - Support research handoffs and stakeholder decision-making
+
+output_notes: |
+  Methodology type ({{methodology_type}}) and participant count ({{participant_count}}) identified from input analysis.
+  Finding count ({{finding_count}}) determined based on data complexity.
+  Session duration ({{session_duration}}) and product area ({{product_area}}) auto-detected.
+  Write in clear, professional language at 10th-grade reading level.
+  Use active voice, avoid business jargon and em-dashes.
+  Include specific quotes and evidence to support findings.
+  Format for formal documentation with clear hierarchy and scannable structure.
 
 output_format: |
-  # 📊 Usability Readout – [Study Title]
+  Hi team! 👋 I've just completed the research readout for {{study_name}}. This includes detailed findings, participant insights, and actionable recommendations for the team.
 
-  **Product Area:** [e.g. Debt Letters MVP]  
-  **Team:** [Team Name or Office]  
-  **Date:** [MM/DD/YYYY]  
-  **Research Lead:** [Your Name]  
-  **Notetaker(s):** [Names]  
-  **Observers:** [Names]  
+  {{team_members}} - this readout is ready for stakeholder review and contains everything needed for the next phase of decision-making.
+
+  📂 *Study:* {{study_name}}  
+  🔗 *Full details:* {{study_link}}
+
+  ---
+
+  # 📊 Usability Readout – {{study_name}}
+
+  **Product Area:** {{product_area}}  
+  **Team:** {{researcher_contact}}  
+  **Date:** {{current_date}}  
+  **Research Lead:** {{researcher_contact}}  
+  **Methodology:** {{methodology_type}}  
+  **Participants:** {{participant_count}}  
 
   ---
 
   ## 🔍 Key Insights Summary
 
-  1. **[Insight 1 Title]:** Short description  
-  2. **[Insight 2 Title]:** Short description  
-  3. **[Insight 3 Title]:** Short description  
+  {{key_insights_list}}
 
   ---
 
   ## 🎯 Research Goals
 
-  - Goal 1
-  - Goal 2
-  - Goal 3
+  {{research_goals}}
 
   ---
 
   ## ❓ Research Questions
 
-  - Question 1
-  - Question 2
-  - Question 3
+  {{research_questions}}
 
   ---
 
   ## 🧪 Methodology
 
-  - **Type:** [e.g. Remote moderated usability testing]  
-  - **Session Length:** [e.g. 60 minutes]  
-  - **Platform:** [e.g. Zoom + CivicMind transcription]  
-  - **Tools:** [e.g. Figma, Slackbot, GitHub]  
+  - **Type:** {{methodology_type}}  
+  - **Session Length:** {{session_duration}}  
+  - **Platform:** Remote moderated sessions  
+  - **Tools:** Slack, GitHub, transcription tools  
 
   ---
 
   ## 👥 Participant Overview
 
-  | Participant ID | Demographics     | Tech Setup       | Notes                       |
-  |----------------|------------------|------------------|-----------------------------|
-  | P01            | [Details]        | [Device]         | [Notes]                     |
-  | P02            | [Details]        | [Device]         | [Notes]                     |
-  | P03            | [Details]        | [Device]         | [Notes]                     |
+  {{participant_table}}
 
   ---
 
   ## 🧠 Detailed Findings & Recommendations
 
-  ### 🧭 Finding 1: [Title]
-
-  **Summary:**  
-  [Short summary]
-
-  **Evidence:**  
-  > “[Quote]”
-
-  **Recommendation:**  
-  [Proposed improvement]
-
-  ### 🧭 Finding 2: [Title]
-  ...
+  {{detailed_findings}}
 
   ---
 
   ## 📊 Summary Table
 
-  | Finding Title          | Severity | Frequency | Recommendation           |
-  |------------------------|----------|-----------|--------------------------|
-  | [Title]                | [High]   | [e.g. 3/3] | [e.g. Add yes/no screener]|
+  {{findings_summary_table}}
 
   ---
 
   ## 📎 Linked Artifacts
 
-  - [Transcripts Folder](../data/transcripts)
-  - [Conversation Guide](conversation-guide.md)
-  - [Insight Cards](../insights/insight_card_template.md)
-  - [Design Files](https://www.figma.com/file/xyz)
-  - [GitHub Issues](https://github.com/org/repo/issues)
+  - [Study Documentation]({{study_link}})
+  - [Research Notes](../data/notes)
+  - [GitHub Issues](https://github.com/department-of-veterans-affairs/va.gov-team/issues)
 
   ---
 
   ## ✅ Next Steps
 
-  - [Action 1]
-  - [Action 2]
-  - [Action 3]
+  {{next_steps}}
 
   ---
 
   ## 🏷️ Tags
 
-  `va`, `usability`, `research-readout`, `ux`, `civicmind`
+  `va`, `{{methodology_type | lower | replace(" ", "-")}}`, `research-readout`, `{{product_area | lower | replace(" ", "-")}}`, `civicmind`
+
+  ---
+
+  *Questions about these findings?* Reply in thread or contact {{researcher_contact}} for detailed discussion.
+
+prompt: |
+  You are a senior UX researcher creating a comprehensive VA-compliant research readout for formal documentation and stakeholder review.
+
+  ANALYSIS CONTEXT:
+  - Study: {{study_name}}
+  - Methodology: {{methodology_type}} (AI-identified from input)
+  - Participants: {{participant_count}} (AI-estimated from data)
+  - Findings: {{finding_count}} (AI-determined from complexity)
+  - Product area: {{product_area}} (AI-identified from context)
+
+  Create a structured research readout that includes:
+
+  1. **Key Insights List** - {{finding_count}} high-level insights with clear titles
+  2. **Research Goals** - 3-4 goals based on study objectives
+  3. **Research Questions** - 3-4 specific questions the research addressed
+  4. **Participant Table** - Structured table with participant details (use aliases for privacy)
+  5. **Detailed Findings** - {{finding_count}} findings with:
+     - Clear title and summary
+     - Supporting evidence and quotes
+     - Specific recommendations
+  6. **Findings Summary Table** - Tabular view with severity and frequency
+  7. **Next Steps** - 3-5 actionable recommendations for the team
+
+  Requirements:
+  - Follow VA research standards and documentation practices
+  - Use clear, professional language at 10th-grade reading level
+  - Include specific quotes to support findings
+  - Make recommendations actionable and specific
+  - Use participant aliases (P01, P02) for privacy
+  - Avoid business jargon, passive voice, and em-dashes
+  - Structure for formal review and decision-making
+
+  Focus on creating documentation that enables stakeholders to understand research outcomes and make informed decisions about next steps.
+
+  Format using markdown structure with clear headings, tables, and bullet points for professional readability.
+
+notify:
+  - role: research_team
+    action: "Research readout completed"
+    channel: "{{study_channel}}"
+    message: "📊 Research readout for {{study_name}} is complete. {{finding_count}} key findings with detailed recommendations ready for review."
+  - role: researcher
+    action: "Readout delivered"
+    slack_tag: "{{researcher_contact}}"
+    message: "Your research readout has been posted to {{study_channel}} and saved to GitHub for stakeholder review."
