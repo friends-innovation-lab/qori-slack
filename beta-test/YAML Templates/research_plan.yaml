@@ -9,65 +9,60 @@ author: CivicMind R&D
 created: 2025-06-26
 last_updated: 2025-07-02
 
-input_type: text
-input_processing: summarize_if_long
+input_type: structured
+input_processing: direct
 temperature: 0.4
 precision_mode: concise | detailed
 
 input_variables:
-  - input_text           # Research goals, context, methodology requirements (REQUIRED)
-  - study_name           # Title of study (REQUIRED)
-  - researcher_contact   # Lead researcher (REQUIRED)
-  - study_channel        # Where to notify completion (REQUIRED)
-  - study_link           # Link to study folder or documentation (OPTIONAL)
-  - team_members         # Who to notify (OPTIONAL)
+  - project_title        # Project title from UI (REQUIRED)
+  - product_area         # Product/Feature area from UI (REQUIRED)
+  - decision_context     # What decision will this research inform? (REQUIRED)
+  - research_goal        # Primary research goal from UI (REQUIRED)
+  - methodology          # Selected methodologies from checkboxes (REQUIRED)
+  - target_participants  # Target participants description (REQUIRED)
+  - participant_count    # Number of participants (REQUIRED)
+  - timeline_preference  # Rush/Standard/Extended from radio buttons (REQUIRED)
+  - lead_researcher      # Lead researcher name (REQUIRED)
+  - team_office          # Team/Office from UI (REQUIRED)
 
 # Auto-generated/computed variables
 auto_variables:
-  - product_area: |
-      # AI identifies product/service area from context
-      identify_product_area(input_text) || "Digital Services"
-  - team_office: |
-      # AI determines team/office from context
-      identify_team_office(input_text) || "OCTO-DE"
-  - research_goal: |
-      # AI extracts primary research goal
-      extract_research_goal(input_text) || "Understand user needs and pain points"
-  - methodology: |
-      # AI suggests research methodology from goals
-      suggest_methodology(input_text) || "Qualitative interviews and usability testing"
-  - target_participants: |
-      # AI identifies target participant types
-      identify_participants(input_text) || "Veterans and caregivers"
-  - participant_count: |
-      # AI suggests participant count based on methodology
-      suggest_participant_count(input_text) || "8-12 participants"
-  - timeline_preference: |
-      # AI determines timeline urgency from context
-      assess_timeline_urgency(input_text) || "standard"
-  - decision_context: |
-      # AI extracts decision context from research goals
-      extract_decision_context(input_text) || "Inform product improvements and user experience design"
+  - timeline_dates: |
+      # AI calculates specific dates based on timeline_preference and current_date
+      # Rush: Planning(3d), Recruiting(5d), Interviews(5d), Synthesis(3d), Reporting(2d)
+      # Standard: Planning(5d), Recruiting(10d), Interviews(10d), Synthesis(5d), Reporting(5d)  
+      # Extended: Planning(10d), Recruiting(21d), Interviews(14d), Synthesis(10d), Reporting(7d)
+      calculate_timeline_dates(timeline_preference, current_date)
+  - recruitment_strategy: |
+      # AI suggests recruitment approach based on target_participants
+      suggest_recruitment_strategy(target_participants) || "Perigean recruitment panel and screener survey"
+  - methodology_details: |
+      # AI expands on selected methodology with implementation details
+      expand_methodology_details(methodology) || "Detailed methodology implementation"
+  - success_criteria: |
+      # AI generates success criteria based on research_goal and methodology
+      generate_success_criteria(research_goal, methodology) || "Clear, measurable success criteria"
   - current_date: |
       # Auto-generate current date
       new Date().toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})
   - github_file_link: |
-      # Auto-generate based on study name and date
-      generate_github_link(study_name, current_date) || null
+      # Auto-generate based on project title and date
+      generate_github_link(project_title, current_date) || null
 
 # Output configuration
 output_options:
   default_delivery: "file_only"
   slack_format: "notification_only"
   file_location: "01-planning/"
-  file_name: "research_plan_{{study_name_slug}}_{{current_date}}.md"
+  file_name: "research_plan_{{project_title | slugify}}_{{current_date}}.md"
 
 slack_output:
   post_in_channel: false
   create_thread: false
   send_notification: true
   title_format: "🧭 Research Plan Created"
-  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
+  ping_team: ["{{lead_researcher}}"]
   interactive_elements:
     - text: "🧭 View Plan"
       url: "{{github_file_link}}"
@@ -85,24 +80,25 @@ output_use: |
     - Document recruitment strategy and logistics
 
 output_notes: |
-  Product area ({{product_area}}) and methodology ({{methodology}}) determined from research goals.
-  Timeline preference ({{timeline_preference}}) and participant details ({{target_participants}}) identified automatically.
-  Plan includes VA/OCTO organizational alignment and trauma-informed considerations.
+  Project details collected via structured form input from research planning UI.
+  Timeline dates ({{timeline_dates}}) calculated based on {{timeline_preference}} selection.
+  Recruitment strategy ({{recruitment_strategy}}) determined from {{target_participants}} specifications.
+  Plan follows VA research standards including organizational priorities and trauma-informed considerations.
   Write in clear, professional language accessible to stakeholders.
   Include realistic timelines and actionable planning details.
 
 output_format: |
-  # 🧭 Research Plan – {{study_name}}
+  # 🧭 Research Plan – {{project_title}}
 
   **📦 Product/Feature Area:** {{product_area}}  
   **🏛️ Team/Office:** {{team_office}}  
-  **👩🏽‍🔬 Lead Researcher:** {{researcher_contact}}  
+  **👩🏽‍🔬 Lead Researcher:** {{lead_researcher}}  
   **🗓️ Date:** {{current_date}}
 
   ---
 
   ## 🔎 Background  
-  {{study_background}}
+  {{decision_context}}
 
   ## 🎯 Organizational Priorities  
   {{organizational_priorities}}
@@ -138,10 +134,14 @@ output_format: |
   **🧍 Participant Count:** {{participant_count}}
 
   ## ⏰ Timeline Overview
-  {{timeline_table}}
+  {{timeline_dates}}
 
   ## 👥 Team Roles
-  {{team_roles_table}}
+  | Team Member      | Role               |
+  |------------------|--------------------|
+  | {{lead_researcher}} | Lead Researcher |
+  | [To be assigned] | Note-taker         |
+  | [To be assigned] | Observer           |
 
   ## 🧰 Tools & Platforms  
   {{tools_and_platforms}}
@@ -153,61 +153,58 @@ output_format: |
   {{output_artifacts}}
 
   ## 🏷️ Tags  
-  {{generated_tags}}
-
-  ---
-  **Study Details:** {{study_link}}
+  `va`, `ux-research`, `research-plan`, `{{product_area | lower | replace(" ", "-")}}`, `{{methodology | lower | replace(" ", "-")}}`
 
 prompt: |
   You are a senior UX researcher experienced in creating comprehensive VA-compliant research plans for government service design.
 
-  ANALYSIS CONTEXT:
-  - Study: {{study_name}}
-  - Product area: {{product_area}} (AI-identified from context)
-  - Team/Office: {{team_office}} (AI-determined from scope)
-  - Research goal: {{research_goal}} (AI-extracted from objectives)
-  - Methodology: {{methodology}} (AI-suggested from goals)
-  - Participants: {{target_participants}} (AI-identified from context)
-  - Count: {{participant_count}} (AI-suggested from methodology)
-  - Timeline: {{timeline_preference}} (AI-assessed from urgency)
-  - Decision context: {{decision_context}} (AI-extracted from goals)
+  STRUCTURED INPUT DATA:
+  - Project: {{project_title}}
+  - Product area: {{product_area}}
+  - Team/Office: {{team_office}}
+  - Lead researcher: {{lead_researcher}}
+  - Decision context: {{decision_context}}
+  - Research goal: {{research_goal}}
+  - Methodology: {{methodology}}
+  - Target participants: {{target_participants}}
+  - Participant count: {{participant_count}}
+  - Timeline preference: {{timeline_preference}}
 
-  Create a comprehensive research plan that includes:
+  Using this structured input data, generate comprehensive content for:
 
-  1. **Study Background** - Context and motivation for research based on decision context
-  2. **Organizational Priorities** - Alignment with VA/OCTO goals relevant to product area
-  3. **User Journey Context** - How this research fits in end-to-end user experience
-  4. **Additional Goals** - 2-3 supporting goals based on methodology and context
-  5. **Research Questions** - 3-4 specific questions based on research goal and methodology
-  6. **Research Hypotheses** - 2-3 testable hypotheses based on research questions
-  7. **Methodology Details** - Specific implementation details for suggested methodology
-  8. **Recruitment Strategy** - Appropriate channels and approach for target participants
-  9. **Timeline Tables** - Realistic timelines based on timeline preference:
+  1. **Organizational Priorities** - Alignment with VA/OCTO goals relevant to {{product_area}}
+  2. **User Journey Context** - How {{product_area}} fits in end-to-end user experience for {{target_participants}}
+  3. **Additional Goals** - 2-3 supporting goals based on {{methodology}} and {{research_goal}}
+  4. **Research Questions** - 3-4 specific questions based on {{research_goal}} and {{decision_context}}
+  5. **Research Hypotheses** - 2-3 testable hypotheses based on research questions and {{methodology}}
+  6. **Methodology Details** - Specific implementation details for {{methodology}}
+  7. **Recruitment Timeline Table** - Based on {{timeline_preference}} settings:
+     - Rush: 5 days recruiting
+     - Standard: 10 days recruiting  
+     - Extended: 21 days recruiting
+  8. **Timeline Dates** - Calculate actual dates from {{current_date}} using {{timeline_preference}}:
      - Rush: Planning(3d), Recruiting(5d), Interviews(5d), Synthesis(3d), Reporting(2d)
      - Standard: Planning(5d), Recruiting(10d), Interviews(10d), Synthesis(5d), Reporting(5d)
      - Extended: Planning(10d), Recruiting(21d), Interviews(14d), Synthesis(10d), Reporting(7d)
-  10. **Team Roles Table** - Lead researcher plus suggested roles
-  11. **Tools and Platforms** - Specific tools based on methodology
-  12. **Success Criteria** - 2-3 measurable success criteria
-  13. **Output Artifacts** - Realistic deliverables based on methodology
-  14. **Generated Tags** - Relevant tags for organization and discovery
+  9. **Tools and Platforms** - Specific tools based on {{methodology}} selections
+  10. **Output Artifacts** - Realistic deliverables based on {{methodology}} and {{research_goal}}
 
   Requirements:
-  - Calculate actual dates from {{current_date}} using business days only
+  - Calculate actual calendar dates from {{current_date}} using business days only
   - Follow VA research standards and organizational priorities
   - Use plain, professional language accessible to stakeholders
   - Include realistic timelines and resource considerations
   - Consider trauma-informed design principles where relevant
-  - Format tables using Markdown table syntax
+  - Format timeline tables using Markdown table syntax
 
   Write in clear, directive language that guides successful research execution while ensuring stakeholder alignment.
 
 notify:
   - role: research_team
     action: "Research plan created"
-    channel: "{{study_channel}}"
-    message: "🧭 Research plan for {{study_name}} has been created and saved. {{timeline_preference}} timeline with {{methodology}} methodology planned."
+    channel: "#research-planning"
+    message: "🧭 Research plan for {{project_title}} has been created and saved. {{timeline_preference}} timeline with {{methodology}} methodology planned."
   - role: researcher
     action: "Plan ready for execution"
-    slack_tag: "{{researcher_contact}}"
+    slack_tag: "{{lead_researcher}}"
     message: "Your research plan has been saved to the planning folder and is ready for team review and execution."
