@@ -152,9 +152,6 @@ output_format: |
   ## 📦 Output Artifacts  
   {{output_artifacts}}
 
-  ## 🏷️ Tags  
-  `va`, `ux-research`, `research-plan`, `{{product_area | lower | replace(" ", "-")}}`, `{{methodology | lower | replace(" ", "-")}}`
-
 prompt: |
   You are a senior UX researcher experienced in creating comprehensive VA-compliant research plans for government service design.
 
