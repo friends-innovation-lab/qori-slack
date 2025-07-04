@@ -55,7 +55,7 @@ output_options:
   default_delivery: "file_only"
   slack_format: "notification_only"
   file_location: "01-planning/"
-  file_name: "research_brief_{{project_title | slugify}}_{{current_date}}.md"
+  file_name: "research_brief_{{project_title}}_{{current_date}}.md"
 
 slack_output:
   post_in_channel: false
