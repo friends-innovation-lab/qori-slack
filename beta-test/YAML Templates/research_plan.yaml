@@ -1,18 +1,18 @@
 id: research_plan
 name: run_research_plan
 label: 🧭 Research Plan
-version: v2.0
+version: v2.1
 description: |
   Generate comprehensive VA-aligned research plans for civic tech studies. Creates structured research plans with timelines, methodology, recruitment strategy, and success criteria following VA research standards and organizational priorities.
 
 author: CivicMind R&D
 created: 2025-06-26
-last_updated: 2025-07-02
+last_updated: 2025-07-07
 
 input_type: structured
 input_processing: direct
 temperature: 0.4
-precision_mode: concise | detailed
+precision_mode: detailed
 
 input_variables:
   - project_title        # Project title from UI (REQUIRED)
@@ -26,66 +26,70 @@ input_variables:
   - lead_researcher      # Lead researcher name (REQUIRED)
   - team_office          # Team/Office from UI (REQUIRED)
 
-# Auto-generated/computed variables
-auto_variables:
-  - timeline_dates: |
-      # AI calculates specific dates based on timeline_preference and current_date
-      # Rush: Planning(3d), Recruiting(5d), Interviews(5d), Synthesis(3d), Reporting(2d)
-      # Standard: Planning(5d), Recruiting(10d), Interviews(10d), Synthesis(5d), Reporting(5d)  
-      # Extended: Planning(10d), Recruiting(21d), Interviews(14d), Synthesis(10d), Reporting(7d)
-      calculate_timeline_dates(timeline_preference, current_date)
-  - recruitment_strategy: |
-      # AI suggests recruitment approach based on target_participants
-      suggest_recruitment_strategy(target_participants) || "Perigean recruitment panel and screener survey"
-  - methodology_details: |
-      # AI expands on selected methodology with implementation details
-      expand_methodology_details(methodology) || "Detailed methodology implementation"
-  - success_criteria: |
-      # AI generates success criteria based on research_goal and methodology
-      generate_success_criteria(research_goal, methodology) || "Clear, measurable success criteria"
-  - current_date: |
-      # Auto-generate current date
-      new Date().toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})
-  - github_file_link: |
-      # Auto-generate based on project title and date
-      generate_github_link(project_title, current_date) || null
+# Processing instructions for AI
+processing_instructions: |
+  1. Use the input variables to generate all missing content
+  2. Calculate timeline dates based on timeline_preference and current date
+  3. Generate organizational priorities relevant to the product_area
+  4. Create user journey context for the target_participants
+  5. Develop research questions based on research_goal and decision_context
+  6. Generate hypotheses that can be tested with the chosen methodology
+  7. Provide detailed methodology implementation steps
+  8. Create recruitment strategy appropriate for target_participants
+  9. Calculate realistic timeline with actual dates
+  10. Suggest appropriate tools and platforms
+  11. Define measurable success criteria
+  12. List expected output artifacts
 
-# Output configuration
-output_options:
-  default_delivery: "file_only"
-  slack_format: "notification_only"
-  file_location: "01-planning/"
-  file_name: "research_plan_{{project_title}}_{{current_date}}.md"
+# Timeline calculation rules
+timeline_rules:
+  rush:
+    planning_days: 3
+    recruiting_days: 5
+    interviews_days: 5
+    synthesis_days: 3
+    reporting_days: 2
+  standard:
+    planning_days: 5
+    recruiting_days: 10
+    interviews_days: 10
+    synthesis_days: 5
+    reporting_days: 5
+  extended:
+    planning_days: 10
+    recruiting_days: 21
+    interviews_days: 14
+    synthesis_days: 10
+    reporting_days: 7
 
-slack_output:
-  post_in_channel: false
-  create_thread: false
-  send_notification: true
-  title_format: "🧭 Research Plan Created"
-  ping_team: ["{{lead_researcher}}"]
-  interactive_elements:
-    - text: "🧭 View Plan"
-      url: "{{github_file_link}}"
-    - text: "💬 Create Discussion Guide"
-      action: "run_discussion_guide"
-
-output_use: |
-  CivicMind Research Plan generator creates comprehensive VA-compliant research plans with detailed timelines, methodology, and recruitment strategies. Ensures proper planning and stakeholder alignment for successful research execution.
-
-  Use this method to:
-    - Generate structured research plans following VA standards
-    - Plan realistic timelines and resource allocation
-    - Define clear methodology and participant requirements
-    - Align teams on research goals and success criteria
-    - Document recruitment strategy and logistics
-
-output_notes: |
-  Project details collected via structured form input from research planning UI.
-  Timeline dates ({{timeline_dates}}) calculated based on {{timeline_preference}} selection.
-  Recruitment strategy ({{recruitment_strategy}}) determined from {{target_participants}} specifications.
-  Plan follows VA research standards including organizational priorities and trauma-informed considerations.
-  Write in clear, professional language accessible to stakeholders.
-  Include realistic timelines and actionable planning details.
+# Content generation prompts
+content_prompts:
+  organizational_priorities: |
+    Based on product_area "{{product_area}}" and team_office "{{team_office}}", generate 2-3 relevant VA/OCTO organizational priorities that this research supports.
+  
+  user_journey_context: |
+    Describe how "{{product_area}}" fits into the end-to-end user experience for "{{target_participants}}" within the VA ecosystem.
+  
+  research_questions: |
+    Generate 3-4 specific, actionable research questions based on research_goal "{{research_goal}}" and decision_context "{{decision_context}}".
+  
+  research_hypotheses: |
+    Create 2-3 testable hypotheses based on the research questions and methodology "{{methodology}}".
+  
+  methodology_details: |
+    Provide specific implementation details for "{{methodology}}" including session structure, duration, and approach.
+  
+  recruitment_strategy: |
+    Suggest appropriate recruitment strategy for "{{target_participants}}" considering VA research standards and accessibility.
+  
+  tools_platforms: |
+    List specific tools and platforms needed for "{{methodology}}" including scheduling, recording, analysis tools.
+  
+  success_criteria: |
+    Define 3-4 measurable success criteria that indicate the research has achieved "{{research_goal}}".
+  
+  output_artifacts: |
+    List realistic deliverables based on "{{methodology}}" and "{{research_goal}}" with estimated completion dates.
 
 output_format: |
   # 🧭 Research Plan – {{project_title}}
@@ -101,40 +105,40 @@ output_format: |
   {{decision_context}}
 
   ## 🎯 Organizational Priorities  
-  {{organizational_priorities}}
+  [AI GENERATE: organizational_priorities based on {{product_area}} and {{team_office}}]
 
   ## 🧭 Veteran/User Journey  
-  {{user_journey_context}}
+  [AI GENERATE: user_journey_context for {{target_participants}} using {{product_area}}]
 
   ## 🎓 Research Goals  
-  {{research_goal}}
+  **Primary Goal:** {{research_goal}}
 
-  {{additional_goals}}
+  [AI GENERATE: 2-3 additional supporting goals based on {{methodology}} and {{research_goal}}]
 
   ## ❓ Research Questions  
-  {{research_questions}}
+  [AI GENERATE: 3-4 specific research questions based on {{research_goal}} and {{decision_context}}]
 
   ## 🧪 Hypotheses  
-  {{research_hypotheses}}
+  [AI GENERATE: 2-3 testable hypotheses based on research questions and {{methodology}}]
 
   ## 🛠️ Methodology  
-  {{methodology}}
+  **Approach:** {{methodology}}
 
-  {{methodology_details}}
+  [AI GENERATE: methodology_details with specific implementation steps]
 
   ## 🧲 Recruitment Plan  
 
   **🎯 Target Participants:** {{target_participants}}
 
-  **📋 Recruitment Strategy:** {{recruitment_strategy}}
+  **📋 Recruitment Strategy:** [AI GENERATE: recruitment_strategy for {{target_participants}}]
 
   **📅 Recruitment Timeline:**
-  {{recruitment_timeline_table}}
+  [AI GENERATE: recruitment timeline table based on {{timeline_preference}}]
 
   **🧍 Participant Count:** {{participant_count}}
 
   ## ⏰ Timeline Overview
-  {{timeline_dates}}
+  [AI GENERATE: timeline_dates calculated from {{current_date}} using {{timeline_preference}} rules]
 
   ## 👥 Team Roles
   | Team Member      | Role               |
@@ -144,18 +148,19 @@ output_format: |
   | [To be assigned] | Observer           |
 
   ## 🧰 Tools & Platforms  
-  {{tools_and_platforms}}
+  [AI GENERATE: tools_platforms based on {{methodology}}]
 
   ## ✅ Success Criteria  
-  {{success_criteria}}
+  [AI GENERATE: success_criteria based on {{research_goal}} and {{methodology}}]
 
   ## 📦 Output Artifacts  
-  {{output_artifacts}}
+  [AI GENERATE: output_artifacts based on {{methodology}} and {{research_goal}}]
 
+# Main generation prompt
 prompt: |
-  You are a senior UX researcher experienced in creating comprehensive VA-compliant research plans for government service design.
+  You are a senior UX researcher creating a comprehensive VA-compliant research plan. 
 
-  STRUCTURED INPUT DATA:
+  INPUT DATA:
   - Project: {{project_title}}
   - Product area: {{product_area}}
   - Team/Office: {{team_office}}
@@ -166,42 +171,43 @@ prompt: |
   - Target participants: {{target_participants}}
   - Participant count: {{participant_count}}
   - Timeline preference: {{timeline_preference}}
+  - Current date: {{current_date}}
 
-  Using this structured input data, generate comprehensive content for:
+  GENERATE ALL MISSING CONTENT:
 
-  1. **Organizational Priorities** - Alignment with VA/OCTO goals relevant to {{product_area}}
-  2. **User Journey Context** - How {{product_area}} fits in end-to-end user experience for {{target_participants}}
-  3. **Additional Goals** - 2-3 supporting goals based on {{methodology}} and {{research_goal}}
-  4. **Research Questions** - 3-4 specific questions based on {{research_goal}} and {{decision_context}}
-  5. **Research Hypotheses** - 2-3 testable hypotheses based on research questions and {{methodology}}
-  6. **Methodology Details** - Specific implementation details for {{methodology}}
-  7. **Recruitment Timeline Table** - Based on {{timeline_preference}} settings:
-     - Rush: 5 days recruiting
-     - Standard: 10 days recruiting  
-     - Extended: 21 days recruiting
-  8. **Timeline Dates** - Calculate actual dates from {{current_date}} using {{timeline_preference}}:
-     - Rush: Planning(3d), Recruiting(5d), Interviews(5d), Synthesis(3d), Reporting(2d)
-     - Standard: Planning(5d), Recruiting(10d), Interviews(10d), Synthesis(5d), Reporting(5d)
-     - Extended: Planning(10d), Recruiting(21d), Interviews(14d), Synthesis(10d), Reporting(7d)
-  9. **Tools and Platforms** - Specific tools based on {{methodology}} selections
-  10. **Output Artifacts** - Realistic deliverables based on {{methodology}} and {{research_goal}}
+  1. **Organizational Priorities**: 2-3 VA/OCTO priorities relevant to {{product_area}}
+  
+  2. **Veteran/User Journey**: How {{product_area}} fits in the end-to-end experience for {{target_participants}}
+  
+  3. **Additional Research Goals**: 2-3 supporting goals beyond the primary goal
+  
+  4. **Research Questions**: 3-4 specific questions that will inform {{decision_context}}
+  
+  5. **Research Hypotheses**: 2-3 testable hypotheses based on {{methodology}}
+  
+  6. **Methodology Details**: Specific implementation for {{methodology}} including session structure and duration
+  
+  7. **Recruitment Strategy**: Appropriate approach for recruiting {{target_participants}}
+  
+  8. **Recruitment Timeline Table**: Based on {{timeline_preference}} settings (Rush: 5 days, Standard: 10 days, Extended: 21 days)
+  
+  9. **Timeline Dates**: Calculate actual dates from {{current_date}} using business days:
+     - Rush: Planning(3d), Recruiting(5d), Interviews(5d), Synthesis(3d), Reporting(2d) = 18 total days
+     - Standard: Planning(5d), Recruiting(10d), Interviews(10d), Synthesis(5d), Reporting(5d) = 35 total days  
+     - Extended: Planning(10d), Recruiting(21d), Interviews(14d), Synthesis(10d), Reporting(7d) = 62 total days
+  
+  10. **Tools and Platforms**: Specific tools needed for {{methodology}}
+  
+  11. **Success Criteria**: 3-4 measurable criteria indicating success
+  
+  12. **Output Artifacts**: Realistic deliverables with completion dates
 
-  Requirements:
-  - Calculate actual calendar dates from {{current_date}} using business days only
-  - Follow VA research standards and organizational priorities
-  - Use plain, professional language accessible to stakeholders
+  REQUIREMENTS:
+  - Use actual calendar dates (business days only)
+  - Follow VA research standards and trauma-informed design principles
+  - Use professional, accessible language
   - Include realistic timelines and resource considerations
-  - Consider trauma-informed design principles where relevant
-  - Format timeline tables using Markdown table syntax
+  - Format all tables using proper Markdown syntax
 
-  Write in clear, directive language that guides successful research execution while ensuring stakeholder alignment.
-
-notify:
-  - role: research_team
-    action: "Research plan created"
-    channel: "#research-planning"
-    message: "🧭 Research plan for {{project_title}} has been created and saved. {{timeline_preference}} timeline with {{methodology}} methodology planned."
-  - role: researcher
-    action: "Plan ready for execution"
-    slack_tag: "{{lead_researcher}}"
-    message: "Your research plan has been saved to the planning folder and is ready for team review and execution."
+execution_mode: "generate_full_content"
+replace_placeholders: true
