@@ -2,27 +2,36 @@ id: research_plan
 name: run_research_plan
 label: 🧭 Research Plan
 version: v2.1
-description: Generate comprehensive VA-aligned research plans
+description: |
+  Generate comprehensive VA-aligned research plans for civic tech studies. Creates structured research plans with timelines, methodology, recruitment strategy, and success criteria following VA research standards and organizational priorities.
+
+author: CivicMind R&D
+created: 2025-06-26
+last_updated: 2025-07-07
 
 # LangChain.js Router Configuration
 router_config:
   primary_worker: "llm_worker"
-  model: "gpt-4o"
+  model: "gpt-3.5-turbo"
   temperature: 0.4
   max_tokens: 4000
 
+input_type: structured
+input_processing: direct
+precision_mode: detailed
+
 # Input schema for Slack UI
 input_variables:
-  - project_title        # REQUIRED
-  - product_area         # REQUIRED  
-  - decision_context     # REQUIRED
-  - research_goal        # REQUIRED
-  - methodology          # REQUIRED
-  - target_participants  # REQUIRED
-  - participant_count    # REQUIRED
-  - timeline_preference  # REQUIRED
-  - lead_researcher      # REQUIRED
-  - team_office          # REQUIRED
+  - project_title        # Project title from UI (REQUIRED)
+  - product_area         # Product/Feature area from UI (REQUIRED)
+  - decision_context     # What decision will this research inform? (REQUIRED)
+  - research_goal        # Primary research goal from UI (REQUIRED)
+  - methodology          # Selected methodologies from checkboxes (REQUIRED)
+  - target_participants  # Target participants description (REQUIRED)
+  - participant_count    # Number of participants (REQUIRED)
+  - timeline_preference  # Rush/Standard/Extended from radio buttons (REQUIRED)
+  - lead_researcher      # Lead researcher name (REQUIRED)
+  - team_office          # Team/Office from UI (REQUIRED)
 
 # AI Generation Tasks - These will be processed by LLM Worker
 ai_generation_tasks:
@@ -188,3 +197,6 @@ slack_config:
   notify_channel: "#research-planning"
   notify_user: "{{lead_researcher}}"
   message: "🧭 Research plan for {{project_title}} has been generated and saved to GitHub."
+
+execution_mode: "generate_full_content"
+replace_placeholders: true
