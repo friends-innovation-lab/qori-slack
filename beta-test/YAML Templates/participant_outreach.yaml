@@ -1,234 +1,138 @@
 id: participant_outreach
-label: "📬 Participant Outreach Templates"
-description: Generates outreach messages for different recruitment phases - from initial contact to post-session follow-up.
+name: run_participant_outreach
+label: 📧 Participant Outreach
+version: v1.0
+description: |
+  Generate VA-compliant participant outreach messages for research studies. Creates professional, accessible communication for recruitment, scheduling, and follow-up based on research phase and participant needs.
+
+author: CivicMind R&D
+created: 2025-07-07
+last_updated: 2025-07-07
+
+# LangChain.js Router Configuration
+router_config:
+  primary_worker: "llm_worker"
+  model: "gpt-3.5-turbo"
+  temperature: 0.4
+  max_tokens: 1500
+
 input_type: structured
+input_processing: direct
+precision_mode: concise
 
-# Message type selection (presented as radio buttons in Slack modal)
-message_types:
+# Input schema for Slack UI
+input_variables:
+  - message_type         # Selected message type (REQUIRED)
+  - study_name          # Name of the research study (REQUIRED)
+  - researcher_name     # Lead researcher name (REQUIRED)
+  - researcher_email    # Contact email (REQUIRED)
+  - participant_name    # Participant name (OPTIONAL - for personalization)
+  - session_date        # Session date (REQUIRED for confirmation/reminder)
+  - session_time        # Session time (REQUIRED for confirmation/reminder)
+  - session_link        # Meeting link (REQUIRED for confirmation/reminder)
+  - study_description   # Brief study description (REQUIRED for initial recruitment)
+  - incentive_amount    # Compensation amount (OPTIONAL)
+  - reschedule_options  # Available reschedule times (REQUIRED for reschedule)
+
+# Message type specific prompts
+message_type_prompts:
   initial_recruitment:
-    label: "📧 Initial Recruitment Email"
-    description: "First contact to invite participants to join your study. Includes study overview and next steps."
-    icon: "📧"
-  
+    prompt: |
+      Create a professional, welcoming initial recruitment message for "{{study_name}}" that includes:
+      - Warm, respectful greeting
+      - Brief study description: {{study_description}}
+      - What participation involves (duration, format)
+      - Compensation information: {{incentive_amount}}
+      - Next steps to participate
+      - Clear contact information: {{researcher_name}} at {{researcher_email}}
+      - VA research ethics and voluntary participation language
+      - Professional, accessible tone at 10th-grade reading level
+    
   session_confirmation:
-    label: "📅 Session Confirmation"
-    description: "Confirm scheduled session details with participant. Includes date, time, and joining instructions."
-    icon: "📅"
-  
+    prompt: |
+      Create a session confirmation message for "{{study_name}}" that includes:
+      - Confirmation of participation
+      - Session details: {{session_date}} at {{session_time}}
+      - Meeting link: {{session_link}}
+      - What to expect during the session
+      - Pre-session preparation instructions
+      - Technical requirements (if remote)
+      - Contact information: {{researcher_name}} at {{researcher_email}}
+      - Professional, clear tone with helpful logistics
+    
   session_reminder:
-    label: "⏰ Session Reminder"
-    description: "24-48 hour reminder about upcoming session. Includes prep instructions and contact info."
-    icon: "⏰"
-  
+    prompt: |
+      Create a 24-48 hour session reminder for "{{study_name}}" that includes:
+      - Friendly reminder of upcoming session
+      - Session details: {{session_date}} at {{session_time}}
+      - Meeting link: {{session_link}}
+      - Preparation checklist or instructions
+      - What to do if they need to reschedule
+      - Contact information: {{researcher_name}} at {{researcher_email}}
+      - Encouraging, supportive tone
+    
   rescheduling_request:
-    label: "🔄 Rescheduling Request"
-    description: "When you need to reschedule a session. Apologetic tone with new time options."
-    icon: "🔄"
-  
+    prompt: |
+      Create an apologetic rescheduling message for "{{study_name}}" that includes:
+      - Sincere apology for the schedule change
+      - Brief explanation (without oversharing details)
+      - Alternative time options: {{reschedule_options}}
+      - Reassurance about their continued participation
+      - Easy way to confirm new time
+      - Contact information: {{researcher_name}} at {{researcher_email}}
+      - Respectful, understanding tone
+    
   follow_up:
-    label: "🔔 Follow-up"
-    description: "Check in when participant hasn't responded. Gentle reminder with easy opt-out option."
-    icon: "🔔"
-  
+    prompt: |
+      Create a gentle follow-up message for "{{study_name}}" that includes:
+      - Polite check-in about participation
+      - Reminder of study importance and their valuable input
+      - Easy way to confirm or decline participation
+      - Clear opt-out option with no penalty
+      - Alternative participation options if relevant
+      - Contact information: {{researcher_name}} at {{researcher_email}}
+      - Respectful, pressure-free tone
+    
   thank_you:
-    label: "🙏 Thank You"
-    description: "Post-session thank you with next steps, payment info, and how their input will be used."
-    icon: "🙏"
+    prompt: |
+      Create a post-session thank you message for "{{study_name}}" that includes:
+      - Sincere gratitude for their participation
+      - Acknowledgment of their valuable contribution
+      - Information about compensation/payment: {{incentive_amount}}
+      - Timeline for payment processing
+      - How their input will be used (anonymized)
+      - Optional future research opportunities
+      - Contact information: {{researcher_name}} at {{researcher_email}}
+      - Warm, appreciative tone
 
-# Form fields (shown in Slack modal)
-fields:
-  message_type:
-    type: "radio"
-    label: "Message Type"
-    required: true
-    default: "initial_recruitment"
-    options: ["initial_recruitment", "session_confirmation", "session_reminder", "rescheduling_request", "follow_up", "thank_you"]
+# AI Generation Task
+ai_generation_tasks:
+  - task_id: "message_content"
+    worker: "llm_worker"
+    prompt: "{{selected_message_prompt}}"
+
+# Processing workflow
+processing_workflow:
+  1. validate_inputs
+  2. select_message_prompt
+  3. execute_ai_generation
+  4. format_output
+
+# Output template
+output_template: |
+  **Subject:** {{generated_subject_line}}
   
-  participant_name:
-    type: "text"
-    label: "Participant Name"
-    placeholder: "e.g., Alex M. or pt004"
-    required: true
+  ---
   
-  contact_method:
-    type: "select"
-    label: "Contact Method"
-    required: true
-    default: "email"
-    options: ["email", "phone", "sms"]
+  {{ai_generated.message_content}}
   
-  session_date:
-    type: "date"
-    label: "Session Date"
-    required: false
+  ---
   
-  session_time:
-    type: "time"
-    label: "Session Time"
-    required: false
-    default: "14:00"
-  
-  tone:
-    type: "select"
-    label: "Tone"
-    required: true
-    default: "friendly"
-    options: ["friendly", "formal", "casual"]
-  
-  contact_person:
-    type: "text"
-    label: "Contact Person"
-    placeholder: "Your name and title"
-    default: "Jordan (UX Researcher)"
-    required: true
+  **Message Type:** {{message_type}}  
+  **Study:** {{study_name}}  
+  **Generated:** {{current_date}}
 
-# Dynamic prompts based on message type
-prompts:
-  initial_recruitment: |
-    Write a {{tone}} initial recruitment email to {{participant_name}} inviting them to participate in a VA housing app research study. 
-    
-    Include:
-    - Brief, friendly introduction
-    - Study purpose (improving VA housing application process)
-    - Session details: {{session_date}} at {{session_time}}, 45 minutes, remote
-    - $75 compensation
-    - Next steps and contact info for {{contact_person}}
-    - Professional but welcoming tone
-    
-    Contact method: {{contact_method}}
-
-  session_confirmation: |
-    Write a {{tone}} session confirmation email to {{participant_name}} confirming their scheduled research session.
-    
-    Include:
-    - Confirmation of session details: {{session_date}} at {{session_time}}
-    - Virtual meeting link placeholder
-    - What to expect (45-minute conversation)
-    - Prep instructions (no special preparation needed)
-    - Contact info for {{contact_person}} if questions
-    - Looking forward to the conversation
-    
-    Contact method: {{contact_method}}
-
-  session_reminder: |
-    Write a {{tone}} reminder email to {{participant_name}} about their upcoming research session.
-    
-    Include:
-    - Friendly reminder: session is {{session_date}} at {{session_time}}
-    - Meeting link and dial-in info
-    - Brief reminder of what to expect
-    - Contact info for {{contact_person}} for questions
-    - Appreciation for their time
-    
-    Contact method: {{contact_method}}
-
-  rescheduling_request: |
-    Write a {{tone}} rescheduling email to {{participant_name}} requesting to reschedule their session.
-    
-    Include:
-    - Apologetic tone for the inconvenience
-    - Explanation that we need to reschedule (keep it brief)
-    - 2-3 alternative time options around {{session_date}}
-    - Reassurance that we still want their participation
-    - Contact info for {{contact_person}} to confirm new time
-    - Thanks for their flexibility
-    
-    Contact method: {{contact_method}}
-
-  follow_up: |
-    Write a {{tone}} follow-up email to {{participant_name}} checking in about their research session participation.
-    
-    Include:
-    - Gentle check-in (no pressure)
-    - Reminder of the research opportunity
-    - Session details: {{session_date}} at {{session_time}} if still available
-    - Easy opt-out option if no longer interested
-    - Contact info for {{contact_person}}
-    - Appreciation for their consideration
-    
-    Contact method: {{contact_method}}
-
-  thank_you: |
-    Write a {{tone}} thank you email to {{participant_name}} after their completed research session.
-    
-    Include:
-    - Genuine thanks for their time and insights
-    - How their feedback will be used to improve VA services
-    - Information about $75 payment processing
-    - Timeline for when improvements might be visible
-    - Contact info for {{contact_person}} for follow-up questions
-    - Appreciation for their service (if veteran)
-    
-    Contact method: {{contact_method}}
-
-# Output format templates
-output_formats:
-  email:
-    subject_templates:
-      initial_recruitment: "Research Opportunity: Help Improve VA Housing Services"
-      session_confirmation: "Session Confirmed: {{session_date}} at {{session_time}}"
-      session_reminder: "Reminder: Research Session Tomorrow at {{session_time}}"
-      rescheduling_request: "Need to Reschedule: Research Session"
-      follow_up: "Following up: VA Housing Research Opportunity"
-      thank_you: "Thank You: Your Input Helps Improve VA Services"
-    
-    format: |
-      Subject: {{subject}}
-      
-      {{email_body}}
-      
-      {{signature}}
-
-  phone:
-    format: |
-      Phone Script for {{participant_name}}:
-      
-      {{phone_script}}
-      
-      Key points to remember:
-      - {{session_date}} at {{session_time}}
-      - 45-minute conversation
-      - $75 thank-you payment
-      - Contact: {{contact_person}}
-
-  sms:
-    format: |
-      SMS to {{participant_name}}:
-      
-      {{sms_message}}
-      
-      (Keep under 160 characters)
-
-# File naming convention for saved outputs
-file_naming:
-  pattern: "{{participant_name_slug}}_{{message_type}}_{{date}}"
-  path: "02-participants/outreach/"
-  extension: ".md"
-
-# Slack output configuration
-slack_output:
-  title_format: "{{message_type_icon}} {{message_type_label}} Generated"
-  context_format: "Generated for: {{participant_name}} • {{contact_method}} • {{tone}} tone • Session: {{session_date}} at {{session_time}}"
-  
-  buttons:
-    primary:
-      - text: "📋 Copy Email"
-        action: "copy_to_clipboard"
-      - text: "✏️ Edit & Regenerate"
-        action: "edit_template"
-      - text: "👥 Generate for Another Participant"
-        action: "new_participant"
-    
-    quick_actions:
-      label: "Generate other message types:"
-      buttons:
-        - text: "📅 Session Confirmation"
-          action: "generate_confirmation"
-        - text: "⏰ Session Reminder"
-          action: "generate_reminder"
-        - text: "🔄 Rescheduling Request"
-          action: "generate_rescheduling"
-        - text: "🔔 Follow-up"
-          action: "generate_followup"
-        - text: "🙏 Thank You"
-          action: "generate_thankyou"
+# Slack notification configuration
+slack_config:
+  notify_channel: "#research-ops"
+  message: "📧 {{message_type}} message generated for {{study_name}}"
