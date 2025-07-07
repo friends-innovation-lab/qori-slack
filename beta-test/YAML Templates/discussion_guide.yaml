@@ -1,19 +1,26 @@
 id: discussion_guide
 name: run_discussion_guide
 label: 💬 Discussion Guide
-version: v2.0
+version: v2.1
 description: |
   Generate VA-aligned conversation guides for moderated research sessions. Creates structured discussion guides with timing, tasks, warm-up questions, and observer instructions following VA research standards and best practices.
 
 author: CivicMind R&D
 created: 2025-06-26
-last_updated: 2025-07-02
+last_updated: 2025-07-07
+
+# LangChain.js Router Configuration
+router_config:
+  primary_worker: "llm_worker"
+  model: "gpt-3.5-turbo"
+  temperature: 0.4
+  max_tokens: 4000
 
 input_type: text
 input_processing: summarize_if_long
-temperature: 0.4
-precision_mode: concise | detailed
+precision_mode: detailed
 
+# Input schema for Slack UI
 input_variables:
   - input_text           # Research objectives, tasks, participant info (REQUIRED)
   - study_name           # Title of study (REQUIRED)
@@ -22,80 +29,102 @@ input_variables:
   - study_link           # Link to study folder or documentation (OPTIONAL)
   - team_members         # Who to notify (OPTIONAL)
 
-# Auto-generated/computed variables
-auto_variables:
-  - session_type: |
-      # AI identifies session type from research objectives
-      # Usability Testing, Discovery Interview, Concept Validation, etc.
-      identify_session_type(input_text) || "Discovery Interview"
-  - session_duration: |
-      # AI estimates duration based on tasks and objectives
-      # 30/45/60/90 minutes based on complexity
-      estimate_session_duration(input_text) || "60 minutes"
-  - task_count: |
-      # AI determines number of tasks from objectives
-      # 2-5 tasks based on scope and duration
-      analyze_task_complexity(input_text) || 3
-  - participant_type: |
-      # AI identifies target participant from context
-      # Veteran, Caregiver, Service Member, etc.
-      identify_participant_type(input_text) || "Veteran"
-  - current_date: |
-      # Auto-generate current date for file naming
-      new Date().toISOString().split('T')[0]
-  - github_file_link: |
-      # Auto-generate based on study name and date
-      generate_github_link(study_name, current_date) || null
+# AI Generation Tasks - These will be processed by LLM Worker
+ai_generation_tasks:
+  - task_id: "session_analysis"
+    worker: "llm_worker"
+    prompt: |
+      Analyze the research objectives and tasks described in: "{{input_text}}"
+      
+      Determine and provide in this exact format:
+      Session Type: [Usability Testing|Discovery Interview|Concept Validation|Card Sort|Tree Test|etc.]
+      Duration: [30|45|60|90] minutes
+      Task Count: [2-5 based on complexity]
+      Participant Type: [Veteran|Caregiver|Service Member|Dependent|etc.]
+      
+      Base your analysis on the complexity, objectives, and scope described in the input text.
 
-# Output configuration
-output_options:
-  default_delivery: "file_only"
-  slack_format: "notification_only"
-  file_location: "01-planning/"
-  file_name: "discussion_guide_{{study_name_slug}}_{{current_date}}.md"
+  - task_id: "warmup_questions"
+    worker: "llm_worker"
+    prompt: |
+      Create 3-4 warm-up questions appropriate for the participant type and study context based on: "{{input_text}}"
+      
+      Questions should:
+      - Help participants feel comfortable
+      - Be relevant to the research domain
+      - Build rapport and context
+      - Use plain, conversational language
+      
+      Format as a bulleted list with clear, friendly questions.
 
-slack_output:
-  post_in_channel: false
-  create_thread: false
-  send_notification: true
-  title_format: "💬 Discussion Guide Created"
-  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
-  interactive_elements:
-    - text: "📝 View Guide"
-      url: "{{github_file_link}}"
-    - text: "✅ Create Pre-Session Reminder"
-      action: "create_calendar_reminder"
+  - task_id: "task_sections"
+    worker: "llm_worker"
+    prompt: |
+      Based on the research objectives in "{{input_text}}", create structured task sections for the discussion guide.
+      
+      For each task, provide:
+      - Clear step-by-step instructions for the moderator
+      - Specific things for observers to watch for
+      - Estimated timing (5-15 minutes per task)
+      - Natural progression from simple to complex
+      
+      Format each task as:
+      ## 🎯 Task [Number]: [Task Name] – [X Minutes]
+      
+      **Instructions for Moderator:**
+      [Step-by-step instructions]
+      
+      **Things to Watch For:**
+      [Observer notes and what to look for]
+      
+      Create 2-4 tasks based on the complexity and objectives described.
 
-output_use: |
-  CivicMind Discussion Guide generator creates VA-compliant conversation guides for research sessions. Ensures consistent structure, timing, and coverage of key research objectives while maintaining VA standards for participant consent and ethics.
+  - task_id: "post_task_questions"
+    worker: "llm_worker"
+    prompt: |
+      Create 4-5 post-task interview questions based on the research objectives in "{{input_text}}"
+      
+      Questions should:
+      - Gather overall impressions and feedback
+      - Address any gaps from task sections
+      - Be open-ended and encourage reflection
+      - Relate to the specific research goals
+      
+      Format as a bulleted list with thoughtful, probing questions.
 
-  Use this method to:
-    - Generate structured conversation guides following VA standards
-    - Ensure consistent session moderation across researchers
-    - Include proper consent and recording protocols
-    - Plan timing and task flow for effective sessions
-    - Create observer instructions and logistics checklists
+  - task_id: "emergency_procedures"
+    worker: "llm_worker"
+    prompt: |
+      Create VA-approved emergency exit language for research sessions that covers:
+      - Technical difficulties during the session
+      - Participant distress or discomfort
+      - Inappropriate content or behavior
+      - Session termination procedures
+      - Contact information for support
+      
+      Use professional, supportive language that prioritizes participant well-being.
 
-output_notes: |
-  Session type ({{session_type}}) and duration ({{session_duration}}) determined from research objectives.
-  Task count ({{task_count}}) and participant type ({{participant_type}}) identified automatically.
-  Guide follows VA research standards including consent protocols and emergency procedures.
-  Includes pre-session logistics, warm-up questions, and post-session procedures.
-  Write in plain, professional language at 10th-grade reading level.
-  Use clear task instructions and timing guidance for moderators.
+# Processing workflow for LangChain.js Router
+processing_workflow:
+  1. validate_inputs
+  2. execute_ai_generation_tasks
+  3. parse_session_analysis
+  4. populate_template
+  5. save_to_github
 
-output_format: |
+# Output template with AI generation placeholders
+output_template: |
   # 💬 Discussion Guide – {{study_name}}
 
-  **Session Type:** {{session_type}}  
-  **Duration:** {{session_duration}}  
-  **Participant:** {{participant_type}}  
+  **Session Type:** {{parsed_session_type}}  
+  **Duration:** {{parsed_duration}}  
+  **Participant:** {{parsed_participant_type}}  
   **Moderator:** {{researcher_contact}}
 
   ## 📋 Moderator Logistics
 
   ### 2–3 Days Before Session
-  - [ ] Schedule and confirm sessions with {{participant_type}}
+  - [ ] Schedule and confirm sessions with {{parsed_participant_type}}
   - [ ] Review platform research checklist
   - [ ] Complete project-specific prep tasks for {{study_name}}
   - [ ] Send calendar invites to {{team_members}}
@@ -109,7 +138,7 @@ output_format: |
   ## 🗣️ Intro – 5 Minutes
 
   Welcome the participant. Cover:
-  - Session duration (~{{session_duration}})
+  - Session duration (~{{parsed_duration}})
   - That feedback is welcome and voluntary
   - Consent for screen/audio recording
   - Confirmation of observer presence
@@ -119,18 +148,14 @@ output_format: |
   > **Prompt**: "Are you okay with being recorded and having observers? This helps our team learn from your experience."
 
   ## ❄️ Warm-Up Questions – 5 Minutes
-  {{warmup_questions}}
+  {{ai_generated.warmup_questions}}
 
   ## 🧪 Task Sections
 
-  {{task_1_section}}
-
-  {{task_2_section}}
-
-  {{task_3_section}}
+  {{ai_generated.task_sections}}
 
   ## 🎤 Post-Task Interview – 10 Minutes
-  {{post_task_questions}}
+  {{ai_generated.post_task_questions}}
 
   ## 🔁 Reconfirm Clip Consent
   "Are you still comfortable with us using a short video clip (with de-identified info) to share with internal VA teams? This helps us communicate your feedback to decision-makers."
@@ -142,7 +167,7 @@ output_format: |
   - Provide contact information: {{researcher_contact}}
 
   ## 🚨 Emergency Exit Strategy
-  {{emergency_procedures}}
+  {{ai_generated.emergency_procedures}}
 
   ## 📝 Observer Instructions
   **For {{team_members}}:**
@@ -155,45 +180,24 @@ output_format: |
   **Guide created:** {{current_date}}  
   **Study details:** {{study_link}}
 
-prompt: |
-  You are a senior UX researcher experienced in creating VA-compliant discussion guides for government research sessions.
+# GitHub storage configuration
+github_config:
+  repo: "your-research-repo"
+  path: "01-planning/"
+  filename: "discussion_guide_{{study_name_slug}}_{{current_date}}.md"
+  commit_message: "Add discussion guide for {{study_name}}"
 
-  ANALYSIS CONTEXT:
-  - Study: {{study_name}}
-  - Session type: {{session_type}} (AI-identified from objectives)
-  - Duration: {{session_duration}} (AI-estimated from scope)
-  - Tasks: {{task_count}} (AI-determined from complexity)
-  - Participant: {{participant_type}} (AI-identified from context)
+# Slack notification configuration
+slack_config:
+  notify_channel: "{{study_channel}}"
+  notify_user: "{{researcher_contact}}"
+  team_members: "{{team_members}}"
+  message: "💬 Discussion guide for {{study_name}} has been created and saved. {{parsed_duration}} {{parsed_session_type}} guide ready for {{parsed_participant_type}} sessions."
+  interactive_elements:
+    - text: "📝 View Guide"
+      url: "{{github_file_link}}"
+    - text: "✅ Create Pre-Session Reminder"
+      action: "create_calendar_reminder"
 
-  Create a comprehensive discussion guide that includes:
-
-  1. **Warm-up Questions** - 3-4 questions relevant to {{participant_type}} and the study context
-  2. **Task Sections** - {{task_count}} structured tasks with:
-     - Clear step-by-step instructions
-     - "Things to Watch For" observer notes
-     - Estimated timing for each task
-  3. **Post-Task Questions** - 4-5 questions to gather overall feedback
-  4. **Emergency Procedures** - VA-approved language for session issues
-
-  Requirements:
-  - Follow VA research standards and ethics guidelines
-  - Use plain, professional language at 10th-grade reading level
-  - Include proper consent and recording protocols
-  - Provide clear timing guidance for moderators
-  - Create actionable observer instructions
-  - Focus on {{participant_type}} experience and needs
-  - Avoid business jargon, em-dashes, and complex language
-
-  Structure tasks to build naturally from simple to complex, allowing participants to get comfortable before tackling main objectives.
-
-  Write in clear, directive language that guides moderators through smooth session flow while gathering valuable insights.
-
-notify:
-  - role: research_team
-    action: "Discussion guide created"
-    channel: "{{study_channel}}"
-    message: "💬 Discussion guide for {{study_name}} has been created and saved. {{session_duration}} {{session_type}} guide ready for {{participant_type}} sessions."
-  - role: researcher
-    action: "Guide ready for use"
-    slack_tag: "{{researcher_contact}}"
-    message: "Your discussion guide has been saved to the planning folder and is ready for sessions."
+output_use: |
+  CivicMind Discussion Guide generator creates VA-compliant conversation guides for research sessions. Ensures consistent structure, timing, and coverage of key research objectives while maintaining VA standards for participant consent and ethics.
