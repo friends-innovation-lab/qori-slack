@@ -1,19 +1,26 @@
 id: research_brief
 name: run_research_brief
 label: 📄 Research Brief
-version: v2.0
+version: v2.1
 description: |
   Generate VA-aligned research briefs for scoping studies with design and product partners. Creates structured research briefs with objectives, hypotheses, and methodology following VA research standards and government service considerations.
 
 author: CivicMind R&D
 created: 2025-06-26
-last_updated: 2025-07-02
+last_updated: 2025-07-07
+
+# LangChain.js Router Configuration
+router_config:
+  primary_worker: "llm_worker"
+  model: "gpt-4o"
+  temperature: 0.4
+  max_tokens: 3000
 
 input_type: text
 input_processing: summarize_if_long
-temperature: 0.4
-precision_mode: concise | detailed
+precision_mode: concise
 
+# Input schema for Slack UI
 input_variables:
   - project_title        # Project Title/Focus from UI (REQUIRED)
   - study_context        # Study context and motivation from UI (REQUIRED)
@@ -23,74 +30,70 @@ input_variables:
   - research_approach    # Research approach from UI (REQUIRED)
   - prepared_by          # Prepared by from UI (REQUIRED)
 
-# Auto-generated/computed variables
-auto_variables:
-  - project_scope: |
-      # AI identifies broader project scope from title and context
-      identify_project_scope(project_title, study_context) || "Digital Services"
-  - design_improvements: |
-      # AI generates specific design improvements from barriers and flows
-      generate_design_improvements(target_barriers, user_flows) || "Improve user experience and reduce friction"
-  - trauma_informed_considerations: |
-      # AI creates VA-relevant trauma-informed considerations
-      generate_trauma_considerations(study_context, target_barriers) || "Consider veteran mental health and accessibility needs"
-  - research_hypotheses: |
-      # AI generates testable hypotheses from barriers and approach
-      generate_hypotheses(target_barriers, research_approach) || "Research hypotheses based on identified barriers"
-  - framing_questions: |
-      # AI creates specific research questions from approach and barriers
-      generate_framing_questions(research_approach, target_barriers, user_flows) || "Specific research questions to guide investigation"
-  - methodology_details: |
-      # AI expands on research approach with implementation details
-      expand_methodology_details(research_approach) || "Detailed methodology implementation"
-  - current_date: |
-      # Auto-generate current date
-      new Date().toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})
-  - github_file_link: |
-      # Auto-generate based on project title and date
-      generate_github_link(project_title, current_date) || null
+# AI Generation Tasks - These will be processed by LLM Worker
+ai_generation_tasks:
+  - task_id: "project_scope"
+    worker: "llm_worker"
+    prompt: |
+      Based on the project title "{{project_title}}" and study context "{{study_context}}", identify the broader project scope or domain area (e.g., Digital Services, Benefits Claims, Healthcare, Education, etc.). Provide a concise 1-2 word descriptor.
 
-# Output configuration
-output_options:
-  default_delivery: "file_only"
-  slack_format: "notification_only"
-  file_location: "01-planning/"
-  file_name: "research_brief_{{project_title}}_{{current_date}}.md"
+  - task_id: "design_improvements"
+    worker: "llm_worker"
+    prompt: |
+      Based on the target barriers "{{target_barriers}}" and user flows "{{user_flows}}", generate 2-3 specific design and content improvements this research will inform. Focus on actionable outcomes that address the identified barriers in the user experience.
 
-slack_output:
-  post_in_channel: false
-  create_thread: false
-  send_notification: true
-  title_format: "📄 Research Brief Created"
-  ping_team: ["{{prepared_by}}"]
-  interactive_elements:
-    - text: "📄 View Brief"
-      url: "{{github_file_link}}"
-    - text: "🧭 Create Research Plan"
-      action: "run_research_plan"
+  - task_id: "trauma_informed_considerations"
+    worker: "llm_worker"
+    prompt: |
+      Create 2-3 VA-relevant trauma-informed design considerations based on:
+      - Study context: {{study_context}}
+      - Target barriers: {{target_barriers}}
+      
+      Focus on veteran mental health, accessibility needs, and creating safe, supportive digital experiences.
 
-output_use: |
-  CivicMind Research Brief generator creates VA-compliant research scoping documents for stakeholder alignment. Ensures consistent structure and coverage of key research elements while supporting trauma-informed design principles.
+  - task_id: "research_hypotheses"
+    worker: "llm_worker"
+    prompt: |
+      Generate 2-3 testable research hypotheses based on:
+      - Target barriers: {{target_barriers}}
+      - Research approach: {{research_approach}}
+      - User flows: {{user_flows}}
+      
+      Format as clear, testable statements that this research can validate or refute.
 
-  Use this method to:
-    - Generate structured research briefs following VA standards
-    - Align stakeholders on research objectives and scope
-    - Document research hypotheses and framing questions
-    - Plan research approach and methodology
-    - Support trauma-informed service design considerations
+  - task_id: "framing_questions"
+    worker: "llm_worker"
+    prompt: |
+      Create 3-4 specific research questions that will guide the investigation based on:
+      - Research approach: {{research_approach}}
+      - Target barriers: {{target_barriers}}
+      - User flows: {{user_flows}}
+      
+      Questions should be specific, actionable, and aligned with the research approach.
 
-output_notes: |
-  Project details collected via structured form input from research brief UI.
-  Project scope ({{project_scope}}) determined from title and context analysis.
-  Design improvements ({{design_improvements}}) generated from barriers and flow specifications.
-  Brief follows VA research standards including trauma-informed design considerations.
-  Write in plain, accessible language at 10th-grade reading level.
-  Keep focused and actionable for design and product partners.
+  - task_id: "methodology_details"
+    worker: "llm_worker"
+    prompt: |
+      Expand on the research approach "{{research_approach}}" with specific implementation details including:
+      - Specific methods and techniques
+      - Session structure or data collection approach
+      - VA compliance considerations
+      - Timeline and resource requirements
+      
+      Keep focused on practical implementation details.
 
-output_format: |
+# Processing workflow for LangChain.js Router
+processing_workflow:
+  1. validate_inputs
+  2. execute_ai_generation_tasks
+  3. populate_template
+  4. save_to_github
+
+# Output template with AI generation placeholders
+output_template: |
   # 📄 Research Brief – {{project_title}}
 
-  **📦 Project Area:** {{project_scope}}  
+  **📦 Project Area:** {{ai_generated.project_scope}}  
   **👩🏽‍🔬 Prepared by:** {{prepared_by}}  
   **🗓️ Date:** {{current_date}}
 
@@ -109,10 +112,10 @@ output_format: |
      {{user_flows}}
 
   3. **Surface Insights for Design & Content Improvements:**  
-     {{design_improvements}}
+     {{ai_generated.design_improvements}}
 
   4. **Support Trauma-Informed Service Design:**  
-     {{trauma_informed_considerations}}
+     {{ai_generated.trauma_informed_considerations}}
 
   ---
 
@@ -122,53 +125,39 @@ output_format: |
     {{stakeholders}}
 
   - **Initial Hypotheses:**  
-    {{research_hypotheses}}
+    {{ai_generated.research_hypotheses}}
 
   - **Framing Questions:**  
-    {{framing_questions}}
+    {{ai_generated.framing_questions}}
 
   - **Research Approach Summary:**  
     {{research_approach}}
     
-    {{methodology_details}}
+    {{ai_generated.methodology_details}}
 
-prompt: |
-  You are a senior UX researcher experienced in creating VA-compliant research briefs for government service design.
+# GitHub storage configuration
+github_config:
+  repo: "your-research-repo"
+  path: "01-planning/"
+  filename: "research_brief_{{project_title}}_{{current_date}}.md"
+  commit_message: "Add research brief for {{project_title}}"
 
-  STRUCTURED INPUT DATA:
-  - Project title: {{project_title}}
-  - Study context: {{study_context}}
-  - Target barriers: {{target_barriers}}
-  - User flows: {{user_flows}}
-  - Stakeholders: {{stakeholders}}
-  - Research approach: {{research_approach}}
-  - Prepared by: {{prepared_by}}
+# Slack notification configuration
+slack_config:
+  notify_channel: "#research-planning"
+  notify_user: "{{prepared_by}}"
+  message: "📄 Research brief for {{project_title}} has been generated and saved to GitHub."
+  interactive_elements:
+    - text: "📄 View Brief"
+      url: "{{github_file_link}}"
+    - text: "🧭 Create Research Plan"
+      action: "run_research_plan"
 
-  Using this structured input data, generate comprehensive content for:
+output_use: |
+  CivicMind Research Brief generator creates VA-compliant research scoping documents for stakeholder alignment. Ensures consistent structure and coverage of key research elements while supporting trauma-informed design principles.
 
-  1. **Project Scope** - Broader project scope identification from {{project_title}} and {{study_context}}
-  2. **Design Improvements** - Specific improvements this research will inform based on {{target_barriers}} and {{user_flows}}
-  3. **Trauma-Informed Considerations** - VA-relevant considerations for veteran experiences based on {{study_context}} and {{target_barriers}}
-  4. **Research Hypotheses** - 2-3 testable hypotheses based on {{target_barriers}} and {{research_approach}}
-  5. **Framing Questions** - 3-4 specific research questions based on {{research_approach}}, {{target_barriers}}, and {{user_flows}}
-  6. **Methodology Details** - Expanded details on {{research_approach}} with specific implementation methods
-
-  Requirements:
-  - Follow VA research standards and trauma-informed design principles
-  - Use plain, accessible language at 10th-grade reading level
-  - Focus on actionable outcomes for design and product partners
-  - Consider veteran experiences, mental health impacts, and equitable access
-  - Avoid business jargon, em-dashes, and complex language
-  - Connect research to specific service improvements based on the provided barriers and flows
-
-  Write in clear, professional language that helps stakeholders understand research value and scope.
-
-notify:
-  - role: research_team
-    action: "Research brief created"
-    channel: "#research-planning"
-    message: "📄 Research brief for {{project_title}} has been created and saved. Ready for stakeholder review and planning phase."
-  - role: researcher
-    action: "Brief ready for review"
-    slack_tag: "{{prepared_by}}"
-    message: "Your research brief has been saved to the planning folder and is ready for stakeholder review."
+output_notes: |
+  Project details collected via structured form input from research brief UI.
+  Brief follows VA research standards including trauma-informed design considerations.
+  Write in plain, accessible language at 10th-grade reading level.
+  Keep focused and actionable for design and product partners.
