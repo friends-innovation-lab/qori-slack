@@ -52,7 +52,23 @@ Stay up-to-date with feature development by following our [CivicMind MVP GitHub 
 
 ### 📢 Share Out
 - **Weekly Slack Digests**  
-  Auto-publish research summaries, tagged by theme or project, into Slack channels to keep teams informed and engaged. 
+  Auto-publish research summaries, tagged by theme or project, into Slack channels to keep teams informed and engaged.
+
+---
+
+## 🎯 Market Position
+
+**The Problem**: Government research teams spend 60-80% of their time on research operations (scheduling, transcribing, organizing, reporting) instead of actual analysis and insight generation. Existing tools are built for enterprise teams, not public service workflows.
+
+**Our Solution**: Purpose-built research operations platform that understands government constraints, compliance requirements, and civic tech workflows.
+
+**Why CivicMind vs. Generic AI Tools**:
+- Government-specific templates and workflows out of the box
+- FedRAMP compliance pathway (not an afterthought)
+- Built for teams who serve the public, not venture-backed startups
+- Integrates with government-approved tools (Slack, GitHub) rather than requiring new platforms
+
+**Target Users**: Digital service teams in federal agencies, state governments, and civic tech organizations doing user research.
 
 ---
 
