@@ -117,7 +117,7 @@ processing_workflow:
   1. validate_inputs
   2. execute_ai_generation_tasks
   3. populate_template
-  4. save_to_github
+  4. save_to_outputs
 
 # Output template with AI generation placeholders
 output_template: |
@@ -185,18 +185,38 @@ output_template: |
   ## 📦 Output Artifacts  
   {{ai_generated.output_artifacts}}
 
-# GitHub storage configuration
-github_config:
-  repo: "your-research-repo"
-  path: "01-planning/"
+# Output configuration
+output_options:
+  # File settings
   filename: "research_plan_{{project_title}}_{{current_date}}.md"
-  commit_message: "Add research plan for {{project_title}}"
-
-# Slack notification configuration
-slack_config:
-  notify_channel: "#research-planning"
-  notify_user: "{{lead_researcher}}"
-  message: "🧭 Research plan for {{project_title}} has been generated and saved to GitHub."
+  path: "01-planning/"
+  
+  # Delivery methods (multiple can be enabled)
+  delivery:
+    github:
+      enabled: true
+      repo: "your-research-repo"
+      commit_message: "Add research plan for {{project_title}}"
+      
+    slack:
+      enabled: true
+      channel: "#research-planning"
+      notify_user: "{{lead_researcher}}"
+      message: "🧭 Research plan for {{project_title}} has been generated and saved to GitHub."
+      include_preview: false  # Set to true to include brief summary in Slack
+      actions:
+        - text: "🧭 View Plan"
+          url: "{{github_file_link}}"
+        - text: "📋 Create Research Script"
+          action: "run_research_script"
+    
+    email:
+      enabled: false
+      # Future: email delivery options
+      
+    teams:
+      enabled: false
+      # Future: Teams delivery options
 
 execution_mode: "generate_full_content"
 replace_placeholders: true
