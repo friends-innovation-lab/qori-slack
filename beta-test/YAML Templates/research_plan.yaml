@@ -9,9 +9,8 @@ author: CivicMind R&D
 created: 2025-06-26
 last_updated: 2025-07-07
 
-# LangChain.js Router Configuration
-router_config:
-  primary_worker: "llm_worker"
+# LLM Configuration
+llm_config:
   model: "gpt-3.5-turbo"
   temperature: 0.4
   max_tokens: 4000
@@ -33,25 +32,21 @@ input_variables:
   - lead_researcher      # Lead researcher name (REQUIRED)
   - team_office          # Team/Office from UI (REQUIRED)
 
-# AI Generation Tasks - These will be processed by LLM Worker
+# AI Generation Tasks - These will be processed sequentially
 ai_generation_tasks:
   - task_id: "organizational_priorities"
-    worker: "llm_worker"
     prompt: |
       Based on the product area "{{product_area}}" and team office "{{team_office}}", generate 2-3 specific VA/OCTO organizational priorities that this research supports. Focus on real VA priorities like equity, digital modernization, and veteran-centric design.
     
   - task_id: "user_journey_context"
-    worker: "llm_worker"
     prompt: |
       Describe how "{{product_area}}" fits into the end-to-end user experience for "{{target_participants}}" within the VA ecosystem. Include touchpoints, related services, and how this area connects to their broader VA journey.
     
   - task_id: "additional_research_goals"
-    worker: "llm_worker"
     prompt: |
       Generate 2-3 supporting research goals that complement the primary goal: "{{research_goal}}". These should be specific to the methodology "{{methodology}}" and help inform the decision context.
     
   - task_id: "research_questions"
-    worker: "llm_worker"
     prompt: |
       Create 3-4 specific, actionable research questions based on:
       - Primary goal: {{research_goal}}
@@ -60,12 +55,10 @@ ai_generation_tasks:
       - Methodology: {{methodology}}
     
   - task_id: "research_hypotheses"
-    worker: "llm_worker"
     prompt: |
       Generate 2-3 testable hypotheses based on the research questions and methodology "{{methodology}}". Make them specific and measurable.
     
   - task_id: "methodology_details"
-    worker: "llm_worker"
     prompt: |
       Provide detailed implementation steps for "{{methodology}}" including:
       - Session structure and duration
@@ -74,7 +67,6 @@ ai_generation_tasks:
       - Trauma-informed design elements
     
   - task_id: "recruitment_strategy"
-    worker: "llm_worker"
     prompt: |
       Suggest a comprehensive recruitment strategy for "{{target_participants}}" that includes:
       - Specific recruitment channels appropriate for VA research
@@ -83,7 +75,6 @@ ai_generation_tasks:
       - Accessibility considerations
     
   - task_id: "timeline_calculation"
-    worker: "llm_worker"
     prompt: |
       Calculate a detailed timeline starting from the current date using "{{timeline_preference}}" settings:
       - Rush: Planning(3d), Recruiting(5d), Interviews(5d), Synthesis(3d), Reporting(2d)
@@ -93,7 +84,6 @@ ai_generation_tasks:
       Provide actual calendar dates (business days only) in a markdown table format.
     
   - task_id: "tools_platforms"
-    worker: "llm_worker"
     prompt: |
       List specific tools and platforms needed for "{{methodology}}" including:
       - Scheduling and coordination tools
@@ -103,16 +93,14 @@ ai_generation_tasks:
       - Documentation and storage
     
   - task_id: "success_criteria"
-    worker: "llm_worker"
     prompt: |
       Define 3-4 measurable success criteria that indicate the research has achieved "{{research_goal}}" and will inform "{{decision_context}}".
     
   - task_id: "output_artifacts"
-    worker: "llm_worker"
     prompt: |
       List realistic deliverables and artifacts based on "{{methodology}}" and "{{research_goal}}" with estimated completion dates.
 
-# Processing workflow for LangChain.js Router
+# Processing workflow
 processing_workflow:
   1. validate_inputs
   2. execute_ai_generation_tasks
