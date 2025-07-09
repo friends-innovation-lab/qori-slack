@@ -178,7 +178,7 @@ output_template: |
 output_options:
   # File settings
   filename: "discussion_guide_{{study_name_slug}}_{{current_date}}.md"
-  path: "01-planning/"
+  path: "03-fieldwork/"
   
   # Delivery methods (multiple can be enabled)
   delivery:
