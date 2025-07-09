@@ -1,426 +1,441 @@
-# Qori Notes: Government Research Automation Platform
+# Qori Notes: Government Research Documentation Automation
 
-**Executive Summary:** Intelligent research documentation system that transforms government meetings into structured, compliant research documents with direct integration to existing government systems.
+**Executive Summary:** Focused automation system that transforms stakeholder meetings into research briefs and interview recordings into structured summaries. Two core workflows, maximum impact.
 
 ---
 
 ## 🎯 Product Vision
 
 ### The Problem
-Government research teams spend 60-70% of their time on documentation instead of actual research:
-- Manual note-taking during stakeholder meetings
-- Hours writing research briefs after calls
-- Inconsistent documentation standards
-- Delayed research initiation due to paperwork
-- Lost insights from poor note quality
+Government researchers spend too much time on documentation busywork:
+- **4+ hours writing research briefs** after stakeholder meetings
+- **2+ hours summarizing each interview** with themes and quotes
+- **Inconsistent documentation quality** across team members
+- **Delayed research initiation** due to paperwork bottlenecks
 
-### The Solution: Automated Research Pipeline
+### The Solution: Two Critical Automations
 ```
-📞 Meeting Audio → 🤖 AI Processing → 📄 Structured Documents → 🏛️ Qori Integration
+📞 Stakeholder Meeting → 📄 Research Brief (automated)
+🎤 Interview Recording → 📝 Interview Summary (automated)
 ```
 
-**Instead of:** 4-5 hours of manual documentation per meeting  
-**Deliver:** Complete, compliant research documents within minutes
+**Focus:** Automate the documentation, not the strategy. Researchers maintain control over planning and analysis.
 
 ---
 
-## 🔄 Core Scenarios
+## 🔄 Core Automation Scenarios
 
-### Scenario 1: Stakeholder Planning Call
+### Scenario 1: Stakeholder Meeting → Research Brief
+
+**Current Manual Process:**
 ```
-INPUT: Stakeholder meeting audio
-PROCESS: research_brief.yaml template
-OUTPUT: Complete research brief → 00-brief/ folder in Qori
+📞 60-min stakeholder meeting
+    ↓
+📝 Researcher takes scattered notes  
+    ↓
+⏰ 3-4 hours writing formal research brief
+    ↓
+📧 Email drafts for review and approval
+    ↓
+🗂️ Manual upload to project repository
+```
+**Total time: 4-5 hours**
+
+**Automated Process:**
+```
+📞 60-min stakeholder meeting (with audio recording)
+    ↓
+🤖 research_brief.yaml processes audio automatically
+    ↓
+📄 Complete, formatted research brief ready in 5 minutes
+    ↓
+📁 Auto-uploaded to 00-brief/ folder in GitHub
+```
+**Total time: 60 minutes (just the meeting)**
+
+**Example Audio Input:**
+> "We're getting complaints about the benefits application process. Veterans are abandoning the form halfway through. We need to understand what's happening in that middle section - maybe it's too complex or confusing. Sarah from UX will lead this, and we should probably do some user interviews with veterans who've had trouble."
+
+**Auto-Generated Research Brief:**
+```markdown
+# 📄 Research Brief – VA Benefits Application Abandonment Study
+
+**📦 Project Area:** Digital Services  
+**👩🏽‍🔬 Prepared by:** Sarah (UX Team)  
+**🗓️ Date:** 2025-07-09
+
+## Overview
+Veterans are experiencing abandonment issues during the benefits 
+application process, specifically at the midpoint of the form...
+
+## Objectives
+1. **Identify Barriers:** Form complexity causing mid-process abandonment
+2. **Evaluate Navigation Experience:** Benefits application user flow  
+3. **Research Approach:** User interviews with affected veterans
+
+## Initial Scoping Materials
+- **Stakeholders Consulted:** Benefits Team, UX Team
+- **Target Participants:** Veterans who abandoned benefits applications
+- **Research Methods:** User interviews, form analytics review
 ```
 
-**Example Flow:**
-- VA team discusses benefits application issues
-- AI extracts: project scope, barriers, research approach, team members
-- Auto-generates: Professional research brief following VA standards
-- Direct upload: Brief appears in Qori system immediately
+### Scenario 2: Interview Recording → Interview Summary
 
-### Scenario 2: Research Participant Interview
+**Current Manual Process:**
 ```
-INPUT: Interview session audio  
-PROCESS: interview_summary.yaml template
-OUTPUT: Structured interview summary → 03-fieldwork/ folder in Qori
+🎤 45-min participant interview
+    ↓
+📝 Researcher reviews audio recording
+    ↓
+⏰ 2-3 hours extracting themes, quotes, and insights
+    ↓
+📄 Writing formatted interview summary
+    ↓
+🗂️ Manual file organization and storage
 ```
+**Total time: 3-4 hours per interview**
 
-**Example Flow:**
-- 45-minute veteran interview about form difficulties
-- AI extracts: 3 key themes, 3 pain points, 3 notable quotes
-- Auto-generates: Clean summary with actionable insights
-- Direct upload: Summary available for team analysis
-
-### Scenario 3: Research Analysis Session
+**Automated Process:**
 ```
-INPUT: Team analysis notes/audio
-PROCESS: affinity_mapping.yaml template  
-OUTPUT: Thematic analysis report → 04-analysis/ folder in Qori
+🎤 45-min participant interview (with audio recording)
+    ↓
+🤖 interview_summary.yaml processes audio automatically
+    ↓
+📝 Structured summary with themes, pain points, quotes ready in 5 minutes
+    ↓
+📁 Auto-uploaded to 03-fieldwork/ folder in GitHub
 ```
+**Total time: 45 minutes (just the interview)**
 
-**Example Flow:**
-- Team discusses patterns across 12 interviews
-- AI identifies: Common themes, severity rankings, design implications
-- Auto-generates: Structured affinity mapping with recommendations
-- Direct upload: Analysis ready for stakeholder review
+**Example Audio Input:**
+> "The form is really confusing. I got to page 4 and just gave up. The medical questions don't make sense, and I wasn't sure if I needed all those documents upfront. It felt overwhelming, like I was doing something wrong..."
+
+**Auto-Generated Interview Summary:**
+```markdown
+# 📝 Interview Summary - P001
+
+**🏛️ Study:** VA Benefits Application Research  
+**👩🏽‍🔬 Interviewer:** Sarah Chen  
+**🗓️ Date:** 2025-07-10
+
+## 🧠 Key Themes
+- Form abandonment occurs at mid-process (page 4)
+- Medical terminology creates comprehension barriers
+- Document requirements cause uncertainty and stress
+
+## ⚠️ Pain Points  
+- Overwhelming complexity in medical questions section
+- Unclear upfront document requirements
+- No progress indicators or save functionality
+
+## 💬 Notable Quotes
+- "I got to page 4 and just gave up" – P001
+- "The medical questions don't make sense" – P001  
+- "I wasn't sure if I needed all those documents upfront" – P001
+```
 
 ---
 
 ## 🏗️ Technical Architecture
 
-### System Overview
+### Simple System Design
 ```
-┌─ Audio Processing Layer ─────────────────┐
-│ • Real-time transcription (Whisper)     │
-│ • Speaker identification                │ 
-│ • Audio quality filtering               │
-│ • Government-compliant recording        │
-└─────────────────────────────────────────┘
+┌─ Two YAML Templates ───────────────────┐
+│ • research_brief.yaml                  │
+│ • interview_summary.yaml              │
+└────────────────────────────────────────┘
                     ↓
-┌─ AI Processing Engine ──────────────────┐
-│ • OpenAI/Anthropic API integration     │
-│ • Custom prompt routing system         │
-│ • YAML template processing engine      │
-│ • Multi-format document generation     │
-└─────────────────────────────────────────┘
+┌─ Processing Engine ────────────────────┐
+│ • Audio transcription (Whisper)       │
+│ • LLM processing (OpenAI/Anthropic)   │
+│ • Template population                 │
+│ • Markdown generation                 │
+└────────────────────────────────────────┘
                     ↓
-┌─ Document Generation Layer ─────────────┐
-│ • Markdown rendering                   │
-│ • PDF export with government branding  │
-│ • Template population and validation   │
-│ • Compliance checking                  │
-└─────────────────────────────────────────┘
-                    ↓
-┌─ Integration & Storage Layer ───────────┐
-│ • Qori API integration                 │
-│ • Slack/Teams notifications           │
-│ • Government file management          │
-│ • Audit trail logging                 │
-└─────────────────────────────────────────┘
+┌─ GitHub Integration ───────────────────┐
+│ • Auto-folder organization            │
+│ • Structured commits                  │
+│ • Team notifications                  │
+└────────────────────────────────────────┘
 ```
 
-### Recommended Tech Stack
-
-**Backend Infrastructure:**
-- **Node.js/Express** or **Python/FastAPI** for API layer
-- **OpenAI Whisper** for government-approved transcription
+### Tech Stack
+- **Python processing engine** (simple scripts)
+- **OpenAI Whisper** for transcription
 - **OpenAI/Anthropic APIs** for document generation
-- **PostgreSQL** for session metadata and audit trails
-- **Redis** for caching and queue management
-- **Docker containers** for on-premises deployment
+- **YAML templates** for configuration
+- **GitHub API** for file organization
+- **Slack webhooks** for notifications
 
-**Frontend Application:**
-- **Electron** for cross-platform desktop application
-- **React** with TypeScript for UI components
-- **Tailwind CSS** for government design system compliance
-- **Offline-first architecture** for classified environments
+---
 
-**Government-Specific Requirements:**
-- **HTTPS/TLS 1.3 encryption** throughout entire pipeline
-- **Role-based access control** (RBAC) with CAC/PIV integration
-- **Comprehensive audit logging** for all user actions
-- **FedRAMP compliance** for cloud components
-- **STIG hardening** for security standards
-- **Section 508 accessibility** compliance
+## 📁 YAML Template System
 
-### Security Architecture
+### research_brief.yaml
 ```yaml
-security:
-  encryption: 
-    at_rest: "AES-256 encryption"
-    in_transit: "TLS 1.3 minimum"
-  authentication: 
-    primary: "PKI/CAC card integration"
-    fallback: "Multi-factor authentication"
-  authorization:
-    model: "Role-based access control"
-    levels: "Public, FOUO, Confidential, Secret"
-  audit_logging: 
-    scope: "All actions logged"
-    retention: "7 years minimum"
-    format: "NIST compliant"
-  data_residency: 
-    processing: "US-only data centers"
-    storage: "Government-approved facilities"
-  clearance_support: 
-    maximum: "Secret classification"
-    segregation: "Classification-based data isolation"
+id: research_brief
+label: 📄 Research Brief
+description: Transform stakeholder meetings into structured research briefs
+
+input_variables:
+  - meeting_audio
+  - study_name
+  - prepared_by
+
+ai_extraction_tasks:
+  - project_title_and_scope
+  - study_context_and_motivation  
+  - target_barriers_to_identify
+  - proposed_research_approach
+  - stakeholder_participants
+
+output_template: |
+  # 📄 Research Brief – {{project_title}}
+  
+  **📦 Project Area:** {{project_scope}}  
+  **👩🏽‍🔬 Prepared by:** {{prepared_by}}  
+  **🗓️ Date:** {{current_date}}
+  
+  ## Overview
+  {{study_context}}
+  
+  ## Objectives
+  {{research_objectives}}
+  
+  ## Initial Scoping Materials
+  {{scoping_details}}
+
+output_options:
+  filename: "research_brief_{{study_slug}}_{{date}}.md"
+  path: "00-brief/"
+  github_repo: "{{project_repo}}"
+  slack_notification: true
+```
+
+### interview_summary.yaml
+```yaml
+id: interview_summary
+label: 📝 Interview Summary  
+description: Extract themes, pain points, and quotes from interview recordings
+
+input_variables:
+  - interview_audio
+  - participant_id
+  - study_name
+  - interviewer_name
+
+ai_extraction_tasks:
+  - key_themes (3 maximum)
+  - pain_points (3 maximum)  
+  - notable_quotes (3 maximum)
+
+output_template: |
+  # 📝 Interview Summary - {{participant_id}}
+  
+  **🏛️ Study:** {{study_name}}  
+  **👩🏽‍🔬 Interviewer:** {{interviewer_name}}  
+  **🗓️ Date:** {{interview_date}}
+  
+  ## 🧠 Key Themes
+  {{key_themes}}
+  
+  ## ⚠️ Pain Points
+  {{pain_points}}
+  
+  ## 💬 Notable Quotes  
+  {{notable_quotes}}
+
+output_options:
+  filename: "interview_summary_{{participant_id}}_{{date}}.md"
+  path: "03-fieldwork/"
+  github_repo: "{{project_repo}}"
+  slack_notification: true
 ```
 
 ---
 
-## 📁 Document Templates
+## 🚀 Usage & Integration
 
-### Current YAML Templates
+### Command Line Interface
+```bash
+# Process stakeholder meeting
+./qori-notes process --template=research_brief \
+                     --audio=stakeholder_meeting.mp3 \
+                     --study="VA Benefits Research" \
+                     --prepared_by="Sarah Chen"
 
-**research_brief.yaml**
-- **Purpose:** Transform stakeholder calls into structured research briefs
-- **Folder:** `00-brief/`
-- **AI Tasks:** Project scope, design improvements, trauma-informed considerations, hypotheses, questions, methodology
+# Process interview
+./qori-notes process --template=interview_summary \
+                     --audio=interview_p001.mp3 \
+                     --participant="P001" \
+                     --study="VA Benefits Research"
+```
 
-**research_plan.yaml**  
-- **Purpose:** Generate comprehensive research implementation plans
-- **Folder:** `01-planning/`
-- **AI Tasks:** Organizational priorities, user journey context, goals, questions, hypotheses, methodology, recruitment, timeline, tools, success criteria
+### Slack Bot Integration
+```
+# Research brief
+/qori-notes brief --audio=[upload] --study="Benefits Research" --lead="Sarah"
 
-**discussion_guide.yaml**
-- **Purpose:** Create structured conversation guides for research sessions
-- **Folder:** `03-fieldwork/`
-- **AI Tasks:** Session analysis, warm-up questions, task sections, post-task questions, emergency procedures
+# Interview summary  
+/qori-notes interview --audio=[upload] --participant="P001" --study="Benefits Research"
+```
 
-**interview_summary.yaml**
-- **Purpose:** Extract themes, pain points, and quotes from interview transcripts
-- **Folder:** `03-fieldwork/`
-- **Output:** 3 key themes, 3 pain points, 3 notable quotes in plain language
-
-### Future Templates
-- **affinity_mapping.yaml** → `04-analysis/`
-- **research_report.yaml** → `05-deliverables/`
-- **stakeholder_presentation.yaml** → `05-deliverables/`
-- **executive_summary.yaml** → `05-deliverables/`
-
----
-
-## 🚀 Development Roadmap
-
-### Phase 1: Core Engine (3-4 months)
-**Goal:** Basic meeting → document pipeline
-
-**Features:**
-- Audio transcription pipeline with Whisper integration
-- YAML template processing engine
-- Basic document generation (Markdown output)
-- Local file system output
-- Simple web interface for testing
-
-**Deliverables:**
-- Working prototype with research_brief.yaml
-- Basic audio processing capability
-- Template rendering system
-- Local testing environment
-
-### Phase 2: Government Integration (2-3 months)
-**Goal:** Government-ready deployment
-
-**Features:**
-- Qori API integration for direct uploads
-- Security hardening and compliance features
-- User authentication and authorization
-- Audit logging and compliance reporting
-- Desktop application (Electron)
-
-**Deliverables:**
-- Government-compliant security implementation
-- Direct Qori integration
-- Desktop application beta
-- Initial compliance certification
-
-### Phase 3: Advanced Features (3-4 months)
-**Goal:** Full research workflow automation
-
-**Features:**
-- All remaining YAML templates (interview, analysis, reporting)
-- Batch processing for multiple interviews
-- Advanced analytics and insights
-- Mobile companion app
-- Team collaboration features
-
-**Deliverables:**
-- Complete research workflow automation
-- Mobile application
-- Analytics dashboard
-- Team management features
-
-### Phase 4: Scale & Enhancement (Ongoing)
-**Goal:** Multi-agency deployment
-
-**Features:**
-- Multi-tenancy for different agencies
-- Advanced customization capabilities
-- Integration with additional government systems
-- AI model optimization for government language
-- Advanced reporting and metrics
+### Auto-Generated File Organization
+```
+📁 va-benefits-research/
+├── 📁 00-brief/
+│   └── 📄 research_brief_va_benefits_study_2025-07-09.md
+└── 📁 03-fieldwork/
+    ├── 📄 interview_summary_P001_2025-07-10.md
+    ├── 📄 interview_summary_P002_2025-07-11.md
+    ├── 📄 interview_summary_P003_2025-07-12.md
+    └── 📄 interview_summary_P004_2025-07-13.md
+```
 
 ---
 
-## 💰 Investment Requirements
+## 💰 Development Investment
 
-### Development Team (Annual Costs)
-- **2-3 Full-stack developers:** $300-600K
-- **1 DevOps/Security engineer:** $160-180K  
-- **1 Government compliance specialist:** $120-140K
-- **1 UX/UI designer:** $100-120K
-- **1 Product manager:** $130-150K
+### Development Team (4-6 months)
+- **1 Senior Python Developer:** $150-200K total
+- **1 AI/LLM Integration Specialist:** $100-150K total  
+- **1 Government Compliance Consultant:** $25-50K total
 
-**Total Team Cost:** $810K - 1.19M annually
+**Total Development Cost:** $275-400K (one-time)
 
-### Infrastructure & Operations
-- **Development environment:** $24-60K annually
-- **Government compliance tools:** $120-240K annually
-- **Testing and certification:** $50-100K one-time
-- **Legal and compliance consulting:** $50-100K annually
+### Infrastructure & Operations (Annual)
+- **GitHub Enterprise:** $2-5K annually
+- **OpenAI/Anthropic API costs:** $3-10K annually
+- **Server hosting:** $1-5K annually
+- **Compliance and maintenance:** $5-15K annually
 
-**Total Infrastructure:** $244-500K annually
+**Total Operating Cost:** $11-35K annually
 
-### Total MVP Investment
-**Year 1 Total:** $1.05M - 1.69M  
-**Ongoing Annual:** $1.05M - 1.44M
+### Total Investment
+**Development:** $275-400K (one-time)  
+**Operations:** $11-35K annually
 
 ---
 
-## 🎯 Market Analysis
+## 🎯 Value Proposition
 
-### Target Market
+### Time Savings Per Research Project
+**Traditional Approach:**
+- Research brief writing: 4-5 hours
+- 8 interview summaries: 24-32 hours  
+- **Total documentation time: 28-37 hours**
 
-**Primary Customers:**
-1. **VA Research Teams** (immediate opportunity)
-2. **Federal agency research divisions** (HHS, DoD, DHS, CDC)
-3. **Government contractors** conducting research
-4. **State and local government** research teams
+**With Qori Notes:**
+- Research brief: 5 minutes (automated)
+- 8 interview summaries: 40 minutes (automated)
+- **Total documentation time: 45 minutes**
 
-**Market Size:**
-- **Federal government research spending:** $150+ billion annually
-- **Documentation overhead:** Estimated 30-40% of research budgets
-- **Addressable market:** $45-60 billion in potential efficiency gains
+**Time savings: 95%+ reduction in documentation overhead**
 
-### Competitive Landscape
+### Quality Improvements
+- **Consistent formatting** across all team members
+- **No missed insights** from poor note-taking
+- **Immediate availability** for team analysis
+- **Professional presentation** for stakeholders
 
-**Direct Competitors:** None (blue ocean opportunity)
-
-**Adjacent Competitors:**
-- **Granola.ai:** Commercial note-taking (different market)
-- **Otter.ai:** Generic transcription (lacks government compliance)
-- **Manual processes:** Current government standard (status quo)
-
-**Competitive Advantages:**
-1. **Government-first design** - Built for federal compliance from day one
-2. **Research-specific workflows** - Not generic note-taking
-3. **Direct system integration** - Seamless Qori connectivity
-4. **Structured document outputs** - Beyond simple transcription
-5. **Multi-classification support** - Handles sensitive government data
+### Team Impact
+- **Researchers focus on research** instead of paperwork
+- **Faster project initiation** with immediate documentation
+- **Better insights** from consistent, thorough summaries
+- **Improved stakeholder communication** with professional outputs
 
 ---
 
-## 🏛️ Government Deployment Considerations
+## 🏛️ Government Deployment
+
+### Security & Compliance
+- **On-premises deployment** for air-gapped environments
+- **Audio processing locally** (no data leaves government networks)
+- **Configurable LLM endpoints** (use government-approved models)
+- **File-based operation** (no persistent databases)
+- **Audit logging** for all processing activities
 
 ### Deployment Models
 
-**Option 1: On-Premises Deployment**
-- Complete air-gapped installation within government networks
-- Maximum security and control
-- Higher maintenance overhead
-- Suitable for classified environments
+**Option 1: Fully Air-Gapped**
+```
+Government Network
+├── Qori Notes processing engine  
+├── Local GitHub Enterprise
+├── Local LLM models (if required)
+└── Audio file processing
+```
 
-**Option 2: GovCloud Deployment**  
-- AWS GovCloud or Azure Government hosting
-- FedRAMP compliance required
-- Balanced security and maintenance
-- Suitable for most federal agencies
-
-**Option 3: Hybrid Deployment**
-- On-premises processing with approved cloud storage
-- Custom configuration per agency requirements
-- Complex but flexible
-- Suitable for agencies with specific needs
-
-### Compliance Requirements
-
-**Mandatory Certifications:**
-- **FedRAMP** (Moderate or High depending on data classification)
-- **STIG compliance** for security configuration
-- **Section 508** for accessibility
-- **FIPS 140-2** for cryptographic modules
-
-**Documentation Requirements:**
-- System Security Plan (SSP)
-- Privacy Impact Assessment (PIA)
-- Authority to Operate (ATO) documentation
-- Continuous monitoring procedures
+**Option 2: Secure Hybrid**  
+```
+Government Network
+├── Qori Notes processing engine
+├── GitHub Enterprise (cloud or on-prem)
+└── Secure API calls to approved LLM services
+```
 
 ---
 
-## 📈 Business Model
+## 📈 Market Strategy
 
-### Revenue Streams
+### Target Customers
+1. **VA Research Teams** (immediate pilot opportunity)
+2. **Federal research divisions** (HHS, DoD, DHS, CDC)
+3. **Government contractors** conducting user research
+4. **Academic institutions** with government research contracts
 
-**1. Software Licensing**
-- Per-seat annual licensing for government agencies
-- Tiered pricing based on classification level and features
-- Volume discounts for large agency deployments
+### Pricing Model
+**Agency License:** $50-75K annually
+- Unlimited processing for agency research teams
+- Custom GitHub integration setup
+- Training and implementation support
+- Priority technical support
 
-**2. Professional Services**
-- Implementation and integration services
-- Custom template development
-- Training and change management
-- Ongoing support and maintenance
+**Per-Project License:** $5-10K per research study
+- Suitable for contractors and smaller engagements
+- Pay-as-you-go model
+- Standard integration and support
 
-**3. Hosting & Infrastructure**
-- Managed GovCloud hosting services
-- Infrastructure monitoring and maintenance
-- Backup and disaster recovery services
-- Security monitoring and incident response
-
-### Pricing Strategy (Preliminary)
-
-**Standard Edition:** $200-300/user/year
-- Basic research workflow automation
-- Standard government compliance
-- Community support
-
-**Professional Edition:** $400-600/user/year
-- Advanced analytics and reporting
-- Custom template development
-- Priority support
-
-**Enterprise Edition:** $800-1200/user/year
-- Multi-agency deployment
-- Advanced security features
-- Dedicated support team
-- Custom integrations
+### Market Entry Strategy
+1. **VA pilot program** (leveraging existing relationships)
+2. **Case study development** with quantified time savings
+3. **Government contractor partnerships** for broader reach
+4. **GSA Schedule inclusion** for easy procurement
 
 ---
 
-## 🚀 Success Metrics
+## 🔮 Success Roadmap
 
-### Product Metrics
-- **Time savings:** Target 50-70% reduction in documentation time
-- **Document quality:** Consistent formatting and compliance scores
-- **User adoption:** 80%+ adoption rate within 6 months of deployment
-- **System uptime:** 99.5%+ availability for critical government operations
+### 6-Month Goals
+- **VA deployment** with 2-3 research teams using daily
+- **Documented time savings** of 25+ hours per research project
+- **2 additional agency pilots** initiated
+- **Template refinement** based on user feedback
 
-### Business Metrics
-- **Customer acquisition:** 5-10 federal agencies in first 18 months
-- **Revenue growth:** $5-10M ARR by end of year 2
-- **Market expansion:** 20+ agencies by end of year 3
-- **Profitability:** Positive cash flow by month 18
+### 12-Month Goals  
+- **5+ federal agencies** using Qori Notes regularly
+- **Government contractor adoption** for external research
+- **Template marketplace** for agency-specific customizations
+- **Integration partnerships** with other government research tools
+
+### 18-Month Goals
+- **Standard tool** for federal user research documentation
+- **20+ agencies** across multiple departments
+- **Custom template library** for specialized research types
+- **Training program** for government research best practices
 
 ---
 
-## 🔮 Future Vision
+## 💡 Product Philosophy
 
-### 5-Year Roadmap
+**"Automate the documentation, not the strategy."**
 
-**Year 1-2: Foundation**
-- Establish product-market fit with VA and 2-3 other agencies
-- Achieve core compliance certifications
-- Build sustainable development and support operations
+Qori Notes handles the busywork that prevents researchers from doing their best work, while keeping humans in control of the strategic thinking, planning, and analysis that requires expertise and judgment.
 
-**Year 3-4: Expansion**  
-- Multi-agency platform with advanced customization
-- International government markets (Five Eyes alliance)
-- AI model optimization for government-specific language and processes
-
-**Year 5+: Platform Evolution**
-- Comprehensive government research platform
-- Integration with broader government digital transformation
-- Potential acquisition target for major government technology providers
-
-### Long-term Impact
-**Transform government research from a documentation-heavy process to an insight-driven practice, enabling faster policy decisions, improved citizen services, and more effective use of taxpayer resources.**
+**Simple, focused, and incredibly valuable.**
 
 ---
 
 **Last Updated:** July 9, 2025  
-**Document Version:** 1.0  
+**Document Version:** 3.0 (Focused Two-Scenario Architecture)  
 **Next Review:** August 9, 2025
