@@ -9,9 +9,8 @@ author: CivicMind R&D
 created: 2025-06-26
 last_updated: 2025-07-07
 
-# LangChain.js Router Configuration
-router_config:
-  primary_worker: "llm_worker"
+# LLM Configuration
+llm_config:
   model: "gpt-3.5-turbo"
   temperature: 0.4
   max_tokens: 4000
@@ -29,10 +28,9 @@ input_variables:
   - study_link           # Link to study folder or documentation (OPTIONAL)
   - team_members         # Who to notify (OPTIONAL)
 
-# AI Generation Tasks - These will be processed by LLM Worker
+# AI Generation Tasks - These will be processed sequentially
 ai_generation_tasks:
   - task_id: "session_analysis"
-    worker: "llm_worker"
     prompt: |
       Analyze the research objectives and tasks described in: "{{input_text}}"
       
@@ -45,7 +43,6 @@ ai_generation_tasks:
       Base your analysis on the complexity, objectives, and scope described in the input text.
 
   - task_id: "warmup_questions"
-    worker: "llm_worker"
     prompt: |
       Create 3-4 warm-up questions appropriate for the participant type and study context based on: "{{input_text}}"
       
@@ -58,7 +55,6 @@ ai_generation_tasks:
       Format as a bulleted list with clear, friendly questions.
 
   - task_id: "task_sections"
-    worker: "llm_worker"
     prompt: |
       Based on the research objectives in "{{input_text}}", create structured task sections for the discussion guide.
       
@@ -80,7 +76,6 @@ ai_generation_tasks:
       Create 2-4 tasks based on the complexity and objectives described.
 
   - task_id: "post_task_questions"
-    worker: "llm_worker"
     prompt: |
       Create 4-5 post-task interview questions based on the research objectives in "{{input_text}}"
       
@@ -93,7 +88,6 @@ ai_generation_tasks:
       Format as a bulleted list with thoughtful, probing questions.
 
   - task_id: "emergency_procedures"
-    worker: "llm_worker"
     prompt: |
       Create VA-approved emergency exit language for research sessions that covers:
       - Technical difficulties during the session
@@ -104,13 +98,13 @@ ai_generation_tasks:
       
       Use professional, supportive language that prioritizes participant well-being.
 
-# Processing workflow for LangChain.js Router
+# Processing workflow
 processing_workflow:
   1. validate_inputs
   2. execute_ai_generation_tasks
   3. parse_session_analysis
   4. populate_template
-  5. save_to_github
+  5. save_to_outputs
 
 # Output template with AI generation placeholders
 output_template: |
@@ -180,24 +174,39 @@ output_template: |
   **Guide created:** {{current_date}}  
   **Study details:** {{study_link}}
 
-# GitHub storage configuration
-github_config:
-  repo: "your-research-repo"
-  path: "01-planning/"
+# Output configuration
+output_options:
+  # File settings
   filename: "discussion_guide_{{study_name_slug}}_{{current_date}}.md"
-  commit_message: "Add discussion guide for {{study_name}}"
-
-# Slack notification configuration
-slack_config:
-  notify_channel: "{{study_channel}}"
-  notify_user: "{{researcher_contact}}"
-  team_members: "{{team_members}}"
-  message: "💬 Discussion guide for {{study_name}} has been created and saved. {{parsed_duration}} {{parsed_session_type}} guide ready for {{parsed_participant_type}} sessions."
-  interactive_elements:
-    - text: "📝 View Guide"
-      url: "{{github_file_link}}"
-    - text: "✅ Create Pre-Session Reminder"
-      action: "create_calendar_reminder"
+  path: "01-planning/"
+  
+  # Delivery methods (multiple can be enabled)
+  delivery:
+    github:
+      enabled: true
+      repo: "your-research-repo"
+      commit_message: "Add discussion guide for {{study_name}}"
+      
+    slack:
+      enabled: true
+      channel: "{{study_channel}}"
+      notify_user: "{{researcher_contact}}"
+      team_members: "{{team_members}}"
+      message: "💬 Discussion guide for {{study_name}} has been created and saved. {{parsed_duration}} {{parsed_session_type}} guide ready for {{parsed_participant_type}} sessions."
+      include_preview: false
+      actions:
+        - text: "📝 View Guide"
+          url: "{{github_file_link}}"
+        - text: "✅ Create Pre-Session Reminder"
+          action: "create_calendar_reminder"
+    
+    email:
+      enabled: false
+      # Future: email delivery options
+      
+    teams:
+      enabled: false
+      # Future: Teams delivery options
 
 output_use: |
   CivicMind Discussion Guide generator creates VA-compliant conversation guides for research sessions. Ensures consistent structure, timing, and coverage of key research objectives while maintaining VA standards for participant consent and ethics.
