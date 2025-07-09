@@ -1,27 +1,106 @@
 id: interview_summary
+name: run_interview_summary
 label: 📝 Interview Summary
+version: v2.1
 description: Extract key themes, pain points, and quotes from interviews 💬
+
+author: CivicMind R&D
+created: 2025-06-26
+last_updated: 2025-07-07
+
+# LLM Configuration
+llm_config:
+  model: "gpt-3.5-turbo"
+  temperature: 0.4
+  max_tokens: 3000
+
 input_type: text
 input_processing: summarize_if_long
 batch_mode: true
 batch_delimiter: "---"
-precision_mode: concise | detailed
+precision_mode: concise
+
+# Input schema for Slack UI
+input_variables:
+  - transcript_text      # Interview transcript or notes (REQUIRED)
+  - participant_id       # Participant identifier (REQUIRED)
+  - interviewer_name     # Lead interviewer (REQUIRED)
+  - study_name           # Name of the study (REQUIRED)
+  - session_date         # Date of interview (OPTIONAL)
+  - study_channel        # Slack channel for notifications (OPTIONAL)
+
+# Processing workflow
+processing_workflow:
+  1. validate_inputs
+  2. process_transcript
+  3. populate_template
+  4. save_to_outputs
+
 prompt: |
-  You are a research assistant helping synthesize qualitative data. Your task is to extract 3 key themes, 3 pain points, and 3 notable quotes from the following interview transcript. Be clear and specific. Use plain language written at a 10th-grade reading level. Use a conversational but professional tone. Avoid generic business phrases. Where helpful, explain complex ideas using everyday analogies. Use active voice, not passive. Avoid em-dashes. Do not include explanations — only the the outputs in the requested format.
+  You are a research assistant helping synthesize qualitative data. Your task is to extract 3 key themes, 3 pain points, and 3 notable quotes from the following interview transcript. Be clear and specific. Use plain language written at a 10th-grade reading level. Use a conversational but professional tone. Avoid generic business phrases. Where helpful, explain complex ideas using everyday analogies. Use active voice, not passive. Avoid em-dashes. Do not include explanations — only the outputs in the requested format.
+  
   Transcript:
-  {{input}}
-output_format: |
+  {{transcript_text}}
+
+# Output template
+output_template: |
+  # 📝 Interview Summary - {{participant_id}}
+
+  **🏛️ Study:** {{study_name}}  
+  **👩🏽‍🔬 Interviewer:** {{interviewer_name}}  
+  **🗓️ Date:** {{session_date}}
+
   ## 🧠 Key Themes
-  - Theme 1: [Description]
-  - Theme 2: [Description]
-  - Theme 3: [Description]
+  - Theme 1: [AI Generated]
+  - Theme 2: [AI Generated]
+  - Theme 3: [AI Generated]
   
   ## ⚠️ Pain Points
-  - Pain Point 1: [Description]
-  - Pain Point 2: [Description]
-  - Pain Point 3: [Description]
+  - Pain Point 1: [AI Generated]
+  - Pain Point 2: [AI Generated]
+  - Pain Point 3: [AI Generated]
   
   ## 💬 Notable Quotes
-  - "Quote 1" – User
-  - "Quote 2" – User
-  - "Quote 3" – User
+  - "Quote 1" – {{participant_id}}
+  - "Quote 2" – {{participant_id}}
+  - "Quote 3" – {{participant_id}}
+
+  ---
+  **Summary created:** {{current_date}}  
+  **Study details:** Available in project folder
+
+# Output configuration
+output_options:
+  # File settings
+  filename: "interview_summary_{{participant_id}}_{{current_date}}.md"
+  path: "03-fieldwork/"
+  
+  # Delivery methods (multiple can be enabled)
+  delivery:
+    github:
+      enabled: true
+      repo: "your-research-repo"
+      commit_message: "Add interview summary for {{participant_id}} - {{study_name}}"
+      
+    slack:
+      enabled: true
+      channel: "{{study_channel}}"
+      notify_user: "{{interviewer_name}}"
+      message: "📝 Interview summary for {{participant_id}} ({{study_name}}) has been processed and saved."
+      include_preview: false
+      actions:
+        - text: "📝 View Summary"
+          url: "{{github_file_link}}"
+        - text: "📊 View All Summaries"
+          action: "view_study_summaries"
+    
+    email:
+      enabled: false
+      # Future: email delivery options
+      
+    teams:
+      enabled: false
+      # Future: Teams delivery options
+
+output_use: |
+  CivicMind Interview Summary generator creates structured summaries from qualitative research sessions. Extracts key themes, pain points, and quotes to support analysis and reporting phases of government research projects.
