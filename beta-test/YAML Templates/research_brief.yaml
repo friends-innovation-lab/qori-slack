@@ -1,13 +1,13 @@
 id: research_brief
 name: run_research_brief
 label: 📄 Research Brief
-version: v2.1
+version: v2.2
 description: |
   Generate VA-aligned research briefs for scoping studies with design and product partners. Creates structured research briefs with objectives, hypotheses, and methodology following VA research standards and government service considerations.
 
 author: CivicMind R&D
 created: 2025-06-26
-last_updated: 2025-07-07
+last_updated: 2025-07-09
 
 # LLM Configuration
 llm_config:
@@ -37,7 +37,7 @@ ai_generation_tasks:
 
   - task_id: "design_improvements"
     prompt: |
-      Based on the target barriers "{{target_barriers}}" and user flows "{{user_flows}}", generate 2-3 specific design and content improvements this research will inform. Focus on actionable outcomes that address the identified barriers in the user experience.
+      Based on the target barriers "{{target_barriers}}" and user flows "{{user_flows}}", generate 2-3 specific design and content improvements this research will inform. Format each as a numbered point with clear action-oriented language. Focus on actionable outcomes that address the identified barriers in the user experience.
 
   - task_id: "trauma_informed_considerations"
     prompt: |
@@ -45,7 +45,7 @@ ai_generation_tasks:
       - Study context: {{study_context}}
       - Target barriers: {{target_barriers}}
       
-      Focus on veteran mental health, accessibility needs, and creating safe, supportive digital experiences.
+      Format each as a numbered point with clear action-oriented language. Focus on veteran mental health, accessibility needs, and creating safe, supportive digital experiences.
 
   - task_id: "research_hypotheses"
     prompt: |
@@ -54,7 +54,7 @@ ai_generation_tasks:
       - Research approach: {{research_approach}}
       - User flows: {{user_flows}}
       
-      Format as clear, testable statements that this research can validate or refute.
+      Format as numbered, clear, testable statements that this research can validate or refute.
 
   - task_id: "framing_questions"
     prompt: |
@@ -63,17 +63,17 @@ ai_generation_tasks:
       - Target barriers: {{target_barriers}}
       - User flows: {{user_flows}}
       
-      Questions should be specific, actionable, and aligned with the research approach.
+      Format as numbered questions that are specific, actionable, and aligned with the research approach.
 
   - task_id: "methodology_details"
     prompt: |
-      Expand on the research approach "{{research_approach}}" with specific implementation details including:
-      - Specific methods and techniques
-      - Session structure or data collection approach
-      - VA compliance considerations
-      - Timeline and resource requirements
+      Expand on the research approach "{{research_approach}}" with specific implementation details. Structure the response with clear subheadings for:
+      - **Specific Methods & Techniques**
+      - **Session Structure & Data Collection**
+      - **VA Compliance Considerations**
+      - **Timeline & Resource Requirements**
       
-      Keep focused on practical implementation details.
+      Keep focused on practical implementation details with bullet points where appropriate.
 
 # Processing workflow
 processing_workflow:
@@ -82,51 +82,58 @@ processing_workflow:
   3. populate_template
   4. save_to_outputs
 
-# Output template with AI generation placeholders
+# Output template with improved formatting
 output_template: |
   # 📄 Research Brief – {{project_title}}
-
-  **📦 Project Area:** {{ai_generated.project_scope}}  
-  **👩🏽‍🔬 Prepared by:** {{prepared_by}}  
-  **🗓️ Date:** {{current_date}}
+  
+  > **📦 Project Area:** {{ai_generated.project_scope}} &nbsp;&nbsp;|&nbsp;&nbsp; **👩🏽‍🔬 Prepared by:** {{prepared_by}} &nbsp;&nbsp;|&nbsp;&nbsp; **🗓️ Date:** {{current_date}}
 
   ---
 
-  ## Overview
+  ## 🎯 Overview
 
   {{study_context}}
 
-  ## Objectives
+  ---
 
-  1. **Identify Barriers:**  
-     {{target_barriers}}
+  ## 📋 Research Objectives
 
-  2. **Evaluate Navigation Experience:**  
-     {{user_flows}}
+  ### 🚧 **Identify Barriers**
+  {{target_barriers}}
 
-  3. **Surface Insights for Design & Content Improvements:**  
-     {{ai_generated.design_improvements}}
+  ### 🧭 **Evaluate User Experience Flow**  
+  {{user_flows}}
 
-  4. **Support Trauma-Informed Service Design:**  
-     {{ai_generated.trauma_informed_considerations}}
+  ### 🎨 **Surface Insights for Design & Content Improvements**
+  {{ai_generated.design_improvements}}
+
+  ### 💚 **Support Trauma-Informed Service Design**
+  {{ai_generated.trauma_informed_considerations}}
 
   ---
 
-  ## Initial Scoping Materials
+  ## 📚 Initial Scoping Materials
 
-  - **Stakeholders Consulted:**  
-    {{stakeholders}}
+  ### 👥 **Stakeholders Consulted**
+  {{stakeholders}}
 
-  - **Initial Hypotheses:**  
-    {{ai_generated.research_hypotheses}}
+  ### 🔬 **Research Hypotheses**
+  {{ai_generated.research_hypotheses}}
 
-  - **Framing Questions:**  
-    {{ai_generated.framing_questions}}
+  ### ❓ **Framing Questions**
+  {{ai_generated.framing_questions}}
 
-  - **Research Approach Summary:**  
-    {{research_approach}}
-    
-    {{ai_generated.methodology_details}}
+  ### 🛠️ **Research Approach & Methodology**
+  
+  **Approach Summary:**  
+  {{research_approach}}
+  
+  **Implementation Details:**  
+  {{ai_generated.methodology_details}}
+
+  ---
+  
+  > 💡 **Next Steps:** Review with stakeholders → Finalize methodology → Begin participant recruitment
 
 # Output configuration
 output_options:
