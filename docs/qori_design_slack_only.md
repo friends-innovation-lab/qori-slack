@@ -6,11 +6,12 @@ Qori for Design extends the research-to-insight pipeline by automatically genera
 
 ## Core Concept
 
-**Research Insights → HMW Statements → USWDS Wireframes → Developer-Ready Code**
+**Research Insights → HMW Statements → USWDS Wireframes → Developer-Ready Code + Figma Components**
 
 Instead of building a complex design review interface, we leverage Slack's native capabilities:
 - **Screenshots** for visual feedback
 - **Code blocks** for developer handoff  
+- **Figma copy files** for seamless design tool integration
 - **Interactive buttons** for team decision-making
 - **Simple preview links** for stakeholder review
 
@@ -35,6 +36,7 @@ Qori posts a comprehensive message with 3 wireframe options, each including:
 - **Screenshot** of the wireframe  
 - **Component breakdown** showing USWDS elements used
 - **Working HTML code** ready for development
+- **Figma copy file** for seamless design tool integration
 - **Live preview link** for interactive testing
 - **Action buttons** for team feedback
 
@@ -202,7 +204,115 @@ class ScreenshotGenerator {
 }
 ```
 
-#### 3. Preview Page Generator
+#### 3. Figma Integration Service
+```javascript
+// services/figma-converter.js
+class FigmaConverter {
+  convertHTMLToFigmaNodes(html, uswdsComponents) {
+    const dom = this.parseHTML(html);
+    return this.traverseAndConvert(dom, uswdsComponents);
+  }
+
+  traverseAndConvert(element, uswdsComponents) {
+    const figmaNode = {
+      id: this.generateId(),
+      name: this.getElementName(element),
+      type: this.getFigmaNodeType(element),
+      ...this.getLayoutProps(element),
+      ...this.getStyleProps(element, uswdsComponents)
+    };
+
+    if (element.children) {
+      figmaNode.children = element.children.map(child => 
+        this.traverseAndConvert(child, uswdsComponents)
+      );
+    }
+
+    return figmaNode;
+  }
+
+  getFigmaNodeType(element) {
+    const tagMapping = {
+      'div': 'FRAME',
+      'button': 'COMPONENT_INSTANCE',
+      'input': 'COMPONENT_INSTANCE', 
+      'label': 'TEXT',
+      'form': 'FRAME',
+      'h1': 'TEXT',
+      'h2': 'TEXT',
+      'p': 'TEXT'
+    };
+    
+    return tagMapping[element.tagName.toLowerCase()] || 'FRAME';
+  }
+
+  generateFigmaCopyFile(wireframeTitle, figmaNodes) {
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <title>Copy to Figma: ${wireframeTitle}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px; text-align: center; background: #f8f9fa; }
+    .container { max-width: 500px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .success { color: #28a745; font-weight: bold; }
+    .instructions { background: #e7f3ff; padding: 20px; border-radius: 6px; margin: 20px 0; text-align: left; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📋 Figma Copy Ready</h1>
+    <p><strong>Wireframe:</strong> ${wireframeTitle}</p>
+    
+    <div class="instructions">
+      <h3>Next Steps:</h3>
+      <ol>
+        <li>The wireframe data is automatically copying to your clipboard</li>
+        <li>Open your Figma file</li>
+        <li>Press Cmd+V (Mac) or Ctrl+V (Windows)</li>
+        <li>The wireframe will appear as USWDS components</li>
+      </ol>
+    </div>
+
+    <div id="status">⏳ Copying to clipboard...</div>
+  </div>
+
+  <script>
+    const figmaData = ${JSON.stringify(figmaNodes)};
+    
+    async function autoCopy() {
+      try {
+        const clipboardData = {
+          "figma/node-data": JSON.stringify({
+            nodes: figmaData,
+            pasteMetadata: { type: "PASTE_NODES", source: "qori-design" }
+          })
+        };
+
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/plain": "Wireframe from Qori Design: ${wireframeTitle}",
+            "figma/node-data": new Blob([clipboardData["figma/node-data"]], { type: "application/json" })
+          })
+        ]);
+
+        document.getElementById('status').innerHTML = 
+          '<div class="success">✅ Copied! Now paste in Figma (Cmd+V or Ctrl+V)</div>';
+        
+      } catch (err) {
+        document.getElementById('status').innerHTML = 
+          '<div class="error">❌ Auto-copy failed. <button onclick="autoCopy()">Try Again</button></div>';
+      }
+    }
+
+    window.addEventListener('load', () => setTimeout(autoCopy, 500));
+  </script>
+</body>
+</html>`;
+  }
+}
+```
+
+#### 4. Preview Page Generator
 ```javascript
 // services/preview-generator.js
 class PreviewGenerator {
@@ -265,7 +375,7 @@ app.get('/preview/:id', async (req, res) => {
 });
 ```
 
-#### 4. Slack Integration Service
+#### 5. Slack Integration Service
 ```javascript
 // slack/design-commands.js
 app.command('/design', async ({ ack, command, respond, client }) => {
@@ -386,6 +496,32 @@ async function buildDesignResultsBlocks(result) {
 
   return blocks;
 }
+
+// Figma Download Handler
+app.action('download_for_figma', async ({ ack, body, client }) => {
+  await ack();
+
+  const wireframeId = JSON.parse(body.actions[0].value).wireframe_id;
+  const wireframe = await getWireframeById(wireframeId);
+  
+  // Convert to Figma format
+  const converter = new FigmaConverter();
+  const figmaNodes = converter.convertHTMLToFigmaNodes(wireframe.html, uswdsToFigmaMapping);
+  
+  // Generate self-copying HTML file
+  const copyFileContent = converter.generateFigmaCopyFile(wireframe.title, figmaNodes);
+  const filename = `${wireframe.title.replace(/\s+/g, '-')}-figma-copy.html`;
+  
+  // Upload file to Slack
+  await client.files.upload({
+    channels: body.channel.id,
+    initial_comment: `📋 *Figma Copy File for: ${wireframe.title}*\n\n*Instructions:*\n1. Download the file below\n2. Open it in your browser\n3. The wireframe data will automatically copy to your clipboard\n4. Switch to Figma and paste (Cmd+V or Ctrl+V)\n\n*Note:* Make sure you have the USWDS Figma component library installed.`,
+    file: Buffer.from(copyFileContent),
+    filename: filename,
+    filetype: 'html',
+    title: `Figma Copy: ${wireframe.title}`
+  });
+});
 ```
 
 ### YAML Workflow Configuration
@@ -450,6 +586,14 @@ steps:
       wireframes: "${steps.generate_wireframes.outputs.wireframes}"
     outputs:
       preview_links: "preview_urls"
+      
+  - name: "prepare_figma_export"
+    service: "figma-service"
+    action: "prepare_figma_data"
+    inputs:
+      wireframes: "${steps.generate_wireframes.outputs.wireframes}"
+    outputs:
+      figma_ready_data: "figma_conversion_data"
       
   - name: "post_to_slack"
     service: "slack-service"
@@ -536,7 +680,7 @@ Accessibility Features: Screen reader progress announcements, Keyboard navigatio
 </form>
 ```
 
-[👍 Select This Option] [🔗 Live Preview] [💬 Feedback]
+[👍 Select This Option] [🔗 Live Preview] [📋 Download for Figma] [💬 Feedback]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -679,7 +823,12 @@ Accessibility Features: Single question focus, Clear explanations and examples, 
    - Implement screenshot embedding
    - Add action buttons and responses
 
-3. **Preview Page System**
+3. **Figma Integration**
+   - Build HTML to Figma node converter
+   - Create self-copying HTML file generator
+   - Implement Slack file upload for Figma copy files
+
+4. **Preview Page System**
    - Simple Express server for wireframe previews
    - HTML generation with USWDS styling
    - Temporary storage and expiration handling
@@ -718,6 +867,22 @@ Accessibility Features: Single question focus, Clear explanations and examples, 
 
 ---
 
+## Prerequisites for Figma Integration
+
+### Required Setup
+1. **USWDS Figma Component Library**: Teams must have the official USWDS Figma library installed in their workspace
+2. **Modern Browser Support**: Chrome, Edge, Firefox, or Safari with Clipboard API support
+3. **Figma Desktop App**: Recommended for most reliable copy/paste functionality
+
+### Component Library Installation
+```bash
+# Teams need to install from Figma Community:
+# "U.S. Web Design System (USWDS)" by GSA
+# URL: https://www.figma.com/community/file/836611771720754351
+```
+
+---
+
 ## Configuration for GOTS Deployment
 
 ### Environment Variables
@@ -738,15 +903,66 @@ SCREENSHOT_TIMEOUT=30000
 MAX_SCREENSHOT_SIZE=2048x2048
 ```
 
+### USWDS to Figma Component Mapping
+```javascript
+// config/uswds-figma-mapping.js
+const uswdsToFigmaMapping = {
+  'usa-button': {
+    componentId: 'figma-uswds-button-primary',
+    figmaProps: {
+      width: 'hug-contents',
+      height: 44,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      fills: [{ type: 'SOLID', color: { r: 0.004, g: 0.298, b: 0.635 } }],
+      cornerRadius: 4
+    }
+  },
+  'usa-button--secondary': {
+    componentId: 'figma-uswds-button-secondary',
+    figmaProps: {
+      fills: [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }],
+      strokes: [{ type: 'SOLID', color: { r: 0.004, g: 0.298, b: 0.635 } }]
+    }
+  },
+  'usa-input': {
+    componentId: 'figma-uswds-input',
+    figmaProps: {
+      width: 320,
+      height: 40,
+      fills: [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }],
+      strokes: [{ type: 'SOLID', color: { r: 0.451, g: 0.451, b: 0.451 } }],
+      cornerRadius: 4
+    }
+  },
+  'usa-form-group': {
+    figmaProps: {
+      layoutMode: 'VERTICAL',
+      itemSpacing: 8,
+      paddingBottom: 16
+    }
+  },
+  'usa-step-indicator': {
+    componentId: 'figma-uswds-step-indicator',
+    figmaProps: {
+      layoutMode: 'HORIZONTAL',
+      itemSpacing: 24
+    }
+  }
+};
+```
+
 ### Agency Customization
 ```yaml
 # config/design-config.yaml
 design_generation:
   enabled: true
   max_wireframes_per_request: 3
+  enable_figma_export: true
   
   uswds_customization:
     version: "3.0.0"
+    figma_library_id: "uswds-component-library-id"  # Agency's USWDS Figma library
     theme_colors:
       primary: "#005ea2"      # Default USWDS blue
       secondary: "#fa9441"    # Default USWDS gold
@@ -792,6 +1008,7 @@ github_integration:
 - **Command Usage**: 80%+ of research studies generate wireframes
 - **Team Engagement**: Average 3+ team members interact per wireframe set
 - **Selection Rate**: 90%+ of wireframe sets result in option selection
+- **Figma Integration**: 70%+ of design teams download Figma copy files
 - **GitHub Integration**: 85%+ selected wireframes become development issues
 
 ### Quality Measures
@@ -802,4 +1019,4 @@ github_integration:
 
 ---
 
-This Slack-native approach delivers the power of AI-generated wireframes without the complexity of building and maintaining a separate web interface. Teams get visual design concepts, working code, and seamless integration with their existing workflows - all within the Slack environment they already use daily.
+This Slack-native approach delivers the power of AI-generated wireframes without the complexity of building and maintaining a separate web interface. Teams get visual design concepts, working code, seamless Figma integration, and smooth handoff to development - all within the Slack environment they already use daily.
