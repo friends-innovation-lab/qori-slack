@@ -82,7 +82,7 @@ processing_workflow:
   3. populate_template
   4. save_to_outputs
 
-# Output template 
+# Output template with improved formatting
 output_template: |
   # 📄 Research Brief – {{project_title}}
   
