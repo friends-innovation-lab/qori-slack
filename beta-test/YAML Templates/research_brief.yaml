@@ -139,7 +139,7 @@ output_template: |
 output_options:
   # File settings
   filename: "research_brief_{{project_title}}_{{current_date}}.md"
-  path: "01-planning/"
+  path: "00-brief/"
   
   # Delivery methods (multiple can be enabled)
   delivery:
