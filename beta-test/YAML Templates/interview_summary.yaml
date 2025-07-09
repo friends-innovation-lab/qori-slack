@@ -1,24 +1,24 @@
 id: interview_summary
 name: run_interview_summary
 label: 📝 Interview Summary
-version: v2.1
-description: Extract key themes, pain points, and quotes from interviews 💬
+version: v2.2
+description: Extract key themes, pain points, quotes, and coded transcript segments from interviews 💬
 
 author: CivicMind R&D
 created: 2025-06-26
-last_updated: 2025-07-07
+last_updated: 2025-07-09
 
 # LLM Configuration
 llm_config:
   model: "gpt-3.5-turbo"
   temperature: 0.4
-  max_tokens: 3000
+  max_tokens: 4000
 
 input_type: text
 input_processing: summarize_if_long
 batch_mode: true
 batch_delimiter: "---"
-precision_mode: concise
+precision_mode: detailed
 
 # Input schema for Slack UI
 input_variables:
@@ -29,15 +29,64 @@ input_variables:
   - session_date         # Date of interview (OPTIONAL)
   - study_channel        # Slack channel for notifications (OPTIONAL)
 
+# Qualitative coding framework
+coding_framework:
+  emotional_states: 
+    - frustrated
+    - confused
+    - confident
+    - overwhelmed
+    - satisfied
+    - anxious
+    - hopeful
+  
+  barrier_types:
+    - language_barrier
+    - process_confusion
+    - technical_difficulty
+    - cognitive_load
+    - documentation_issue
+    - accessibility_barrier
+  
+  user_behaviors:
+    - abandonment
+    - workaround
+    - help_seeking
+    - completion_success
+    - error_recovery
+    - giving_up
+  
+  interaction_points:
+    - form_fields
+    - navigation
+    - help_text
+    - error_messages
+    - document_upload
+    - verification_step
+
 # Processing workflow
 processing_workflow:
   1. validate_inputs
   2. process_transcript
-  3. populate_template
-  4. save_to_outputs
+  3. apply_coding_framework
+  4. populate_template
+  5. save_to_outputs
 
 prompt: |
-  You are a research assistant helping synthesize qualitative data. Your task is to extract 3 key themes, 3 pain points, and 3 notable quotes from the following interview transcript. Be clear and specific. Use plain language written at a 10th-grade reading level. Use a conversational but professional tone. Avoid generic business phrases. Where helpful, explain complex ideas using everyday analogies. Use active voice, not passive. Avoid em-dashes. Do not include explanations — only the outputs in the requested format.
+  You are a qualitative research assistant helping analyze interview data. Your task is to:
+  
+  1. Extract 3 key themes, 3 pain points, and 3 notable quotes
+  2. Apply research codes to significant transcript segments
+  
+  For the coded transcript, identify 8-12 important segments and label them using this coding framework:
+  
+  **Emotional States:** frustrated, confused, confident, overwhelmed, satisfied, anxious, hopeful
+  **Barrier Types:** language_barrier, process_confusion, technical_difficulty, cognitive_load, documentation_issue, accessibility_barrier  
+  **User Behaviors:** abandonment, workaround, help_seeking, completion_success, error_recovery, giving_up
+  **Interaction Points:** form_fields, navigation, help_text, error_messages, document_upload, verification_step
+  
+  Format coded segments as: **[CODE_CATEGORY - SPECIFIC_CODE]** followed by the quote.
+  Use plain language written at a 10th-grade reading level. Be conversational but professional. Use active voice. Do not include explanations — only the outputs in the requested format.
   
   Transcript:
   {{transcript_text}}
@@ -65,6 +114,15 @@ output_template: |
   - "Quote 2" – {{participant_id}}
   - "Quote 3" – {{participant_id}}
 
+  ## 🏷️ Coded Transcript Segments
+  
+  [AI Generated coded segments with research labels]
+
+  ## 📊 Code Summary
+  
+  **Most Frequent Codes:**
+  [AI Generated code frequency count]
+
   ---
   **Summary created:** {{current_date}}  
   **Study details:** Available in project folder
@@ -80,19 +138,21 @@ output_options:
     github:
       enabled: true
       repo: "your-research-repo"
-      commit_message: "Add interview summary for {{participant_id}} - {{study_name}}"
+      commit_message: "Add coded interview summary for {{participant_id}} - {{study_name}}"
       
     slack:
       enabled: true
       channel: "{{study_channel}}"
       notify_user: "{{interviewer_name}}"
-      message: "📝 Interview summary for {{participant_id}} ({{study_name}}) has been processed and saved."
+      message: "📝 Coded interview summary for {{participant_id}} ({{study_name}}) has been processed and saved."
       include_preview: false
       actions:
         - text: "📝 View Summary"
           url: "{{github_file_link}}"
         - text: "📊 View All Summaries"
           action: "view_study_summaries"
+        - text: "🏷️ Compare Codes"
+          action: "compare_participant_codes"
     
     email:
       enabled: false
@@ -103,4 +163,4 @@ output_options:
       # Future: Teams delivery options
 
 output_use: |
-  CivicMind Interview Summary generator creates structured summaries from qualitative research sessions. Extracts key themes, pain points, and quotes to support analysis and reporting phases of government research projects.
+  CivicMind Interview Summary generator creates structured summaries with qualitative coding from research sessions. Extracts key themes, pain points, quotes, and applies research codes to transcript segments to support analysis and reporting phases of government research projects.
