@@ -9,9 +9,8 @@ author: CivicMind R&D
 created: 2025-06-26
 last_updated: 2025-07-07
 
-# LangChain.js Router Configuration
-router_config:
-  primary_worker: "llm_worker"
+# LLM Configuration
+llm_config:
   model: "gpt-3.5-turbo"
   temperature: 0.4
   max_tokens: 3000
@@ -30,20 +29,17 @@ input_variables:
   - research_approach    # Research approach from UI (REQUIRED)
   - prepared_by          # Prepared by from UI (REQUIRED)
 
-# AI Generation Tasks - These will be processed by LLM Worker
+# AI Generation Tasks - These will be processed sequentially
 ai_generation_tasks:
   - task_id: "project_scope"
-    worker: "llm_worker"
     prompt: |
       Based on the project title "{{project_title}}" and study context "{{study_context}}", identify the broader project scope or domain area (e.g., Digital Services, Benefits Claims, Healthcare, Education, etc.). Provide a concise 1-2 word descriptor.
 
   - task_id: "design_improvements"
-    worker: "llm_worker"
     prompt: |
       Based on the target barriers "{{target_barriers}}" and user flows "{{user_flows}}", generate 2-3 specific design and content improvements this research will inform. Focus on actionable outcomes that address the identified barriers in the user experience.
 
   - task_id: "trauma_informed_considerations"
-    worker: "llm_worker"
     prompt: |
       Create 2-3 VA-relevant trauma-informed design considerations based on:
       - Study context: {{study_context}}
@@ -52,7 +48,6 @@ ai_generation_tasks:
       Focus on veteran mental health, accessibility needs, and creating safe, supportive digital experiences.
 
   - task_id: "research_hypotheses"
-    worker: "llm_worker"
     prompt: |
       Generate 2-3 testable research hypotheses based on:
       - Target barriers: {{target_barriers}}
@@ -62,7 +57,6 @@ ai_generation_tasks:
       Format as clear, testable statements that this research can validate or refute.
 
   - task_id: "framing_questions"
-    worker: "llm_worker"
     prompt: |
       Create 3-4 specific research questions that will guide the investigation based on:
       - Research approach: {{research_approach}}
@@ -72,7 +66,6 @@ ai_generation_tasks:
       Questions should be specific, actionable, and aligned with the research approach.
 
   - task_id: "methodology_details"
-    worker: "llm_worker"
     prompt: |
       Expand on the research approach "{{research_approach}}" with specific implementation details including:
       - Specific methods and techniques
@@ -82,7 +75,7 @@ ai_generation_tasks:
       
       Keep focused on practical implementation details.
 
-# Processing workflow for LangChain.js Router
+# Processing workflow
 processing_workflow:
   1. validate_inputs
   2. execute_ai_generation_tasks
