@@ -1,13 +1,13 @@
 id: research_plan
 name: run_research_plan
 label: 🧭 Research Plan
-version: v2.1
+version: v2.2
 description: |
-  Generate comprehensive VA-aligned research plans for civic tech studies. Creates structured research plans with timelines, methodology, recruitment strategy, and success criteria following VA research standards and organizational priorities.
+  Generate comprehensive VA-aligned research plans for civic tech studies. Creates structured research plans with timelines, methodology, recruitment strategy, and success criteria following VA research standards and organizational priorities. Automatically refines informal inputs to create professional, detailed execution plans.
 
 author: CivicMind R&D
 created: 2025-06-26
-last_updated: 2025-07-07
+last_updated: 2025-07-10
 
 # LLM Configuration
 llm_config:
@@ -34,84 +34,259 @@ input_variables:
 
 # AI Generation Tasks - These will be processed sequentially
 ai_generation_tasks:
+  - task_id: "refined_product_area"
+    prompt: |
+      Improve and clarify the product area: "{{product_area}}"
+      
+      Rewrite to be more professional and specific while preserving the original meaning:
+      - Use proper VA/government terminology
+      - Fix informal language and make more specific
+      - Maintain the core product focus and scope
+      - Add context about how this fits within VA services
+      
+      If input is very brief, expand appropriately to provide better context while staying true to the apparent intent.
+
+  - task_id: "refined_decision_context"
+    prompt: |
+      Improve and clarify the decision context: "{{decision_context}}"
+      
+      Rewrite to be more professional and specific while preserving the original intent:
+      - Use clear business language
+      - Make vague decisions more specific and actionable
+      - Fix grammatical issues and informal language
+      - Maintain the core decision that needs to be made
+      - Add context about why this decision matters
+      
+      If input is very brief, expand appropriately to explain the business context and stakes involved.
+
+  - task_id: "refined_research_goal"
+    prompt: |
+      Improve and clarify the research goal: "{{research_goal}}"
+      
+      Rewrite to be more professional and measurable while preserving the original intent:
+      - Use proper research terminology
+      - Make vague goals more specific and actionable
+      - Fix informal language
+      - Maintain the core learning objective
+      - Ensure the goal is achievable through research
+      
+      Format as a clear, single-sentence goal that explains what insights the research will provide.
+
+  - task_id: "refined_target_participants"
+    prompt: |
+      Improve and clarify the target participants: "{{target_participants}}"
+      
+      Rewrite to be more professional and specific while preserving the original intent:
+      - Use proper demographic and psychographic descriptors
+      - Make vague participant descriptions more specific
+      - Fix informal language
+      - Maintain the core participant profile
+      - Add relevant context about why these participants matter for the research
+      
+      If input is very brief, expand appropriately to provide better participant context while staying true to the apparent intent.
+
   - task_id: "organizational_priorities"
     prompt: |
-      Based on the product area "{{product_area}}" and team office "{{team_office}}", generate 2-3 specific VA/OCTO organizational priorities that this research supports. Focus on real VA priorities like equity, digital modernization, and veteran-centric design.
-    
+      Based on the refined product area and team office "{{team_office}}", generate 2-3 specific VA/OCTO organizational priorities that this research supports. 
+      
+      Focus on real VA priorities such as:
+      - Digital modernization and user experience improvements
+      - Equity and accessibility in veteran services
+      - Veteran-centric design and service delivery
+      - Operational efficiency and cost reduction
+      - Data-driven decision making
+      
+      Connect each priority to how this specific research supports broader VA goals.
+
   - task_id: "user_journey_context"
     prompt: |
-      Describe how "{{product_area}}" fits into the end-to-end user experience for "{{target_participants}}" within the VA ecosystem. Include touchpoints, related services, and how this area connects to their broader VA journey.
-    
+      Describe how the refined product area fits into the end-to-end user experience for the refined target participants within the VA ecosystem. 
+      
+      Include:
+      - Key touchpoints and related services
+      - How this area connects to their broader VA journey
+      - Dependencies and related processes
+      - Impact on overall veteran experience
+      
+      Keep focused on the user journey context, not technical implementation details.
+
   - task_id: "additional_research_goals"
     prompt: |
-      Generate 2-3 supporting research goals that complement the primary goal: "{{research_goal}}". These should be specific to the methodology "{{methodology}}" and help inform the decision context.
-    
+      Generate 2-3 supporting research goals that complement the refined primary goal.
+      
+      These should:
+      - Be specific to the methodology "{{methodology}}"
+      - Help inform the refined decision context
+      - Support the primary goal without duplicating it
+      - Be achievable within the research scope
+      
+      Format as bulleted secondary objectives that build on the primary goal.
+
   - task_id: "research_questions"
     prompt: |
       Create 3-4 specific, actionable research questions based on:
-      - Primary goal: {{research_goal}}
-      - Decision context: {{decision_context}}
-      - Target participants: {{target_participants}}
+      - Refined primary goal
+      - Refined decision context
+      - Refined target participants
       - Methodology: {{methodology}}
-    
+      
+      Questions should:
+      - Be answerable through the specified methodology
+      - Connect directly to the decision that needs to be made
+      - Be specific to the participant type and context
+      - Focus on insights that will inform action
+      
+      Format as numbered questions that guide the research investigation.
+
   - task_id: "research_hypotheses"
     prompt: |
-      Generate 2-3 testable hypotheses based on the research questions and methodology "{{methodology}}". Make them specific and measurable.
-    
+      Generate 2-3 testable hypotheses based on the research questions and methodology "{{methodology}}".
+      
+      Each hypothesis should:
+      - Make a specific prediction about what the research will find
+      - Be testable through the proposed methodology
+      - Connect to the refined research goals
+      - Use measurable language when possible
+      
+      Format as clear statements that can be validated or refuted through research.
+
   - task_id: "methodology_details"
     prompt: |
       Provide detailed implementation steps for "{{methodology}}" including:
-      - Session structure and duration
-      - Specific approach and techniques
-      - VA compliance considerations
-      - Trauma-informed design elements
-    
+      
+      **Session Structure and Duration:**
+      - Specific session format and timing
+      - Number and length of interactions
+      - Session flow and activities
+      
+      **Specific Approach and Techniques:**
+      - Detailed methodology implementation
+      - Data collection methods
+      - Specific protocols and procedures
+      
+      **VA Compliance Considerations:**
+      - IRB approval requirements and timeline
+      - Informed consent procedures
+      - Data privacy and security protocols
+      - Veteran-specific ethical considerations
+      
+      **Trauma-Informed Design Elements:**
+      - Approaches to support veteran mental health
+      - Accommodation for PTSD and anxiety
+      - Safe and supportive research environment
+      
+      Use bullet points for readability and be specific about practical implementation.
+
   - task_id: "recruitment_strategy"
     prompt: |
-      Suggest a comprehensive recruitment strategy for "{{target_participants}}" that includes:
-      - Specific recruitment channels appropriate for VA research
-      - Partnership opportunities with VA programs
-      - Screening criteria and process
-      - Accessibility considerations
-    
+      Suggest a comprehensive recruitment strategy for the refined target participants that includes:
+      
+      **Specific Recruitment Channels:**
+      - VA-specific recruitment channels and databases
+      - Community partnerships and veteran organizations
+      - Digital outreach methods appropriate for the target audience
+      
+      **Partnership Opportunities:**
+      - Relevant VA programs and offices
+      - External veteran service organizations
+      - Community groups and advocacy organizations
+      
+      **Screening Criteria and Process:**
+      - Specific inclusion/exclusion criteria
+      - Screening questions and process
+      - Qualification verification methods
+      
+      **Accessibility Considerations:**
+      - Accommodations for disabilities
+      - Language and communication needs
+      - Technology access and support
+      
+      Provide specific, actionable recruitment guidance.
+
   - task_id: "timeline_calculation"
     prompt: |
       Calculate a detailed timeline starting from the current date using "{{timeline_preference}}" settings:
-      - Rush: Planning(3d), Recruiting(5d), Interviews(5d), Synthesis(3d), Reporting(2d)
-      - Standard: Planning(5d), Recruiting(10d), Interviews(10d), Synthesis(5d), Reporting(5d)
-      - Extended: Planning(10d), Recruiting(21d), Interviews(14d), Synthesis(10d), Reporting(7d)
       
-      Provide actual calendar dates (business days only) in a markdown table format.
-    
+      **Rush Timeline:** Planning(3d), Recruiting(5d), Interviews(5d), Synthesis(3d), Reporting(2d)
+      **Standard Timeline:** Planning(5d), Recruiting(10d), Interviews(10d), Synthesis(5d), Reporting(5d)  
+      **Extended Timeline:** Planning(10d), Recruiting(21d), Interviews(14d), Synthesis(10d), Reporting(7d)
+      
+      Create a markdown table with:
+      - Phase names
+      - Duration in business days
+      - Actual start and end dates (business days only)
+      - Key milestones and deliverables
+      
+      Calculate from today's date and account for weekends.
+
   - task_id: "tools_platforms"
     prompt: |
       List specific tools and platforms needed for "{{methodology}}" including:
-      - Scheduling and coordination tools
-      - Research session platforms
-      - Recording and transcription
-      - Analysis and synthesis tools
-      - Documentation and storage
-    
+      
+      **Scheduling and Coordination:**
+      - Participant scheduling tools
+      - Calendar management systems
+      - Communication platforms
+      
+      **Research Session Platforms:**
+      - Video conferencing tools
+      - Screen sharing and recording
+      - Remote testing platforms
+      
+      **Recording and Transcription:**
+      - Audio/video recording solutions
+      - Transcription services
+      - Data security and storage
+      
+      **Analysis and Synthesis:**
+      - Qualitative analysis software
+      - Collaboration and synthesis tools
+      - Data visualization platforms
+      
+      **Documentation and Storage:**
+      - Document management systems
+      - Secure file storage
+      - Version control and sharing
+      
+      Recommend specific tools with VA compliance considerations.
+
   - task_id: "success_criteria"
     prompt: |
-      Define 3-4 measurable success criteria that indicate the research has achieved "{{research_goal}}" and will inform "{{decision_context}}".
-    
+      Define 3-4 measurable success criteria that indicate the research has achieved the refined primary goal and will inform the refined decision context.
+      
+      Each criterion should:
+      - Be specific and measurable
+      - Connect directly to the research goals
+      - Indicate actionable insights were gained
+      - Support the decision-making process
+      
+      Format as clear, measurable outcomes that define research success.
+
   - task_id: "output_artifacts"
     prompt: |
-      List realistic deliverables and artifacts based on "{{methodology}}" and "{{research_goal}}" with estimated completion dates.
+      List realistic deliverables and artifacts based on "{{methodology}}" and the refined research goal.
+      
+      Include:
+      - Primary research deliverables (reports, presentations, etc.)
+      - Supporting artifacts (recordings, transcripts, etc.)
+      - Stakeholder communication materials
+      - Actionable recommendations and next steps
+      
+      Provide estimated completion dates based on the timeline preference and methodology complexity.
 
 # Processing workflow
 processing_workflow:
   1. validate_inputs
   2. execute_ai_generation_tasks
-  3. populate_template
-  4. save_to_outputs
+  3. validate_generated_content
+  4. populate_template
+  5. save_to_outputs
 
-# Output template with AI generation placeholders
+# Output template with refined content
 output_template: |
   # 🧭 Research Plan – {{project_title}}
 
-  **📦 Product/Feature Area:** {{product_area}}  
+  **📦 Product/Feature Area:** {{ai_generated.refined_product_area}}  
   **🏛️ Team/Office:** {{team_office}}  
   **👩🏽‍🔬 Lead Researcher:** {{lead_researcher}}  
   **🗓️ Date:** {{current_date}}
@@ -119,7 +294,7 @@ output_template: |
   ---
 
   ## 🔎 Background  
-  {{decision_context}}
+  {{ai_generated.refined_decision_context}}
 
   ## 🎯 Organizational Priorities  
   {{ai_generated.organizational_priorities}}
@@ -128,8 +303,9 @@ output_template: |
   {{ai_generated.user_journey_context}}
 
   ## 🎓 Research Goals  
-  **Primary Goal:** {{research_goal}}
+  **Primary Goal:** {{ai_generated.refined_research_goal}}
 
+  **Supporting Goals:**
   {{ai_generated.additional_research_goals}}
 
   ## ❓ Research Questions  
@@ -145,12 +321,10 @@ output_template: |
 
   ## 🧲 Recruitment Plan  
 
-  **🎯 Target Participants:** {{target_participants}}
+  **🎯 Target Participants:** {{ai_generated.refined_target_participants}}
 
-  **📋 Recruitment Strategy:** {{ai_generated.recruitment_strategy}}
-
-  **📅 Recruitment Timeline:**
-  {{ai_generated.timeline_calculation}}
+  **📋 Recruitment Strategy:** 
+  {{ai_generated.recruitment_strategy}}
 
   **🧍 Participant Count:** {{participant_count}}
 
@@ -195,8 +369,8 @@ output_options:
       actions:
         - text: "🧭 View Plan"
           url: "{{github_file_link}}"
-        - text: "📋 Create Research Script"
-          action: "run_research_script"
+        - text: "💬 Create Discussion Guide"
+          action: "run_discussion_guide"
     
     email:
       enabled: false
@@ -205,6 +379,16 @@ output_options:
     teams:
       enabled: false
       # Future: Teams delivery options
+
+output_use: |
+  CivicMind Research Plan generator creates comprehensive VA-aligned research execution plans. Automatically refines informal or unclear inputs to create professional, detailed research plans with timelines, methodology, and success criteria. Transforms stakeholder input into actionable research roadmaps.
+
+output_notes: |
+  Input refinement: AI automatically improves clarity and professionalism of research inputs while preserving original intent.
+  Content quality: Transforms informal inputs into detailed, professional research execution plans.
+  VA compliance: All generated content follows VA research standards and organizational priorities.
+  Quality control: Ensures consistent professional output regardless of input quality.
+  Format consistency: Maintains professional formatting with detailed implementation guidance.
 
 execution_mode: "generate_full_content"
 replace_placeholders: true
