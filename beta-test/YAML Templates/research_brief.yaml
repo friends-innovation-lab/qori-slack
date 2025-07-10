@@ -1,13 +1,13 @@
 id: research_brief
 name: run_research_brief
 label: 📄 Research Brief
-version: v2.2
+version: v2.3
 description: |
   Generate VA-aligned research briefs for scoping studies with design and product partners. Creates structured research briefs with objectives, hypotheses, and methodology following VA research standards and government service considerations.
 
 author: CivicMind R&D
 created: 2025-06-26
-last_updated: 2025-07-09
+last_updated: 2025-07-10
 
 # LLM Configuration
 llm_config:
@@ -27,25 +27,68 @@ input_variables:
   - user_flows           # User flows/touchpoints to evaluate from UI (REQUIRED)
   - stakeholders         # Stakeholders consulted from UI (REQUIRED)
   - research_approach    # Research approach from UI (REQUIRED)
-  - prepared_by          # Prepared by from UI (REQUIRED)
+  - prepared_by          # Prepared by name and title from UI (REQUIRED)
 
 # AI Generation Tasks - These will be processed sequentially
 ai_generation_tasks:
   - task_id: "project_scope"
     prompt: |
-      Based on the project title "{{project_title}}" and study context "{{study_context}}", identify the broader project scope or domain area (e.g., Digital Services, Benefits Claims, Healthcare, Education, etc.). Provide a concise 1-2 word descriptor.
+      Based on the project title "{{project_title}}" and study context "{{study_context}}", identify the broader project scope or domain area.
+      
+      Choose from these VA domains:
+      - Digital Services (web platforms, online tools)
+      - Benefits Claims (disability, education, housing benefits)
+      - Healthcare Services (medical care, appointments, records)
+      - Education Services (GI Bill, training programs)
+      - Career Services (employment, vocational rehab)
+      - Financial Services (loans, payments, debt)
+      
+      If unclear, default to "Digital Services"
+      Provide a concise 1-2 word descriptor (e.g., "Digital Services", "Benefits Claims").
 
   - task_id: "design_improvements"
     prompt: |
-      Based on the target barriers "{{target_barriers}}" and user flows "{{user_flows}}", generate 2-3 specific design and content improvements this research will inform. Format each as a numbered point with clear action-oriented language. Focus on actionable outcomes that address the identified barriers in the user experience.
+      Based on target barriers "{{target_barriers}}" and user flows "{{user_flows}}", generate 2-3 specific design and content improvements.
+      
+      Each improvement should:
+      - Start with an action verb (Simplify, Enhance, Streamline, Implement, etc.)
+      - Address a specific barrier mentioned in the input
+      - Be implementable by design/content teams
+      - Include specific techniques or approaches
+      
+      Format exactly as:
+      1. **[Action] [specific area]** by [specific approach/technique that addresses the barrier]. [Additional detail about implementation or benefit].
+      
+      If input is vague, focus on common VA improvement areas:
+      - Navigation simplification
+      - Accessibility enhancements  
+      - Form optimization
+      - Information architecture improvements
+      
+      Avoid generic statements - be specific about what will be improved and how.
 
   - task_id: "trauma_informed_considerations"
     prompt: |
-      Create 2-3 VA-relevant trauma-informed design considerations based on:
+      Create 2-3 VA-specific trauma-informed design considerations based on:
       - Study context: {{study_context}}
       - Target barriers: {{target_barriers}}
       
-      Format each as a numbered point with clear action-oriented language. Focus on veteran mental health, accessibility needs, and creating safe, supportive digital experiences.
+      Each consideration should:
+      - Address veteran-specific needs (PTSD, anxiety, cognitive load)
+      - Provide specific design approaches
+      - Connect to the research context when possible
+      
+      Format exactly as:
+      1. **[Trauma-informed approach]** [specific description of what this means and how to implement it, focusing on veteran mental health and safety].
+      
+      Focus on these trauma-informed principles:
+      - Reducing cognitive load and complexity
+      - Providing clear progress indicators and control
+      - Supporting accessibility and multiple interaction methods
+      - Creating predictable, safe user experiences
+      - Offering multiple ways to get help or exit processes
+      
+      If input is vague, provide general veteran-focused trauma-informed considerations.
 
   - task_id: "research_hypotheses"
     prompt: |
@@ -54,33 +97,97 @@ ai_generation_tasks:
       - Research approach: {{research_approach}}
       - User flows: {{user_flows}}
       
-      Format as numbered, clear, testable statements that this research can validate or refute.
+      Each hypothesis should:
+      - Be testable through the proposed research approach
+      - Make a specific prediction about user behavior or outcomes
+      - Connect directly to the barriers or user flows mentioned
+      - Use measurable language (more/less time, higher/lower success rates, etc.)
+      
+      Format exactly as:
+      1. **[Hypothesis name]:** [Specific prediction about user behavior that can be measured and tested through this research].
+      
+      If input mentions specific barriers, create hypotheses about those.
+      If input is vague, create hypotheses about common VA user experience issues:
+      - Navigation complexity vs. task completion time
+      - Information clarity vs. user comprehension
+      - Accessibility features vs. user satisfaction
+      
+      Avoid generic hypotheses - be specific about what will be measured.
 
   - task_id: "framing_questions"
     prompt: |
-      Create 3-4 specific research questions that will guide the investigation based on:
+      Create 3-4 specific research questions based on:
       - Research approach: {{research_approach}}
       - Target barriers: {{target_barriers}}
       - User flows: {{user_flows}}
       
-      Format as numbered questions that are specific, actionable, and aligned with the research approach.
+      Questions should:
+      - Be answerable through the proposed research approach
+      - Focus on understanding user behavior, not validating assumptions
+      - Connect directly to design/product decisions
+      - Use specific language about what you want to learn
+      
+      Format as numbered questions that investigate:
+      - How users currently experience the barriers
+      - What specific challenges they encounter in user flows
+      - Why certain approaches work or don't work
+      - What would improve their experience
+      
+      If input mentions specific research methods:
+      - Usability testing → questions about task performance and usability issues
+      - Interviews → questions about experiences, motivations, and context
+      - Surveys → questions about satisfaction, preferences, and demographics
+      - Analytics → questions about behavior patterns and drop-off points
+      
+      If input is vague, create questions about:
+      - Current user experience and pain points
+      - Specific barriers in key user journeys
+      - User expectations vs. reality
+      - Improvement opportunities
+      
+      Start each question with "How do", "What are", "Why do", "What would" for actionable insights.
 
   - task_id: "methodology_details"
     prompt: |
-      Expand on the research approach "{{research_approach}}" with specific implementation details. Structure the response with clear subheadings for:
-      - **Specific Methods & Techniques**
-      - **Session Structure & Data Collection**
-      - **VA Compliance Considerations**
-      - **Timeline & Resource Requirements**
+      Expand on the research approach "{{research_approach}}" with specific, actionable implementation details.
       
-      Keep focused on practical implementation details with bullet points where appropriate.
+      Structure the response with exactly these subheadings and provide specific details for each:
+      
+      **Specific Methods & Techniques**
+      - List the specific research methods (interviews, usability testing, surveys, etc.)
+      - Include participant recruitment approach and sample size
+      - Mention any tools or platforms needed
+      - Specify data collection techniques
+      
+      **Session Structure & Data Collection**
+      - Provide session timing and format (remote/in-person)
+      - Detail data recording and consent procedures
+      - Include observer roles and note-taking approaches
+      - Mention any specific protocols or scripts needed
+      
+      **VA Compliance Considerations**
+      - Address IRB approval requirements and timeline
+      - Mention informed consent and data privacy requirements
+      - Include veteran-specific ethical considerations
+      - Note any security or confidentiality protocols
+      
+      **Timeline & Resource Requirements**
+      - Provide realistic timeline for each research phase
+      - Identify team roles and expertise needed
+      - Mention technology or facility requirements
+      - Include analysis and reporting timelines
+      
+      If the research approach is vague, provide details for mixed-methods approach including interviews and usability testing.
+      
+      Use bullet points for readability and be specific about practical implementation.
 
 # Processing workflow
 processing_workflow:
   1. validate_inputs
   2. execute_ai_generation_tasks
-  3. populate_template
-  4. save_to_outputs
+  3. validate_generated_content
+  4. populate_template
+  5. save_to_outputs
 
 # Output template with improved formatting
 output_template: |
@@ -169,10 +276,11 @@ output_options:
       # Future: Teams delivery options
 
 output_use: |
-  CivicMind Research Brief generator creates VA-compliant research scoping documents for stakeholder alignment. Ensures consistent structure and coverage of key research elements while supporting trauma-informed design principles.
+  CivicMind Research Brief generator creates VA-compliant research scoping documents for stakeholder alignment. Ensures consistent structure and coverage of key research elements while supporting trauma-informed design principles. Handles vague inputs with sensible VA-focused defaults.
 
 output_notes: |
-  Project details collected via structured form input from research brief UI.
-  Brief follows VA research standards including trauma-informed design considerations.
-  Write in plain, accessible language at 10th-grade reading level.
-  Keep focused and actionable for design and product partners.
+  Input validation: Ensure all required fields are provided and non-empty.
+  Content generation: AI tasks include specific formatting requirements and fallback content for vague inputs.
+  VA compliance: All generated content follows VA research standards and trauma-informed design principles.
+  Quality control: Added validation step for generated content before template population.
+  Format consistency: Maintain professional formatting with clear section breaks and actionable content.
