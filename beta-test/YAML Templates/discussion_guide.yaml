@@ -1,7 +1,7 @@
 id: discussion_guide
 name: run_discussion_guide
 label: 💬 Discussion Guide
-version: v2.2
+version: v2.3
 description: |
   Generate VA-aligned conversation guides for moderated research sessions. Creates structured discussion guides with timing, tasks, warm-up questions, and observer instructions following VA research standards and best practices.
 
@@ -23,10 +23,10 @@ precision_mode: detailed
 input_variables:
   - input_text           # Research objectives, tasks, participant info (REQUIRED)
   - study_name           # Title of study (REQUIRED)
-  - researcher_contact   # Lead researcher (REQUIRED)
-  - study_channel        # Where to notify completion (REQUIRED)
+  - researcher_contact   # Lead researcher name and contact (REQUIRED)
+  - study_channel        # Slack channel for notifications (REQUIRED)
   - study_link           # Link to study folder or documentation (OPTIONAL)
-  - team_members         # Who to notify (OPTIONAL)
+  - team_members         # Team members to notify, comma-separated (OPTIONAL)
 
 # AI Generation Tasks - These will be processed sequentially
 ai_generation_tasks:
@@ -34,57 +34,96 @@ ai_generation_tasks:
     prompt: |
       Analyze the research objectives and tasks described in: "{{input_text}}"
       
-      Create a session overview in this exact format:
-      **Session Type:** [Usability Testing/Discovery Interview/Concept Validation/Card Sort/Tree Test/etc.]  
-      **Duration:** [30/45/60/90] minutes  
-      **Participant:** [Veteran/Caregiver/Service Member/Dependent/etc.]
+      Create a session overview in this exact format (fill in ALL fields with realistic values):
+      **Session Type:** [Choose: Usability Testing/Discovery Interview/Concept Validation/Card Sort/Tree Test/Focus Group]  
+      **Duration:** [Choose: 30/45/60/90] minutes  
+      **Participant:** [Choose: Veteran/Caregiver/Service Member/Dependent/VA Staff/General Public]
       
-      Base your analysis on the complexity, objectives, and scope described in the input text. Choose the most appropriate session type and realistic duration.
+      Guidelines:
+      - If input is vague, choose "Discovery Interview", "60 minutes", and "Veteran" as defaults
+      - Choose session type based on whether tasks involve testing interfaces, exploring experiences, or validating concepts
+      - Duration should match complexity: simple interviews 30-45min, usability testing 60-90min
+      - Participant type should align with VA research context
 
   - task_id: "warmup_questions"
     prompt: |
-      Create 3-4 warm-up questions appropriate for the participant type and study context based on: "{{input_text}}"
+      Create 3-4 warm-up questions based on the research context: "{{input_text}}"
       
       Questions should:
-      - Help participants feel comfortable
-      - Be relevant to the research domain
-      - Build rapport and context
+      - Build rapport and make participants comfortable
+      - Be specific to the research domain (not generic "tell me about yourself")
       - Use plain, conversational language
+      - Connect to the participant's relevant experience
       
-      Format as a bulleted list with clear, friendly questions.
+      If input mentions:
+      - VA benefits → Ask about experience with VA services
+      - Healthcare → Ask about healthcare experiences  
+      - Digital tools → Ask about technology comfort level
+      - Forms/applications → Ask about online form experiences
+      
+      If input is vague, create VA-focused questions about:
+      - Experience with VA services or websites
+      - Comfort with digital platforms
+      - Previous interactions with government services
+      
+      Format as bullet points with natural, friendly questions.
 
   - task_id: "task_sections"
     prompt: |
-      Based on the research objectives in "{{input_text}}", create structured task sections for the discussion guide.
+      Create 2-4 specific, actionable task sections based on: "{{input_text}}"
       
-      For each task, provide:
-      - Clear step-by-step instructions for the moderator
-      - Specific things for observers to watch for
-      - Estimated timing (5-15 minutes per task)
-      - Natural progression from simple to complex
+      Each task must include:
+      - Concrete, step-by-step moderator instructions 
+      - Specific observer notes (not generic "watch for confusion")
+      - Realistic 5-15 minute timing
+      - Clear objectives tied to research goals
       
-      Format each task as:
-      ## 🎯 Task [Number]: [Task Name] – [X Minutes]
+      Task progression should be: simple → complex, broad → specific
+      
+      If input mentions specific features/processes, create tasks around those.
+      If input is vague, create realistic VA-focused tasks such as:
+      - Navigation/wayfinding tasks
+      - Form completion scenarios  
+      - Information-seeking tasks
+      - Status checking or account management
+      
+      Format each task exactly as:
+      ## 🎯 Task [Number]: [Specific Task Name] – [X Minutes]
       
       **Instructions for Moderator:**
-      [Step-by-step instructions]
+      [Numbered step-by-step instructions with specific actions]
       
       **Things to Watch For:**
-      [Observer notes and what to look for]
+      [Specific behaviors, struggles, or success indicators - not generic phrases]
       
-      Create 2-4 tasks based on the complexity and objectives described.
+      Avoid generic tasks like "explore the interface" - be specific about what participants should accomplish.
 
   - task_id: "post_task_questions"
     prompt: |
-      Create 4-5 post-task interview questions based on the research objectives in "{{input_text}}"
+      Create 4-5 post-task interview questions based on: "{{input_text}}"
       
       Questions should:
-      - Gather overall impressions and feedback
-      - Address any gaps from task sections
+      - Focus on overall experience and impressions (not the research process itself)
+      - Gather actionable feedback for design/product decisions
       - Be open-ended and encourage reflection
-      - Relate to the specific research goals
+      - Connect to specific research objectives when possible
       
-      Format as a bulleted list with thoughtful, probing questions.
+      Avoid meta-questions about "the tasks" or "research objectives"
+      Instead focus on:
+      - Overall experience with the product/service/process
+      - What worked well vs. what was challenging
+      - Comparison to expectations or similar experiences
+      - Confidence in using independently
+      - Specific improvement suggestions
+      
+      If input is vague, create VA-focused questions about:
+      - Overall experience with the digital service
+      - Comparison to other government services
+      - Confidence and comfort level
+      - Specific pain points or successes
+      - Improvement recommendations
+      
+      Format as bullet points with thoughtful, open-ended questions.
 
   - task_id: "emergency_procedures"
     prompt: |
@@ -122,7 +161,8 @@ processing_workflow:
   1. validate_inputs
   2. execute_ai_generation_tasks
   3. populate_template
-  4. save_to_outputs
+  4. validate_output_variables
+  5. save_to_outputs
 
 # Output template with proper variable usage
 output_template: |
@@ -243,4 +283,11 @@ output_options:
       # Future: Teams delivery options
 
 output_use: |
-  CivicMind Discussion Guide generator creates VA-compliant conversation guides for research sessions. Ensures consistent structure, timing, and coverage of key research objectives while maintaining VA standards for participant consent and ethics.
+  CivicMind Discussion Guide generator creates VA-compliant conversation guides for research sessions. Ensures consistent structure, timing, and coverage of key research objectives while maintaining VA standards for participant consent and ethics. Handles vague inputs by providing sensible defaults for VA research contexts.
+
+output_notes: |
+  Input validation: Ensure all required fields are provided and non-empty.
+  Variable handling: Use fallback values for optional fields (team_members, study_link).
+  Content quality: AI tasks include specific instructions for handling vague or incomplete research objectives.
+  VA compliance: All generated content follows VA research standards and ethical guidelines.
+  Format consistency: Maintain professional formatting with proper timing and clear moderator instructions.
