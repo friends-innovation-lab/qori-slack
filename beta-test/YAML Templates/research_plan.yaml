@@ -296,11 +296,17 @@ output_template: |
   ## 🔎 Background  
   {{ai_generated.refined_decision_context}}
 
+  ---
+
   ## 🎯 Organizational Priorities  
   {{ai_generated.organizational_priorities}}
 
+  ---
+
   ## 🧭 Veteran/User Journey  
   {{ai_generated.user_journey_context}}
+
+  ---
 
   ## 🎓 Research Goals  
   **Primary Goal:** {{ai_generated.refined_research_goal}}
@@ -308,16 +314,24 @@ output_template: |
   **Supporting Goals:**
   {{ai_generated.additional_research_goals}}
 
+  ---
+
   ## ❓ Research Questions  
   {{ai_generated.research_questions}}
 
+  ---
+
   ## 🧪 Hypotheses  
   {{ai_generated.research_hypotheses}}
+
+  ---
 
   ## 🛠️ Methodology  
   **Approach:** {{methodology}}
 
   {{ai_generated.methodology_details}}
+
+  ---
 
   ## 🧲 Recruitment Plan  
 
@@ -328,8 +342,12 @@ output_template: |
 
   **🧍 Participant Count:** {{participant_count}}
 
+  ---
+
   ## ⏰ Timeline Overview
   {{ai_generated.timeline_calculation}}
+
+  ---
 
   ## 👥 Team Roles
   | Team Member      | Role               |
@@ -338,11 +356,17 @@ output_template: |
   | [To be assigned] | Note-taker         |
   | [To be assigned] | Observer           |
 
+  ---
+
   ## 🧰 Tools & Platforms  
   {{ai_generated.tools_platforms}}
 
+  ---
+
   ## ✅ Success Criteria  
   {{ai_generated.success_criteria}}
+
+  ---
 
   ## 📦 Output Artifacts  
   {{ai_generated.output_artifacts}}
