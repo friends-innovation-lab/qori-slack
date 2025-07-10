@@ -88,14 +88,34 @@ ai_generation_tasks:
 
   - task_id: "emergency_procedures"
     prompt: |
-      Create VA-approved emergency exit language for research sessions that covers:
-      - Technical difficulties during the session
-      - Participant distress or discomfort
-      - Inappropriate content or behavior
-      - Session termination procedures
-      - Contact information for support
+      Create comprehensive emergency exit procedures for VA research sessions. Write from the moderator's perspective with specific action steps for each scenario:
       
-      Use professional, supportive language that prioritizes participant well-being.
+      **Technical Difficulties:**
+      - Specific steps for moderator when tech issues arise
+      - How to pause/resume recording
+      - Rescheduling procedures
+      
+      **Participant Distress:**
+      - How to immediately pause the session
+      - Language for checking on participant well-being
+      - Voluntary participation reminders
+      
+      **Inappropriate Content/Behavior:**
+      - Steps for calmly ending the session
+      - Documentation requirements
+      - Supervisor contact procedures
+      
+      **Session Termination:**
+      - Recording security procedures
+      - Professional closing language
+      - Incident documentation steps
+      
+      **Support Contacts:**
+      - VA Research Ethics Office contact
+      - Study supervisor information
+      - Emergency escalation procedures
+      
+      Use professional, supportive language with specific actionable steps for moderators.
 
 # Processing workflow
 processing_workflow:
