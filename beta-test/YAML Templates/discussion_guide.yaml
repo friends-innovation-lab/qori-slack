@@ -1,9 +1,9 @@
 id: discussion_guide
 name: run_discussion_guide
 label: 💬 Discussion Guide
-version: v2.3
+version: v2.4
 description: |
-  Generate VA-aligned conversation guides for moderated research sessions. Creates structured discussion guides with timing, tasks, warm-up questions, and observer instructions following VA research standards and best practices.
+  Generate VA-aligned conversation guides for moderated research sessions. Creates structured discussion guides with timing, tasks, warm-up questions, and observer instructions following VA research standards and best practices. Automatically refines informal inputs to create professional, actionable session guides.
 
 author: CivicMind R&D
 created: 2025-06-26
@@ -30,58 +30,79 @@ input_variables:
 
 # AI Generation Tasks - These will be processed sequentially
 ai_generation_tasks:
+  - task_id: "refined_input_text"
+    prompt: |
+      Improve and clarify the research input provided: "{{input_text}}"
+      
+      Rewrite to be more professional and specific while preserving the original intent:
+      - Fix informal language and grammar issues
+      - Make vague objectives more specific and actionable
+      - Clarify participant information and research context
+      - Maintain the core research goals and scope
+      - Use proper UX research terminology
+      
+      Structure the improved version to clearly separate:
+      - Research objectives (what you want to learn)
+      - Tasks or scenarios (what participants will do)
+      - Participant context (who and why)
+      
+      If input is very brief, expand appropriately based on apparent intent while staying true to the scope.
+
   - task_id: "session_overview"
     prompt: |
-      Analyze the research objectives and tasks described in: "{{input_text}}"
-      
-      Create a session overview in this exact format (fill in ALL fields with realistic values):
+      Analyze the refined research objectives and create a session overview in this exact format (fill in ALL fields with realistic values):
       **Session Type:** [Choose: Usability Testing/Discovery Interview/Concept Validation/Card Sort/Tree Test/Focus Group]  
       **Duration:** [Choose: 30/45/60/90] minutes  
       **Participant:** [Choose: Veteran/Caregiver/Service Member/Dependent/VA Staff/General Public]
       
-      Guidelines:
-      - If input is vague, choose "Discovery Interview", "60 minutes", and "Veteran" as defaults
-      - Choose session type based on whether tasks involve testing interfaces, exploring experiences, or validating concepts
-      - Duration should match complexity: simple interviews 30-45min, usability testing 60-90min
-      - Participant type should align with VA research context
+      Base decisions on the refined research content, using these guidelines:
+      - If testing interfaces or specific tasks → Usability Testing (60-90 min)
+      - If exploring experiences or attitudes → Discovery Interview (45-60 min)
+      - If evaluating concepts or ideas → Concept Validation (30-45 min)
+      - If organizing information → Card Sort (45-60 min)
+      - Duration should match complexity and number of tasks
+      - Participant type should align with VA research context and stated objectives
+      
+      If input is still vague after refinement, use defaults: "Discovery Interview", "60 minutes", "Veteran"
 
   - task_id: "warmup_questions"
     prompt: |
-      Create 3-4 warm-up questions based on the research context: "{{input_text}}"
+      Create 3-4 warm-up questions based on the refined research context.
       
       Questions should:
       - Build rapport and make participants comfortable
-      - Be specific to the research domain (not generic "tell me about yourself")
+      - Be specific to the research domain identified in the refined input
       - Use plain, conversational language
       - Connect to the participant's relevant experience
       
-      If input mentions:
+      If refined input mentions:
       - VA benefits → Ask about experience with VA services
       - Healthcare → Ask about healthcare experiences  
-      - Digital tools → Ask about technology comfort level
+      - Digital tools/websites → Ask about technology comfort level
       - Forms/applications → Ask about online form experiences
+      - Claims/status → Ask about previous claim experiences
       
-      If input is vague, create VA-focused questions about:
+      If refined input is still general, create VA-focused questions about:
       - Experience with VA services or websites
       - Comfort with digital platforms
       - Previous interactions with government services
       
-      Format as bullet points with natural, friendly questions.
+      Format as bullet points with natural, friendly questions that feel conversational.
 
   - task_id: "task_sections"
     prompt: |
-      Create 2-4 specific, actionable task sections based on: "{{input_text}}"
+      Create 2-4 specific, actionable task sections based on the refined research objectives.
       
       Each task must include:
-      - Concrete, step-by-step moderator instructions 
+      - Concrete, step-by-step moderator instructions based on refined objectives
       - Specific observer notes (not generic "watch for confusion")
-      - Realistic 5-15 minute timing
-      - Clear objectives tied to research goals
+      - Realistic 5-15 minute timing based on task complexity
+      - Clear objectives tied to the refined research goals
       
       Task progression should be: simple → complex, broad → specific
       
-      If input mentions specific features/processes, create tasks around those.
-      If input is vague, create realistic VA-focused tasks such as:
+      If refined input mentions specific features/processes, create tasks around those.
+      If refined input is still general, create realistic VA-focused tasks such as:
       - Navigation/wayfinding tasks
       - Form completion scenarios  
       - Information-seeking tasks
@@ -91,37 +112,42 @@ ai_generation_tasks:
       ## 🎯 Task [Number]: [Specific Task Name] – [X Minutes]
       
       **Instructions for Moderator:**
-      [Numbered step-by-step instructions with specific actions]
+      1. [Specific numbered step with clear action]
+      2. [Specific numbered step with clear action]
+      3. [Specific numbered step with clear action]
       
       **Things to Watch For:**
-      [Specific behaviors, struggles, or success indicators - not generic phrases]
+      - [Specific behavior, struggle, or success indicator]
+      - [Specific usability issue or user reaction]
+      - [Specific area of confusion or clarity]
       
-      Avoid generic tasks like "explore the interface" - be specific about what participants should accomplish.
+      Make tasks concrete and actionable - avoid generic instructions like "explore the interface."
 
   - task_id: "post_task_questions"
     prompt: |
-      Create 4-5 post-task interview questions based on: "{{input_text}}"
+      Create 4-5 post-task interview questions based on the refined research objectives.
       
       Questions should:
       - Focus on overall experience and impressions (not the research process itself)
       - Gather actionable feedback for design/product decisions
       - Be open-ended and encourage reflection
-      - Connect to specific research objectives when possible
+      - Connect to specific research objectives from the refined input
       
       Avoid meta-questions about "the tasks" or "research objectives"
       Instead focus on:
-      - Overall experience with the product/service/process
+      - Overall experience with the product/service/process tested
       - What worked well vs. what was challenging
       - Comparison to expectations or similar experiences
-      - Confidence in using independently
+      - Confidence in using the service independently
       - Specific improvement suggestions
       
-      If input is vague, create VA-focused questions about:
+      If refined input mentions specific areas, tailor questions to those.
+      If refined input is still general, create VA-focused questions about:
       - Overall experience with the digital service
       - Comparison to other government services
-      - Confidence and comfort level
-      - Specific pain points or successes
-      - Improvement recommendations
+      - Confidence and comfort level using VA services
+      - Specific pain points or successes encountered
+      - Recommendations for improvement
       
       Format as bullet points with thoughtful, open-ended questions.
 
@@ -130,41 +156,46 @@ ai_generation_tasks:
       Create comprehensive emergency exit procedures for VA research sessions. Write from the moderator's perspective with specific action steps for each scenario:
       
       **Technical Difficulties:**
-      - Specific steps for moderator when tech issues arise
-      - How to pause/resume recording
-      - Rescheduling procedures
+      - Pause recording immediately and inform participant of technical issues
+      - Attempt basic troubleshooting (refresh browser, check connection, restart application)
+      - If issues persist beyond 5 minutes, offer to reschedule at participant's convenience
+      - Document technical problems encountered for future session planning
       
       **Participant Distress:**
-      - How to immediately pause the session
-      - Language for checking on participant well-being
-      - Voluntary participation reminders
+      - Immediately pause the session and ask if participant needs a break
+      - Remind participant that participation is voluntary and they can stop at any time
+      - Offer mental health resources if participant expresses distress related to military service
+      - Allow participant to collect themselves and decide whether to continue
       
       **Inappropriate Content/Behavior:**
-      - Steps for calmly ending the session
-      - Documentation requirements
-      - Supervisor contact procedures
+      - Calmly but firmly redirect conversation back to research topics
+      - If behavior continues, politely end the session: "I think we have enough information for today"
+      - Document incident details immediately after session
+      - Contact research supervisor within 24 hours for guidance on next steps
       
       **Session Termination:**
-      - Recording security procedures
-      - Professional closing language
-      - Incident documentation steps
+      - Save and secure any recordings immediately
+      - Thank participant professionally regardless of reason for termination
+      - Complete incident documentation including time, reason, and participant response
+      - Follow up with participant via email if appropriate
       
       **Support Contacts:**
-      - VA Research Ethics Office contact
-      - Study supervisor information
-      - Emergency escalation procedures
+      - VA Research Ethics Office: research.ethics@va.gov | (202) 443-5930
+      - Study supervisor: [Insert supervisor contact from research protocol]
+      - Mental health crisis support: Veterans Crisis Line 1-800-273-8255
+      - For immediate emergencies: 911
       
-      Use professional, supportive language with specific actionable steps for moderators.
+      Remember: Participant well-being is always the top priority over research objectives.
 
 # Processing workflow
 processing_workflow:
   1. validate_inputs
   2. execute_ai_generation_tasks
-  3. populate_template
-  4. validate_output_variables
+  3. validate_generated_content
+  4. populate_template
   5. save_to_outputs
 
-# Output template with proper variable usage
+# Output template with refined content
 output_template: |
   # 💬 Discussion Guide – {{study_name}}
 
@@ -283,11 +314,11 @@ output_options:
       # Future: Teams delivery options
 
 output_use: |
-  CivicMind Discussion Guide generator creates VA-compliant conversation guides for research sessions. Ensures consistent structure, timing, and coverage of key research objectives while maintaining VA standards for participant consent and ethics. Handles vague inputs by providing sensible defaults for VA research contexts.
+  CivicMind Discussion Guide generator creates VA-compliant conversation guides for research sessions. Automatically refines informal or unclear research inputs to create professional, actionable session guides. Ensures consistent structure, timing, and coverage of key research objectives while maintaining VA standards for participant consent and ethics.
 
 output_notes: |
-  Input validation: Ensure all required fields are provided and non-empty.
-  Variable handling: Use fallback values for optional fields (team_members, study_link).
+  Input refinement: AI automatically improves clarity and professionalism of research objectives while preserving original intent.
   Content quality: AI tasks include specific instructions for handling vague or incomplete research objectives.
   VA compliance: All generated content follows VA research standards and ethical guidelines.
+  Quality control: Transforms informal inputs into professional moderator-ready session guides.
   Format consistency: Maintain professional formatting with proper timing and clear moderator instructions.
