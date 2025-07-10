@@ -111,6 +111,8 @@ output_template: |
   {{ai_generated.session_overview}}  
   **Moderator:** {{researcher_contact}}
 
+  ---
+
   ## 📋 Moderator Logistics
 
   ### 2–3 Days Before Session
@@ -125,6 +127,8 @@ output_template: |
   - [ ] Send observer instructions to {{team_members}}
   - [ ] Join feedback Slack channel: {{study_channel}}
 
+  ---
+
   ## 🗣️ Intro – 5 Minutes
 
   Welcome the participant. Cover:
@@ -137,18 +141,28 @@ output_template: |
 
   > **Prompt**: "Are you okay with being recorded and having observers? This helps our team learn from your experience."
 
+  ---
+
   ## ❄️ Warm-Up Questions – 5 Minutes
   {{ai_generated.warmup_questions}}
+
+  ---
 
   ## 🧪 Task Sections
 
   {{ai_generated.task_sections}}
 
+  ---
+
   ## 🎤 Post-Task Interview – 10 Minutes
   {{ai_generated.post_task_questions}}
 
+  ---
+
   ## 🔁 Reconfirm Clip Consent
   "Are you still comfortable with us using a short video clip (with de-identified info) to share with internal VA teams? This helps us communicate your feedback to decision-makers."
+
+  ---
 
   ## 🙏 Thank You & Closing – 5 Minutes
   - Thank participant for their time and insights
@@ -156,8 +170,12 @@ output_template: |
   - Offer opt-in for future research opportunities
   - Provide contact information: {{researcher_contact}}
 
+  ---
+
   ## 🚨 Emergency Exit Strategy
   {{ai_generated.emergency_procedures}}
+
+  ---
 
   ## 📝 Observer Instructions
   **For {{team_members}}:**
