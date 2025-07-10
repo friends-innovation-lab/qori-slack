@@ -3,7 +3,7 @@ name: run_research_brief
 label: 📄 Research Brief
 version: v2.4
 description: |
-  Generate VA-aligned research briefs for scoping studies with design and product partners. Creates structured research briefs that capture stakeholder thinking to inform detailed research plans. Follows proper brief format focused on problem definition and learning goals rather than execution details.
+  Generate VA-aligned research briefs for scoping studies with design and product partners. Creates structured research briefs that capture and refine stakeholder thinking to inform detailed research plans. Automatically improves informal or unclear stakeholder inputs while preserving original intent.
 
 author: CivicMind R&D
 created: 2025-06-26
@@ -92,6 +92,18 @@ ai_generation_tasks:
       3. [Clear action/step]
       etc.
 
+  - task_id: "refined_research_approach"
+    prompt: |
+      Improve and professionalize the research approach: "{{research_approach}}"
+      
+      Rewrite to be more professional and specific while preserving the original intent:
+      - Use proper research methodology terminology
+      - Be more specific about methods (e.g., "talk to users" → "user interviews")
+      - Fix informal language
+      - Maintain the core approach and scope
+      
+      Keep it concise - just 1-2 sentences describing the high-level methodology.
+
   - task_id: "stakeholder_concerns"
     prompt: |
       Based on the refined barriers and context, identify 2-3 key stakeholder concerns or problems that are driving this research.
@@ -159,7 +171,7 @@ ai_generation_tasks:
 
   - task_id: "research_rationale"
     prompt: |
-      Based on the research approach "{{research_approach}}", explain in 1-2 sentences why this approach makes sense for the research objectives.
+      Based on the refined research approach, explain in 1-2 sentences why this approach makes sense for the research objectives.
       
       Focus on:
       - Why this method will answer the key questions
@@ -231,7 +243,7 @@ output_template: |
 
   ## 🧭 Proposed Research Approach
 
-  **High-level approach:** {{research_approach}}
+  **High-level approach:** {{ai_generated.refined_research_approach}}
 
   **Reasoning:** {{ai_generated.research_rationale}}
 
