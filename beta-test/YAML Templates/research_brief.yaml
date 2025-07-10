@@ -46,9 +46,55 @@ ai_generation_tasks:
       If unclear, default to "Digital Services"
       Provide a concise 1-2 word descriptor (e.g., "Digital Services", "Benefits Claims").
 
+  - task_id: "refined_context"
+    prompt: |
+      Rewrite and improve the study context provided: "{{study_context}}"
+      
+      Make it more professional and clear while preserving the original meaning. The improved version should:
+      - Use clear, professional language
+      - Provide better context and background
+      - Be 2-3 sentences that set up the research need
+      - Fix any grammatical or clarity issues
+      - Maintain the core message and intent
+      
+      If the input is very brief or unclear, expand it appropriately while staying true to the apparent intent.
+
+  - task_id: "refined_barriers"
+    prompt: |
+      Improve and clarify the target barriers: "{{target_barriers}}"
+      
+      Rewrite as a clear, bulleted list that:
+      - Uses professional UX/research language
+      - Makes vague barriers more specific
+      - Fixes grammatical issues
+      - Maintains the original intent
+      - Formats consistently
+      
+      Format as:
+      - [Clear, specific barrier description]
+      - [Clear, specific barrier description]
+      - [Clear, specific barrier description]
+
+  - task_id: "refined_user_flows"
+    prompt: |
+      Improve and clarify the user flows: "{{user_flows}}"
+      
+      Rewrite as a clear, numbered list that:
+      - Uses consistent formatting
+      - Makes vague steps more specific
+      - Fixes any unclear language
+      - Maintains logical flow order
+      - Uses action-oriented language
+      
+      Format as:
+      1. [Clear action/step]
+      2. [Clear action/step]
+      3. [Clear action/step]
+      etc.
+
   - task_id: "stakeholder_concerns"
     prompt: |
-      Based on the target barriers "{{target_barriers}}" and study context "{{study_context}}", identify 2-3 key stakeholder concerns or problems that are driving this research.
+      Based on the refined barriers and context, identify 2-3 key stakeholder concerns or problems that are driving this research.
       
       Format as bullet points focusing on:
       - Business problems (not research questions)
@@ -64,9 +110,9 @@ ai_generation_tasks:
   - task_id: "learning_objectives"
     prompt: |
       Create 3-4 clear learning objectives based on:
-      - Target barriers: {{target_barriers}}
+      - Refined barriers: Use the improved barrier descriptions
       - User flows: {{user_flows}}
-      - Study context: {{study_context}}
+      - Study context: Use the refined context
       
       Format as "What we want to learn:" with bullet points that start with:
       - "Where veterans..." (understand pain points)
@@ -80,7 +126,7 @@ ai_generation_tasks:
   - task_id: "key_questions"
     prompt: |
       Create 3-4 primary research questions based on:
-      - Target barriers: {{target_barriers}}
+      - Refined barriers and context
       - User flows: {{user_flows}}
       - Research approach: {{research_approach}}
       
@@ -100,7 +146,7 @@ ai_generation_tasks:
   - task_id: "team_hypotheses"
     prompt: |
       Generate 2-3 brief team hypotheses based on:
-      - Target barriers: {{target_barriers}}
+      - Refined barriers and context
       - Stakeholder input and context
       
       Format as simple statements of what the team currently believes, such as:
@@ -141,7 +187,7 @@ processing_workflow:
   4. populate_template
   5. save_to_outputs
 
-# Output template - proper brief structure
+# Output template - proper brief structure with refined content
 output_template: |
   # 📄 Research Brief – {{project_title}}
   
@@ -151,7 +197,7 @@ output_template: |
 
   ## 🎯 Business Context
 
-  {{study_context}}
+  {{ai_generated.refined_context}}
 
   **Stakeholder Concerns:**
   {{ai_generated.stakeholder_concerns}}
@@ -163,7 +209,13 @@ output_template: |
   {{ai_generated.learning_objectives}}
 
   **User journey in scope:**
-  {{user_flows}}
+  {{ai_generated.refined_user_flows}}
+
+  ---
+
+  ## 🎯 Target Barriers
+
+  {{ai_generated.refined_barriers}}
 
   ---
 
@@ -245,11 +297,11 @@ output_options:
       # Future: Teams delivery options
 
 output_use: |
-  CivicMind Research Brief generator creates VA-compliant research scoping documents that capture stakeholder thinking and define research objectives. Focuses on problem definition and learning goals to inform detailed research plan development. Follows proper brief format rather than detailed execution planning.
+  CivicMind Research Brief generator creates VA-compliant research scoping documents that capture and refine stakeholder thinking. Automatically improves informal or unclear stakeholder inputs to create professional, coherent research briefs. Focuses on problem definition and learning goals to inform detailed research plan development.
 
 output_notes: |
-  Purpose: Brief captures stakeholder input and defines research scope - does NOT include detailed methodology.
-  Input validation: Ensure all required fields are provided and non-empty.
+  Input refinement: AI automatically improves clarity and professionalism of stakeholder inputs while preserving original intent.
   Content focus: Problem definition, learning objectives, and high-level approach only.
+  Quality control: Transforms informal Slack inputs into professional stakeholder-ready documents.
   Next step: Brief should inform separate detailed research plan creation.
   Format: Concise, stakeholder-friendly language focused on alignment and scope setting.
