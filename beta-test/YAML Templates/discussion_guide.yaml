@@ -1,13 +1,13 @@
 id: discussion_guide
 name: run_discussion_guide
 label: 💬 Discussion Guide
-version: v2.1
+version: v2.2
 description: |
   Generate VA-aligned conversation guides for moderated research sessions. Creates structured discussion guides with timing, tasks, warm-up questions, and observer instructions following VA research standards and best practices.
 
 author: CivicMind R&D
 created: 2025-06-26
-last_updated: 2025-07-07
+last_updated: 2025-07-10
 
 # LLM Configuration
 llm_config:
@@ -30,17 +30,16 @@ input_variables:
 
 # AI Generation Tasks - These will be processed sequentially
 ai_generation_tasks:
-  - task_id: "session_analysis"
+  - task_id: "session_overview"
     prompt: |
       Analyze the research objectives and tasks described in: "{{input_text}}"
       
-      Determine and provide in this exact format:
-      Session Type: [Usability Testing|Discovery Interview|Concept Validation|Card Sort|Tree Test|etc.]
-      Duration: [30|45|60|90] minutes
-      Task Count: [2-5 based on complexity]
-      Participant Type: [Veteran|Caregiver|Service Member|Dependent|etc.]
+      Create a session overview in this exact format:
+      **Session Type:** [Usability Testing/Discovery Interview/Concept Validation/Card Sort/Tree Test/etc.]  
+      **Duration:** [30/45/60/90] minutes  
+      **Participant:** [Veteran/Caregiver/Service Member/Dependent/etc.]
       
-      Base your analysis on the complexity, objectives, and scope described in the input text.
+      Base your analysis on the complexity, objectives, and scope described in the input text. Choose the most appropriate session type and realistic duration.
 
   - task_id: "warmup_questions"
     prompt: |
@@ -102,23 +101,20 @@ ai_generation_tasks:
 processing_workflow:
   1. validate_inputs
   2. execute_ai_generation_tasks
-  3. parse_session_analysis
-  4. populate_template
-  5. save_to_outputs
+  3. populate_template
+  4. save_to_outputs
 
-# Output template with AI generation placeholders
+# Output template with proper variable usage
 output_template: |
   # 💬 Discussion Guide – {{study_name}}
 
-  **Session Type:** {{parsed_session_type}}  
-  **Duration:** {{parsed_duration}}  
-  **Participant:** {{parsed_participant_type}}  
+  {{ai_generated.session_overview}}  
   **Moderator:** {{researcher_contact}}
 
   ## 📋 Moderator Logistics
 
   ### 2–3 Days Before Session
-  - [ ] Schedule and confirm sessions with {{parsed_participant_type}}
+  - [ ] Schedule and confirm sessions with participants
   - [ ] Review platform research checklist
   - [ ] Complete project-specific prep tasks for {{study_name}}
   - [ ] Send calendar invites to {{team_members}}
@@ -132,7 +128,7 @@ output_template: |
   ## 🗣️ Intro – 5 Minutes
 
   Welcome the participant. Cover:
-  - Session duration (~{{parsed_duration}})
+  - Session duration and purpose
   - That feedback is welcome and voluntary
   - Consent for screen/audio recording
   - Confirmation of observer presence
@@ -177,7 +173,7 @@ output_template: |
 # Output configuration
 output_options:
   # File settings
-  filename: "discussion_guide_{{study_name_slug}}_{{current_date}}.md"
+  filename: "discussion_guide_{{study_name}}_{{current_date}}.md"
   path: "03-fieldwork/"
   
   # Delivery methods (multiple can be enabled)
@@ -192,7 +188,7 @@ output_options:
       channel: "{{study_channel}}"
       notify_user: "{{researcher_contact}}"
       team_members: "{{team_members}}"
-      message: "💬 Discussion guide for {{study_name}} has been created and saved. {{parsed_duration}} {{parsed_session_type}} guide ready for {{parsed_participant_type}} sessions."
+      message: "💬 Discussion guide for {{study_name}} has been created and saved. Research session guide ready for fieldwork."
       include_preview: false
       actions:
         - text: "📝 View Guide"
