@@ -1,13 +1,13 @@
 id: research_plan
 name: run_research_plan
 label: 🧭 Research Plan
-version: v2.2
+version: v2.3
 description: |
-  Generate comprehensive VA-aligned research plans for civic tech studies. Creates structured research plans with timelines, methodology, recruitment strategy, and success criteria following VA research standards and organizational priorities. Automatically refines informal inputs to create professional, detailed execution plans.
+  Generate comprehensive VA-aligned research plans for civic tech studies. Creates structured research plans with timelines, methodology, recruitment strategy, and success criteria following VA research standards and organizational priorities. Automatically refines informal inputs to create professional, detailed execution plans with Qori AI-powered analysis integration.
 
 author: CivicMind R&D
 created: 2025-06-26
-last_updated: 2025-07-10
+last_updated: 2025-07-11
 
 # LLM Configuration
 llm_config:
@@ -96,19 +96,24 @@ ai_generation_tasks:
       - Operational efficiency and cost reduction
       - Data-driven decision making
       
-      Connect each priority to how this specific research supports broader VA goals.
+      Format each priority with:
+      1. **Bold header:** Brief priority name
+      2. Detailed explanation of how this research supports the priority
+      3. Clear connection to broader VA goals
+      
+      Use proper bullet formatting with clear indentation for readability.
 
   - task_id: "user_journey_context"
     prompt: |
       Describe how the refined product area fits into the end-to-end user experience for the refined target participants within the VA ecosystem. 
       
-      Include:
+      Structure the response with clear sections and proper formatting:
       - Key touchpoints and related services
       - How this area connects to their broader VA journey
       - Dependencies and related processes
       - Impact on overall veteran experience
       
-      Keep focused on the user journey context, not technical implementation details.
+      Use clear paragraph structure and proper spacing. Keep focused on the user journey context, not technical implementation details.
 
   - task_id: "additional_research_goals"
     prompt: |
@@ -120,7 +125,7 @@ ai_generation_tasks:
       - Support the primary goal without duplicating it
       - Be achievable within the research scope
       
-      Format as bulleted secondary objectives that build on the primary goal.
+      Format as clear bullet points with proper indentation and descriptive explanations for each goal.
 
   - task_id: "research_questions"
     prompt: |
@@ -136,7 +141,7 @@ ai_generation_tasks:
       - Be specific to the participant type and context
       - Focus on insights that will inform action
       
-      Format as numbered questions that guide the research investigation.
+      Format as numbered questions with clear, detailed explanations that guide the research investigation.
 
   - task_id: "research_hypotheses"
     prompt: |
@@ -148,14 +153,19 @@ ai_generation_tasks:
       - Connect to the refined research goals
       - Use measurable language when possible
       
-      Format as clear statements that can be validated or refuted through research.
+      Format each hypothesis with:
+      1. **Hypothesis statement** (numbered)
+      2. Clear explanation of how it can be tested
+      3. Connection to research goals
+      
+      Use proper indentation and bullet formatting for sub-points.
 
   - task_id: "methodology_details"
     prompt: |
-      Provide detailed implementation steps for "{{methodology}}" including:
+      Provide detailed implementation steps for "{{methodology}}" with proper formatting and structure:
       
       **Session Structure and Duration:**
-      - Specific session format and timing
+      - Session format and timing
       - Number and length of interactions
       - Session flow and activities
       
@@ -175,11 +185,11 @@ ai_generation_tasks:
       - Accommodation for PTSD and anxiety
       - Safe and supportive research environment
       
-      Use bullet points for readability and be specific about practical implementation.
+      Use clear section headers (bolded), proper bullet point indentation, and specific implementation details.
 
   - task_id: "recruitment_strategy"
     prompt: |
-      Suggest a comprehensive recruitment strategy for the refined target participants that includes:
+      Suggest a comprehensive recruitment strategy for the refined target participants with clear formatting:
       
       **Specific Recruitment Channels:**
       - VA-specific recruitment channels and databases
@@ -201,78 +211,129 @@ ai_generation_tasks:
       - Language and communication needs
       - Technology access and support
       
-      Provide specific, actionable recruitment guidance.
+      Use bolded headers, proper indentation, and specific actionable guidance for each section.
 
   - task_id: "timeline_calculation"
     prompt: |
       Calculate a detailed timeline starting from the current date using "{{timeline_preference}}" settings:
       
-      **Rush Timeline:** Planning(3d), Recruiting(5d), Interviews(5d), Synthesis(3d), Reporting(2d)
-      **Standard Timeline:** Planning(5d), Recruiting(10d), Interviews(10d), Synthesis(5d), Reporting(5d)  
-      **Extended Timeline:** Planning(10d), Recruiting(21d), Interviews(14d), Synthesis(10d), Reporting(7d)
+      **Rush Timeline:** Planning(3d), Recruiting(5d), Interviews(5d), AI Synthesis(1d), Reporting(1d)
+      **Standard Timeline:** Planning(5d), Recruiting(10d), Interviews(10d), AI Synthesis(2d), Reporting(2d)  
+      **Extended Timeline:** Planning(10d), Recruiting(21d), Interviews(14d), AI Synthesis(3d), Reporting(3d)
       
-      Create a markdown table with:
+      Create a clean markdown table with:
       - Phase names
       - Duration in business days
       - Actual start and end dates (business days only)
       - Key milestones and deliverables
       
+      Note: Synthesis timeline dramatically reduced due to Qori's AI-powered analysis capabilities. Traditional manual coding and thematic analysis (5-10 days) replaced with AI-assisted insights generation.
+      
       Calculate from today's date and account for weekends.
+
+  - task_id: "ai_analysis_approach"
+    prompt: |
+      Describe how Qori will be integrated into the analysis workflow for "{{methodology}}" with clear formatting:
+      
+      **Real-time Analysis:**
+      - Automatic transcription and thematic tagging during interviews
+      - Live insight generation and pattern detection
+      - Instant quote extraction and sentiment analysis
+      
+      **Post-Interview Synthesis:**
+      - Automated cross-interview pattern recognition
+      - AI-generated insight summaries with supporting evidence
+      - Rapid identification of conflicting findings and edge cases
+      
+      **Quality Assurance:**
+      - Human researcher review of AI-generated insights
+      - Validation of key themes and recommendations
+      - Manual refinement of nuanced findings
+      
+      **Output Generation:**
+      - Automated report drafting with human editorial oversight
+      - Instant stakeholder-ready summaries and recommendations
+      - Real-time Slack updates with key findings
+      
+      Use bolded section headers and clear bullet point structure with proper indentation.
 
   - task_id: "tools_platforms"
     prompt: |
-      List specific tools and platforms needed for "{{methodology}}" including:
+      List specific tools and platforms needed for "{{methodology}}" with clear organization and formatting:
       
       **Scheduling and Coordination:**
-      - Participant scheduling tools
-      - Calendar management systems
-      - Communication platforms
+      - Participant scheduling tools: Calendly, Doodle
+      - Calendar management systems: Google Calendar, Microsoft Outlook
+      - Communication platforms: Slack, Microsoft Teams
       
       **Research Session Platforms:**
-      - Video conferencing tools
-      - Screen sharing and recording
-      - Remote testing platforms
+      - Video conferencing tools: Zoom, Microsoft Teams
+      - Screen sharing and recording: Zoom, Microsoft Teams
+      - Remote testing platforms: UserTesting, Validately
       
       **Recording and Transcription:**
-      - Audio/video recording solutions
-      - Transcription services
-      - Data security and storage
+      - Audio/video recording solutions: Zoom, Microsoft Teams
+      - AI-powered transcription services: Whisper, Otter.ai
+      - Data security and storage: Google Drive, Microsoft OneDrive
       
-      **Analysis and Synthesis:**
-      - Qualitative analysis software
-      - Collaboration and synthesis tools
-      - Data visualization platforms
+      **AI-Powered Analysis and Synthesis:**
+      - **Primary:** Qori (AI-powered qualitative analysis and insight generation)
+      - **Supporting:** Traditional tools for complex analysis (NVivo, Dedoose) if needed
+      - **Collaboration:** Miro for visual synthesis, Slack integration for real-time insights
+      - **Data visualization:** GitHub markdown files from Qori + Tableau/Power BI for advanced needs
       
       **Documentation and Storage:**
-      - Document management systems
-      - Secure file storage
-      - Version control and sharing
+      - **Version control:** GitHub (research artifacts, insights, and documentation)
+      - **Secure file storage:** Government-approved cloud storage solutions
+      - **Real-time collaboration:** Slack integration for instant insights and team coordination
       
-      Recommend specific tools with VA compliance considerations.
+      **VA Compliance Note:** Ensure all selected tools meet VA security and privacy requirements. Qori significantly reduces analysis time from weeks to hours through automated thematic analysis, quote extraction, and insight generation.
+      
+      Use clear section headers (bolded), proper tool categorization, and specific tool recommendations.
 
   - task_id: "success_criteria"
     prompt: |
-      Define 3-4 measurable success criteria that indicate the research has achieved the refined primary goal and will inform the refined decision context.
+      Define 3-4 measurable success criteria that leverage Qori's AI capabilities and indicate the research has achieved the refined primary goal:
       
       Each criterion should:
       - Be specific and measurable
       - Connect directly to the research goals
-      - Indicate actionable insights were gained
-      - Support the decision-making process
+      - Leverage Qori's speed and AI capabilities
+      - Support rapid decision-making
       
-      Format as clear, measurable outcomes that define research success.
+      Include criteria such as:
+      - **Speed:** Timeline for initial insights delivery
+      - **Depth:** AI theme identification and validation rates
+      - **Actionability:** Time to stakeholder action on findings
+      - **Integration:** Automated conversion to actionable items
+      
+      Format as numbered, measurable outcomes with clear metrics and timelines.
 
   - task_id: "output_artifacts"
     prompt: |
-      List realistic deliverables and artifacts based on "{{methodology}}" and the refined research goal.
+      List realistic deliverables and artifacts based on "{{methodology}}" and the refined research goal, with clear formatting:
       
-      Include:
-      - Primary research deliverables (reports, presentations, etc.)
-      - Supporting artifacts (recordings, transcripts, etc.)
-      - Stakeholder communication materials
-      - Actionable recommendations and next steps
+      **Primary Research Deliverables:**
+      - AI-generated interview summaries and thematic analysis
+      - Comprehensive research reports with supporting evidence
+      - Executive summaries with actionable recommendations
       
-      Provide estimated completion dates based on the timeline preference and methodology complexity.
+      **AI-Generated Supporting Artifacts:**
+      - Automated transcripts with thematic tagging
+      - Real-time insight updates posted to Slack
+      - Quote libraries organized by theme and sentiment
+      
+      **Stakeholder Communication Materials:**
+      - Executive dashboards with key findings
+      - Visual summaries and infographics
+      - GitHub issues with specific recommendations
+      
+      **Actionable Recommendations and Next Steps:**
+      - Prioritized improvement roadmaps
+      - Implementation strategies with supporting evidence
+      - Follow-up research recommendations
+      
+      Provide estimated completion dates based on timeline preference and emphasize how Qori accelerates delivery. Use clear section headers and proper formatting.
 
 # Processing workflow
 processing_workflow:
@@ -282,62 +343,80 @@ processing_workflow:
   4. populate_template
   5. save_to_outputs
 
-# Output template with refined content
+# Output template with improved formatting
 output_template: |
   # 🧭 Research Plan – {{project_title}}
 
-  **📦 Product/Feature Area:** {{ai_generated.refined_product_area}}  
-  **🏛️ Team/Office:** {{team_office}}  
-  **👩🏽‍🔬 Lead Researcher:** {{lead_researcher}}  
+  **📦 Product/Feature Area:** {{ai_generated.refined_product_area}}
+
+  **🏛️ Team/Office:** {{team_office}}
+
+  **👩🏽‍🔬 Lead Researcher:** {{lead_researcher}}
+
   **🗓️ Date:** {{current_date}}
 
   ---
 
-  ## 🔎 Background  
+  ## 🔎 Background
+
   {{ai_generated.refined_decision_context}}
 
   ---
 
-  ## 🎯 Organizational Priorities  
+  ## 🎯 Organizational Priorities
+
   {{ai_generated.organizational_priorities}}
 
   ---
 
-  ## 🧭 Veteran/User Journey  
+  ## 🧭 Veteran/User Journey
+
   {{ai_generated.user_journey_context}}
 
   ---
 
-  ## 🎓 Research Goals  
+  ## 🎓 Research Goals
+
   **Primary Goal:** {{ai_generated.refined_research_goal}}
 
   **Supporting Goals:**
+
   {{ai_generated.additional_research_goals}}
 
   ---
 
-  ## ❓ Research Questions  
+  ## ❓ Research Questions
+
   {{ai_generated.research_questions}}
 
   ---
 
-  ## 🧪 Hypotheses  
+  ## 🧪 Hypotheses
+
   {{ai_generated.research_hypotheses}}
 
   ---
 
-  ## 🛠️ Methodology  
+  ## 🛠️ Methodology
+
   **Approach:** {{methodology}}
 
   {{ai_generated.methodology_details}}
 
   ---
 
-  ## 🧲 Recruitment Plan  
+  ## 🤖 AI-Powered Analysis with Qori
+
+  {{ai_generated.ai_analysis_approach}}
+
+  ---
+
+  ## 🧲 Recruitment Plan
 
   **🎯 Target Participants:** {{ai_generated.refined_target_participants}}
 
-  **📋 Recruitment Strategy:** 
+  **📋 Recruitment Strategy:**
+
   {{ai_generated.recruitment_strategy}}
 
   **🧍 Participant Count:** {{participant_count}}
@@ -345,11 +424,13 @@ output_template: |
   ---
 
   ## ⏰ Timeline Overview
+
   {{ai_generated.timeline_calculation}}
 
   ---
 
   ## 👥 Team Roles
+
   | Team Member      | Role               |
   |------------------|--------------------|
   | {{lead_researcher}} | Lead Researcher |
@@ -358,17 +439,20 @@ output_template: |
 
   ---
 
-  ## 🧰 Tools & Platforms  
+  ## 🧰 Tools & Platforms
+
   {{ai_generated.tools_platforms}}
 
   ---
 
-  ## ✅ Success Criteria  
+  ## ✅ Success Criteria
+
   {{ai_generated.success_criteria}}
 
   ---
 
-  ## 📦 Output Artifacts  
+  ## 📦 Output Artifacts
+
   {{ai_generated.output_artifacts}}
 
 # Output configuration
@@ -405,14 +489,14 @@ output_options:
       # Future: Teams delivery options
 
 output_use: |
-  CivicMind Research Plan generator creates comprehensive VA-aligned research execution plans. Automatically refines informal or unclear inputs to create professional, detailed research plans with timelines, methodology, and success criteria. Transforms stakeholder input into actionable research roadmaps.
+  CivicMind Research Plan generator creates comprehensive VA-aligned research execution plans with integrated AI-powered analysis. Automatically refines informal or unclear inputs to create professional, detailed research plans with accelerated timelines through Qori's AI capabilities. Transforms stakeholder input into actionable research roadmaps with built-in synthesis automation.
 
 output_notes: |
   Input refinement: AI automatically improves clarity and professionalism of research inputs while preserving original intent.
-  Content quality: Transforms informal inputs into detailed, professional research execution plans.
+  Content quality: Transforms informal inputs into detailed, professional research execution plans with enhanced formatting.
   VA compliance: All generated content follows VA research standards and organizational priorities.
-  Quality control: Ensures consistent professional output regardless of input quality.
-  Format consistency: Maintains professional formatting with detailed implementation guidance.
+  AI integration: Leverages Qori's capabilities to dramatically reduce synthesis time and improve insight quality.
+  Format consistency: Maintains professional formatting with improved readability and clear structure.
 
 execution_mode: "generate_full_content"
 replace_placeholders: true
