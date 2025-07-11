@@ -1,7 +1,7 @@
 id: research_plan
 name: run_research_plan
 label: 🧭 Research Plan
-version: v2.3
+version: v2.4
 description: |
   Generate comprehensive VA-aligned research plans for civic tech studies. Creates structured research plans with timelines, methodology, recruitment strategy, and success criteria following VA research standards and organizational priorities. Automatically refines informal inputs to create professional, detailed execution plans with Qori AI-powered analysis integration.
 
@@ -85,35 +85,61 @@ ai_generation_tasks:
       
       If input is very brief, expand appropriately to provide better participant context while staying true to the apparent intent.
 
-  - task_id: "organizational_priorities"
+  - task_id: "octo_priorities"
     prompt: |
-      Based on the refined product area and team office "{{team_office}}", generate 2-3 specific VA/OCTO organizational priorities that this research supports. 
+      Identify which OCTO-DE priorities this research supports and explain the connection. Reference the official priorities below:
       
-      Focus on real VA priorities such as:
-      - Digital modernization and user experience improvements
-      - Equity and accessibility in veteran services
-      - Veteran-centric design and service delivery
-      - Operational efficiency and cost reduction
-      - Data-driven decision making
+      **OCTO-DE Priorities 2023:**
+      1) Improve the Veteran login experience
+      2) Solidify the VA.gov platform
+      3) Integrate health portal features into VA.gov
+      4) Expand the flagship mobile app
+      5) Refresh VA.gov homepage and IA
+      6) Enhance Veterans' personalized online experience
+      7) Fast-track disability claims, starting with PACT Act claims
+      8) Grow the OCTO team
+      9) Formalize the VA Innovation Unit and innovation process
+      10) Drive OIT's Digital Transformation Strategy
       
-      Format each priority with:
-      1. **Bold header:** Brief priority name
-      2. Detailed explanation of how this research supports the priority
-      3. Clear connection to broader VA goals
+      **Format your response:**
       
-      Use proper bullet formatting with clear indentation for readability.
+      **Primary OCTO Priority:** Select the most relevant priority from the list above and explain how this research directly supports it
+      
+      **Additional Priorities (if applicable):** List any other relevant OCTO priorities this research touches
+      
+      **Project-Specific Priorities:** Add 2-3 additional goals specific to this research that support broader VA objectives (similar to how real VA teams add context-specific priorities)
+      
+      Use the exact OCTO priority titles from the list above. Keep explanations concise and focused on how the research outcomes will advance these priorities.
 
   - task_id: "user_journey_context"
     prompt: |
-      Describe how the refined product area fits into the end-to-end user experience for the refined target participants within the VA ecosystem. 
+      Map this research to the official VA Journeys of Veterans Map framework using the established stages and moments below.
       
-      Structure the response with clear sections and proper formatting:
-      - Key touchpoints and related services
-      - How this area connects to their broader VA journey
-      - Dependencies and related processes
-      - Impact on overall veteran experience
+      **VA Journey Map Reference:**
       
-      Use clear paragraph structure and proper spacing. Keep focused on the user journey context, not technical implementation details.
+      *Life Stages:* Joining, Serving, Getting out, Starting up, Reinventing Myself, Putting down roots, Taking care of myself, Retiring, Aging, Dying
+      
+      *Key Moments (commonly referenced):*
+      - Taking care of myself: Attending to health needs, Recognizing and addressing mental health needs, Managing primary care and chronic health issues, Seeking support for an acute health event, Maintaining my health, Re-establishing and creating relationships, Balancing finances
+      - Putting down roots: Finding a place to live, Starting/growing/maintaining my family, Connecting with and serving my community
+      - Retiring: Finding additional sources of income, Managing my declining health, Planning for longer term care
+      - Aging: Maintaining social and community connections, Adapting my support network to my new needs
+      
+      *Key "Moments that Matter" (reference if relevant):*
+      - Mental health access: "Veterans with mental health needs often have a difficult time accessing providers and feeling safe once in care"
+      - Healthcare continuity: "A lack of formal or informal knowledge transfer between providers leads to Veterans experiencing discontinuity"
+      - Community connection: "Veterans create a sense of community through bonding over shared experiences"
+      - Technology adoption: Veterans' varying comfort levels with digital tools and platforms
+      
+      **Format your response as:**
+      
+      **Veteran Journey Connection:** Write 1-2 sentences explaining where this product/research fits into the Veteran journey
+      
+      **Key Moments:** List 3-5 specific moments from the VA Journey stages above that this research touches, using exact terminology
+      
+      **Relevant "Moments that Matter" (if applicable):** Reference any specific moments that matter that are particularly relevant to this research
+      
+      Keep the response concise and practical - similar to how VA research teams write these sections. Use the exact moment terminology provided above.
 
   - task_id: "additional_research_goals"
     prompt: |
@@ -363,13 +389,13 @@ output_template: |
 
   ---
 
-  ## 🎯 Organizational Priorities
+  ## 🎯 OCTO Priorities
 
-  {{ai_generated.organizational_priorities}}
+  {{ai_generated.octo_priorities}}
 
   ---
 
-  ## 🧭 Veteran/User Journey
+  ## 🧭 Veteran Journey
 
   {{ai_generated.user_journey_context}}
 
