@@ -1,7 +1,7 @@
 id: research_plan
 name: run_research_plan
 label: 🧭 Research Plan
-version: v2.4
+version: v2.5
 description: |
   Generate comprehensive VA-aligned research plans for civic tech studies. Creates structured research plans with timelines, methodology, recruitment strategy, and success criteria following VA research standards and organizational priorities. Automatically refines informal inputs to create professional, detailed execution plans with Qori AI-powered analysis integration.
 
@@ -239,6 +239,32 @@ ai_generation_tasks:
       
       Use bolded headers, proper indentation, and specific actionable guidance for each section.
 
+  - task_id: "demographic_requirements"
+    prompt: |
+      Generate specific demographic recruitment requirements based on the participant count "{{participant_count}}" and research context. Follow VA's inclusive recruitment standards:
+      
+      **Format as:**
+      
+      **Demographic must-haves:** 
+      Create specific quotas based on the total participant count, using this structure:
+      - Service era diversity (recent veterans, different service periods)
+      - Income diversity (at least 40% with household income $49,000 or less)
+      - Racial/ethnic diversity (at least 50% identifying as Black, Hispanic/Latina/Latinx, Asian, or Native American)
+      - Cognitive considerations (significant portion with diagnosed cognitive disorders)
+      - Gender diversity (at least 35% identifying as other than male)
+      - LGBTQ+ representation (at least 25% identifying as LGBTQ+)
+      - Education diversity (mix of education levels including those without degrees)
+      - Age diversity (both under 35 and over 55 represented)
+      - Language diversity (non-native English speakers)
+      - Accessibility needs (screen reader users, assistive technology users)
+      
+      **Secondary criteria (nice-to-haves):**
+      - Geographic diversity (rural vs urban)
+      - VA service usage patterns
+      - Technology comfort levels
+      
+      Calculate actual numbers based on the participant count and add a note about recruitment challenges. Use the exact format and language style from real VA research plans.
+
   - task_id: "timeline_calculation"
     prompt: |
       Calculate a detailed timeline starting from the current date using "{{timeline_preference}}" settings:
@@ -445,6 +471,10 @@ output_template: |
 
   {{ai_generated.recruitment_strategy}}
 
+  **👥 Demographic Requirements:**
+
+  {{ai_generated.demographic_requirements}}
+
   **🧍 Participant Count:** {{participant_count}}
 
   ---
@@ -515,13 +545,14 @@ output_options:
       # Future: Teams delivery options
 
 output_use: |
-  CivicMind Research Plan generator creates comprehensive VA-aligned research execution plans with integrated AI-powered analysis. Automatically refines informal or unclear inputs to create professional, detailed research plans with accelerated timelines through Qori's AI capabilities. Transforms stakeholder input into actionable research roadmaps with built-in synthesis automation.
+  CivicMind Research Plan generator creates comprehensive VA-aligned research execution plans with integrated AI-powered analysis. Automatically refines informal or unclear inputs to create professional, detailed research plans with accelerated timelines through Qori's AI capabilities. Transforms stakeholder input into actionable research roadmaps with built-in synthesis automation and inclusive recruitment standards.
 
 output_notes: |
   Input refinement: AI automatically improves clarity and professionalism of research inputs while preserving original intent.
   Content quality: Transforms informal inputs into detailed, professional research execution plans with enhanced formatting.
   VA compliance: All generated content follows VA research standards and organizational priorities.
   AI integration: Leverages Qori's capabilities to dramatically reduce synthesis time and improve insight quality.
+  Inclusive recruitment: Automatically generates demographic requirements that meet VA diversity and accessibility standards.
   Format consistency: Maintains professional formatting with improved readability and clear structure.
 
 execution_mode: "generate_full_content"
