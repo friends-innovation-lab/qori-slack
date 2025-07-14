@@ -1,18 +1,22 @@
 id: research_plan
 name: run_research_plan
 label: 🧭 Research Plan
-version: v2.5
+version: v2.6
 description: |
-  Generate comprehensive VA-aligned research plans for civic tech studies. Creates structured research plans with timelines, methodology, recruitment strategy, and success criteria following VA research standards and organizational priorities. Automatically refines informal inputs to create professional, detailed execution plans with Qori AI-powered analysis integration.
+  🧭 **Research Idea → Complete Execution Plan**
+  
+  Transform your research concept into a comprehensive, VA-compliant plan in minutes. Just provide your basic project details and get back a professional research plan with timeline, recruitment strategy, methodology details, and stakeholder-ready documentation.
+  
+  Perfect for getting leadership buy-in and ensuring your research meets VA standards.
 
 author: CivicMind R&D
 created: 2025-06-26
-last_updated: 2025-07-11
+last_updated: 2025-07-14
 
-# LLM Configuration
+# LLM Configuration - Updated for better consistency
 llm_config:
   model: "gpt-3.5-turbo"
-  temperature: 0.4
+  temperature: 0.2  # Reduced for more focused, consistent output
   max_tokens: 4000
 
 input_type: structured
@@ -48,16 +52,21 @@ ai_generation_tasks:
 
   - task_id: "refined_decision_context"
     prompt: |
-      Improve and clarify the decision context: "{{decision_context}}"
+      Create a focused background section for {{product_area}} research.
       
-      Rewrite to be more professional and specific while preserving the original intent:
-      - Use clear business language
-      - Make vague decisions more specific and actionable
-      - Fix grammatical issues and informal language
-      - Maintain the core decision that needs to be made
-      - Add context about why this decision matters
+      Input context: "{{decision_context}}"
       
-      If input is very brief, expand appropriately to explain the business context and stakes involved.
+      Write exactly 2-3 sentences:
+      1. **Decision statement:** "This research will inform whether [specific change to {{product_area}}]."
+      2. **Impact statement:** "This decision will [specific benefit for Veterans] and [business outcome for VA]."
+      3. **Context:** Brief explanation of current situation (optional if needed)
+      
+      Requirements:
+      - Mention {{product_area}} by name in the first sentence
+      - Be specific about the change being considered
+      - Include measurable impact on Veterans
+      - Avoid generic business language
+      - Maximum 75 words total
 
   - task_id: "refined_research_goal"
     prompt: |
@@ -67,10 +76,10 @@ ai_generation_tasks:
       - Use proper research terminology
       - Make vague goals more specific and actionable
       - Fix informal language
-      - Maintain the core learning objective
+      - Maintain the core learning objective about {{product_area}}
       - Ensure the goal is achievable through research
       
-      Format as a clear, single-sentence goal that explains what insights the research will provide.
+      Format as a clear, single-sentence goal that explains what insights the research will provide about {{product_area}}.
 
   - task_id: "refined_target_participants"
     prompt: |
@@ -81,13 +90,13 @@ ai_generation_tasks:
       - Make vague participant descriptions more specific
       - Fix informal language
       - Maintain the core participant profile
-      - Add relevant context about why these participants matter for the research
+      - Add relevant context about why these participants matter for {{product_area}} research
       
       If input is very brief, expand appropriately to provide better participant context while staying true to the apparent intent.
 
   - task_id: "octo_priorities"
     prompt: |
-      Identify which OCTO-DE priorities this research supports and explain the connection. Reference the official priorities below:
+      Map {{product_area}} research to OCTO-DE priorities. Reference the official priorities below:
       
       **OCTO-DE Priorities 2023:**
       1) Improve the Veteran login experience
@@ -101,19 +110,21 @@ ai_generation_tasks:
       9) Formalize the VA Innovation Unit and innovation process
       10) Drive OIT's Digital Transformation Strategy
       
-      **Format your response:**
+      Required format:
+      **Primary OCTO Priority:** [Exact title from list above]
+      **Explanation:** One sentence connecting {{product_area}} to this priority.
       
-      **Primary OCTO Priority:** Select the most relevant priority from the list above and explain how this research directly supports it
+      **Additional Priorities (if applicable):** [List max 2 others with brief explanations]
       
-      **Additional Priorities (if applicable):** List any other relevant OCTO priorities this research touches
+      **Project-Specific Priorities:**
+      - Improve {{product_area}} [specific aspect]
+      - [Two more priorities specific to this product area]
       
-      **Project-Specific Priorities:** Add 2-3 additional goals specific to this research that support broader VA objectives (similar to how real VA teams add context-specific priorities)
-      
-      Use the exact OCTO priority titles from the list above. Keep explanations concise and focused on how the research outcomes will advance these priorities.
+      Use exact OCTO priority titles. Avoid generic language about "user experience" - be specific to {{product_area}}.
 
   - task_id: "user_journey_context"
     prompt: |
-      Map this research to the official VA Journeys of Veterans Map framework using the established stages and moments below.
+      Map {{product_area}} research to the official VA Journeys of Veterans Map framework using the established stages and moments below.
       
       **VA Journey Map Reference:**
       
@@ -133,71 +144,77 @@ ai_generation_tasks:
       
       **Format your response as:**
       
-      **Veteran Journey Connection:** Write 1-2 sentences explaining where this product/research fits into the Veteran journey
+      **Veteran Journey Connection:** Write 1-2 sentences explaining where {{product_area}} fits into the Veteran journey
       
-      **Key Moments:** List 3-5 specific moments from the VA Journey stages above that this research touches, using exact terminology
+      **Key Moments:** List 3-5 specific moments from the VA Journey stages above that {{product_area}} touches, using exact terminology
       
-      **Relevant "Moments that Matter" (if applicable):** Reference any specific moments that matter that are particularly relevant to this research
+      **Relevant "Moments that Matter" (if applicable):** Reference any specific moments that matter that are particularly relevant to {{product_area}}
       
-      Keep the response concise and practical - similar to how VA research teams write these sections. Use the exact moment terminology provided above.
+      Keep the response concise and practical. Use the exact moment terminology provided above. Focus specifically on {{product_area}}.
 
   - task_id: "additional_research_goals"
     prompt: |
-      Generate 2-3 supporting research goals that complement the refined primary goal.
+      Generate 2-3 supporting research goals that complement the refined primary goal for {{product_area}}.
       
       These should:
-      - Be specific to the methodology "{{methodology}}"
-      - Help inform the refined decision context
+      - Be specific to {{methodology}} and {{product_area}}
+      - Help inform the decision about {{product_area}}
       - Support the primary goal without duplicating it
       - Be achievable within the research scope
+      - Reference {{target_participants}} specifically
       
       Format as clear bullet points with proper indentation and descriptive explanations for each goal.
 
   - task_id: "research_questions"
     prompt: |
+      CONTEXT: You are creating research questions for {{product_area}}.
+      REQUIREMENT: Every question must relate directly to {{product_area}} and include specific terminology.
+      
       Create 3-4 specific, actionable research questions based on:
-      - Refined primary goal
-      - Refined decision context
-      - Refined target participants
-      - Methodology: {{methodology}}
+      - {{product_area}} (must be mentioned in each question)
+      - {{target_participants}}
+      - {{methodology}}
+      - Decision context about {{product_area}}
       
-      Questions should:
-      - Be answerable through the specified methodology
-      - Connect directly to the decision that needs to be made
-      - Be specific to the participant type and context
-      - Focus on insights that will inform action
+      Each question should:
+      - Include "{{product_area}}" or related terminology
+      - Reference {{target_participants}} explicitly
+      - Be answerable through {{methodology}}
+      - Connect directly to the decision about {{product_area}}
       
-      Format as numbered questions with clear, detailed explanations that guide the research investigation.
+      AVOID: Generic usability questions, website navigation, e-commerce references unless {{product_area}} specifically involves these.
+      
+      Format as numbered questions with context-specific explanations that focus on {{product_area}}.
 
   - task_id: "research_hypotheses"
     prompt: |
-      Generate 2-3 testable hypotheses based on the research questions and methodology "{{methodology}}".
+      Generate exactly 3 testable hypotheses for {{product_area}} research using {{methodology}}.
       
-      Each hypothesis should:
-      - Make a specific prediction about what the research will find
-      - Be testable through the proposed methodology
-      - Connect to the refined research goals
-      - Use measurable language when possible
+      Each hypothesis must:
+      - Start with "Veterans using {{product_area}} will..." or "{{target_participants}} will..."
+      - Include specific, measurable predictions about {{product_area}}
+      - Reference {{methodology}} testing approach
+      - Connect to the decision about {{product_area}}
       
-      Format each hypothesis with:
-      1. **Hypothesis statement** (numbered)
-      2. Clear explanation of how it can be tested
-      3. Connection to research goals
+      Required format for each:
+      **Hypothesis [number]:** [Specific prediction about {{product_area}}]
+      - **Testing method:** How this will be measured through {{methodology}}
+      - **Success criteria:** Specific metrics or observations that would confirm this hypothesis
       
-      Use proper indentation and bullet formatting for sub-points.
+      Maximum 100 words per hypothesis. Ensure each hypothesis mentions {{product_area}} by name.
 
   - task_id: "methodology_details"
     prompt: |
-      Provide detailed implementation steps for "{{methodology}}" with proper formatting and structure:
+      Provide detailed implementation steps for "{{methodology}}" specifically for {{product_area}} research:
       
       **Session Structure and Duration:**
-      - Session format and timing
+      - Session format and timing for {{product_area}} evaluation
       - Number and length of interactions
-      - Session flow and activities
+      - Session flow and activities specific to {{product_area}}
       
       **Specific Approach and Techniques:**
-      - Detailed methodology implementation
-      - Data collection methods
+      - Detailed {{methodology}} implementation for {{product_area}}
+      - Data collection methods relevant to {{product_area}}
       - Specific protocols and procedures
       
       **VA Compliance Considerations:**
@@ -207,29 +224,29 @@ ai_generation_tasks:
       - Veteran-specific ethical considerations
       
       **Trauma-Informed Design Elements:**
-      - Approaches to support veteran mental health
+      - Approaches to support veteran mental health during {{product_area}} research
       - Accommodation for PTSD and anxiety
       - Safe and supportive research environment
       
-      Use clear section headers (bolded), proper bullet point indentation, and specific implementation details.
+      Use clear section headers (bolded), proper bullet point indentation, and specific implementation details for {{product_area}}.
 
   - task_id: "recruitment_strategy"
     prompt: |
-      Suggest a comprehensive recruitment strategy for the refined target participants with clear formatting:
+      Suggest a comprehensive recruitment strategy for {{target_participants}} for {{product_area}} research:
       
       **Specific Recruitment Channels:**
-      - VA-specific recruitment channels and databases
+      - VA-specific recruitment channels and databases relevant to {{product_area}} users
       - Community partnerships and veteran organizations
-      - Digital outreach methods appropriate for the target audience
+      - Digital outreach methods appropriate for {{target_participants}}
       
       **Partnership Opportunities:**
-      - Relevant VA programs and offices
+      - Relevant VA programs and offices related to {{product_area}}
       - External veteran service organizations
       - Community groups and advocacy organizations
       
       **Screening Criteria and Process:**
-      - Specific inclusion/exclusion criteria
-      - Screening questions and process
+      - Specific inclusion/exclusion criteria for {{product_area}} research
+      - Screening questions related to {{product_area}} experience
       - Qualification verification methods
       
       **Accessibility Considerations:**
@@ -237,11 +254,11 @@ ai_generation_tasks:
       - Language and communication needs
       - Technology access and support
       
-      Use bolded headers, proper indentation, and specific actionable guidance for each section.
+      Use bolded headers, proper indentation, and specific actionable guidance for recruiting {{target_participants}} for {{product_area}} research.
 
   - task_id: "demographic_requirements"
     prompt: |
-      Generate specific demographic recruitment requirements based on the participant count "{{participant_count}}" and research context. Follow VA's inclusive recruitment standards:
+      Generate specific demographic recruitment requirements based on the participant count "{{participant_count}}" for {{product_area}} research. Follow VA's inclusive recruitment standards:
       
       **Format as:**
       
@@ -260,10 +277,10 @@ ai_generation_tasks:
       
       **Secondary criteria (nice-to-haves):**
       - Geographic diversity (rural vs urban)
-      - VA service usage patterns
+      - {{product_area}} usage patterns and experience levels
       - Technology comfort levels
       
-      Calculate actual numbers based on the participant count and add a note about recruitment challenges. Use the exact format and language style from real VA research plans.
+      Calculate actual numbers based on {{participant_count}} and add a note about recruitment challenges. Use the exact format and language style from real VA research plans.
 
   - task_id: "timeline_calculation"
     prompt: |
@@ -283,109 +300,44 @@ ai_generation_tasks:
       
       Calculate from today's date and account for weekends.
 
-  - task_id: "ai_analysis_approach"
-    prompt: |
-      Describe how Qori will be integrated into the analysis workflow for "{{methodology}}" with clear formatting:
-      
-      **Real-time Analysis:**
-      - Automatic transcription and thematic tagging during interviews
-      - Live insight generation and pattern detection
-      - Instant quote extraction and sentiment analysis
-      
-      **Post-Interview Synthesis:**
-      - Automated cross-interview pattern recognition
-      - AI-generated insight summaries with supporting evidence
-      - Rapid identification of conflicting findings and edge cases
-      
-      **Quality Assurance:**
-      - Human researcher review of AI-generated insights
-      - Validation of key themes and recommendations
-      - Manual refinement of nuanced findings
-      
-      **Output Generation:**
-      - Automated report drafting with human editorial oversight
-      - Instant stakeholder-ready summaries and recommendations
-      - Real-time Slack updates with key findings
-      
-      Use bolded section headers and clear bullet point structure with proper indentation.
-
-  - task_id: "tools_platforms"
-    prompt: |
-      List specific tools and platforms needed for "{{methodology}}" with clear organization and formatting:
-      
-      **Scheduling and Coordination:**
-      - Participant scheduling tools: Calendly, Doodle
-      - Calendar management systems: Google Calendar, Microsoft Outlook
-      - Communication platforms: Slack, Microsoft Teams
-      
-      **Research Session Platforms:**
-      - Video conferencing tools: Zoom, Microsoft Teams
-      - Screen sharing and recording: Zoom, Microsoft Teams
-      - Remote testing platforms: UserTesting, Validately
-      
-      **Recording and Transcription:**
-      - Audio/video recording solutions: Zoom, Microsoft Teams
-      - AI-powered transcription services: Whisper, Otter.ai
-      - Data security and storage: Google Drive, Microsoft OneDrive
-      
-      **AI-Powered Analysis and Synthesis:**
-      - **Primary:** Qori (AI-powered qualitative analysis and insight generation)
-      - **Supporting:** Traditional tools for complex analysis (NVivo, Dedoose) if needed
-      - **Collaboration:** Miro for visual synthesis, Slack integration for real-time insights
-      - **Data visualization:** GitHub markdown files from Qori + Tableau/Power BI for advanced needs
-      
-      **Documentation and Storage:**
-      - **Version control:** GitHub (research artifacts, insights, and documentation)
-      - **Secure file storage:** Government-approved cloud storage solutions
-      - **Real-time collaboration:** Slack integration for instant insights and team coordination
-      
-      **VA Compliance Note:** Ensure all selected tools meet VA security and privacy requirements. Qori significantly reduces analysis time from weeks to hours through automated thematic analysis, quote extraction, and insight generation.
-      
-      Use clear section headers (bolded), proper tool categorization, and specific tool recommendations.
-
   - task_id: "success_criteria"
     prompt: |
-      Define 3-4 measurable success criteria that leverage Qori's AI capabilities and indicate the research has achieved the refined primary goal:
+      Define 3-4 measurable success criteria that indicate the {{product_area}} research has achieved its goals:
       
       Each criterion should:
       - Be specific and measurable
-      - Connect directly to the research goals
-      - Leverage Qori's speed and AI capabilities
-      - Support rapid decision-making
+      - Connect directly to the research goals about {{product_area}}
+      - Support rapid decision-making about {{product_area}}
+      - Include specific metrics or outcomes
       
       Include criteria such as:
-      - **Speed:** Timeline for initial insights delivery
-      - **Depth:** AI theme identification and validation rates
-      - **Actionability:** Time to stakeholder action on findings
-      - **Integration:** Automated conversion to actionable items
+      - **Insight quality:** Specific findings about {{product_area}} that inform decisions
+      - **Participant engagement:** Response rates and feedback quality
+      - **Actionability:** Time from findings to stakeholder decisions about {{product_area}}
+      - **Impact measurement:** Metrics to track {{product_area}} improvements
       
-      Format as numbered, measurable outcomes with clear metrics and timelines.
+      Format as numbered, measurable outcomes with clear metrics and timelines for {{product_area}}.
 
   - task_id: "output_artifacts"
     prompt: |
-      List realistic deliverables and artifacts based on "{{methodology}}" and the refined research goal, with clear formatting:
+      List realistic research deliverables for {{methodology}} that will inform decisions about {{product_area}}:
       
-      **Primary Research Deliverables:**
-      - AI-generated interview summaries and thematic analysis
-      - Comprehensive research reports with supporting evidence
-      - Executive summaries with actionable recommendations
+      **Primary Deliverables:**
+      - Research report with key findings about {{product_area}} and actionable recommendations
+      - Executive summary with specific insights about {{product_area}} decisions
+      - Supporting evidence and participant quotes related to {{product_area}}
       
-      **AI-Generated Supporting Artifacts:**
-      - Automated transcripts with thematic tagging
-      - Real-time insight updates posted to Slack
-      - Quote libraries organized by theme and sentiment
+      **Supporting Materials:**
+      - Visual summaries and infographics about {{product_area}} findings
+      - Implementation recommendations with priorities for {{product_area}}
+      - Follow-up research suggestions for {{product_area}}
       
-      **Stakeholder Communication Materials:**
-      - Executive dashboards with key findings
-      - Visual summaries and infographics
-      - GitHub issues with specific recommendations
+      **Stakeholder Communication:**
+      - Presentation materials for {{product_area}} decisions
+      - One-page summary of key {{product_area}} recommendations
+      - Documentation of {{product_area}} improvement opportunities
       
-      **Actionable Recommendations and Next Steps:**
-      - Prioritized improvement roadmaps
-      - Implementation strategies with supporting evidence
-      - Follow-up research recommendations
-      
-      Provide estimated completion dates based on timeline preference and emphasize how Qori accelerates delivery. Use clear section headers and proper formatting.
+      Focus on stakeholder value and decision-making about {{product_area}}. Include estimated completion dates based on timeline preference.
 
 # Processing workflow
 processing_workflow:
@@ -395,7 +347,7 @@ processing_workflow:
   4. populate_template
   5. save_to_outputs
 
-# Output template with improved formatting
+# Output template with improved formatting and stakeholder focus
 output_template: |
   # 🧭 Research Plan – {{project_title}}
 
@@ -437,6 +389,18 @@ output_template: |
 
   ---
 
+  ## ✅ Success Criteria & Expected Deliverables
+
+  **Success Criteria:**
+
+  {{ai_generated.success_criteria}}
+
+  **Key Outputs:**
+
+  {{ai_generated.output_artifacts}}
+
+  ---
+
   ## ❓ Research Questions
 
   {{ai_generated.research_questions}}
@@ -454,12 +418,6 @@ output_template: |
   **Approach:** {{methodology}}
 
   {{ai_generated.methodology_details}}
-
-  ---
-
-  ## 🤖 AI-Powered Analysis with Qori
-
-  {{ai_generated.ai_analysis_approach}}
 
   ---
 
@@ -495,21 +453,7 @@ output_template: |
 
   ---
 
-  ## 🧰 Tools & Platforms
-
-  {{ai_generated.tools_platforms}}
-
-  ---
-
-  ## ✅ Success Criteria
-
-  {{ai_generated.success_criteria}}
-
-  ---
-
-  ## 📦 Output Artifacts
-
-  {{ai_generated.output_artifacts}}
+  *Research accelerated by Qori's AI-powered analysis capabilities, reducing synthesis time from weeks to days.*
 
 # Output configuration
 output_options:
