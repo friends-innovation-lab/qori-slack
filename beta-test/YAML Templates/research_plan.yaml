@@ -1,7 +1,7 @@
 id: research_plan
 name: run_research_plan
 label: 🧭 Research Plan
-version: v2.6
+version: v2.7
 description: |
   🧭 **Research Idea → Complete Execution Plan**
   
@@ -11,7 +11,7 @@ description: |
 
 author: CivicMind R&D
 created: 2025-06-26
-last_updated: 2025-07-14
+last_updated: 2025-07-15
 
 # LLM Configuration - Updated for better consistency
 llm_config:
@@ -47,6 +47,7 @@ ai_generation_tasks:
       - Fix informal language and make more specific
       - Maintain the core product focus and scope
       - Add context about how this fits within VA services
+      - Use plain, conversational language (avoid "crucial," "ensure," "leverage," "facilitate")
       
       If input is very brief, expand appropriately to provide better context while staying true to the apparent intent.
 
@@ -56,7 +57,7 @@ ai_generation_tasks:
       
       Input context: "{{decision_context}}"
       
-      Write exactly 2-3 sentences:
+      Write exactly 2-3 sentences using plain, conversational language:
       1. **Decision statement:** "This research will inform whether [specific change to {{product_area}}]."
       2. **Impact statement:** "This decision will [specific benefit for Veterans] and [business outcome for VA]."
       3. **Context:** Brief explanation of current situation (optional if needed)
@@ -65,7 +66,8 @@ ai_generation_tasks:
       - Mention {{product_area}} by name in the first sentence
       - Be specific about the change being considered
       - Include measurable impact on Veterans
-      - Avoid generic business language
+      - Use plain language - avoid words like "crucial," "ensure," "leverage," "facilitate," "enhance"
+      - Write like you're explaining to a colleague
       - Maximum 75 words total
 
   - task_id: "refined_research_goal"
@@ -75,9 +77,10 @@ ai_generation_tasks:
       Rewrite to be more professional and measurable while preserving the original intent:
       - Use proper research terminology
       - Make vague goals more specific and actionable
-      - Fix informal language
+      - Fix informal language but keep it conversational
       - Maintain the core learning objective about {{product_area}}
-      - Ensure the goal is achievable through research
+      - Make the goal achievable through research
+      - Avoid formal jargon like "ensure," "facilitate," "leverage"
       
       Format as a clear, single-sentence goal that explains what insights the research will provide about {{product_area}}.
 
@@ -88,9 +91,10 @@ ai_generation_tasks:
       Rewrite to be more professional and specific while preserving the original intent:
       - Use proper demographic and psychographic descriptors
       - Make vague participant descriptions more specific
-      - Fix informal language
+      - Fix informal language but keep it conversational
       - Maintain the core participant profile
       - Add relevant context about why these participants matter for {{product_area}} research
+      - Avoid words like "crucial," "ensure," "leverage"
       
       If input is very brief, expand appropriately to provide better participant context while staying true to the apparent intent.
 
@@ -120,7 +124,7 @@ ai_generation_tasks:
       - Improve {{product_area}} [specific aspect]
       - [Two more priorities specific to this product area]
       
-      Use exact OCTO priority titles. Avoid generic language about "user experience" - be specific to {{product_area}}.
+      Use exact OCTO priority titles. Be specific to {{product_area}} and use plain language.
 
   - task_id: "user_journey_context"
     prompt: |
@@ -150,7 +154,7 @@ ai_generation_tasks:
       
       **Relevant "Moments that Matter" (if applicable):** Reference any specific moments that matter that are particularly relevant to {{product_area}}
       
-      Keep the response concise and practical. Use the exact moment terminology provided above. Focus specifically on {{product_area}}.
+      Keep the response concise and practical. Use the exact moment terminology provided above. Focus specifically on {{product_area}}. Use plain language.
 
   - task_id: "additional_research_goals"
     prompt: |
@@ -162,6 +166,7 @@ ai_generation_tasks:
       - Support the primary goal without duplicating it
       - Be achievable within the research scope
       - Reference {{target_participants}} specifically
+      - Use plain, conversational language
       
       Format as clear bullet points with proper indentation and descriptive explanations for each goal.
 
@@ -181,10 +186,15 @@ ai_generation_tasks:
       - Reference {{target_participants}} explicitly
       - Be answerable through {{methodology}}
       - Connect directly to the decision about {{product_area}}
+      - Use plain, conversational language
       
       AVOID: Generic usability questions, website navigation, e-commerce references unless {{product_area}} specifically involves these.
       
-      Format as numbered questions with context-specific explanations that focus on {{product_area}}.
+      Format as numbered questions with indented sub-explanations:
+      1. [Main question about {{product_area}}]
+         - This question [explanation of why it matters for {{product_area}}]
+      2. [Second question about {{product_area}}]
+         - This question [explanation of connection to {{product_area}} decision]
 
   - task_id: "research_hypotheses"
     prompt: |
@@ -195,13 +205,14 @@ ai_generation_tasks:
       - Include specific, measurable predictions about {{product_area}}
       - Reference {{methodology}} testing approach
       - Connect to the decision about {{product_area}}
+      - Use plain, conversational language
       
       Required format for each:
       **Hypothesis [number]:** [Specific prediction about {{product_area}}]
       - **Testing method:** How this will be measured through {{methodology}}
       - **Success criteria:** Specific metrics or observations that would confirm this hypothesis
       
-      Maximum 100 words per hypothesis. Ensure each hypothesis mentions {{product_area}} by name.
+      Maximum 100 words per hypothesis. Use plain language and mention {{product_area}} by name.
 
   - task_id: "methodology_details"
     prompt: |
@@ -228,7 +239,7 @@ ai_generation_tasks:
       - Accommodation for PTSD and anxiety
       - Safe and supportive research environment
       
-      Use clear section headers (bolded), proper bullet point indentation, and specific implementation details for {{product_area}}.
+      Use clear section headers (bolded), proper bullet point indentation, and specific implementation details for {{product_area}}. Write in plain, conversational language.
 
   - task_id: "recruitment_strategy"
     prompt: |
@@ -254,41 +265,43 @@ ai_generation_tasks:
       - Language and communication needs
       - Technology access and support
       
-      Use bolded headers, proper indentation, and specific actionable guidance for recruiting {{target_participants}} for {{product_area}} research.
+      Use bolded headers, proper indentation, and specific actionable guidance for recruiting {{target_participants}} for {{product_area}} research. Write in plain, conversational language.
 
-  - task_id: "demographic_requirements"
+  - task_id: "demographic_targets"
     prompt: |
-      Generate specific demographic recruitment requirements based on the participant count "{{participant_count}}" for {{product_area}} research. Follow VA's inclusive recruitment standards:
+      Generate realistic demographic targets based on the participant count "{{participant_count}}" for {{product_area}} research. Follow VA's inclusive recruitment standards but make targets achievable for small studies:
       
       **Format as:**
       
-      **Demographic must-haves:** 
-      Create specific quotas based on the total participant count, using this structure:
-      - Service era diversity (recent veterans, different service periods)
-      - Income diversity (at least 40% with household income $49,000 or less)
-      - Racial/ethnic diversity (at least 50% identifying as Black, Hispanic/Latina/Latinx, Asian, or Native American)
-      - Cognitive considerations (significant portion with diagnosed cognitive disorders)
-      - Gender diversity (at least 35% identifying as other than male)
-      - LGBTQ+ representation (at least 25% identifying as LGBTQ+)
-      - Education diversity (mix of education levels including those without degrees)
-      - Age diversity (both under 35 and over 55 represented)
-      - Language diversity (non-native English speakers)
-      - Accessibility needs (screen reader users, assistive technology users)
+      **Demographic targets (aim for when possible):**
+      Calculate realistic numbers for {{participant_count}} participants:
+      - Service era diversity: Include participants from recent veterans and different service periods when possible
+      - Income diversity: Aim for 2-3 participants with household income $49,000 or less (if {{participant_count}} allows)
+      - Racial/ethnic diversity: Include participants identifying as Black, Hispanic/Latina/Latinx, Asian, or Native American when possible
+      - Cognitive considerations: Include participants with diagnosed cognitive disorders if relevant to {{product_area}}
+      - Gender diversity: Include participants identifying as other than male when possible
+      - LGBTQ+ representation: Include LGBTQ+ participants when possible
+      - Education diversity: Mix of education levels including those without degrees
+      - Age diversity: Include both under 35 and over 55 when possible
+      - Language diversity: Include non-native English speakers if relevant
+      - Accessibility needs: Include screen reader users, assistive technology users if relevant to {{product_area}}
       
-      **Secondary criteria (nice-to-haves):**
+      **Secondary targets (nice-to-haves):**
       - Geographic diversity (rural vs urban)
       - {{product_area}} usage patterns and experience levels
       - Technology comfort levels
       
-      Calculate actual numbers based on {{participant_count}} and add a note about recruitment challenges. Use the exact format and language style from real VA research plans.
+      For {{participant_count}} participants, note that not all demographic targets may be achievable in a single study. Prioritize the most relevant categories for {{product_area}} research.
+      
+      Use plain language and realistic expectations for small participant counts.
 
   - task_id: "timeline_calculation"
     prompt: |
-      Calculate a detailed timeline starting from the current date using "{{timeline_preference}}" settings:
+      Calculate a detailed timeline starting from the current date using "{{timeline_preference}}" settings optimized for Qori's AI automation:
       
-      **Rush Timeline:** Planning(3d), Recruiting(5d), Interviews(5d), AI Synthesis(1d), Reporting(1d)
-      **Standard Timeline:** Planning(5d), Recruiting(10d), Interviews(10d), AI Synthesis(2d), Reporting(2d)  
-      **Extended Timeline:** Planning(10d), Recruiting(21d), Interviews(14d), AI Synthesis(3d), Reporting(3d)
+      **Rush Timeline (AI-Accelerated):** Planning(1d), Recruiting(3d), Interviews(3d), AI Synthesis(0.5d), Reporting(0.5d) = **8 days total**
+      **Standard Timeline (AI-Accelerated):** Planning(2d), Recruiting(7d), Interviews(5d), AI Synthesis(1d), Reporting(1d) = **16 days total**  
+      **Extended Timeline (AI-Accelerated):** Planning(3d), Recruiting(14d), Interviews(7d), AI Synthesis(1d), Reporting(2d) = **27 days total**
       
       Create a clean markdown table with:
       - Phase names
@@ -296,9 +309,9 @@ ai_generation_tasks:
       - Actual start and end dates (business days only)
       - Key milestones and deliverables
       
-      Note: Synthesis timeline dramatically reduced due to Qori's AI-powered analysis capabilities. Traditional manual coding and thematic analysis (5-10 days) replaced with AI-assisted insights generation.
+      Note: These timelines reflect Qori's AI-powered analysis capabilities. Traditional manual coding and thematic analysis (5-10 days) has been replaced with AI-assisted insights generation (0.5-2 days).
       
-      Calculate from today's date and account for weekends.
+      Calculate from today's date and account for weekends. Use the accelerated timelines above that showcase Qori's speed advantage.
 
   - task_id: "success_criteria"
     prompt: |
@@ -309,6 +322,7 @@ ai_generation_tasks:
       - Connect directly to the research goals about {{product_area}}
       - Support rapid decision-making about {{product_area}}
       - Include specific metrics or outcomes
+      - Use plain, conversational language
       
       Include criteria such as:
       - **Insight quality:** Specific findings about {{product_area}} that inform decisions
@@ -337,7 +351,7 @@ ai_generation_tasks:
       - One-page summary of key {{product_area}} recommendations
       - Documentation of {{product_area}} improvement opportunities
       
-      Focus on stakeholder value and decision-making about {{product_area}}. Include estimated completion dates based on timeline preference.
+      Focus on stakeholder value and decision-making about {{product_area}}. Include estimated completion dates based on accelerated timeline preference. Use plain language.
 
 # Processing workflow
 processing_workflow:
@@ -429,9 +443,9 @@ output_template: |
 
   {{ai_generated.recruitment_strategy}}
 
-  **👥 Demographic Requirements:**
+  **👥 Demographic Targets:**
 
-  {{ai_generated.demographic_requirements}}
+  {{ai_generated.demographic_targets}}
 
   **🧍 Participant Count:** {{participant_count}}
 
@@ -492,12 +506,13 @@ output_use: |
   CivicMind Research Plan generator creates comprehensive VA-aligned research execution plans with integrated AI-powered analysis. Automatically refines informal or unclear inputs to create professional, detailed research plans with accelerated timelines through Qori's AI capabilities. Transforms stakeholder input into actionable research roadmaps with built-in synthesis automation and inclusive recruitment standards.
 
 output_notes: |
-  Input refinement: AI automatically improves clarity and professionalism of research inputs while preserving original intent.
-  Content quality: Transforms informal inputs into detailed, professional research execution plans with enhanced formatting.
+  Input refinement: AI automatically improves clarity and professionalism of research inputs while preserving original intent using plain language.
+  Content quality: Transforms informal inputs into detailed, professional research execution plans with conversational formatting.
   VA compliance: All generated content follows VA research standards and organizational priorities.
   AI integration: Leverages Qori's capabilities to dramatically reduce synthesis time and improve insight quality.
-  Inclusive recruitment: Automatically generates demographic requirements that meet VA diversity and accessibility standards.
-  Format consistency: Maintains professional formatting with improved readability and clear structure.
+  Inclusive recruitment: Automatically generates realistic demographic targets that meet VA diversity standards for small studies.
+  Format consistency: Maintains professional formatting with improved readability, clear structure, and plain language.
+  Timeline acceleration: Reflects true AI-powered research speed with realistic timelines that showcase Qori's competitive advantage.
 
 execution_mode: "generate_full_content"
 replace_placeholders: true
