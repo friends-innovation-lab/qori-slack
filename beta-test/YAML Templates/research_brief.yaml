@@ -1,11 +1,15 @@
+# EXECUTIVE BRIEF FORMAT - Stakeholder Decision-Focused Research Brief
+
 id: research_brief
 name: run_research_brief
 label: 📄 Research Brief
-version: v3.0
+version: v4.0
 description: |
-  📄 **Generate VA-Aligned Research Briefs**
+  📄 **Executive Research Brief Generator**
   
-  Transform stakeholder conversations and rough research ideas into professional, coherent research briefs. Fixes content quality issues and ensures all sections relate to the same project. Perfect for scoping studies with design and product partners.
+  Create concise, business-focused research briefs designed for fast stakeholder approval. Transforms research ideas into clear business cases with executive-friendly structure and decision-oriented content.
+  
+  Optimized for 1-2 minute read time and 80%+ stakeholder approval rates.
 
 author: CivicMind R&D
 created: 2025-06-26
@@ -15,437 +19,254 @@ last_updated: 2025-07-16
 llm_config:
   model: "gpt-3.5-turbo"
   temperature: 0.3
-  max_tokens: 3500
+  max_tokens: 2500  # Reduced for concise output
 
 input_type: structured
 input_processing: direct
-precision_mode: detailed
+precision_mode: concise  # Changed from detailed
 
-# Enhanced Error Handling
+# Streamlined Error Handling
 error_handling:
   validation_errors:
     - field: "project_title"
       rules:
         - type: "min_length"
           value: 5
-          message: "Project title must be at least 5 characters"
-        - type: "coherence_check"
-          message: "Project title should clearly describe the research focus"
-    
-    - field: "study_context"
+          message: "Project title must clearly describe the research focus"
+    - field: "business_problem"
       rules:
         - type: "min_length"
           value: 20
-          message: "Study context must explain the business situation (minimum 20 characters)"
-        - type: "context_relevance"
-          message: "Context should directly relate to the project title and barriers"
-    
-    - field: "target_barriers"
-      rules:
-        - type: "barrier_specificity"
-          message: "Barriers should be specific to the project area, not generic research problems"
+          message: "Business problem must explain what's broken and why it matters"
 
-# Current UI-Compatible Input Schema
+# SIMPLIFIED INPUT SCHEMA - Executive Brief Focus
 input_variables:
   - project_title:
       type: "text"
       required: true
       placeholder: "e.g., Claims Status Navigation Study"
       
-  - study_context:
+  - business_problem:
       type: "textarea"
       required: true
-      placeholder: "e.g., Veterans are calling the help desk frequently about claim status, suggesting navigation issues with the current online experience"
+      placeholder: "What's broken? e.g., Veterans are calling help desk frequently about claim status, creating operational burden and user frustration"
       
   - target_barriers:
       type: "textarea"
       required: true
-      placeholder: "e.g., Confusing status language, unclear next steps, hard-to-find claim details"
+      placeholder: "What specific barriers? e.g., Confusing status language, unclear next steps, hidden claim details"
       
-  - user_flows:
-      type: "textarea"
+  - research_approach:
+      type: "select"
       required: true
-      placeholder: "e.g., Login to claim status page, interpreting status updates, finding additional details"
+      options: ["User interviews", "Usability testing", "User interviews + usability testing", "Survey research", "Card sorting", "Field studies", "Mixed methods"]
+      
+  - timeline_needed:
+      type: "select"
+      required: true
+      options: ["ASAP (2-3 weeks)", "Standard (4-6 weeks)", "Flexible (6+ weeks)"]
       
   - stakeholders:
       type: "textarea"
       required: true
-      placeholder: "e.g., VBA Claims Team, Call Center Manager, UX Design Lead"
-      
-  - research_approach:
-      type: "text"
-      required: true
-      placeholder: "e.g., User interviews and usability testing"
+      placeholder: "Who needs these findings? e.g., VBA Claims Team, Call Center Manager, Product Owner"
       
   - prepared_by:
       type: "text"
       required: true
       placeholder: "e.g., Jordan Smith, UX Researcher"
 
-# ENHANCED AI GENERATION TASKS - Fixes Content Coherence Issues
+# EXECUTIVE-FOCUSED AI GENERATION TASKS
 ai_generation_tasks:
-  # NEW - Project coherence validation (prevents mismatched content)
-  - task_id: "project_coherence_check"
+  # Business impact assessment (most important for executives)
+  - task_id: "business_impact"
     prompt: |
-      Validate project coherence and create consistent project scope:
+      Create compelling business impact statement for {{project_title}}:
       
-      Project title: "{{project_title}}"
-      Study context: "{{study_context}}"
+      Business problem: "{{business_problem}}"
       Target barriers: "{{target_barriers}}"
-      User flows: "{{user_flows}}"
+      Stakeholders: "{{stakeholders}}"
       
-      CRITICAL: Ensure all inputs relate to the SAME project. If there are inconsistencies, flag them.
+      Generate 2-3 sentences that answer:
+      - How does this problem affect VA operations?
+      - What's the impact on Veterans?
+      - What's the cost of NOT fixing this?
       
-      Create:
-      **Project Focus:** [Single, clear statement of what this research is about]
-      **VA Domain:** [Which VA service area this focuses on - be specific]
-      **Research Type:** [Discovery, Validation, Optimization, or Strategic research]
-      **Coherence Check:** [Confirm all inputs relate to the same project or note inconsistencies]
+      Use specific, measurable language. Focus on business value, not research value.
       
-      If inputs are mismatched or generic, note this for correction.
+      Format: [Current operational impact] + [Veteran experience impact] + [Risk of inaction]
 
-  # IMPROVED - Professional context refinement (fixes vague content)
-  - task_id: "refined_context"
-    prompt: |
-      Transform study context into professional, coherent business background:
-      
-      Original context: "{{study_context}}"
-      Project focus: "{{project_title}}"
-      
-      REQUIREMENTS - Create exactly 2-3 sentences that:
-      1. **Current Situation:** What's happening now with {{project_title}}
-      2. **Business Impact:** Why this matters to VA and Veterans  
-      3. **Research Opportunity:** What research can solve
-      
-      CRITICAL COHERENCE RULES:
-      - ALL content must relate directly to {{project_title}}
-      - NO generic business language or unrelated examples
-      - Focus specifically on the situation described in study context
-      - Use professional language while preserving original meaning
-      - Maximum 75 words total
-
-  # IMPROVED - Coherent stakeholder concerns (fixes mismatched content)
-  - task_id: "stakeholder_concerns"
-    prompt: |
-      Generate stakeholder concerns that directly relate to {{project_title}}:
-      
-      Based on:
-      - Project: "{{project_title}}"
-      - Context: "{{study_context}}"
-      - Barriers: "{{target_barriers}}"
-      - Stakeholders: "{{stakeholders}}"
-      
-      Create 3-4 specific concerns that:
-      - Directly relate to {{project_title}} (not generic business problems)
-      - Connect to the barriers and context provided
-      - Matter to the stakeholders mentioned
-      - Focus on business impact and user experience
-      
-      Format as:
-      - **[Concern Type]:** [Specific concern about {{project_title}}]
-      
-      AVOID generic concerns like "communication issues" or "system integration" unless directly related to {{project_title}}.
-
-  # IMPROVED - Coherent learning objectives (fixes mismatched goals)
-  - task_id: "learning_objectives"
-    prompt: |
-      Create learning objectives that consistently focus on {{project_title}}:
-      
-      Based on:
-      - Project focus: "{{project_title}}"
-      - Barriers: "{{target_barriers}}"
-      - User flows: "{{user_flows}}"
-      - Research approach: "{{research_approach}}"
-      
-      Generate 3-4 learning objectives that:
-      - ALL reference {{project_title}} or related terminology
-      - Address the specific barriers mentioned
-      - Connect to the user flows provided
-      - Are achievable through {{research_approach}}
-      
-      Format as:
-      - **Understand** [specific aspect of {{project_title}}] to inform [specific decision]
-      - **Identify** [specific barriers in {{project_title}}] that impact [user outcome]
-      - **Determine** [specific factors in {{project_title}}] that influence [user behavior]
-      
-      CRITICAL: Every objective must clearly relate to {{project_title}}.
-
-  # IMPROVED - Coherent user flows (fixes generic journey descriptions)
-  - task_id: "refined_user_flows"
-    prompt: |
-      Transform user flows to be specific to {{project_title}}:
-      
-      Original flows: "{{user_flows}}"
-      Project context: "{{project_title}}"
-      
-      Create numbered steps that:
-      - Specifically relate to {{project_title}} processes
-      - Use action-oriented, specific language
-      - Connect to the barriers identified
-      - Are relevant to {{research_approach}}
-      - Avoid generic research participation steps
-      
-      Format as:
-      1. [Specific action related to {{project_title}}]
-      2. [Specific interaction with {{project_title}} system/process]
-      3. [etc.]
-      
-      AVOID generic research study steps like "sign up for study" - focus on actual user interactions with {{project_title}}.
-
-  # IMPROVED - Coherent barrier identification (fixes generic research problems)
-  - task_id: "refined_barriers"
-    prompt: |
-      Refine barriers to be specific to {{project_title}}:
-      
-      Original barriers: "{{target_barriers}}"
-      Project context: "{{project_title}}"
-      User flows: "{{user_flows}}"
-      
-      Transform into specific, actionable barriers that:
-      - Directly relate to {{project_title}} user experience
-      - Connect to the user flows described
-      - Are research-addressable through {{research_approach}}
-      - Avoid generic research study problems (survey fatigue, recruitment issues)
-      
-      Format as clear bullet points:
-      - [Specific barrier veterans face with {{project_title}}]
-      - [Specific usability issue in {{project_title}} interface]
-      - [Specific process barrier in {{project_title}} workflow]
-      
-      Focus on user experience barriers, NOT research methodology problems.
-
-  # IMPROVED - Coherent research questions (fixes topic confusion)
+  # Key learning objectives (3-4 max, business-focused)
   - task_id: "key_questions"
     prompt: |
-      Generate research questions that consistently focus on {{project_title}}:
-      
-      EVERY question must:
-      - Include "{{project_title}}" or directly related terminology
-      - Address the specific barriers identified
-      - Connect to the user flows described
-      - Be answerable through {{research_approach}}
-      
-      Create 3-4 questions:
-      1. How do veterans currently [specific behavior] when using {{project_title}}?
-      2. What barriers prevent veterans from [specific goal] in {{project_title}}?
-      3. Why do veterans [specific behavior] when encountering [specific situation] in {{project_title}}?
-      4. What causes [specific problem] when veterans interact with {{project_title}}?
-      
-      CRITICAL: Every question must clearly reference {{project_title}} context.
-
-  # IMPROVED - Realistic hypotheses (fixes disconnected examples)
-  - task_id: "team_hypotheses"
-    prompt: |
-      Create testable hypotheses specific to {{project_title}}:
-      
-      Based on:
-      - Project: "{{project_title}}"
-      - Context: "{{study_context}}"
-      - Barriers: "{{target_barriers}}"
-      
-      Generate 2-3 hypotheses that:
-      - Reference {{project_title}} specifically
-      - Connect to the barriers and context provided
-      - Are testable through {{research_approach}}
-      - Reflect realistic team assumptions about {{project_title}}
-      
-      Format as:
-      - "Veterans using {{project_title}} experience [specific challenge] when [specific condition]"
-      - "The current [{{project_title}} feature/process] causes [predicted impact] for [user group]"
-      
-      AVOID generic healthcare or unrelated examples. Focus on {{project_title}} only.
-
-  # IMPROVED - Coherent research approach (fixes methodology mismatch)
-  - task_id: "refined_research_approach"
-    prompt: |
-      Improve research approach description for {{project_title}}:
-      
-      Approach: "{{research_approach}}"
-      Project context: "{{project_title}}"
-      Learning objectives: Based on barriers and user flows
-      
-      Create:
-      **Methodology:** [Improved, specific description of {{research_approach}} for {{project_title}}]
-      **Rationale:** [Why {{research_approach}} is optimal for {{project_title}} research - 1-2 sentences]
-      
-      Ensure approach description:
-      - Uses proper research methodology terminology
-      - Explains how it will address {{project_title}} barriers
-      - Connects to {{project_title}} user experience evaluation
-      - Avoids generic methodology descriptions
-
-  # NEW - Business urgency and decision timeline
-  - task_id: "decision_framework"
-    prompt: |
-      Create clear decision framework for {{project_title}} research:
-      
-      Based on:
-      - Project: "{{project_title}}"
-      - Business context: "{{study_context}}"
-      - Stakeholders: "{{stakeholders}}"
-      
-      Generate:
-      **Decision This Research Will Inform:** [Specific decision about {{project_title}}]
-      **Decision Timeline:** [When stakeholders need to act on findings]
-      **Business Urgency:** [Why this research is needed now]
-      **Success Criteria:** [How stakeholders will know research succeeded]
-      
-      Focus on practical business decision-making about {{project_title}}.
-
-  # IMPROVED - Realistic expected outcomes (fixes generic benefits)
-  - task_id: "expected_outcomes"
-    prompt: |
-      Define specific outcomes for {{project_title}} research:
+      Create 3-4 key business questions this research will answer:
       
       Project: "{{project_title}}"
-      Stakeholders: "{{stakeholders}}"
-      Business context: "{{study_context}}"
+      Problem: "{{business_problem}}"
+      Barriers: "{{target_barriers}}"
       
-      Format as "Research will inform:" followed by specific applications:
-      - [Specific improvements] to {{project_title}} [feature/process]
-      - [Specific decisions] about {{project_title}} [priority/resource allocation]
-      - [Specific changes] to {{project_title}} [user experience/workflow]
+      Questions should:
+      - Be answerable by stakeholders in business terms
+      - Focus on "what should we do?" not "what do users think?"
+      - Support specific {{project_title}} decisions
+      - Be achievable through {{research_approach}}
       
-      Make outcomes:
-      - Directly actionable for {{project_title}}
-      - Relevant to the stakeholders mentioned
-      - Connected to the business context provided
+      Format as:
+      - Should we [specific action] to improve {{project_title}}?
+      - Which [specific options] would have the biggest impact on [specific outcome]?
+      - How should we prioritize [specific improvements] for {{project_title}}?
+      
+      Keep focused on actionable business decisions.
 
-  # NEW - Stakeholder alignment and next steps
-  - task_id: "next_steps_roadmap"
+  # Approach justification (concise, business value)
+  - task_id: "approach_rationale"
     prompt: |
-      Create actionable next steps roadmap for {{project_title}} research:
+      Justify research approach in business terms:
       
-      Stakeholders: "{{stakeholders}}"
-      Research approach: "{{research_approach}}"
+      Approach: "{{research_approach}}"
+      Timeline: "{{timeline_needed}}"
+      Business problem: "{{business_problem}}"
       
-      Format:
-      **Immediate Actions (This Week):**
-      - [Stakeholder review and approval process]
-      - [Resource allocation decisions]
+      Create 2-3 sentences that explain:
+      - Why {{research_approach}} is the right method for this business problem
+      - What type of insights it will provide for decision-making
+      - How {{timeline_needed}} timeline supports business needs
       
-      **Research Planning (Next 2 Weeks):**
-      - [Detailed research plan development for {{project_title}}]
-      - [Participant recruitment strategy]
-      
-      **Execution Timeline:**
-      - [Research implementation for {{project_title}}]
-      - [Findings delivery and stakeholder review]
-      
-      **Decision Phase:**
-      - [{{project_title}} improvement implementation]
-      - [Success measurement and follow-up]
-      
-      Include realistic timelines and clear ownership for each step.
+      Use business language, not research methodology jargon.
+      Focus on ROI and decision-making value.
 
-# Enhanced Processing Workflow
+  # Success criteria (business outcomes, not research metrics)
+  - task_id: "success_criteria"
+    prompt: |
+      Define business success criteria for {{project_title}} research:
+      
+      Timeline: "{{timeline_needed}}"
+      Stakeholders: "{{stakeholders}}"
+      
+      Create 3 criteria focused on business value:
+      1. **Decision Support:** [How findings will enable specific {{project_title}} decisions]
+      2. **Implementation Impact:** [How research will improve {{project_title}} for Veterans]
+      3. **Stakeholder Value:** [How research will help stakeholders achieve their goals]
+      
+      Avoid research metrics. Focus on business outcomes and stakeholder value.
+
+  # Resource requirements (what stakeholders need to approve)
+  - task_id: "resource_requirements"
+    prompt: |
+      Estimate resource requirements for {{project_title}} research:
+      
+      Approach: "{{research_approach}}"
+      Timeline: "{{timeline_needed}}"
+      
+      Provide realistic estimates:
+      **Time Commitment:**
+      - Lead researcher: [hours/week over timeline]
+      - Stakeholder time: [hours for review/input]
+      
+      **Budget Considerations:**
+      - Participant incentives: [estimated cost]
+      - Tools/platform costs: [if any]
+      
+      **Timeline:**
+      - Research execution: [timeline breakdown]
+      - Findings delivery: [when stakeholders get results]
+      
+      Keep practical and business-focused.
+
+  # Next steps (clear decision pathway)
+  - task_id: "next_steps"
+    prompt: |
+      Create clear next steps for stakeholder decision-making:
+      
+      Timeline: "{{timeline_needed}}"
+      Stakeholders: "{{stakeholders}}"
+      
+      Format as immediate action plan:
+      **This Week:**
+      - [Stakeholder decision needed]
+      - [Resource allocation/approval]
+      
+      **Next 2 Weeks:**
+      - [Research plan development]
+      - [Team coordination]
+      
+      **Research Execution:**
+      - [Timeline for {{research_approach}}]
+      - [Findings delivery schedule]
+      
+      Include specific decision points and timelines.
+
+# STREAMLINED PROCESSING
 processing_workflow:
   1. validate_inputs
-  2. check_project_coherence
-  3. validate_content_consistency
-  4. execute_ai_generation_tasks
-  5. validate_generated_coherence
-  6. format_professional_output
-  7. save_to_github
-  8. send_slack_notification
-  9. track_analytics
+  2. execute_ai_generation_tasks
+  3. format_executive_brief
+  4. save_to_github
+  5. send_slack_notification
 
-# IMPROVED OUTPUT TEMPLATE - Coherent and Professional
+# EXECUTIVE BRIEF OUTPUT TEMPLATE - Concise & Scannable
 output_template: |
   # 📄 Research Brief – {{project_title}}
 
-  > **👩🏽‍🔬 Prepared by:** {{prepared_by}} &nbsp;&nbsp;|&nbsp;&nbsp; **🗓️ Date:** {{current_date}} &nbsp;&nbsp;|&nbsp;&nbsp; **📁 File:** `{{filename}}`
-
-  {{ai_generated.project_coherence_check}}
+  **Prepared by:** {{prepared_by}} &nbsp;&nbsp;|&nbsp;&nbsp; **Date:** {{current_date}} &nbsp;&nbsp;|&nbsp;&nbsp; **Timeline:** {{timeline_needed}}
 
   ---
 
-  ## 🎯 Business Context
+  ## 🎯 The Problem
 
-  {{ai_generated.refined_context}}
-
-  **Key Stakeholder Concerns:**
-  {{ai_generated.stakeholder_concerns}}
+  {{business_problem}}
 
   ---
 
-  ## 🎯 Research Objectives
+  ## 💼 Business Impact
 
-  {{ai_generated.learning_objectives}}
-
-  **User Journey in Scope:**
-  {{ai_generated.refined_user_flows}}
+  {{ai_generated.business_impact}}
 
   ---
 
-  ## 🎯 Target Barriers & Pain Points
+  ## 🔍 What We Need to Learn
 
-  {{ai_generated.refined_barriers}}
-
-  ---
-
-  ## 🤔 Key Questions & Hypotheses
-
-  **Primary Research Questions:**
   {{ai_generated.key_questions}}
 
-  **Team Hypotheses:**
-  {{ai_generated.team_hypotheses}}
+  ---
+
+  ## 🛠️ Approach & Timeline
+
+  **Method:** {{research_approach}}
+
+  **Rationale:** {{ai_generated.approach_rationale}}
+
+  **Resources:** {{ai_generated.resource_requirements}}
 
   ---
 
-  ## 🧭 Proposed Research Approach
+  ## ✅ Success Criteria
 
-  {{ai_generated.refined_research_approach}}
-
-  ---
-
-  ## 👥 Stakeholder Input & Alignment
-
-  **Consulted Stakeholders:**
-  {{stakeholders}}
-
-  **Key Insights from Stakeholder Conversations:**
-  - Research need validated through stakeholder input and business context analysis
-  - {{project_title}} improvement priorities clearly established through stakeholder feedback
-  - Research approach confirmed appropriate for {{project_title}} decision-making needs
-  - Stakeholder alignment achieved on research scope and expected outcomes
+  {{ai_generated.success_criteria}}
 
   ---
 
-  ## 🎯 Expected Outcomes & Decision Framework
+  ## 🚀 Next Steps
 
-  {{ai_generated.decision_framework}}
-
-  **Research Application:**
-  {{ai_generated.expected_outcomes}}
+  {{ai_generated.next_steps}}
 
   ---
 
-  ## 🚀 Next Steps & Decision Timeline
+  ## 📋 The Ask
 
-  {{ai_generated.next_steps_roadmap}}
+  **Decision Needed:** Approve {{project_title}} research to inform improvement strategy
 
-  ---
+  **Stakeholders:** {{stakeholders}}
 
-  ## 📋 Executive Summary
+  **Timeline:** {{timeline_needed}} research cycle with findings for decision-making
 
-  **The Research Need:** {{project_title}} research addresses critical user experience barriers affecting veteran satisfaction and operational efficiency.
-
-  **The Approach:** {{research_approach}} to provide actionable insights for immediate {{project_title}} decision-making.
-
-  **The Timeline:** Standard 3-4 week research cycle with findings delivery for stakeholder review and {{project_title}} improvement planning.
-
-  **The Value:** Clear prioritization of {{project_title}} improvements, data-driven recommendations, and reduced risk in product decisions.
+  **Value:** Clear prioritization of {{project_title}} improvements with data-driven recommendations
 
   ---
 
-  > 💡 **Status:** Ready for stakeholder review and approval → {{project_title}} research plan development
+  *Executive research brief • Generated by Qori Research Platform v{{version}}*
 
-  *Research brief generated by Qori AI Research Platform v{{version}}*  
-  *Saved to: `{{path}}{{filename}}`*
-
-# Enhanced Output Options
+# Streamlined Output Options
 output_options:
   filename: "research_brief_{{project_title|slugify}}_{{current_date}}.md"
   path: "00-brief/"
@@ -454,92 +275,99 @@ output_options:
     github:
       enabled: true
       repo: "your-research-repo"
-      commit_message: "Add research brief: {{project_title}}"
+      commit_message: "Add executive research brief: {{project_title}}"
       
     slack:
       enabled: true
       channel: "#research-planning"
       message: |
-        📄 **Research Brief Generated**
+        📄 **Executive Research Brief Ready**
         
         **Project:** {{project_title}}
-        **Prepared by:** {{prepared_by}}
-        **Stakeholders:** {{stakeholders}}
+        **Timeline:** {{timeline_needed}}
+        **Decision needed:** Approve research to inform {{project_title}} improvements
         
-        Professional, coherent research brief ready for stakeholder review.
+        Brief optimized for fast stakeholder review and approval.
       
       actions:
-        - text: "📄 View Brief"
+        - text: "📄 Review Brief"
           style: "primary"
           url: "{{github_file_url}}"
-        - text: "🧭 Create Research Plan"
+        - text: "✅ Approve & Create Plan"
           style: "default"
           action: "trigger_research_plan"
           pre_fill:
             project_title: "{{project_title}}"
             prepared_by: "{{prepared_by}}"
-        - text: "👥 Share with Stakeholders"
-          style: "default"
-          action: "share_brief"
 
-# Current UI-Compatible Slack Interface
+# SIMPLIFIED SLACK UI - Executive Brief Focus
 slack_ui:
   modal:
-    title: "📄 Create Research Brief"
+    title: "📄 Executive Research Brief"
     submit_label: "Generate Brief"
     close_label: "Cancel"
     blocks:
       - type: "section"
-        text: "I'll help you create a focused research brief for scoping with design and product partners."
+        text: "Create a concise, executive-focused research brief designed for fast stakeholder approval."
       
       - type: "input"
-        label: "Project Title/Focus"
+        label: "Project Title"
         element: "plain_text_input"
         placeholder: "e.g., Claims Status Navigation Study"
         
       - type: "input"
-        label: "Study context and motivation"
+        label: "Business Problem"
         element: "plain_text_input"
         multiline: true
-        placeholder: "e.g., Veterans are calling the help desk frequently about claim status, suggesting navigation issues with the current online experience"
+        placeholder: "What's broken? e.g., Veterans calling help desk frequently about claim status, creating operational burden"
         
       - type: "input"
-        label: "Target barriers to identify"
+        label: "Target Barriers"
         element: "plain_text_input"
         multiline: true
-        placeholder: "e.g., Confusing status language, unclear next steps, hard-to-find claim details"
+        placeholder: "Specific barriers: e.g., Confusing status language, unclear next steps, hidden details"
         
       - type: "input"
-        label: "User flows/touchpoints to evaluate"
+        label: "Research Approach"
+        element: "static_select"
+        options:
+          - text: "User interviews"
+            value: "user_interviews"
+          - text: "Usability testing"
+            value: "usability_testing"
+          - text: "User interviews + usability testing"
+            value: "interviews_usability"
+          - text: "Survey research"
+            value: "survey_research"
+          - text: "Mixed methods"
+            value: "mixed_methods"
+            
+      - type: "input"
+        label: "Timeline Needed"
+        element: "radio_buttons"
+        options:
+          - text: "ASAP (2-3 weeks)"
+            value: "asap"
+          - text: "Standard (4-6 weeks)"
+            value: "standard"
+          - text: "Flexible (6+ weeks)"
+            value: "flexible"
+            
+      - type: "input"
+        label: "Key Stakeholders"
         element: "plain_text_input"
         multiline: true
-        placeholder: "e.g., Login to claim status page, interpreting status updates, finding additional details"
+        placeholder: "Who needs findings? e.g., VBA Claims Team, Call Center Manager, Product Owner"
         
       - type: "input"
-        label: "Stakeholders consulted"
-        element: "plain_text_input"
-        multiline: true
-        placeholder: "e.g., VBA Claims Team, Call Center Manager, UX Design Lead"
-        
-      - type: "input"
-        label: "Research approach"
-        element: "plain_text_input"
-        placeholder: "e.g., User interviews and usability testing"
-        
-      - type: "input"
-        label: "Prepared by"
+        label: "Prepared By"
         element: "plain_text_input"
         placeholder: "e.g., Jordan Smith, UX Researcher"
 
 # Analytics
 analytics:
   track_events:
-    - event: "research_brief_generated"
-      properties: [project_title, research_approach, prepared_by]
-    - event: "content_coherence_improved"
-      properties: [project_title, coherence_score]
-      
-  generate_reports:
-    - type: "content_quality_tracking"
-      recipients: ["research-ops@va.gov"]
-      metrics: [coherence_scores, stakeholder_satisfaction, brief_to_plan_conversion]
+    - event: "executive_brief_generated"
+      properties: [project_title, research_approach, timeline_needed]
+    - event: "stakeholder_approval_tracked"
+      properties: [project_title, approval_time, stakeholder_count]
