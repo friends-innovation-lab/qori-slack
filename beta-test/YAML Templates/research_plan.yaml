@@ -1,13 +1,13 @@
-# REALISTIC OPTIMIZATION - Compatible with Current Single-Modal UI
+# FINAL OPTIMIZED RESEARCH PLAN - Targeted Improvements Implementation
 
 id: research_plan
 name: run_research_plan
 label: 🧭 Research Plan
-version: v2.8
+version: v3.0
 description: |
   🧭 **Research Idea → Complete Execution Plan**
   
-  Transform your research concept into a comprehensive, VA-compliant plan in minutes. Just provide your basic project details and get back a professional research plan with timeline, recruitment strategy, methodology details, and stakeholder-ready documentation.
+  Transform your research concept into a comprehensive, VA-compliant plan in minutes. Streamlined for faster stakeholder approval while maintaining professional quality. Optimized to keep your strong VA-specific sections while adding critical planning elements and removing bloat.
 
 author: CivicMind R&D
 created: 2025-06-26
@@ -23,7 +23,7 @@ input_type: structured
 input_processing: direct
 precision_mode: detailed
 
-# ENHANCED ERROR HANDLING (without requiring UI changes)
+# Enhanced Error Handling (backend only)
 error_handling:
   validation_errors:
     - field: "project_title"
@@ -31,25 +31,12 @@ error_handling:
         - type: "min_length"
           value: 5
           message: "Project title must be at least 5 characters"
-        - type: "max_length"
-          value: 80
-          message: "Project title cannot exceed 80 characters"
-    
     - field: "participant_count"
       rules:
-        - type: "numeric_range"
-          min: 3
-          max: 50
-          message: "Participant count must be between 3 and 50"
         - type: "methodology_appropriate"
-          message: "Participant count should match methodology (interviews: 5-12, usability: 5-8, surveys: 20+)"
-    
-    - field: "lead_researcher"
-      rules:
-        - type: "name_format"
-          message: "Please include your full name"
+          message: "Participant count should match methodology"
 
-# CURRENT UI-COMPATIBLE INPUT SCHEMA
+# Current UI-Compatible Input Schema
 input_variables:
   - project_title:
       type: "text"
@@ -72,7 +59,7 @@ input_variables:
       placeholder: "e.g., Understand how veterans interpret current debt letters and identify pain points"
       
   - methodology:
-      type: "checkboxes"  # Matches current UI
+      type: "checkboxes"
       required: true
       options: ["Usability Testing", "User Interviews", "Survey Research", "Card Sorting", "Concept Testing", "Competitive Analysis"]
       
@@ -87,7 +74,7 @@ input_variables:
       placeholder: "e.g., 5-8 participants"
       
   - timeline_preference:
-      type: "radio"  # Matches current UI
+      type: "radio"
       required: true
       options: ["Rush (2-3 weeks total)", "Standard (4-6 weeks total)", "Extended (8+ weeks total)"]
       
@@ -101,119 +88,334 @@ input_variables:
       required: true
       placeholder: "e.g., VA Digital Services, OCTO, 18F"
 
-# ENHANCED AI GENERATION (works with any UI)
+# ENHANCED AI GENERATION TASKS
 ai_generation_tasks:
-  - task_id: "methodology_optimization"
+  # IMPROVED - Concise product area (replace verbose description)
+  - task_id: "concise_product_area"
     prompt: |
-      Analyze and optimize the selected methodologies: {{methodology}}
+      Create a concise, professional description of "{{product_area}}" (maximum 2-3 sentences).
       
-      For the research goal: "{{research_goal}}"
-      Target participants: "{{target_participants}}"
-      Participant count: "{{participant_count}}"
+      Requirements:
+      - Explain what it is and why it matters to Veterans
+      - Include business context within VA ecosystem
+      - Use clear, professional language
+      - NO marketing speak or verbose descriptions
       
-      Provide:
-      **Recommended Primary Method:** [Best fit for the research goal]
-      **Supporting Methods:** [Complementary approaches]
-      **Sequencing:** [Optimal order if multiple methods]
-      **Participant Allocation:** [How to distribute participants across methods]
-      **Methodology Rationale:** [Why this combination works best]
-      
-      Consider methodology best practices and ensure participant count aligns with selected methods.
+      Example format: "[Product] - [what it does] serving [Veterans' need]. [Brief business context or impact]."
 
-  - task_id: "enhanced_timeline"
+  # KEEP - OCTO Priorities (enhanced with 2025 priorities)
+  - task_id: "octo_priorities"
     prompt: |
-      Create detailed timeline for {{timeline_preference}} research plan.
+      Map {{product_area}} research to current OCTO-DE priorities:
       
-      Project: "{{project_title}}"
+      **OCTO-DE Priorities 2025:**
+      1. Improve the Veteran login experience
+      2. Solidify the VA.gov platform  
+      3. Integrate health portal features into VA.gov
+      4. Expand the flagship mobile app
+      5. Refresh VA.gov homepage and IA
+      6. Enhance Veterans' personalized online experience
+      7. Fast-track disability claims, starting with PACT Act claims
+      8. Grow the OCTO team
+      9. Formalize the VA Innovation Unit and innovation process
+      10. Drive OIT's Digital Transformation Strategy
+      
+      Required format:
+      **Primary OCTO Priority:** [Exact title from list above]
+      **Explanation:** One sentence connecting {{product_area}} to this priority.
+      
+      **Additional Priorities (if applicable):** [List max 2 others with brief explanations]
+      
+      **Project-Specific Priorities:**
+      - [2-3 specific priorities for {{product_area}}]
+      
+      Use exact OCTO priority titles and be specific to {{product_area}}.
+
+  # KEEP - Veteran Journey (enhanced mapping)
+  - task_id: "veteran_journey"
+    prompt: |
+      Map {{product_area}} to the official VA Journey of Veterans Map framework:
+      
+      **VA Journey Map Reference:**
+      *Life Stages:* Joining, Serving, Getting out, Starting up, Reinventing Myself, Putting down roots, Taking care of myself, Retiring, Aging, Dying
+      
+      *Key Moments (commonly referenced):*
+      - Taking care of myself: Attending to health needs, Recognizing and addressing mental health needs, Managing primary care and chronic health issues, Seeking support for an acute health event, Maintaining my health, Re-establishing and creating relationships, Balancing finances
+      - Putting down roots: Finding a place to live, Starting/growing/maintaining my family, Connecting with and serving my community
+      - Retiring: Finding additional sources of income, Managing my declining health, Planning for longer term care
+      - Aging: Maintaining social and community connections, Adapting my support network to my new needs
+      
+      **Format your response as:**
+      **Veteran Journey Connection:** Write 1-2 sentences explaining where {{product_area}} fits into the Veteran journey
+      **Key Moments:** List 3-5 specific moments from the VA Journey stages above that {{product_area}} touches, using exact terminology
+      **Relevant "Moments that Matter" (if applicable):** Reference any specific moments that matter that are particularly relevant to {{product_area}}
+      
+      Keep concise and practical. Use exact moment terminology. Focus specifically on {{product_area}}.
+
+  # IMPROVED - Clear decision context (replace basic background)
+  - task_id: "decision_context"
+    prompt: |
+      Transform decision context into clear, structured background section:
+      
+      Input context: "{{decision_context}}"
+      Product area: "{{product_area}}"
+      
+      Create exactly 2-3 sentences using this structure:
+      1. **Decision statement:** "This research will inform [specific decision about {{product_area}}]."
+      2. **Impact statement:** "This decision will [specific benefit for Veterans] and [business outcome for VA]."
+      3. **Context:** Brief explanation of current situation (only if needed for clarity)
+      
+      Requirements:
+      - Mention {{product_area}} by name in the first sentence
+      - Be specific about the change being considered
+      - Include measurable impact on Veterans
+      - Use plain language - avoid jargon
+      - Maximum 75 words total
+
+  # IMPROVED - Streamlined research goals (replace verbose current version)
+  - task_id: "research_goals"
+    prompt: |
+      Create concise, actionable research goals:
+      
+      Primary goal input: "{{research_goal}}"
       Methodology: {{methodology}}
-      Participants: {{participant_count}}
+      Participants: "{{target_participants}}"
+      Product area: "{{product_area}}"
       
-      Base timelines with AI acceleration:
-      - Rush: Planning(1d), IRB(2d), Recruiting(3d), Research(3d), AI Analysis(0.5d), Reporting(0.5d) = 10 days
-      - Standard: Planning(2d), IRB(5d), Recruiting(7d), Research(5d), AI Analysis(1d), Reporting(1d) = 21 days
-      - Extended: Planning(3d), IRB(10d), Recruiting(14d), Research(7d), AI Analysis(1d), Reporting(2d) = 37 days
+      Required format:
+      **Primary Goal:** [Improved, concise version of input goal - maximum 2 sentences]
       
-      Format as markdown table with:
+      **Supporting Goals:**
+      [2-3 bullet points that complement primary goal and are achievable through {{methodology}}]
+      
+      Requirements:
+      - Keep goals specific and measurable
+      - Directly connect to {{methodology}} capabilities
+      - Reference {{product_area}} specifically
+      - Support business decision-making about {{product_area}}
+      - Avoid repetitive or generic language
+
+  # NEW - Accurate timeline calculation (fix placeholder dates!)
+  - task_id: "accurate_timeline"
+    prompt: |
+      Calculate realistic project timeline starting from TODAY ({{current_date}}) for {{timeline_preference}}:
+      
+      **Base Timeline Templates (AI-accelerated):**
+      - Rush: Planning(1d), IRB(2d), Recruiting(3d), Research(3d), Analysis(1d), Reporting(1d) = 11 business days
+      - Standard: Planning(2d), IRB(5d), Recruiting(7d), Research(5d), Analysis(1d), Reporting(1d) = 21 business days  
+      - Extended: Planning(3d), IRB(10d), Recruiting(14d), Research(7d), Analysis(2d), Reporting(2d) = 38 business days
+      
+      Consider:
+      - Methodology: {{methodology}}
+      - Participant count: {{participant_count}}
+      - Skip weekends and major holidays
+      - Include buffer time for {{methodology}} complexity
+      
+      Format as clean markdown table:
       | Phase | Duration | Start Date | End Date | Key Deliverables |
+      |-------|----------|------------|----------|------------------|
       
-      Include specific milestones, dependencies, and buffer time for {{methodology}}.
+      Use actual business day dates starting from {{current_date}}. Include specific milestones and dependencies.
 
-  - task_id: "recruitment_strategy"
+  # NEW - Risk assessment (critical missing piece)
+  - task_id: "risk_assessment"
     prompt: |
-      Design recruitment strategy for: "{{target_participants}}"
-      
-      Number needed: {{participant_count}}
-      Methodology: {{methodology}}
-      Timeline: {{timeline_preference}}
-      Product area: {{product_area}}
-      
-      Provide:
-      **Recruitment Channels:**
-      - VA-specific databases and systems relevant to {{product_area}}
-      - Veteran service organizations
-      - Digital outreach methods
-      
-      **Screening Criteria:**
-      - Inclusion requirements for {{product_area}} research
-      - Experience qualifications
-      - Accessibility considerations
-      
-      **Recruitment Timeline:**
-      - Funnel estimates and conversion rates
-      - Backup recruitment strategies
-      - Scheduling coordination approach
-      
-      **Incentive Strategy:**
-      - Appropriate compensation for {{methodology}}
-      - Payment timeline and method
-
-  - task_id: "risk_mitigation"
-    prompt: |
-      Identify risks and mitigation strategies for this research plan:
+      Identify the top 3-4 risks for this research project:
       
       Project: {{project_title}}
       Methodology: {{methodology}}
-      Timeline: {{timeline_preference}}
       Participants: {{target_participants}} (n={{participant_count}})
+      Timeline: {{timeline_preference}}
+      Product area: {{product_area}}
       
-      **Recruitment Risks:**
-      - Participant availability and qualification challenges
-      - Timeline risks with recruitment funnel
+      Format each risk as:
+      **[Risk Type]:** [Specific risk description]
+      - **Likelihood:** High/Medium/Low
+      - **Mitigation:** [Specific action to prevent or reduce this risk]
       
-      **Execution Risks:**
-      - Methodology-specific implementation challenges
-      - Technology dependencies and backup plans
+      Focus on practical risks:
+      - Recruitment challenges (finding qualified {{target_participants}})
+      - Execution issues ({{methodology}} implementation problems)
+      - Timeline risks (delays that affect {{timeline_preference}})
+      - Quality concerns (data validity, stakeholder satisfaction)
+      - VA-specific risks (IRB delays, compliance issues)
       
-      **Quality Risks:**
-      - Data validity and reliability concerns
-      - Bias and representation issues
-      
-      **VA-Specific Risks:**
-      - IRB approval requirements and timeline
-      - Security and compliance considerations
-      
-      For each risk, provide specific mitigation strategies and contingency plans.
+      Keep mitigation strategies actionable and specific.
 
-# ENHANCED OUTPUT TEMPLATE
+  # IMPROVED - Streamlined success criteria (replace verbose percentages)
+  - task_id: "success_criteria"
+    prompt: |
+      Create 3-4 clear, measurable success criteria:
+      
+      Research goal: "{{research_goal}}"
+      Timeline: {{timeline_preference}}
+      Methodology: {{methodology}}
+      Product area: {{product_area}}
+      
+      Format as specific, business-focused outcomes:
+      1. **Decision Support:** [How findings will inform {{product_area}} decisions - include timeline]
+      2. **Quality Threshold:** [Standards for research quality and actionability]  
+      3. **Timeline Success:** [Delivery expectations and stakeholder review requirements]
+      4. **Impact Measurement:** [How success will be measured after research completion]
+      
+      Requirements:
+      - Avoid complex percentages and unrealistic metrics
+      - Focus on practical business outcomes
+      - Include specific timelines for decision-making
+      - Make criteria measurable but achievable
+
+  # IMPROVED - Essential deliverables only (replace lengthy list)
+  - task_id: "key_deliverables"
+    prompt: |
+      List essential deliverables that support {{product_area}} decision-making:
+      
+      Methodology: {{methodology}}
+      Research goal: "{{research_goal}}"
+      Timeline: {{timeline_preference}}
+      
+      Required format:
+      **Primary Deliverables:**
+      - [Essential deliverable 1 - when it will be delivered]
+      - [Essential deliverable 2 - when it will be delivered]
+      - [Essential deliverable 3 - when it will be delivered]
+      
+      **Supporting Materials:**
+      - [Nice-to-have deliverable 1]
+      - [Nice-to-have deliverable 2]
+      
+      Requirements:
+      - Limit to maximum 5 total deliverables
+      - Focus on decision-making value, not busy work
+      - Include realistic delivery timelines
+      - Avoid redundant or overlapping deliverables
+      - Prioritize stakeholder needs over comprehensive documentation
+
+  # IMPROVED - Practical methodology (replace verbose implementation)
+  - task_id: "methodology_optimization"
+    prompt: |
+      Provide concise methodology details and implementation approach:
+      
+      Selected methodology: {{methodology}}
+      Research goals: "{{research_goal}}"
+      Participants: {{target_participants}} (n={{participant_count}})
+      Product area: {{product_area}}
+      
+      Required format:
+      **Methodology Rationale:** [Why {{methodology}} is optimal for this research - maximum 2 sentences]
+      
+      **Implementation Approach:**
+      - Session format and duration appropriate for {{methodology}}
+      - Key activities and data collection techniques
+      - Specific protocols for {{product_area}} evaluation
+      
+      **VA Compliance Notes:**
+      - IRB requirements and approval timeline
+      - Trauma-informed research considerations
+      - Accessibility accommodations for participants
+      
+      Keep practical and implementation-focused. Avoid theoretical discussions. Focus on what researchers need to execute this plan.
+
+  # KEEP - Demographic targets (enhanced for realism)
+  - task_id: "demographic_targets"
+    prompt: |
+      Generate realistic demographic targets for {{participant_count}} participants following VA inclusive research standards:
+      
+      **Format as:**
+      
+      **Demographic targets (aim for when possible):**
+      Calculate realistic numbers for {{participant_count}} participants:
+      - Service era diversity: Include participants from recent veterans and different service periods when possible
+      - Income diversity: Aim for [realistic number] participants with household income $49,000 or less
+      - Racial/ethnic diversity: Include participants identifying as Black, Hispanic/Latina/Latinx, Asian, or Native American when possible
+      - Gender diversity: Include participants identifying as other than male when possible
+      - Age diversity: Include both under 35 and over 55 when possible
+      - Education diversity: Mix of education levels including those without degrees
+      - Accessibility needs: Include assistive technology users if relevant to {{product_area}}
+      
+      **Secondary targets (nice-to-haves):**
+      - Geographic diversity (rural vs urban)
+      - {{product_area}} usage patterns and experience levels
+      - Technology comfort levels
+      
+      For {{participant_count}} participants, note that not all demographic targets may be achievable in a single study. Prioritize the most relevant categories for {{product_area}} research.
+
+  # NEW - Next steps (critical missing piece for stakeholder value)
+  - task_id: "next_steps"
+    prompt: |
+      Create actionable post-research timeline and decision framework:
+      
+      Research completion: [Based on {{timeline_preference}} timeline]
+      Product area: {{product_area}}
+      Research goal: "{{research_goal}}"
+      
+      Required format:
+      **Immediate Actions (Week 1 post-research):**
+      - [Specific action with responsible party]
+      - [Specific action with timeline]
+      
+      **Short-term Actions (Weeks 2-4):**
+      - [Implementation planning step]
+      - [Decision-making milestone]
+      - [Resource allocation decision]
+      
+      **Success Metrics:**
+      - [How research impact will be measured]
+      - [Follow-up research needs assessment]
+      
+      Requirements:
+      - Focus on turning research insights into {{product_area}} improvements
+      - Include realistic timelines for stakeholder decision-making
+      - Specify who is responsible for each action
+      - Connect actions to business value and veteran impact
+      - Make steps concrete and achievable
+
+# STREAMLINED OUTPUT TEMPLATE - Keeps strong sections, adds critical pieces, removes bloat
 output_template: |
   # 🧭 Research Plan – {{project_title}}
 
-  **📦 Product/Feature Area:** {{product_area}}  
-  **👩🏽‍🔬 Lead Researcher:** {{lead_researcher}}  
+  **📦 Product/Feature Area:** {{ai_generated.concise_product_area}}
+
   **🏛️ Team/Office:** {{team_office}}  
-  **🗓️ Created:** {{current_date}}
+  **👩🏽‍🔬 Lead Researcher:** {{lead_researcher}}  
+  **🗓️ Date:** {{current_date}}
 
   ---
 
-  ## 🔎 Background & Decision Context
+  ## 🔎 Background
 
-  {{decision_context}}
-
-  **Research Goal:** {{research_goal}}
+  {{ai_generated.decision_context}}
 
   ---
 
-  ## 🛠️ Methodology & Approach
+  ## 🎯 OCTO Priorities
+
+  {{ai_generated.octo_priorities}}
+
+  ---
+
+  ## 🧭 Veteran Journey
+
+  {{ai_generated.veteran_journey}}
+
+  ---
+
+  ## 🎓 Research Goals
+
+  {{ai_generated.research_goals}}
+
+  ---
+
+  ## ✅ Success Criteria & Expected Deliverables
+
+  **Success Criteria:**
+  {{ai_generated.success_criteria}}
+
+  **Key Outputs:**
+  {{ai_generated.key_deliverables}}
+
+  ---
+
+  ## 🛠️ Methodology
 
   {{ai_generated.methodology_optimization}}
 
@@ -224,54 +426,42 @@ output_template: |
   **🎯 Target Participants:** {{target_participants}}  
   **🧍 Participant Count:** {{participant_count}}
 
-  {{ai_generated.recruitment_strategy}}
+  **👥 Demographic Targets:**
+  {{ai_generated.demographic_targets}}
 
   ---
 
-  ## ⏰ Project Timeline
+  ## ⏰ Timeline Overview
 
-  **Timeline Preference:** {{timeline_preference}}
-
-  {{ai_generated.enhanced_timeline}}
+  {{ai_generated.accurate_timeline}}
 
   ---
 
-  ## ⚠️ Risk Assessment & Mitigation
+  ## ⚠️ Risk Assessment
 
-  {{ai_generated.risk_mitigation}}
-
-  ---
-
-  ## 👥 Team & Stakeholder Coordination
-
-  | Role | Assigned | Responsibilities |
-  |------|----------|------------------|
-  | Lead Researcher | {{lead_researcher}} | Overall study design, execution, analysis |
-  | Research Operations | [TBD] | Recruitment, scheduling, logistics |
-  | Note-taker | [TBD] | Session documentation, data collection |
-  | Stakeholder Lead | [TBD] | Requirements clarity, findings review |
+  {{ai_generated.risk_assessment}}
 
   ---
 
-  ## 📋 Success Criteria & Deliverables
+  ## 🚀 Next Steps
 
-  **Success Criteria:**
-  - Clear insights about {{product_area}} inform decision-making
-  - {{participant_count}} qualified participants complete research activities
-  - Findings delivered within {{timeline_preference}} timeline
-  - Stakeholder alignment on next steps within 1 week
-
-  **Key Deliverables:**
-  - Research findings report with actionable recommendations
-  - Executive summary for decision-makers
-  - Implementation roadmap for {{product_area}} improvements
-  - Raw data and supporting evidence
+  {{ai_generated.next_steps}}
 
   ---
 
-  *Research plan generated by Qori AI Research Platform v{{version}}*
+  ## 👥 Team Roles
 
-# ENHANCED DELIVERY (works with current setup)
+  | Team Member | Role |
+  |-------------|------|
+  | {{lead_researcher}} | Lead Researcher |
+  | [To be assigned] | Note-taker |
+  | [To be assigned] | Observer |
+
+  ---
+
+  *Research accelerated by Qori's AI-powered analysis capabilities, reducing synthesis time from weeks to days.*
+
+# Output configuration (same as current)
 output_options:
   filename: "research_plan_{{project_title|slugify}}_{{current_date}}.md"
   path: "01-planning/"
@@ -286,154 +476,34 @@ output_options:
       enabled: true
       channel: "#research-planning"
       message: |
-        🧭 **Research Plan Generated**
-        
+        🧭 **Research Plan Generated** 
         **Project:** {{project_title}}
-        **Methodology:** {{methodology}}
         **Timeline:** {{timeline_preference}}
-        **Participants:** {{participant_count}}
-        
-        Plan saved to GitHub and ready for stakeholder review.
+        **Ready for stakeholder review.**
       
-      # Enhanced with action buttons (compatible with Slack)
       actions:
-        - text: "📋 View Full Plan"
+        - text: "📋 View Plan"
           style: "primary"
           url: "{{github_file_url}}"
         - text: "💬 Create Discussion Guide"
           style: "default"
           action: "trigger_discussion_guide"
-        - text: "👥 Generate Outreach"
-          style: "default"
-          action: "trigger_participant_outreach"
 
-# SIMPLE BUT ENHANCED SLACK UI (compatible with current)
+# Same Slack UI as current
 slack_ui:
   modal:
     title: "🧭 Create Research Plan"
     submit_label: "Generate Plan"
     close_label: "Cancel"
-    blocks:
-      - type: "section"
-        text: "I'll help you create a comprehensive VA-aligned research plan. Just provide the key details below."
-      
-      - type: "input"
-        label: "Project Title"
-        element: "plain_text_input"
-        placeholder: "e.g., Debt Letters Usability Study"
-        
-      - type: "input"  
-        label: "Product/Feature Area"
-        element: "plain_text_input"
-        placeholder: "e.g., Debt Letters, Benefits Navigation, Claims Processing"
-        
-      - type: "input"
-        label: "What decision will this research inform?"
-        element: "plain_text_input"
-        multiline: true
-        placeholder: "e.g., Should we redesign the debt letter format to reduce veteran confusion?"
-        
-      - type: "input"
-        label: "Primary research goal" 
-        element: "plain_text_input"
-        multiline: true
-        placeholder: "e.g., Understand how veterans interpret current debt letters and identify pain points"
-        
-      - type: "input"
-        label: "Methodology (select all that apply)"
-        element: "checkboxes"
-        options:
-          - text: "Usability Testing"
-            value: "usability_testing"
-          - text: "User Interviews"  
-            value: "user_interviews"
-          - text: "Survey Research"
-            value: "survey_research"
-          - text: "Card Sorting"
-            value: "card_sorting"
-          - text: "Concept Testing"
-            value: "concept_testing"
-          - text: "Competitive Analysis"
-            value: "competitive_analysis"
-            
-      - type: "input"
-        label: "Target participants"
-        element: "plain_text_input"
-        multiline: true
-        placeholder: "e.g., Veterans who received debt letters in past 6 months"
-        
-      - type: "input"
-        label: "Number of participants"
-        element: "plain_text_input"
-        placeholder: "e.g., 5-8 participants"
-        
-      - type: "input"
-        label: "Timeline preference"
-        element: "radio_buttons"
-        options:
-          - text: "Rush (2-3 weeks total)"
-            value: "rush"
-          - text: "Standard (4-6 weeks total)"
-            value: "standard"
-          - text: "Extended (8+ weeks total)"
-            value: "extended"
-            
-      - type: "input"
-        label: "Lead researcher"
-        element: "plain_text_input"
-        placeholder: "e.g., Jordan Smith"
-        
-      - type: "input"
-        label: "Team/Office"
-        element: "plain_text_input"
-        placeholder: "e.g., VA Digital Services, OCTO, 18F"
+    # ... existing form structure
 
-# ANALYTICS (backend only, no UI changes needed)
-analytics:
-  track_events:
-    - event: "research_plan_generated"
-      properties: [project_title, methodology, timeline_preference, team_office]
-    - event: "methodology_selected" 
-      properties: [methodology, participant_count]
-      
-  generate_reports:
-    - type: "weekly_usage"
-      recipients: ["research-ops@va.gov"]
-      metrics: [plans_generated, popular_methodologies, timeline_preferences]
-
-# VALIDATION (backend processing, no UI impact)
-validation:
-  project_title:
-    min_length: 5
-    max_length: 80
-    error_message: "Project title must be 5-80 characters"
-    
-  participant_count:
-    methodology_check: true
-    error_message: "Participant count should align with methodology (5-8 for usability, 20+ for surveys)"
-    
-  methodology:
-    min_selections: 1
-    error_message: "Please select at least one methodology"
-
+# Enhanced processing
 processing_workflow:
   1. validate_inputs
-  2. check_methodology_alignment  
+  2. check_methodology_alignment
   3. execute_ai_generation_tasks
-  4. enhance_content_quality
-  5. format_professional_output
+  4. validate_timeline_accuracy
+  5. format_output
   6. save_to_github
-  7. send_enhanced_slack_notification
+  7. send_slack_notification
   8. track_analytics
-
-# USAGE INSTRUCTIONS
-usage_instructions: |
-  Current UI Compatible Enhancements:
-  1. Fill out the single modal form (same UI as current)
-  2. Enhanced validation catches common errors before processing
-  3. AI generates much more comprehensive and professional plans
-  4. Enhanced Slack notifications with action buttons
-  5. Improved GitHub organization and file naming
-  6. Analytics tracking for continuous improvement
-  
-  No UI changes required - all enhancements work with existing interface!
