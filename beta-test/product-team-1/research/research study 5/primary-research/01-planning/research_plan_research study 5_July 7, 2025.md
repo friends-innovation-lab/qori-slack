@@ -1,4 +1,4 @@
-# 🧭 Research Plan – research study 5
+# 🧭 Research Plan – research study 6
 
 **📦 Product/Feature Area:** research study 5  
 **🏛️ Team/Office:** research study 5  
