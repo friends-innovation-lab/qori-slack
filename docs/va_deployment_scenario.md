@@ -59,7 +59,7 @@ qori-enterprise-v1.2.3/
 
 ### Demo Scenario:
 1. **VA Researcher** joins dedicated Slack channel: `#qori-pilot-housing-research`
-2. **Command**: `/new-study "Veterans Housing Application Feedback"`
+2. **Command**: `/start-research "Veterans Housing Application Feedback"`
 3. **Qori** automatically:
    - Creates GitHub repo folder structure
    - Sets up participant tracking database
