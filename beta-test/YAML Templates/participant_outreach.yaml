@@ -1,5 +1,4 @@
 # participant_outreach.yaml - Integration Guide
-# This shows exactly where to add improvements to your current YAML
 
 id: participant_outreach
 name: run_participant_outreach
@@ -74,7 +73,7 @@ error_handling:
           message: "Please use approved meeting platforms"
 # ===== END NEW SECTION =====
 
-# Input schema - KEEP YOUR CURRENT STRUCTURE, but ADD these fields:
+# Input schema:
 input_variables:
   - message_type:
       type: "select"
@@ -113,7 +112,7 @@ input_variables:
       options: ["friendly", "formal", "casual"]
       default: "friendly"
       
-  # Conditional fields - KEEP YOUR CURRENT STRUCTURE
+  # Conditional fields 
   - session_date:
       type: "date"
       required_if: ["session_confirmation", "session_reminder", "rescheduling_request"]
@@ -147,7 +146,7 @@ input_variables:
       required_if: ["rescheduling_request"]
       placeholder: "List 2-3 alternative time slots"
 
-# ===== REPLACE YOUR CURRENT ai_generation_tasks WITH THIS =====
+# ===== ai_generation_tasks =====
 ai_generation_tasks:
   - task_id: "subject_line"
     prompt: |
@@ -323,7 +322,7 @@ ai_generation_tasks:
       Format as actionable bullet points with suggested timelines.
 # ===== END REPLACEMENT =====
 
-# Processing workflow - KEEP AS IS
+# Processing workflow 
 processing_workflow:
   1. validate_inputs
   2. validate_conditional_fields
@@ -332,7 +331,7 @@ processing_workflow:
   5. save_to_github
   6. send_to_slack
 
-# ===== REPLACE YOUR CURRENT output_template WITH THIS =====
+# ===== output_template =====
 output_template: |
   # 📧 {{message_type|title|replace("_", " ")}} Message
   
@@ -384,7 +383,7 @@ output_template: |
   *Saved to: `{{path}}{{filename}}`*
 # ===== END REPLACEMENT =====
 
-# ===== REPLACE YOUR CURRENT output_options WITH THIS =====
+# ===== output_options =====
 output_options:
   # Enhanced file naming with sanitization
   filename: "{{participant_name|lower|replace(' ', '_')|replace('.', '')|replace(',', '')}}_{{message_type}}_{{current_date}}.md"
@@ -403,7 +402,7 @@ output_options:
       path: "02-participants/outreach/"
       commit_message: "Add {{message_type}} message for {{participant_name}}"
       
-    # Enhanced Slack DM with better formatting
+    # Enhanced Slack DM 
     slack:
       enabled: true
       send_dm: true
@@ -439,11 +438,6 @@ output_options:
           action_type: "url"
           url: "{{github_file_url}}"
           
-        - text: "✏️ Edit & Regenerate"
-          style: "default"
-          action_type: "modal"
-          modal_id: "edit_outreach_message"
-          
         - text: "👥 Generate for Another Participant"
           style: "default"
           action_type: "modal"
@@ -461,7 +455,7 @@ output_options:
       message: "📧 {{message_type|replace('_', ' ')|title}} message generated for {{study_name}}"
 # ===== END REPLACEMENT =====
 
-# ===== REPLACE YOUR CURRENT slack_ui WITH THIS =====
+# ===== slack_ui =====
 slack_ui:
   # Initial modal configuration
   modal:
@@ -505,7 +499,7 @@ slack_ui:
       error_message: "Please use approved meeting platforms"
 # ===== END REPLACEMENT =====
 
-# ===== ADD THIS NEW SECTION AFTER slack_ui =====
+# ===== slack_ui =====
 # Analytics and Tracking
 analytics:
   track_events:
