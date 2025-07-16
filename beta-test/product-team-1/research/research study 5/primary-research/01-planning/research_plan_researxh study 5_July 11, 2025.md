@@ -1,10 +1,10 @@
-# 🧭 Research Plan – researxh study 5
+# 🧭 Research Plan – researxh study 6
 
 **📦 Product/Feature Area:** Title: VA Research Study 5: Impact of Telehealth Services on Veteran Mental Health
 
 Description: This research study, conducted by the Department of Veterans Affairs, aims to assess the effectiveness of telehealth services in improving mental health outcomes for veterans. By analyzing data from a sample of veterans receiving telehealth services, the study seeks to identify key factors that contribute to successful mental health interventions. This research is part of the VA's ongoing efforts to enhance the delivery of healthcare services to veterans and address the unique challenges they face.  
 **🏛️ Team/Office:** researxh study 5  
-**👩🏽‍🔬 Lead Researcher:** researxh study 5  
+**👩🏽‍🔬 Lead Researcher:** researxh study 6  
 **🗓️ Date:** July 11, 2025
 
 ---
