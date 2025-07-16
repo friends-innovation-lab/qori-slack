@@ -1,6 +1,6 @@
 🧠 Qori: Augmenting Civic Tech Research with AI
 
-**Qori** is an agentic AI built specifically for civic technologists and public interest researchers. It accelerates the messy, vital work of user research without compromising the care, ethics, and context that make it human-centered.
+**Qori** is a **microservices-based workflow orchestration platform** that specializes in research operations for civic tech teams. Built as an agentic AI specifically for civic technologists and public interest researchers, it accelerates the messy, vital work of user research without compromising the care, ethics, and context that make it human-centered.
 
 ## Research Ops as Code
 
@@ -44,7 +44,7 @@ Every study makes the next one smarter. Templates improve, AI gets better at you
 - **🏛️ Government-Ready**: Meets compliance requirements for distributed systems
 
 **Core Architecture Pattern:**
-**YAML (GitHub) → AI Processing → Structured Output (Slack)**
+**YAML (GitHub) → Microservice Orchestration → Structured Output (Slack)**
 
 The microservices architecture enables:
 - **Independent scaling** of AI workers vs. data processing vs. Slack integration
