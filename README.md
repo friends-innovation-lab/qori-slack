@@ -1,23 +1,44 @@
-# 🧠 CivicMind: Augmenting Civic Tech Research with AI
+🧠 Qori: Augmenting Civic Tech Research with AI
 
-**CivicMind** is an agentic AI built specifically for civic technologists and public interest researchers. It accelerates the messy, vital work of user research without compromising the care, ethics, and context that make it human-centered.
+Qori is an agentic AI built specifically for civic technologists and public interest researchers. It accelerates the messy, vital work of user research without compromising the care, ethics, and context that make it human-centered.
+Research Ops as Code
+What if research workflows could be as version-controlled, collaborative, and scalable as your codebase?
+YAML → AI → Slack: The Missing Link Between Research and Delivery
+Most research dies in decks. Qori changes that.
+Here's how:
 
-CivicMind is:
-- A Slack-native orchestration layer that uses YAML templates to guide AI-powered research workflows
-- It posts structured output (JTBDs, summaries, insights) back into Slack
-- YAML lives in GitHub → AI runs prompt → result returns to Slack thread
+YAML templates in GitHub mean your research methods are version-controlled, peer-reviewed, and reusable across projects
+AI workers handle the grunt work—transcription, tagging, synthesis—so researchers focus on insights, not operations
+Structured output in Slack means findings land where decisions get made, not buried in folders
 
-> We're not building a bot. We’re building a method system.
+Why This Architecture Wins:
 
-Unlike generic productivity bots, **CivicMind is purpose-built for public service teams**:  
-- It reduces ResearchOps friction. No more cobbling together templates or folder structures.
-- It helps design studies, from research plans to interview guides. 
-- It supports study creation, automates transcription, and tags insights thematically.  
-- It helps synthesize and summarize findings quickly, without relying on memory or manual labor.  
-- It makes research visible by posting digests in Slack and converting insights into GitHub issues.  
-- It ensures that **insights don’t just sit in decks. They actively shape delivery.**
+🔄 Version-Controlled Research Methods
+Templates evolve with your team. New hire? They inherit battle-tested workflows, not blank documents.
 
-CivicMind weaves research directly into the way public interest teams build. It connects the people doing the work with the systems being designed for them, ensuring that insights flow into delivery instead of getting lost. With CivicMind, research becomes part of the team’s operating system, always present and always actionable.
+⚡ Zero Context-Switching
+Teams live in Slack. Research lives in Slack. No more "Did you see that report I shared last week?"
+
+🛡️ Government-Ready by Design
+FedRAMP compliance isn't bolted on—it's baked in. Audit trails, data governance, and human oversight from day one.
+
+🚀 Compound Learning
+Every study makes the next one smarter. Templates improve, AI gets better at your domain, and institutional knowledge accumulates instead of walking out the door.
+The result? Research becomes infrastructure, not a bottleneck. Teams ship faster because insights flow directly into delivery, not into presentations that get forgotten.
+This is research ops that scales with your mission, not against it.
+
+We're not building a bot. We're building a method system.
+
+Unlike generic productivity bots, Qori is purpose-built for public service teams:
+
+It reduces ResearchOps friction. No more cobbling together templates or folder structures.
+It helps design studies, from research plans to interview guides.
+It supports study creation, automates transcription, and tags insights thematically.
+It helps synthesize and summarize findings quickly, without relying on memory or manual labor.
+It makes research visible by posting digests in Slack and converting insights into GitHub issues.
+It ensures that insights don't just sit in decks. They actively shape delivery.
+
+Qori weaves research directly into the way public interest teams build. It connects the people doing the work with the systems being designed for them, ensuring that insights flow into delivery instead of getting lost. With Qori, research becomes part of the team's operating system, always present and always actionable.
 
 ---
 
