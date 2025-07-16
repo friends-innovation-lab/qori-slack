@@ -33,7 +33,24 @@ Every study makes the next one smarter. Templates improve, AI gets better at you
 
 *This is research ops that scales with your mission, not against it.*
 
-> We're not building a bot. We're building a method system.
+## 🏗️ Built as Microservices
+
+**Qori is architected as a distributed system of specialized microservices**, making it:
+
+- **🔧 Modular**: Each service handles one responsibility (transcription, analysis, outreach, etc.)
+- **📈 Scalable**: Scale individual services based on demand
+- **🛡️ Resilient**: If one service fails, others continue operating
+- **🔄 Maintainable**: Update, deploy, and debug services independently
+- **🏛️ Government-Ready**: Meets compliance requirements for distributed systems
+
+**Core Architecture Pattern:**
+**YAML (GitHub) → AI Processing → Structured Output (Slack)**
+
+The microservices architecture enables:
+- **Independent scaling** of AI workers vs. data processing vs. Slack integration
+- **Technology flexibility** (Python for AI, Node.js for Slack, etc.)
+- **Deployment options** (on-premises, cloud, hybrid) to meet agency requirements
+- **Service isolation** for security and compliance auditing
 
 Unlike generic productivity bots, **Qori is purpose-built for public service teams**:
 - It reduces ResearchOps friction. No more cobbling together templates or folder structures.
