@@ -456,50 +456,107 @@ output_options:
 # ===== END REPLACEMENT =====
 
 # ===== slack_ui =====
-slack_ui:
-  # Initial modal configuration
-  modal:
-    title: "📧 Participant Outreach"
-    submit_label: "Generate Message"
-    close_label: "Cancel"
-    
-  # Dynamic field display based on message type
-  conditional_fields:
-    session_confirmation: ["session_date", "session_time", "session_link"]
-    session_reminder: ["session_date", "session_time", "session_link"]
-    rescheduling_request: ["session_date", "session_time", "reschedule_reason", "reschedule_options"]
-    initial_recruitment: ["study_description", "incentive_amount"]
-    thank_you: ["incentive_amount"]
-    follow_up: []
-    
-  # Enhanced field validation rules
-  validation:
-    participant_name:
-      min_length: 2
-      max_length: 50
-      error_message: "Please enter a participant name or ID (2-50 characters)"
-    study_name:
-      min_length: 5
-      max_length: 100
-      error_message: "Please enter a study name (5-100 characters)"
-    researcher_name:
-      min_length: 2
-      max_length: 50
-      error_message: "Please enter researcher name (2-50 characters)"
-    researcher_email:
-      email_format: true
-      domain_whitelist: ["va.gov", "vha.gov", "med.va.gov"]
-      error_message: "Please enter a valid VA email address"
-    session_date:
-      future_date: true
-      error_message: "Session date must be in the future"
-    session_link:
-      url_format: true
-      allowed_domains: ["zoom.us", "teams.microsoft.com", "meet.google.com"]
-      error_message: "Please use approved meeting platforms"
-# ===== END REPLACEMENT =====
+# Updated participant_outreach.yaml for Multi-Step Approach
+# This is much simpler to implement than conditional fields
 
+# Replace your current slack_ui section with this:
+slack_ui:
+  # Step 1: Message Type Selection
+  initial_modal:
+    title: "📧 Participant Outreach"
+    submit_label: "Next"
+    close_label: "Cancel"
+    blocks:
+      message_type_selection:
+        type: "radio_buttons"
+        options: ["initial_recruitment", "session_confirmation", "session_reminder", "rescheduling_request", "follow_up", "thank_you"]
+        required: true
+    
+  # Step 2: Details Modal (generated dynamically based on step 1)
+  details_modal:
+    title: "📝 Message Details"
+    submit_label: "Generate Message"
+    close_label: "Back"
+    
+    # Common fields for all message types
+    common_fields:
+      - participant_name
+      - study_name
+      - researcher_name
+      - researcher_email
+      - contact_method
+      - tone
+    
+    # Message-specific fields
+    conditional_fields:
+      initial_recruitment:
+        - study_description
+        - incentive_amount
+      session_confirmation:
+        - session_date
+        - session_time
+        - session_link
+      session_reminder:
+        - session_date
+        - session_time
+        - session_link
+      rescheduling_request:
+        - session_date
+        - session_time
+        - reschedule_reason
+        - reschedule_options
+      follow_up: []
+      thank_you:
+        - incentive_amount
+
+# Add this new section for step navigation
+step_navigation:
+  steps:
+    1:
+      title: "Choose Message Type"
+      description: "Select the type of outreach message you need"
+      next_action: "show_details_modal"
+    2:
+      title: "Message Details"
+      description: "Fill in the details for your message"
+      next_action: "generate_message"
+      
+  # Step transition logic
+  transitions:
+    message_type_selected:
+      from: "step_1"
+      to: "step_2"
+      action: "generate_details_modal"
+    
+    form_submitted:
+      from: "step_2"
+      to: "complete"
+      action: "generate_message"
+    
+    back_pressed:
+      from: "step_2"
+      to: "step_1"
+      action: "show_initial_modal"
+
+# Validation rules remain the same
+validation:
+  participant_name:
+    min_length: 2
+    max_length: 50
+    error_message: "Please enter a participant name (2-50 characters)"
+  study_name:
+    min_length: 5
+    max_length: 100
+    error_message: "Please enter a study name (5-100 characters)"
+  researcher_email:
+    email_format: true
+    domain_whitelist: ["va.gov", "vha.gov", "med.va.gov"]
+    error_message: "Please enter a valid VA email address"
+  session_date:
+    future_date: true
+    error_message: "Session date must be in the future"
 # ===== slack_ui =====
+
 # Analytics and Tracking
 analytics:
   track_events:
