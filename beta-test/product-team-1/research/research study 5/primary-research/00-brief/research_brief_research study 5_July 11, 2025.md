@@ -1,4 +1,4 @@
-# 📄 Research Brief – research study 5
+# 📄 Research Brief – research study 6
 
 > **📦 Project Area:** Healthcare Services &nbsp;&nbsp;|&nbsp;&nbsp; **👩🏽‍🔬 Prepared by:** research study 5 &nbsp;&nbsp;|&nbsp;&nbsp; **🗓️ Date:** July 11, 2025
 
