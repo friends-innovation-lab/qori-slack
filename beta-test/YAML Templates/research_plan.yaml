@@ -1,5 +1,3 @@
-# FINAL OPTIMIZED RESEARCH PLAN - Targeted Improvements Implementation
-
 id: research_plan
 name: run_research_plan
 label: 🧭 Research Plan
@@ -122,6 +120,7 @@ ai_generation_tasks:
       
       Required format:
       **Primary OCTO Priority:** [Exact title from list above]
+      
       **Explanation:** One sentence connecting {{product_area}} to this priority.
       
       **Additional Priorities (if applicable):** [List max 2 others with brief explanations]
@@ -147,7 +146,9 @@ ai_generation_tasks:
       
       **Format your response as:**
       **Veteran Journey Connection:** Write 1-2 sentences explaining where {{product_area}} fits into the Veteran journey
+      
       **Key Moments:** List 3-5 specific moments from the VA Journey stages above that {{product_area}} touches, using exact terminology
+      
       **Relevant "Moments that Matter" (if applicable):** Reference any specific moments that matter that are particularly relevant to {{product_area}}
       
       Keep concise and practical. Use exact moment terminology. Focus specifically on {{product_area}}.
@@ -201,9 +202,9 @@ ai_generation_tasks:
       Calculate realistic project timeline starting from TODAY ({{current_date}}) for {{timeline_preference}}:
       
       **Base Timeline Templates (AI-accelerated):**
-      - Rush: Planning(1d), IRB(2d), Recruiting(3d), Research(3d), Analysis(1d), Reporting(1d) = 11 business days
-      - Standard: Planning(2d), IRB(5d), Recruiting(7d), Research(5d), Analysis(1d), Reporting(1d) = 21 business days  
-      - Extended: Planning(3d), IRB(10d), Recruiting(14d), Research(7d), Analysis(2d), Reporting(2d) = 38 business days
+      - Rush: Planning(1d), Collaboration Cycle(2d), Recruiting(3d), Research(3d), Analysis(1d), Reporting(1d) = 11 business days
+      - Standard: Planning(2d), Collaboration Cycle(5d), Recruiting(7d), Research(5d), Analysis(1d), Reporting(1d) = 21 business days  
+      - Extended: Planning(3d), Collaboration Cycle(10d), Recruiting(14d), Research(7d), Analysis(2d), Reporting(2d) = 38 business days
       
       Consider:
       - Methodology: {{methodology}}
@@ -238,7 +239,7 @@ ai_generation_tasks:
       - Execution issues ({{methodology}} implementation problems)
       - Timeline risks (delays that affect {{timeline_preference}})
       - Quality concerns (data validity, stakeholder satisfaction)
-      - VA-specific risks (IRB delays, compliance issues)
+      - VA-specific risks (Collaboration Cycle delays, compliance issues)
       
       Keep mitigation strategies actionable and specific.
 
@@ -286,7 +287,7 @@ ai_generation_tasks:
       Requirements:
       - Limit to maximum 5 total deliverables
       - Focus on decision-making value, not busy work
-      - Include realistic delivery timelines
+      - Include realistic delivery timelines based on AI-accelerated synthesis (1-2 days for analysis, 1 day for reporting)
       - Avoid redundant or overlapping deliverables
       - Prioritize stakeholder needs over comprehensive documentation
 
@@ -309,7 +310,7 @@ ai_generation_tasks:
       - Specific protocols for {{product_area}} evaluation
       
       **VA Compliance Notes:**
-      - IRB requirements and approval timeline
+      - Collaboration Cycle requirements and approval timeline
       - Trauma-informed research considerations
       - Accessibility accommodations for participants
       
@@ -324,20 +325,18 @@ ai_generation_tasks:
       
       **Demographic targets (aim for when possible):**
       Calculate realistic numbers for {{participant_count}} participants:
-      - Service era diversity: Include participants from recent veterans and different service periods when possible
-      - Income diversity: Aim for [realistic number] participants with household income $49,000 or less
-      - Racial/ethnic diversity: Include participants identifying as Black, Hispanic/Latina/Latinx, Asian, or Native American when possible
-      - Gender diversity: Include participants identifying as other than male when possible
-      - Age diversity: Include both under 35 and over 55 when possible
-      - Education diversity: Mix of education levels including those without degrees
-      - Accessibility needs: Include assistive technology users if relevant to {{product_area}}
+      - Service era diversity: Include 2 participants from recent veterans and 2 participants from different service periods
+      - Income diversity: Aim for 4 participants with household income $49,000 or less
+      - Racial/ethnic diversity: Include 2 participants identifying as Black, 2 as Hispanic/Latina/Latinx, 2 as Asian, and 1 as Native American
+      - Gender diversity: Include 2 participants identifying as other than male
+      - Age diversity: Include 2 participants under 35 and 2 over 55
+      - Education diversity: Include at least 2 participants without degrees
+      - Accessibility needs: Include 1 assistive technology user if relevant to the study
       
       **Secondary targets (nice-to-haves):**
-      - Geographic diversity (rural vs urban)
-      - {{product_area}} usage patterns and experience levels
-      - Technology comfort levels
-      
-      For {{participant_count}} participants, note that not all demographic targets may be achievable in a single study. Prioritize the most relevant categories for {{product_area}} research.
+      - Geographic diversity: Aim for 2 participants from rural areas and 2 from urban areas
+      - {{product_area}} usage patterns and experience levels: Include 2 participants with high usage levels and 2 with low usage levels
+      - Technology comfort levels: Include 2 participants with high comfort levels and 2 with low comfort levels
 
   # NEW - Next steps (critical missing piece for stakeholder value)
   - task_id: "next_steps"
@@ -424,6 +423,7 @@ output_template: |
   ## 🧲 Recruitment Plan
 
   **🎯 Target Participants:** {{target_participants}}  
+
   **🧍 Participant Count:** {{participant_count}}
 
   **👥 Demographic Targets:**
@@ -456,10 +456,6 @@ output_template: |
   | {{lead_researcher}} | Lead Researcher |
   | [To be assigned] | Note-taker |
   | [To be assigned] | Observer |
-
-  ---
-
-  *Research accelerated by Qori's AI-powered analysis capabilities, reducing synthesis time from weeks to days.*
 
 # Output configuration (same as current)
 output_options:
