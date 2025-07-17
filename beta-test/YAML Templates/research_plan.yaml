@@ -90,7 +90,35 @@ input_variables:
 
 # ENHANCED AI GENERATION TASKS
 ai_generation_tasks:
-  # NEW - Input validation and improvement (runs first)
+  # NEW - Audience detection (runs first to determine user type)
+  - task_id: "audience_detection"
+    prompt: |
+      **MANDATORY ANALYSIS REQUIREMENTS:**
+      - ALWAYS determine the primary user type based on target participants
+      - ALWAYS provide specific rationale for the classification
+      - ALWAYS suggest appropriate research frameworks for this audience
+      
+      As an experienced VA UX Researcher, analyze the target participants to determine the primary audience type:
+      
+      **Target Participants:** "{{target_participants}}"
+      **Product Area:** "{{product_area}}"
+      
+      **Audience Categories:**
+      1. **Veterans** - Current or former military service members accessing VA services
+      2. **VA Employees** - Internal staff, contractors, or VA system users (nurses, claims processors, etc.)
+      3. **External Stakeholders** - Non-VA professionals serving veterans (accredited reps, family members, caregivers, etc.)
+      
+      **Required Output Format:**
+      **Primary Audience:** [Veterans/VA Employees/External Stakeholders]
+      **Rationale:** [1-2 sentences explaining why this classification fits]
+      **Framework Needs:** [What research frameworks should be used for this audience type]
+      
+      Examples:
+      - "Veterans who use disability benefits" → Primary Audience: Veterans
+      - "VA nurses using electronic health records" → Primary Audience: VA Employees  
+      - "Accredited representatives submitting claims" → Primary Audience: External Stakeholders
+
+  # NEW - Input validation and improvement (runs second)
   - task_id: "input_validation"
     prompt: |
       **MANDATORY WRITING REQUIREMENTS:**
@@ -106,6 +134,7 @@ ai_generation_tasks:
       **Decision Context:** {{decision_context}}
       **Research Goal:** {{research_goal}}
       **Target Participants:** {{target_participants}}
+      **Detected Audience:** {{ai_generated.audience_detection}}
       
       For each input, provide:
       1. **Validation:** Is it clear and specific enough?
@@ -133,7 +162,7 @@ ai_generation_tasks:
       
       Example format: "[Product] - [what it does] serving [Veterans' need]. [Brief business context or impact]."
 
-  # KEEP - OCTO Priorities (enhanced with 2025 priorities)
+  # ADAPTIVE - OCTO Priorities (focuses on relevant user experience)
   - task_id: "octo_priorities"
     prompt: |
       **MANDATORY WRITING REQUIREMENTS:**
@@ -141,8 +170,12 @@ ai_generation_tasks:
       - ALWAYS format Additional Priorities with bold priority names: **[Priority Name]:** [description]
       - ALWAYS use direct, concrete language - avoid vague aspirational phrases
       - ALWAYS use active voice and specific verbs
+      - ALWAYS focus on the correct user experience based on detected audience
       
-      As an experienced VA UX Researcher, map {{product_area}} research to current OCTO-DE priorities:
+      As an experienced VA UX Researcher, map {{product_area}} research to current OCTO-DE priorities based on the detected audience:
+      
+      **Detected Audience:** {{ai_generated.audience_detection}}
+      **Product Area:** {{product_area}}
       
       **OCTO-DE Priorities 2025:**
       1. Improve the Veteran login experience
@@ -156,50 +189,63 @@ ai_generation_tasks:
       9. Formalize the VA Innovation Unit and innovation process
       10. Drive OIT's Digital Transformation Strategy
       
-      Required format:
-      **Primary OCTO Priority:** [Exact title from list above]
+      **Audience-Specific Priority Focus:**
+      - **IF Veterans:** Focus on veteran-facing priorities (1, 2, 3, 4, 5, 6, 7)
+      - **IF VA Employees:** Focus on internal efficiency priorities (2, 7, 8, 9, 10)
+      - **IF External Stakeholders:** Focus on external-facing platform priorities (2, 7, 10)
       
-      **Explanation:** One sentence connecting {{product_area}} to this priority.
+      Required format:
+      **Primary OCTO Priority:** [Exact title from list above - most relevant to detected audience]
+      
+      **Explanation:** One sentence connecting {{product_area}} to this priority for the detected audience type.
       
       **Additional Priorities (if applicable):**
-      - **[Priority Name]:** [Brief explanation]
-      - **[Priority Name]:** [Brief explanation]
+      - **[Priority Name]:** [Brief explanation of relevance to detected audience]
+      - **[Priority Name]:** [Brief explanation of relevance to detected audience]
       
       **Project-Specific Priorities:**
-      - [2-3 specific priorities for {{product_area}}]
+      - [2-3 specific priorities for {{product_area}} that serve the detected audience]
       
-      Use exact OCTO priority titles and be specific to {{product_area}}.
+      Use exact OCTO priority titles and be specific to both {{product_area}} and the detected audience needs.
 
-  # KEEP - Veteran Journey (enhanced mapping)
-  - task_id: "veteran_journey"
+  # ADAPTIVE - User Journey (varies by audience type)
+  - task_id: "user_journey"
     prompt: |
       **MANDATORY WRITING REQUIREMENTS:**
       - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline," "play a role"
       - ALWAYS use direct, concrete language - avoid vague aspirational phrases
       - ALWAYS use active voice and specific verbs
-      - ALWAYS bold the life stage names: **[Life Stage]:** [description]
+      - ALWAYS bold the stage/phase names: **[Stage]:** [description]
       
-      As an experienced VA UX Researcher, map {{product_area}} to the official VA Journey of Veterans Map framework:
+      As an experienced VA UX Researcher, map {{product_area}} to the appropriate user journey framework based on the detected audience:
       
-      **VA Journey Map Reference:**
-      *Life Stages:* Joining, Serving, Getting out, Starting up, Reinventing Myself, Putting down roots, Taking care of myself, Retiring, Aging, Dying
+      **Detected Audience:** {{ai_generated.audience_detection}}
+      **Product Area:** {{product_area}}
       
-      *Key Moments (commonly referenced):*
-      - Taking care of myself: Attending to health needs, Recognizing and addressing mental health needs, Managing primary care and chronic health issues, Seeking support for an acute health event, Maintaining my health, Re-establishing and creating relationships, Balancing finances
-      - Putting down roots: Finding a place to live, Starting/growing/maintaining my family, Connecting with and serving my community
-      - Retiring: Finding additional sources of income, Managing my declining health, Planning for longer term care
-      - Aging: Maintaining social and community connections, Adapting my support network to my new needs
+      **IF PRIMARY AUDIENCE = Veterans:**
+      Use VA Journey of Veterans Map:
+      *Life Stages:* Taking care of myself, Putting down roots, Retiring, Aging, etc.
       
-      **Format your response as:**
-      **Veteran Journey Connection:** Write 1-2 sentences explaining where {{product_area}} fits into the Veteran journey
+      **IF PRIMARY AUDIENCE = VA Employees:**
+      Use VA Employee Workflow Map:
+      *Work Phases:* Onboarding, Daily operations, Process improvement, Career development, Knowledge transfer
+      *Key Workflows:* Case management, System navigation, Collaboration with colleagues, Training and compliance, Performance evaluation
       
-      **Key Moments:** List 3-5 specific moments from the VA Journey stages above that {{product_area}} touches, using this EXACT format:
-      - **[Life Stage]:** [Specific moment description]
-      - **[Life Stage]:** [Specific moment description]
+      **IF PRIMARY AUDIENCE = External Stakeholders:**
+      Use Professional Service Journey:
+      *Service Phases:* Client acquisition, Case preparation, VA system interaction, Case management, Resolution and follow-up
+      *Key Touchpoints:* Initial consultation, Documentation gathering, VA portal access, Status tracking, Client communication
       
-      **Relevant "Moments that Matter" (if applicable):** Reference any specific moments that matter that are particularly relevant to {{product_area}}
+      **Required Format:**
+      **User Journey Connection:** 1-2 sentences explaining where {{product_area}} fits into the user's workflow
       
-      CRITICAL: Always bold the life stage names before the colon. Keep concise and practical. Use exact moment terminology. Focus specifically on {{product_area}}.
+      **Key Moments/Phases:** List 3-5 specific moments using this EXACT format:
+      - **[Stage/Phase]:** [Specific moment description]
+      - **[Stage/Phase]:** [Specific moment description]
+      
+      **Critical Pain Points (if applicable):** Reference any specific pain points particularly relevant to {{product_area}}
+      
+      CRITICAL: Always bold the stage/phase names before the colon. Use the appropriate framework for the detected audience.
 
   # IMPROVED - Clear decision context (replace basic background)
   - task_id: "decision_context"
@@ -401,7 +447,7 @@ ai_generation_tasks:
       
       Keep practical and implementation-focused. Avoid theoretical discussions. Focus on what researchers need to execute this plan.
 
-  # KEEP - Demographic targets (enhanced for realism)
+  # ADAPTIVE - Demographic targets (varies by audience type)
   - task_id: "demographic_targets"
     prompt: |
       **MANDATORY WRITING REQUIREMENTS:**
@@ -410,24 +456,43 @@ ai_generation_tasks:
       - ALWAYS use active voice and specific verbs
       - ALWAYS provide specific realistic numbers that add up logically
       
-      As an experienced VA UX Researcher, generate realistic demographic targets for {{participant_count}} participants following VA inclusive research standards:
+      As an experienced VA UX Researcher, generate realistic demographic targets for {{participant_count}} participants based on the detected audience type:
       
-      **Format as:**
+      **Detected Audience:** {{ai_generated.audience_detection}}
+      **Participant Count:** {{participant_count}}
+      **Product Area:** {{product_area}}
       
+      **IF PRIMARY AUDIENCE = Veterans:**
       **Demographic targets (aim for when possible):**
-      Based on {{participant_count}} participants, calculate realistic and proportional numbers:
       - Service era diversity: Include participants from recent veterans and different service periods when possible
       - Income diversity: Aim for participants with household income $49,000 or less (target ~30% of sample)
       - Racial/ethnic diversity: Include participants identifying as Black, Hispanic/Latina/Latinx, Asian, or Native American when possible
-      - Gender diversity: Include participants identifying as other than male when possible  
+      - Gender diversity: Include participants identifying as other than male when possible
       - Age diversity: Include both under 35 and over 55 when possible
       - Education diversity: Include participants without degrees when possible
       - Accessibility needs: Include assistive technology users if relevant to the study
       
+      **IF PRIMARY AUDIENCE = VA Employees:**
+      **Demographic targets (aim for when possible):**
+      - Role diversity: Include participants from different job functions (clinical, administrative, technical support)
+      - Experience diversity: Mix of new employees (under 2 years) and experienced staff (5+ years)
+      - GS level diversity: Include both lower GS levels (1-12) and higher levels (13+) when relevant
+      - Location diversity: Include participants from different VA facilities or regional offices
+      - Department diversity: Include participants from different VA administrations (VHA, VBA, NCA)
+      - Technology comfort diversity: Mix of high and low comfort levels with digital tools
+      
+      **IF PRIMARY AUDIENCE = External Stakeholders:**
+      **Demographic targets (aim for when possible):**
+      - Organization type diversity: Include VSO representatives, private attorneys, and claims agents
+      - Experience diversity: Mix of new practitioners (under 2 years) and experienced professionals (5+ years)
+      - Caseload diversity: Include those with small (under 50 cases) and large (100+ cases) caseloads
+      - Geographic diversity: Include urban and rural practitioners
+      - Practice size diversity: Include solo practitioners and large organizations
+      - Technology comfort diversity: Mix of high and low comfort levels with digital tools
+      
       **Secondary targets (nice-to-haves):**
-      - Geographic diversity: Rural and urban participants when possible
-      - {{product_area}} usage patterns: Mix of high and low usage levels when possible
-      - Technology comfort levels: Mix of high and low comfort when possible
+      - {{product_area}} usage patterns: Mix of frequent and infrequent users when possible
+      - Training background: Mix of formal VA training and self-taught users
       
       **Important:** For {{participant_count}} participants, provide specific realistic numbers (e.g., "2-3 participants" or "at least 1 participant") that add up logically. If the participant count is small (under 8), note that not all demographic targets may be achievable in a single study and prioritize the most relevant categories for {{product_area}} research.
 
@@ -491,9 +556,9 @@ output_template: |
 
   ---
 
-  ## 🧭 Veteran Journey
+  ## 🧭 User Journey
 
-  {{ai_generated.veteran_journey}}
+  {{ai_generated.user_journey}}
 
   ---
 
@@ -595,11 +660,12 @@ slack_ui:
 # Enhanced processing
 processing_workflow:
   1. validate_inputs
-  2. execute_input_validation_task
-  3. check_methodology_alignment
-  4. execute_ai_generation_tasks
-  5. validate_timeline_accuracy
-  6. format_output
-  7. save_to_github
-  8. send_slack_notification
-  9. track_analytics
+  2. execute_audience_detection_task
+  3. execute_input_validation_task
+  4. check_methodology_alignment
+  5. execute_ai_generation_tasks
+  6. validate_timeline_accuracy
+  7. format_output
+  8. save_to_github
+  9. send_slack_notification
+  10. track_analytics
