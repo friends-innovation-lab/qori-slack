@@ -463,7 +463,7 @@ output_template: |
 
 # Output configuration (same as current)
 output_options:
-  filename: "research_plan_{{project_title|slugify}}_{{current_date}}.md"
+  filename: "research_plan_{{project_title}}_{{current_date}}.md"
   path: "01-planning/"
   
   delivery:
