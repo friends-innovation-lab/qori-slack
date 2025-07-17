@@ -96,27 +96,24 @@ ai_generation_tasks:
       **MANDATORY ANALYSIS REQUIREMENTS:**
       - ALWAYS determine the primary user type based on target participants
       - ALWAYS provide specific rationale for the classification
-      - ALWAYS suggest appropriate research frameworks for this audience
+      - ALWAYS use explicit keywords to classify the audience
       
       As an experienced VA UX Researcher, analyze the target participants to determine the primary audience type:
       
       **Target Participants:** "{{target_participants}}"
       **Product Area:** "{{product_area}}"
       
-      **Audience Categories:**
-      1. **Veterans** - Current or former military service members accessing VA services
-      2. **VA Employees** - Internal staff, contractors, or VA system users (nurses, claims processors, etc.)
-      3. **External Stakeholders** - Non-VA professionals serving veterans (accredited reps, family members, caregivers, etc.)
+      **Classification Rules:**
+      - IF participants include words like "veterans," "former military," "service members" → Veterans
+      - IF participants include words like "VA staff," "VA employees," "nurses," "physicians," "claims processors," "VA workers" → VA Employees
+      - IF participants include words like "accredited representatives," "attorneys," "VSO representatives," "family members," "caregivers" → External Stakeholders
       
       **Required Output Format:**
       **Primary Audience:** [Veterans/VA Employees/External Stakeholders]
-      **Rationale:** [1-2 sentences explaining why this classification fits]
-      **Framework Needs:** [What research frameworks should be used for this audience type]
+      **Rationale:** [1-2 sentences explaining the classification based on keywords found]
+      **Framework:** [Which research framework should be used for this audience type]
       
-      Examples:
-      - "Veterans who use disability benefits" → Primary Audience: Veterans
-      - "VA nurses using electronic health records" → Primary Audience: VA Employees  
-      - "Accredited representatives submitting claims" → Primary Audience: External Stakeholders
+      **CRITICAL:** Base classification on explicit job roles, not assumptions. "VA clinical staff including nurses, physicians" = VA Employees.
 
   # NEW - Input validation and improvement (runs second)
   - task_id: "input_validation"
@@ -170,11 +167,11 @@ ai_generation_tasks:
       - ALWAYS format Additional Priorities with bold priority names: **[Priority Name]:** [description]
       - ALWAYS use direct, concrete language - avoid vague aspirational phrases
       - ALWAYS use active voice and specific verbs
-      - ALWAYS focus on the correct user experience based on detected audience
+      - ALWAYS focus ONLY on the correct user experience based on detected audience
       
       As an experienced VA UX Researcher, map {{product_area}} research to current OCTO-DE priorities based on the detected audience:
       
-      **Detected Audience:** {{ai_generated.audience_detection}}
+      **Detected Audience from Analysis:** {{ai_generated.audience_detection}}
       **Product Area:** {{product_area}}
       
       **OCTO-DE Priorities 2025:**
@@ -189,13 +186,14 @@ ai_generation_tasks:
       9. Formalize the VA Innovation Unit and innovation process
       10. Drive OIT's Digital Transformation Strategy
       
-      **Audience-Specific Priority Focus:**
-      - **IF Veterans:** Focus on veteran-facing priorities (1, 2, 3, 4, 5, 6, 7)
-      - **IF VA Employees:** Focus on internal efficiency priorities (2, 7, 8, 9, 10)
-      - **IF External Stakeholders:** Focus on external-facing platform priorities (2, 7, 10)
+      **Select priorities based on detected audience:**
+      
+      **If detected audience is Veterans:** Focus on priorities 1, 2, 3, 4, 5, 6, 7 (veteran-facing)
+      **If detected audience is VA Employees:** Focus on priorities 2, 7, 8, 9, 10 (internal efficiency)  
+      **If detected audience is External Stakeholders:** Focus on priorities 2, 7, 10 (external-facing platforms)
       
       Required format:
-      **Primary OCTO Priority:** [Exact title from list above - most relevant to detected audience]
+      **Primary OCTO Priority:** [Select exact title from relevant priority list above]
       
       **Explanation:** One sentence connecting {{product_area}} to this priority for the detected audience type.
       
@@ -206,7 +204,7 @@ ai_generation_tasks:
       **Project-Specific Priorities:**
       - [2-3 specific priorities for {{product_area}} that serve the detected audience]
       
-      Use exact OCTO priority titles and be specific to both {{product_area}} and the detected audience needs.
+      **CRITICAL:** Only select priorities appropriate for the detected audience. Do not default to veteran-facing priorities for non-veteran audiences.
 
   # ADAPTIVE - User Journey (varies by audience type)
   - task_id: "user_journey"
@@ -455,15 +453,19 @@ ai_generation_tasks:
       - ALWAYS use direct, concrete language - avoid vague aspirational phrases
       - ALWAYS use active voice and specific verbs
       - ALWAYS provide specific realistic numbers that add up logically
+      - ONLY show the framework for the detected audience - do not show all three options
       
       As an experienced VA UX Researcher, generate realistic demographic targets for {{participant_count}} participants based on the detected audience type:
       
-      **Detected Audience:** {{ai_generated.audience_detection}}
+      **Detected Audience from Analysis:** {{ai_generated.audience_detection}}
       **Participant Count:** {{participant_count}}
       **Product Area:** {{product_area}}
       
-      **IF PRIMARY AUDIENCE = Veterans:**
+      Based on the detected audience, provide ONLY the relevant demographic framework below:
+      
+      **If detected audience is Veterans, use this framework:**
       **Demographic targets (aim for when possible):**
+      Based on {{participant_count}} participants, calculate realistic numbers:
       - Service era diversity: Include participants from recent veterans and different service periods when possible
       - Income diversity: Aim for participants with household income $49,000 or less (target ~30% of sample)
       - Racial/ethnic diversity: Include participants identifying as Black, Hispanic/Latina/Latinx, Asian, or Native American when possible
@@ -472,8 +474,9 @@ ai_generation_tasks:
       - Education diversity: Include participants without degrees when possible
       - Accessibility needs: Include assistive technology users if relevant to the study
       
-      **IF PRIMARY AUDIENCE = VA Employees:**
+      **If detected audience is VA Employees, use this framework:**
       **Demographic targets (aim for when possible):**
+      Based on {{participant_count}} participants, calculate realistic numbers:
       - Role diversity: Include participants from different job functions (clinical, administrative, technical support)
       - Experience diversity: Mix of new employees (under 2 years) and experienced staff (5+ years)
       - GS level diversity: Include both lower GS levels (1-12) and higher levels (13+) when relevant
@@ -481,8 +484,9 @@ ai_generation_tasks:
       - Department diversity: Include participants from different VA administrations (VHA, VBA, NCA)
       - Technology comfort diversity: Mix of high and low comfort levels with digital tools
       
-      **IF PRIMARY AUDIENCE = External Stakeholders:**
+      **If detected audience is External Stakeholders, use this framework:**
       **Demographic targets (aim for when possible):**
+      Based on {{participant_count}} participants, calculate realistic numbers:
       - Organization type diversity: Include VSO representatives, private attorneys, and claims agents
       - Experience diversity: Mix of new practitioners (under 2 years) and experienced professionals (5+ years)
       - Caseload diversity: Include those with small (under 50 cases) and large (100+ cases) caseloads
@@ -490,11 +494,11 @@ ai_generation_tasks:
       - Practice size diversity: Include solo practitioners and large organizations
       - Technology comfort diversity: Mix of high and low comfort levels with digital tools
       
-      **Secondary targets (nice-to-haves):**
+      **Secondary targets (for all audiences):**
       - {{product_area}} usage patterns: Mix of frequent and infrequent users when possible
-      - Training background: Mix of formal VA training and self-taught users
+      - Training background: Mix of formal training and self-taught users
       
-      **Important:** For {{participant_count}} participants, provide specific realistic numbers (e.g., "2-3 participants" or "at least 1 participant") that add up logically. If the participant count is small (under 8), note that not all demographic targets may be achievable in a single study and prioritize the most relevant categories for {{product_area}} research.
+      **CRITICAL:** Only provide the demographic framework that matches the detected audience. Do not show all three options.
 
   # NEW - Next steps (critical missing piece for stakeholder value)
   - task_id: "next_steps"
