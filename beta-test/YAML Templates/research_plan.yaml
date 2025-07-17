@@ -93,6 +93,12 @@ ai_generation_tasks:
   # NEW - Input validation and improvement (runs first)
   - task_id: "input_validation"
     prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Focus on practical improvements and clear validation
+      
       As an experienced VA UX Researcher, review and improve these user inputs for clarity and completeness:
       
       **Project Title:** {{project_title}}
@@ -106,17 +112,18 @@ ai_generation_tasks:
       2. **Improvements:** Any suggested refinements for VA research standards
       3. **Compliance Notes:** Any VA-specific considerations
       
-      Writing Style Guidelines:
-      - Be direct and specific - avoid buzzwords like "crucial," "seamless," "ultimately," "leverage"
-      - Use active voice and concrete language
-      - Focus on practical improvements, not aspirational language
-      
-      Return improved versions that maintain the user's intent but enhance clarity and specificity for stakeholder consumption.
+      Return improved versions that maintain the user's intent but improve clarity and specificity for stakeholder consumption.
 
   # IMPROVED - Concise product area (replace verbose description)
   - task_id: "concise_product_area"
     prompt: |
-      As an experienced VA UX Researcher, create a concise, professional description of "{{product_area}}" (maximum 2-3 sentences).
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Maximum 2-3 sentences ONLY
+      
+      As an experienced VA UX Researcher, create a concise, professional description of "{{product_area}}":
       
       Requirements:
       - Explain what it is and why it matters to Veterans
@@ -124,16 +131,17 @@ ai_generation_tasks:
       - Use clear, professional language
       - NO marketing speak or verbose descriptions
       
-      Writing Style Guidelines:
-      - Be direct and specific - avoid buzzwords like "crucial," "seamless," "ultimately," "leverage"
-      - Use active voice and concrete language
-      - Focus on practical benefits, not aspirational language
-      
       Example format: "[Product] - [what it does] serving [Veterans' need]. [Brief business context or impact]."
 
   # KEEP - OCTO Priorities (enhanced with 2025 priorities)
   - task_id: "octo_priorities"
     prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS format Additional Priorities with bold priority names: **[Priority Name]:** [description]
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
       As an experienced VA UX Researcher, map {{product_area}} research to current OCTO-DE priorities:
       
       **OCTO-DE Priorities 2025:**
@@ -160,16 +168,17 @@ ai_generation_tasks:
       **Project-Specific Priorities:**
       - [2-3 specific priorities for {{product_area}}]
       
-      Writing Style Guidelines:
-      - Be direct and specific - avoid buzzwords like "crucial," "seamless," "ultimately," "leverage"
-      - Use active voice and concrete language
-      - Focus on practical benefits, not aspirational language
-      
       Use exact OCTO priority titles and be specific to {{product_area}}.
 
   # KEEP - Veteran Journey (enhanced mapping)
   - task_id: "veteran_journey"
     prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline," "play a role"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - ALWAYS bold the life stage names: **[Life Stage]:** [description]
+      
       As an experienced VA UX Researcher, map {{product_area}} to the official VA Journey of Veterans Map framework:
       
       **VA Journey Map Reference:**
@@ -190,16 +199,18 @@ ai_generation_tasks:
       
       **Relevant "Moments that Matter" (if applicable):** Reference any specific moments that matter that are particularly relevant to {{product_area}}
       
-      Writing Style Guidelines:
-      - Be direct and specific - avoid buzzwords like "crucial," "seamless," "ultimately," "leverage"
-      - Use active voice and concrete language
-      - Focus on practical connections, not aspirational language
-      
       CRITICAL: Always bold the life stage names before the colon. Keep concise and practical. Use exact moment terminology. Focus specifically on {{product_area}}.
 
   # IMPROVED - Clear decision context (replace basic background)
   - task_id: "decision_context"
     prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - NEVER use numbered lists - write as flowing paragraphs
+      - Maximum 75 words total
+      
       As an experienced VA UX Researcher, transform decision context into clear, structured background section:
       
       Input context: "{{decision_context}}"
@@ -213,17 +224,17 @@ ai_generation_tasks:
       - Be specific about the change being considered
       - Include measurable impact on Veterans
       - Use plain language - avoid jargon
-      - Maximum 75 words total
       - Write as flowing paragraphs, not numbered points
-      
-      Writing Style Guidelines:
-      - Be direct and specific - avoid buzzwords like "crucial," "seamless," "ultimately," "leverage"
-      - Use active voice and concrete language
-      - Focus on practical benefits, not aspirational language
 
   # IMPROVED - Streamlined research goals (replace verbose current version)
   - task_id: "research_goals"
     prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Maximum 2 sentences for Primary Goal
+      
       As an experienced VA UX Researcher, create concise, actionable research goals:
       
       Primary goal input: "{{research_goal}}"
@@ -243,15 +254,16 @@ ai_generation_tasks:
       - Reference {{product_area}} specifically
       - Support business decision-making about {{product_area}}
       - Avoid repetitive or generic language
-      
-      Writing Style Guidelines:
-      - Be direct and specific - avoid buzzwords like "crucial," "seamless," "ultimately," "leverage"
-      - Use active voice and concrete language
-      - Focus on practical outcomes, not aspirational language
 
   # NEW - Accurate timeline calculation (fix placeholder dates!)
   - task_id: "accurate_timeline"
     prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - ALWAYS calculate actual business day dates starting from {{current_date}}
+      
       As an experienced VA UX Researcher, calculate realistic project timeline starting from TODAY ({{current_date}}) for {{timeline_preference}}:
       
       **Base Timeline Templates (AI-accelerated):**
@@ -269,16 +281,17 @@ ai_generation_tasks:
       | Phase | Duration | Start Date | End Date | Key Deliverables |
       |-------|----------|------------|----------|------------------|
       
-      Writing Style Guidelines:
-      - Be direct and specific - avoid buzzwords like "crucial," "seamless," "ultimately," "leverage"
-      - Use active voice and concrete language
-      - Focus on practical milestones, not aspirational language
-      
       Use actual business day dates starting from {{current_date}}. Include specific milestones and dependencies.
 
   # NEW - Risk assessment (critical missing piece)
   - task_id: "risk_assessment"
     prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Focus on practical, actionable mitigation strategies
+      
       As an experienced VA UX Researcher, identify the top 3-4 risks for this research project:
       
       Project: {{project_title}}
@@ -298,11 +311,6 @@ ai_generation_tasks:
       - Timeline risks (delays that affect {{timeline_preference}})
       - Quality concerns (data validity, stakeholder satisfaction)
       - VA-specific risks (Collaboration Cycle delays, compliance issues)
-      
-      Writing Style Guidelines:
-      - Be direct and specific - avoid buzzwords like "crucial," "seamless," "ultimately," "leverage"
-      - Use active voice and concrete language
-      - Focus on practical solutions, not aspirational language
       
       Keep mitigation strategies actionable and specific.
 
@@ -331,6 +339,13 @@ ai_generation_tasks:
   # IMPROVED - Essential deliverables only (replace lengthy list)
   - task_id: "key_deliverables"
     prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS tie timing to "research completion" not arbitrary day numbers
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Maximum 5 total deliverables
+      
       As an experienced VA UX Researcher, list essential deliverables that support {{product_area}} decision-making:
       
       Methodology: {{methodology}}
@@ -354,15 +369,16 @@ ai_generation_tasks:
       - Tie timing to "research completion" not arbitrary day numbers
       - Avoid redundant or overlapping deliverables
       - Prioritize stakeholder needs over comprehensive documentation
-      
-      Writing Style Guidelines:
-      - Be direct and specific - avoid buzzwords like "crucial," "seamless," "ultimately," "leverage"
-      - Use active voice and concrete language
-      - Focus on practical outcomes, not aspirational language
 
   # IMPROVED - Practical methodology (replace verbose implementation)
   - task_id: "methodology_optimization"
     prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Maximum 2 sentences for Methodology Rationale
+      
       As an experienced VA UX Researcher, provide concise methodology details and implementation approach:
       
       Selected methodology: {{methodology}}
@@ -384,15 +400,16 @@ ai_generation_tasks:
       - Accessibility accommodations for participants
       
       Keep practical and implementation-focused. Avoid theoretical discussions. Focus on what researchers need to execute this plan.
-      
-      Writing Style Guidelines:
-      - Be direct and specific - avoid buzzwords like "crucial," "seamless," "ultimately," "leverage"
-      - Use active voice and concrete language
-      - Focus on practical outcomes, not aspirational language
 
   # KEEP - Demographic targets (enhanced for realism)
   - task_id: "demographic_targets"
     prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - ALWAYS provide specific realistic numbers that add up logically
+      
       As an experienced VA UX Researcher, generate realistic demographic targets for {{participant_count}} participants following VA inclusive research standards:
       
       **Format as:**
@@ -413,15 +430,16 @@ ai_generation_tasks:
       - Technology comfort levels: Mix of high and low comfort when possible
       
       **Important:** For {{participant_count}} participants, provide specific realistic numbers (e.g., "2-3 participants" or "at least 1 participant") that add up logically. If the participant count is small (under 8), note that not all demographic targets may be achievable in a single study and prioritize the most relevant categories for {{product_area}} research.
-      
-      Writing Style Guidelines:
-      - Be direct and specific - avoid buzzwords like "crucial," "seamless," "ultimately," "leverage"
-      - Use active voice and concrete language
-      - Focus on practical targets, not aspirational language
 
   # NEW - Next steps (critical missing piece for stakeholder value)
   - task_id: "next_steps"
     prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Focus on actionable, specific steps with clear ownership
+      
       As an experienced VA UX Researcher, create actionable post-research timeline and decision framework:
       
       Research completion: [Based on {{timeline_preference}} timeline]
@@ -448,11 +466,6 @@ ai_generation_tasks:
       - Specify who is responsible for each action
       - Connect actions to business value and veteran impact
       - Make steps concrete and achievable
-      
-      Writing Style Guidelines:
-      - Be direct and specific - avoid buzzwords like "crucial," "seamless," "ultimately," "leverage"
-      - Use active voice and concrete language
-      - Focus on practical outcomes, not aspirational language
 
 # STREAMLINED OUTPUT TEMPLATE - Keeps strong sections, adds critical pieces, removes bloat
 output_template: |
