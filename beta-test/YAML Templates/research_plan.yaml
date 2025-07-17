@@ -1,3 +1,5 @@
+# FINAL OPTIMIZED RESEARCH PLAN - Targeted Improvements Implementation
+
 id: research_plan
 name: run_research_plan
 label: 🧭 Research Plan
@@ -88,10 +90,28 @@ input_variables:
 
 # ENHANCED AI GENERATION TASKS
 ai_generation_tasks:
+  # NEW - Input validation and improvement (runs first)
+  - task_id: "input_validation"
+    prompt: |
+      As an experienced VA UX Researcher, review and improve these user inputs for clarity and completeness:
+      
+      **Project Title:** {{project_title}}
+      **Product Area:** {{product_area}}
+      **Decision Context:** {{decision_context}}
+      **Research Goal:** {{research_goal}}
+      **Target Participants:** {{target_participants}}
+      
+      For each input, provide:
+      1. **Validation:** Is it clear and specific enough?
+      2. **Improvements:** Any suggested refinements for VA research standards
+      3. **Compliance Notes:** Any VA-specific considerations
+      
+      Return improved versions that maintain the user's intent but enhance clarity and specificity for stakeholder consumption.
+
   # IMPROVED - Concise product area (replace verbose description)
   - task_id: "concise_product_area"
     prompt: |
-      Create a concise, professional description of "{{product_area}}" (maximum 2-3 sentences).
+      As an experienced VA UX Researcher, create a concise, professional description of "{{product_area}}" (maximum 2-3 sentences).
       
       Requirements:
       - Explain what it is and why it matters to Veterans
@@ -104,7 +124,7 @@ ai_generation_tasks:
   # KEEP - OCTO Priorities (enhanced with 2025 priorities)
   - task_id: "octo_priorities"
     prompt: |
-      Map {{product_area}} research to current OCTO-DE priorities:
+      As an experienced VA UX Researcher, map {{product_area}} research to current OCTO-DE priorities:
       
       **OCTO-DE Priorities 2025:**
       1. Improve the Veteran login experience
@@ -133,7 +153,7 @@ ai_generation_tasks:
   # KEEP - Veteran Journey (enhanced mapping)
   - task_id: "veteran_journey"
     prompt: |
-      Map {{product_area}} to the official VA Journey of Veterans Map framework:
+      As an experienced VA UX Researcher, map {{product_area}} to the official VA Journey of Veterans Map framework:
       
       **VA Journey Map Reference:**
       *Life Stages:* Joining, Serving, Getting out, Starting up, Reinventing Myself, Putting down roots, Taking care of myself, Retiring, Aging, Dying
@@ -147,24 +167,24 @@ ai_generation_tasks:
       **Format your response as:**
       **Veteran Journey Connection:** Write 1-2 sentences explaining where {{product_area}} fits into the Veteran journey
       
-      **Key Moments:** List 3-5 specific moments from the VA Journey stages above that {{product_area}} touches, using exact terminology
+      **Key Moments:** List 3-5 specific moments from the VA Journey stages above that {{product_area}} touches, using this EXACT format:
+      - **[Life Stage]:** [Specific moment description]
+      - **[Life Stage]:** [Specific moment description]
       
       **Relevant "Moments that Matter" (if applicable):** Reference any specific moments that matter that are particularly relevant to {{product_area}}
       
-      Keep concise and practical. Use exact moment terminology. Focus specifically on {{product_area}}.
+      CRITICAL: Always bold the life stage names before the colon. Keep concise and practical. Use exact moment terminology. Focus specifically on {{product_area}}.
 
   # IMPROVED - Clear decision context (replace basic background)
   - task_id: "decision_context"
     prompt: |
-      Transform decision context into clear, structured background section:
+      As an experienced VA UX Researcher, transform decision context into clear, structured background section:
       
       Input context: "{{decision_context}}"
       Product area: "{{product_area}}"
       
-      Create exactly 2-3 sentences using this structure:
-      1. **Decision statement:** "This research will inform [specific decision about {{product_area}}]."
-      2. **Impact statement:** "This decision will [specific benefit for Veterans] and [business outcome for VA]."
-      3. **Context:** Brief explanation of current situation (only if needed for clarity)
+      Create 2-3 clean sentences (NO numbered lists) using this structure:
+      "This research will inform [specific decision about {{product_area}}]. This decision will [specific benefit for Veterans] and [business outcome for VA]. [Brief context if needed]."
       
       Requirements:
       - Mention {{product_area}} by name in the first sentence
@@ -172,11 +192,12 @@ ai_generation_tasks:
       - Include measurable impact on Veterans
       - Use plain language - avoid jargon
       - Maximum 75 words total
+      - Write as flowing paragraphs, not numbered points
 
   # IMPROVED - Streamlined research goals (replace verbose current version)
   - task_id: "research_goals"
     prompt: |
-      Create concise, actionable research goals:
+      As an experienced VA UX Researcher, create concise, actionable research goals:
       
       Primary goal input: "{{research_goal}}"
       Methodology: {{methodology}}
@@ -199,7 +220,7 @@ ai_generation_tasks:
   # NEW - Accurate timeline calculation (fix placeholder dates!)
   - task_id: "accurate_timeline"
     prompt: |
-      Calculate realistic project timeline starting from TODAY ({{current_date}}) for {{timeline_preference}}:
+      As an experienced VA UX Researcher, calculate realistic project timeline starting from TODAY ({{current_date}}) for {{timeline_preference}}:
       
       **Base Timeline Templates (AI-accelerated):**
       - Rush: Planning(1d), Collaboration Cycle(2d), Recruiting(3d), Research(3d), Analysis(1d), Reporting(1d) = 11 business days
@@ -221,7 +242,7 @@ ai_generation_tasks:
   # NEW - Risk assessment (critical missing piece)
   - task_id: "risk_assessment"
     prompt: |
-      Identify the top 3-4 risks for this research project:
+      As an experienced VA UX Researcher, identify the top 3-4 risks for this research project:
       
       Project: {{project_title}}
       Methodology: {{methodology}}
@@ -246,7 +267,7 @@ ai_generation_tasks:
   # IMPROVED - Streamlined success criteria (replace verbose percentages)
   - task_id: "success_criteria"
     prompt: |
-      Create 3-4 clear, measurable success criteria:
+      As an experienced VA UX Researcher, create 3-4 clear, measurable success criteria:
       
       Research goal: "{{research_goal}}"
       Timeline: {{timeline_preference}}
@@ -268,7 +289,7 @@ ai_generation_tasks:
   # IMPROVED - Essential deliverables only (replace lengthy list)
   - task_id: "key_deliverables"
     prompt: |
-      List essential deliverables that support {{product_area}} decision-making:
+      As an experienced VA UX Researcher, list essential deliverables that support {{product_area}} decision-making:
       
       Methodology: {{methodology}}
       Research goal: "{{research_goal}}"
@@ -294,7 +315,7 @@ ai_generation_tasks:
   # IMPROVED - Practical methodology (replace verbose implementation)
   - task_id: "methodology_optimization"
     prompt: |
-      Provide concise methodology details and implementation approach:
+      As an experienced VA UX Researcher, provide concise methodology details and implementation approach:
       
       Selected methodology: {{methodology}}
       Research goals: "{{research_goal}}"
@@ -319,7 +340,7 @@ ai_generation_tasks:
   # KEEP - Demographic targets (enhanced for realism)
   - task_id: "demographic_targets"
     prompt: |
-      Generate realistic demographic targets for {{participant_count}} participants following VA inclusive research standards:
+      As an experienced VA UX Researcher, generate realistic demographic targets for {{participant_count}} participants following VA inclusive research standards:
       
       **Format as:**
       
@@ -341,7 +362,7 @@ ai_generation_tasks:
   # NEW - Next steps (critical missing piece for stakeholder value)
   - task_id: "next_steps"
     prompt: |
-      Create actionable post-research timeline and decision framework:
+      As an experienced VA UX Researcher, create actionable post-research timeline and decision framework:
       
       Research completion: [Based on {{timeline_preference}} timeline]
       Product area: {{product_area}}
@@ -496,10 +517,11 @@ slack_ui:
 # Enhanced processing
 processing_workflow:
   1. validate_inputs
-  2. check_methodology_alignment
-  3. execute_ai_generation_tasks
-  4. validate_timeline_accuracy
-  5. format_output
-  6. save_to_github
-  7. send_slack_notification
-  8. track_analytics
+  2. execute_input_validation_task
+  3. check_methodology_alignment
+  4. execute_ai_generation_tasks
+  5. validate_timeline_accuracy
+  6. format_output
+  7. save_to_github
+  8. send_slack_notification
+  9. track_analytics
