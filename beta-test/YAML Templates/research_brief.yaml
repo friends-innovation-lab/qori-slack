@@ -37,7 +37,7 @@ error_handling:
           value: 20
           message: "Business problem must explain what's broken and why it matters"
 
-# SIMPLIFIED INPUT SCHEMA - Executive Brief Focus (CORRECTED TO MATCH ORIGINAL)
+# SIMPLIFIED INPUT SCHEMA - Executive Brief Focus
 input_variables:
   - project_title:
       type: "text"
@@ -74,7 +74,7 @@ input_variables:
       required: true
       placeholder: "e.g., Jordan Smith, UX Researcher"
 
-# EXECUTIVE-FOCUSED AI GENERATION TASKS (CORRECTED TO MATCH ORIGINAL)
+# EXECUTIVE-FOCUSED AI GENERATION TASKS
 ai_generation_tasks:
   # Business impact assessment (most important for executives)
   - task_id: "business_impact"
@@ -194,7 +194,7 @@ ai_generation_tasks:
       
       Include specific decision points and timelines.
 
-# STREAMLINED PROCESSING (CORRECTED TO MATCH ORIGINAL)
+# STREAMLINED PROCESSING
 processing_workflow:
   1. validate_inputs
   2. execute_ai_generation_tasks
@@ -362,7 +362,7 @@ slack_ui:
         element: "plain_text_input"
         placeholder: "e.g., Jordan Smith, UX Researcher"
 
-# Analytics (CORRECTED TO MATCH ORIGINAL)
+# Analytics
 analytics:
   track_events:
     - event: "executive_brief_generated"
