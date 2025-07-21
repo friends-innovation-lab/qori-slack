@@ -37,57 +37,47 @@ error_handling:
           value: 20
           message: "Business problem must explain what's broken and why it matters"
 
-# FIXED INPUT SCHEMA - Executive Brief Focus
+# SIMPLIFIED INPUT SCHEMA - Executive Brief Focus (CORRECTED TO MATCH ORIGINAL)
 input_variables:
-  project_title:
-    type: "text"
-    required: true
-    placeholder: "e.g., Claims Status Navigation Study"
+  - project_title:
+      type: "text"
+      required: true
+      placeholder: "e.g., Claims Status Navigation Study"
       
-  business_problem:
-    type: "textarea"
-    required: true
-    placeholder: "What's broken? e.g., Veterans are calling help desk frequently about claim status, creating operational burden and user frustration"
+  - business_problem:
+      type: "textarea"
+      required: true
+      placeholder: "What's broken? e.g., Veterans are calling help desk frequently about claim status, creating operational burden and user frustration"
       
-  target_barriers:
-    type: "textarea"
-    required: true
-    placeholder: "What specific barriers? e.g., Confusing status language, unclear next steps, hidden claim details"
+  - target_barriers:
+      type: "textarea"
+      required: true
+      placeholder: "What specific barriers? e.g., Confusing status language, unclear next steps, hidden claim details"
       
-  research_approach:
-    type: "select"
-    required: true
-    options: 
-      - "User interviews"
-      - "Usability testing"
-      - "User interviews + usability testing"
-      - "Survey research"
-      - "Card sorting"
-      - "Field studies"
-      - "Mixed methods"
+  - research_approach:
+      type: "select"
+      required: true
+      options: ["User interviews", "Usability testing", "User interviews + usability testing", "Survey research", "Card sorting", "Field studies", "Mixed methods"]
       
-  timeline_needed:
-    type: "select"
-    required: true
-    options: 
-      - "ASAP (2-3 weeks)"
-      - "Standard (4-6 weeks)"
-      - "Flexible (6+ weeks)"
+  - timeline_needed:
+      type: "select"
+      required: true
+      options: ["ASAP (2-3 weeks)", "Standard (4-6 weeks)", "Flexible (6+ weeks)"]
       
-  stakeholders:
-    type: "textarea"
-    required: true
-    placeholder: "Who needs these findings? e.g., VBA Claims Team, Call Center Manager, Product Owner"
+  - stakeholders:
+      type: "textarea"
+      required: true
+      placeholder: "Who needs these findings? e.g., VBA Claims Team, Call Center Manager, Product Owner"
       
-  prepared_by:
-    type: "text"
-    required: true
-    placeholder: "e.g., Jordan Smith, UX Researcher"
+  - prepared_by:
+      type: "text"
+      required: true
+      placeholder: "e.g., Jordan Smith, UX Researcher"
 
-# EXECUTIVE-FOCUSED AI GENERATION TASKS
+# EXECUTIVE-FOCUSED AI GENERATION TASKS (CORRECTED TO MATCH ORIGINAL)
 ai_generation_tasks:
   # Business impact assessment (most important for executives)
-  business_impact:
+  - task_id: "business_impact"
     prompt: |
       Create compelling business impact statement for {{project_title}}:
       
@@ -105,7 +95,7 @@ ai_generation_tasks:
       Format: [Current operational impact] + [Veteran experience impact] + [Risk of inaction]
 
   # Key learning objectives (3-4 max, business-focused)
-  key_questions:
+  - task_id: "key_questions"
     prompt: |
       Create 3-4 key business questions this research will answer:
       
@@ -127,7 +117,7 @@ ai_generation_tasks:
       Keep focused on actionable business decisions.
 
   # Approach justification (concise, business value)
-  approach_rationale:
+  - task_id: "approach_rationale"
     prompt: |
       Justify research approach in business terms:
       
@@ -144,7 +134,7 @@ ai_generation_tasks:
       Focus on ROI and decision-making value.
 
   # Success criteria (business outcomes, not research metrics)
-  success_criteria:
+  - task_id: "success_criteria"
     prompt: |
       Define business success criteria for {{project_title}} research:
       
@@ -159,7 +149,7 @@ ai_generation_tasks:
       Avoid research metrics. Focus on business outcomes and stakeholder value.
 
   # Resource requirements (what stakeholders need to approve)
-  resource_requirements:
+  - task_id: "resource_requirements"
     prompt: |
       Estimate resource requirements for {{project_title}} research:
       
@@ -182,7 +172,7 @@ ai_generation_tasks:
       Keep practical and business-focused.
 
   # Next steps (clear decision pathway)
-  next_steps:
+  - task_id: "next_steps"
     prompt: |
       Create clear next steps for stakeholder decision-making:
       
@@ -204,13 +194,13 @@ ai_generation_tasks:
       
       Include specific decision points and timelines.
 
-# STREAMLINED PROCESSING
+# STREAMLINED PROCESSING (CORRECTED TO MATCH ORIGINAL)
 processing_workflow:
-  - validate_inputs
-  - execute_ai_generation_tasks
-  - format_executive_brief
-  - save_to_github
-  - send_slack_notification
+  1. validate_inputs
+  2. execute_ai_generation_tasks
+  3. format_executive_brief
+  4. save_to_github
+  5. send_slack_notification
 
 # EXECUTIVE BRIEF OUTPUT TEMPLATE - Concise & Scannable
 output_template: |
@@ -372,16 +362,10 @@ slack_ui:
         element: "plain_text_input"
         placeholder: "e.g., Jordan Smith, UX Researcher"
 
-# Analytics
+# Analytics (CORRECTED TO MATCH ORIGINAL)
 analytics:
   track_events:
     - event: "executive_brief_generated"
-      properties: 
-        - project_title
-        - research_approach
-        - timeline_needed
+      properties: [project_title, research_approach, timeline_needed]
     - event: "stakeholder_approval_tracked"
-      properties: 
-        - project_title
-        - approval_time
-        - stakeholder_count
+      properties: [project_title, approval_time, stakeholder_count]
