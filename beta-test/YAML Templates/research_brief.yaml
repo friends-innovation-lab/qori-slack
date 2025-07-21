@@ -2,7 +2,7 @@ id: research_brief
 name: run_research_brief
 label: 📄 Research Brief
 version: v4.0
-description: "Executive Research Brief Generator - Create concise, business-focused research briefs designed for fast stakeholder approval."
+description: "Executive Research Brief Generator - Create concise, business-focused research briefs designed for fast stakeholder approval. Transforms research ideas into clear business cases with executive-friendly structure and decision-oriented content. Optimized for 1-2 minute read time and 80%+ stakeholder approval rates."
 
 author: CivicMind R&D
 created: 2025-06-26
@@ -24,37 +24,37 @@ error_handling:
         - type: "min_length"
           value: 5
           message: "Project title must clearly describe the research focus"
-    - field: "study_context"
+    - field: "business_problem"
       rules:
         - type: "min_length"
           value: 20
-          message: "Study context must explain the motivation for research"
+          message: "Business problem must explain what's broken and why it matters"
 
 input_variables:
   - project_title:
       type: "text"
       required: true
       placeholder: "e.g., Claims Status Navigation Study"
-  - study_context:
+  - business_problem:
       type: "textarea"
       required: true
-      placeholder: "e.g., Veterans are calling the help desk frequently about claim status, suggesting navigation issues with the current online experience"
+      placeholder: "e.g., Veterans are calling help desk frequently about claim status, creating operational burden and user frustration"
   - target_barriers:
       type: "textarea"
       required: true
-      placeholder: "e.g., Confusing status language, unclear next steps, hard-to-find claim details"
-  - user_flows_touchpoints:
-      type: "textarea"
+      placeholder: "What specific barriers? e.g., Confusing status language, unclear next steps, hidden claim details"
+  - research_approach:
+      type: "select"
       required: true
-      placeholder: "e.g., Login to claim status page, interpreting status updates, finding additional details"
+      options: ["User interviews", "Usability testing", "User interviews + usability testing", "Survey research", "Card sorting", "Field studies", "Mixed methods"]
+  - timeline_needed:
+      type: "select"
+      required: true
+      options: ["ASAP (2-3 weeks)", "Standard (4-6 weeks)", "Flexible (6+ weeks)"]
   - stakeholders:
       type: "textarea"
       required: true
-      placeholder: "e.g., VBA Claims Team, Call Center Manager, UX Design Lead"
-  - research_approach:
-      type: "text"
-      required: true
-      placeholder: "e.g., User interviews and usability testing"
+      placeholder: "Who needs these findings? e.g., VBA Claims Team, Call Center Manager, Product Owner"
   - prepared_by:
       type: "text"
       required: true
@@ -62,25 +62,22 @@ input_variables:
 
 ai_generation_tasks:
   - task_id: "business_impact"
-    prompt: "Create compelling business impact statement for {project_title}. Study context: {study_context}. Target barriers: {target_barriers}. Stakeholders: {stakeholders}. Generate 2-3 sentences that answer: How does this problem affect VA operations? What's the impact on Veterans? What's the cost of NOT fixing this? Use specific, measurable language. Focus on business value, not research value."
+    prompt: "Create compelling business impact statement for {project_title}. Business problem: {business_problem}. Target barriers: {target_barriers}. Stakeholders: {stakeholders}. Generate 2-3 sentences that answer: How does this problem affect VA operations? What's the impact on Veterans? What's the cost of NOT fixing this? Use specific, measurable language. Focus on business value, not research value. Format: Current operational impact + Veteran experience impact + Risk of inaction"
 
   - task_id: "key_questions"
-    prompt: "Create 3-4 key business questions this research will answer. Project: {project_title}. Context: {study_context}. Barriers: {target_barriers}. Questions should be answerable by stakeholders in business terms, focus on what should we do not what do users think, and support specific decisions. Format as actionable business questions that help prioritize improvements."
-
-  - task_id: "touchpoint_analysis"
-    prompt: "Analyze specific touchpoints for {project_title}. User flows/touchpoints to evaluate: {user_flows_touchpoints}. Study context: {study_context}. Target barriers: {target_barriers}. Create analysis focusing on: Why these touchpoints are critical to business success, How problems at these touchpoints connect to overall issues, Which should be prioritized based on business impact. Format as business-focused touchpoint prioritization."
+    prompt: "Create 3-4 key business questions this research will answer. Project: {project_title}. Problem: {business_problem}. Barriers: {target_barriers}. Questions should: Be answerable by stakeholders in business terms, Focus on what should we do not what do users think, Support specific {project_title} decisions, Be achievable through {research_approach}. Format as bullet points: Should we take specific action to improve {project_title}? Which specific options would have the biggest impact on specific outcome? How should we prioritize specific improvements for {project_title}? Keep focused on actionable business decisions."
 
   - task_id: "approach_rationale"
-    prompt: "Justify research approach in business terms. Approach: {research_approach}. Study context: {study_context}. Create 2-3 sentences explaining: Why this approach is right for this problem, What type of insights it will provide for decision-making, How it supports business needs. Use business language, focus on ROI and decision-making value."
+    prompt: "Justify research approach in business terms. Approach: {research_approach}. Timeline: {timeline_needed}. Business problem: {business_problem}. Create 2-3 sentences that explain: Why {research_approach} is the right method for this business problem, What type of insights it will provide for decision-making, How {timeline_needed} timeline supports business needs. Use business language, not research methodology jargon. Focus on ROI and decision-making value."
 
   - task_id: "success_criteria"
-    prompt: "Define business success criteria for {project_title} research. Stakeholders: {stakeholders}. Create 3 criteria focused on business value: 1. Decision Support: How findings will enable specific decisions 2. Implementation Impact: How research will improve experience for Veterans 3. Stakeholder Value: How research will help stakeholders achieve goals. Focus on business outcomes and stakeholder value."
+    prompt: "Define business success criteria for {project_title} research. Timeline: {timeline_needed}. Stakeholders: {stakeholders}. Create 3 criteria focused on business value: 1. Decision Support: How findings will enable specific {project_title} decisions 2. Implementation Impact: How research will improve {project_title} for Veterans 3. Stakeholder Value: How research will help stakeholders achieve their goals. Avoid research metrics. Focus on business outcomes and stakeholder value."
 
   - task_id: "resource_requirements"
-    prompt: "Estimate resource requirements for {project_title} research. Approach: {research_approach}. Provide realistic estimates: Time Commitment - Lead researcher hours per week, Stakeholder time for review. Budget Considerations - Participant incentives, Tools costs. Timeline - Research execution breakdown, Findings delivery timeline. Keep practical and business-focused."
+    prompt: "Estimate resource requirements for {project_title} research. Approach: {research_approach}. Timeline: {timeline_needed}. Provide realistic estimates: Time Commitment - Lead researcher hours per week over timeline, Stakeholder time hours for review and input. Budget Considerations - Participant incentives estimated cost, Tools and platform costs if any. Timeline - Research execution timeline breakdown, Findings delivery when stakeholders get results. Keep practical and business-focused."
 
   - task_id: "next_steps"
-    prompt: "Create clear next steps for stakeholder decision-making. Stakeholders: {stakeholders}. Format as immediate action plan: This Week - Stakeholder decision needed, Resource allocation. Next 2 Weeks - Research plan development, Team coordination. Research Execution - Timeline and findings delivery schedule. Include specific decision points."
+    prompt: "Create clear next steps for stakeholder decision-making. Timeline: {timeline_needed}. Stakeholders: {stakeholders}. Format as immediate action plan: This Week - Stakeholder decision needed, Resource allocation and approval. Next 2 Weeks - Research plan development, Team coordination. Research Execution - Timeline for {research_approach}, Findings delivery schedule. Include specific decision points and timelines."
 
 processing_workflow:
   1. validate_inputs
@@ -89,7 +86,7 @@ processing_workflow:
   4. save_to_github
   5. send_slack_notification
 
-output_template: "# Research Brief – {project_title}\n\n**Prepared by:** {prepared_by} | **Date:** {current_date}\n\n---\n\n## 🎯 Study Context & Motivation\n\n{study_context}\n\n---\n\n## 💼 Business Impact\n\n{ai_generated.business_impact}\n\n---\n\n## 🔍 What We Need to Learn\n\n{ai_generated.key_questions}\n\n---\n\n## 🗺️ User Flows & Touchpoints to Evaluate\n\n**Focus Areas:** {user_flows_touchpoints}\n\n**Analysis:** {ai_generated.touchpoint_analysis}\n\n---\n\n## 🛠️ Research Approach\n\n**Method:** {research_approach}\n\n**Rationale:** {ai_generated.approach_rationale}\n\n**Resources:** {ai_generated.resource_requirements}\n\n---\n\n## ✅ Success Criteria\n\n{ai_generated.success_criteria}\n\n---\n\n## 🚀 Next Steps\n\n{ai_generated.next_steps}\n\n---\n\n## 📋 The Ask\n\n**Decision Needed:** Approve {project_title} research to inform improvement strategy\n\n**Stakeholders:** {stakeholders}\n\n**Value:** Clear prioritization of improvements with data-driven recommendations\n\n---\n\n*Research brief • Generated by Qori Research Platform*"
+output_template: "# Research Brief – {project_title}\n\n**Prepared by:** {prepared_by} | **Date:** {current_date} | **Timeline:** {timeline_needed}\n\n---\n\n## 🎯 The Problem\n\n{business_problem}\n\n---\n\n## 💼 Business Impact\n\n{ai_generated.business_impact}\n\n---\n\n## 🔍 What We Need to Learn\n\n{ai_generated.key_questions}\n\n---\n\n## 🛠️ Approach & Timeline\n\n**Method:** {research_approach}\n\n**Rationale:** {ai_generated.approach_rationale}\n\n**Resources:** {ai_generated.resource_requirements}\n\n---\n\n## ✅ Success Criteria\n\n{ai_generated.success_criteria}\n\n---\n\n## 🚀 Next Steps\n\n{ai_generated.next_steps}\n\n---\n\n## 📋 The Ask\n\n**Decision Needed:** Approve {project_title} research to inform improvement strategy\n\n**Stakeholders:** {stakeholders}\n\n**Timeline:** {timeline_needed} research cycle with findings for decision-making\n\n**Value:** Clear prioritization of {project_title} improvements with data-driven recommendations\n\n---\n\n*Executive research brief • Generated by Qori Research Platform v4.0*"
 
 output_options:
   filename: "research_brief_{project_title_slug}_{current_date}.md"
@@ -99,13 +96,63 @@ delivery:
   github:
     enabled: true
     repo: "your-research-repo"
-    commit_message: "Add research brief: {project_title}"
+    commit_message: "Add executive research brief: {project_title}"
   slack:
     enabled: true
     channel: "#research-planning"
-    message: "📄 **Research Brief Ready** - {project_title} - Brief optimized for stakeholder review and approval."
+    message: "📄 **Executive Research Brief Ready**\n\n**Project:** {project_title}\n**Timeline:** {timeline_needed}\n**Decision needed:** Approve research to inform {project_title} improvements\n\nBrief optimized for fast stakeholder review and approval."
+    actions:
+      - text: "📄 Review Brief"
+        style: "primary"
+        url: "{github_file_url}"
+      - text: "✅ Approve & Create Plan"
+        style: "default"
+        action: "trigger_research_plan"
+
+slack_ui:
+  modal:
+    title: "Create Research Brief"
+    submit_label: "Generate Brief"
+    close_label: "Cancel"
+    blocks:
+      - type: "section"
+        text: "I'll help you create a focused research brief for scoping with design and product partners."
+      - type: "input"
+        label: "Project Title/Focus"
+        element: "plain_text_input"
+        placeholder: "e.g., Claims Status Navigation Study"
+      - type: "input"
+        label: "Study context and motivation"
+        element: "plain_text_input"
+        multiline: true
+        placeholder: "e.g., Veterans are calling the help desk frequently about claim status, suggesting navigation issues with the current online experience"
+      - type: "input"
+        label: "Target barriers to identify"
+        element: "plain_text_input"
+        multiline: true
+        placeholder: "e.g., Confusing status language, unclear next steps, hard-to-find claim details"
+      - type: "input"
+        label: "User flows/touchpoints to evaluate"
+        element: "plain_text_input"
+        multiline: true
+        placeholder: "e.g., Login to claim status page, interpreting status updates, finding additional details"
+      - type: "input"
+        label: "Stakeholders consulted"
+        element: "plain_text_input"
+        multiline: true
+        placeholder: "e.g., VBA Claims Team, Call Center Manager, UX Design Lead"
+      - type: "input"
+        label: "Research approach"
+        element: "plain_text_input"
+        placeholder: "e.g., User interviews and usability testing"
+      - type: "input"
+        label: "Prepared by"
+        element: "plain_text_input"
+        placeholder: "e.g., Jordan Smith, UX Researcher"
 
 analytics:
   track_events:
-    - event: "research_brief_generated"
-      properties: [project_title, research_approach]
+    - event: "executive_brief_generated"
+      properties: [project_title, research_approach, timeline_needed]
+    - event: "stakeholder_approval_tracked"
+      properties: [project_title, approval_time, stakeholder_count]
