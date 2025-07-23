@@ -1,4 +1,3 @@
-# Fixed version with removed pipe operators and dynamic paths
 id: participant_outreach
 name: run_participant_outreach
 label: 📧 Participant Outreach
@@ -18,6 +17,52 @@ llm_config:
 input_type: structured
 input_processing: dynamic_conditional
 precision_mode: detailed
+
+# Enhanced Error Handling and Validation
+error_handling:
+  validation_errors:
+    - field: "participant_name"
+      rules:
+        - type: "min_length"
+          value: 2
+          message: "Participant name must be at least 2 characters"
+        - type: "max_length"
+          value: 50
+          message: "Participant name cannot exceed 50 characters"
+    
+    - field: "study_name"
+      rules:
+        - type: "min_length"
+          value: 5
+          message: "Study name must be at least 5 characters"
+        - type: "max_length"
+          value: 100
+          message: "Study name cannot exceed 100 characters"
+    
+    - field: "researcher_email"
+      rules:
+        - type: "email_format"
+          message: "Please enter a valid email address"
+        - type: "domain_whitelist"
+          domains: ["va.gov", "vha.gov", "med.va.gov"]
+          message: "Please use a VA email address"
+    
+    - field: "session_date"
+      rules:
+        - type: "future_date"
+          message: "Session date must be in the future"
+        - type: "business_hours"
+          start_time: "08:00"
+          end_time: "17:00"
+          message: "Please schedule sessions during business hours (8 AM - 5 PM)"
+    
+    - field: "session_link"
+      rules:
+        - type: "url_format"
+          message: "Please enter a valid meeting link"
+        - type: "allowed_domains"
+          domains: ["zoom.us", "teams.microsoft.com", "meet.google.com"]
+          message: "Please use approved meeting platforms"
 
 # Input variables with proper validation
 input_variables:
@@ -106,6 +151,12 @@ input_variables:
       required_if: ["initial_recruitment"]
       placeholder: "Brief description of what the study involves"
       
+  - signup_instructions:
+      type: "textarea"
+      required_if: ["initial_recruitment"]
+      placeholder: "e.g., Please reply to this email or call (555) 123-4567 to express interest"
+      help_text: "How participants should sign up or express interest"
+      
   - incentive_amount:
       type: "text"
       required_if: ["initial_recruitment", "thank_you"]
@@ -139,6 +190,19 @@ ai_generation_tasks:
       - Match the tone appropriately
       - Include urgency indicators for time-sensitive messages
       
+      Format requirements:
+      - No special characters that might break email systems
+      - Avoid spam trigger words
+      - Include participant identifier if helpful for tracking
+      
+      Subject line examples by type:
+      - initial_recruitment: "Research Opportunity: {{study_name}} - Your Input Needed"
+      - session_confirmation: "Confirmed: {{study_name}} Session {{session_date}} at {{session_time}}"
+      - session_reminder: "Tomorrow: {{study_name}} Session at {{session_time}}"
+      - rescheduling_request: "Schedule Change: {{study_name}} Session - New Times Available"
+      - follow_up: "Following up: {{study_name}} Research Opportunity"
+      - thank_you: "Thank you for participating in {{study_name}}"
+      
       Return only the subject line, no additional text.
 
   - task_id: "email_body"
@@ -153,21 +217,151 @@ ai_generation_tasks:
       - Tone: {{tone}}
       - Contact Method: {{contact_method}}
       
-      Include proper VA disclaimers, contact information, and trauma-informed language.
-      Use 10th-grade reading level maximum.
-      Format with clear paragraphs and bullet points where appropriate.
+      VA Research Standards - CRITICAL:
+      - Use trauma-informed language (avoid triggering terms)
+      - Emphasize voluntary participation and right to withdraw
+      - Include clear accessibility accommodations statement
+      - Use 10th-grade reading level maximum
+      - Include proper VA disclaimers and contact information
+      - Mention confidentiality and data protection
+      - Use respectful, professional tone appropriate for veterans
+      
+      Formatting Requirements:
+      - Use clear paragraph breaks for readability
+      - Include contact information in signature
+      - Use bullet points for important details
+      - Keep sentences under 20 words when possible
+      - Use active voice
+      
+      {% if message_type == "initial_recruitment" %}
+      Recruitment-Specific Content:
+      - Study Description: {{study_description}}
+      - Sign-up Instructions: {{signup_instructions}}
+      - Incentive: {{incentive_amount}}
+      
+      Required elements for initial recruitment:
+      - Warm, respectful greeting using {{participant_name}}
+      - Clear explanation of study purpose: {{study_description}}
+      - Specific details about what participation involves
+      - Duration and format of participation
+      - Compensation/incentive information: {{incentive_amount}}
+      - Clear sign-up instructions: {{signup_instructions}}
+      - Right to decline without penalty
+      - Contact information for questions
+      - Professional closing
+      {% endif %}
+      
+      {% if message_type == "session_confirmation" %}
+      Session Details:
+      - Date: {{session_date}}
+      - Time: {{session_time}}
+      - Duration: {{session_duration}}
+      - Link: {{session_link}}
+      - Meeting ID: {{meeting_id}}
+      - Dial-in: {{dial_in_number}}
+      
+      Required elements:
+      - Confirmation of their participation
+      - Complete session logistics (date, time, access)
+      - What to expect during the session
+      - Pre-session preparation instructions
+      - Technical requirements and troubleshooting
+      - What to do if they need to reschedule
+      - Contact information for day-of issues
+      {% endif %}
+      
+      {% if message_type == "session_reminder" %}
+      Session Details:
+      - Date: {{session_date}}
+      - Time: {{session_time}}
+      - Duration: {{session_duration}}
+      - Link: {{session_link}}
+      - Meeting ID: {{meeting_id}}
+      - Dial-in: {{dial_in_number}}
+      
+      Required elements:
+      - Friendly reminder of upcoming session
+      - Complete session details with easy-to-find info
+      - Meeting access instructions
+      - Brief preparation checklist
+      - What to do if they can't attend
+      - Emergency contact information
+      - Encouraging, supportive tone
+      {% endif %}
+      
+      {% if message_type == "rescheduling_request" %}
+      Rescheduling Details:
+      - Original Date: {{session_date}}
+      - Reason: {{reschedule_reason}}
+      - New Options: {{reschedule_options}}
+      
+      Required elements:
+      - Sincere apology for the inconvenience
+      - Brief, professional explanation (don't over-explain)
+      - 2-3 clear alternative time options
+      - Reassurance about their continued value to the study
+      - Easy way to confirm new time
+      - Contact information for questions
+      - Respectful, understanding tone
+      {% endif %}
+      
+      {% if message_type == "follow_up" %}
+      Required elements:
+      - Polite check-in about their interest
+      - Reminder of study value and their important input
+      - Easy way to confirm participation or decline
+      - Clear opt-out option with no pressure or guilt
+      - Alternative participation methods if available
+      - Respectful, pressure-free tone
+      - Clear contact information
+      {% endif %}
+      
+      {% if message_type == "thank_you" %}
+      Payment Details:
+      - Incentive: {{incentive_amount}}
+      
+      Required elements:
+      - Sincere, specific gratitude for their time
+      - Acknowledgment of their valuable contribution
+      - Clear payment/compensation process and timeline
+      - How their input will be used (with anonymization assurance)
+      - Optional future research opportunities
+      - Final contact information
+      - Warm, appreciative closing
+      {% endif %}
       
       Email Signature Format:
+      
       Best regards,
       {{researcher_name}}
+      [Title/Department]
       Department of Veterans Affairs
       Email: {{researcher_email}}
       Phone: {{researcher_phone}}
+      
+      *This research is conducted in accordance with VA research standards and IRB approval.*
 
   - task_id: "followup_suggestions"
     prompt: >
-      Suggest 2-3 follow-up actions the researcher should consider after sending this {{message_type}} message.
+      Suggest 2-3 follow-up actions the researcher should consider after sending this {{message_type}} message:
+      
+      Consider:
+      - Timing for follow-up communications
+      - Potential participant responses or concerns
+      - Next steps in the research process
+      - Documentation or tracking needs
+      - Accessibility or accommodation considerations
+      
       Format as actionable bullet points with suggested timelines.
+
+# Processing workflow
+processing_workflow:
+  1. validate_inputs
+  2. validate_conditional_fields
+  3. execute_ai_generation_tasks
+  4. format_output
+  5. save_to_github
+  6. send_to_slack
 
 # Output template - simplified without complex filters
 output_template: >
@@ -184,7 +378,9 @@ output_template: >
   ## Email Content
   
   ### Subject Line
+  ```
   {{ai_generated.subject_line}}
+  ```
   
   ### Email Body
   **To:** {{participant_name}}  
@@ -203,28 +399,259 @@ output_template: >
   
   ---
   
-  *Generated by Qori's AI-powered outreach system {{version}}*
+  ## Message Tracking
+  
+  - **Message Type:** {{message_type}}
+  - **Contact Method:** {{contact_method}}
+  - **Tone:** {{tone}}
+  - **Generated:** {{current_date}}
+  {% if session_date %}- **Session Date:** {{session_date}}{% endif %}
+  {% if session_time %}- **Session Time:** {{session_time}}{% endif %}
+  {% if session_link %}- **Meeting Link:** {{session_link}}{% endif %}
+  
+  ---
+  
+  *Generated by Qori's AI-powered outreach system {{version}}*  
+  *Saved to: {{path}}{{filename}}*
 
 # Output configuration with dynamic paths
 output_options:
   # Dynamic file naming - simplified
   filename: "{{participant_name}}_{{message_type}}_{{current_date}}.md"
   # Dynamic path based on study
-  path: "studies/{{study_folder_name}}/participants/outreach/"
+  path: "research/{{study_folder_name}}/participants/outreach/"
   
+  # Add index file generation
+  generate_index: true
+  index_filename: "README.md"
+  
+  # Multiple delivery methods
   delivery:
+    # Save to GitHub first
     github:
       enabled: true
-      path: "studies/{{study_folder_name}}/participants/outreach/"
+      repo: "your-research-repo"
+      path: "research/{{study_folder_name}}/participants/outreach/"
       commit_message: "Add {{message_type}} message for {{participant_name}}"
       
+    # Enhanced Slack DM with better formatting
     slack:
       enabled: true
       send_dm: true
+      target_user: "{{slack_user_id}}"
+      include_copy_button: true
+      include_email_format: true
       message: >
         Participant outreach message generated for {{participant_name}} in {{study_name}}
         
-        Message saved to: research/{{study_folder_name}}/participants/outreach/{{filename}}
+        Message Type: {{message_type}}
+        Saved to: research/{{study_folder_name}}/participants/outreach/{{filename}}
+      
+      # Enhanced Action buttons
+      actions:
+        - text: "📋 Copy Email (Formatted)"
+          style: "primary"
+          action_type: "copy_to_clipboard"
+          content: >
+            Subject: {{ai_generated.subject_line}}
+            
+            {{ai_generated.email_body}}
+            
+        - text: "📋 Copy Subject Only"
+          style: "default"
+          action_type: "copy_to_clipboard"
+          content: "{{ai_generated.subject_line}}"
+          
+        - text: "📂 View in GitHub"
+          style: "default"
+          action_type: "url"
+          url: "{{github_file_url}}"
+          
+        - text: "👥 Generate for Another Participant"
+          style: "default"
+          action_type: "modal"
+          modal_id: "participant_outreach"
+          
+        - text: "📊 View All Messages"
+          style: "default"
+          action_type: "url"
+          url: "{{github_folder_url}}"
+    
+    # Channel notification (optional)
+    channel_notification:
+      enabled: false
+      channel: "#research-ops"
+      message: "Participant outreach message generated for {{study_name}}"
+
+# Slack UI Configuration - Multi-Step Approach
+slack_ui:
+  # Step 1: Message Type Selection
+  initial_modal:
+    title: "📧 Participant Outreach"
+    submit_label: "Next"
+    close_label: "Cancel"
+    blocks:
+      message_type_selection:
+        type: "radio_buttons"
+        options: ["initial_recruitment", "session_confirmation", "session_reminder", "rescheduling_request", "follow_up", "thank_you"]
+        required: true
+    
+  # Step 2: Details Modal (generated dynamically based on step 1)
+  details_modal:
+    title: "📝 Message Details"
+    submit_label: "Generate Message"
+    close_label: "Back"
+    
+    # Common fields for all message types
+    common_fields:
+      - participant_name
+      - study_name
+      - study_folder_name
+      - researcher_name
+      - researcher_email
+      - researcher_phone
+      - contact_method
+      - tone
+    
+    # Message-specific fields
+    conditional_fields:
+      initial_recruitment:
+        - study_description
+        - signup_instructions
+        - incentive_amount
+      session_confirmation:
+        - session_date
+        - session_time
+        - session_duration
+        - session_link
+        - meeting_id
+        - dial_in_number
+      session_reminder:
+        - session_date
+        - session_time
+        - session_duration
+        - session_link
+        - meeting_id
+        - dial_in_number
+      rescheduling_request:
+        - session_date
+        - session_time
+        - reschedule_reason
+        - reschedule_options
+      follow_up: []
+      thank_you:
+        - incentive_amount
+
+  # Step navigation logic
+  step_navigation:
+    steps:
+      1:
+        title: "Choose Message Type"
+        description: "Select the type of outreach message you need"
+        next_action: "show_details_modal"
+      2:
+        title: "Message Details"
+        description: "Fill in the details for your message"
+        next_action: "generate_message"
+        
+    # Step transition logic
+    transitions:
+      message_type_selected:
+        from: "step_1"
+        to: "step_2"
+        action: "generate_details_modal"
+      
+      form_submitted:
+        from: "step_2"
+        to: "complete"
+        action: "generate_message"
+      
+      back_pressed:
+        from: "step_2"
+        to: "step_1"
+        action: "show_initial_modal"
+
+  # Field validation rules
+  validation:
+    participant_name:
+      min_length: 2
+      max_length: 50
+      error_message: "Please enter a participant name (2-50 characters)"
+    study_name:
+      min_length: 5
+      max_length: 100
+      error_message: "Please enter a study name (5-100 characters)"
+    study_folder_name:
+      min_length: 3
+      max_length: 50
+      error_message: "Please enter a study folder name (3-50 characters)"
+    researcher_name:
+      min_length: 2
+      max_length: 50
+      error_message: "Please enter researcher name (2-50 characters)"
+    researcher_email:
+      email_format: true
+      domain_whitelist: ["va.gov", "vha.gov", "med.va.gov"]
+      error_message: "Please enter a valid VA email address"
+    researcher_phone:
+      phone_format: true
+      error_message: "Please enter a valid phone number"
+    session_date:
+      future_date: true
+      error_message: "Session date must be in the future"
+    session_link:
+      url_format: true
+      allowed_domains: ["zoom.us", "teams.microsoft.com", "meet.google.com"]
+      error_message: "Please use approved meeting platforms"
+
+# Analytics and Tracking
+analytics:
+  track_events:
+    - event: "message_generated"
+      properties:
+        - message_type
+        - participant_name
+        - study_name
+        - researcher_name
+        - tone
+        - contact_method
+    
+    - event: "message_copied"
+      properties:
+        - message_id
+        - copy_type  # full_email, subject_only
+    
+    - event: "message_edited"
+      properties:
+        - message_id
+        - edit_type
+        - original_message_type
+    
+  # Usage reporting
+  generate_reports:
+    - type: "weekly_usage"
+      recipients: ["research-ops@va.gov"]
+      metrics:
+        - total_messages_generated
+        - messages_by_type
+        - most_active_researchers
+        - common_study_types
+    
+    - type: "monthly_efficiency"
+      recipients: ["leadership@va.gov"]
+      metrics:
+        - time_saved_estimation
+        - researcher_adoption_rate
+        - message_quality_scores
+
+# Usage instructions
+usage_instructions: >
+  1. **Choose Message Type**: Select the appropriate message type for your research phase
+  2. **Fill Required Fields**: Complete all required fields (marked with *)
+  3. **Review Conditional Fields**: Additional fields will appear based on your message type
+  4. **Generate**: Click "Generate Message" to create your outreach communication
+  5. **Copy & Use**: Use the copy button to transfer the formatted email to your email client
+  6. **Track**: Message is automatically saved to GitHub for record-keeping
 
 # Message type descriptions for UI  
 message_type_descriptions:
@@ -234,3 +661,32 @@ message_type_descriptions:
   rescheduling_request: "When you need to reschedule a session"
   follow_up: "Check in when participant hasn't responded"
   thank_you: "Post-session thank you with next steps"
+
+# Conditional fields for UI (what fields to show based on message type)
+conditional_fields:
+  initial_recruitment:
+    - study_description
+    - signup_instructions
+    - incentive_amount
+  session_confirmation:
+    - session_date
+    - session_time
+    - session_duration
+    - session_link
+    - meeting_id
+    - dial_in_number
+  session_reminder:
+    - session_date
+    - session_time
+    - session_duration
+    - session_link
+    - meeting_id
+    - dial_in_number
+  rescheduling_request:
+    - session_date
+    - session_time
+    - reschedule_reason
+    - reschedule_options
+  follow_up: []
+  thank_you:
+    - incentive_amount
