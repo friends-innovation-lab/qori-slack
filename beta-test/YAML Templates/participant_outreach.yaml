@@ -21,6 +21,16 @@ precision_mode: detailed
 # Enhanced Error Handling and Validation
 error_handling:
   validation_errors:
+    - field: "study_id"
+      rules:
+        - type: "required"
+          message: "Please select a study"
+        - type: "exists_in_database"
+          table: "studies"
+          message: "Selected study not found or you don't have access"
+        - type: "study_active"
+          message: "Selected study is not active"
+    
     - field: "participant_name"
       rules:
         - type: "min_length"
@@ -29,15 +39,6 @@ error_handling:
         - type: "max_length"
           value: 50
           message: "Participant name cannot exceed 50 characters"
-    
-    - field: "study_name"
-      rules:
-        - type: "min_length"
-          value: 5
-          message: "Study name must be at least 5 characters"
-        - type: "max_length"
-          value: 100
-          message: "Study name cannot exceed 100 characters"
     
     - field: "researcher_email"
       rules:
@@ -77,17 +78,22 @@ input_variables:
       required: true
       placeholder: "e.g., Alex M. or pt004"
       
-  - study_name:
-      type: "text"
+  # Study selection - integrated with plan-study
+  - study_id:
+      type: "select"
       required: true
-      placeholder: "e.g., VA Housing App Usability Study"
+      data_source: "existing_studies"  # Pull from plan-study database
+      placeholder: "Select a study..."
+      help_text: "Choose from your existing studies created in plan-study"
       
-  # NEW: Study folder for file organization
+  # Auto-populated based on study selection
+  - study_name:
+      type: "hidden"  # Auto-filled from selected study
+      derived_from: "study_id.name"
+      
   - study_folder_name:
-      type: "text"
-      required: true
-      placeholder: "e.g., housing-app-study-2025"
-      help_text: "Folder name for organizing study files"
+      type: "hidden"  # Auto-filled from selected study  
+      derived_from: "study_id.folder_name"
       
   - researcher_name:
       type: "text"
@@ -505,8 +511,7 @@ slack_ui:
     # Common fields for all message types
     common_fields:
       - participant_name
-      - study_name
-      - study_folder_name
+      - study_id  # Changed from study_name to study_id (dropdown)
       - researcher_name
       - researcher_email
       - researcher_phone
@@ -573,18 +578,14 @@ slack_ui:
 
   # Field validation rules
   validation:
+    study_id:
+      required: true
+      exists_in_database: true
+      error_message: "Please select a valid study"
     participant_name:
       min_length: 2
       max_length: 50
       error_message: "Please enter a participant name (2-50 characters)"
-    study_name:
-      min_length: 5
-      max_length: 100
-      error_message: "Please enter a study name (5-100 characters)"
-    study_folder_name:
-      min_length: 3
-      max_length: 50
-      error_message: "Please enter a study folder name (3-50 characters)"
     researcher_name:
       min_length: 2
       max_length: 50
@@ -644,14 +645,42 @@ analytics:
         - researcher_adoption_rate
         - message_quality_scores
 
+# Integration with plan-study system
+study_integration:
+  enabled: true
+  data_source: "plan_study_database"
+  
+  # What data to pull from existing studies
+  study_fields:
+    - id: "study_id"
+    - name: "study_name" 
+    - folder_name: "study_folder_name"
+    - description: "study_description"
+    - researcher: "researcher_name"
+    - researcher_email: "researcher_email"
+    - created_date: "study_created_date"
+  
+  # Fallback if no studies exist
+  fallback_mode:
+    enabled: true
+    show_manual_entry: true
+    message: "No studies found. Create a study first using plan-study or enter details manually."
+    
+  # Study validation
+  validation:
+    require_active_study: true
+    check_permissions: true
+    error_message: "Please select a valid, active study you have access to."
+
 # Usage instructions
 usage_instructions: >
-  1. **Choose Message Type**: Select the appropriate message type for your research phase
-  2. **Fill Required Fields**: Complete all required fields (marked with *)
-  3. **Review Conditional Fields**: Additional fields will appear based on your message type
-  4. **Generate**: Click "Generate Message" to create your outreach communication
-  5. **Copy & Use**: Use the copy button to transfer the formatted email to your email client
-  6. **Track**: Message is automatically saved to GitHub for record-keeping
+  1. **Select Study**: Choose from your existing studies created in plan-study
+  2. **Choose Message Type**: Select the appropriate message type for your research phase
+  3. **Fill Required Fields**: Complete all required fields (marked with *)
+  4. **Review Conditional Fields**: Additional fields will appear based on your message type
+  5. **Generate**: Click "Generate Message" to create your outreach communication
+  6. **Copy & Use**: Use the copy button to transfer the formatted email to your email client
+  7. **Track**: Message is automatically saved to your study's GitHub folder
 
 # Message type descriptions for UI  
 message_type_descriptions:
