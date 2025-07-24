@@ -425,7 +425,7 @@ output_options:
   # Dynamic file naming - simplified
   filename: "{{participant_name}}_{{message_type}}_{{current_date}}.md"
   # Dynamic path based on study
-  path: "research/{{study_folder_name}}/participants/outreach/"
+  path: "02-participants/outreach/"
   
   # Add index file generation
   generate_index: true
@@ -437,7 +437,7 @@ output_options:
     github:
       enabled: true
       repo: "your-research-repo"
-      path: "research/{{study_folder_name}}/participants/outreach/"
+      path: "02-participants/outreach/"
       commit_message: "Add {{message_type}} message for {{participant_name}}"
       
     # Enhanced Slack DM with better formatting
