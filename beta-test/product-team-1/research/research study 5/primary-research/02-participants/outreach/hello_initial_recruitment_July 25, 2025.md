@@ -9,20 +9,24 @@ Subject: Invitation to Participate in Research Study 5
 
 Hello [Participant],
 
-I hope this message finds you well. I am reaching out to invite you to participate in our research study 5, which aims to [briefly describe study purpose].
+I hope this message finds you well. I am reaching out to invite you to participate in research study 5, conducted by the Department of Veterans Affairs. Your insights and experiences are invaluable to our research efforts.
 
-Participation in this study involves [specific details about participation format and duration]. Your valuable insights will greatly contribute to advancing our understanding of [research topic].
+Study Description:
+- Our research aims to explore [brief description of study purpose].
+- Your participation will involve [specific details about participation format and duration].
+- As a token of appreciation, participants will receive [incentive amount].
 
-As a token of our appreciation for your time and contribution, we are offering an incentive of $11 for your participation.
+Sign-up Instructions:
+- If you are interested in participating, please [clear sign-up instructions].
 
-If you are interested in participating, please follow the sign-up instructions provided [insert sign-up instructions].
-
-Please remember that your participation is completely voluntary, and you have the right to withdraw at any time without penalty. Your confidentiality and data protection are of utmost importance to us.
-
-If you have any questions or require further information, please do not hesitate to contact me at [email] or [phone number].
+Please remember:
+- Participation is voluntary, and you have the right to withdraw at any time without penalty.
+- Your confidentiality and data protection are paramount to us.
+- If you have any questions or concerns, please do not hesitate to contact me at [email] or [phone number].
 
 Best regards,
-Hello
+
+hello
 [Title/Department]
 Department of Veterans Affairs
 Email: [email]
@@ -31,9 +35,11 @@ Phone: [phone number]
 *This research is conducted in accordance with VA research standards and IRB approval.*
 ---
 ## Follow-up Actions
-1. Follow up with a reminder email one week after the initial recruitment message to ensure participants have had enough time to consider the opportunity and respond. 
-2. Consider sending a personalized follow-up message to participants who have not responded after two weeks, addressing any potential concerns or questions they may have. 
-3. Create a tracking system to monitor participant responses and follow-up communications, ensuring all interactions are documented for future reference.
+1. Follow up with a reminder email one week after the initial recruitment message to prompt potential participants who may have overlooked or forgotten about the opportunity.
+
+2. Send a personalized follow-up message to individuals who expressed interest but have not yet responded within two weeks of the initial recruitment message, addressing any concerns they may have and providing additional information about the research study.
+
+3. Create a tracking system to monitor responses and follow-up communications, noting any patterns or trends in participant engagement to inform future recruitment strategies and ensure all interested individuals are accounted for.
 ---
 ## Message Tracking
 - **Message Type:** initial_recruitment - **Contact Method:** Email - **Tone:** Friendly - **Generated:** July 25, 2025 {% if session_date %}- **Session Date:** date{% endif %} {% if session_time %}- **Session Time:** time{% endif %} {% if session_link %}- **Meeting Link:** {% endif %}
