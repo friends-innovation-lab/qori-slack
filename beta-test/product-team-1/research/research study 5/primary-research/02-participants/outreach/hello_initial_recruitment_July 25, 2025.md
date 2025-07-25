@@ -5,41 +5,40 @@
 ### Subject Line ``` Research Study 5: Your Input Needed ```
 ### Email Body **To:** hello   **From:** hello <hello>   **Subject:** Research Study 5: Your Input Needed
 ---
-Subject: Invitation to Participate in Research Study 5
+Subject: Participate in Research Study 5: Help Us Improve Veteran Services
 
-Hello [Participant],
+Hello,
 
-I hope this message finds you well. I am reaching out to invite you to participate in research study 5, conducted by the Department of Veterans Affairs. Your insights and experiences are invaluable to our research efforts.
+I hope this message finds you well. I am reaching out to invite you to participate in our research study 5, focused on improving services for veterans like yourself.
 
 Study Description:
-- Our research aims to explore [brief description of study purpose].
-- Your participation will involve [specific details about participation format and duration].
-- As a token of appreciation, participants will receive [incentive amount].
+- Our research aims to gather feedback on current VA services to identify areas for improvement.
+- Your participation will involve completing a brief survey online, which should take approximately 20 minutes.
+
+Incentive:
+- As a token of our appreciation for your time, you will receive a $11 gift card upon completion of the survey.
 
 Sign-up Instructions:
-- If you are interested in participating, please [clear sign-up instructions].
+- To sign up for the study, simply click on the following link: [Link to Survey]
+- Your participation is completely voluntary, and you have the right to withdraw at any time without penalty.
 
-Please remember:
-- Participation is voluntary, and you have the right to withdraw at any time without penalty.
-- Your confidentiality and data protection are paramount to us.
-- If you have any questions or concerns, please do not hesitate to contact me at [email] or [phone number].
+If you have any questions or concerns about the study, please feel free to contact me at [Email] or [Phone].
+
+Thank you for considering participating in our research study. Your feedback is invaluable in helping us better serve our veteran community.
 
 Best regards,
-
-hello
+Hello
 [Title/Department]
 Department of Veterans Affairs
-Email: [email]
-Phone: [phone number]
+Email: [Email]
+Phone: [Phone]
 
 *This research is conducted in accordance with VA research standards and IRB approval.*
 ---
 ## Follow-up Actions
-1. Follow up with a reminder email one week after the initial recruitment message to prompt potential participants who may have overlooked or forgotten about the opportunity.
-
-2. Send a personalized follow-up message to individuals who expressed interest but have not yet responded within two weeks of the initial recruitment message, addressing any concerns they may have and providing additional information about the research study.
-
-3. Create a tracking system to monitor responses and follow-up communications, noting any patterns or trends in participant engagement to inform future recruitment strategies and ensure all interested individuals are accounted for.
+1. Follow up with a reminder email one week after the initial recruitment message to prompt potential participants who may have missed the first communication.
+2. Create a FAQ document addressing common participant concerns and questions, and send it out along with a follow-up email two weeks after the initial recruitment message.
+3. Set up a tracking system to monitor responses and follow-up communications, ensuring all potential participants are accounted for and engaged in the research process.
 ---
 ## Message Tracking
 - **Message Type:** initial_recruitment - **Contact Method:** Email - **Tone:** Friendly - **Generated:** July 25, 2025 {% if session_date %}- **Session Date:** date{% endif %} {% if session_time %}- **Session Time:** time{% endif %} {% if session_link %}- **Meeting Link:** {% endif %}
