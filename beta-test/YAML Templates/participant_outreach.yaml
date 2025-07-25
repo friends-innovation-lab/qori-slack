@@ -411,15 +411,15 @@ output_template: >
   - **Contact Method:** {{contact_method}}
   - **Tone:** {{tone}}
   - **Generated:** {{current_date}}
- {{#if session_date}}
-- **Session Date:** {{session_date}}
-{{/if}}
-{{#if session_time}}
-- **Session Time:** {{session_time}}
-{{/if}}
-{{#if session_link}}
-- **Meeting Link:** {{session_link}}
-{{/if}}
+  {{#if session_date}}
+  - **Session Date:** {{session_date}}
+  {{/if}}
+  {{#if session_time}}
+  - **Session Time:** {{session_time}}
+  {{/if}}
+  {{#if session_link}}
+  - **Meeting Link:** {{session_link}}
+  {{/if}}
   
   ---
   
