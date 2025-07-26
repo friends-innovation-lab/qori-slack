@@ -2,6 +2,54 @@
 
 **Qori by Friends** is a role-based suite of AI-powered tools designed to support government product teams throughout the entire digital delivery lifecycle. Each tool is built to reflect how real teams work — with minimal UI, native Slack integration, and GitHub as the system of record. The tools are modular, non-overlapping, but fully interoperable.
 
+🧠 **Qori for Research**
+
+- Supports user researchers in collecting, synthesizing, and sharing insights faster.
+- Uploads and tags research notes, transcripts, quotes, and recordings
+- Extracts themes, Jobs-to-be-Done, and insights using structured AI prompts
+- Pushes synthesis outputs into GitHub for use by other Qori tools
+- Slack-native: run and retrieve insights directly in channel
+
+🎨 **Qori for Design
+
+- Helps designers log design decisions, capture rationale, and align with product strategy.
+- Records UX decisions, links to Figma files, and documents iterations
+- Connects design rationale to research evidence and product requirements
+- Maintains a clear record of how and why the product evolved visually
+- Works in Slack with GitHub-based structured storage
+
+📌 **Qori for Product
+
+- Acts as a product manager's AI co-pilot for planning, alignment, and execution.
+- Drafts roadmaps, Jira tickets, user stories, and success criteria
+- Surfaces relevant research and design inputs when writing features
+- Structures strategy docs, PM briefs, and stakeholder updates
+- Manages backlog context and decision history without additional tools
+
+📌 **Qori for Dev 
+
+- Log technical decisions (stack choices, data modeling, migrations, tool adoption)
+- Summarize architecture using Slack prompts linked to diagrams or PRs
+- Capture API handoffs and document system boundaries
+- Auto-generate developer onboarding packs from environment setup info, common workflows, and project structure
+- Log postmortems with linked root causes, fixes, and preventive actions
+- Slack-based technical Q&A retrieval (“How do I restart staging?” “Who owns the analytics pipeline?”)
+
+📚 **QoriDocs
+
+- Captures and organizes structured documentation throughout the life of a project — designed for transition, onboarding, and audit-readiness.
+- Logs milestones, sprint summaries, decisions, and architecture notes
+- Creates onboarding packets and training docs on demand
+- AI-powered search across all Qori artifacts, grounded in project files
+- GitHub serves as the documentation vault; Slack is the access point
+
+🔗 ** Interoperability
+- All tools speak the same language (YAML, Markdown, tagging) and connect through:
+- Shared GitHub folder structure
+- Common metadata schema
+- Slack as the unified interface
+- Centralized retrieval and export layer
+
 ## Research Ops as Code
 
 **What if research workflows could be as version-controlled, collaborative, and scalable as your codebase?**
