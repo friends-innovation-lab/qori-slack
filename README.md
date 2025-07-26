@@ -10,7 +10,7 @@
 - Pushes synthesis outputs into GitHub for use by other Qori tools
 - Slack-native: run and retrieve insights directly in channel
 
-🎨 **Qori for Design
+🎨 **Qori for Design**
 
 - Helps designers log design decisions, capture rationale, and align with product strategy.
 - Records UX decisions, links to Figma files, and documents iterations
@@ -18,7 +18,7 @@
 - Maintains a clear record of how and why the product evolved visually
 - Works in Slack with GitHub-based structured storage
 
-📌 **Qori for Product
+📌 **Qori for Product**
 
 - Acts as a product manager's AI co-pilot for planning, alignment, and execution.
 - Drafts roadmaps, Jira tickets, user stories, and success criteria
@@ -26,7 +26,7 @@
 - Structures strategy docs, PM briefs, and stakeholder updates
 - Manages backlog context and decision history without additional tools
 
-📌 **Qori for Dev 
+📌 **Qori for Dev**
 
 - Log technical decisions (stack choices, data modeling, migrations, tool adoption)
 - Summarize architecture using Slack prompts linked to diagrams or PRs
@@ -35,7 +35,7 @@
 - Log postmortems with linked root causes, fixes, and preventive actions
 - Slack-based technical Q&A retrieval (“How do I restart staging?” “Who owns the analytics pipeline?”)
 
-📚 **QoriDocs
+📚 **QoriDocs**
 
 - Captures and organizes structured documentation throughout the life of a project — designed for transition, onboarding, and audit-readiness.
 - Logs milestones, sprint summaries, decisions, and architecture notes
@@ -43,7 +43,7 @@
 - AI-powered search across all Qori artifacts, grounded in project files
 - GitHub serves as the documentation vault; Slack is the access point
 
-🔗 ** Interoperability
+🔗 **Interoperability**
 - All tools speak the same language (YAML, Markdown, tagging) and connect through:
 - Shared GitHub folder structure
 - Common metadata schema
