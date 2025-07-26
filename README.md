@@ -1,6 +1,6 @@
 🧠 Qori: Augmenting Civic Tech Research with AI
 
-**Qori** is a **microservices-based workflow orchestration platform** that specializes in research operations for civic tech teams. Built as an agentic AI specifically for civic technologists and public interest researchers, it accelerates the messy, vital work of user research without compromising the care, ethics, and context that make it human-centered.
+**Qori by Friends** is a role-based suite of AI-powered tools designed to support government product teams throughout the entire digital delivery lifecycle. Each tool is built to reflect how real teams work — with minimal UI, native Slack integration, and GitHub as the system of record. The tools are modular, non-overlapping, but fully interoperable.
 
 ## Research Ops as Code
 
