@@ -57,7 +57,7 @@ error_handling:
           end_time: "17:00"
           message: "Please schedule sessions during business hours (8 AM - 5 PM)"
     
-    - field: "session_link"
+    - field: "meeting_link"
       rules:
         - type: "url_format"
           message: "Please enter a valid meeting link"
@@ -137,7 +137,7 @@ input_variables:
       options: ["30 minutes", "45 minutes", "60 minutes", "90 minutes"]
       default: "45 minutes"
       
-  - session_link:
+  - meeting_link:
       type: "url"
       required_if: ["session_confirmation", "session_reminder"]
       placeholder: "https://va-gov.zoom.us/j/123456789"
@@ -262,7 +262,7 @@ ai_generation_tasks:
       - Date: {{session_date}}
       - Time: {{session_time}}
       - Duration: {{session_duration}}
-      - Link: {{session_link}}
+      - Link: {{meeting_link}}
       - Meeting ID: {{meeting_id}}
       - Dial-in: {{dial_in_number}}
       
@@ -281,7 +281,7 @@ ai_generation_tasks:
       - Date: {{session_date}}
       - Time: {{session_time}}
       - Duration: {{session_duration}}
-      - Link: {{session_link}}
+      - Link: {{meeting_link}}
       - Meeting ID: {{meeting_id}}
       - Dial-in: {{dial_in_number}}
       
@@ -417,8 +417,17 @@ output_template: >
   {{#if session_time}}
   - **Session Time:** {{session_time}}
   {{/if}}
-  {{#if session_link}}
-  - **Meeting Link:** {{session_link}}
+  {{#if session_duration}}
+  - **Session Duration:** {{session_duration}}
+  {{/if}}
+  {{#if meeting_link}}
+  - **Meeting Link:** {{meeting_link}}
+  {{/if}}
+  {{#if meeting_id}}
+  - **Meeting ID:** {{meeting_id}}
+  {{/if}}
+  {{#if dial_in_number}}
+  - **Dial-in Number:** {{dial_in_number}}
   {{/if}}
   
   ---
@@ -534,14 +543,14 @@ slack_ui:
         - session_date
         - session_time
         - session_duration
-        - session_link
+        - meeting_link
         - meeting_id
         - dial_in_number
       session_reminder:
         - session_date
         - session_time
         - session_duration
-        - session_link
+        - meeting_link
         - meeting_id
         - dial_in_number
       rescheduling_request:
@@ -606,7 +615,7 @@ slack_ui:
     session_date:
       future_date: true
       error_message: "Session date must be in the future"
-    session_link:
+    meeting_link:
       url_format: true
       allowed_domains: ["zoom.us", "teams.microsoft.com", "meet.google.com"]
       error_message: "Please use approved meeting platforms"
@@ -707,14 +716,14 @@ conditional_fields:
     - session_date
     - session_time
     - session_duration
-    - session_link
+    - meeting_link
     - meeting_id
     - dial_in_number
   session_reminder:
     - session_date
     - session_time
     - session_duration
-    - session_link
+    - meeting_link
     - meeting_id
     - dial_in_number
   rescheduling_request:
