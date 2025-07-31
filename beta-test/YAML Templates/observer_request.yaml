@@ -23,6 +23,10 @@ inputs:
   max_capacity: 3
   request_timestamp: "{{current_date}}"
   urgent_request: "{{urgent_request}}" # true/false for same-day sessions
+  available_sessions: "{{available_sessions}}" # list of sessions with capacity
+  session_times: "{{session_times}}" # session schedule data
+  current_observers: "{{current_observers}}" # who's already observing each session
+  session_participant_names: "{{session_participant_names}}" # participant names per session
 
 # Observer role definitions and auto-approval rules
 observer_roles:
