@@ -267,7 +267,7 @@ ai_generation_tasks:
       
       Return ONLY the subject line, no quotes or additional text.
 
- - task_id: "email_body"
+  - task_id: "email_body" 
     prompt: >
       Create a trauma-informed {{message_type}} email for the {{study_name}} research study using a {{tone}} tone.
       
