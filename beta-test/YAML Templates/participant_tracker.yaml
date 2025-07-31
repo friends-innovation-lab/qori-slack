@@ -20,6 +20,9 @@ inputs:
   added_by: "{{added_by}}"
   import_source: "{{import_source}}" # manual, calendly, csv
   existing_participants: "{{existing_participants}}" # for updates
+  session_context: "{{session_context}}" # study context for observer guidelines
+  meeting_link: "{{meeting_link}}" # for observer guidelines
+  session_duration: "{{session_duration}}" # default 45 minutes
   
   # Observer-related inputs
   observer_assignment: "{{observer_assignment}}" # when adding observers
