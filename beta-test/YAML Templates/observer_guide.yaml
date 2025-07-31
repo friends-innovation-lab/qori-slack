@@ -20,6 +20,7 @@ inputs:
   meeting_link: "{{meeting_link}}"
   discussion_guide_link: "{{discussion_guide_link}}"
   study_context: "{{study_context}}"
+  triggered_by: "{{triggered_by}}" # observer_request, manual, participant_tracker
 
 # Role-specific content variations
 role_content:
@@ -70,3 +71,374 @@ role_content:
       - "Connect user behaviors to product decisions"
       - "Identify feature gaps and opportunities"
       - "Note business implications of user pain points"
+      - "Assess market fit and user satisfaction signals"
+    specific_instructions:
+      - "Focus on 'why' behind user actions and reactions"
+      - "Note potential product improvements or new features"
+      - "Consider business impact of observed pain points"
+      - "Think about scalability of user needs"
+    tools_needed:
+      - "Business impact assessment framework"
+      - "Feature opportunity tracker"
+      - "User journey mapping template"
+    post_session_tasks:
+      - "Document business insights within 4 hours"
+      - "Identify top 3 product opportunities"
+      - "Share competitive analysis observations"
+      - "Suggest follow-up research questions"
+
+  stakeholder:
+    primary_focus: "Understand strategic implications and high-level user experience"
+    key_responsibilities:
+      - "Observe overall user satisfaction and sentiment"  
+      - "Note strategic alignment with business goals"
+      - "Identify policy or process improvement opportunities"
+      - "Assess accessibility and inclusion considerations"
+    specific_instructions:
+      - "Focus on big-picture user experience themes"
+      - "Note any compliance or accessibility concerns"
+      - "Observe alignment with organizational priorities"
+      - "Minimal note-taking - focus on listening and understanding"
+    tools_needed:
+      - "Strategic observation checklist"
+      - "Policy alignment framework"
+      - "High-level insight template"
+    post_session_tasks:
+      - "Provide strategic feedback within 24 hours"
+      - "Identify organizational action items"
+      - "Note resource needs or process changes"
+      - "Share insights with leadership team"
+
+# Session type considerations
+session_considerations:
+  remote:
+    prep_requirements:
+      - "Test meeting platform and audio/video 15 minutes early"
+      - "Ensure stable internet connection and backup plan"
+      - "Set up dual monitor if possible for notes and observation"
+      - "Mute yourself upon joining and stay muted throughout"
+    technical_setup:
+      - "Close unnecessary applications to prevent notifications"
+      - "Use headphones to avoid audio feedback"
+      - "Have researcher contact info readily available"
+      - "Test screen sharing if you need to share templates"
+    
+  in_person:
+    prep_requirements:
+      - "Arrive 15 minutes early for setup and introductions"
+      - "Bring physical notepad and backup pens"
+      - "Locate bathroom, water, and emergency exits"
+      - "Silence all devices completely"
+    logistics:
+      - "Sit where you can observe participant without being distracting"
+      - "Avoid moving around during session"
+      - "Make eye contact with researcher if urgent issue arises"
+      - "Stay after session for immediate debrief"
+      
+  sensitive_topic:
+    special_considerations:
+      - "Be extra mindful of participant comfort and emotional state"
+      - "Avoid any visible reactions to sensitive information"
+      - "Be prepared for participant to become emotional or upset"
+      - "Respect confidentiality even more strictly than usual"
+    observer_conduct:
+      - "Minimize note-taking on sensitive personal details"
+      - "Focus on process and experience rather than content"
+      - "Be prepared to leave session if participant requests privacy"
+      - "Debrief sensitively and professionally"
+
+# Experience level guidance
+experience_guidance:
+  first_time:
+    additional_prep:
+      - "Review complete observer guidelines 24 hours before session"
+      - "Schedule 15-minute prep call with researcher"
+      - "Practice using note-taking templates if applicable"
+      - "Understand how to handle technical issues during session"
+    reassurance_points:
+      - "Your fresh perspective is valuable - don't worry about being 'expert'"
+      - "Focus on being respectful and professional"
+      - "When in doubt, do nothing and ask researcher after session"
+      - "Mistakes happen - just learn and apply to next session"
+      
+  experienced:
+    efficiency_notes:
+      - "You know the drill - focus on role-specific objectives"
+      - "Feel free to bring your own tools if they're more effective"
+      - "Share any process improvements with research team"
+      - "Mentor new observers when possible"
+
+prompt: |
+  You are creating personalized observer guidelines for a VA research session. Generate comprehensive, role-specific guidance that prepares the observer for their responsibilities and ensures a successful session experience.
+
+  **Observer Details:**
+  - **Observer:** {{observer_name}}
+  - **Role:** {{observer_role}}
+  - **Experience:** {{observer_experience}}
+  - **Session:** {{session_id}} - {{participant_name}}
+  - **Date/Time:** {{session_date}} at {{session_time}}
+  - **Duration:** {{session_duration}}
+  - **Study:** {{study_name}}
+  - **Session Type:** {{session_type}}
+  - **Researcher:** {{researcher_contact}}
+
+  **Session Context:**
+  {{study_context}}
+
+  **Instructions:**
+  
+  1. **Role-Specific Guidance**: Use role_content for {{observer_role}} to provide specific responsibilities and focus areas
+  2. **Experience-Level Customization**: Adapt guidance based on {{observer_experience}} level
+  3. **Session-Type Preparation**: Include relevant prep based on {{session_type}} requirements
+  4. **Practical Information**: Include all meeting details, contact info, and logistics
+  5. **Professional Standards**: Emphasize VA research standards, confidentiality, and trauma-informed approaches
+
+  **Generate comprehensive observer guidelines that:**
+  - Prepare observer for their specific role and responsibilities
+  - Provide practical session logistics and technical setup
+  - Include professional conduct expectations
+  - Offer post-session requirements and next steps
+  - Address observer experience level appropriately
+
+output_format: |
+  # 👀 Observer Guidelines – {{study_name}}
+  
+  **Welcome {{observer_name}}!** You've been confirmed as **{{observer_role}}** for this research session.
+  
+  ## 📋 Session Overview
+  
+  - **Session:** {{session_id}} - {{participant_name}}
+  - **Date & Time:** {{session_date}} at {{session_time}} ({{session_duration}})
+  - **Format:** {{session_type}}
+  - **Study:** {{study_name}}
+  - **Lead Researcher:** {{researcher_contact}}
+  - **Meeting Link:** {{meeting_link}}
+  
+  ---
+  
+  ## 🎯 Your Role: {{observer_role}}
+  
+  **Primary Focus:** [Insert role-specific primary focus from role_content]
+  
+  ### 📝 Key Responsibilities:
+  [Generate bullet list from role_content key_responsibilities for {{observer_role}}]
+  
+  ### ⚡ Specific Instructions:
+  [Generate specific instructions from role_content for {{observer_role}}]
+  
+  ### 🛠️ Tools You'll Need:
+  [List tools_needed from role_content for {{observer_role}}]
+  
+  ---
+  
+  ## 🔧 Session Preparation
+  
+  ### 📚 Background Reading:
+  - **Study Context:** {{study_context}}
+  - **Discussion Guide:** {{discussion_guide_link}} (if available)
+  - **Previous Session Notes:** Contact {{researcher_contact}} if you need context from prior sessions
+  
+  ### 💻 Technical Setup:
+  [Generate session type-specific technical requirements from session_considerations]
+  
+  ### ⏰ Timeline:
+  - **15 minutes before:** [Session type-specific prep activities]
+  - **5 minutes before:** Final technical check and researcher connection
+  - **During session:** Focus on your observer role responsibilities
+  - **Immediately after:** Brief debrief with research team
+  
+  ---
+  
+  ## 📖 Professional Guidelines
+  
+  ### 🤐 Confidentiality Requirements:
+  - All participant information is strictly confidential
+  - Do not discuss participant details outside of research team
+  - Securely store and share any notes according to VA data policies
+  - Ask researcher about proper data handling for your notes
+  
+  ### 🎭 Observer Conduct:
+  - Stay muted/silent throughout the session unless emergency
+  - Avoid visible reactions that might influence participant
+  - Be respectful of participant's time, emotions, and experiences
+  - Follow trauma-informed research practices
+  
+  ### 🚨 If Issues Arise:
+  - **Technical problems:** Contact {{researcher_contact}} immediately
+  - **Participant distress:** Allow researcher to handle, stay professional
+  - **Urgent situations:** Use researcher emergency contact protocol
+  
+  ---
+  
+  ## 📝 During the Session
+  
+  ### 🎯 Focus Areas for {{observer_role}}:
+  [Customize based on observer_role - what specifically to watch for and document]
+  
+  ### 📋 Note-Taking Guidelines:
+  [Role-specific note-taking instructions]
+  
+  ### 🔍 Key Moments to Capture:
+  - Participant reactions to specific tasks or questions
+  - Points of confusion, frustration, or delight
+  - Accessibility challenges or accommodation needs
+  - Technical issues or platform difficulties
+  
+  ---
+  
+  ## ✅ Post-Session Requirements
+  
+  ### 📤 Immediate Actions (within 2-4 hours):
+  [Generate role-specific post_session_tasks from role_content]
+  
+  ### 📊 Deliverables:
+  [Specify what observer needs to provide and when]
+  
+  ### 🤝 Team Debrief:
+  - Participate in immediate post-session discussion
+  - Share key insights and observations
+  - Ask questions about anything you observed
+  - Provide feedback on session process if requested
+  
+  ---
+  
+  ## 📞 Contact Information
+  
+  **Lead Researcher:** {{researcher_contact}}
+  **Session Emergency Contact:** [Include emergency researcher contact]
+  **Technical Support:** [Include IT support if needed]
+  
+  **Questions Before Session:**
+  - Contact {{researcher_contact}} at least 24 hours before session
+  - Join optional observer prep call if available
+  - Review any additional materials provided
+  
+  ---
+  
+  ## 🌟 Additional Guidance
+  
+  [Include experience_guidance content based on {{observer_experience}}]
+  
+  ### 💡 Success Tips:
+  - Your perspective is valuable - bring your authentic observations
+  - When in doubt, observe more and document less
+  - Focus on participant experience rather than product critique
+  - Remember you're there to learn, not to solve problems in real-time
+  
+  ### 🔄 Continuous Improvement:
+  - Provide feedback on observer experience after session
+  - Suggest improvements to observer guidelines
+  - Share insights that could help future observers
+  
+  ---
+  
+  **🎯 Remember:** Your role is to support the research team by providing {{observer_role}} perspective while maintaining the highest standards of professionalism and respect for our participants.
+  
+  **Questions?** Contact {{researcher_contact}} - we're here to help make this a successful experience for everyone!
+  
+  ---
+  
+  *Observer guidelines generated for {{observer_name}} on {{current_date}}*
+
+# Output configuration
+output_options:
+  filename: "observer_guide_{{observer_name}}_{{session_id}}_{{current_date}}.md"
+  path: "02-participants/observer-guides/"
+  generate_index: true
+  index_filename: "README.md"
+  
+  delivery:
+    github:
+      enabled: true
+      repo: "your-research-repo"
+      path: "02-participants/observer-guides/"
+      commit_message: "Observer guide: {{observer_name}} for {{session_id}}"
+      
+    slack:
+      enabled: true
+      send_dm: true
+      target_user: "{{observer_slack_id}}"
+      include_copy_button: true
+      include_email_format: false
+      
+      message: >
+        👀 **Observer Guidelines Ready!**
+        
+        Your role-specific guidelines for **{{session_id}}** are ready:
+        
+        **📋 Your Role:** {{observer_role}}
+        **📅 Session:** {{session_date}} at {{session_time}}
+        **⏱️ Duration:** {{session_duration}}
+        
+        **🔍 Key Focus:** [Role-specific primary focus]
+        
+        💾 Full guidelines saved to: `{{filename}}`
+        
+        **📞 Questions?** Contact {{researcher_contact}}
+      
+      actions:
+        - text: "📋 View Full Guidelines"
+          style: "primary"
+          action_type: "url"
+          url: "{{github_file_url}}"
+          
+        - text: "📅 Add to Calendar"
+          style: "default"
+          action_type: "calendar"
+          event_details:
+            title: "Observer: {{session_id}}"
+            date: "{{session_date}}"
+            time: "{{session_time}}"
+            duration: "{{session_duration}}"
+            description: "Observer role: {{observer_role}}"
+            
+        - text: "📞 Contact Researcher"
+          style: "default"
+          action_type: "slack_dm"
+          target: "{{researcher_contact}}"
+
+# Workflow integration points
+workflow_integration:
+  triggered_by:
+    - "observer_request_approved"
+    - "participant_tracker_observer_added"
+    - "manual_observer_assignment"
+  
+  auto_triggers:
+    observer_request_approved:
+      enabled: true
+      delay: "immediate"
+      conditions:
+        - "observer_role != null"
+        - "session_date != null"
+    
+    participant_tracker_observer_added:
+      enabled: true
+      delay: "5 minutes"
+      conditions:
+        - "observer_status == confirmed"
+  
+  integration_data:
+    observer_request:
+      maps_to:
+        observer_name: "requesting_user_name"
+        observer_role: "requested_role"
+        observer_experience: "observer_experience"
+    
+    participant_tracker:
+      maps_to:
+        observer_name: "observer_user_name"
+        session_id: "participant_id"
+        session_date: "scheduled_date"
+        session_time: "scheduled_time"
+
+# Notification routing
+notification_routing:
+  primary_observer: "{{observer_slack_id}}"
+  researcher_copy: "{{researcher_slack_id}}"
+  team_notification: "{{study_channel}}"
+  
+  escalation:
+    no_response_timeout: "4 hours"
+    escalate_to: "{{researcher_contact}}"
+    escalation_message: "Observer {{observer_name}} has not acknowledged guidelines for {{session_id}}"
