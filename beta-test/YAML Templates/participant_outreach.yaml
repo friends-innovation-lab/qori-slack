@@ -416,7 +416,7 @@ processing_workflow:
   5. save_to_github
   6. send_to_slack
 
-# RESTORED - Output template for GitHub files (developers expect this)
+# Output template for GitHub files (developers expect this)
 output_template: >
   # {{study_name}} - {{message_type}} Message
   
