@@ -21,6 +21,14 @@ inputs:
   import_source: "{{import_source}}" # manual, calendly, csv
   existing_participants: "{{existing_participants}}" # for updates
   
+  # Observer-related inputs
+  observer_assignment: "{{observer_assignment}}" # when adding observers
+  observer_user_id: "{{observer_user_id}}"
+  observer_user_name: "{{observer_user_name}}"
+  observer_role: "{{observer_role}}"
+  observer_status: "{{observer_status}}" # confirmed, pending, removed
+  triggered_by_observer_request: "{{triggered_by_observer_request}}" # true/false
+  
 # Participant status mappings
 status_mappings:
   recruited: 
@@ -108,7 +116,7 @@ session_structure:
         submitted_at: "{{feedback_timestamp}}"
 
 prompt: |
-  You are managing a participant tracker for a VA research study. Generate or update a comprehensive participant tracking table based on the provided participant information.
+  You are managing a participant tracker for a VA research study. Generate or update a comprehensive participant tracking table based on the provided participant information and observer assignments.
 
   **Study Details:**
   - Study: {{study_name}}
@@ -122,6 +130,13 @@ prompt: |
   - Added by: {{added_by}}
   - Added on: {{current_date}}
 
+  **Observer Information** (if applicable):
+  - Observer Assignment: {{observer_assignment}}
+  - Observer: {{observer_user_name}} ({{observer_user_id}})
+  - Observer Role: {{observer_role}}
+  - Observer Status: {{observer_status}}
+  - Triggered by Observer Request: {{triggered_by_observer_request}}
+
   **Instructions:**
   
   1. **Generate Participant ID**: Create a unique participant ID (P01, P02, etc.) based on existing participants count
@@ -130,6 +145,14 @@ prompt: |
   4. **Scheduling**: Format date/time clearly, handle TBD cases appropriately
   5. **Notes Management**: Include accommodations, demographics, recruitment source details
   6. **Recruitment Tracking**: Show recruitment method and track effectiveness
+  7. **Observer Management**: Update observer assignments, track capacity, manage guidelines delivery
+
+  **Observer Integration Logic:**
+  - If {{triggered_by_observer_request}} is true, this update was triggered by an approved observer request
+  - Update observer tables with new assignments
+  - Track observer capacity per session (max 3)
+  - Generate action items for observer guideline delivery
+  - Include observer status in session scheduling section
 
   **Privacy Guidelines:**
   - Use participant aliases or initials instead of full names when possible
@@ -140,13 +163,14 @@ prompt: |
   **Calculations:**
   - Count total participants, confirmed sessions, pending responses, completed sessions
   - Calculate recruitment method breakdown with percentages
+  - Track observer assignments and capacity utilization
   - Generate action items based on current status and missing information
-  - Suggest next steps for recruitment and scheduling
+  - Suggest next steps for recruitment, scheduling, and observer coordination
 
   **Existing Participants** (if updating tracker):
   {{existing_participants}}
 
-  Generate a complete, well-organized participant tracker that includes this new participant and maintains all existing participant data.
+  Generate a complete, well-organized participant tracker that includes this new participant/observer update and maintains all existing participant data with enhanced observer management.
 
 output_format: |
   # 👥 Participant Tracker – {{study_name}}
@@ -156,6 +180,7 @@ output_format: |
   - **Confirmed Sessions:** [Count confirmed status]
   - **Pending Responses:** [Count pending status]
   - **Completed Sessions:** [Count completed status]
+  - **Observer Assignments:** [Count total observer assignments across all sessions]
   - **Last Updated:** {{current_date}} by {{added_by}}
 
   ---
@@ -182,7 +207,7 @@ output_format: |
   ## 📅 Session Schedule
 
   ### ✅ Confirmed Sessions
-  [List all confirmed sessions with dates, times, and participant IDs]
+  [List all confirmed sessions with dates, times, participant IDs, and observer assignments]
 
   ### ⏳ Pending Scheduling
   [List participants who need session scheduling]
@@ -192,27 +217,27 @@ output_format: |
 
   ---
 
-  ## 🔍 Action Items
-
-  **🚨 Immediate Actions:**
-  [Generate specific action items based on participant statuses and missing information]
-
-  **📞 Follow-up Needed:**
-  [List participants who need follow-up contact]
-
-  **📋 Recruitment Needs:**
-  [Assess if more participants are needed and suggest recruitment strategies]
-
-  ---
-
   ## 👥 Observer Management
 
   **Session Observer Assignments:**
-  [Generate table showing observer assignments for each confirmed session]
+  [Generate detailed table showing observer assignments for each session]
 
-  | Session | Date/Time | Observers | Capacity | Pending Requests |
-  |---------|-----------|-----------|----------|------------------|
-  | [Show actual observer data for each session] |
+  | Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
+  |---------|-----------|-----------|----------|------------------|-----------------|
+  | [Show observer data for each session including guideline delivery status] |
+
+  **Observer Role Distribution:**
+  | Role | Count | Sessions |
+  |------|-------|----------|
+  | 📝 Note-taker | [count] | [session list] |
+  | 👁️ Silent Observer | [count] | [session list] |
+  | 📊 PM Observer | [count] | [session list] |
+  | 🏛️ Stakeholder | [count] | [session list] |
+
+  **Observer Guidelines Status:**
+  - **✅ Guidelines Sent:** [List observers who have received guidelines]
+  - **⏳ Pending Delivery:** [List observers awaiting guidelines]
+  - **🔄 Updates Needed:** [List observers needing updated guidelines]
 
   **Observer Guidelines:** 
   - Review session plan before observing
@@ -222,6 +247,32 @@ output_format: |
 
   **🔄 Observer Action Items:**
   [Generate specific observer-related tasks based on current assignments and gaps]
+  - [ ] Send guidelines to newly assigned observers
+  - [ ] Update existing observers with session changes
+  - [ ] Confirm observer availability 24hrs before sessions
+  - [ ] Prepare observer-specific materials (templates, frameworks)
+
+  ---
+
+  ## 🔍 Action Items
+
+  **🚨 Immediate Actions:**
+  [Generate specific action items based on participant statuses and observer assignments]
+
+  **📞 Follow-up Needed:**
+  [List participants who need follow-up contact]
+
+  **👀 Observer Coordination:**
+  [List observer-specific action items]
+  {% if triggered_by_observer_request %}
+  - [ ] ✅ {{observer_user_name}} approved for {{session_id}} as {{observer_role}}
+  - [ ] 📤 Send observer guidelines to {{observer_user_name}}
+  - [ ] 📅 Add {{observer_user_name}} to {{session_id}} calendar invite
+  - [ ] 🔄 Update session capacity tracking
+  {% endif %}
+
+  **📋 Recruitment Needs:**
+  [Assess if more participants are needed and suggest recruitment strategies]
 
   ---
 
@@ -236,6 +287,7 @@ output_format: |
   - [ ] Screen reader compatibility tested
   - [ ] Alternative formats prepared
   - [ ] Session timing accommodations noted
+  - [ ] Observer accessibility needs considered
 
   ---
 
@@ -252,13 +304,15 @@ output_format: |
   - Include accommodation needs for proper session planning
   - Track recruitment sources to analyze effectiveness
   - Coordinate with observers before each session
+  - Send observer guidelines immediately upon assignment
 
   **🔄 Next Steps:**
   [Generate specific recommendations based on current tracker status:
   - If under target: suggest recruitment strategies
   - If scheduling gaps: suggest scheduling optimization
   - If accommodations needed: reminder to arrange services
-  - If observers needed: suggest adding team members]
+  - If observers needed: suggest adding team members
+  - If observer guidelines pending: immediate delivery required]
 
 # Output configuration
 output_options:
@@ -286,9 +340,15 @@ output_options:
         
         💾 Saved to: `{{filename}}`
         
+        {% if participant_name %}
         **Participant Added:** {{participant_name}}
         **Status:** {{status_select}}
         **Recruitment Source:** {{recruitment_source}}
+        {% endif %}
+        
+        {% if observer_assignment %}
+        **Observer Update:** {{observer_user_name}} assigned as {{observer_role}}
+        {% endif %}
       
       actions:
         - text: "📋 View Tracker"
@@ -300,11 +360,104 @@ output_options:
           style: "default"
           action_type: "modal"
           modal_id: "participant_tracker"
-  
+
+# Enhanced notification system with observer integration
 notify:
   - role: researcher
     action: "Participant added to tracker"
     slack_tag: "@{{added_by}}"
+    condition: "participant_name != null"
+    
   - role: team
     action: "Recruitment status update"
     channel: "{{study_channel}}"
+    condition: "participant_name != null"
+    
+  # NEW: Observer notifications
+  - role: observer
+    action: "Added to session"
+    slack_dm: "{{observer_user_id}}"
+    condition: "observer_assignment == true"
+    message: >
+      👀 **You've been assigned as observer!**
+      
+      **Session:** {{session_id}} - {{participant_name}}
+      **Date:** {{scheduled_date}} at {{scheduled_time}}
+      **Your Role:** {{observer_role}}
+      
+      📋 Observer guidelines are being sent to you now with session-specific preparation materials.
+    auto_trigger: "observer_guide"
+    trigger_params:
+      observer_name: "{{observer_user_name}}"
+      observer_role: "{{observer_role}}"
+      session_id: "{{session_id}}"
+      participant_name: "{{participant_name}}"
+      session_date: "{{scheduled_date}}"
+      session_time: "{{scheduled_time}}"
+      
+  - role: researcher
+    action: "Observer assigned to session"
+    slack_tag: "@{{researcher_slack_id}}"
+    condition: "observer_assignment == true"
+    message: "✅ {{observer_user_name}} confirmed as {{observer_role}} for {{session_id}}"
+
+# Workflow integration with observer request system
+workflow_integration:
+  triggers:
+    observer_request_approved:
+      enabled: true
+      action: "update_tracker_with_observer"
+      data_mapping:
+        observer_user_id: "requesting_user"
+        observer_user_name: "requesting_user_name"
+        observer_role: "requested_role"
+        session_id: "session_id"
+        triggered_by_observer_request: true
+      
+    manual_observer_assignment:
+      enabled: true
+      action: "update_tracker_with_observer"
+      
+  auto_triggers:
+    observer_guidelines:
+      condition: "observer_assignment == true AND observer_status == confirmed"
+      target_workflow: "observer_guide"
+      delay: "immediate"
+      
+    capacity_alert:
+      condition: "observer_count >= 3"
+      action: "notify_researcher_capacity_reached"
+      
+# Integration data mappings for cross-workflow communication
+integration_mappings:
+  from_observer_request:
+    requesting_user: "observer_user_id"
+    requesting_user_name: "observer_user_name" 
+    requested_role: "observer_role"
+    session_id: "session_id"
+    
+  to_observer_guide:
+    observer_user_name: "observer_name"
+    observer_role: "observer_role"
+    session_id: "session_id"
+    participant_name: "participant_name"
+    scheduled_date: "session_date"
+    scheduled_time: "session_time"
+
+# Capacity management and validation
+capacity_management:
+  max_observers_per_session: 3
+  role_limits:
+    note_taker: 1
+    stakeholder: 1
+    pm_observer: 2
+    silent_observer: 3
+    
+  validation_rules:
+    - check_session_capacity_before_assignment
+    - validate_observer_role_limits
+    - confirm_no_duplicate_assignments
+    
+  overflow_handling:
+    action: "create_waitlist"
+    notification: "notify_researcher_and_requester"
