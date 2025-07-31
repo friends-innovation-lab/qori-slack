@@ -260,6 +260,47 @@ output_format: |
   - If accommodations needed: reminder to arrange services
   - If observers needed: suggest adding team members]
 
+# Output configuration
+output_options:
+  filename: "{{study_name}}_participant_tracker_{{current_date}}.md"
+  path: "02-participants/"
+  generate_index: true
+  index_filename: "README.md"
+  
+  delivery:
+    github:
+      enabled: true
+      repo: "your-research-repo"
+      path: "02-participants/"
+      commit_message: "Update participant tracker for {{study_name}}"
+      
+    slack:
+      enabled: true
+      send_dm: true
+      target_user: "{{slack_user_id}}"
+      include_copy_button: true
+      include_email_format: false
+      
+      message: >
+        👥 **Participant Tracker Updated** for {{study_name}}
+        
+        💾 Saved to: `{{filename}}`
+        
+        **Participant Added:** {{participant_name}}
+        **Status:** {{status_select}}
+        **Recruitment Source:** {{recruitment_source}}
+      
+      actions:
+        - text: "📋 View Tracker"
+          style: "primary"
+          action_type: "url"
+          url: "{{github_file_url}}"
+          
+        - text: "👥 Add Another Participant"
+          style: "default"
+          action_type: "modal"
+          modal_id: "participant_tracker"
+  
 notify:
   - role: researcher
     action: "Participant added to tracker"
