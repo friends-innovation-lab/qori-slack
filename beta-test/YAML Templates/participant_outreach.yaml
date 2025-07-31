@@ -267,7 +267,7 @@ ai_generation_tasks:
       
       Return ONLY the subject line, no quotes or additional text.
 
-  - task_id: "email_body" 
+  - task_id: "email_body"
     prompt: >
       Create a trauma-informed {{message_type}} email for the {{study_name}} research study using a {{tone}} tone.
       
@@ -282,101 +282,60 @@ ai_generation_tasks:
       
       TONE GUIDELINES:
       
-      **FRIENDLY tone** - Warm, welcoming, conversational but professional:
-      - Use: "Hi {{participant_name}}", "We'd love to hear", "Your thoughts would be valuable", "Thanks for considering"
+      FRIENDLY tone - Warm, welcoming, conversational but professional:
+      - Use: Hi {{participant_name}}, We would love to hear, Your thoughts would be valuable, Thanks for considering
       - Avoid: formal language, overly clinical terms
-      - Example opening: "Hi Sarah, I hope you're doing well. We're looking for veterans to share their experiences..."
+      - Example opening: Hi Sarah, I hope you are doing well. We are looking for veterans to share their experiences...
       
-      **FORMAL tone** - Professional, respectful, structured:
-      - Use: "Dear {{participant_name}}", "We are conducting", "Your participation would be valuable", "Thank you for your consideration"
+      FORMAL tone - Professional, respectful, structured:
+      - Use: Dear {{participant_name}}, We are conducting, Your participation would be valuable, Thank you for your consideration
       - Maintain professional distance while being respectful
-      - Example opening: "Dear Mr. Johnson, We are writing to invite you to participate in our research study..."
+      - Example opening: Dear Mr. Johnson, We are writing to invite you to participate in our research study...
       
-      **CASUAL tone** - Relaxed, approachable, like talking to a friend:
-      - Use: "Hey {{participant_name}}", "We're hoping you might be interested", "It would be great to get your input", "Let me know what you think"
+      CASUAL tone - Relaxed, approachable, like talking to a friend:
+      - Use: Hey {{participant_name}}, We are hoping you might be interested, It would be great to get your input, Let me know what you think
       - Keep it conversational but still respectful
-      - Example opening: "Hey Alex, Hope you're having a good week. We're working on a project that could really use your input..."
+      - Example opening: Hey Alex, Hope you are having a good week. We are working on a project that could really use your input...
       
       LANGUAGE REQUIREMENTS:
       - Use simple, clear language (10th grade reading level)
-      - AVOID these words/phrases: "aim", "seek to", "endeavor", "utilize", "facilitate", "implement", "optimal", "objective"
-      - USE instead: "want to", "hope to", "work to", "use", "help", "do", "best", "goal"
+      - AVOID these words: aim, seek to, endeavor, utilize, facilitate, implement, optimal, objective
+      - USE instead: want to, hope to, work to, use, help, do, best, goal
       - Be direct and specific rather than academic
-      - Focus on "what's in it for them" and "how easy it is"
+      - Focus on what is in it for them and how easy it is
       
       SAMPLE LANGUAGE PATTERNS:
-      - Instead of: "We aim to understand..." → "We want to learn about..."
-      - Instead of: "This study seeks to..." → "This study will help us..."
-      - Instead of: "Your input would facilitate..." → "Your input will help us..."
-      - Instead of: "We endeavor to..." → "We're working to..."
+      - Instead of: We aim to understand... → We want to learn about...
+      - Instead of: This study seeks to... → This study will help us...
+      - Instead of: Your input would facilitate... → Your input will help us...
+      - Instead of: We endeavor to... → We are working to...
       
-      {% if message_type == "initial_recruitment" %}
-      RECRUITMENT CONTENT (use these exact values):
-      - Study Description: "{{study_description}}"
-      - Signup Instructions: "{{signup_instructions}}"
-      {% if incentive_amount %}
-      - Incentive Amount: {{incentive_amount}}
-      {% endif %}
+      For initial_recruitment messages:
+      - Use Study Description: {{study_description}}
+      - Use Signup Instructions: {{signup_instructions}}
+      - Use Incentive Amount: {{incentive_amount}} (if provided)
       
-      Write a complete email that:
-      1. Greets {{participant_name}} using {{tone}} style
-      2. Explains the study: {{study_description}} (rewrite in simple terms if needed)
-      3. Describes what participation involves based on the study description
-      4. Mentions compensation: {{incentive_amount}} (if provided)
-      5. Provides signup instructions: {{signup_instructions}}
-      6. Emphasizes voluntary participation and easy opt-out
-      7. Includes researcher contact info
+      Write a complete email that greets {{participant_name}} using {{tone}} style, explains the study in simple terms, describes what participation involves, mentions compensation if provided, provides signup instructions, emphasizes voluntary participation, and includes researcher contact info.
       
-      SAMPLE RECRUITMENT OPENERS BY TONE:
-      - Friendly: "Hi {{participant_name}}, I hope you're doing well. We're working on improving [service] and would love to get your thoughts..."
-      - Formal: "Dear {{participant_name}}, We are writing to invite you to participate in a research study about [topic]. Your experience would be valuable..."
-      - Casual: "Hey {{participant_name}}, Hope your week is going well. We're working on a project to make [service] better and could really use your input..."
-      {% endif %}
+      For session_confirmation and session_reminder messages:
+      - Use Date: {{session_date}}
+      - Use Time: {{session_time}}
+      - Use Duration: {{session_duration}}
+      - Use Meeting Link: {{meeting_link}}
+      - Use Meeting ID: {{meeting_id}}
+      - Use Dial-in Number: {{dial_in_number}}
       
-      {% if message_type == "session_confirmation" %}
-      SESSION DETAILS (use these exact values):
-      - Date: {{session_date}}
-      - Time: {{session_time}}
-      - Duration: {{session_duration}}
-      - Meeting Link: {{meeting_link}}
-      - Meeting ID: {{meeting_id}}
-      - Dial-in Number: {{dial_in_number}}
+      For rescheduling_request messages:
+      - Use Original Date: {{session_date}}
+      - Use Original Time: {{session_time}}
+      - Use Reason: {{reschedule_reason}}
+      - Use New Options: {{reschedule_options}}
       
-      Write a complete email that confirms their session with all technical details using {{tone}} style.
-      {% endif %}
-      
-      {% if message_type == "session_reminder" %}
-      SESSION DETAILS (use these exact values):
-      - Date: {{session_date}}
-      - Time: {{session_time}}
-      - Duration: {{session_duration}}
-      - Meeting Link: {{meeting_link}}
-      - Meeting ID: {{meeting_id}}
-      - Dial-in Number: {{dial_in_number}}
-      
-      Write a friendly reminder email with all session access information using {{tone}} style.
-      {% endif %}
-      
-      {% if message_type == "rescheduling_request" %}
-      RESCHEDULING INFO (use these exact values):
-      - Original Date: {{session_date}}
-      - Original Time: {{session_time}}
-      - Reason: {{reschedule_reason}}
-      - New Options: {{reschedule_options}}
-      
-      Write an apologetic email requesting to reschedule with the new options provided using {{tone}} style.
-      {% endif %}
-      
-      {% if message_type == "follow_up" %}
+      For follow_up messages:
       Write a gentle follow-up email checking if {{participant_name}} is still interested in the {{study_name}} study using {{tone}} style.
-      {% endif %}
       
-      {% if message_type == "thank_you" %}
-      Write a grateful thank-you email to {{participant_name}} for participating in {{study_name}} using {{tone}} style.
-      {% if incentive_amount %}
-      Mention the {{incentive_amount}} compensation.
-      {% endif %}
-      {% endif %}
+      For thank_you messages:
+      Write a grateful thank-you email to {{participant_name}} for participating in {{study_name}} using {{tone}} style. Mention {{incentive_amount}} compensation if provided.
       
       VA Research Standards:
       - Use trauma-informed language (avoid pressure, emphasize choice)
@@ -392,7 +351,7 @@ ai_generation_tasks:
       On behalf of the Department of Veterans Affairs
       Email: {{researcher_email}}
       
-      *This research is conducted in accordance with VA research standards and IRB approval.*
+      This research is conducted in accordance with VA research standards and IRB approval.
 
   - task_id: "followup_suggestions"
     prompt: >
@@ -458,16 +417,14 @@ output_options:
       repo: "your-research-repo"
       path: "02-participants/outreach/"
       commit_message: "Add {{message_type}} message for {{participant_name}}"
-      # GitHub uses the full output_template defined above
       
     slack:
       enabled: true
       send_dm: true
       target_user: "{{slack_user_id}}"
       include_copy_button: true
-      include_email_format: false  # Changed to false to prevent showing full template
+      include_email_format: false
       
-      # Clean message for Slack display (no markdown metadata)
       message: >
         📧 Generated {{message_type|replace("_", " ")}} message for **{{participant_name}}** in {{study_name}}
         
@@ -594,7 +551,7 @@ message_type_descriptions:
   follow_up: "Check in when participant hasn't responded"
   thank_you: "Post-session thank you with next steps"
 
-# Tone examples for AI generation (place this as its own section)
+# Tone examples for AI generation
 tone_examples:
   friendly: 
     sample_phrases: ["Hi there", "We'd love to hear", "Thanks for considering", "Hope you're doing well"]
