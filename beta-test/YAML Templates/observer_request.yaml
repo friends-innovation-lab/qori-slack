@@ -18,7 +18,6 @@ inputs:
   observer_experience: "{{observer_experience}}" # first_time, experienced
   researcher_contact: "{{researcher_contact}}"
   researcher_slack_id: "{{researcher_slack_id}}"
-  current_observers: "{{current_observers}}" # existing observer count
   existing_observer_list: "{{existing_observer_list}}" # who's already observing
   max_capacity: 3
   request_timestamp: "{{current_date}}"
