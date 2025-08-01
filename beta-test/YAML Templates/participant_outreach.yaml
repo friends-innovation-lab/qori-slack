@@ -379,14 +379,14 @@ processing_workflow:
 output_template: >
   # {{study_name}} - {{message_type}} Message
   
-  **Participant:** {{participant_name}}  
-  **Generated:** {{current_date}}  
-  **Message Type:** {{message_type}}  
+  # Participant: {{participant_name}}  
+  # Generated: {{current_date}}  
+  # Message Type: {{message_type}}  
 
-  **Subject:** {{ai_generated.subject_line}}
+  #Subject: {{ai_generated.subject_line}}
   
-  **To:** {{participant_name}}  
-  **From:** {{researcher_name}} <{{researcher_email}}>
+  #To: {{participant_name}}  
+  #From: {{researcher_name}} <{{researcher_email}}>
   
   ---
   
