@@ -175,7 +175,7 @@ prompt: |
 
   Generate a complete, well-organized participant tracker that includes this new participant/observer update and maintains all existing participant data with enhanced observer management.
 
-output_format: |
+output_template: |
   # 👥 Participant Tracker – {{study_name}}
 
   **📊 Recruitment Summary**
