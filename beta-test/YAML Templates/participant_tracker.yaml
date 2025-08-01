@@ -118,7 +118,7 @@ session_structure:
         themes: ["{{theme1}}", "{{theme2}}"]
         submitted_at: "{{feedback_timestamp}}"
 
-prompt: |
+ai_generation_tasks: |
   You are managing a participant tracker for a VA research study. Generate or update a comprehensive participant tracking table based on the provided participant information and observer assignments.
 
   **Study Details:**
