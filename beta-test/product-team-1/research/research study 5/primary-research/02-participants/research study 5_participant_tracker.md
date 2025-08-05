@@ -14,7 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
-| 1 | Abdul | abdul@gmail.com | email_outreach | 2025-08-28  | backup_participant | no |
+| 1 | Tanzeel | tanzeel@gmail.com | internal_va_panel | 2025-08-31  | rescheduling_needed | no |
 
 ---
 
