@@ -136,7 +136,7 @@ output_template: |
   | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
   |----|-----------|---------|-----------------|-----------|--------|----------------------|
   {{#each participants}}
-  | {{id}} | {{name}} | {{contact}} | {{recruitment_source}} | {{scheduled_date}} {{scheduled_time}} | {{status}} | {{notes}} |
+  | {{id}} | {{participant_name}} | {{contact_details}} | {{recruitment_source}} | {{scheduled_date}} {{scheduled_time}} | {{status_select}} | {{notes_field}} |
   {{/each}}
 
   ---
