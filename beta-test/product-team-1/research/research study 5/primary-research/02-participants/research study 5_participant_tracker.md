@@ -1,11 +1,11 @@
 # 👥 Participant Tracker – research study 5
 
 **📊 Recruitment Summary**
-- **Total Participants:** 
-- **Confirmed Sessions:** 
-- **Pending Responses:** 
-- **Completed Sessions:** 
-- **Observer Assignments:** 
+- **Total Participants:** 1
+- **Confirmed Sessions:** 0
+- **Pending Responses:** 0
+- **Completed Sessions:** 0
+- **Observer Assignments:** 0
 - **Last Updated:** August 5, 2025 by U08T1F4B347
 
 ---
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 1 | Tanzeel | tanzeel@gmail.com | internal_va_panel | 2025-08-26  | backup_participant | no |
 
 ---
 
