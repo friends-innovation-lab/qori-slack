@@ -275,7 +275,7 @@ output_template: |
 
 # Output configuration
 output_options:
-  filename: "{{study_name}}_participant_tracker_{{current_date}}.md"
+  filename: "{{study_name}}_participant_tracker.md"
   path: "02-participants/"
   generate_index: true
   index_filename: "README.md"
