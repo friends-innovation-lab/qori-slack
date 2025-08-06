@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – Assistive Technology Usability Test
 
 **📊 Recruitment Summary**
-- **Total Participants:** 4
+- **Total Participants:** 5
 - **Confirmed Sessions:** 2
 - **Pending Responses:** 2
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 5 | PT005 | n/A | calendly_signup | 2025-08-13 1:00 PM EST | recruited |  |
 | 4 | PT003 | johndoe@gmail.com | calendly_signup | 2025-08-13 11:00 am EST | pending_response |  |
 | 3 | Lulu Thomas | lulu@gmail.com | calendly_signup | 2025-08-20 10: 00 am CST | pending_response |  |
 | 2 | PT01 | Bessie Thomas | calendly_signup | 2025-08-26 11:00 am EST | confirmed | Prefers Morning Sessions |
@@ -25,10 +26,10 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| calendly_signup | 4 | 100% |
+| calendly_signup | 5 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
+Recruitment effectiveness: 40% conversion rate (2 confirmed of 5 recruited)
 
 ---
 
@@ -116,7 +117,7 @@ Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 3 of 4 participants
+Demographics collected for 4 of 5 participants
 
 ---
 
