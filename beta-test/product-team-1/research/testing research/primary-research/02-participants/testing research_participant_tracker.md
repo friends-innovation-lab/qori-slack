@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – testing research
 
 **📊 Recruitment Summary**
-- **Total Participants:** 9
-- **Confirmed Sessions:** 3
+- **Total Participants:** 10
+- **Confirmed Sessions:** 4
 - **Pending Responses:** 5
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 22 | hello | hello | calendly_signup | 2025-08-19 2pm | confirmed | no |
 | 20 | hello | test | calendly_signup | 2025-08-25 2pk | confirmed | jo |
 | 19 | hello | test@gmail.com | email_outreach | 2025-08-18 2:00 pm | rescheduling_needed | NO |
 | 18 | abdyll | test@gmail.com | phone_recruitment | 2025-08-18 2:00 PM | pending_response | NO |
@@ -30,19 +31,21 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| calendly_signup | 3 | 33% |
-| 📧 Email Outreach | 2 | 22% |
-| phone_recruitment | 3 | 33% |
-| 🤝 Referral | 1 | 11% |
+| calendly_signup | 4 | 40% |
+| 📧 Email Outreach | 2 | 20% |
+| phone_recruitment | 3 | 30% |
+| 🤝 Referral | 1 | 10% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 33% conversion rate (3 confirmed of 9 recruited)
+Recruitment effectiveness: 40% conversion rate (4 confirmed of 10 recruited)
 
 ---
 
 ## 📅 Session Schedule
 
 ### ✅ Confirmed Sessions
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 - **** -  at 
@@ -114,6 +117,7 @@ Recruitment effectiveness: 33% conversion rate (3 confirmed of 9 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 22: no
 - 20: jo
 - 19: NO
 - 18: NO
@@ -137,7 +141,7 @@ Recruitment effectiveness: 33% conversion rate (3 confirmed of 9 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 9 of 9 participants
+Demographics collected for 9 of 10 participants
 
 ---
 
