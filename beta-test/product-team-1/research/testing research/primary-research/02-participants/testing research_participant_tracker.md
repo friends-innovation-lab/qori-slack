@@ -56,34 +56,16 @@ Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
 
 | Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
 |---------|-----------|-----------|----------|------------------|-----------------|
+| pt009 | 2025-08-05 12:00 pm | User U08T1F4B347 (📊 PM Observer) | 1/3 | 0 | ✅ Sent |
+| pt008 | 2025-08-25 1:00 PM | User U08T1F4B347 (🏛️ Stakeholder), User U08T1F4B347 (👁️ Silent Observer) | 2/3 | 1 | ✅ Sent |
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker |  |  |
-| 👁️ Silent Observer |  |  |
-| 📊 PM Observer |  |  |
-| 🏛️ Stakeholder |  |  |
-
-**Observer Guidelines Status:**
-- **✅ Guidelines Sent:** 
-- **⏳ Pending Delivery:** 
-- **🔄 Updates Needed:** 
-
-**Observer Guidelines:** 
-- Review session plan before observing
-- Stay muted unless emergency
-- Take notes without interrupting
-- Share feedback after session
-
-**🔄 Observer Action Items:**
-{% if triggered_by_observer_request %}
-- [ ] ✅  approved for  as 
-- [ ] 📤 Send observer guidelines to 
-- [ ] 📅 Add  to  calendar invite
-- [ ] 🔄 Update session capacity tracking
-{% endif %}
-
+| 📝 Note-taker | 0 | - |
+| 👁️ Silent Observer | 1 | pt008 |
+| 📊 PM Observer | 1 | pt009 |
+| 🏛️ Stakeholder | 1 | pt008 |
 ---
 
 ## 🔍 Action Items
