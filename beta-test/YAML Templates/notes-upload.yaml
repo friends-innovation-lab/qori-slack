@@ -1,0 +1,642 @@
+id: upload_notes
+label: 📝 Upload Session Notes
+description: Process and structure session notes, transcripts, and recordings into research-ready documentation
+input_type: structured
+input_processing: ai_enhanced_analysis
+
+# Structured inputs from Slack modal
+inputs:
+  study_id: "{{study_id}}"
+  study_name: "{{study_name}}"
+  participant_id: "{{participant_id}}"
+  participant_name: "{{participant_name}}"
+  session_date: "{{session_date}}"
+  session_time: "{{session_time}}"
+  
+  # Input method and content
+  input_method: "{{input_method}}" # upload, zoom, manual
+  uploaded_files: "{{uploaded_files}}" # array of file objects
+  manual_notes: "{{manual_notes}}" # direct text input
+  zoom_meeting_id: "{{zoom_meeting_id}}" # for zoom integration
+  
+  # Processing options
+  extract_quotes: "{{extract_quotes}}" # boolean
+  identify_themes: "{{identify_themes}}" # boolean
+  code_insights: "{{code_insights}}" # boolean - tag as pain points, opportunities, insights
+  extract_action_items: "{{extract_action_items}}" # boolean
+  note_accessibility: "{{note_accessibility}}" # boolean
+  scrub_pii: "{{scrub_pii}}" # boolean - auto-redact PII before storage
+  
+  # Observer collaboration
+  session_observers: "{{session_observers}}" # array of observer objects
+  notify_observers: "{{notify_observers}}" # array of observer IDs to notify
+  request_observer_input: "{{request_observer_input}}" # boolean
+  
+  # Metadata
+  uploaded_by: "{{uploaded_by}}"
+  upload_timestamp: "{{upload_timestamp}}"
+  session_duration: "{{session_duration}}"
+  session_platform: "{{session_platform}}" # zoom, teams, in-person
+
+# File processing configuration
+file_processing:
+  supported_formats:
+    transcripts: [".txt", ".docx", ".pdf", ".md"]
+    audio: [".mp3", ".m4a", ".wav", ".aac"]
+    video: [".mp4", ".mov", ".avi", ".webm"]
+    
+  max_file_size: "100MB"
+  
+  transcription_service:
+    enabled: true
+    provider: "azure_speech" # or "aws_transcribe", "google_speech"
+    language: "en-US"
+    speaker_diarization: true
+    
+  content_extraction:
+    pdf_ocr: true
+    docx_formatting: true
+    timestamp_preservation: true
+
+# Privacy and PII protection
+privacy_protection:
+  pii_scrubbing:
+    enabled: true
+    auto_detect: true
+    
+    patterns_to_redact:
+      names: true # Replace with participant IDs
+      email_addresses: true # Replace with [EMAIL_REDACTED]
+      phone_numbers: true # Replace with [PHONE_REDACTED]
+      ssn: true # Replace with [SSN_REDACTED]
+      addresses: true # Replace with [ADDRESS_REDACTED]
+      credit_cards: true # Replace with [CC_REDACTED]
+      custom_patterns: ["veteran_id", "case_number", "claim_number"]
+    
+    replacement_strategy:
+      names: "{{participant_id}}" # e.g., "John Smith" → "pt001"
+      generic: "[{{type}}_REDACTED]" # e.g., "[EMAIL_REDACTED]"
+      
+    confidence_threshold: 0.85 # AI confidence level for PII detection
+    human_review_required: true # Flag low-confidence detections for review
+    
+  audit_trail:
+    log_redactions: true
+    track_reviewer: true
+    maintain_mapping: false # Don't store PII mapping for security
+
+# Insight coding and categorization system
+insight_coding:
+  enabled: true
+  
+  categories:
+    pain_points:
+      icon: "🔴"
+      label: "Pain Point"
+      severity_levels: ["Critical", "High", "Medium", "Low"]
+      
+    opportunities:
+      icon: "🟡"
+      label: "Opportunity"
+      impact_levels: ["High Impact", "Medium Impact", "Quick Win"]
+      
+    key_insights:
+      icon: "💡"
+      label: "Key Insight"
+      insight_types: ["User Behavior", "System Issue", "Process Gap", "Success Pattern"]
+      
+    usability_issues:
+      icon: "⚠️"
+      label: "Usability Issue"
+      severity_levels: ["Blocker", "Major", "Minor", "Enhancement"]
+      
+    feature_requests:
+      icon: "✨"
+      label: "Feature Request"
+      priority_levels: ["Must Have", "Should Have", "Nice to Have"]
+  
+  auto_coding:
+    confidence_threshold: 0.75
+    human_validation: true
+    context_analysis: true # Consider surrounding text for better accuracy
+
+# Search and discoverability
+search_optimization:
+  github_search:
+    enabled: true
+    indexable_fields: ["participant_quotes", "themes", "pain_points", "insights"]
+    
+  metadata_tagging:
+    study_tags: true
+    participant_tags: true
+    session_tags: true
+    insight_tags: true
+    
+  cross_reference:
+    link_related_sessions: true
+    link_similar_insights: true
+    track_theme_evolution: true
+ai_processing:
+  content_analysis:
+    sentiment_analysis: true
+    emotion_detection: true
+    topic_modeling: true
+    key_phrase_extraction: true
+    
+  research_specific:
+    usability_issues: true
+    feature_requests: true
+    user_goals: true
+    pain_point_severity: true
+    accessibility_barriers: true
+    
+  output_structuring:
+    executive_summary: true
+    detailed_findings: true
+    participant_quotes: true
+    researcher_observations: true
+    next_steps: true
+
+# Observer collaboration workflow
+observer_workflow:
+  notification_timing: "immediate" # immediate, 1_hour, 24_hour
+  
+  input_request:
+    deadline: "48_hours"
+    reminder_frequency: "24_hours"
+    
+  contribution_types:
+    additional_observations: true
+    context_clarification: true
+    follow_up_questions: true
+    technical_notes: true
+    accessibility_insights: true
+    
+  review_process:
+    researcher_approval: true
+    version_control: true
+    attribution: true
+
+# Integration with participant tracker
+participant_integration:
+  update_session_status: true
+  link_to_participant_record: true
+  update_completion_tracking: true
+  trigger_follow_up_workflows: true
+
+output_template: |
+  # 📝 Session Notes: {{participant_name}} ({{participant_id}})
+  
+  **Study:** {{study_name}}  
+  **Session Date:** {{session_date}} at {{session_time}}  
+  **Duration:** {{session_duration}} minutes  
+  **Platform:** {{session_platform}}  
+  **Processed:** {{upload_timestamp}} by {{uploaded_by}}
+
+  ---
+
+  ## 📋 Executive Summary
+
+  {{ai_executive_summary}}
+
+  **Key Findings:**
+  {{#each key_findings}}
+  - {{finding}}
+  {{/each}}
+
+  **Severity Levels:**
+  - 🔴 Critical Issues: {{critical_issues_count}}
+  - 🟡 Medium Issues: {{medium_issues_count}}  
+  - 🟢 Minor Issues: {{minor_issues_count}}
+
+  ---
+
+  ## 🎯 Research Objectives & Outcomes
+
+  **Objectives Addressed:**
+  {{#each objectives_met}}
+  - ✅ {{objective}}
+  {{/each}}
+
+  **Unaddressed Areas:**
+  {{#each objectives_missed}}
+  - ⏳ {{objective}} (Reason: {{reason}})
+  {{/each}}
+
+  ---
+
+  ## 💬 Key Participant Quotes
+
+  {% if extract_quotes %}
+  {{#each participant_quotes}}
+  > **{{context}}**  
+  > "{{quote}}"  
+  > *— {{participant_id}} ({{timestamp}})* <!-- PII-scrubbed: original name replaced with participant ID -->
+
+  {{/each}}
+  {% endif %}
+
+  ---
+
+  ## 🔍 Detailed Findings
+
+  {% if code_insights %}
+  ### 🔴 Pain Points
+  {{#each pain_points}}
+  **{{severity}} - {{title}}**
+  - *Description:* {{description}}
+  - *User Impact:* {{user_impact}}
+  - *Frequency:* {{frequency}}
+  - *Evidence:* "{{supporting_quote}}"
+  - *Recommendation:* {{recommendation}}
+  {{/each}}
+
+  ### 🟡 Opportunities
+  {{#each opportunities}}
+  **{{impact_level}} - {{title}}**
+  - *Description:* {{description}}
+  - *Business Value:* {{business_value}}
+  - *Implementation Effort:* {{effort_estimate}}
+  - *Evidence:* "{{supporting_quote}}"
+  {{/each}}
+
+  ### 💡 Key Insights
+  {{#each key_insights}}
+  **{{insight_type}} - {{title}}**
+  - *Insight:* {{description}}
+  - *Implication:* {{implication}}
+  - *Evidence:* "{{supporting_quote}}"
+  - *Cross-session Pattern:* {{pattern_status}}
+  {{/each}}
+
+  ### ⚠️ Usability Issues
+  {{#each usability_issues}}
+  **{{severity}} - {{title}}**
+  - *Issue:* {{description}}
+  - *User Behavior:* {{observed_behavior}}
+  - *Suggested Fix:* {{suggested_solution}}
+  - *WCAG Impact:* {{wcag_relevance}}
+  {{/each}}
+  {% endif %}
+
+  {% if identify_themes %}
+  ### Themes Identified
+  {{#each themes}}
+  #### {{theme_name}}
+  **Frequency:** {{frequency}} mentions  
+  **Sentiment:** {{sentiment}}
+
+  {{theme_description}}
+
+  **Supporting Evidence:**
+  {{#each evidence}}
+  - {{evidence_item}}
+  {{/each}}
+
+  {{/each}}
+  {% endif %}
+
+  ### Usability Observations
+
+  #### ✅ What Worked Well
+  {{#each positive_findings}}
+  - **{{category}}:** {{observation}}
+    - *Evidence:* {{evidence}}
+    - *Impact:* {{impact_level}}
+  {{/each}}
+
+  #### ⚠️ Issues Identified
+  {{#each issues}}
+  - **{{severity}} - {{category}}:** {{issue_description}}
+    - *User Impact:* {{user_impact}}
+    - *Frequency:* {{frequency}}
+    - *Participant Quote:* "{{supporting_quote}}"
+    - *Suggested Fix:* {{suggested_solution}}
+  {{/each}}
+
+  {% if highlight_pain_points %}
+  #### 😣 Pain Points Analysis
+  {{#each pain_points}}
+  **{{pain_point_title}}** (Severity: {{severity}})
+  - *Description:* {{description}}
+  - *User Behavior:* {{observed_behavior}}
+  - *Emotional Response:* {{emotional_impact}}
+  - *Potential Solutions:* {{potential_solutions}}
+  {{/each}}
+  {% endif %}
+
+  {% if note_accessibility %}
+  #### ♿ Accessibility Observations
+  {{#each accessibility_notes}}
+  - **{{barrier_type}}:** {{description}}
+    - *Affected Users:* {{user_groups}}
+    - *Severity:* {{accessibility_severity}}
+    - *WCAG Relevance:* {{wcag_guideline}}
+    - *Recommended Action:* {{recommendation}}
+  {{/each}}
+  {% endif %}
+
+  ---
+
+  ## 🎬 Session Flow & Behavior
+
+  ### Timeline of Events
+  {{#each session_timeline}}
+  **{{timestamp}}** - {{event_type}}  
+  {{event_description}}
+  {% if participant_reaction %}*Participant reaction:* {{participant_reaction}}{% endif %}
+
+  {{/each}}
+
+  ### Task Performance
+  {{#each tasks}}
+  #### Task {{task_number}}: {{task_name}}
+  - **Completion:** {{completion_status}}
+  - **Time Taken:** {{duration}}
+  - **Success Rate:** {{success_rate}}
+  - **Difficulty Rating:** {{difficulty}} (1-5 scale)
+  - **Notable Behaviors:** {{behaviors}}
+  {{/each}}
+
+  ---
+
+  ## 👥 Observer Contributions
+
+  {% for observer in session_observers %}
+  ### {{observer.name}} ({{observer.role}})
+  {% if observer.contributed %}
+  **Additional Observations:**
+  {{observer.observations}}
+
+  **Technical Notes:**
+  {{observer.technical_notes}}
+
+  **Follow-up Suggestions:**
+  {{observer.follow_up_suggestions}}
+  {% else %}
+  *Input requested - pending response*
+  {% endif %}
+
+  {% endfor %}
+
+  ---
+
+  {% if extract_action_items %}
+  ## ✅ Action Items & Next Steps
+
+  ### Immediate Actions (1-2 weeks)
+  {{#each immediate_actions}}
+  - [ ] **{{action}}**
+    - *Owner:* {{owner}}
+    - *Due Date:* {{due_date}}
+    - *Priority:* {{priority}}
+  {{/each}}
+
+  ### Short-term Actions (1-2 months)
+  {{#each short_term_actions}}
+  - [ ] **{{action}}**
+    - *Owner:* {{owner}}
+    - *Estimated Effort:* {{effort}}
+  {{/each}}
+
+  ### Long-term Considerations
+  {{#each long_term_items}}
+  - **{{consideration}}**
+    - *Impact:* {{impact}}
+    - *Dependencies:* {{dependencies}}
+  {{/each}}
+  {% endif %}
+
+  ---
+
+  ## 🔄 Follow-up Planning
+
+  **Recommended Follow-up Sessions:**
+  {{#each follow_up_sessions}}
+  - {{session_type}} with {{participant_name}} (Timing: {{timing}})
+    - *Focus:* {{focus_areas}}
+    - *Questions to explore:* {{questions}}
+  {{/each}}
+
+  **Cross-participant Patterns:**
+  {{cross_participant_insights}}
+
+  ---
+
+  ## 📊 Research Metrics
+
+  | Metric | Value | Notes |
+  |--------|-------|-------|
+  | Task Success Rate | {{overall_success_rate}}% | {{success_notes}} |
+  | Average Task Time | {{avg_task_time}} min | {{timing_notes}} |
+  | User Satisfaction | {{satisfaction_score}}/10 | {{satisfaction_notes}} |
+  | Critical Issues Found | {{critical_issues}} | {{issues_notes}} |
+  | Accessibility Barriers | {{accessibility_barriers}} | {{barriers_notes}} |
+
+  ---
+
+  ## 🔗 Related Documentation
+
+  - **Participant Profile:** [{{participant_id}} Details](../participant-tracker/{{participant_id}}.md)
+  - **Study Protocol:** [{{study_name}} Protocol](../study-design/protocol.md)
+  - **Redacted Transcript:** [{{participant_id}} Transcript](./redacted-transcripts/{{participant_id}}-transcript.txt)
+  {% if uploaded_files %}
+  - **Source Files:**
+    {% for file in uploaded_files %}
+    - [{{file.name}}](./raw-materials/{{file.name}})
+    {% endfor %}
+  {% endif %}
+
+  ---
+
+  ## 🔍 Search & Discovery
+
+  **GitHub Search Tips:**
+  - Search across all sessions: `repo:your-org/research-repo "pain point"`
+  - Find similar insights: `repo:your-org/research-repo "{{key_theme}}" path:fieldwork`
+  - Participant-specific search: `repo:your-org/research-repo "{{participant_id}}" path:session-notes`
+  - Cross-study patterns: `repo:your-org/research-repo "usability issue" path:primary-research`
+
+  **Searchable Content:** All participant quotes, themes, pain points, and insights are indexed for GitHub search.
+
+  ---
+
+  **📝 Processing Details:**
+  - *Source:* {{input_method}}
+  - *AI Analysis:* {{ai_processing_version}}
+  - *PII Protection:* {{pii_scrubbing_status}}
+  - *Insight Coding:* {{insights_coded_count}} items coded
+  - *Observer Input Status:* {{observer_input_status}}
+  - *Last Updated:* {{last_updated}}
+  - *Next Review:* {{next_review_date}}
+
+# Output file structure and organization
+output_options:
+  primary_file:
+    filename: "{{participant_id}}-session-notes.md"
+    path: "primary-research/fieldwork/{{study_name}}/session-notes/"
+  
+  supporting_files:
+    redacted_transcript:
+      filename: "{{participant_id}}-transcript.txt"
+      path: "primary-research/fieldwork/{{study_name}}/redacted-transcripts/"
+    
+    raw_materials:
+      path: "primary-research/fieldwork/{{study_name}}/raw-materials/{{participant_id}}/"
+    
+    observer_contributions:
+      filename: "{{participant_id}}-observer-input.md"
+      path: "primary-research/fieldwork/{{study_name}}/observer-insights/"
+    
+    session_summary:
+      filename: "{{participant_id}}-summary.md" 
+      path: "primary-research/fieldwork/{{study_name}}/session-summaries/"
+      
+  indexing:
+    update_study_index: true
+    update_participant_index: true
+    create_session_index: true
+  
+  delivery:
+    github:
+      enabled: true
+      commit_message: "Add PII-scrubbed session notes for {{participant_id}} - {{insights_coded_count}} insights coded"
+      auto_pr: false
+      
+    slack:
+      enabled: true
+      channel: "{{study_slack_channel}}"
+      dm_researcher: true
+      
+      message: |
+        📝 **Session Notes Processed** for {{study_name}}
+        
+        **Participant:** {{participant_name}} ({{participant_id}})
+        **Session Date:** {{session_date}}
+        **Key Findings:** {{summary_findings_count}} insights identified
+        
+        {% if critical_issues > 0 %}
+        🔴 **{{critical_issues}} Critical Issues** found - review needed
+        {% endif %}
+        
+        📁 **Files Created:**
+        - Session Notes: `{{session_notes_filename}}`
+        - Raw Transcript: `{{transcript_filename}}`
+        {% if observer_input_pending %}
+        
+        👥 **Observer Input Status:**
+        - ✅ Input received: {{observers_responded}}
+        - ⏳ Awaiting input: {{observers_pending}}
+        {% endif %}
+      
+      actions:
+        - text: "📖 View Session Notes"
+          style: "primary"
+          url: "{{github_notes_url}}"
+          
+        - text: "📊 View All Sessions"
+          style: "default"
+          url: "{{github_study_url}}"
+          
+        - text: "➕ Process Another Session"
+          style: "default"
+          action_type: "modal"
+          modal_id: "upload_notes"
+
+# Observer notification and collaboration system
+observer_notifications:
+  immediate_notification:
+    enabled: true
+    message: |
+      👀 **Session Notes Ready for Your Input**
+      
+      **Session:** {{participant_name}} ({{participant_id}}) - {{session_date}}
+      **Study:** {{study_name}}
+      **Your Role:** {{observer_role}}
+      
+      The initial session notes have been processed. Please review and add your observations within 48 hours.
+      
+      **What to focus on:**
+      {% if observer_role == "note_taker" %}
+      - Verify quote accuracy
+      - Add missed observations
+      - Clarify unclear sections
+      {% elif observer_role == "pm_observer" %}
+      - Business impact insights
+      - Feature prioritization notes
+      - Technical feasibility observations
+      {% elif observer_role == "stakeholder" %}
+      - Strategic implications
+      - Policy considerations
+      - Resource allocation insights
+      {% else %}
+      - Additional context
+      - Behavioral observations
+      - User experience insights
+      {% endif %}
+    
+    actions:
+      - text: "📝 Add Your Input"
+        url: "{{observer_input_form_url}}"
+        
+      - text: "📖 Review Notes"
+        url: "{{session_notes_url}}"
+
+  reminder_schedule:
+    first_reminder: "24_hours"
+    final_reminder: "46_hours"
+    escalation: "48_hours"
+    
+# Integration with other workflows
+workflow_integration:
+  triggers:
+    participant_status_update:
+      enabled: true
+      target: "participant_tracker"
+      data:
+        participant_id: "{{participant_id}}"
+        status: "completed"
+        session_date: "{{session_date}}"
+        
+    synthesis_preparation:
+      enabled: true
+      condition: "all_sessions_completed OR session_count >= 5"
+      target: "research_synthesis"
+      delay: "24_hours"
+      
+    follow_up_scheduling:
+      enabled: true
+      condition: "follow_up_recommended == true"
+      target: "participant_outreach"
+      delay: "1_week"
+
+# Data quality and validation
+quality_assurance:
+  content_validation:
+    min_content_length: 500
+    quote_attribution_required: true
+    timestamp_validation: true
+    
+  ai_confidence_thresholds:
+    theme_identification: 0.7
+    sentiment_analysis: 0.8
+    quote_extraction: 0.9
+    
+  human_review_triggers:
+    low_ai_confidence: true
+    critical_issues_identified: true
+    accessibility_barriers_found: true
+    participant_distress_detected: true
+
+# Analytics and reporting
+analytics:
+  track_processing_time: true
+  measure_ai_accuracy: true
+  monitor_observer_response_rate: true
+  analyze_finding_patterns: true
+  
+reporting:
+  weekly_summary: true
+  study_progress_dashboard: true
+  cross_session_analysis: true
+  methodology_effectiveness: true
