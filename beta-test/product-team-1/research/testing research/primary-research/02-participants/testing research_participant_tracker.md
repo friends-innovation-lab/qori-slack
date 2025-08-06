@@ -1,9 +1,9 @@
 # 👥 Participant Tracker – testing research
 
 **📊 Recruitment Summary**
-- **Total Participants:** 4
+- **Total Participants:** 5
 - **Confirmed Sessions:** 2
-- **Pending Responses:** 2
+- **Pending Responses:** 3
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
 - **Last Updated:** August 6, 2025 by U08T1F4B347
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 16 | Abdul | abdul@gmail.com | calendly_signup | 2025-08-25 2:00 PM | pending_response | NO |
 | 11 | abdul | abdul@gmail.com | email_outreach | 2025-08-25 3:00 PM | pending_response | NO |
 | 10 | tamara | tamara@gmail.com | referral | 2025-08-18 3:00 pm | confirmed | NO |
 | 9 | abdul | abdul@gmail.com | phone_recruitment | 2025-08-05 12:00 pm | confirmed | NO |
@@ -25,12 +26,13 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 1 | 25% |
-| 🤝 Referral | 1 | 25% |
-| phone_recruitment | 2 | 50% |
+| calendly_signup | 1 | 20% |
+| 📧 Email Outreach | 1 | 20% |
+| 🤝 Referral | 1 | 20% |
+| phone_recruitment | 2 | 40% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
+Recruitment effectiveness: 40% conversion rate (2 confirmed of 5 recruited)
 
 ---
 
@@ -45,6 +47,7 @@ Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
 ### ⏳ Pending Scheduling
 - **** -  ()
 - **** -  ()
+- **** -  ()
 
 ### 🕐 Rescheduling Needed
 
@@ -56,16 +59,34 @@ Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
 
 | Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
 |---------|-----------|-----------|----------|------------------|-----------------|
-| pt009 | 2025-08-05 12:00 pm | User U08T1F4B347 (📊 PM Observer) | 1/3 | 0 | ✅ Sent |
-| pt008 | 2025-08-25 1:00 PM | User U08T1F4B347 (🏛️ Stakeholder), User U08T1F4B347 (👁️ Silent Observer) | 2/3 | 1 | ✅ Sent |
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker | 0 | - |
-| 👁️ Silent Observer | 1 | pt008 |
-| 📊 PM Observer | 1 | pt009 |
-| 🏛️ Stakeholder | 1 | pt008 |
+| 📝 Note-taker |  |  |
+| 👁️ Silent Observer |  |  |
+| 📊 PM Observer |  |  |
+| 🏛️ Stakeholder |  |  |
+
+**Observer Guidelines Status:**
+- **✅ Guidelines Sent:** 
+- **⏳ Pending Delivery:** 
+- **🔄 Updates Needed:** 
+
+**Observer Guidelines:** 
+- Review session plan before observing
+- Stay muted unless emergency
+- Take notes without interrupting
+- Share feedback after session
+
+**🔄 Observer Action Items:**
+{% if triggered_by_observer_request %}
+- [ ] ✅  approved for  as 
+- [ ] 📤 Send observer guidelines to 
+- [ ] 📅 Add  to  calendar invite
+- [ ] 🔄 Update session capacity tracking
+{% endif %}
+
 ---
 
 ## 🔍 Action Items
@@ -84,6 +105,7 @@ Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 16: NO
 - 11: NO
 - 10: NO
 - 9: NO
@@ -102,7 +124,7 @@ Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 4 of 4 participants
+Demographics collected for 5 of 5 participants
 
 ---
 
@@ -115,4 +137,4 @@ Demographics collected for 4 of 4 participants
 - Send observer guidelines immediately upon assignment
 
 **🔄 Next Steps:**
-Follow up with 2 pending participant(s)
+Follow up with 3 pending participant(s)
