@@ -14,10 +14,6 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
-| 7 | Abdul | abdul@gmail.com | referral | 2025-08-22 1:00 pm | confirmed | NO |
-| 6 | Lepadra | lepadra@gmail.com | phone_recruitment | 2025-08-19 3:00 PM | pending_response | NO |
-| 5 | Abdul | abdul@gmail.com | email_outreach | 2025-08-24 3:00 PM | pending_response | NO |
-| 3 | Tanzeel | tanzeel@gmail.com | referral | 2025-08-25 2:00pm | confirmed | NO |
 
 ---
 
