@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – Study
 
 **📊 Recruitment Summary**
-- **Total Participants:** 1
-- **Confirmed Sessions:** 0
+- **Total Participants:** 2
+- **Confirmed Sessions:** 1
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 9 | abdul | abdul@gmail.com | phone_recruitment | 2025-08-05 12:00 pm | confirmed | NO |
 | 8 | tanzeel | tanzeel@gmail.com | phone_recruitment | 2025-08-25 1:00 PM | pending_response | NO |
 
 ---
@@ -22,16 +23,18 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| phone_recruitment | 1 | 100% |
+| phone_recruitment | 2 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
+Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 
 ---
 
 ## 📅 Session Schedule
 
 ### ✅ Confirmed Sessions
+- **** -  at 
+  - Observers: 
 
 ### ⏳ Pending Scheduling
 - **** -  ()
@@ -80,7 +83,6 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 
 **🚨 Immediate Actions:**
 - [ ] 
-- [ ] 
 
 **📞 Follow-up Needed:**
 
@@ -94,6 +96,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 9: NO
 - 8: NO
 
 **Preparation Checklist:**
@@ -109,7 +112,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 1 of 1 participants
+Demographics collected for 2 of 2 participants
 
 ---
 
@@ -122,4 +125,4 @@ Demographics collected for 1 of 1 participants
 - Send observer guidelines immediately upon assignment
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (2 more needed); Follow up with 1 pending participant(s); Schedule first confirmed session
+Continue recruiting to reach minimum of 3 participants (1 more needed); Follow up with 1 pending participant(s)
