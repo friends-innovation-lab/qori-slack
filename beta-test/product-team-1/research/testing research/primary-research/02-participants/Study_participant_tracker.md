@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – Study
 
 **📊 Recruitment Summary**
-- **Total Participants:** 2
-- **Confirmed Sessions:** 1
+- **Total Participants:** 3
+- **Confirmed Sessions:** 2
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 10 | tamara | tamara@gmail.com | referral | 2025-08-18 3:00 pm | confirmed | NO |
 | 9 | abdul | abdul@gmail.com | phone_recruitment | 2025-08-05 12:00 pm | confirmed | NO |
 | 8 | tanzeel | tanzeel@gmail.com | phone_recruitment | 2025-08-25 1:00 PM | pending_response | NO |
 
@@ -23,16 +24,19 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| phone_recruitment | 2 | 100% |
+| 🤝 Referral | 1 | 33% |
+| phone_recruitment | 2 | 67% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
+Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 
 ---
 
 ## 📅 Session Schedule
 
 ### ✅ Confirmed Sessions
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 
@@ -82,7 +86,6 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 ## 🔍 Action Items
 
 **🚨 Immediate Actions:**
-- [ ] 
 
 **📞 Follow-up Needed:**
 
@@ -96,6 +99,7 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 10: NO
 - 9: NO
 - 8: NO
 
@@ -112,7 +116,7 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 2 of 2 participants
+Demographics collected for 3 of 3 participants
 
 ---
 
@@ -125,4 +129,4 @@ Demographics collected for 2 of 2 participants
 - Send observer guidelines immediately upon assignment
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (1 more needed); Follow up with 1 pending participant(s)
+Follow up with 1 pending participant(s)
