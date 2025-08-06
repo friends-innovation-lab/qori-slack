@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – participant testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 3
+- **Total Participants:** 4
 - **Confirmed Sessions:** 2
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 25 | hello | hello | email_outreach | 2025-08-18 2:00pm | rescheduling_needed | no |
 | 24 | hello | hello | internal_va_panel | 2025-08-17 2:00 | confirmed | no |
 | 13 | Lepadra | lepadra@gmail.com | calendly_signup | 2025-08-18 1:00 PM | confirmed | Yes do this |
 | 12 | Tanzeel | tanzeel@gmail.com | calendly_signup | 2025-08-20 2:00 PM | pending_response | NO |
@@ -24,11 +25,12 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| internal_va_panel | 1 | 33% |
-| calendly_signup | 2 | 67% |
+| 📧 Email Outreach | 1 | 25% |
+| internal_va_panel | 1 | 25% |
+| calendly_signup | 2 | 50% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
+Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
 
 ---
 
@@ -44,6 +46,7 @@ Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 - **** -  ()
 
 ### 🕐 Rescheduling Needed
+- **** -  ()
 
 ---
 
@@ -99,6 +102,7 @@ Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 25: no
 - 24: no
 - 13: Yes do this
 - 12: NO
@@ -116,7 +120,7 @@ Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 2 of 3 participants
+Demographics collected for 2 of 4 participants
 
 ---
 
@@ -129,4 +133,4 @@ Demographics collected for 2 of 3 participants
 - Send observer guidelines immediately upon assignment
 
 **🔄 Next Steps:**
-Follow up with 1 pending participant(s)
+Follow up with 1 pending participant(s); Reschedule 1 session(s)
