@@ -1,9 +1,9 @@
 # 👥 Participant Tracker – Assistive Technology Usability Test
 
 **📊 Recruitment Summary**
-- **Total Participants:** 2
+- **Total Participants:** 3
 - **Confirmed Sessions:** 2
-- **Pending Responses:** 0
+- **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
 - **Last Updated:** August 6, 2025 by U01SC2TNYKU
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 3 | Lulu Thomas | lulu@gmail.com | calendly_signup | 2025-08-20 10: 00 am CST | pending_response |  |
 | 2 | PT01 | Bessie Thomas | calendly_signup | 2025-08-26 11:00 am EST | confirmed | Prefers Morning Sessions |
 | 1 | PT001 | John Jones | calendly_signup | 2025-08-18 2:00 pm EST | confirmed | Needs interpreter, and assistive technology |
 
@@ -23,10 +24,10 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| calendly_signup | 2 | 100% |
+| calendly_signup | 3 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
+Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 
 ---
 
@@ -39,6 +40,7 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
   - Observers: 
 
 ### ⏳ Pending Scheduling
+- **** -  ()
 
 ### 🕐 Rescheduling Needed
 
@@ -83,7 +85,6 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 ## 🔍 Action Items
 
 **🚨 Immediate Actions:**
-- [ ] 
 
 **📞 Follow-up Needed:**
 
@@ -113,7 +114,7 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 2 of 2 participants
+Demographics collected for 3 of 3 participants
 
 ---
 
@@ -126,4 +127,4 @@ Demographics collected for 2 of 2 participants
 - Send observer guidelines immediately upon assignment
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (1 more needed)
+Follow up with 1 pending participant(s)
