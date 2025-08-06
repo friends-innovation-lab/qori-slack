@@ -49,13 +49,13 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 
 | Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
 |---------|-----------|-----------|----------|------------------|-----------------|
+| pt012 | 2025-08-20 2:00 PM | User U08T1F4B347 (📝 Note-taker), User U08T1F4B347 (👁️ Silent Observer) | 2/3 | 0 | ✅ Sent |
 | pt013 | 2025-08-18 1:00 PM | User U08T1F4B347 (📊 PM Observer) | 1/3 | 0 | ✅ Sent |
-| pt012 | 2025-08-20 2:00 PM | User U08T1F4B347 (👁️ Silent Observer) | 1/3 | 0 | ✅ Sent |
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker | 0 | - |
+| 📝 Note-taker | 1 | pt012 |
 | 👁️ Silent Observer | 1 | pt012 |
 | 📊 PM Observer | 1 | pt013 |
 | 🏛️ Stakeholder | 0 | - |
