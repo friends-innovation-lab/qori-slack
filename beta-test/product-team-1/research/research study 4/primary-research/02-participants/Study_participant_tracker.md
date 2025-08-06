@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – Study
 
 **📊 Recruitment Summary**
-- **Total Participants:** 3
-- **Confirmed Sessions:** 1
+- **Total Participants:** 4
+- **Confirmed Sessions:** 2
 - **Pending Responses:** 2
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 7 | Abdul | abdul@gmail.com | referral | 2025-08-22 1:00 pm | confirmed | NO |
 | 6 | Lepadra | lepadra@gmail.com | phone_recruitment | 2025-08-19 3:00 PM | pending_response | NO |
 | 5 | Abdul | abdul@gmail.com | email_outreach | 2025-08-24 3:00 PM | pending_response | NO |
 | 3 | Tanzeel | tanzeel@gmail.com | referral | 2025-08-25 2:00pm | confirmed | NO |
@@ -24,18 +25,20 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| phone_recruitment | 1 | 33% |
-| 📧 Email Outreach | 1 | 33% |
-| 🤝 Referral | 1 | 33% |
+| 🤝 Referral | 2 | 50% |
+| phone_recruitment | 1 | 25% |
+| 📧 Email Outreach | 1 | 25% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 33% conversion rate (1 confirmed of 3 recruited)
+Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
 
 ---
 
 ## 📅 Session Schedule
 
 ### ✅ Confirmed Sessions
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 
@@ -99,6 +102,7 @@ Recruitment effectiveness: 33% conversion rate (1 confirmed of 3 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 7: NO
 - 6: NO
 - 5: NO
 - 3: NO
@@ -116,7 +120,7 @@ Recruitment effectiveness: 33% conversion rate (1 confirmed of 3 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 3 of 3 participants
+Demographics collected for 4 of 4 participants
 
 ---
 
