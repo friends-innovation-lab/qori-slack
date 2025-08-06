@@ -6,21 +6,43 @@ input_processing: ai_enhanced_analysis
 
 # INTEGRATION: Auto-populated from participant tracker
 # Triggered when: session_datetime + 30_minutes has passed
+# References: participant_tracker.yaml - pulls session data, observer assignments, and study context
+# Status sync: confirmed (trigger) -> completed (after lead upload) -> fully_documented (after all observers)
 integration_source: participant_tracker
 trigger_conditions:
-  - session_status: "confirmed"
-  - current_time: ">session_datetime + 30_minutes"
-  - observers_assigned: true
+  - session_status: "confirmed" # From participant tracker status_mappings
+  - current_time: ">session_datetime + 30_minutes" # 30 min after scheduled_date + scheduled_time
+  - observers_assigned: true # Must have observers in session_structure
 
 # Pre-populated inputs from participant tracker
 inputs:
-  # Session context (from participant tracker)
-  study_id: "{{tracker_study_id}}"
-  study_name: "{{tracker_study_name}}"
-  participant_id: "{{tracker_participant_id}}"
-  session_date: "{{tracker_session_date}}"
-  session_time: "{{tracker_session_time}}"
-  session_observers: "{{tracker_session_observers}}" # Array from tracker
+  # Session context (pulled from participant tracker fields)
+  study_id: "{{tracker_study_id}}" # From participant_tracker.study_id
+  study_name: "{{tracker_study_name}}" # From participant_tracker.study_name  
+  participant_id: "{{tracker_participant_id}}" # Generated ID (e.g. pt001, pt002)
+  participant_alias: "{{tracker_participant_alias}}" # From participant_tracker.participant_name (is actually alias)
+  session_date: "{{tracker_session_date}}" # From participant_tracker.scheduled_date
+  session_time: "{{tracker_session_time}}" # From participant_tracker.scheduled_time
+  session_observers: "{{tracker_session_observers}}" # From session_structure in participant tracker
+  session_duration: "{{tracker_session_duration}}" # From participant_tracker (default 45 minutes)
+  meeting_link: "{{tracker_meeting_link}}" # From participant_tracker.meeting_link
+  session_context: "{{tracker_session_context}}" # From participant_tracker.session_context
+  
+  # Current user context (from Slack notification trigger)
+  current_user_id: "{{slack_user_id}}"
+  current_user_role: "{{user_observer_role}}" # From tracker observer assignment
+  triggered_by_notification: true
+  notification_timestamp: "{{current_timestamp}}"
+  
+  # Input method and content (user-provided)
+  input_method: "{{input_method}}" # upload, zoom, manual
+  uploaded_files: "{{uploaded_files}}" # array of file objects
+  manual_notes: "{{manual_notes}}" # direct text input
+  zoom_meeting_id: "{{zoom_meeting_id}}" # for zoom integration
+  
+  # Processing metadata
+  uploaded_by: "{{current_user_id}}"
+  upload_timestamp: "{{upload_timestamp}}"
   
   # Current user context (from Slack notification trigger)
   current_user_id: "{{slack_user_id}}"
@@ -40,7 +62,7 @@ inputs:
   session_duration: "{{tracker_session_duration}}"
   session_platform: "{{tracker_session_platform}}"
 
-# Role-specific guidance and prompts
+# Role-specific guidance and prompts (aligned with participant tracker observer_roles)
 role_specific_prompts:
   lead_researcher:
     title: "Lead Researcher Checklist"
@@ -55,47 +77,47 @@ role_specific_prompts:
     
   note_taker:
     title: "Note-Taker Focus Areas"
-    description: "Help verify and supplement the session documentation."
+    description: "Take detailed notes and verify session documentation accuracy."
     focus_areas:
-      - "Quote accuracy and context"
-      - "Missed observations or details"
-      - "Participant non-verbal cues"
-      - "Technical difficulties encountered"
-      - "Timing and flow clarifications"
-    processing_priority: "medium"
+      - "Quote accuracy and context verification"
+      - "Detailed behavioral observations"
+      - "Participant non-verbal cues and reactions"
+      - "Technical difficulties and timing issues"
+      - "Session flow and interaction clarifications"
+    processing_priority: "high" # Note-takers are critical for accuracy
     
   pm_observer:
-    title: "PM Observer Insights"
-    description: "Focus on business and product implications."
+    title: "PM Observer Business Insights"
+    description: "Focus on product and business implications from your observations."
     focus_areas:
-      - "Business impact observations"
-      - "Feature prioritization insights"
-      - "Technical feasibility notes"
-      - "User adoption barriers"
-      - "Market validation points"
+      - "Business impact and user adoption insights"
+      - "Feature prioritization and roadmap implications"
+      - "Technical feasibility observations"
+      - "Market validation and user needs analysis"
+      - "Competitive advantage opportunities"
     processing_priority: "medium"
     
   silent_observer:
-    title: "Silent Observer Contributions"
-    description: "Share your unique perspective from observing."
+    title: "Silent Observer Unique Perspective"
+    description: "Share your observational insights without taking formal notes."
     focus_areas:
-      - "User behavior patterns"
-      - "Emotional journey mapping"
-      - "Accessibility observations"
-      - "Environment/context factors"
-      - "Comparative insights"
+      - "User behavior patterns and emotional journey"
+      - "Environmental and contextual factors"
+      - "Accessibility and inclusion observations"
+      - "Comparative insights from similar sessions"
+      - "Overall user experience impressions"
     processing_priority: "low"
     
   stakeholder:
     title: "Stakeholder Strategic View"
-    description: "Provide strategic context and policy implications."
+    description: "Provide executive and policy-level strategic context."
     focus_areas:
-      - "Strategic implications"
-      - "Policy considerations"
-      - "Resource allocation insights"
-      - "Compliance observations"
-      - "Organizational impact"
-    processing_priority: "high"
+      - "Strategic implications for organizational direction"
+      - "Policy considerations and compliance observations"
+      - "Resource allocation and investment insights"
+      - "Risk assessment and mitigation opportunities"
+      - "Organizational change management implications"
+    processing_priority: "high" # Stakeholder input is valuable
 
 # Automatic notification system
 notification_workflow:
@@ -236,7 +258,7 @@ file_processing:
   
   transcription_service:
     enabled: true
-    provider: "azure_speech" # or "aws_transcribe", "google_speech"
+    provider: "aws_transcribe" # Using AWS Transcribe for government compliance
     language: "en-US"
     speaker_diarization: true
     
@@ -573,8 +595,15 @@ output_options:
 participant_tracker_integration:
   # Update participant status when notes are uploaded
   status_updates:
-    lead_researcher_upload: "session_documented"
-    all_observers_complete: "fully_documented"
+    lead_researcher_upload: "completed" # Update to completed status in tracker
+    all_observers_complete: "fully_documented" # New status for fully documented sessions
+    
+  # Sync back to participant tracker fields
+  field_updates:
+    session_notes_url: "{{github_notes_url}}"
+    documentation_status: "{{processing_status}}"
+    insights_found: "{{insights_coded_count}}"
+    last_updated: "{{upload_timestamp}}"
     
   # Trigger next phase workflows
   workflow_triggers:
@@ -620,36 +649,56 @@ quality_assurance:
     min_content_length: 200 # Shorter for observer contributions
     ai_confidence_threshold: 0.7
     
+  # Integration validation with participant tracker
   integration_validation:
     verify_participant_tracker_sync: true
     verify_observer_assignments: true
     check_session_timing: true
+    validate_study_context: true
+    confirm_participant_alias_privacy: true
+    
+  # Cross-reference with participant tracker data
+  participant_tracker_validation:
+    confirm_session_exists: true
+    verify_observer_roles: true
+    check_status_progression: true # confirmed -> completed -> fully_documented
+    validate_capacity_limits: true
     
   automated_review:
     flag_sensitive_content: true
     validate_pii_scrubbing: true
     check_insight_coding_quality: true
+    verify_tracker_status_sync: true
 
-# Capacity management and validation
+# Capacity management and validation (aligned with participant tracker)
 capacity_management:
-  max_observers_per_session: 3
+  max_observers_per_session: 3 # Matches participant tracker capacity_per_session
+  
+  # Observer roles from participant tracker
   role_limits:
-    note_taker: 1
-    stakeholder: 1
-    pm_observer: 2
-    silent_observer: 3
+    note_taker: 1 # Take detailed notes during session
+    silent_observer: 3 # Observe without taking notes
+    pm_observer: 2 # Focus on product/business insights  
+    stakeholder: 1 # Executive or external observer
+    
+  # Auto-approval settings (inherited from participant tracker)
+  auto_approve_roles: ["note_taker", "silent_observer"]
+  approval_required_roles: ["pm_observer", "stakeholder"]
     
   validation_rules:
     - check_session_capacity_before_assignment
     - validate_observer_role_limits
     - confirm_no_duplicate_assignments
+    - verify_participant_tracker_sync
     
   overflow_handling:
     action: "create_waitlist"
     notification: "notify_researcher_and_requester"
+    sync_with_tracker: true
 
-# Analytics for system optimization
+# Analytics for system optimization and participant tracker integration
 analytics:
+  # Standard upload system analytics
   track_response_rates: true
   measure_upload_timing: true
   analyze_content_quality: true
@@ -659,7 +708,16 @@ analytics:
   monitor_observer_response_rate: true
   analyze_finding_patterns: true
   
+  # Participant tracker integration analytics
+  integration_health:
+    track_sync_success_rate: true
+    monitor_status_update_accuracy: true
+    measure_observer_assignment_accuracy: true
+    track_session_trigger_reliability: true
+    analyze_data_mapping_errors: true
+    
 reporting:
+  # Standard reporting
   observer_participation_rates: true
   session_completion_metrics: true
   integration_health_dashboard: true
@@ -668,6 +726,12 @@ reporting:
   study_progress_dashboard: true
   cross_session_analysis: true
   methodology_effectiveness: true
+  
+  # Integration-specific reporting
+  participant_tracker_sync_health: true
+  observer_assignment_accuracy: true
+  session_trigger_performance: true
+  status_update_success_rates: true
 
 # Workflow integration with other systems
 workflow_integration:
@@ -715,9 +779,11 @@ integration_mappings:
   from_participant_tracker:
     tracker_study_id: "study_id"
     tracker_study_name: "study_name"
-    tracker_participant_id: "participant_id"
-    tracker_session_date: "session_date"
-    tracker_session_time: "session_time"
-    tracker_session_observers: "session_observers"
-    tracker_session_duration: "session_duration"
-    tracker_session_platform: "session_platform"
+    tracker_participant_id: "participant_id" # Generated from participant_name
+    tracker_participant_alias: "participant_name" # This is actually the alias in tracker
+    tracker_session_date: "scheduled_date"
+    tracker_session_time: "scheduled_time"
+    tracker_session_observers: "session_observers" # From session_structure
+    tracker_session_duration: "session_duration" # Default 45 minutes
+    tracker_meeting_link: "meeting_link"
+    tracker_session_context: "session_context"
