@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – participant testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 4
-- **Confirmed Sessions:** 2
+- **Total Participants:** 5
+- **Confirmed Sessions:** 3
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 26 | hello | hello | email_outreach | 2025-08-25 2pm | confirmed | no |
 | 25 | hello | hello | email_outreach | 2025-08-18 2:00pm | rescheduling_needed | no |
 | 24 | hello | hello | internal_va_panel | 2025-08-17 2:00 | confirmed | no |
 | 13 | Lepadra | lepadra@gmail.com | calendly_signup | 2025-08-18 1:00 PM | confirmed | Yes do this |
@@ -25,18 +26,20 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 1 | 25% |
-| internal_va_panel | 1 | 25% |
-| calendly_signup | 2 | 50% |
+| 📧 Email Outreach | 2 | 40% |
+| internal_va_panel | 1 | 20% |
+| calendly_signup | 2 | 40% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
+Recruitment effectiveness: 60% conversion rate (3 confirmed of 5 recruited)
 
 ---
 
 ## 📅 Session Schedule
 
 ### ✅ Confirmed Sessions
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 - **** -  at 
@@ -102,6 +105,7 @@ Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 26: no
 - 25: no
 - 24: no
 - 13: Yes do this
@@ -120,7 +124,7 @@ Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 2 of 4 participants
+Demographics collected for 2 of 5 participants
 
 ---
 
