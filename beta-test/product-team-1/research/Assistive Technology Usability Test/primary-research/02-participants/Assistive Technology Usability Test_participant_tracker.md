@@ -55,34 +55,15 @@ Recruitment effectiveness: 40% conversion rate (2 confirmed of 5 recruited)
 
 | Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
 |---------|-----------|-----------|----------|------------------|-----------------|
+| pt004 | 2025-08-13 11:00 am EST | User U01SC2TNYKU (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker |  |  |
-| 👁️ Silent Observer |  |  |
-| 📊 PM Observer |  |  |
-| 🏛️ Stakeholder |  |  |
-
-**Observer Guidelines Status:**
-- **✅ Guidelines Sent:** 
-- **⏳ Pending Delivery:** 
-- **🔄 Updates Needed:** 
-
-**Observer Guidelines:** 
-- Review session plan before observing
-- Stay muted unless emergency
-- Take notes without interrupting
-- Share feedback after session
-
-**🔄 Observer Action Items:**
-{% if triggered_by_observer_request %}
-- [ ] ✅  approved for  as 
-- [ ] 📤 Send observer guidelines to 
-- [ ] 📅 Add  to  calendar invite
-- [ ] 🔄 Update session capacity tracking
-{% endif %}
-
+| 📝 Note-taker | 1 | pt004 |
+| 👁️ Silent Observer | 0 | - |
+| 📊 PM Observer | 0 | - |
+| 🏛️ Stakeholder | 0 | - |
 ---
 
 ## 🔍 Action Items
