@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – oberver testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 3
+- **Total Participants:** 4
 - **Confirmed Sessions:** 2
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 23 | hello | hello | email_outreach | 2025-08-26 2:00 PM | recruited | NO |
 | 21 | hello | hello@gmail.com | calendly_signup | 2025-08-25 2:00pm | pending_response | no |
 | 15 | abdul | abdul@gmail.com | calendly_signup | 2025-08-25 1:00 PM | confirmed | Yes |
 | 14 | Tanzeel | tanzeel@gmail.com | calendly_signup | 2025-08-26 4:00 PM | confirmed | do it |
@@ -24,10 +25,11 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| calendly_signup | 3 | 100% |
+| 📧 Email Outreach | 1 | 25% |
+| calendly_signup | 3 | 75% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
+Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
 
 ---
 
@@ -98,6 +100,7 @@ Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 23: NO
 - 21: no
 - 15: Yes
 - 14: do it
@@ -115,7 +118,7 @@ Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 1 of 3 participants
+Demographics collected for 1 of 4 participants
 
 ---
 
