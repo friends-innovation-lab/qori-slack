@@ -1,9 +1,9 @@
 # 👥 Participant Tracker – oberver testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 2
+- **Total Participants:** 3
 - **Confirmed Sessions:** 2
-- **Pending Responses:** 0
+- **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
 - **Last Updated:** August 6, 2025 by U08T1F4B347
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 21 | hello | hello@gmail.com | calendly_signup | 2025-08-25 2:00pm | pending_response | no |
 | 15 | abdul | abdul@gmail.com | calendly_signup | 2025-08-25 1:00 PM | confirmed | Yes |
 | 14 | Tanzeel | tanzeel@gmail.com | calendly_signup | 2025-08-26 4:00 PM | confirmed | do it |
 
@@ -23,10 +24,10 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| calendly_signup | 2 | 100% |
+| calendly_signup | 3 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
+Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 
 ---
 
@@ -39,6 +40,7 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
   - Observers: 
 
 ### ⏳ Pending Scheduling
+- **** -  ()
 
 ### 🕐 Rescheduling Needed
 
@@ -50,21 +52,39 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 | Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
 |---------|-----------|-----------|----------|------------------|-----------------|
-| pt014 | 2025-08-26 4:00 PM | User U08T1F4B347 (🏛️ Stakeholder), User U08T1F4B347 (👁️ Silent Observer), User U08T1F4B347 (👁️ Silent Observer) | 3/3 | 0 | ✅ Sent |
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker | 0 | - |
-| 👁️ Silent Observer | 2 | pt014 |
-| 📊 PM Observer | 0 | - |
-| 🏛️ Stakeholder | 1 | pt014 |
+| 📝 Note-taker |  |  |
+| 👁️ Silent Observer |  |  |
+| 📊 PM Observer |  |  |
+| 🏛️ Stakeholder |  |  |
+
+**Observer Guidelines Status:**
+- **✅ Guidelines Sent:** 
+- **⏳ Pending Delivery:** 
+- **🔄 Updates Needed:** 
+
+**Observer Guidelines:** 
+- Review session plan before observing
+- Stay muted unless emergency
+- Take notes without interrupting
+- Share feedback after session
+
+**🔄 Observer Action Items:**
+{% if triggered_by_observer_request %}
+- [ ] ✅  approved for  as 
+- [ ] 📤 Send observer guidelines to 
+- [ ] 📅 Add  to  calendar invite
+- [ ] 🔄 Update session capacity tracking
+{% endif %}
+
 ---
 
 ## 🔍 Action Items
 
 **🚨 Immediate Actions:**
-- [ ] 
 
 **📞 Follow-up Needed:**
 
@@ -78,6 +98,7 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 21: no
 - 15: Yes
 - 14: do it
 
@@ -94,7 +115,7 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 1 of 2 participants
+Demographics collected for 1 of 3 participants
 
 ---
 
@@ -107,4 +128,4 @@ Demographics collected for 1 of 2 participants
 - Send observer guidelines immediately upon assignment
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (1 more needed)
+Follow up with 1 pending participant(s)
