@@ -1,9 +1,9 @@
 # 👥 Participant Tracker – testing research
 
 **📊 Recruitment Summary**
-- **Total Participants:** 6
+- **Total Participants:** 7
 - **Confirmed Sessions:** 2
-- **Pending Responses:** 4
+- **Pending Responses:** 5
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
 - **Last Updated:** August 6, 2025 by U08T1F4B347
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 18 | abdyll | test@gmail.com | phone_recruitment | 2025-08-18 2:00 PM | pending_response | NO |
 | 17 | hello | hello@gmail.com | calendly_signup | 2025-08-11 2:pm | pending_response | no |
 | 16 | Abdul | abdul@gmail.com | calendly_signup | 2025-08-25 2:00 PM | pending_response | NO |
 | 11 | abdul | abdul@gmail.com | email_outreach | 2025-08-25 3:00 PM | pending_response | NO |
@@ -27,13 +28,13 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| calendly_signup | 2 | 33% |
-| 📧 Email Outreach | 1 | 17% |
-| 🤝 Referral | 1 | 17% |
-| phone_recruitment | 2 | 33% |
+| phone_recruitment | 3 | 43% |
+| calendly_signup | 2 | 29% |
+| 📧 Email Outreach | 1 | 14% |
+| 🤝 Referral | 1 | 14% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 33% conversion rate (2 confirmed of 6 recruited)
+Recruitment effectiveness: 29% conversion rate (2 confirmed of 7 recruited)
 
 ---
 
@@ -46,6 +47,7 @@ Recruitment effectiveness: 33% conversion rate (2 confirmed of 6 recruited)
   - Observers: 
 
 ### ⏳ Pending Scheduling
+- **** -  ()
 - **** -  ()
 - **** -  ()
 - **** -  ()
@@ -107,6 +109,7 @@ Recruitment effectiveness: 33% conversion rate (2 confirmed of 6 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 18: NO
 - 17: no
 - 16: NO
 - 11: NO
@@ -127,7 +130,7 @@ Recruitment effectiveness: 33% conversion rate (2 confirmed of 6 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 6 of 6 participants
+Demographics collected for 7 of 7 participants
 
 ---
 
@@ -140,4 +143,4 @@ Demographics collected for 6 of 6 participants
 - Send observer guidelines immediately upon assignment
 
 **🔄 Next Steps:**
-Follow up with 4 pending participant(s)
+Follow up with 5 pending participant(s)
