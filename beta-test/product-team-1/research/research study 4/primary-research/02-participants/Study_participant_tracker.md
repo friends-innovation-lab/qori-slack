@@ -1,9 +1,9 @@
 # 👥 Participant Tracker – Study
 
 **📊 Recruitment Summary**
-- **Total Participants:** 1
-- **Confirmed Sessions:** 0
-- **Pending Responses:** 0
+- **Total Participants:** 2
+- **Confirmed Sessions:** 1
+- **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
 - **Last Updated:** August 6, 2025 by U08T1F4B347
@@ -15,6 +15,7 @@
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
 | 5 | Abdul | abdul@gmail.com | email_outreach | 2025-08-24 3:00 PM | pending_response | NO |
+| 3 | Tanzeel | tanzeel@gmail.com | referral | 2025-08-25 2:00pm | confirmed | NO |
 
 ---
 
@@ -22,18 +23,22 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 1 | 100% |
+| 📧 Email Outreach | 1 | 50% |
+| 🤝 Referral | 1 | 50% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
+Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 
 ---
 
 ## 📅 Session Schedule
 
 ### ✅ Confirmed Sessions
+- **** -  at 
+  - Observers: 
 
 ### ⏳ Pending Scheduling
+- **** -  ()
 
 ### 🕐 Rescheduling Needed
 
@@ -79,7 +84,6 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 
 **🚨 Immediate Actions:**
 - [ ] 
-- [ ] 
 
 **📞 Follow-up Needed:**
 
@@ -94,6 +98,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 
 **Special Needs Summary:**
 - 5: NO
+- 3: NO
 
 **Preparation Checklist:**
 - [ ] Interpreter services arranged (if needed)
@@ -108,7 +113,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 1 of 1 participants
+Demographics collected for 2 of 2 participants
 
 ---
 
@@ -121,4 +126,4 @@ Demographics collected for 1 of 1 participants
 - Send observer guidelines immediately upon assignment
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (2 more needed); Schedule first confirmed session
+Continue recruiting to reach minimum of 3 participants (1 more needed)
