@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – testing research
 
 **📊 Recruitment Summary**
-- **Total Participants:** 7
+- **Total Participants:** 8
 - **Confirmed Sessions:** 2
 - **Pending Responses:** 5
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 19 | hello | test@gmail.com | email_outreach | 2025-08-18 2:00 pm | rescheduling_needed | NO |
 | 18 | abdyll | test@gmail.com | phone_recruitment | 2025-08-18 2:00 PM | pending_response | NO |
 | 17 | hello | hello@gmail.com | calendly_signup | 2025-08-11 2:pm | pending_response | no |
 | 16 | Abdul | abdul@gmail.com | calendly_signup | 2025-08-25 2:00 PM | pending_response | NO |
@@ -28,13 +29,13 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| phone_recruitment | 3 | 43% |
-| calendly_signup | 2 | 29% |
-| 📧 Email Outreach | 1 | 14% |
-| 🤝 Referral | 1 | 14% |
+| 📧 Email Outreach | 2 | 25% |
+| phone_recruitment | 3 | 38% |
+| calendly_signup | 2 | 25% |
+| 🤝 Referral | 1 | 13% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 29% conversion rate (2 confirmed of 7 recruited)
+Recruitment effectiveness: 25% conversion rate (2 confirmed of 8 recruited)
 
 ---
 
@@ -54,6 +55,7 @@ Recruitment effectiveness: 29% conversion rate (2 confirmed of 7 recruited)
 - **** -  ()
 
 ### 🕐 Rescheduling Needed
+- **** -  ()
 
 ---
 
@@ -109,6 +111,7 @@ Recruitment effectiveness: 29% conversion rate (2 confirmed of 7 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 19: NO
 - 18: NO
 - 17: no
 - 16: NO
@@ -130,7 +133,7 @@ Recruitment effectiveness: 29% conversion rate (2 confirmed of 7 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 7 of 7 participants
+Demographics collected for 8 of 8 participants
 
 ---
 
@@ -143,4 +146,4 @@ Demographics collected for 7 of 7 participants
 - Send observer guidelines immediately upon assignment
 
 **🔄 Next Steps:**
-Follow up with 5 pending participant(s)
+Follow up with 5 pending participant(s); Reschedule 1 session(s)
