@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – Assistive Technology Usability Test
 
 **📊 Recruitment Summary**
-- **Total Participants:** 1
-- **Confirmed Sessions:** 1
+- **Total Participants:** 2
+- **Confirmed Sessions:** 2
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 2 | PT01 | Bessie Thomas | calendly_signup | 2025-08-26 11:00 am EST | confirmed | Prefers Morning Sessions |
 | 1 | PT001 | John Jones | calendly_signup | 2025-08-18 2:00 pm EST | confirmed | Needs interpreter, and assistive technology |
 
 ---
@@ -22,16 +23,18 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| calendly_signup | 1 | 100% |
+| calendly_signup | 2 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
+Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 ---
 
 ## 📅 Session Schedule
 
 ### ✅ Confirmed Sessions
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 
@@ -94,6 +97,7 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 2: Prefers Morning Sessions
 - 1: Needs interpreter, and assistive technology
 
 **Preparation Checklist:**
@@ -109,7 +113,7 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 1 of 1 participants
+Demographics collected for 2 of 2 participants
 
 ---
 
@@ -122,4 +126,4 @@ Demographics collected for 1 of 1 participants
 - Send observer guidelines immediately upon assignment
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (2 more needed)
+Continue recruiting to reach minimum of 3 participants (1 more needed)
