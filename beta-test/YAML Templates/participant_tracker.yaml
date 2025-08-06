@@ -9,19 +9,24 @@ inputs:
   study_id: "{{study_id}}"
   study_name: "{{study_name}}"
   participant_name: "{{participant_name}}"
-  contact_details: "{{contact_details}}"
   recruitment_source: "{{recruitment_source}}"
   scheduled_date: "{{scheduled_date}}"
   scheduled_time: "{{scheduled_time}}"
   status_select: "{{status_select}}"
   notes_field: "{{notes_field}}"
-  demographics_info: "{{demographics_info}}"
+  
+  # New demographic inputs
+  race_ethnicity: "{{race_ethnicity}}"
+  age_range: "{{age_range}}"
+  education_level: "{{education_level}}"
+  location_type: "{{location_type}}"
+  
   current_date: "{{current_date}}"
   added_by: "{{added_by}}"
-  import_source: "{{import_source}}" # manual, calendly, csv
+  import_source: "{{import_source}}" # manual, csv
   existing_participants: "{{existing_participants}}" # for updates
-  session_context: "{{session_context}}" # study context for observer guidelines
-  meeting_link: "{{meeting_link}}" # for observer guidelines
+  session_context: "{{session_context}}" # study context
+  meeting_link: "{{meeting_link}}"
   session_duration: "{{session_duration}}" # default 45 minutes
   
   # Observer-related inputs
@@ -59,16 +64,54 @@ status_mappings:
     display: "🚫 Disqualified"
     description: "Did not meet study criteria"
 
-# Recruitment source mappings
+# Recruitment source mappings (removed calendly)
 recruitment_sources:
   internal_panel: "🗂️ Internal VA Panel"
-  calendly: "📅 Calendly Signup"
   email_outreach: "📧 Email Outreach"
   phone: "📞 Phone Recruitment"
   referral: "🤝 Referral"
   online: "🌐 Social/Website"
   csv_import: "📊 CSV Import"
   api_import: "🔗 API Import"
+
+# Demographic mappings
+demographic_mappings:
+  race_ethnicity:
+    american_indian: "American Indian or Alaska Native"
+    asian: "Asian"
+    black: "Black or African American"
+    hispanic_latino: "Hispanic or Latino"
+    native_hawaiian: "Native Hawaiian or Other Pacific Islander"
+    white: "White"
+    two_or_more: "Two or More Races"
+    prefer_not_to_say: "Prefer not to say"
+  
+  age_range:
+    "18-24": "18-24"
+    "25-34": "25-34"
+    "35-44": "35-44"
+    "45-54": "45-54"
+    "55-64": "55-64"
+    "65-74": "65-74"
+    "75+": "75+"
+    prefer_not_to_say: "Prefer not to say"
+  
+  education_level:
+    less_than_high_school: "Less than high school"
+    high_school: "High school diploma/GED"
+    some_college: "Some college"
+    associate: "Associate degree"
+    bachelor: "Bachelor's degree"
+    master: "Master's degree"
+    professional: "Professional degree"
+    doctorate: "Doctorate degree"
+    prefer_not_to_say: "Prefer not to say"
+  
+  location_type:
+    urban: "Urban"
+    suburban: "Suburban"
+    rural: "Rural"
+    prefer_not_to_say: "Prefer not to say"
 
 # Observer management configuration
 observer_management:
@@ -112,11 +155,6 @@ session_structure:
         requested_at: "{{request_timestamp}}"
         reason: "{{observer_reason}}"
         status: "pending_approval"
-    observer_feedback:
-      - observer: "{{observer_user_id}}"
-        feedback: "{{feedback_text}}"
-        themes: ["{{theme1}}", "{{theme2}}"]
-        submitted_at: "{{feedback_timestamp}}"
 
 output_template: |
   # 👥 Participant Tracker – {{study_name}}
@@ -133,10 +171,10 @@ output_template: |
 
   ## 📋 Participant Details
 
-  | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
-  |----|-----------|---------|-----------------|-----------|--------|----------------------|
+  | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
+  |----|-------|---------------|-----------|--------|----------------------|
   {{#each participants}}
-  | {{id}} | {{participant_name}} | {{contact_details}} | {{recruitment_source}} | {{scheduled_date}} {{scheduled_time}} | {{status_select}} | {{notes_field}} |
+  | {{id}} | {{participant_name}} | {{recruitment_source}} | {{scheduled_date}} {{scheduled_time}} | {{status_select}} | {{notes_field}} |
   {{/each}}
 
   ---
@@ -154,22 +192,17 @@ output_template: |
 
   ---
 
-  ## 📅 Session Schedule
+  ## ✅ Confirmed Sessions
 
-  ### ✅ Confirmed Sessions
   {{#each confirmed_sessions}}
   - **{{participant_id}}** - {{date}} at {{time}}
     - Observers: {{observers_list}}
   {{/each}}
 
-  ### ⏳ Pending Scheduling
+  ## ⏳ Pending Sessions
+
   {{#each pending_sessions}}
   - **{{participant_id}}** - {{participant_name}} ({{status}})
-  {{/each}}
-
-  ### 🕐 Rescheduling Needed
-  {{#each rescheduling_sessions}}
-  - **{{participant_id}}** - {{participant_name}} ({{reason}})
   {{/each}}
 
   ---
@@ -178,10 +211,10 @@ output_template: |
 
   **Session Observer Assignments:**
 
-  | Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
-  |---------|-----------|-----------|----------|------------------|-----------------|
+  | Session | Date/Time | Observers | Capacity | Pending Requests |
+  |---------|-----------|-----------|----------|------------------|
   {{#each session_observers}}
-  | {{session_id}} | {{date_time}} | {{observers}} | {{capacity}}/3 | {{pending_count}} | {{guidelines_status}} |
+  | {{session_id}} | {{date_time}} | {{observers}} | {{capacity}}/3 | {{pending_count}} |
   {{/each}}
 
   **Observer Role Distribution:**
@@ -192,49 +225,19 @@ output_template: |
   | 📊 PM Observer | {{pm_observer_count}} | {{pm_observer_sessions}} |
   | 🏛️ Stakeholder | {{stakeholder_count}} | {{stakeholder_sessions}} |
 
-  **Observer Guidelines Status:**
-  - **✅ Guidelines Sent:** {{guidelines_sent_list}}
-  - **⏳ Pending Delivery:** {{guidelines_pending_list}}
-  - **🔄 Updates Needed:** {{guidelines_update_list}}
-
   **Observer Guidelines:** 
   - Review session plan before observing
   - Stay muted unless emergency
   - Take notes without interrupting
   - Share feedback after session
 
-  **🔄 Observer Action Items:**
-  {{#each observer_action_items}}
-  - [ ] {{item}}
-  {{/each}}
   {% if triggered_by_observer_request %}
-  - [ ] ✅ {{observer_user_name}} approved for {{session_id}} as {{observer_role}}
-  - [ ] 📤 Send observer guidelines to {{observer_user_name}}
-  - [ ] 📅 Add {{observer_user_name}} to {{session_id}} calendar invite
-  - [ ] 🔄 Update session capacity tracking
+  **🔄 Observer Updates:**
+  - ✅ {{observer_user_name}} approved for {{session_id}} as {{observer_role}}
+  - 📤 Send observer guidelines to {{observer_user_name}}
+  - 📅 Add {{observer_user_name}} to {{session_id}} calendar invite
+  - 🔄 Update session capacity tracking
   {% endif %}
-
-  ---
-
-  ## 🔍 Action Items
-
-  **🚨 Immediate Actions:**
-  {{#each immediate_actions}}
-  - [ ] {{action}}
-  {{/each}}
-
-  **📞 Follow-up Needed:**
-  {{#each followup_needed}}
-  - [ ] {{participant_id}} - {{action}} ({{status}})
-  {{/each}}
-
-  **👀 Observer Coordination:**
-  {{#each observer_coordination}}
-  - [ ] {{task}}
-  {{/each}}
-
-  **📋 Recruitment Needs:**
-  {{recruitment_recommendations}}
 
   ---
 
@@ -255,10 +258,33 @@ output_template: |
 
   ---
 
-  ## 📊 Demographics Overview (Optional)
+  ## 📊 Demographics Overview
 
   **Diversity Tracking:**
-  {{demographics_summary}}
+
+  | Race/Ethnicity | Count | Percentage |
+  |----------------|-------|------------|
+  {{#each race_ethnicity_breakdown}}
+  | {{category}} | {{count}} | {{percentage}}% |
+  {{/each}}
+
+  | Age Range | Count | Percentage |
+  |-----------|-------|------------|
+  {{#each age_range_breakdown}}
+  | {{range}} | {{count}} | {{percentage}}% |
+  {{/each}}
+
+  | Education Level | Count | Percentage |
+  |----------------|-------|------------|
+  {{#each education_breakdown}}
+  | {{level}} | {{count}} | {{percentage}}% |
+  {{/each}}
+
+  | Location Type | Count | Percentage |
+  |---------------|-------|------------|
+  {{#each location_breakdown}}
+  | {{type}} | {{count}} | {{percentage}}% |
+  {{/each}}
 
   ---
 
@@ -268,7 +294,6 @@ output_template: |
   - Include accommodation needs for proper session planning
   - Track recruitment sources to analyze effectiveness
   - Coordinate with observers before each session
-  - Send observer guidelines immediately upon assignment
 
   **🔄 Next Steps:**
   {{next_steps_recommendations}}
@@ -332,7 +357,7 @@ notify:
     channel: "{{study_channel}}"
     condition: "participant_name != null"
     
-  # NEW: Observer notifications
+  # Observer notifications
   - role: observer
     action: "Added to session"
     slack_dm: "{{observer_user_id}}"
