@@ -1,9 +1,9 @@
 # 👥 Participant Tracker – Study
 
 **📊 Recruitment Summary**
-- **Total Participants:** 2
+- **Total Participants:** 3
 - **Confirmed Sessions:** 1
-- **Pending Responses:** 1
+- **Pending Responses:** 2
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
 - **Last Updated:** August 6, 2025 by U08T1F4B347
@@ -14,6 +14,7 @@
 
 | ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-----------|---------|-----------------|-----------|--------|----------------------|
+| 6 | Lepadra | lepadra@gmail.com | phone_recruitment | 2025-08-19 3:00 PM | pending_response | NO |
 | 5 | Abdul | abdul@gmail.com | email_outreach | 2025-08-24 3:00 PM | pending_response | NO |
 | 3 | Tanzeel | tanzeel@gmail.com | referral | 2025-08-25 2:00pm | confirmed | NO |
 
@@ -23,11 +24,12 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 1 | 50% |
-| 🤝 Referral | 1 | 50% |
+| phone_recruitment | 1 | 33% |
+| 📧 Email Outreach | 1 | 33% |
+| 🤝 Referral | 1 | 33% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
+Recruitment effectiveness: 33% conversion rate (1 confirmed of 3 recruited)
 
 ---
 
@@ -38,6 +40,7 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
   - Observers: 
 
 ### ⏳ Pending Scheduling
+- **** -  ()
 - **** -  ()
 
 ### 🕐 Rescheduling Needed
@@ -83,7 +86,6 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 ## 🔍 Action Items
 
 **🚨 Immediate Actions:**
-- [ ] 
 
 **📞 Follow-up Needed:**
 
@@ -97,6 +99,7 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 6: NO
 - 5: NO
 - 3: NO
 
@@ -113,7 +116,7 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 ## 📊 Demographics Overview (Optional)
 
 **Diversity Tracking:**
-Demographics collected for 2 of 2 participants
+Demographics collected for 3 of 3 participants
 
 ---
 
@@ -126,4 +129,4 @@ Demographics collected for 2 of 2 participants
 - Send observer guidelines immediately upon assignment
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (1 more needed)
+Follow up with 2 pending participant(s)
