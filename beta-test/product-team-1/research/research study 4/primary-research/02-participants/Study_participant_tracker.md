@@ -1,9 +1,9 @@
 # 👥 Participant Tracker – Study
 
 **📊 Recruitment Summary**
-- **Total Participants:** 4
-- **Confirmed Sessions:** 2
-- **Pending Responses:** 2
+- **Total Participants:** 0
+- **Confirmed Sessions:** 0
+- **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
 - **Last Updated:** August 6, 2025 by U08T1F4B347
@@ -21,9 +21,6 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 🤝 Referral | 2 | 50% |
-| phone_recruitment | 1 | 25% |
-| 📧 Email Outreach | 1 | 25% |
 
 **🔍 Recruitment Effectiveness:**
 Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
