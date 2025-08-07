@@ -1,24 +1,25 @@
 # 👥 Participant Tracker – participant testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 5
+- **Total Participants:** 6
 - **Confirmed Sessions:** 3
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
-- **Last Updated:** August 6, 2025 by U08T1F4B347
+- **Last Updated:** August 7, 2025 by U08T1F4B347
 
 ---
 
 ## 📋 Participant Details
 
-| ID | Name/Alias | Contact | Recruited Via | Scheduled | Status | Notes & Accommodations |
-|----|-----------|---------|-----------------|-----------|--------|----------------------|
-| 26 | hello | hello | email_outreach | 2025-08-25 2pm | confirmed | no |
-| 25 | hello | hello | email_outreach | 2025-08-18 2:00pm | rescheduling_needed | no |
-| 24 | hello | hello | internal_va_panel | 2025-08-17 2:00 | confirmed | no |
-| 13 | Lepadra | lepadra@gmail.com | calendly_signup | 2025-08-18 1:00 PM | confirmed | Yes do this |
-| 12 | Tanzeel | tanzeel@gmail.com | calendly_signup | 2025-08-20 2:00 PM | pending_response | NO |
+| ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
+|----|-------|---------------|-----------|--------|----------------------|
+| 27 | tanzeel | phone_recruitment | 2025-08-19 2:00 PM | rescheduling_needed | NO |
+| 26 | hello | email_outreach | 2025-08-25 2pm | confirmed | no |
+| 25 | hello | email_outreach | 2025-08-18 2:00pm | rescheduling_needed | no |
+| 24 | hello | internal_va_panel | 2025-08-17 2:00 | confirmed | no |
+| 13 | Lepadra | calendly_signup | 2025-08-18 1:00 PM | confirmed | Yes do this |
+| 12 | Tanzeel | calendly_signup | 2025-08-20 2:00 PM | pending_response | NO |
 
 ---
 
@@ -26,18 +27,18 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 2 | 40% |
-| internal_va_panel | 1 | 20% |
-| calendly_signup | 2 | 40% |
+| phone_recruitment | 1 | 17% |
+| 📧 Email Outreach | 2 | 33% |
+| internal_va_panel | 1 | 17% |
+| calendly_signup | 2 | 33% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 60% conversion rate (3 confirmed of 5 recruited)
+Recruitment effectiveness: 50% conversion rate (3 confirmed of 6 recruited)
 
 ---
 
-## 📅 Session Schedule
+## ✅ Confirmed Sessions
 
-### ✅ Confirmed Sessions
 - **** -  at 
   - Observers: 
 - **** -  at 
@@ -45,10 +46,8 @@ Recruitment effectiveness: 60% conversion rate (3 confirmed of 5 recruited)
 - **** -  at 
   - Observers: 
 
-### ⏳ Pending Scheduling
-- **** -  ()
+## ⏳ Pending Sessions
 
-### 🕐 Rescheduling Needed
 - **** -  ()
 
 ---
@@ -57,37 +56,37 @@ Recruitment effectiveness: 60% conversion rate (3 confirmed of 5 recruited)
 
 **Session Observer Assignments:**
 
-| Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
-|---------|-----------|-----------|----------|------------------|-----------------|
-| pt025 | 2025-08-18 2:00pm | User U08T1F4B347 (📊 PM Observer) | 1/3 | 0 | ✅ Sent |
-| pt012 | 2025-08-20 2:00 PM | User U08T1F4B347 (📝 Note-taker), User U08T1F4B347 (👁️ Silent Observer) | 2/3 | 0 | ✅ Sent |
-| pt013 | 2025-08-18 1:00 PM | User U08T1F4B347 (📊 PM Observer) | 1/3 | 0 | ✅ Sent |
+| Session | Date/Time | Observers | Capacity | Pending Requests |
+|---------|-----------|-----------|----------|------------------|
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker | 1 | pt012 |
-| 👁️ Silent Observer | 1 | pt012 |
-| 📊 PM Observer | 2 | pt025, pt013 |
-| 🏛️ Stakeholder | 0 | - |
----
+| 📝 Note-taker |  |  |
+| 👁️ Silent Observer |  |  |
+| 📊 PM Observer |  |  |
+| 🏛️ Stakeholder |  |  |
 
-## 🔍 Action Items
+**Observer Guidelines:** 
+- Review session plan before observing
+- Stay muted unless emergency
+- Take notes without interrupting
+- Share feedback after session
 
-**🚨 Immediate Actions:**
-
-**📞 Follow-up Needed:**
-
-**👀 Observer Coordination:**
-
-**📋 Recruitment Needs:**
-
+{% if triggered_by_observer_request %}
+**🔄 Observer Updates:**
+- ✅  approved for  as 
+- 📤 Send observer guidelines to 
+- 📅 Add  to  calendar invite
+- 🔄 Update session capacity tracking
+{% endif %}
 
 ---
 
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 27: NO
 - 26: no
 - 25: no
 - 24: no
@@ -104,10 +103,25 @@ Recruitment effectiveness: 60% conversion rate (3 confirmed of 5 recruited)
 
 ---
 
-## 📊 Demographics Overview (Optional)
+## 📊 Demographics Overview
 
 **Diversity Tracking:**
-Demographics collected for 2 of 5 participants
+
+| Race/Ethnicity | Count | Percentage |
+|----------------|-------|------------|
+| Asian | 1 | 17% |
+
+| Age Range | Count | Percentage |
+|-----------|-------|------------|
+| 25-34 | 1 | 17% |
+
+| Education Level | Count | Percentage |
+|----------------|-------|------------|
+| Bachelor's degree | 1 | 17% |
+
+| Location Type | Count | Percentage |
+|---------------|-------|------------|
+| Urban | 1 | 17% |
 
 ---
 
@@ -117,7 +131,6 @@ Demographics collected for 2 of 5 participants
 - Include accommodation needs for proper session planning
 - Track recruitment sources to analyze effectiveness
 - Coordinate with observers before each session
-- Send observer guidelines immediately upon assignment
 
 **🔄 Next Steps:**
-Follow up with 1 pending participant(s); Reschedule 1 session(s)
+Follow up with 1 pending participant(s); Reschedule 2 session(s)
