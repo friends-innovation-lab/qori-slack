@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – participant testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 7
-- **Confirmed Sessions:** 4
+- **Total Participants:** 8
+- **Confirmed Sessions:** 5
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 29 | rahman | email_outreach | 2025-08-19 2:00 PM | confirmed | NO |
 | 28 | lepadra | email_outreach | 2025-08-31 1:00 PM | confirmed | NO |
 | 27 | tanzeel | phone_recruitment | 2025-08-19 2:00 PM | rescheduling_needed | NO |
 | 26 | hello | email_outreach | 2025-08-25 2pm | confirmed | no |
@@ -28,18 +29,20 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 3 | 43% |
-| phone_recruitment | 1 | 14% |
-| internal_va_panel | 1 | 14% |
-| calendly_signup | 2 | 29% |
+| 📧 Email Outreach | 4 | 50% |
+| phone_recruitment | 1 | 13% |
+| internal_va_panel | 1 | 13% |
+| calendly_signup | 2 | 25% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 57% conversion rate (4 confirmed of 7 recruited)
+Recruitment effectiveness: 63% conversion rate (5 confirmed of 8 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 - **** -  at 
@@ -89,6 +92,7 @@ Recruitment effectiveness: 57% conversion rate (4 confirmed of 7 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 29: NO
 - 28: NO
 - 27: NO
 - 26: no
@@ -113,21 +117,22 @@ Recruitment effectiveness: 57% conversion rate (4 confirmed of 7 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| American Indian or Alaska Native | 1 | 14% |
-| Asian | 1 | 14% |
+| Asian | 2 | 25% |
+| American Indian or Alaska Native | 1 | 13% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 35-44 | 1 | 14% |
-| 25-34 | 1 | 14% |
+| 18-24 | 1 | 13% |
+| 35-44 | 1 | 13% |
+| 25-34 | 1 | 13% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Bachelor's degree | 2 | 29% |
+| Bachelor's degree | 3 | 38% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Urban | 2 | 29% |
+| Urban | 3 | 38% |
 
 ---
 
