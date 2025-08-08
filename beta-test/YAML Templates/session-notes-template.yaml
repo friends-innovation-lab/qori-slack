@@ -34,13 +34,13 @@ github:
   repository: "primary-research"
   branch: "main"
   base_path: "03-fieldwork/session-notes"
-  commit_message: "Session notes: {{session_info}} by {{user_name}}"
+  commit_message: "Session notes: {{selected_session}} by {{slack_user_display_name}}"
 
 # File naming convention
 filename:
   pattern: "{{session_id}}_notes_{{user_name}}_{{date}}.md"
   variables:
-    session_id: "{{session_info | extract_session_id}}"  # Extract session ID from first field
+    session_id: "{{selected_session}}"  # Session ID from dropdown selection
     user_name: "{{slack_user_display_name | slugify}}"   # Slack user's display name, URL-safe
     date: "{{submission_timestamp | format_date:'YYYY-MM-DD'}}"
 
@@ -99,13 +99,13 @@ field_mapping:
 
 # Markdown template structure
 markdown_template: |
-  # Session Notes: {{selected_session.session_id}} - {{selected_session.participant_name}}
+  # Session Notes: {{selected_session}} - {{participant_name}}
   
   **📝 Note Taker:** {{slack_user_display_name}}  
   **⏰ Submitted:** {{submission_timestamp | format_date:'MMMM DD, YYYY at HH:mm'}}  
-  **📂 Session:** {{selected_session.session_id}} - {{selected_session.participant_name}}  
-  **📅 Session Date:** {{selected_session.session_date}} at {{selected_session.session_time}}  
-  **👨‍🔬 Researcher:** {{selected_session.researcher}}
+  **📂 Session:** {{selected_session}} - {{participant_name}}  
+  **📅 Session Date:** {{session_date}} at {{session_time}}  
+  **👨‍🔬 Researcher:** {{researcher}}
   
   ---
   
@@ -195,7 +195,7 @@ post_actions:
       📝 **New Session Notes Submitted**
       
       **Note Taker:** {{slack_user_display_name}}
-      **Session:** {{session_info}}
+      **Session:** {{selected_session}}
       **File:** `{{filename}}`
       
       📂 View in GitHub: {{github_file_url}}
@@ -220,17 +220,17 @@ post_actions:
     enabled: true
     index_file: "03-fieldwork/session-notes/README.md"
     append_entry: |
-      - [{{session_info}}]({{filename}}) - {{slack_user_display_name}} - {{submission_date}}
+      - [{{selected_session}}]({{filename}}) - {{slack_user_display_name}} - {{submission_date}}
 
 # Data validation rules
 validation:
   required_fields:
-    - session_details.session_info
+    - session_selection.selected_session
     - quotes_reactions.quotes
     - key_moments.moments
     
   field_limits:
-    session_info: 200  # characters
+    selected_session: 200  # characters
     quotes: 5000
     emotions: 3000
     tasks: 3000
@@ -242,7 +242,7 @@ validation:
   error_handling:
     validation_failure:
       response_type: "ephemeral"
-      message: "❌ Please fill in all required fields: Session Details, Key Quotes, and Top 3 Key Moments."
+      message: "❌ Please fill in all required fields: Session Selection, Key Quotes, and Top 3 Key Moments."
       
     github_failure:
       response_type: "ephemeral" 
@@ -287,3 +287,86 @@ integration:
       - "chat:write"
       - "users:read"
       - "channels:read"
+
+# Output configuration
+output_options:
+  filename: "{{selected_session}}_notes_{{slack_user_display_name | slugify}}_{{submission_timestamp | format_date:'YYYY-MM-DD'}}.md"
+  path: "03-fieldwork/session-notes/"
+  generate_index: true
+  index_filename: "README.md"
+  
+  delivery:
+    github:
+      enabled: true
+      repo: "primary-research"
+      path: "03-fieldwork/session-notes/"
+      commit_message: "Session notes: {{selected_session}} by {{slack_user_display_name}}"
+      
+    slack:
+      enabled: true
+      send_dm: true
+      target_user: "{{slack_user_id}}"
+      include_copy_button: true
+      include_email_format: false
+      
+      message: |
+        📝 **Your session notes have been saved!**
+        
+        **Session:** {{selected_session}}
+        **File:** `{{filename}}`
+        **Location:** `03-fieldwork/session-notes/`
+        
+        📂 View your notes: {{github_file_url}}
+        
+        Thanks for contributing to our research! 🙏
+      
+      actions:
+        - text: "📋 View Notes in GitHub"
+          style: "primary"
+          action_type: "url"
+          url: "{{github_file_url}}"
+          
+        - text: "📊 View All Session Notes"
+          style: "default"
+          action_type: "url"
+          url: "{{github_directory_url}}"
+
+# Workflow integration points
+workflow_integration:
+  triggered_by:
+    - "slack_modal_submission"
+    - "manual_note_submission"
+  
+  auto_triggers:
+    slack_modal_submission:
+      enabled: true
+      delay: "immediate"
+      conditions:
+        - "selected_session != null"
+        - "quotes != null"
+        - "moments != null"
+  
+  integration_data:
+    slack_modal:
+      maps_to:
+        selected_session: "session_dropdown_value"
+        slack_user_display_name: "user_display_name"
+        slack_user_id: "user_id"
+    
+    participant_tracker:
+      maps_to:
+        participant_name: "participant_name"
+        session_date: "session_date"
+        session_time: "session_time"
+        researcher: "researcher"
+
+# Notification routing
+notification_routing:
+  primary_submitter: "{{slack_user_id}}"
+  research_team: "#research-team"
+  researcher_copy: "{{researcher_slack_id}}"
+  
+  escalation:
+    processing_timeout: "30 seconds"
+    escalate_to: "#research-team"
+    escalation_message: "Session notes submission from {{slack_user_display_name}} failed to process for {{selected_session}}"
