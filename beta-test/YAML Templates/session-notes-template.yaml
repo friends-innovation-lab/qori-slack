@@ -4,6 +4,31 @@ description: Convert Slack modal submissions to structured GitHub markdown files
 trigger_type: slack_modal_submission
 callback_id: session_notes_modal
 
+# External data sources
+external_data_sources:
+  participant_tracker:
+    file_path: "participant_tracker.yaml"
+    endpoint: "/api/slack/options/sessions"
+    cache_duration: "5 minutes"
+    
+    # How to format dropdown options from participant tracker
+    option_mapping:
+      value: "{{session_id}}"  # What gets submitted when selected
+      label: "{{session_id}} - {{participant_name}} ({{session_date}})"  # What user sees
+      description: "{{session_time}} | {{researcher}} | {{session_type}}"  # Additional context
+      
+    # Filter criteria for available sessions
+    filters:
+      - status: "scheduled|in_progress|completed"  # Only show relevant sessions
+      - session_date: "within_7_days"  # Only recent/upcoming sessions
+      - has_observers: true  # Only sessions that allow observers
+      
+    # Fallback if participant tracker unavailable
+    fallback:
+      enabled: true
+      fallback_to: "text_input"
+      placeholder: "Enter session ID manually (e.g., P001-SessionA)"
+
 # GitHub configuration
 github:
   repository: "primary-research"
@@ -21,10 +46,11 @@ filename:
 
 # Field mapping from Slack modal to markdown
 field_mapping:
-  session_details:
-    block_id: "session_details"
-    action_id: "session_info"
-    variable_name: "session_info"
+  session_selection:
+    block_id: "session_selection"
+    action_id: "session_dropdown"
+    variable_name: "selected_session"
+    data_source: "participant_tracker.yaml"
     required: true
     
   quotes_reactions:
@@ -73,11 +99,13 @@ field_mapping:
 
 # Markdown template structure
 markdown_template: |
-  # Session Notes: {{session_info}}
+  # Session Notes: {{selected_session.session_id}} - {{selected_session.participant_name}}
   
   **📝 Note Taker:** {{slack_user_display_name}}  
   **⏰ Submitted:** {{submission_timestamp | format_date:'MMMM DD, YYYY at HH:mm'}}  
-  **📂 Session:** {{session_info}}
+  **📂 Session:** {{selected_session.session_id}} - {{selected_session.participant_name}}  
+  **📅 Session Date:** {{selected_session.session_date}} at {{selected_session.session_time}}  
+  **👨‍🔬 Researcher:** {{selected_session.researcher}}
   
   ---
   
