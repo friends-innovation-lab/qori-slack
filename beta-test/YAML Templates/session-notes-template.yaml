@@ -1,0 +1,261 @@
+id: session_notes_template
+label: "📝 Session Notes Generator"
+description: Convert Slack modal submissions to structured GitHub markdown files
+trigger_type: slack_modal_submission
+callback_id: session_notes_modal
+
+# GitHub configuration
+github:
+  repository: "primary-research"
+  branch: "main"
+  base_path: "03-fieldwork/session-notes"
+  commit_message: "Session notes: {{session_info}} by {{user_name}}"
+
+# File naming convention
+filename:
+  pattern: "{{session_id}}_notes_{{user_name}}_{{date}}.md"
+  variables:
+    session_id: "{{session_info | extract_session_id}}"  # Extract session ID from first field
+    user_name: "{{slack_user_display_name | slugify}}"   # Slack user's display name, URL-safe
+    date: "{{submission_timestamp | format_date:'YYYY-MM-DD'}}"
+
+# Field mapping from Slack modal to markdown
+field_mapping:
+  session_details:
+    block_id: "session_details"
+    action_id: "session_info"
+    variable_name: "session_info"
+    required: true
+    
+  quotes_reactions:
+    block_id: "quotes_reactions"
+    action_id: "quotes"
+    variable_name: "quotes"
+    format_type: "preserve_line_breaks"
+    
+  emotional_moments:
+    block_id: "emotional_moments"
+    action_id: "emotions"
+    variable_name: "emotions"
+    format_type: "preserve_line_breaks"
+    
+  task_observations:
+    block_id: "task_observations"
+    action_id: "tasks"
+    variable_name: "tasks"
+    format_type: "preserve_line_breaks"
+    
+  technical_issues:
+    block_id: "technical_issues"
+    action_id: "tech_issues"
+    variable_name: "tech_issues"
+    format_type: "preserve_line_breaks"
+    
+  accessibility_notes:
+    block_id: "accessibility_notes"
+    action_id: "accessibility"
+    variable_name: "accessibility"
+    format_type: "preserve_line_breaks"
+    optional: true
+    
+  key_moments:
+    block_id: "key_moments"
+    action_id: "moments"
+    variable_name: "moments"
+    format_type: "preserve_line_breaks"
+    
+  additional_notes:
+    block_id: "additional_notes"
+    action_id: "notes"
+    variable_name: "additional"
+    format_type: "preserve_line_breaks"
+    optional: true
+
+# Markdown template structure
+markdown_template: |
+  # Session Notes: {{session_info}}
+  
+  **📝 Note Taker:** {{slack_user_display_name}}  
+  **⏰ Submitted:** {{submission_timestamp | format_date:'MMMM DD, YYYY at HH:mm'}}  
+  **📂 Session:** {{session_info}}
+  
+  ---
+  
+  ## 🗣️ Key Quotes & Reactions
+  
+  {{#if quotes}}
+  {{quotes}}
+  {{else}}
+  *No quotes recorded for this session.*
+  {{/if}}
+  
+  ---
+  
+  ## 😤 Emotional Moments & Body Language
+  
+  {{#if emotions}}
+  {{emotions}}
+  {{else}}
+  *No emotional moments recorded for this session.*
+  {{/if}}
+  
+  ---
+  
+  ## ✅ Task Completion & Errors
+  
+  {{#if tasks}}
+  {{tasks}}
+  {{else}}
+  *No task observations recorded for this session.*
+  {{/if}}
+  
+  ---
+  
+  ## 🐛 Technical Issues & Platform Problems
+  
+  {{#if tech_issues}}
+  {{tech_issues}}
+  {{else}}
+  *No technical issues reported for this session.*
+  {{/if}}
+  
+  ---
+  
+  {{#if accessibility}}
+  ## ♿ Accessibility & Accommodation Observations
+  
+  {{accessibility}}
+  
+  ---
+  
+  {{/if}}
+  ## ⭐ Top 3 Key Moments
+  
+  {{#if moments}}
+  {{moments}}
+  {{else}}
+  *No key moments identified for this session.*
+  {{/if}}
+  
+  ---
+  
+  {{#if additional}}
+  ## 📋 Additional Notes & Context
+  
+  {{additional}}
+  
+  ---
+  
+  {{/if}}
+  ## 📊 Session Metadata
+  
+  - **GitHub Path:** `03-fieldwork/session-notes/{{filename}}`
+  - **Submission Method:** Slack Modal
+  - **Note Taker Slack ID:** {{slack_user_id}}
+  - **Timestamp:** {{submission_timestamp | format_date:'ISO'}}
+  
+  ---
+  
+  *This file was automatically generated from Slack modal submission and saved to the primary-research repository.*
+
+# Post-processing actions
+post_actions:
+  slack_notification:
+    enabled: true
+    target_channel: "#research-team"
+    message_template: |
+      📝 **New Session Notes Submitted**
+      
+      **Note Taker:** {{slack_user_display_name}}
+      **Session:** {{session_info}}
+      **File:** `{{filename}}`
+      
+      📂 View in GitHub: {{github_file_url}}
+    
+    dm_submitter:
+      enabled: true
+      message: |
+        ✅ **Your session notes have been saved!**
+        
+        **File:** `{{filename}}`
+        **Location:** `03-fieldwork/session-notes/`
+        
+        📂 View your notes: {{github_file_url}}
+        
+        Thanks for contributing to our research! 🙏
+
+  email_notification:
+    enabled: false
+    # Could be configured for stakeholder notifications
+    
+  update_index:
+    enabled: true
+    index_file: "03-fieldwork/session-notes/README.md"
+    append_entry: |
+      - [{{session_info}}]({{filename}}) - {{slack_user_display_name}} - {{submission_date}}
+
+# Data validation rules
+validation:
+  required_fields:
+    - session_details.session_info
+    - quotes_reactions.quotes
+    - key_moments.moments
+    
+  field_limits:
+    session_info: 200  # characters
+    quotes: 5000
+    emotions: 3000
+    tasks: 3000
+    tech_issues: 2000
+    accessibility: 2000
+    moments: 1500
+    additional: 3000
+    
+  error_handling:
+    validation_failure:
+      response_type: "ephemeral"
+      message: "❌ Please fill in all required fields: Session Details, Key Quotes, and Top 3 Key Moments."
+      
+    github_failure:
+      response_type: "ephemeral" 
+      message: "⚠️ There was an issue saving to GitHub. Your notes have been saved temporarily and the research team has been notified."
+      fallback_action: "save_to_slack_thread"
+
+# Helper functions for data processing
+data_processing:
+  extract_session_id:
+    # Extract session ID from the beginning of session_info field
+    regex: "^([A-Za-z0-9_-]+)"
+    fallback: "unknown_session"
+    
+  slugify:
+    # Convert display name to URL-safe string
+    replace_spaces: "_"
+    remove_special_chars: true
+    lowercase: true
+    max_length: 20
+    
+  format_timestamps:
+    timezone: "America/New_York"  # VA timezone
+    formats:
+      date: "YYYY-MM-DD"
+      datetime: "MMMM DD, YYYY at HH:mm"
+      iso: "YYYY-MM-DDTHH:mm:ssZ"
+
+# Integration settings
+integration:
+  qori:
+    enabled: true
+    webhook_url: "{{qori_webhook_endpoint}}"
+    authentication: "bearer_token"
+    
+  github_api:
+    enabled: true
+    api_version: "2022-11-28"
+    create_pr: false  # Direct commit to main branch
+    
+  slack_api:
+    scopes_required:
+      - "chat:write"
+      - "users:read"
+      - "channels:read"
