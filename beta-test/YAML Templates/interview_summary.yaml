@@ -1,166 +1,161 @@
 id: interview_summary
-name: run_interview_summary
-label: 📝 Interview Summary
-version: v2.2
-description: Extract key themes, pain points, quotes, and coded transcript segments from interviews 💬
+name: interview_summary
+label: 📝 Analyze Notes
+version: v1.0
+description: Generate quick summary with top pain points, quotes, and observations from session notes
 
 author: CivicMind R&D
-created: 2025-06-26
-last_updated: 2025-07-09
+created: 2025-08-11
+last_updated: 2025-08-11
 
 # LLM Configuration
 llm_config:
-  model: "gpt-3.5-turbo"
-  temperature: 0.4
-  max_tokens: 4000
+  model: "gpt-4"
+  temperature: 0.3
+  max_tokens: 2000
 
-input_type: text
-input_processing: summarize_if_long
-batch_mode: true
-batch_delimiter: "---"
-precision_mode: detailed
+input_type: structured
+input_processing: combine_and_analyze
 
-# Input schema for Slack UI
+# Simple inputs from Slack modal
 input_variables:
-  - transcript_text      # Interview transcript or notes (REQUIRED)
-  - participant_id       # Participant identifier (REQUIRED)
-  - interviewer_name     # Lead interviewer (REQUIRED)
-  - study_name           # Name of the study (REQUIRED)
-  - session_date         # Date of interview (OPTIONAL)
-  - study_channel        # Slack channel for notifications (OPTIONAL)
+  selected_note_files: "{{selected_note_files}}"     # Array of selected note file paths
+  note_content: "{{note_content}}"                   # Combined content from all selected files
+  note_takers: "{{note_takers}}"                     # List of note takers
+  participant_id: "{{participant_id}}"               # Auto-detected from file names (pt001, pt002, etc.)
+  current_date: "{{current_date}}"
+  analyzer: "{{analyzer}}"                           # User who ran the analysis
 
-# Qualitative coding framework
-coding_framework:
-  emotional_states: 
-    - frustrated
-    - confused
-    - confident
-    - overwhelmed
-    - satisfied
-    - anxious
-    - hopeful
-  
-  barrier_types:
-    - language_barrier
-    - process_confusion
-    - technical_difficulty
-    - cognitive_load
-    - documentation_issue
-    - accessibility_barrier
-  
-  user_behaviors:
-    - abandonment
-    - workaround
-    - help_seeking
-    - completion_success
-    - error_recovery
-    - giving_up
-  
-  interaction_points:
-    - form_fields
-    - navigation
-    - help_text
-    - error_messages
-    - document_upload
-    - verification_step
-
-# Processing workflow
-processing_workflow:
-  1. validate_inputs
-  2. process_transcript
-  3. apply_coding_framework
-  4. populate_template
-  5. save_to_outputs
-
+# Simple analysis prompt
 prompt: |
-  You are a qualitative research assistant helping analyze interview data. Your task is to:
-  
-  1. Extract 3 key themes, 3 pain points, and 3 notable quotes
-  2. Apply research codes to significant transcript segments
-  
-  For the coded transcript, identify 8-12 important segments and label them using this coding framework:
-  
-  **Emotional States:** frustrated, confused, confident, overwhelmed, satisfied, anxious, hopeful
-  **Barrier Types:** language_barrier, process_confusion, technical_difficulty, cognitive_load, documentation_issue, accessibility_barrier  
-  **User Behaviors:** abandonment, workaround, help_seeking, completion_success, error_recovery, giving_up
-  **Interaction Points:** form_fields, navigation, help_text, error_messages, document_upload, verification_step
-  
-  Format coded segments as: **[CODE_CATEGORY - SPECIFIC_CODE]** followed by the quote.
-  Use plain language written at a 10th-grade reading level. Be conversational but professional. Use active voice. Do not include explanations — only the outputs in the requested format.
-  
-  Transcript:
-  {{transcript_text}}
+  You are analyzing user research session notes. Create a concise summary that's perfect for sharing with a research team.
 
-# Output template
+  **Your task:**
+  1. Extract the TOP 3 most significant pain points or issues the participant encountered
+  2. Pull 3-5 key quotes that illustrate important insights or user reactions
+  3. Identify 3-4 notable observations about user behavior or patterns
+  4. Suggest 2-3 quick action items the team should consider
+
+  **Guidelines:**
+  - Keep it concise and actionable
+  - Focus on the most impactful findings
+  - Use the participant's actual words when possible
+  - Write in a conversational, team-friendly tone
+  - Prioritize findings that could influence design decisions
+
+  **Notes to analyze:**
+  {{note_content}}
+
+# Simple output template
 output_template: |
-  # 📝 Interview Summary - {{participant_id}}
+  # 📝 Session Summary - {{participant_id}}
 
-  **🏛️ Study:** {{study_name}}  
-  **👩🏽‍🔬 Interviewer:** {{interviewer_name}}  
-  **🗓️ Date:** {{session_date}}
+  Hi team! Here's the interview summary for {{participant_id}} based on session notes from {{note_takers}}. 
 
-  ## 🧠 Key Themes
-  - Theme 1: [AI Generated]
-  - Theme 2: [AI Generated]
-  - Theme 3: [AI Generated]
-  
-  ## ⚠️ Pain Points
-  - Pain Point 1: [AI Generated]
-  - Pain Point 2: [AI Generated]
-  - Pain Point 3: [AI Generated]
-  
-  ## 💬 Notable Quotes
-  - "Quote 1" – {{participant_id}}
-  - "Quote 2" – {{participant_id}}
-  - "Quote 3" – {{participant_id}}
+  **📁 Source:** {{note_takers}} • {{current_date}}
 
-  ## 🏷️ Coded Transcript Segments
-  
-  [AI Generated coded segments with research labels]
+  ## ⚠️ Top 3 Pain Points
 
-  ## 📊 Code Summary
-  
-  **Most Frequent Codes:**
-  [AI Generated code frequency count]
+  **1.** {{pain_point_1}}
+
+  **2.** {{pain_point_2}}
+
+  **3.** {{pain_point_3}}
+
+  ## 💬 Key Quotes
+
+  {{#each key_quotes}}
+  > "{{quote}}" 
+  > 
+  > *{{context}}*
+
+  {{/each}}
+
+  ## 👀 Notable Observations
+
+  {{#each observations}}
+  • {{observation}}
+  {{/each}}
+
+  ## ✅ Quick Action Items
+
+  {{#each action_items}}
+  - [ ] {{action_item}}
+  {{/each}}
 
   ---
-  **Summary created:** {{current_date}}  
-  **Study details:** Available in project folder
+  *Analysis generated by {{analyzer}} • [View source notes]({{source_file_links}})*
 
 # Output configuration
 output_options:
-  # File settings
-  filename: "interview_summary_{{participant_id}}_{{current_date}}.md"
-  path: "03-fieldwork/"
+  filename: "{{participant_id}}_quick_summary_{{current_date}}.md"
+  path: "03-fieldwork/summaries/"
   
-  # Delivery methods (multiple can be enabled)
   delivery:
-    github:
-      enabled: true
-      repo: "your-research-repo"
-      commit_message: "Add coded interview summary for {{participant_id}} - {{study_name}}"
-      
     slack:
       enabled: true
-      channel: "{{study_channel}}"
-      notify_user: "{{interviewer_name}}"
-      message: "📝 Coded interview summary for {{participant_id}} ({{study_name}}) has been processed and saved."
-      include_preview: false
-      actions:
-        - text: "📝 View Summary"
-          url: "{{github_file_link}}"
-        - text: "📊 View All Summaries"
-          action: "view_study_summaries"
-        - text: "🏷️ Compare Codes"
-          action: "compare_participant_codes"
-    
-    email:
-      enabled: false
-      # Future: email delivery options
       
-    teams:
-      enabled: false
-      # Future: Teams delivery options
+      # Send to analyzer first
+      dm_notification:
+        enabled: true
+        target_user: "{{analyzer}}"
+        message: |
+          ✅ **Quick Summary Ready** - {{participant_id}}
+          
+          **📁 Analyzed:** {{selected_files_count}} note files
+          **🕒 Generated:** {{current_date}}
+          
+          Ready to share with your team?
+        
+        actions:
+          - text: "📤 Share to Channel"
+            style: "primary"
+            action_id: "share_summary_to_channel"
+            value: "{{summary_data}}"
+          - text: "📝 View Summary"
+            style: "default"
+            url: "{{github_file_url}}"
+          - text: "🔄 Analyze More Notes"
+            style: "default"
+            action_id: "analyze_notes_modal"
+
+# Sharing workflow when user clicks "Share to Channel"
+sharing_workflow:
+  channel_message: |
+    📝 **Session Summary** - {{participant_id}}
+    
+    **⚠️ Top Pain Points:**
+    {{#each top_pain_points}}
+    {{@index}}. {{this}}
+    {{/each}}
+    
+    **💬 Key Quote:**
+    > {{top_quote}}
+    
+    **👀 Notable Observation:**
+    {{top_observation}}
+    
+    **✅ Action Items:**
+    {{#each priority_actions}}
+    • {{this}}
+    {{/each}}
+  
+  channel_actions:
+    - text: "📖 Read Full Summary"
+      url: "{{github_file_url}}"
+    - text: "💬 Discuss"
+      action_id: "start_discussion_thread"
+
+# Simple processing rules
+processing_rules:
+  auto_detect_participant: true  # Extract participant ID from file names
+  combine_multiple_files: true   # Merge content when multiple files selected
+  prioritize_recent_files: true  # Weight newer files more heavily
+  
+validation_rules:
+  minimum_content_length: 200
+  require_at_least_one_quote: true
+  require_at_least_two_pain_points: true
 
 output_use: |
-  CivicMind Interview Summary generator creates structured summaries with qualitative coding from research sessions. Extracts key themes, pain points, quotes, and applies research codes to transcript segments to support analysis and reporting phases of government research projects.
+  Quick session summary generator for research teams. Transforms raw session notes into shareable summaries with key pain points, quotes, and observations. Perfect for rapid insights and team communication.
