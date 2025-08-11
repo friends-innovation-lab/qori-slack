@@ -180,7 +180,7 @@ output_template: |
   - **GitHub Path:** `03-fieldwork/session-notes/{{filename}}`
   - **Submission Method:** Slack Modal
   - **Note Taker Slack ID:** {{slack_user_id}}
-  - **Timestamp:** {{submission_timestamp | format_date:'ISO'}}
+  - **Timestamp:** {{current_date}}
   
   ---
   
@@ -290,7 +290,7 @@ integration:
 
 # Output configuration
 output_options:
-  filename: "{{selected_session}}_notes_{{slack_user_display_name | slugify}}_{{submission_timestamp | format_date:'YYYY-MM-DD'}}.md"
+  filename: "{{selected_session}}_notes_{{user_name}}_{{current_date}}.md"
   path: "03-fieldwork/session-notes/"
   generate_index: true
   index_filename: "README.md"
