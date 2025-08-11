@@ -101,8 +101,8 @@ field_mapping:
 output_template: |
   # Session Notes: {{selected_session}} - {{participant_name}}
   
-  **📝 Note Taker:** {{slack_user_display_name}}  
-  **⏰ Submitted:** {{submission_timestamp | format_date:'MMMM DD, YYYY at HH:mm'}}  
+  **📝 Note Taker:** {{user_name}}  
+  **⏰ Submitted:** {{current_date}}  
   **📂 Session:** {{selected_session}} - {{participant_name}}  
   **📅 Session Date:** {{session_date}} at {{session_time}}  
   **👨‍🔬 Researcher:** {{researcher}}
