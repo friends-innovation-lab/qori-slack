@@ -16,7 +16,7 @@ notes
 
 ## 😤 Emotional Moments & Body Language
 
-notesnotes
+notes
 
 ---
 
@@ -34,7 +34,7 @@ notes
 
 ## ♿ Accessibility & Accommodation Observations
 
-notes
+notesnotes
 
 ---
 
