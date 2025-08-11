@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – phase 4 research testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 1
+- **Total Participants:** 2
 - **Confirmed Sessions:** 1
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 32 | abdul | calendly_signup | 2025-08-26 9:00 PM | recruited | NO |
 | 31 | Tanzeel | phone_recruitment | 2025-08-12 1:00 PM | confirmed | NO |
 
 ---
@@ -22,10 +23,11 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| phone_recruitment | 1 | 100% |
+| calendly_signup | 1 | 50% |
+| phone_recruitment | 1 | 50% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
+Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 
 ---
 
@@ -73,6 +75,7 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 32: NO
 - 31: NO
 
 **Preparation Checklist:**
@@ -91,19 +94,22 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| Asian | 1 | 100% |
+| Black or African American | 1 | 50% |
+| Asian | 1 | 50% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 18-24 | 1 | 100% |
+| 25-34 | 1 | 50% |
+| 18-24 | 1 | 50% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Some college | 1 | 100% |
+| Less than high school | 1 | 50% |
+| Some college | 1 | 50% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Suburban | 1 | 100% |
+| Suburban | 2 | 100% |
 
 ---
 
@@ -115,4 +121,4 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (2 more needed)
+Continue recruiting to reach minimum of 3 participants (1 more needed)
