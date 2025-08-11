@@ -98,7 +98,7 @@ field_mapping:
     optional: true
 
 # Markdown template structure
-markdown_template: |
+output_template: |
   # Session Notes: {{selected_session}} - {{participant_name}}
   
   **📝 Note Taker:** {{slack_user_display_name}}  
