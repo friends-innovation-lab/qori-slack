@@ -1,12 +1,14 @@
+# STREAMLINED INTERVIEW SUMMARY - Simple Note Analysis
+
 id: analyze_notes
 name: analyze_session_notes
 label: 📝 Analyze Notes
-version: v1.0
-description: Generate quick summary with top pain points, quotes, and observations from session notes
+version: v2.0
+description: Generate quick summary with top pain points, quotes, and observations from session notes for easy team sharing
 
 author: CivicMind R&D
 created: 2025-08-11
-last_updated: 2025-08-11
+last_updated: 2025-08-12
 
 # LLM Configuration
 llm_config:
@@ -17,91 +19,125 @@ llm_config:
 input_type: structured
 input_processing: combine_and_analyze
 
-# Simple inputs from Slack modal
+# Simple inputs matching current Slack UI
 input_variables:
-  study_folder: "{{study_folder}}"                   # Selected research study folder
+  study_folder: "{{study_folder}}"                   # Selected research study folder (e.g., "Benefits Portal Usability")
   study_name: "{{study_name}}"                       # Display name of the study
   selected_note_files: "{{selected_note_files}}"     # Array of selected note file paths
   note_content: "{{note_content}}"                   # Combined content from all selected files
-  note_takers: "{{note_takers}}"                     # List of note takers
-  participant_id: "{{participant_id}}"               # Auto-detected from file names (pt001, pt002, etc.)
+  note_takers: "{{note_takers}}"                     # Auto-extracted from file names (jordan, sarah.m, mike.t)
+  participant_ids: "{{participant_ids}}"             # Auto-detected from file names (bp001, bp002, bp003)
   current_date: "{{current_date}}"
   analyzer: "{{analyzer}}"                           # User who ran the analysis
 
-# Simple analysis prompt
-prompt: |
-  You are analyzing user research session notes. Create a concise summary that's perfect for sharing with a research team.
+# Simple AI generation tasks
+ai_generation_tasks:
+  # Extract top 3 pain points
+  - task_id: "pain_points"
+    prompt: |
+      As a UX researcher, extract the TOP 3 most significant pain points from these session notes:
 
-  **Your task:**
-  1. Extract the TOP 3 most significant pain points or issues the participant encountered
-  2. Pull 3-5 key quotes that illustrate important insights or user reactions
-  3. Identify 3-4 notable observations about user behavior or patterns
-  4. Suggest 2-3 quick action items the team should consider
+      **Notes to analyze:**
+      {{note_content}}
 
-  **Guidelines:**
-  - Keep it concise and actionable
-  - Focus on the most impactful findings
-  - Use the participant's actual words when possible
-  - Write in a conversational, team-friendly tone
-  - Prioritize findings that could influence design decisions
+      Requirements:
+      - Focus on the most impactful user problems
+      - Be specific and actionable
+      - Use clear, direct language
+      - Prioritize by user impact and frequency mentioned
 
-  **Notes to analyze:**
-  {{note_content}}
+      Format each as: **[Pain Point Category]:** [Specific description]
+
+  # Extract key quotes
+  - task_id: "key_quotes"
+    prompt: |
+      Extract 3-5 key participant quotes that best illustrate important insights:
+
+      **Notes:**
+      {{note_content}}
+
+      Requirements:
+      - Use exact participant words
+      - Choose quotes that show emotions, pain points, or key insights
+      - Include brief context for each quote
+
+      Format as:
+      > *"[exact quote]"*
+      > 
+      > [Context: when/why this was said]
+
+  # Identify notable observations
+  - task_id: "observations"
+    prompt: |
+      Identify 3-4 notable observations about user behavior or patterns:
+
+      **Notes:**
+      {{note_content}}
+
+      Requirements:
+      - Focus on observable behaviors, not assumptions
+      - Include emotional responses and workflow patterns
+      - Keep observations actionable for design decisions
+
+      Format as: 🔸 [Specific observation]
+
+  # Generate action items
+  - task_id: "action_items"
+    prompt: |
+      Generate 2-3 quick action items the team should consider:
+
+      **Notes:**
+      {{note_content}}
+
+      Requirements:
+      - Make actions specific and achievable
+      - Focus on addressing the main pain points
+      - Include mix of immediate and short-term actions
+
+      Format as: - [ ] [Specific action item]
 
 # Simple output template
 output_template: |
-  # 📝 Session Summary - {{participant_id}}
+  # 📝 Session Summary - {{participant_ids}}
 
-  👋 Hi team! Here's the interview summary for **{{participant_id}}** from the **{{study_name}}** study, based on session notes from {{note_takers}}. 
+  👋 Hi team! Here's the summary for **{{participant_ids}}** from the **{{study_name}}** study.
 
   *📁 Study:* {{study_name}}  
-  *📝 Source:* {{note_takers}} • {{current_date}}
+  *📝 Notes by:* {{note_takers}} • {{current_date}}  
+  *📊 Files analyzed:* {{selected_files_count}} note files
 
   ## ⚠️ Top 3 Pain Points
 
-  **1.** {{pain_point_1}}
-
-  **2.** {{pain_point_2}}
-
-  **3.** {{pain_point_3}}
+  {{ai_generated.pain_points}}
 
   ## 💬 Key Quotes
 
-  {{#each key_quotes}}
-  > *"{{quote}}"* 
-  > 
-  > {{context}}
-
-  {{/each}}
+  {{ai_generated.key_quotes}}
 
   ## 👀 Notable Observations
 
-  {{#each observations}}
-  🔸 {{observation}}
-  {{/each}}
+  {{ai_generated.observations}}
 
   ## ✅ Quick Action Items
 
-  {{#each action_items}}
-  - [ ] {{action_item}}
-  {{/each}}
+  {{ai_generated.action_items}}
 
   ---
   *Analysis by {{analyzer}} • 📎 [View source notes]({{source_file_links}})*
 
 # Output configuration
 output_options:
-  filename: "{{study_folder}}_{{participant_id}}_summary_{{current_date}}.md"
+  filename: "{{study_folder}}_{{participant_ids}}_summary_{{current_date}}.md"
   path: "03-fieldwork/summaries/{{study_folder}}/"
   
-  # Multi-channel delivery
+  # Simple delivery
   delivery:
     # Save to GitHub repository
     github:
       enabled: true
       repo: "primary-research"
       path: "03-fieldwork/summaries/{{study_folder}}/"
-      commit_message: "Add {{study_name}} summary for {{participant_id}} - {{current_date}}"
+      commit_message: "Add {{study_name}} summary for {{participant_ids}} - {{current_date}}"
       
     # Share via Slack
     slack:
@@ -112,7 +148,7 @@ output_options:
         enabled: true
         target_user: "{{analyzer}}"
         message: |
-          ✅ *Quick Summary Ready* - **{{participant_id}}**
+          ✅ *Summary Ready* - **{{participant_ids}}**
           
           📂 *Study:* {{study_name}}
           📁 *Analyzed:* {{selected_files_count}} note files
@@ -124,7 +160,6 @@ output_options:
           - text: "📤 Share to Channel"
             style: "primary"
             action_id: "share_summary_to_channel"
-            value: "{{summary_data}}"
           - text: "📝 View Full Summary"
             style: "default"
             url: "{{github_file_url}}"
@@ -132,53 +167,46 @@ output_options:
             style: "default"
             action_id: "analyze_notes_modal"
 
-# Slack formatting optimization
+# Slack formatting
 slack_formatting:
-  # Use Slack-friendly markdown
   use_slack_markdown: true
-  # Optimize message length for Slack
   max_channel_message_length: 2000
-  # Use Slack emoji formatting
   prefer_slack_emoji: true
-  # Break long lists into readable chunks
   chunk_long_lists: true
 
-# Sharing workflow when user clicks "Share to Channel"
+# Channel sharing (when user clicks "Share to Channel")
 sharing_workflow:
   channel_message: |
-    👋 Hi team! Here's the interview summary for **{{participant_id}}** from **{{study_name}}**
+    📝 **Session Summary** – {{participant_ids}}
     
-    *⚠️ Top Pain Points:*
+    **Study:** {{study_name}} | **Notes:** {{note_takers}}
+    
+    **⚠️ Top Pain Points:**
     {{#each top_pain_points}}
     `{{@index}}.` {{this}}
     {{/each}}
     
-    *💬 Key Quote:*
+    **💬 Key Quote:**
     > {{top_quote}}
     
-    *👀 Notable Observation:*
-    {{top_observation}}
-    
-    *✅ Action Items:*
+    **✅ Action Items:**
     {{#each priority_actions}}
     🔸 {{this}}
     {{/each}}
     
-    📎 Notes analyzed: {{note_takers}}
+    📎 [Full summary]({{github_file_url}})
   
   channel_actions:
     - text: "📖 Read Full Summary"
       url: "{{github_file_url}}"
     - text: "💬 Start Discussion"
       action_id: "start_discussion_thread"
-    - text: "📋 Copy Summary"
-      action_id: "copy_summary_to_clipboard"
 
 # Simple processing rules
 processing_rules:
-  auto_detect_participant: true  # Extract participant ID from file names
-  combine_multiple_files: true   # Merge content when multiple files selected
-  prioritize_recent_files: true  # Weight newer files more heavily
+  auto_detect_participant_ids: true  # Extract from file names (bp001, bp002, etc.)
+  combine_multiple_files: true       # Merge content when multiple files selected
+  auto_extract_note_takers: true     # Get from file names (jordan, sarah.m, etc.)
   
 validation_rules:
   minimum_content_length: 200
