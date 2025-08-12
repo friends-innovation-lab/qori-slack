@@ -16,7 +16,7 @@ HtHIS ASHD;LKadsnm
 
 ## 😤 Emotional Moments & Body Language
 
-HtHIS ASHD;LKadsnmHtHIS ASHD;LKadsnm
+HtHIS ASHD;LKadsnm
 
 ---
 
