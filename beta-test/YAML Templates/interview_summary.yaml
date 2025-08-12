@@ -50,7 +50,7 @@ prompt: |
 output_template: |
   # 📝 Session Summary - {{participant_id}}
 
-  👋 Hi team! Here's the interview summary for **{{participant_id}}** based on session notes from {{note_takers}}. 
+  👋 Hi team! Here's the interview summary for **{{participant_id}}**. 
 
   *📁 Source:* {{note_takers}} • {{current_date}}
 
