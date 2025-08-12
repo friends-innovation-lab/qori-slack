@@ -19,6 +19,8 @@ input_processing: combine_and_analyze
 
 # Simple inputs from Slack modal
 input_variables:
+  study_folder: "{{study_folder}}"                   # Selected research study folder
+  study_name: "{{study_name}}"                       # Display name of the study
   selected_note_files: "{{selected_note_files}}"     # Array of selected note file paths
   note_content: "{{note_content}}"                   # Combined content from all selected files
   note_takers: "{{note_takers}}"                     # List of note takers
@@ -50,7 +52,10 @@ prompt: |
 output_template: |
   # 📝 Session Summary - {{participant_id}}
 
-  👋 Hi team! Here's the interview summary for **{{participant_id}}**. 
+  👋 Hi team! Here's the interview summary for **{{participant_id}}** from the **{{study_name}}** study, based on session notes from {{note_takers}}. 
+
+  *📁 Study:* {{study_name}}  
+  *📝 Source:* {{note_takers}} • {{current_date}}
 
   ## ⚠️ Top 3 Pain Points
 
@@ -86,8 +91,8 @@ output_template: |
 
 # Output configuration
 output_options:
-  filename: "{{participant_id}}_quick_summary_{{current_date}}.md"
-  path: "03-fieldwork/summaries/"
+  filename: "{{study_folder}}_{{participant_id}}_summary_{{current_date}}.md"
+  path: "03-fieldwork/summaries/{{study_folder}}/"
   
   # Multi-channel delivery
   delivery:
@@ -95,8 +100,8 @@ output_options:
     github:
       enabled: true
       repo: "primary-research"
-      path: "03-fieldwork/summaries/"
-      commit_message: "Add quick summary for {{participant_id}} - {{current_date}}"
+      path: "03-fieldwork/summaries/{{study_folder}}/"
+      commit_message: "Add {{study_name}} summary for {{participant_id}} - {{current_date}}"
       
     # Share via Slack
     slack:
@@ -109,6 +114,7 @@ output_options:
         message: |
           ✅ *Quick Summary Ready* - **{{participant_id}}**
           
+          📂 *Study:* {{study_name}}
           📁 *Analyzed:* {{selected_files_count}} note files
           🕒 *Generated:* {{current_date}}
           
@@ -140,7 +146,7 @@ slack_formatting:
 # Sharing workflow when user clicks "Share to Channel"
 sharing_workflow:
   channel_message: |
-    👋 Hi team! Here's the interview summary for **{{participant_id}}**
+    👋 Hi team! Here's the interview summary for **{{participant_id}}** from **{{study_name}}**
     
     *⚠️ Top Pain Points:*
     {{#each top_pain_points}}
