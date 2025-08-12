@@ -52,8 +52,6 @@ output_template: |
 
   👋 Hi team! Here's the interview summary for **{{participant_id}}**. 
 
-  *📁 Source:* {{note_takers}} • {{current_date}}
-
   ## ⚠️ Top 3 Pain Points
 
   **1.** {{pain_point_1}}
