@@ -1,0 +1,347 @@
+id: synthesize_router
+name: route_synthesis_analysis
+label: 🔬 Synthesize Study Router
+version: v1.1
+description: Smart router that directs research synthesis requests to specialized analysis YAMLs based on user selection and intelligent file selection
+
+author: CivicMind R&D
+created: 2025-08-11
+last_updated: 2025-08-11
+
+input_type: structured
+input_processing: route_and_delegate
+
+# Router inputs from Slack modal
+input_variables:
+  # Study context
+  study_folder: "{{study_folder}}"                   # Selected research study folder
+  study_name: "{{study_name}}"                       # Display name of the study
+  study_channel: "{{study_channel}}"                 # Research team channel
+  
+  # Analysis routing
+  analysis_type: "{{analysis_type}}"                 # Which analysis method to run
+  
+  # Smart File Selection from Slack interface
+  selected_files: "{{selected_files}}"               # Array of file IDs selected by user
+  file_selection_metadata: "{{file_selection_metadata}}" # Categories and counts for validation
+  
+  # User context
+  researcher_contact: "{{researcher_contact}}"       # User who initiated analysis
+  team_members: "{{team_members}}"                   # Team members to notify
+  
+  # Study data context (for routing optimization)
+  total_sessions: "{{total_sessions}}"
+  total_transcripts: "{{total_transcripts}}"
+  total_summaries: "{{total_summaries}}"
+  total_participants: "{{total_participants}}"
+
+# Analysis routing configuration
+analysis_routes:
+  affinity_mapping:
+    target_yaml: "affinity_mapping.yaml"
+    version: "v1.6"
+    description: "Group observations into themes with AI-determined optimal count"
+    required_data: ["session_summaries"]
+    optimal_data: ["transcripts", "research_objectives", "raw_notes", "participant_tracker"]
+    
+  journey_mapping:
+    target_yaml: "journey_mapping.yaml"
+    version: "v1.2"
+    description: "Map user experience stages with AI-adapted journey length"
+    required_data: ["session_summaries"]
+    optimal_data: ["emotional_states_tracker", "task_completion_data", "transcripts", "raw_notes"]
+    
+  persona_generation:
+    target_yaml: "persona_generator.yaml"
+    version: "v2.1"
+    description: "Create research-grounded personas with diversity analysis"
+    required_data: ["participant_tracker", "session_summaries"]
+    optimal_data: ["user_goals_data", "transcripts", "emotional_states_tracker", "task_completion_data"]
+    
+  jobs_to_be_done:
+    target_yaml: "jobs_to_be_done.yaml"
+    version: "v1.7"
+    description: "Extract user jobs and motivations with role diversity analysis"
+    required_data: ["session_summaries", "user_goals_data"]
+    optimal_data: ["transcripts", "participant_tracker", "competitive_analysis", "emotional_states_tracker"]
+    
+  usability_issues:
+    target_yaml: "usability_issues_extractor.yaml"
+    version: "v2.0"
+    description: "Extract prioritized usability problems with severity assessment"
+    required_data: ["session_summaries", "task_completion_data"]
+    optimal_data: ["raw_notes", "error_logs", "transcripts", "participant_tracker", "emotional_states_tracker"]
+    
+  design_opportunities:
+    target_yaml: "design_opportunity_generator.yaml"
+    version: "v2.0"
+    description: "Generate HMW questions and design challenges with innovation scoring"
+    required_data: ["session_summaries", "user_suggestions"]
+    optimal_data: ["user_goals_data", "task_completion_data", "competitive_analysis", "transcripts", "error_logs", "emotional_states_tracker", "research_objectives"]
+
+# Data source mapping for each study
+study_data_mapping:
+  standard_sources:
+    # Core session data
+    session_summaries: "03-fieldwork/summaries/{{study_folder}}/"
+    raw_notes: "03-fieldwork/session-notes/"
+    transcripts: "03-fieldwork/transcripts/"
+    
+    # Participant and user data
+    participant_tracker: "02-participants/{{study_folder}}_participant_tracker.md"
+    user_goals_data: "02-participants/{{study_folder}}_user_goals.md"
+    
+    # Performance and error data
+    task_completion_data: "03-fieldwork/task-data/{{study_folder}}_task_results.csv"
+    error_logs: "03-fieldwork/error-logs/{{study_folder}}_errors.log"
+    
+    # Research context files
+    research_objectives: "01-planning/{{study_folder}}_research_plan.md"
+    competitive_analysis: "01-planning/competitive_analysis.md"
+    user_suggestions: "03-fieldwork/feedback/{{study_folder}}_suggestions.md"
+    emotional_states_tracker: "03-fieldwork/emotional-data/{{study_folder}}_emotions.md"
+    
+  derived_sources:
+    pain_points_analysis: "04-analysis/affinity-mapping/{{study_folder}}_affinity_mapping_*.md"
+    extracted_suggestions: "extracted from transcripts and summaries"
+    calculated_task_data: "extracted from session notes"
+    coded_emotional_data: "extracted from coded observations"
+
+# File ID to source mapping (from Slack interface to actual files)
+file_id_mapping:
+  # Session summaries
+  session_summary_1: "03-fieldwork/summaries/{{study_folder}}/session_summary_p1.md"
+  session_summary_2: "03-fieldwork/summaries/{{study_folder}}/session_summary_p2.md"
+  session_summary_3: "03-fieldwork/summaries/{{study_folder}}/session_summary_p3.md"
+  session_summary_4: "03-fieldwork/summaries/{{study_folder}}/session_summary_p4.md"
+  session_summary_5: "03-fieldwork/summaries/{{study_folder}}/session_summary_p5.md"
+  session_summary_6: "03-fieldwork/summaries/{{study_folder}}/session_summary_p6.md"
+  
+  # Interview transcripts
+  transcript_1: "03-fieldwork/transcripts/{{study_folder}}_p1_transcript.md"
+  transcript_2: "03-fieldwork/transcripts/{{study_folder}}_p2_transcript.md"
+  transcript_3: "03-fieldwork/transcripts/{{study_folder}}_p3_transcript.md"
+  transcript_4: "03-fieldwork/transcripts/{{study_folder}}_p4_transcript.md"
+  
+  # Raw research data
+  raw_notes_1: "03-fieldwork/session-notes/{{study_folder}}_day1_notes.md"
+  raw_notes_2: "03-fieldwork/session-notes/{{study_folder}}_day2_notes.md"
+  raw_notes_3: "03-fieldwork/session-notes/{{study_folder}}_day3_notes.md"
+  
+  # Participant & user data
+  participant_tracker: "02-participants/{{study_folder}}_participant_tracker.md"
+  user_goals_data: "02-participants/{{study_folder}}_user_goals.md"
+  
+  # Performance & error data
+  task_completion_data: "03-fieldwork/task-data/{{study_folder}}_task_results.csv"
+  error_logs: "03-fieldwork/error-logs/{{study_folder}}_errors.log"
+  
+  # Research context
+  research_objectives: "01-planning/{{study_folder}}_research_plan.md"
+  competitive_analysis: "01-planning/competitive_analysis.md"
+  user_suggestions: "03-fieldwork/feedback/{{study_folder}}_suggestions.md"
+  emotional_states_tracker: "03-fieldwork/emotional-data/{{study_folder}}_emotions.md"
+
+# Router processing logic
+processing_workflow:
+  1. validate_study_selection
+  2. confirm_analysis_type
+  3. process_user_file_selection        # NEW: Validate and map selected files
+  4. validate_required_data_availability # NEW: Check required files are selected
+  5. gather_selected_data_sources       # Updated: Only gather user-selected files
+  6. prepare_target_yaml_inputs
+  7. route_to_specialized_yaml
+  8. track_analysis_completion
+
+# File selection processing logic
+file_selection_processing:
+  validation_rules:
+    - ensure_required_files_selected
+    - validate_file_paths_exist
+    - check_file_access_permissions
+    - warn_if_optimal_files_missing
+    
+  combination_strategy:
+    # How to combine different file types for input_text
+    session_summaries:
+      header: "=== SESSION SUMMARIES ==="
+      format: "**Session {{session_number}} - {{participant_details}}**\n{{content}}\n\n"
+      
+    transcripts:
+      header: "=== INTERVIEW TRANSCRIPTS ==="
+      format: "**Transcript {{participant_number}}**\n{{content}}\n\n"
+      
+    raw_notes:
+      header: "=== RAW FIELD NOTES ==="
+      format: "**{{note_date}} - {{note_title}}**\n{{content}}\n\n"
+      
+    participant_data:
+      header: "=== PARTICIPANT DATA ==="
+      format: "{{content}}\n\n"
+      
+    task_data:
+      header: "=== TASK & PERFORMANCE DATA ==="
+      format: "{{content}}\n\n"
+      
+    research_context:
+      header: "=== RESEARCH CONTEXT ==="
+      format: "{{content}}\n\n"
+
+# Input preparation for target YAMLs
+target_yaml_inputs:
+  # Common inputs for all analysis types
+  common:
+    study_name: "{{study_name}}"
+    researcher_contact: "{{researcher_contact}}"
+    study_channel: "{{study_channel}}"
+    team_members: "{{team_members}}"
+    study_link: "{{github_study_folder_link}}"
+    selected_files_summary: "{{selected_files_summary}}"
+    
+  # Analysis-specific input preparation
+  affinity_mapping:
+    input_text: "{{combined_selected_content}}"
+    focus_area: "themes and patterns across sessions"
+    
+  journey_mapping:
+    input_text: "{{combined_selected_content}}"
+    focus_area: "user experience flow and emotional journey"
+    
+  persona_generation:
+    input_text: "{{combined_selected_content}}"
+    focus_area: "behavioral patterns and user archetypes"
+    
+  jobs_to_be_done:
+    input_text: "{{combined_selected_content}}"
+    focus_area: "user motivations and underlying jobs"
+    
+  usability_issues:
+    input_text: "{{combined_selected_content}}"
+    focus_area: "interface problems and usability barriers"
+    
+  design_opportunities:
+    input_text: "{{combined_selected_content}}"
+    focus_area: "innovation opportunities and design challenges"
+
+# Router response template
+output_template: |
+  🔬 **Analysis Router: {{study_name}}**
+  
+  ✅ **Routing Complete**
+  
+  **Study:** {{study_name}}  
+  **Analysis:** {{analysis_routes.[analysis_type].description}}  
+  **Target YAML:** {{analysis_routes.[analysis_type].target_yaml}} ({{analysis_routes.[analysis_type].version}})  
+  **Researcher:** {{researcher_contact}}
+  
+  **Files Selected by User:**
+  {{#each selected_file_details}}
+  • {{file_category}}: {{file_name}} ({{file_type}})
+  {{/each}}
+  
+  **Data Combination Strategy:**
+  {{#each content_sections}}
+  • {{section_name}}: {{file_count}} files combined
+  {{/each}}
+  
+  **Quality Check:**
+  {{#if missing_recommended_files}}
+  ⚠️ **Missing Recommended Files:** {{missing_recommended_files}}
+  💡 Consider adding these for richer insights: {{recommended_additions}}
+  {{else}}
+  ✅ **Optimal file selection** - all recommended data sources included
+  {{/if}}
+  
+  **Next Step:** Running {{analysis_routes.[analysis_type].target_yaml}}...
+  
+  ---
+  
+  *📁 Results will be saved to:* `04-analysis/{{analysis_folder_name}}/`  
+  *📢 Team notification:* {{study_channel}}
+
+# Output configuration - just for routing confirmation
+output_options:
+  filename: "_router_log_{{study_folder}}_{{analysis_type}}_{{current_date}}.md"
+  path: "04-analysis/_router-logs/"
+  
+  delivery:
+    slack:
+      enabled: true
+      dm_notification:
+        enabled: true
+        target_user: "{{researcher_contact}}"
+        message: |
+          🔬 **Analysis Routing Complete**
+          
+          Your **{{analysis_type}}** analysis for **{{study_name}}** is now being processed by {{analysis_routes.[analysis_type].target_yaml}}.
+          
+          **Files Used:** {{selected_files_count}} files selected
+          {{#if file_selection_warnings}}
+          ⚠️ **Note:** {{file_selection_warnings}}
+          {{/if}}
+          
+          ⏱️ Expected completion: 2-5 minutes
+          📂 Results will appear in: {{study_channel}}
+          💾 Files saved to: `04-analysis/{{analysis_folder_name}}/`
+        
+        actions:
+          - text: "🔄 Run Another Analysis"
+            style: "default"
+            action_id: "synthesize_modal"
+          - text: "📊 View Analysis Folder"
+            style: "default"
+            url: "{{analysis_folder_url}}"
+          - text: "📋 View File Selection"
+            style: "default"
+            action_id: "show_file_selection_summary"
+
+# Integration with existing YAMLs
+yaml_integration:
+  method: "workflow_trigger"
+  
+  trigger_mapping:
+    affinity_mapping: "run_affinity_mapping"
+    journey_mapping: "run_journey_mapping"
+    persona_generation: "run_persona_generator"
+    jobs_to_be_done: "extract_jobs_to_be_done"
+    usability_issues: "run_usability_issues_extractor"
+    design_opportunities: "run_design_opportunity_generator"
+  
+  parameter_passthrough:
+    preserve_user_context: true
+    enhance_with_study_data: true
+    maintain_team_notifications: true
+    include_file_selection_metadata: true
+
+# Quality checks before routing
+pre_routing_validation:
+  - verify_study_data_exists
+  - validate_selected_files_exist
+  - confirm_required_data_sources_selected
+  - validate_team_permissions
+  - check_analysis_quota_limits
+  - assess_file_selection_completeness
+
+# Post-routing tracking
+post_routing_tracking:
+  - log_analysis_request_with_file_selection
+  - update_study_dashboard
+  - track_file_selection_patterns
+  - notify_completion_status
+  - update_analysis_index
+
+# Smart recommendations for future file selections
+selection_intelligence:
+  learning_enabled: true
+  track_metrics:
+    - most_successful_file_combinations_by_analysis_type
+    - researcher_selection_patterns
+    - analysis_quality_by_file_completeness
+    
+  recommendation_engine:
+    - suggest_files_based_on_analysis_success_history
+    - warn_about_commonly_missed_but_valuable_files
+    - recommend_file_additions_mid_analysis
+
+output_use: |
+  Enhanced Synthesis Router intelligently directs research analysis requests to specialized YAMLs based on user selection and Smart File Selector choices. Ensures optimal data preparation, validates file selections, provides quality recommendations, and maintains seamless integration with existing analysis workflows while preserving team collaboration features. Now includes intelligent file selection processing and quality assurance for better analysis outcomes.
