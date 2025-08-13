@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – bug fixixng
 
 **📊 Recruitment Summary**
-- **Total Participants:** 1
-- **Confirmed Sessions:** 0
+- **Total Participants:** 2
+- **Confirmed Sessions:** 1
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 2 | abdul | email_outreach | 2025-08-24 2:00 PM | confirmed | NO |
 | 1 | Tanzeel | internal_va_panel | 2025-08-31 1:00PM | recruited | No |
 
 ---
@@ -22,15 +23,18 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| internal_va_panel | 1 | 100% |
+| 📧 Email Outreach | 1 | 50% |
+| internal_va_panel | 1 | 50% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
+Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 
 ## ⏳ Pending Sessions
 
@@ -71,6 +75,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 2: NO
 - 1: No
 
 **Preparation Checklist:**
@@ -89,19 +94,22 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| Asian | 1 | 100% |
+| American Indian or Alaska Native | 1 | 50% |
+| Asian | 1 | 50% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 18-24 | 1 | 100% |
+| 18-24 | 2 | 100% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Associate degree | 1 | 100% |
+| Less than high school | 1 | 50% |
+| Associate degree | 1 | 50% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Urban | 1 | 100% |
+| Suburban | 1 | 50% |
+| Urban | 1 | 50% |
 
 ---
 
@@ -113,4 +121,4 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (2 more needed); Schedule first confirmed session
+Continue recruiting to reach minimum of 3 participants (1 more needed)
