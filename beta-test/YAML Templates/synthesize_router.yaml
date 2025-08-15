@@ -11,6 +11,12 @@ last_updated: 2025-08-11
 input_type: structured
 input_processing: route_and_delegate
 
+# LLM Configuration
+llm_config:
+  model: "gpt-4o"
+  temperature: 0.2
+  max_tokens: 3000
+
 # Router inputs from Slack modal
 input_variables:
   # Study context
@@ -34,6 +40,199 @@ input_variables:
   total_transcripts: "{{total_transcripts}}"
   total_summaries: "{{total_summaries}}"
   total_participants: "{{total_participants}}"
+
+# AI GENERATION TASKS
+ai_generation_tasks:
+  # File selection quality assessment
+  - task_id: "file_selection_analysis"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      As an experienced UX Research analyst, evaluate the file selection quality for this {{analysis_type}} analysis:
+      
+      **Study:** {{study_name}}
+      **Analysis Type:** {{analysis_type}}
+      **Selected Files:** {{selected_files}}
+      **File Categories:** {{file_selection_metadata}}
+      **Study Context:** {{total_sessions}} sessions, {{total_participants}} participants
+      
+      **Required Data for {{analysis_type}}:**
+      {{analysis_routes.[analysis_type].required_data}}
+      
+      **Optimal Data for {{analysis_type}}:**
+      {{analysis_routes.[analysis_type].optimal_data}}
+      
+      Assess:
+      1. **Coverage Assessment:** Do selected files meet minimum requirements?
+      2. **Quality Indicators:** What file types will provide the richest insights?
+      3. **Missing Critical Data:** What important files are missing that could improve analysis quality?
+      4. **Selection Optimization:** Rate the file selection (Excellent/Good/Adequate/Poor)
+      
+      **Format:**
+      **Coverage Status:** ✅ Complete / ⚠️ Partial / ❌ Insufficient
+      **Quality Score:** [X/10] - [brief explanation]
+      **Critical Gaps:** [List missing files that would significantly improve analysis]
+      **Recommendation:** [Keep current selection / Add specific files / Reconsider analysis type]
+
+  # Smart analysis preview and expectations
+  - task_id: "analysis_preview_generation"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Focus on specific, actionable insights
+      
+      As an experienced UX Research analyst, preview what the {{analysis_type}} analysis will deliver:
+      
+      **Study:** {{study_name}}
+      **Analysis Type:** {{analysis_type}}
+      **Available Data:** {{selected_files}}
+      **Study Scale:** {{total_sessions}} sessions with {{total_participants}} participants
+      
+      **Analysis Description:** {{analysis_routes.[analysis_type].description}}
+      
+      Based on the selected files, predict:
+      1. **Key Deliverables:** What specific outputs will be generated?
+      2. **Insight Types:** What kinds of findings should the team expect?
+      3. **Confidence Level:** How reliable will insights be given the data quality?
+      4. **Timeline Estimate:** How long will this analysis take?
+      5. **Team Value:** How will these insights support decision-making?
+      
+      **Format:**
+      **Expected Deliverables:**
+      - [Specific deliverable 1 with detail level]
+      - [Specific deliverable 2 with detail level]
+      - [Specific deliverable 3 with detail level]
+      
+      **Insight Confidence:** High/Medium/Low - [reasoning based on data quality]
+      
+      **Estimated Completion:** [X] minutes for analysis + [Y] minutes for review
+      
+      **Decision Support:** [How findings will help the team make specific decisions]
+
+  # Intelligent file gap analysis and recommendations
+  - task_id: "intelligent_recommendations"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Provide specific, actionable recommendations
+      
+      As an experienced UX Research analyst, provide intelligent recommendations for improving this analysis:
+      
+      **Study:** {{study_name}}
+      **Analysis Type:** {{analysis_type}}
+      **Current Selection:** {{selected_files}}
+      **Study Context:** {{total_sessions}} sessions, {{total_participants}} participants
+      
+      **Available Data Sources:** 
+      - Session summaries: {{total_summaries}}
+      - Transcripts: {{total_transcripts}}
+      - Participant data: Available
+      - Task completion data: Available
+      - Research context: Available
+      
+      Analyze and recommend:
+      1. **High-Impact Additions:** Which missing files would most improve analysis quality?
+      2. **Alternative Analysis Types:** Would a different analysis be better suited to available data?
+      3. **Sequential Analysis:** What analysis should follow this one for maximum insight?
+      4. **Risk Mitigation:** How to address any data quality concerns?
+      
+      **Format:**
+      **Recommended Additions (if any):**
+      - [Specific file type]: [Why it would improve analysis] - Impact: High/Medium/Low
+      - [Specific file type]: [Why it would improve analysis] - Impact: High/Medium/Low
+      
+      **Alternative Suggestion:** 
+      [If current analysis isn't optimal: "Consider [alternative analysis] because [reason]"]
+      [If current analysis is optimal: "Current analysis type is well-suited to available data"]
+      
+      **Follow-up Analysis:**
+      After {{analysis_type}}, consider running [specific analysis] to [specific benefit]
+      
+      **Risk Mitigation:**
+      [Any specific steps to ensure analysis quality given current file selection]
+
+  # Team collaboration and workflow optimization
+  - task_id: "collaboration_optimization"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Focus on specific team coordination actions
+      
+      As an experienced UX Research operations specialist, optimize team collaboration for this analysis:
+      
+      **Study:** {{study_name}}
+      **Analysis Type:** {{analysis_type}}
+      **Researcher:** {{researcher_contact}}
+      **Team Members:** {{team_members}}
+      **Study Channel:** {{study_channel}}
+      
+      Plan coordination strategy:
+      1. **Review Responsibilities:** Who should review what outputs?
+      2. **Stakeholder Communication:** What should be shared and when?
+      3. **Decision Timeline:** When do insights need to inform decisions?
+      4. **Follow-up Actions:** What happens after analysis completion?
+      
+      **Format:**
+      **Review Plan:**
+      - Primary Reviewer: {{researcher_contact}} - [specific responsibilities]
+      - Team Review: {{team_members}} - [what they should focus on]
+      - Stakeholder Review: [timing and format]
+      
+      **Communication Strategy:**
+      - Initial Results: Share [specific elements] in {{study_channel}}
+      - Detailed Findings: Deliver [format] by [timeline]
+      - Decision Support: Present [key insights] to [stakeholders]
+      
+      **Next Steps Planning:**
+      - Immediate (24 hours): [specific actions]
+      - Short-term (1 week): [follow-up activities]
+      - Future Research: [recommended next studies]
+
+  # Analysis routing validation and optimization
+  - task_id: "routing_validation"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      As an experienced UX Research methodology expert, validate the routing decision for this analysis:
+      
+      **Requested Analysis:** {{analysis_type}}
+      **Study Type:** Based on {{study_name}} with {{total_sessions}} sessions
+      **Available Data:** {{selected_files}}
+      **Research Goals:** [Inferred from study context]
+      
+      **Target YAML:** {{analysis_routes.[analysis_type].target_yaml}} ({{analysis_routes.[analysis_type].version}})
+      
+      Validate:
+      1. **Methodology Match:** Is {{analysis_type}} the right choice for this study?
+      2. **Data Compatibility:** Do selected files support this analysis method?
+      3. **Output Alignment:** Will deliverables meet research goals?
+      4. **Resource Efficiency:** Is this the most efficient path to insights?
+      
+      **Format:**
+      **Routing Validation:** ✅ Optimal / ⚠️ Acceptable / ❌ Reconsider
+      
+      **Methodology Assessment:**
+      {{analysis_type}} is [well-suited/adequately suited/poorly suited] because [specific reasoning]
+      
+      **Data-Method Alignment:**
+      Selected files [fully support/partially support/inadequately support] {{analysis_type}} because [specific reasons]
+      
+      **Efficiency Rating:** [High/Medium/Low] - [explanation]
+      
+      **Final Recommendation:**
+      [Proceed as planned / Modify approach / Consider alternative analysis] - [specific reasoning]
 
 # Analysis routing configuration
 analysis_routes:
@@ -148,10 +347,15 @@ processing_workflow:
   2. confirm_analysis_type
   3. process_user_file_selection        # NEW: Validate and map selected files
   4. validate_required_data_availability # NEW: Check required files are selected
-  5. gather_selected_data_sources       # Updated: Only gather user-selected files
-  6. prepare_target_yaml_inputs
-  7. route_to_specialized_yaml
-  8. track_analysis_completion
+  5. execute_file_selection_analysis    # AI: Assess file selection quality
+  6. execute_routing_validation         # AI: Validate analysis type choice
+  7. gather_selected_data_sources       # Updated: Only gather user-selected files
+  8. execute_analysis_preview_generation # AI: Preview expected outcomes
+  9. execute_intelligent_recommendations # AI: Suggest improvements
+  10. execute_collaboration_optimization # AI: Plan team coordination
+  11. prepare_target_yaml_inputs
+  12. route_to_specialized_yaml
+  13. track_analysis_completion
 
 # File selection processing logic
 file_selection_processing:
@@ -234,6 +438,12 @@ output_template: |
   **Target YAML:** {{analysis_routes.[analysis_type].target_yaml}} ({{analysis_routes.[analysis_type].version}})  
   **Researcher:** {{researcher_contact}}
   
+  ---
+  
+  ## 📊 File Selection Analysis
+  
+  {{ai_generated.file_selection_analysis}}
+  
   **Files Selected by User:**
   {{#each selected_file_details}}
   • {{file_category}}: {{file_name}} ({{file_type}})
@@ -244,17 +454,33 @@ output_template: |
   • {{section_name}}: {{file_count}} files combined
   {{/each}}
   
-  **Quality Check:**
-  {{#if missing_recommended_files}}
-  ⚠️ **Missing Recommended Files:** {{missing_recommended_files}}
-  💡 Consider adding these for richer insights: {{recommended_additions}}
-  {{else}}
-  ✅ **Optimal file selection** - all recommended data sources included
-  {{/if}}
+  ---
   
-  **Next Step:** Running {{analysis_routes.[analysis_type].target_yaml}}...
+  ## 🔮 Analysis Preview
+  
+  {{ai_generated.analysis_preview_generation}}
   
   ---
+  
+  ## 💡 Smart Recommendations
+  
+  {{ai_generated.intelligent_recommendations}}
+  
+  ---
+  
+  ## 👥 Team Collaboration Plan
+  
+  {{ai_generated.collaboration_optimization}}
+  
+  ---
+  
+  ## ✅ Routing Validation
+  
+  {{ai_generated.routing_validation}}
+  
+  ---
+  
+  **Next Step:** Running {{analysis_routes.[analysis_type].target_yaml}}...
   
   *📁 Results will be saved to:* `04-analysis/{{analysis_folder_name}}/`  
   *📢 Team notification:* {{study_channel}}
@@ -344,4 +570,4 @@ selection_intelligence:
     - recommend_file_additions_mid_analysis
 
 output_use: |
-  Enhanced Synthesis Router intelligently directs research analysis requests to specialized YAMLs based on user selection and Smart File Selector choices. Ensures optimal data preparation, validates file selections, provides quality recommendations, and maintains seamless integration with existing analysis workflows while preserving team collaboration features. Now includes intelligent file selection processing and quality assurance for better analysis outcomes.
+  AI-Enhanced Synthesis Router intelligently directs research analysis requests to specialized YAMLs with smart file selection validation and AI-powered quality assessment. Features include: intelligent file selection analysis, analysis preview generation, smart recommendations for missing data, team collaboration optimization, and routing validation. Ensures optimal data preparation, provides quality recommendations, predicts analysis outcomes, and maintains seamless integration with existing analysis workflows while preserving team collaboration features. Now includes comprehensive AI analysis at every routing step for better analysis outcomes and team coordination.
