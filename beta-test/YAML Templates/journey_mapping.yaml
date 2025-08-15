@@ -1,41 +1,370 @@
 id: journey_mapping
 name: run_journey_mapping
 label: 🧭 Journey Mapping
-version: v1.2
+version: v1.3
 description: |
   Turn raw user research into a clear, step-by-step journey map.  
+  Enhanced with router intelligence for optimal data quality assessment and context-aware analysis.
   Map up to 7 key stages of the user's experience—capturing actions, thoughts, emotions, opportunities, and ownership—to inform design, policy, and service improvements.
 
 author: CivicMind R&D
 created: 2025-06-30
-last_updated: 2025-07-02
+last_updated: 2025-08-15
 
 input_type: text
 input_processing: summarize_if_long
-temperature: 0.4
 precision_mode: concise | detailed
 
+# LLM Configuration
+llm_config:
+  model: "gpt-4o"
+  temperature: 0.4
+  max_tokens: 4000
+
 input_variables:
+  # Core analysis data (from router)
   - input_text           # Raw notes, quotes, transcripts (REQUIRED)
+  - focus_area           # Analysis focus from router (REQUIRED)
+  
+  # Study context (from router)
   - study_name           # Title of study (REQUIRED)
+  - study_folder         # Study folder path (REQUIRED)
   - researcher_contact   # Lead researcher (REQUIRED)
   - study_channel        # Where to post results (REQUIRED)
   - study_link           # Link to study folder or documentation (OPTIONAL)
   - team_members         # Who to notify/tag (OPTIONAL)
+  
+  # Router intelligence (NEW - from synthesize_router)
+  - file_selection_quality    # Router's file quality assessment
+  - analysis_preview         # Router's expected outcomes
+  - recommendations          # Router's smart suggestions
+  - collaboration_plan       # Router's team coordination plan
+  - routing_validation       # Router's methodology validation
+  - selected_files_summary   # Summary of files used
+  - data_combination_strategy # How files were combined
+  
+  # Router metadata
+  - router_version           # Router version for tracking
+  - preprocessing_timestamp  # When router processed
+  - analysis_id             # Unique analysis identifier
 
-# Auto-generated/computed variables
+# AI GENERATION TASKS
+ai_generation_tasks:
+  # Analyze journey scope and complexity
+  - task_id: "journey_scope_analysis"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      As an experienced service designer and user journey specialist, analyze the scope and complexity of this user journey:
+      
+      **Study:** {{study_name}}
+      **Focus Area:** {{focus_area}}
+      **Input Data:** [Analyze the input_text for journey indicators]
+      **Router Quality Assessment:** {{file_selection_quality}}
+      **Router Recommendations:** {{recommendations}}
+      
+      Analyze:
+      1. **Journey Complexity:** How complex is the user process described in the data?
+      2. **Optimal Step Count:** Based on data complexity, how many journey stages will best represent the experience?
+      3. **Journey Scope:** What is the start and end point of this user journey?
+      4. **Data Richness:** How well does the data support journey mapping vs. other analysis types?
+      5. **Confidence Level:** Given router assessment, what confidence level is appropriate for journey mapping?
+      
+      **Format:**
+      **Journey Complexity:** [High/Medium/Low] - [specific details about process complexity]
+      **Recommended Step Count:** [3-7 steps] - [reasoning based on process complexity]
+      **Journey Scope:** [Start point] → [End point]
+      **Data Suitability:** [Excellent/Good/Adequate/Poor] for journey mapping - [reasoning]
+      **Analysis Confidence:** [High/Medium/Low] - [reasoning based on router assessment]
+
+  # Identify and characterize the primary persona
+  - task_id: "persona_identification"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Create realistic, specific persona characteristics
+      
+      As an experienced user researcher, identify the primary persona for this journey mapping:
+      
+      **Input Data:**
+      {{input_text}}
+      
+      **Study Context:** {{study_name}}
+      **Focus Area:** {{focus_area}}
+      **Journey Scope:** {{ai_generated.journey_scope_analysis}}
+      
+      Analyze the data to identify:
+      1. **Primary User Type:** What type of user is most represented in the data?
+      2. **User Characteristics:** Key demographics, experience level, context
+      3. **Persona Name:** A realistic name that represents this user type
+      4. **User Goals:** What is this persona trying to accomplish?
+      5. **User Context:** What situation brings them to this journey?
+      
+      **Format:**
+      **Primary User Type:** [Specific user category based on data evidence]
+      
+      **Key Characteristics:**
+      - Experience Level: [First-time/Experienced/Mixed] based on data
+      - Context: [Specific situation/need driving their journey]
+      - Background: [Relevant demographics or characteristics from data]
+      
+      **Persona Name:** [Realistic name that fits the user type]
+      
+      **Primary Goal:** [What they're trying to accomplish in this journey]
+      
+      **Journey Motivation:** [Why they started this process/what triggered it]
+      
+      **Supporting Evidence:** [Specific quotes or data points that support this persona identification]
+
+  # Map the journey stages and sequence
+  - task_id: "journey_stage_mapping"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Focus on specific user actions, not abstract concepts
+      
+      As an experienced service designer, map the key stages of the user journey:
+      
+      **Input Data:**
+      {{input_text}}
+      
+      **Journey Context:**
+      - Persona: {{ai_generated.persona_identification}}
+      - Recommended Steps: {{ai_generated.journey_scope_analysis.step_count}}
+      - Journey Scope: {{ai_generated.journey_scope_analysis.scope}}
+      
+      Map the journey stages:
+      1. **Identify Sequential Stages:** What are the key stages the user goes through?
+      2. **Stage Labels:** Clear, descriptive labels for each stage (2-5 words max)
+      3. **Stage Sequence:** Logical flow from start to finish
+      4. **Evidence Support:** What data supports each stage?
+      
+      **Format each stage as:**
+      **Stage [X]: "[Clear stage label]"**
+      - **User Action:** [Specific action the user takes in this stage]
+      - **Stage Purpose:** [What the user is trying to accomplish]
+      - **Data Evidence:** [Quotes or observations supporting this stage]
+      - **Transition:** [What moves the user to the next stage]
+      
+      Requirements:
+      - Only include stages clearly supported by data
+      - Use specific, actionable stage labels
+      - Ensure logical sequence and flow
+      - Ground each stage in research evidence
+
+  # Develop detailed stage characteristics
+  - task_id: "stage_detail_development"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Make thoughts and emotions realistic and specific
+      
+      As an experienced user researcher, develop detailed characteristics for each journey stage:
+      
+      **Journey Stages:**
+      {{ai_generated.journey_stage_mapping}}
+      
+      **Persona Context:**
+      {{ai_generated.persona_identification}}
+      
+      **Input Data:**
+      {{input_text}}
+      
+      For each stage, develop:
+      1. **User Thoughts:** What is the user thinking during this stage?
+      2. **User Emotions:** What emotions are they experiencing?
+      3. **Pain Points:** What challenges or frustrations occur?
+      4. **Success Factors:** What helps users succeed in this stage?
+      5. **Signal Strength:** How often this pattern appears in the data
+      
+      **Format for each stage:**
+      **Stage: "[Stage label]"**
+      
+      💭 **User Thought:** "[Realistic thought the user might have - first person]"
+      
+      ❤️ **Primary Emotion:** [Specific emotion] - [brief context for why]
+      
+      😤 **Pain Points:** [Specific challenges or frustrations in this stage]
+      
+      ✅ **Success Factors:** [What helps users succeed in this stage]
+      
+      📊 **Signal Strength:** [How often this pattern appears: "Consistent across participants" / "Majority reported" / "Recurring theme" / "Strong but localized"]
+      
+      🔍 **Data Source:** [Reference to supporting evidence from input data]
+      
+      Requirements:
+      - Make thoughts realistic and specific (use "I" statements)
+      - Choose specific emotions, not generic ones
+      - Base all details on actual data evidence
+      - Keep stage details focused and actionable
+
+  # Generate actionable opportunities for each stage
+  - task_id: "opportunity_identification"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Make opportunities specific and actionable
+      
+      As an experienced service designer, identify actionable opportunities for each journey stage:
+      
+      **Journey Stages with Details:**
+      {{ai_generated.stage_detail_development}}
+      
+      **Study Context:** {{study_name}}
+      **Focus Area:** {{focus_area}}
+      
+      For each stage, generate:
+      1. **Primary Opportunity:** Most impactful improvement for this stage
+      2. **Secondary Opportunity:** Additional improvement opportunity
+      3. **Implementation Approach:** How teams could pursue these opportunities
+      4. **Success Metrics:** How to measure improvement
+      
+      **Format for each stage:**
+      **Stage: "[Stage label]"**
+      
+      💡 **Primary Opportunity:** [Specific, actionable improvement that directly addresses the main pain point]
+      
+      💡 **Secondary Opportunity:** [Additional improvement that could enhance user experience]
+      
+      🛠️ **Implementation Approach:** [Specific steps teams could take - who does what]
+      
+      📈 **Success Metrics:** [How to measure if opportunities successfully improve this stage]
+      
+      ⭐ **Priority Level:** [High/Medium/Low] - [reasoning based on user impact and implementation effort]
+      
+      **Examples of good opportunities:**
+      - "Add a progress indicator showing which step users are on and how many remain"
+      - "Create a pre-flight checklist that shows exactly what information users need to gather"
+      - "Implement smart defaults based on user's previous selections to reduce form complexity"
+      
+      **NOT vague opportunities like:**
+      - "Improve user experience"
+      - "Better communication"
+      - "More intuitive interface"
+
+  # Assign ownership and generate discussion questions
+  - task_id: "ownership_and_discussion"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Make discussion questions specific and actionable
+      
+      As an experienced product strategist, assign ownership and generate discussion questions for each journey stage:
+      
+      **Journey Stages with Opportunities:**
+      {{ai_generated.opportunity_identification}}
+      
+      **Study Context:** {{study_name}}
+      **Team Context:** {{team_members}}
+      **Collaboration Plan:** {{collaboration_plan}}
+      
+      For each stage, determine:
+      1. **Stage Owner:** Which team/role should own improvements for this stage
+      2. **Discussion Questions:** Specific questions to drive team conversation
+      3. **Cross-functional Needs:** What collaboration is needed
+      4. **Decision Points:** What decisions need to be made
+      
+      **Format for each stage:**
+      **Stage: "[Stage label]"**
+      
+      👤 **Suggested Owner:** [Specific team/role] - [reasoning based on stage characteristics]
+      
+      🤔 **Discussion Questions:**
+      • [Specific question about this stage that drives action]
+      • [Question about implementation or prioritization]
+      
+      🤝 **Cross-functional Needs:** [What other teams need to be involved and why]
+      
+      🎯 **Key Decision:** [Main decision that needs to be made about this stage]
+      
+      **Examples of good ownership assignments:**
+      - "Content Team - this stage is primarily about information clarity and messaging"
+      - "Product Team - involves feature functionality and user interface changes"
+      - "Policy Team - requires process or requirement changes"
+      
+      **Examples of good discussion questions:**
+      - "Should we prioritize reducing steps or improving clarity within existing steps?"
+      - "What's the minimum viable improvement we could ship in the next sprint?"
+      - "How do we measure success for this stage specifically?"
+
+  # Generate follow-up recommendations and next steps
+  - task_id: "journey_follow_up_recommendations"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Provide specific, actionable next steps
+      
+      As an experienced UX researcher, recommend follow-up actions based on the journey mapping results:
+      
+      **Complete Journey Analysis:**
+      {{ai_generated.stage_detail_development}}
+      {{ai_generated.opportunity_identification}}
+      
+      **Router Recommendations:** {{recommendations}}
+      **Study Context:** {{study_name}}
+      
+      Based on the journey mapping results, recommend:
+      
+      1. **Immediate Actions:** What should teams do in the next 1-2 weeks?
+      2. **Journey Validation:** What additional research would strengthen these findings?
+      3. **Design Implications:** How should this inform design and product decisions?
+      4. **Follow-up Analysis:** What other analysis types would complement this journey map?
+      
+      **Format:**
+      **Immediate Next Steps (1-2 weeks):**
+      - [Specific action]: [Who should do it and why]
+      - [Specific prioritization decision]: [Based on which journey stages]
+      
+      **Journey Validation Needs:**
+      - [Research method]: [What this would validate about the journey]
+      - [Data collection approach]: [What additional evidence would strengthen findings]
+      
+      **Design Implications:**
+      - [Specific design principle]: [Based on journey insights]
+      - [Feature/service change]: [How journey findings should inform development]
+      
+      **Complementary Analysis:**
+      Based on router recommendations and journey findings:
+      - [Analysis type]: [How this would build on journey insights]
+      - [Research approach]: [What additional perspective this would provide]
+      
+      **Router Integration:**
+      {{recommendations}}
+      [How router recommendations align with journey findings]
+      
+      **Success Metrics for Journey:**
+      - [Specific metric]: [How to measure journey improvement]
+      - [User experience indicator]: [What signals journey optimization success]
+
+# Auto-generated/computed variables (enhanced with AI analysis)
 auto_variables:
   - persona_name: |
-      # AI analyzes input to identify primary user type/persona
-      # Extracts from quotes or creates representative name
-      extract_primary_persona(input_text) || "Our User"
+      # AI extracts persona name from persona identification task
+      extract_persona_name(ai_generated.persona_identification) || "Our User"
   - max_steps: |
-      # AI determines optimal journey length based on complexity
-      # Default: 5, Range: 3-7 based on process complexity
-      analyze_journey_complexity(input_text) || 5
+      # AI determines optimal journey length from scope analysis
+      extract_step_count(ai_generated.journey_scope_analysis) || 5
   - session_count: |
-      # AI estimates session count from input patterns
-      estimate_session_count(input_text) || "multiple sessions"
+      # AI estimates session count from scope analysis and file metadata
+      extract_session_count(ai_generated.journey_scope_analysis, selected_files_summary) || "multiple sessions"
+  - confidence_level: |
+      # AI determines overall analysis confidence from scope analysis
+      extract_confidence_level(ai_generated.journey_scope_analysis) || "medium"
   - current_date: |
       # Auto-generate current date for file naming
       new Date().toISOString().split('T')[0]
@@ -43,12 +372,12 @@ auto_variables:
       # Auto-generate based on study name and date
       generate_github_link(study_name, current_date) || null
 
-# Output configuration
+# Output configuration (enhanced)
 output_options:
   default_delivery: "slack_and_file"
   slack_format: "structured"
-  file_location: "04-analysis/"
-  file_name: "journey_mapping_{{study_name_slug}}_{{current_date}}.md"
+  file_location: "04-analysis/journey-mapping/"
+  file_name: "{{study_folder}}_journey_mapping_{{current_date}}.md"
 
 slack_output:
   post_in_channel: true
@@ -60,178 +389,127 @@ slack_output:
       action: "run_affinity_mapping"
     - text: "👤 Create Personas"
       action: "run_persona_generator"
+    - text: "🔍 Usability Issues Analysis"
+      action: "run_usability_issues_extractor"
     - text: "🗂️ View in GitHub"
       url: "{{github_file_link}}"
+    - text: "📊 Router Intelligence Log"
+      url: "{{router_log_link}}"
 
 output_use: |
-  CivicMind Journey Mapping accelerates service-blueprint creation by producing a concise, actionable map directly in Slack.  
-  Use this to:
-    - Visualize the user's end-to-end experience
-    - Identify friction points and high-value opportunities
-    - Assign clear ownership for each stage
-    - Foster team discussion and rapid iteration
+  Router-Enhanced Journey Mapping leverages intelligent preprocessing to optimize journey analysis quality and context.
+  Receives AI-validated file selections, quality assessments, and smart recommendations from the synthesize_router
+  to ensure optimal journey mapping. By incorporating router intelligence, researchers can confidently create
+  actionable journey maps with full visibility into data quality, limitations, and optimization opportunities.
+
+  Use this method to:
+    - Benefit from intelligent file selection validation and optimization
+    - Understand data quality impact on journey mapping confidence
+    - Leverage router recommendations for comprehensive service design
+    - Maintain full transparency in AI-assisted journey mapping workflow
 
 output_notes: |
-  This method maps {{max_steps}} journey steps based on data analysis. AI automatically determines optimal step count.
-  Persona ({{persona_name}}) identified from input patterns.
-  Map one journey at a time to maintain focus.
-  Ground each step in actual research—cite sources or quotes.
-  Use plain language; avoid jargon and passive voice.
-  Format for Slack readability using *text* for bold, > for quotes, spacing between steps.
+  This method maps {{max_steps}} journey steps based on AI analysis of process complexity and data quality.
+  Journey confidence level: {{confidence_level}} based on router file selection assessment.
+  Primary persona ({{persona_name}}) identified from input patterns and user characteristics.
+  Router recommendations integrated for context-aware journey analysis approach.
 
+# Enhanced output template using AI-generated content
 output_format: |
-  Hi team! 👋 I just mapped out the user journey for *{{persona_name}}* based on our research. Found {{max_steps}} key stages that show where users get stuck and where we have the biggest opportunities to improve their experience.
+  Hi team! 👋 I just mapped out the user journey for *{{persona_name}}* based on our AI-enhanced analysis. Found {{max_steps}} key stages that show where users get stuck and where we have the biggest opportunities to improve their experience.
 
   {{team_members}} - would love your thoughts on this journey, especially which stages feel most critical or where you see quick wins.
 
   📂 *Study:* {{study_name}}  
   🔗 *Full details:* {{study_link}}
+  📊 *Router Analysis:* [View preprocessing intelligence]({{router_log_link}})
 
   ---
 
-  *🧭 USER JOURNEY: {{persona_name}}*
+  ## 📊 *JOURNEY SCOPE & QUALITY ANALYSIS*
 
-  1️⃣ *STEP 1: {{step_1_label}}*
-  
-  *Action:* {{step_1_action}}
-  *Thought:* {{step_1_thought}}
-  ❤️ *Emotion:* {{step_1_emotion}}
-  🔍 *Source:* {{step_1_source}}
-  📊 *Signal:* {{step_1_signal}}
-  
-  *Opportunities:*
-  • {{step_1_opportunity_1}}
-  • {{step_1_opportunity_2}}
-  
-  👤 *Owner:* {{step_1_owner}}
-  
-  *Questions for Discussion:*
-  • {{step_1_question_1}}
-  • {{step_1_question_2}}
+  {{ai_generated.journey_scope_analysis}}
+
+  **Router Quality Assessment:**
+  {{file_selection_quality}}
+
+  **Files Analyzed:**
+  {{selected_files_summary}}
 
   ---
 
-  2️⃣ *STEP 2: {{step_2_label}}*
-  
-  *Action:* {{step_2_action}}
-  *Thought:* {{step_2_thought}}
-  ❤️ *Emotion:* {{step_2_emotion}}
-  🔍 *Source:* {{step_2_source}}
-  📊 *Signal:* {{step_2_signal}}
-  
-  *Opportunities:*
-  • {{step_2_opportunity_1}}
-  • {{step_2_opportunity_2}}
-  
-  👤 *Owner:* {{step_2_owner}}
-  
-  *Questions for Discussion:*
-  • {{step_2_question_1}}
-  • {{step_2_question_2}}
+  ## 👤 *PRIMARY PERSONA*
+
+  {{ai_generated.persona_identification}}
 
   ---
 
-  3️⃣ *STEP 3: {{step_3_label}}*
-  
-  *Action:* {{step_3_action}}
-  *Thought:* {{step_3_thought}}
-  ❤️ *Emotion:* {{step_3_emotion}}
-  🔍 *Source:* {{step_3_source}}
-  📊 *Signal:* {{step_3_signal}}
-  
-  *Opportunities:*
-  • {{step_3_opportunity_1}}
-  • {{step_3_opportunity_2}}
-  
-  👤 *Owner:* {{step_3_owner}}
-  
-  *Questions for Discussion:*
-  • {{step_3_question_1}}
-  • {{step_3_question_2}}
+  ## 🧭 *USER JOURNEY MAP: {{persona_name}}*
+
+  {{ai_generated.journey_stage_mapping}}
 
   ---
 
-  4️⃣ *STEP 4: {{step_4_label}}*
-  
-  *Action:* {{step_4_action}}
-  *Thought:* {{step_4_thought}}
-  ❤️ *Emotion:* {{step_4_emotion}}
-  🔍 *Source:* {{step_4_source}}
-  📊 *Signal:* {{step_4_signal}}
-  
-  *Opportunities:*
-  • {{step_4_opportunity_1}}
-  • {{step_4_opportunity_2}}
-  
-  👤 *Owner:* {{step_4_owner}}
-  
-  *Questions for Discussion:*
-  • {{step_4_question_1}}
-  • {{step_4_question_2}}
+  ## 🔍 *STAGE DETAILS & EMOTIONS*
+
+  {{ai_generated.stage_detail_development}}
 
   ---
 
-  5️⃣ *STEP 5: {{step_5_label}}*
-  
-  *Action:* {{step_5_action}}
-  *Thought:* {{step_5_thought}}
-  ❤️ *Emotion:* {{step_5_emotion}}
-  🔍 *Source:* {{step_5_source}}
-  📊 *Signal:* {{step_5_signal}}
-  
-  *Opportunities:*
-  • {{step_5_opportunity_1}}
-  • {{step_5_opportunity_2}}
-  
-  👤 *Owner:* {{step_5_owner}}
-  
-  *Questions for Discussion:*
-  • {{step_5_question_1}}
-  • {{step_5_question_2}}
+  ## 💡 *OPPORTUNITIES & IMPROVEMENTS*
+
+  {{ai_generated.opportunity_identification}}
+
+  ---
+
+  ## 👥 *OWNERSHIP & DISCUSSION*
+
+  {{ai_generated.ownership_and_discussion}}
+
+  ---
+
+  ## 🚀 *RECOMMENDED NEXT STEPS*
+
+  {{ai_generated.journey_follow_up_recommendations}}
+
+  **Router Recommendations Integration:**
+  {{recommendations}}
 
   ---
 
   *What do you think?* Reply in thread with your thoughts:
-  • Which steps feel like the biggest pain points?
+  • Which stages feel like the biggest pain points?
   • Any opportunities that could be quick wins?
+  • Should we follow the recommended next analysis steps?
   • Who should own the next steps for improvements?
 
-prompt: |
-  You are a senior human-centered design researcher and service designer with experience turning qualitative research into structured journey maps.
+  ---
+  
+  *🤖 AI-Enhanced Journey Analysis Complete*  
+  *Preprocessing: {{preprocessing_timestamp}} | Router: {{router_version}} | Analysis ID: {{analysis_id}}*
 
-  ANALYSIS CONTEXT:
-  - Study: {{study_name}}
-  - Primary user: {{persona_name}} (AI-identified from data)
-  - Journey length: {{max_steps}} steps (AI-determined based on complexity)
-  - Estimated sessions: {{session_count}}
-
-  Based on the input provided — which may include notes, quotes, field transcripts, or synthesis — identify and map the user's journey as {{max_steps}} key experience stages.
-
-  For each stage, generate:
-    - A short, descriptive *Step Label* (2–5 words max)
-    - A clear *Action* the user is taking
-    - A realistic *Thought* the user might be having
-    - A single-word *Emotion* that best reflects the experience
-    - A brief *Source* reference (e.g., "Study 2, Session 4")
-    - A *Signal* (e.g., "Repeated by 4 participants" or "Observed in multiple interviews")
-    - Two actionable *Opportunities* based on the step
-    - A suggested *Owner* (product, content, research, policy, etc.)
-    - Two *Questions for Discussion* to invite team input or flag ambiguity
-
-  ⚠️ Do not invent steps to meet a quota. Only include stages that are clearly supported by the research. If data supports fewer than {{max_steps}} steps, return fewer.
-
-  Think like a synthesis lead presenting to a product team: clear, specific, grounded in research.
-
-  Write in plain, confident language — no jargon, filler, or speculation. Use active voice and concrete phrasing.
-
-  Format output using Slack-friendly formatting: *text* for bold, > for quotes, clear line breaks and spacing between each step.
+# Processing workflow
+processing_workflow:
+  1. validate_router_inputs
+  2. confirm_data_quality_context
+  3. execute_journey_scope_analysis
+  4. execute_persona_identification
+  5. execute_journey_stage_mapping
+  6. execute_stage_detail_development
+  7. execute_opportunity_identification
+  8. execute_ownership_and_discussion
+  9. execute_journey_follow_up_recommendations
+  10. format_comprehensive_output
+  11. save_to_analysis_folder
+  12. send_team_notifications
+  13. track_analysis_completion
 
 notify:
   - role: team
-    action: "Journey mapping completed"
+    action: "Router-enhanced journey mapping completed"
     channel: "{{study_channel}}"
-    message: "{{researcher_contact}} just mapped the user journey for {{persona_name}} with {{max_steps}} key stages. Check out the opportunities!"
+    message: "{{researcher_contact}} just mapped the user journey for {{persona_name}} with {{max_steps}} key stages and {{confidence_level}} confidence. Check out the opportunities!"
   - role: researcher
     action: "Analysis saved"
     slack_tag: "{{researcher_contact}}"
-    message: "Your journey mapping results have been posted to {{study_channel}} and saved to GitHub."
+    message: "Your router-enhanced journey mapping results have been posted to {{study_channel}} and saved to GitHub. Analysis confidence: {{confidence_level}} based on file quality assessment."
