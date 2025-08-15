@@ -2,40 +2,349 @@ id: affinity_mapping
 name: run_affinity_mapping
 
 label: 🧠 Affinity Mapping
-version: "v1.6"
+version: "v1.7"
 
 description: >
   Group qualitative quotes, notes, or observations into clearly labeled themes using AI.
+  Enhanced with router intelligence for optimal data quality assessment and context-aware analysis.
   This method replaces manual affinity mapping tools (like Miro) with a faster, scalable, and shareable format.
   Designed to support synthesis across large datasets with clean Slack/GitHub export.
 
 author: CivicMind R&D  
 created: 2025-06-27  
-last_updated: 2025-07-02
+last_updated: 2025-08-15
 
 input_type: text
 input_processing: summarize_if_long
-temperature: 0.4
 precision_mode: concise | detailed
 
+# LLM Configuration
+llm_config:
+  model: "gpt-4o"
+  temperature: 0.4
+  max_tokens: 4000
+
 input_variables:
+  # Core analysis data (from router)
   - input_text           # Quotes, observations, or notes to group (REQUIRED)
+  - focus_area           # Analysis focus from router (REQUIRED)
+  
+  # Study context (from router)
   - study_name           # Title of study (REQUIRED)
+  - study_folder         # Study folder path (REQUIRED)
   - researcher_contact   # Lead researcher (REQUIRED)
   - study_channel        # Where to post results (REQUIRED)
   - study_link           # Link to study folder or documentation (OPTIONAL)
   - team_members         # Who to notify/tag (OPTIONAL)
+  
+  # Router intelligence (NEW - from synthesize_router)
+  - file_selection_quality    # Router's file quality assessment
+  - analysis_preview         # Router's expected outcomes
+  - recommendations          # Router's smart suggestions
+  - collaboration_plan       # Router's team coordination plan
+  - routing_validation       # Router's methodology validation
+  - selected_files_summary   # Summary of files used
+  - data_combination_strategy # How files were combined
+  
+  # Router metadata
+  - router_version           # Router version for tracking
+  - preprocessing_timestamp  # When router processed
+  - analysis_id             # Unique analysis identifier
 
-# Auto-generated/computed variables
+# AI GENERATION TASKS
+ai_generation_tasks:
+  # Analyze data scope and determine optimal analysis approach
+  - task_id: "data_scope_analysis"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      As an experienced qualitative researcher, analyze the scope and complexity of this research data:
+      
+      **Study:** {{study_name}}
+      **Focus Area:** {{focus_area}}
+      **Input Data Length:** [Analyze character/word count of input_text]
+      **Router Quality Assessment:** {{file_selection_quality}}
+      **Router Recommendations:** {{recommendations}}
+      
+      Analyze:
+      1. **Data Volume Assessment:** How much data are we working with?
+      2. **Content Complexity:** What types of observations, quotes, and insights are present?
+      3. **Optimal Theme Count:** Based on data volume and complexity, how many themes will best represent the data?
+      4. **Analysis Confidence:** Given router quality assessment, what confidence level is appropriate?
+      5. **Thematic Approach:** What clustering strategy will work best for this data?
+      
+      **Format:**
+      **Data Volume:** [High/Medium/Low] - [specific details about data amount]
+      **Content Types:** [List types of content: quotes, observations, task data, etc.]
+      **Recommended Theme Count:** [2-7 themes] - [reasoning]
+      **Analysis Confidence:** [High/Medium/Low] - [reasoning based on router assessment]
+      **Clustering Strategy:** [Approach for grouping observations into themes]
+
+  # Identify potential themes and patterns in the data
+  - task_id: "theme_identification"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Focus on specific user tensions and needs, not generic categories
+      
+      As an experienced qualitative researcher, identify potential themes and patterns in this research data:
+      
+      **Input Data:**
+      {{input_text}}
+      
+      **Context:**
+      - Study: {{study_name}}
+      - Focus: {{focus_area}}
+      - Recommended theme count: {{ai_generated.data_scope_analysis.theme_count}}
+      - Data scope: {{ai_generated.data_scope_analysis}}
+      
+      Instructions:
+      1. Read through all the data and identify recurring patterns, tensions, and user needs
+      2. Look for quotes and observations that naturally cluster together
+      3. Identify themes that express specific user tensions (not generic categories)
+      4. Ensure themes are distinct and well-supported by evidence
+      5. Focus on actionable insights that teams can use for decision-making
+      
+      **Format each potential theme as:**
+      **Theme [X]: "[Specific user tension or need in quotes]"**
+      - **Evidence Pattern:** [What type of evidence supports this theme]
+      - **User Impact:** [How this affects users' experience]
+      - **Supporting Quote Examples:** [2-3 brief quote snippets]
+      - **Distinctiveness:** [How this differs from other themes]
+      
+      Generate themes that capture real user tensions like:
+      - "I don't know who to trust"
+      - "This process feels endless"
+      - "I'm worried I'll make a mistake"
+      
+      NOT generic categories like "communication issues" or "user experience problems"
+
+  # Cluster quotes and evidence by identified themes
+  - task_id: "quote_clustering"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Include complete, meaningful quotes that demonstrate the theme
+      
+      As an experienced qualitative researcher, cluster quotes and observations by the identified themes:
+      
+      **Identified Themes:**
+      {{ai_generated.theme_identification}}
+      
+      **Full Input Data:**
+      {{input_text}}
+      
+      For each theme, find the best supporting quotes and evidence:
+      
+      1. **Select 3-5 strong quotes** that clearly demonstrate the theme
+      2. **Include participant context** when available (P1, P3, etc.)
+      3. **Ensure quote diversity** - different participants, different contexts
+      4. **Maintain quote integrity** - use complete thoughts, not fragments
+      5. **Show thematic coherence** - explain why these quotes cluster together
+      
+      **Format for each theme:**
+      **Theme: "[Theme label from identification]"**
+      
+      **Supporting Quotes:**
+      > "[Complete quote 1]" - [Participant context if available]
+      > "[Complete quote 2]" - [Participant context if available]  
+      > "[Complete quote 3]" - [Participant context if available]
+      > "[Complete quote 4]" - [Participant context if available]
+      
+      **Clustering Rationale:** [2-3 sentences explaining why these quotes naturally group together and what shared meaning or tension they represent]
+      
+      **Additional Evidence:** [Any non-quote observations, behaviors, or patterns that support this theme]
+
+  # Develop insights and emotional dimensions for each theme
+  - task_id: "insight_generation"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Make insights specific and actionable, not generic observations
+      
+      As an experienced qualitative researcher, develop insights and emotional dimensions for each theme:
+      
+      **Themes with Evidence:**
+      {{ai_generated.quote_clustering}}
+      
+      **Study Context:** {{study_name}}
+      **Focus Area:** {{focus_area}}
+      
+      For each theme, generate:
+      
+      1. **Key Insight:** One concise, declarative statement revealing user behavior, belief, or tension
+      2. **Emotional Dimension:** Specific emotions users experience (frustration, anxiety, confidence, confusion, etc.)
+      3. **Signal Strength:** How strong/frequent this pattern is in the data
+      4. **User Impact:** How this theme affects users' ability to accomplish their goals
+      
+      **Format for each theme:**
+      **Theme: "[Theme label]"**
+      
+      🔍 **Insight:** [One clear, specific insight about user behavior or beliefs - avoid generic statements]
+      
+      ❤️ **Emotional Dimension:** [Specific emotions with brief explanation of when/why users feel this way]
+      
+      📊 **Signal Strength:** [How often this appears: "Consistent across all participants" / "Mentioned by majority" / "Recurring pattern" / "Strong but localized"]
+      
+      🎯 **User Impact:** [Specific way this affects users' success, confidence, or experience]
+      
+      **Examples of good insights:**
+      - "Users create mental shortcuts when official processes feel too complex"
+      - "Veterans assume government websites will fail them based on past experiences"
+      - "People abandon tasks when they can't predict how long they'll take"
+      
+      **NOT generic insights like:**
+      - "Users want better communication"
+      - "The interface needs improvement"
+
+  # Generate actionable opportunities for each theme
+  - task_id: "opportunity_generation"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Make opportunities specific and actionable for design/product teams
+      
+      As an experienced UX researcher, generate actionable opportunities for each theme:
+      
+      **Themes with Insights:**
+      {{ai_generated.insight_generation}}
+      
+      **Study Context:** {{study_name}}
+      **Focus Area:** {{focus_area}}
+      
+      For each theme, generate:
+      
+      1. **Primary Opportunity:** One concrete, actionable response (product, content, policy, or design change)
+      2. **Implementation Approach:** Specific steps teams could take
+      3. **Success Metrics:** How to measure if the opportunity addresses the theme
+      4. **Priority Level:** High/Medium/Low based on user impact and evidence strength
+      
+      **Format for each theme:**
+      **Theme: "[Theme label]"**
+      
+      💡 **Primary Opportunity:** [Specific, actionable opportunity that directly addresses the user tension/need]
+      
+      🛠️ **Implementation Approach:** [2-3 specific steps teams could take to pursue this opportunity]
+      
+      📈 **Success Metrics:** [How to measure if this opportunity successfully addresses the theme]
+      
+      ⭐ **Priority Level:** [High/Medium/Low] - [Brief reasoning based on user impact and evidence strength]
+      
+      **Examples of good opportunities:**
+      - "Add progress indicators showing exact steps remaining and estimated time for each"
+      - "Create a 'confidence check' feature that previews what will happen before users submit"
+      - "Develop contextual help that appears based on where users typically get stuck"
+      
+      **NOT vague opportunities like:**
+      - "Improve communication"
+      - "Make interface more user-friendly"
+      - "Better user experience"
+
+  # Assess confidence levels and identify follow-up needs
+  - task_id: "confidence_assessment"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Be specific about confidence levels and their implications
+      
+      As an experienced qualitative researcher, assess confidence levels for each theme and identify follow-up needs:
+      
+      **Router Quality Assessment:** {{file_selection_quality}}
+      **Data Scope Analysis:** {{ai_generated.data_scope_analysis}}
+      **Themes with Evidence:** {{ai_generated.quote_clustering}}
+      **Router Recommendations:** {{recommendations}}
+      
+      For each theme, assess:
+      
+      1. **Theme Confidence:** How confident are we in this theme based on evidence quality and quantity?
+      2. **Evidence Strength:** How strong is the supporting evidence?
+      3. **Generalizability:** How well might this theme apply beyond the current data?
+      4. **Follow-up Needs:** What additional research would strengthen confidence in this theme?
+      
+      **Format for each theme:**
+      **Theme: "[Theme label]"**
+      
+      🎯 **Theme Confidence:** [High/Medium/Low] - [Specific reasoning based on evidence quality and router assessment]
+      
+      📊 **Evidence Strength:** [Strong/Moderate/Limited] - [Details about quote quality, participant diversity, pattern consistency]
+      
+      🌐 **Generalizability:** [High/Medium/Low] - [How well this might apply to broader user population]
+      
+      🔍 **Follow-up Needs:** [Specific research activities that would strengthen confidence: more interviews, quantitative validation, etc.]
+      
+      **Overall Analysis Confidence:** [High/Medium/Low] based on router quality assessment and evidence strength across all themes
+      
+      **Key Limitations:** [Any significant limitations from router recommendations or data gaps that affect confidence]
+
+  # Generate follow-up analysis recommendations
+  - task_id: "follow_up_recommendations"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Provide specific, actionable next steps
+      
+      As an experienced UX researcher, recommend follow-up analysis based on the affinity mapping results:
+      
+      **Router Recommendations:** {{recommendations}}
+      **Identified Themes:** {{ai_generated.insight_generation}}
+      **Confidence Assessment:** {{ai_generated.confidence_assessment}}
+      **Study Context:** {{study_name}}
+      
+      Based on the themes identified and router intelligence, recommend:
+      
+      1. **Immediate Next Analysis:** What analysis should the team run next to build on these themes?
+      2. **Research Gaps:** What additional research would strengthen the findings?
+      3. **Decision Support:** How can teams use these themes for immediate decisions?
+      4. **Long-term Research:** What future research would be valuable?
+      
+      **Format:**
+      **Immediate Next Steps (1-2 weeks):**
+      - [Specific analysis type]: [Why this builds on current themes]
+      - [Specific research activity]: [How this addresses identified gaps]
+      
+      **Short-term Research (1-2 months):**
+      - [Research approach]: [What this would validate or explore further]
+      - [Analysis method]: [How this complements current findings]
+      
+      **Decision Support:**
+      - [Specific decisions teams can make now]: [Based on which themes]
+      - [Areas needing more research]: [Before making major decisions]
+      
+      **Router-Suggested Analysis:**
+      Based on router recommendations: {{recommendations}}
+      [Specific next analysis types that would complement affinity mapping]
+      
+      **Priority Ranking:**
+      1. **High Priority:** [Most important next step]
+      2. **Medium Priority:** [Valuable but not urgent]
+      3. **Low Priority:** [Nice to have for comprehensive view]
+
+# Auto-generated/computed variables (enhanced with AI analysis)
 auto_variables:
   - max_themes: |
-      # AI analyzes input_text length and complexity to suggest optimal theme count
-      # Default: 3, Range: 2-7 based on data volume
-      analyze_theme_count(input_text) || 3
+      # AI determines optimal theme count from data scope analysis
+      extract_theme_count(ai_generated.data_scope_analysis) || 3
   - session_count: |
-      # AI estimates session count from input patterns
-      # Looks for interview markers, participant IDs, session breaks
-      estimate_session_count(input_text) || "multiple sessions"
+      # AI estimates session count from data scope analysis and file metadata
+      extract_session_count(ai_generated.data_scope_analysis, selected_files_summary) || "multiple sessions"
+  - confidence_level: |
+      # AI determines overall analysis confidence from confidence assessment
+      extract_confidence_level(ai_generated.confidence_assessment) || "medium"
   - current_date: |
       # Auto-generate current date for file naming
       new Date().toISOString().split('T')[0]
@@ -43,12 +352,12 @@ auto_variables:
       # Auto-generate based on study name and date
       generate_github_link(study_name, current_date) || null
 
-# Output configuration
+# Output configuration (enhanced)
 output_options:
   default_delivery: "slack_and_file"  # Post to Slack AND save to GitHub
   slack_format: "structured"          # Use the formatted output with sections
-  file_location: "04-analysis/"
-  file_name: "affinity_mapping_{{study_name_slug}}_{{current_date}}.md"
+  file_location: "04-analysis/affinity-mapping/"
+  file_name: "{{study_folder}}_affinity_mapping_{{current_date}}.md"
 
 slack_output:
   post_in_channel: true
@@ -60,23 +369,30 @@ slack_output:
       action: "run_insight_card"
     - text: "🎯 Jobs to be Done Analysis"
       action: "run_jobs_to_be_done"
+    - text: "🔍 Usability Issues Analysis"
+      action: "run_usability_issues_extractor"
     - text: "🗂️ View in GitHub"
       url: "{{github_file_link}}"
+    - text: "📊 Router Intelligence Log"
+      url: "{{router_log_link}}"
 
 output_use: |
-  CivicMind Affinity Mapping is specifically designed to accelerate qualitative synthesis without sacrificing rigor or transparency. By clearly showing thematic logic, emotional insights, and actionable opportunities, researchers can confidently adopt AI-driven analysis—moving quickly from raw data to informed, trusted, and actionable insights. 
+  Router-Enhanced Affinity Mapping leverages intelligent preprocessing to optimize analysis quality and context.
+  Receives AI-validated file selections, quality assessments, and smart recommendations from the synthesize_router
+  to ensure optimal thematic analysis. By incorporating router intelligence, researchers can confidently adopt
+  AI-driven analysis with full visibility into data quality, limitations, and optimization opportunities.
 
   Use this method to:
-    - Clearly justify and communicate AI-driven affinity mapping to stakeholders.
-    - Visibly speed up your research synthesis workflow without losing depth or nuance.
-    - Facilitate open discussion, continuous refinement, and researcher confidence in AI-supported insights.
+    - Benefit from intelligent file selection validation and optimization
+    - Understand data quality impact on thematic analysis confidence
+    - Leverage router recommendations for follow-up analysis
+    - Maintain full transparency in AI-assisted synthesis workflow
 
 output_notes: |
-  This method returns up to {{max_themes}} themes based on data analysis. AI automatically determines optimal theme count.
-  Session count ({{session_count}}) estimated from input patterns. 
-  Avoid generic or vague labels. Only include a theme if it is distinct and well-supported.
-  Think like a synthesis lead preparing a readout: each theme should be actionable, grounded in quotes, and clear to stakeholders.
-  Use Slack formatting: *text* for bold, > for quotes, spacing between blocks, and horizontal rules for clarity.
+  This method returns up to {{max_themes}} themes based on data analysis and router quality assessment.
+  Analysis confidence level: {{confidence_level}} based on file selection quality.
+  Session count ({{session_count}}) estimated from input patterns and file metadata.
+  Router recommendations integrated for context-aware analysis approach.
 
 persona_hinting: |
   Common personas include:
@@ -86,85 +402,96 @@ persona_hinting: |
     - Small business owner
     - Young adult navigating benefits
 
-prompt: |
-  You are a senior qualitative researcher and synthesis facilitator experienced in affinity mapping. Your job is to cluster quotes, notes, or field observations into meaningful themes—as if physically grouping sticky notes on a wall.
-
-  ANALYSIS CONTEXT:
-  - Study: {{study_name}}
-  - Estimated sessions: {{session_count}}
-  - Target themes: {{max_themes}} (AI-determined based on data complexity)
-
-  Each theme must:
-    - Have a clear, plain-language label capturing the central tension, need, or idea from the quotes.
-    - Include at least 3 supporting quotes clearly demonstrating thematic coherence.
-    - Briefly explain why these quotes naturally cluster together, explicitly highlighting shared meanings or tensions.
-    - Provide one 🔍 *Insight*: a short, declarative summary revealing user behavior, beliefs, or tensions.
-    - Explicitly indicate the ❤️ *Emotional Dimension* (e.g., frustration, confusion, confidence) clearly represented by the quotes, if applicable.
-    - Clearly indicate 📊 *Signal* (strength or frequency of evidence for this theme, e.g., "Mentioned in multiple interviews," "Consistent across user groups").
-    - Optionally suggest one 💡 *Opportunity*: a concrete, actionable response for product, content, policy, or further research.
-    - Optionally provide *Tags* (e.g., trust, transparency, simplicity) for easier future retrieval.
-
-  Return up to {{max_themes}} clearly differentiated themes. Include fewer themes if data does not support clear distinctions. Clearly note if a theme has complexity or nuance.
-
-  Avoid generic labels (e.g., "communication"). Favor labels that express real, specific user tensions (e.g., "I don't know who to trust," "This feels endless"). Write clearly, avoiding jargon, passive voice, or overly academic language. Use Slack markdown formatting clearly for team readability.
-
+# Enhanced output template using AI-generated content
 output_format: |
-  Hi team! 👋 I just finished grouping our research observations into themes using affinity mapping. Found some interesting patterns in the data from {{session_count}} that I think you'll want to discuss.
+  Hi team! 👋 I just finished our AI-enhanced affinity mapping analysis. Found some interesting patterns in the data that I think you'll want to discuss.
 
   {{team_members}} - would love your thoughts on these themes, especially where you see opportunities or have questions about the insights.
 
   📂 *Study:* {{study_name}}  
   🔗 *Full details:* {{study_link}}
+  📊 *Router Analysis:* [View preprocessing intelligence]({{router_log_link}})
 
   ---
 
-  *🧠 AFFINITY MAPPING RESULTS*
+  ## 📊 *DATA SCOPE & QUALITY ANALYSIS*
 
-  *THEME 1: "{{theme_1_label}}"*
+  {{ai_generated.data_scope_analysis}}
 
-  > "{{theme_1_quote_1}}"
-  > 
-  > "{{theme_1_quote_2}}"
-  > 
-  > "{{theme_1_quote_3}}"
+  **Router Quality Assessment:**
+  {{file_selection_quality}}
 
-  🔍 *Insight:* {{theme_1_insight}}
-
-  ❤️ *Emotional Dimension:* {{theme_1_emotion}}
-
-  📊 *Signal:* {{theme_1_signal}}
-
-  💡 *Opportunity:* {{theme_1_opportunity}}
-
-  *Questions for Discussion:*
-  • {{theme_1_question_1}}
-  • {{theme_1_question_2}}
-
-  *Related Themes:*
-  • {{theme_1_related_theme_1}}
-  • {{theme_1_related_theme_2}}
-
-  `Tags: {{theme_1_tags}}`
+  **Files Analyzed:**
+  {{selected_files_summary}}
 
   ---
 
-  *THEME 2: "{{theme_2_label}}"*
+  ## 🧠 *AFFINITY MAPPING RESULTS*
 
-  [Repeat structure for additional themes]
+  {{ai_generated.quote_clustering}}
+
+  ---
+
+  ## 🔍 *INSIGHTS & EMOTIONAL DIMENSIONS*
+
+  {{ai_generated.insight_generation}}
+
+  ---
+
+  ## 💡 *ACTIONABLE OPPORTUNITIES*
+
+  {{ai_generated.opportunity_generation}}
+
+  ---
+
+  ## 🎯 *CONFIDENCE ASSESSMENT*
+
+  {{ai_generated.confidence_assessment}}
+
+  ---
+
+  ## 🚀 *RECOMMENDED NEXT STEPS*
+
+  {{ai_generated.follow_up_recommendations}}
+
+  **Router Recommendations Integration:**
+  {{recommendations}}
 
   ---
 
   *What do you think?* Reply in thread with your thoughts:
   • Which themes feel most actionable?
   • Any themes that need more investigation?
+  • Should we follow the recommended next analysis steps?
   • Connections you're seeing to other research?
+
+  ---
+  
+  *🤖 AI-Enhanced Analysis Complete*  
+  *Preprocessing: {{preprocessing_timestamp}} | Router: {{router_version}} | Analysis ID: {{analysis_id}}*
+
+# Processing workflow
+processing_workflow:
+  1. validate_router_inputs
+  2. confirm_data_quality_context
+  3. execute_data_scope_analysis
+  4. execute_theme_identification
+  5. execute_quote_clustering
+  6. execute_insight_generation
+  7. execute_opportunity_generation
+  8. execute_confidence_assessment
+  9. execute_follow_up_recommendations
+  10. format_comprehensive_output
+  11. save_to_analysis_folder
+  12. send_team_notifications
+  13. track_analysis_completion
 
 notify:
   - role: team
-    action: "Affinity mapping completed"
+    action: "Router-enhanced affinity mapping completed"
     channel: "{{study_channel}}"
-    message: "{{researcher_contact}} just completed affinity mapping for {{study_name}}. {{session_count}} clustered into {{max_themes}} key themes - check it out!"
+    message: "{{researcher_contact}} just completed AI-enhanced affinity mapping for {{study_name}}. {{session_count}} clustered into {{max_themes}} key themes with {{confidence_level}} confidence - check it out!"
   - role: researcher
     action: "Analysis saved"
     slack_tag: "{{researcher_contact}}"
-    message: "Your affinity mapping results have been posted to {{study_channel}} and saved to GitHub."
+    message: "Your router-enhanced affinity mapping results have been posted to {{study_channel}} and saved to GitHub. Analysis confidence: {{confidence_level}} based on file quality assessment."
