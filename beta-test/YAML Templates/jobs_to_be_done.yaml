@@ -1,37 +1,444 @@
 id: jobs_to_be_done
 name: extract_jobs_to_be_done
 label: 🎯 Jobs-To-Be-Done Extraction
-version: v1.7
+version: v1.8
 description: |
-  Extract clear, actionable Jobs-To-Be-Done (JTBD) from civic tech research inputs, including quotes, notes, and observations. Each JTBD clarifies user goals, barriers, and their broader significance in public service and civic engagement contexts. Ideal for researchers, designers, stakeholders, and product teams translating insights into opportunities for improved service delivery and policy outcomes.
+  Extract clear, actionable Jobs-To-Be-Done (JTBD) from civic tech research inputs, including quotes, notes, and observations.
+  Enhanced with router intelligence for optimal data quality assessment and context-aware JTBD analysis.
+  Each JTBD clarifies user goals, barriers, and their broader significance in public service and civic engagement contexts. 
+  Ideal for researchers, designers, stakeholders, and product teams translating insights into opportunities for improved service delivery and policy outcomes.
 
 author: CivicMind R&D
 created: 2025-06-26
-last_updated: 2025-07-02
+last_updated: 2025-08-15
 
 input_type: text
 input_processing: summarize_if_long
-temperature: 0.4
 precision_mode: concise | detailed
 
+# LLM Configuration
+llm_config:
+  model: "gpt-4o"
+  temperature: 0.4
+  max_tokens: 4000
+
 input_variables:
+  # Core analysis data (from router)
   - input_text           # Research data, quotes, observations (REQUIRED)
-  - study_name           # Title of study (REQUIRED)  
+  - focus_area           # Analysis focus from router (REQUIRED)
+  
+  # Study context (from router)
+  - study_name           # Title of study (REQUIRED)
+  - study_folder         # Study folder path (REQUIRED)
   - researcher_contact   # Lead researcher (REQUIRED)
   - study_channel        # Where to post results (REQUIRED)
   - study_link           # Link to study folder or documentation (OPTIONAL)
   - team_members         # Who to notify/tag (OPTIONAL)
+  
+  # Router intelligence (NEW - from synthesize_router)
+  - file_selection_quality    # Router's file quality assessment
+  - analysis_preview         # Router's expected outcomes
+  - recommendations          # Router's smart suggestions
+  - collaboration_plan       # Router's team coordination plan
+  - routing_validation       # Router's methodology validation
+  - selected_files_summary   # Summary of files used
+  - data_combination_strategy # How files were combined
+  
+  # Router metadata
+  - router_version           # Router version for tracking
+  - preprocessing_timestamp  # When router processed
+  - analysis_id             # Unique analysis identifier
 
-# Auto-generated/computed variables
+# AI GENERATION TASKS
+ai_generation_tasks:
+  # Analyze job complexity and determine optimal JTBD approach
+  - task_id: "job_scope_analysis"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      As an experienced JTBD researcher specializing in civic tech, analyze the scope and complexity for Jobs-to-be-Done extraction:
+      
+      **Study:** {{study_name}}
+      **Focus Area:** {{focus_area}}
+      **Input Data:** [Analyze the input_text for job indicators and user role diversity]
+      **Router Quality Assessment:** {{file_selection_quality}}
+      **Router Recommendations:** {{recommendations}}
+      
+      Analyze:
+      1. **Job Complexity Level:** How many distinct jobs are represented in the data?
+      2. **Optimal Job Count:** Based on data patterns and user role diversity, how many JTBD should be extracted?
+      3. **User Role Diversity:** What different types of users/roles are represented?
+      4. **Data Suitability:** How well does the data support JTBD extraction vs. other analysis types?
+      5. **Analysis Confidence:** Given router assessment, what confidence level is appropriate for JTBD analysis?
+      
+      **Format:**
+      **Job Complexity Level:** [High/Medium/Low] - [specific details about variety in user goals and contexts]
+      **Recommended Job Count:** [2-5 jobs] - [reasoning based on distinct job patterns and user roles]
+      **User Role Diversity:** [List different user types/roles identified: veterans, navigators, staff, etc.]
+      **Data Suitability:** [Excellent/Good/Adequate/Poor] for JTBD extraction - [reasoning]
+      **Analysis Confidence:** [High/Medium/Low] - [reasoning based on router assessment]
+      **Primary Context:** [Main civic/service context for the jobs]
+
+  # Identify potential jobs and user contexts
+  - task_id: "job_identification"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Focus on underlying motivations, not surface-level tasks
+      
+      As an experienced JTBD researcher, identify potential jobs from the research data:
+      
+      **Input Data:**
+      {{input_text}}
+      
+      **Job Context:**
+      {{ai_generated.job_scope_analysis}}
+      
+      **Study Context:** {{study_name}}
+      **Focus Area:** {{focus_area}}
+      
+      Based on the recommended job count, identify each distinct job:
+      
+      1. **Job Themes:** What are the core jobs people are trying to get done?
+      2. **User Contexts:** What situations trigger each job?
+      3. **Job Distinctiveness:** How are the jobs different from each other?
+      4. **Evidence Support:** What data supports each identified job?
+      5. **Role Variations:** How do different user roles approach the same job differently?
+      
+      **Format for each potential job:**
+      **Job [X]: "[Descriptive job title]"**
+      - **Core Motivation:** [What the user is fundamentally trying to accomplish]
+      - **Triggering Context:** [Situation that creates the need for this job]
+      - **User Types:** [Which types of users have this job - veterans, staff, navigators, etc.]
+      - **Job Scope:** [How broad or specific this job is]
+      - **Supporting Evidence:** [Quotes or patterns that indicate this job exists]
+      - **Distinctiveness:** [How this job differs from other identified jobs]
+      
+      Requirements:
+      - Focus on jobs that reveal user motivations, not just surface-level tasks
+      - Look for emotional and functional dimensions
+      - Recognize different user roles and contexts
+      - Ensure jobs are genuinely distinct from each other
+      - Ground each job in actual research evidence
+
+  # Develop JTBD narratives using when/want/so structure
+  - task_id: "jtbd_narrative_development"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Follow classic JTBD structure exactly: "When [context], I want to [goal], so I can [outcome]"
+      
+      As an experienced JTBD researcher, develop complete narratives for each identified job:
+      
+      **Identified Jobs:**
+      {{ai_generated.job_identification}}
+      
+      **Input Data:**
+      {{input_text}}
+      
+      For each job, develop the classic JTBD narrative structure:
+      
+      **Format for each job:**
+      **Job: "[Job title]"**
+      
+      📝 **JTBD Narrative:** *When* [specific context/situation], *I want to* [specific goal/action], *so I can* [desired outcome/benefit].
+      
+      🎯 **Job Breakdown:**
+      - **When (Context):** [Specific situation that triggers this job - be detailed and realistic]
+      - **I want to (Goal):** [Specific action or capability the user seeks]
+      - **So I can (Outcome):** [Underlying benefit or result they're after]
+      
+      👤 **Primary User:** [Most common user type for this job]
+      
+      📊 **Job Frequency:** [How often this job occurs - daily, weekly, situational, etc.]
+      
+      🔍 **Supporting Evidence:** [Specific quotes or observations that support this JTBD narrative]
+      
+      Requirements:
+      - Make contexts specific and realistic, not generic
+      - Ensure goals are actionable and concrete
+      - Connect outcomes to real user benefits and motivations
+      - Base all elements on actual data evidence
+      - Avoid abstract or theoretical job statements
+
+  # Analyze obstacles and barriers preventing job completion
+  - task_id: "obstacle_barrier_analysis"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Focus on specific, actionable barriers
+      
+      As an experienced UX researcher specializing in civic services, analyze obstacles preventing job completion:
+      
+      **JTBD Narratives:**
+      {{ai_generated.jtbd_narrative_development}}
+      
+      **Input Data:**
+      {{input_text}}
+      
+      **Study Context:** {{study_name}}
+      
+      For each job, identify:
+      1. **Current Obstacles:** What's preventing users from completing this job successfully?
+      2. **System Barriers:** What structural or process issues create friction?
+      3. **Information Gaps:** What knowledge or clarity is missing?
+      4. **Emotional Barriers:** What fears, anxieties, or confidence issues interfere?
+      5. **Resource Constraints:** What capacity or capability limitations exist?
+      
+      **Format for each job:**
+      **Job: "[Job title]"**
+      
+      🚧 **Current Obstacles:** [Comprehensive list of what prevents job completion - be specific]
+      
+      🏛️ **System Barriers:** [Structural, process, or policy issues that create friction]
+      
+      ❓ **Information Gaps:** [What users don't know or can't find out]
+      
+      😟 **Emotional Barriers:** [Fears, anxieties, confidence issues, trust problems]
+      
+      ⚡ **Resource Constraints:** [Time, capacity, skill, or access limitations]
+      
+      🎯 **Primary Blocker:** [The biggest single obstacle preventing job success]
+      
+      📊 **Impact Severity:** [High/Medium/Low] - [How much obstacles affect job completion]
+      
+      🔍 **Evidence:** [Specific quotes or observations that demonstrate these obstacles]
+      
+      Requirements:
+      - Make obstacles specific and actionable, not generic
+      - Connect barriers to actual user experiences from data
+      - Prioritize obstacles by impact on job completion
+      - Focus on barriers teams can potentially address
+
+  # Assess civic significance and broader impact
+  - task_id: "civic_impact_assessment"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Connect to real civic and systemic outcomes
+      
+      As an experienced civic tech strategist, assess the broader significance of each job:
+      
+      **Jobs with Obstacles:**
+      {{ai_generated.obstacle_barrier_analysis}}
+      
+      **Study Context:** {{study_name}}
+      **Focus Area:** {{focus_area}}
+      
+      For each job, assess:
+      1. **Civic Significance:** Why does this job matter for public service delivery?
+      2. **Systemic Impact:** How does job failure affect broader systems or outcomes?
+      3. **User Impact:** What happens to individuals when this job fails?
+      4. **Organizational Impact:** How does job friction affect government/service efficiency?
+      5. **Policy Implications:** What policy or process changes could address job barriers?
+      
+      **Format for each job:**
+      **Job: "[Job title]"**
+      
+      🏛️ **Civic Significance:** [Why this job matters for public service delivery - specific benefits to civic mission]
+      
+      🌐 **Systemic Impact:** [How job success/failure affects broader systems, processes, or outcomes]
+      
+      👤 **User Impact:** [Specific consequences for individuals when this job fails or succeeds]
+      
+      🏢 **Organizational Impact:** [How job friction affects government efficiency, staff workload, or service quality]
+      
+      📋 **Policy Implications:** [What policy, process, or regulatory changes could address job barriers]
+      
+      ⭐ **Priority Level:** [High/Medium/Low] - [reasoning based on civic impact and user consequences]
+      
+      📈 **Success Metrics:** [How to measure if this job is being completed successfully]
+      
+      Requirements:
+      - Connect significance to real-world civic and service outcomes
+      - Show specific impact on both users and systems
+      - Avoid generic "important for users" statements
+      - Focus on measurable consequences and benefits
+
+  # Generate actionable opportunities for each job
+  - task_id: "job_opportunity_generation"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Make opportunities specific and actionable for civic teams
+      
+      As an experienced civic service designer, generate actionable opportunities for each job:
+      
+      **Jobs with Impact Assessment:**
+      {{ai_generated.civic_impact_assessment}}
+      
+      **Obstacle Analysis:**
+      {{ai_generated.obstacle_barrier_analysis}}
+      
+      **Study Context:** {{study_name}}
+      
+      For each job, generate:
+      1. **Primary Opportunity:** Most impactful way to support job completion
+      2. **Implementation Approach:** Specific steps civic teams could take
+      3. **Quick Wins:** Immediate actions that could reduce job friction
+      4. **Long-term Solutions:** Systemic changes that would transform job experience
+      
+      **Format for each job:**
+      **Job: "[Job title]"**
+      
+      💡 **Primary Opportunity:** [Specific, actionable intervention that directly addresses the primary blocker]
+      
+      🛠️ **Implementation Approach:**
+      - [Immediate action]: [What team should do this and timeline]
+      - [System change]: [What structural improvement is needed]
+      - [Resource requirement]: [What capacity or tools are needed]
+      
+      ⚡ **Quick Wins:** [2-3 immediate actions that could reduce job friction within weeks]
+      
+      🚀 **Long-term Solutions:** [Systemic changes that would transform the job experience]
+      
+      📊 **Success Indicators:** [How to measure if opportunities successfully support job completion]
+      
+      🎯 **Team Ownership:** [Which teams/roles should own different aspects of this opportunity]
+      
+      **Examples of good civic opportunities:**
+      - "Create a unified eligibility checker that gives real-time, consistent answers across all staff"
+      - "Develop a pre-application checklist that shows exactly what documents are needed for each benefit"
+      - "Implement proactive status updates that eliminate the need for users to call for progress"
+      
+      **NOT vague opportunities like:**
+      - "Improve communication"
+      - "Better user experience"
+      - "More efficient processes"
+
+  # Generate supporting quotes and evidence validation
+  - task_id: "evidence_quote_generation"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Use actual quotes that demonstrate the job, not paraphrases
+      
+      As an experienced qualitative researcher, identify supporting quotes and validate evidence for each job:
+      
+      **Complete Job Analysis:**
+      {{ai_generated.jtbd_narrative_development}}
+      {{ai_generated.obstacle_barrier_analysis}}
+      
+      **Input Data:**
+      {{input_text}}
+      
+      For each job, find:
+      1. **Representative Quote:** Direct quote that best illustrates the job
+      2. **Signal Strength:** How often this job appears in the data
+      3. **Source Reference:** Where the evidence comes from
+      4. **Evidence Quality:** How well-supported this job is
+      5. **Tags:** Keywords for categorization
+      
+      **Format for each job:**
+      **Job: "[Job title]"**
+      
+      💬 **Representative Quote:** "[Direct quote from data that clearly illustrates this job - use actual participant language]"
+      
+      📊 **Signal Strength:** [How often this job appears: "Mentioned by X participants" / "Consistent theme across sessions" / "Strong recurring pattern" / "Well-documented example"]
+      
+      📚 **Source Reference:** [Specific reference to research source - session, study, participant ID if available]
+      
+      ✅ **Evidence Quality:** [Strong/Moderate/Limited] - [assessment of how well data supports this job]
+      
+      🏷️ **Tags:** [3-5 relevant keywords for categorization: efficiency, trust, clarity, access, etc.]
+      
+      🔍 **Additional Evidence:** [Other quotes or observations that support this job]
+      
+      Requirements:
+      - Use direct quotes that genuinely demonstrate the job
+      - Be specific about signal strength - use actual numbers when possible
+      - Reference specific sources from the research
+      - Choose tags that help with categorization and future analysis
+      - Assess evidence quality honestly based on data strength
+
+  # Generate follow-up recommendations and validation needs
+  - task_id: "job_validation_and_follow_up"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Provide specific validation approaches and next steps
+      
+      As an experienced civic research strategist, validate jobs and recommend follow-up actions:
+      
+      **Complete JTBD Analysis:**
+      {{ai_generated.civic_impact_assessment}}
+      {{ai_generated.job_opportunity_generation}}
+      {{ai_generated.evidence_quote_generation}}
+      
+      **Router Quality Assessment:** {{file_selection_quality}}
+      **Router Recommendations:** {{recommendations}}
+      **Study Context:** {{study_name}}
+      
+      For the job set, assess:
+      
+      1. **Job Validation:** How confident are we in these jobs?
+      2. **Priority Ranking:** Which jobs should teams address first?
+      3. **Validation Needs:** What additional research would strengthen job confidence?
+      4. **Implementation Readiness:** Which jobs are ready for immediate action?
+      
+      **Format:**
+      **Overall JTBD Confidence:** [High/Medium/Low] - [reasoning based on data quality and router assessment]
+      
+      **Job Priority Ranking:**
+      1. **[Job Title]** - [High/Medium/Low Priority] - [reasoning based on civic impact and implementation feasibility]
+      2. **[Job Title]** - [High/Medium/Low Priority] - [reasoning]
+      3. **[Job Title]** - [High/Medium/Low Priority] - [reasoning]
+      
+      **Implementation Readiness:**
+      - **Ready for Action:** [Jobs with strong evidence and clear opportunities]
+      - **Need Validation:** [Jobs requiring additional research before action]
+      - **Exploratory:** [Jobs worth investigating but not yet actionable]
+      
+      **JTBD Validation Needs:**
+      - [Validation method]: [What this would confirm about the jobs]
+      - [Research approach]: [How to strengthen job confidence]
+      
+      **Follow-up Analysis Recommendations:**
+      Based on router recommendations and JTBD findings:
+      - [Analysis type]: [How this would complement JTBD insights]
+      - [Research method]: [What additional perspective this would provide]
+      
+      **Router Integration:**
+      {{recommendations}}
+      [How router recommendations align with JTBD development]
+      
+      **Success Metrics for JTBD:**
+      - [Job completion metric]: [How to measure if jobs are being completed successfully]
+      - [Impact metric]: [How to measure civic/service improvement]
+      
+      **Key Limitations:** [Any significant limitations from router assessment or data gaps that affect job confidence]
+
+# Auto-generated/computed variables (enhanced with AI analysis)
 auto_variables:
   - max_jobs: |
-      # AI analyzes input complexity to determine optimal job count
-      # Default: 3, Range: 2-5 based on data patterns and user role diversity
-      analyze_job_complexity(input_text) || 3
+      # AI determines optimal job count from scope analysis
+      extract_job_count(ai_generated.job_scope_analysis) || 3
   - session_count: |
-      # AI estimates session count from input patterns
-      # Looks for interview markers, participant IDs, role indicators
-      estimate_session_count(input_text) || "multiple sessions"
+      # AI estimates session count from scope analysis and file metadata
+      extract_session_count(ai_generated.job_scope_analysis, selected_files_summary) || "multiple sessions"
+  - confidence_level: |
+      # AI determines overall analysis confidence from validation task
+      extract_confidence_level(ai_generated.job_validation_and_follow_up) || "medium"
+  - primary_context: |
+      # AI identifies primary civic context from scope analysis
+      extract_primary_context(ai_generated.job_scope_analysis) || "civic service context"
   - current_date: |
       # Auto-generate current date for file naming
       new Date().toISOString().split('T')[0]
@@ -39,12 +446,12 @@ auto_variables:
       # Auto-generate based on study name and date
       generate_github_link(study_name, current_date) || null
 
-# Output configuration
+# Output configuration (enhanced)
 output_options:
   default_delivery: "slack_and_file"
   slack_format: "structured"
-  file_location: "04-analysis/"
-  file_name: "jobs_to_be_done_{{study_name_slug}}_{{current_date}}.md"
+  file_location: "04-analysis/jobs-to-be-done/"
+  file_name: "{{study_folder}}_jobs_to_be_done_{{current_date}}.md"
 
 slack_output:
   post_in_channel: true
@@ -56,24 +463,30 @@ slack_output:
       action: "run_affinity_mapping"
     - text: "👤 Create Personas"
       action: "run_persona_generator"
+    - text: "🧭 Map User Journey"
+      action: "run_journey_mapping"
     - text: "🗂️ View in GitHub"
       url: "{{github_file_link}}"
+    - text: "📊 Router Intelligence Log"
+      url: "{{router_log_link}}"
 
 output_use: |
-  CivicMind Jobs-To-Be-Done (JTBD) extraction accelerates qualitative synthesis and quickly translates user insights into clear, structured, and actionable product or policy opportunities.
+  Router-Enhanced Jobs-To-Be-Done extraction leverages intelligent preprocessing to optimize JTBD analysis quality and context.
+  Receives AI-validated file selections, quality assessments, and smart recommendations from the synthesize_router
+  to ensure optimal job identification and analysis. By incorporating router intelligence, researchers can confidently extract
+  actionable JTBD with full visibility into data quality, limitations, and optimization opportunities.
 
-  Use this JTBD method to:
-    - Rapidly articulate precise user goals, obstacles, and measurable outcomes.
-    - Clearly communicate insights to stakeholders and teams, directly linking research to actionable interventions.
-    - Provide transparency around AI-driven synthesis logic, enabling trust and adoption among researchers.
-    - Facilitate quicker transitions from research insights to design or policy decisions without sacrificing rigor or clarity.
+  Use this method to:
+    - Benefit from intelligent file selection validation and optimization
+    - Understand data quality impact on JTBD confidence and civic significance
+    - Leverage router recommendations for comprehensive service design insights
+    - Maintain full transparency in AI-assisted JTBD extraction workflow
 
 output_notes: |
-  This method returns up to {{max_jobs}} jobs based on data analysis. AI automatically determines optimal job count.
-  Session count ({{session_count}}) estimated from input patterns and role diversity.
-  Write in clear, confident, plain language. Avoid technical jargon, filler words, or speculative statements. No em-dashes.
-  Clearly connect "Why it Matters" to real-world civic or systemic outcomes.
-  Use Slack formatting: *text* for bold (single asterisks), > for quotes, `backticks` for tags, spacing between blocks, and horizontal rules for clarity.
+  This method extracts {{max_jobs}} jobs based on AI analysis of data complexity and user role diversity.
+  JTBD confidence level: {{confidence_level}} based on router file selection assessment.
+  Primary context ({{primary_context}}) identified from civic service patterns.
+  Router recommendations integrated for context-aware JTBD analysis approach.
 
 persona_hinting: |
   Common civic personas include:
@@ -86,141 +499,109 @@ persona_hinting: |
     - Community organizer advocating for local policy change
     - Immigrant navigating citizenship processes
 
-prompt: |
-  You are a senior civic tech strategist and qualitative researcher with extensive experience applying the Jobs-To-Be-Done (JTBD) framework to civic research.
-
-  ANALYSIS CONTEXT:
-  - Study: {{study_name}}
-  - Estimated sessions: {{session_count}}
-  - Target jobs: {{max_jobs}} (AI-determined based on data complexity and role diversity)
-
-  Extract up to {{max_jobs}} clearly differentiated Jobs-To-Be-Done (JTBD).
-  
-  Each JTBD must follow the classic JTBD narrative structure:
-  "*When* [context/situation], *I want to* [goal/action], *so I can* [desired outcome]."
-
-  For each job, provide:
-  1. **Job Title** - Clear, descriptive name for the job
-  2. **JTBD Narrative** - The when/want/so structure  
-  3. **Current Obstacles** - What's preventing job completion
-  4. **Why This Matters** - Broader civic or systemic significance
-  5. **Supporting Quote** - Direct quote illustrating the job
-  6. **Opportunity** - Actionable response to address obstacles
-  7. **Signal** - Evidence strength (e.g., "Mentioned by 4 participants")
-  8. **Source** - Research source reference
-  9. **Tags** - Keywords for categorization
-
-  Focus on jobs that reveal user motivations, not just surface-level tasks. Look for emotional and functional dimensions. Recognize different user roles (primary users, support staff, decision-makers).
-
-  Format for Slack using *single asterisks* for bold, > for quotes, `backticks` for code formatting on tags, and proper spacing.
-
-  **Example JTBD:**
-
-  🛠️ *JOB 1: "Getting Reliable Eligibility Information"*
-
-  *When* I'm helping a client determine their benefit eligibility, *I want to* access consistent, up-to-date guidelines, *so I can* give them accurate information without multiple calls or delays.
-
-  *Current Obstacles:*
-  Guidelines are scattered across different systems, some information is outdated, and different staff give conflicting answers.
-
-  *Why This Matters:*
-  Accurate eligibility information directly impacts whether people get the help they need and reduces administrative burden on staff.
-
-  > "I waste hours cross-checking rules, delaying support for people who urgently need it."
-
-  💡 *Opportunity:* Create a unified eligibility checker tool with real-time updates
-  📊 *Signal:* Mentioned by 7 out of 8 navigators
-  📚 *Source:* Study 2, Session 5
-  `Tags: efficiency, accuracy, tools`
-
-  ⚠️ Return no more than {{max_jobs}} JTBDs.
-
+# Enhanced output template using AI-generated content
 output_format: |
-  Hi team! 👋 I just extracted the key jobs users are trying to get done from our research data. Found some really interesting patterns around what people are actually trying to accomplish and what's getting in their way.
+  Hi team! 👋 I just extracted the key jobs users are trying to get done from our AI-enhanced analysis. Found some really interesting patterns around what people are actually trying to accomplish and what's getting in their way.
 
   {{team_members}} - would love your thoughts on these jobs, especially which ones feel most urgent or where you see quick wins we could tackle.
 
   📂 *Study:* {{study_name}}  
   🔗 *Full details:* {{study_link}}
+  📊 *Router Analysis:* [View preprocessing intelligence]({{router_log_link}})
 
   ---
 
-  *🎯 JOBS-TO-BE-DONE RESULTS*
+  ## 📊 *JOB SCOPE & QUALITY ANALYSIS*
 
-  🛠️ *JOB 1: "{{job_1_title}}"*
+  {{ai_generated.job_scope_analysis}}
 
-  *When* {{job_1_context}}, *I want to* {{job_1_goal}}, *so I can* {{job_1_outcome}}.
+  **Router Quality Assessment:**
+  {{file_selection_quality}}
 
-  *Current Obstacles:*
-  {{job_1_obstacle}}
-
-  *Why This Matters:*
-  {{job_1_significance}}
-
-  > "{{job_1_quote}}"
-
-  💡 *Opportunity:* {{job_1_opportunity}}
-
-  📊 *Signal:* {{job_1_signal}}  
-  📚 *Source:* {{job_1_source}}
-
-  `Tags: {{job_1_tags}}`
+  **Files Analyzed:**
+  {{selected_files_summary}}
 
   ---
 
-  🛠️ *JOB 2: "{{job_2_title}}"*
+  ## 🔍 *IDENTIFIED JOBS*
 
-  *When* {{job_2_context}}, *I want to* {{job_2_goal}}, *so I can* {{job_2_outcome}}.
-
-  *Current Obstacles:*
-  {{job_2_obstacle}}
-
-  *Why This Matters:*
-  {{job_2_significance}}
-
-  > "{{job_2_quote}}"
-
-  💡 *Opportunity:* {{job_2_opportunity}}
-
-  📊 *Signal:* {{job_2_signal}}  
-  📚 *Source:* {{job_2_source}}
-
-  `Tags: {{job_2_tags}}`
+  {{ai_generated.job_identification}}
 
   ---
 
-  🛠️ *JOB 3: "{{job_3_title}}"*
+  ## 🎯 *JOBS-TO-BE-DONE NARRATIVES*
 
-  *When* {{job_3_context}}, *I want to* {{job_3_goal}}, *so I can* {{job_3_outcome}}.
+  {{ai_generated.jtbd_narrative_development}}
 
-  *Current Obstacles:*
-  {{job_3_obstacle}}
+  ---
 
-  *Why This Matters:*
-  {{job_3_significance}}
+  ## 🚧 *OBSTACLES & BARRIERS*
 
-  > "{{job_3_quote}}"
+  {{ai_generated.obstacle_barrier_analysis}}
 
-  💡 *Opportunity:* {{job_3_opportunity}}
+  ---
 
-  📊 *Signal:* {{job_3_signal}}  
-  📚 *Source:* {{job_3_source}}
+  ## 🏛️ *CIVIC IMPACT & SIGNIFICANCE*
 
-  `Tags: {{job_3_tags}}`
+  {{ai_generated.civic_impact_assessment}}
+
+  ---
+
+  ## 💡 *ACTIONABLE OPPORTUNITIES*
+
+  {{ai_generated.job_opportunity_generation}}
+
+  ---
+
+  ## 📚 *SUPPORTING EVIDENCE*
+
+  {{ai_generated.evidence_quote_generation}}
+
+  ---
+
+  ## ✅ *JOB VALIDATION & NEXT STEPS*
+
+  {{ai_generated.job_validation_and_follow_up}}
+
+  **Router Recommendations Integration:**
+  {{recommendations}}
 
   ---
 
   *What do you think?* Reply in thread with your thoughts:
   • Which jobs feel most critical to address first?
   • Any jobs that need more research or validation?
+  • Should we follow the recommended implementation steps?
   • How do these connect to our current roadmap priorities?
+
+  ---
+  
+  *🤖 AI-Enhanced JTBD Analysis Complete*  
+  *Preprocessing: {{preprocessing_timestamp}} | Router: {{router_version}} | Analysis ID: {{analysis_id}}*
+
+# Processing workflow
+processing_workflow:
+  1. validate_router_inputs
+  2. confirm_data_quality_context
+  3. execute_job_scope_analysis
+  4. execute_job_identification
+  5. execute_jtbd_narrative_development
+  6. execute_obstacle_barrier_analysis
+  7. execute_civic_impact_assessment
+  8. execute_job_opportunity_generation
+  9. execute_evidence_quote_generation
+  10. execute_job_validation_and_follow_up
+  11. format_comprehensive_output
+  12. save_to_analysis_folder
+  13. send_team_notifications
+  14. track_analysis_completion
 
 notify:
   - role: team
-    action: "Jobs-To-Be-Done extraction completed"
+    action: "Router-enhanced Jobs-To-Be-Done extraction completed"
     channel: "{{study_channel}}"
-    message: "{{researcher_contact}} just extracted {{max_jobs}} key jobs from {{study_name}}. Check out the actionable opportunities!"
+    message: "{{researcher_contact}} just extracted {{max_jobs}} key jobs from {{study_name}} with {{confidence_level}} confidence. Check out the actionable opportunities!"
   - role: researcher
     action: "Analysis saved"
     slack_tag: "{{researcher_contact}}"
-    message: "Your Jobs-To-Be-Done results have been posted to {{study_channel}} and saved to GitHub."
+    message: "Your router-enhanced JTBD results have been posted to {{study_channel}} and saved to GitHub. Analysis confidence: {{confidence_level}} based on file quality assessment."
