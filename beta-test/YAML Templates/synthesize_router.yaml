@@ -353,9 +353,10 @@ processing_workflow:
   8. execute_analysis_preview_generation # AI: Preview expected outcomes
   9. execute_intelligent_recommendations # AI: Suggest improvements
   10. execute_collaboration_optimization # AI: Plan team coordination
-  11. prepare_target_yaml_inputs
-  12. route_to_specialized_yaml
-  13. track_analysis_completion
+  11. prepare_target_yaml_inputs        # Format combined content for target YAML
+  12. generate_routing_intelligence_log # Save preprocessing report
+  13. trigger_target_yaml_execution     # EXECUTE target analysis YAML
+  14. track_analysis_handoff_completion # Monitor target YAML completion
 
 # File selection processing logic
 file_selection_processing:
@@ -427,11 +428,11 @@ target_yaml_inputs:
     input_text: "{{combined_selected_content}}"
     focus_area: "innovation opportunities and design challenges"
 
-# Router response template
-output_template: |
-  🔬 **Analysis Router: {{study_name}}**
+# Router intelligence report template (not the final analysis)
+router_output_template: |
+  🔬 **Router Intelligence: {{study_name}}**
   
-  ✅ **Routing Complete**
+  ✅ **Preprocessing Complete - Analysis Starting**
   
   **Study:** {{study_name}}  
   **Analysis:** {{analysis_routes.[analysis_type].description}}  
@@ -480,50 +481,71 @@ output_template: |
   
   ---
   
-  **Next Step:** Running {{analysis_routes.[analysis_type].target_yaml}}...
+  ## 🚀 Execution Status
   
-  *📁 Results will be saved to:* `04-analysis/{{analysis_folder_name}}/`  
-  *📢 Team notification:* {{study_channel}}
+  **Input Preparation:** ✅ Complete  
+  **Combined Content:** {{combined_content_length}} characters prepared  
+  **Target YAML Trigger:** {{analysis_routes.[analysis_type].target_yaml}} starting now...  
+  
+  **Expected Outputs from {{analysis_routes.[analysis_type].target_yaml}}:**
+  - Primary analysis deliverable in `04-analysis/{{analysis_folder_name}}/`
+  - Team notification in {{study_channel}} upon completion
+  - Analysis completion within {{estimated_completion_time}}
+  
+  ---
+  
+  *📋 This routing log saved to:* `04-analysis/_router-logs/`  
+  *🎯 Actual analysis results will be delivered by:* {{analysis_routes.[analysis_type].target_yaml}}
 
-# Output configuration - just for routing confirmation
-output_options:
+# Router output configuration - preprocessing intelligence log only
+router_output_options:
   filename: "_router_log_{{study_folder}}_{{analysis_type}}_{{current_date}}.md"
   path: "04-analysis/_router-logs/"
+  template: "{{router_output_template}}"
   
   delivery:
     slack:
       enabled: true
+      channel: "{{study_channel}}"
+      message: |
+        🔬 **Analysis Starting: {{analysis_type}}**
+        
+        {{researcher_contact}} is running {{analysis_type}} on {{study_name}}.
+        
+        **File Quality:** {{ai_generated.file_selection_quality_summary}}
+        **Expected Results:** {{ai_generated.analysis_preview_summary}}
+        
+        ⏱️ ETA: {{estimated_completion_time}}
+        📁 Results will appear in this channel when complete
+        
       dm_notification:
         enabled: true
         target_user: "{{researcher_contact}}"
         message: |
-          🔬 **Analysis Routing Complete**
+          🔬 **Preprocessing Complete - Analysis Running**
           
-          Your **{{analysis_type}}** analysis for **{{study_name}}** is now being processed by {{analysis_routes.[analysis_type].target_yaml}}.
+          Your **{{analysis_type}}** for **{{study_name}}** has been optimized and is now running.
           
-          **Files Used:** {{selected_files_count}} files selected
-          {{#if file_selection_warnings}}
-          ⚠️ **Note:** {{file_selection_warnings}}
-          {{/if}}
+          **Quality Assessment:** {{ai_generated.file_selection_quality_summary}}
+          **Expected Completion:** {{estimated_completion_time}}
           
-          ⏱️ Expected completion: 2-5 minutes
-          📂 Results will appear in: {{study_channel}}
-          💾 Files saved to: `04-analysis/{{analysis_folder_name}}/`
+          The actual analysis results will be delivered by {{analysis_routes.[analysis_type].target_yaml}} when complete.
         
         actions:
+          - text: "📊 View Routing Intelligence"
+            style: "default"
+            url: "{{routing_log_url}}"
           - text: "🔄 Run Another Analysis"
             style: "default"
             action_id: "synthesize_modal"
-          - text: "📊 View Analysis Folder"
-            style: "default"
-            url: "{{analysis_folder_url}}"
-          - text: "📋 View File Selection"
-            style: "default"
-            action_id: "show_file_selection_summary"
 
-# Integration with existing YAMLs
+# Target YAML will handle its own output configuration
+# Router only produces preprocessing intelligence, not final analysis
+
+# Integration with target analysis YAMLs
 yaml_integration:
   method: "workflow_trigger"
+  handoff_type: "direct_execution"
   
   trigger_mapping:
     affinity_mapping: "run_affinity_mapping"
@@ -533,11 +555,44 @@ yaml_integration:
     usability_issues: "run_usability_issues_extractor"
     design_opportunities: "run_design_opportunity_generator"
   
+  # What gets passed to target YAML
   parameter_passthrough:
-    preserve_user_context: true
-    enhance_with_study_data: true
-    maintain_team_notifications: true
-    include_file_selection_metadata: true
+    # Core analysis input (processed and formatted)
+    input_text: "{{combined_selected_content}}"           # Main analysis data
+    focus_area: "{{target_yaml_inputs.[analysis_type].focus_area}}"
+    
+    # Study context (preserved)
+    study_name: "{{study_name}}"
+    study_folder: "{{study_folder}}"
+    researcher_contact: "{{researcher_contact}}"
+    study_channel: "{{study_channel}}"
+    team_members: "{{team_members}}"
+    
+    # Router intelligence (enhanced)
+    file_selection_quality: "{{ai_generated.file_selection_analysis}}"
+    analysis_preview: "{{ai_generated.analysis_preview_generation}}"
+    recommendations: "{{ai_generated.intelligent_recommendations}}"
+    collaboration_plan: "{{ai_generated.collaboration_optimization}}"
+    routing_validation: "{{ai_generated.routing_validation}}"
+    
+    # File metadata
+    selected_files_summary: "{{selected_files_summary}}"
+    data_combination_strategy: "{{file_combination_metadata}}"
+    
+    # Processing context
+    router_version: "v1.1"
+    preprocessing_timestamp: "{{current_timestamp}}"
+    analysis_id: "{{unique_analysis_id}}"
+
+  # Execution flow
+  execution_sequence:
+    1. router_completes_preprocessing
+    2. router_saves_intelligence_log
+    3. router_triggers_target_yaml
+    4. target_yaml_receives_prepared_inputs
+    5. target_yaml_generates_analysis_deliverable
+    6. target_yaml_notifies_completion
+    7. router_tracks_end_to_end_success
 
 # Quality checks before routing
 pre_routing_validation:
@@ -570,4 +625,4 @@ selection_intelligence:
     - recommend_file_additions_mid_analysis
 
 output_use: |
-  AI-Enhanced Synthesis Router intelligently directs research analysis requests to specialized YAMLs with smart file selection validation and AI-powered quality assessment. Features include: intelligent file selection analysis, analysis preview generation, smart recommendations for missing data, team collaboration optimization, and routing validation. Ensures optimal data preparation, provides quality recommendations, predicts analysis outcomes, and maintains seamless integration with existing analysis workflows while preserving team collaboration features. Now includes comprehensive AI analysis at every routing step for better analysis outcomes and team coordination.
+  AI-Enhanced Synthesis Router serves as an intelligent preprocessor that validates file selections, optimizes analysis inputs, and triggers specialized analysis YAMLs. The router produces two key outputs: (1) routing intelligence log with file quality assessment, analysis preview, smart recommendations, and team collaboration planning, and (2) prepared, formatted inputs that are passed to target analysis YAMLs (affinity_mapping.yaml, journey_mapping.yaml, etc.) for actual analysis execution. This ensures optimal data preparation, provides quality recommendations, sets realistic expectations, and maintains seamless integration with existing analysis workflows while preserving team collaboration features. The router transforms raw file selection into optimized analysis inputs, maximizing the quality of downstream analysis deliverables.
