@@ -498,7 +498,7 @@ output_template: |
   *🎯 Actual analysis results will be delivered by:* {{analysis_routes.[analysis_type].target_yaml}}
 
 # Router output configuration - preprocessing intelligence log only
-router_output_options:
+output_options:
   filename: "_router_log_{{study_folder}}_{{analysis_type}}_{{current_date}}.md"
   path: "04-analysis/_router-logs/"
   template: "{{router_output_template}}"
