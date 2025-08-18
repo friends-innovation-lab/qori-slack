@@ -429,7 +429,7 @@ target_yaml_inputs:
     focus_area: "innovation opportunities and design challenges"
 
 # Router intelligence report template (not the final analysis)
-router_output_template: |
+output_template: |
   🔬 **Router Intelligence: {{study_name}}**
   
   ✅ **Preprocessing Complete - Analysis Starting**
