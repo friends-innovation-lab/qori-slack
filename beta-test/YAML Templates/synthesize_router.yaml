@@ -343,20 +343,20 @@ file_id_mapping:
 
 # Router processing logic
 processing_workflow:
-  1. validate_study_selection
-  2. confirm_analysis_type
-  3. process_user_file_selection        # NEW: Validate and map selected files
-  4. validate_required_data_availability # NEW: Check required files are selected
-  5. execute_file_selection_analysis    # AI: Assess file selection quality
-  6. execute_routing_validation         # AI: Validate analysis type choice
-  7. gather_selected_data_sources       # Updated: Only gather user-selected files
-  8. execute_analysis_preview_generation # AI: Preview expected outcomes
-  9. execute_intelligent_recommendations # AI: Suggest improvements
-  10. execute_collaboration_optimization # AI: Plan team coordination
-  11. prepare_target_yaml_inputs        # Format combined content for target YAML
-  12. generate_routing_intelligence_log # Save preprocessing report
-  13. trigger_target_yaml_execution     # EXECUTE target analysis YAML
-  14. track_analysis_handoff_completion # Monitor target YAML completion
+  - validate_study_selection
+  - confirm_analysis_type
+  - process_user_file_selection  # NEW: Validate and map selected files
+  - validate_required_data_availability  # NEW: Check required files are selected
+  - execute_file_selection_analysis  # AI: Assess file selection quality
+  - execute_routing_validation  # AI: Validate analysis type choice
+  - gather_selected_data_sources  # Updated: Only gather user-selected files
+  - execute_analysis_preview_generation  # AI: Preview expected outcomes
+  - execute_intelligent_recommendations  # AI: Suggest improvements
+  - execute_collaboration_optimization  # AI: Plan team coordination
+  - prepare_target_yaml_inputs  # Format combined content for target YAML
+  - generate_routing_intelligence_log  # Save preprocessing report
+  - trigger_target_yaml_execution  # EXECUTE target analysis YAML
+  - track_analysis_handoff_completion  # Monitor target YAML completion
 
 # File selection processing logic
 file_selection_processing:
