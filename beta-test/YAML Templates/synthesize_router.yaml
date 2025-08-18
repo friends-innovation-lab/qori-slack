@@ -60,10 +60,10 @@ ai_generation_tasks:
       **Study Context:** {{total_sessions}} sessions, {{total_participants}} participants
       
       **Required Data for {{analysis_type}}:**
-      {{analysis_routes.[analysis_type].required_data}}
+      {{analysis_type}}.required_data
       
       **Optimal Data for {{analysis_type}}:**
-      {{analysis_routes.[analysis_type].optimal_data}}
+      {{analysis_type}}.optimal_data
       
       Assess:
       1. **Coverage Assessment:** Do selected files meet minimum requirements?
