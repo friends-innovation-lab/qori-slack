@@ -93,7 +93,7 @@ ai_generation_tasks:
       **Available Data:** {{selected_files}}
       **Study Scale:** {{total_sessions}} sessions with {{total_participants}} participants
       
-      **Analysis Description:** {{analysis_routes[analysis_type].description}}
+      **Analysis Description:** {{analysis_type}}.description
       
       Based on the selected files, predict:
       1. **Key Deliverables:** What specific outputs will be generated?
@@ -212,7 +212,7 @@ ai_generation_tasks:
       **Available Data:** {{selected_files}}
       **Research Goals:** [Inferred from study context]
       
-      **Target YAML:** {{analysis_routes[analysis_type].target_yaml}} ({{analysis_routes[analysis_type].version}})
+      **Target YAML:** {{analysis_type}}.target_yaml {{analysis_type}}.version
       
       Validate:
       1. **Methodology Match:** Is {{analysis_type}} the right choice for this study?
