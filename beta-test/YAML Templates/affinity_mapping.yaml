@@ -356,8 +356,8 @@ auto_variables:
 output_options:
   default_delivery: "slack_and_file"  # Post to Slack AND save to GitHub
   slack_format: "structured"          # Use the formatted output with sections
-  file_location: "04-analysis/affinity-mapping/"
-  file_name: "{{study_folder}}_affinity_mapping_{{current_date}}.md"
+  path: "04-analysis/affinity-mapping/"
+  filename: "{{study_folder}}_affinity_mapping_{{current_date}}.md"
 
 slack_output:
   post_in_channel: true
