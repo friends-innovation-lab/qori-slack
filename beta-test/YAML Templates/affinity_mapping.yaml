@@ -403,7 +403,7 @@ persona_hinting: |
     - Young adult navigating benefits
 
 # Enhanced output template using AI-generated content
-output_format: |
+output_template: |
   Hi team! 👋 I just finished our AI-enhanced affinity mapping analysis. Found some interesting patterns in the data that I think you'll want to discuss.
 
   {{team_members}} - would love your thoughts on these themes, especially where you see opportunities or have questions about the insights.
