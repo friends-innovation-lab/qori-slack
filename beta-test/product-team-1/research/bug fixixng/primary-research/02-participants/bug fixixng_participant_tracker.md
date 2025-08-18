@@ -1,12 +1,12 @@
 # 👥 Participant Tracker – bug fixixng
 
 **📊 Recruitment Summary**
-- **Total Participants:** 2
+- **Total Participants:** 3
 - **Confirmed Sessions:** 1
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
-- **Last Updated:** August 13, 2025 by U08T1F4B347
+- **Last Updated:** August 18, 2025 by U08T1F4B347
 
 ---
 
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 3 | abdul | calendly_signup | 2025-08-24 1:00 PM | rescheduling_needed | nO |
 | 2 | abdul | email_outreach | 2025-08-24 2:00 PM | confirmed | NO |
 | 1 | Tanzeel | internal_va_panel | 2025-08-31 1:00PM | recruited | No |
 
@@ -23,11 +24,12 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 1 | 50% |
-| internal_va_panel | 1 | 50% |
+| calendly_signup | 1 | 33% |
+| 📧 Email Outreach | 1 | 33% |
+| internal_va_panel | 1 | 33% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
+Recruitment effectiveness: 33% conversion rate (1 confirmed of 3 recruited)
 
 ---
 
@@ -45,22 +47,37 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 
 **Session Observer Assignments:**
 
-| Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
-|---------|-----------|-----------|----------|------------------|-----------------|
-| pt001 | 2025-08-31 1:00PM | tanzeelsaleem10 (👁️ Silent Observer) | 1/3 | 0 | ✅ Sent |
+| Session | Date/Time | Observers | Capacity | Pending Requests |
+|---------|-----------|-----------|----------|------------------|
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker | 0 | - |
-| 👁️ Silent Observer | 1 | pt001 |
-| 📊 PM Observer | 0 | - |
-| 🏛️ Stakeholder | 0 | - |
+| 📝 Note-taker |  |  |
+| 👁️ Silent Observer |  |  |
+| 📊 PM Observer |  |  |
+| 🏛️ Stakeholder |  |  |
+
+**Observer Guidelines:** 
+- Review session plan before observing
+- Stay muted unless emergency
+- Take notes without interrupting
+- Share feedback after session
+
+{% if triggered_by_observer_request %}
+**🔄 Observer Updates:**
+- ✅  approved for  as 
+- 📤 Send observer guidelines to 
+- 📅 Add  to  calendar invite
+- 🔄 Update session capacity tracking
+{% endif %}
+
 ---
 
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 3: nO
 - 2: NO
 - 1: No
 
@@ -80,22 +97,25 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| American Indian or Alaska Native | 1 | 50% |
-| Asian | 1 | 50% |
+| Black or African American | 1 | 33% |
+| American Indian or Alaska Native | 1 | 33% |
+| Asian | 1 | 33% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 18-24 | 2 | 100% |
+| 55-64 | 1 | 33% |
+| 18-24 | 2 | 67% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Less than high school | 1 | 50% |
-| Associate degree | 1 | 50% |
+| High school diploma/GED | 1 | 33% |
+| Less than high school | 1 | 33% |
+| Associate degree | 1 | 33% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Suburban | 1 | 50% |
-| Urban | 1 | 50% |
+| Urban | 2 | 67% |
+| Suburban | 1 | 33% |
 
 ---
 
@@ -107,4 +127,4 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (1 more needed)
+Reschedule 1 session(s)
