@@ -254,80 +254,118 @@ output_options:
 slack_output:
   post_in_channel: true
   create_thread: true
-  title_format: "🐛 Creating GitHub Issues"
+  title_format: "🐛 GitHub Issues Created"
   ping_team: ["{{researcher_contact}}", "@dev-team", "@product-team", "{{team_members}}"]
+  
+  # Simple creation flow
+  creation_flow:
+    start_message: "🔄 Creating {{total_issues_count}} GitHub issues from research findings..."
+    progress_indicator: "simple_status"  # No individual updates
+    completion_time: "{{creation_time}} seconds"
+    
+  # Focus on post-creation actions
   interactive_elements:
     - text: "🔗 View All Issues"
       url: "{{github_repo_url}}/issues"
-    - text: "📊 View Research Readout"
-      action: "run_research_readout"
-    - text: "🎯 Stakeholder Summary"
-      action: "run_stakeholder_summary"
-    - text: "📋 Add to Project Board"
-      action: "add_issues_to_project"
+    - text: "📋 Add to Current Sprint"
+      action: "add_issues_to_sprint"
+    - text: "👥 Notify Dev Team"
+      action: "notify_development_teams"
+    - text: "📊 Generate Sprint Report"
+      action: "create_sprint_planning_report"
+    - text: "🏷️ Update Labels" 
+      action: "bulk_update_issue_labels"
+    - text: "📅 Set Milestones"
+      action: "assign_issues_to_milestones"
 
-# Enhanced output template with real-time creation
+# Simple Before/After output template  
 output_format: |
-  Hi dev team! 👋 I'm creating {{total_issues_count}} GitHub issues directly in {{github_repository}} from our {{study_name}} research findings.
-
-  @dev-team @product-team {{team_members}} - Issues will be created with proper labels, assignments, and research context.
+  Hi dev team! 👋 Creating {{total_issues_count}} GitHub issues directly in {{github_repository}} from our {{study_name}} research findings...
 
   📂 *Study:* {{study_name}}  
   🔗 *Repository:* {{github_repo_url}}
   🚨 *Critical Issues:* {{p0_issues_count}} P0 items
-  ⏱️ *Estimated Time:* {{estimated_creation_time}}
 
   ---
 
-  ## 🐛 CREATING GITHUB ISSUES IN REAL-TIME
+  ## 🔄 Creating GitHub Issues...
 
-  **🤖 Direct API Integration | {{current_date}}**
-
-  ---
-
-  ### 📊 Creation Plan
-
-  {{ai_generated.batch_creation_strategy}}
+  **🤖 Processing {{total_issues_count}} research-backed issues**
 
   ---
 
-  ### 🔄 Creation Progress
+  ## ✅ GitHub Issues Created Successfully!
 
-  {{real_time_progress_updates}}
+  **📊 Issues Created:**
+  • **{{p0_issues_count}} P0 Critical** - Block user success, need immediate attention
+  • **{{p1_issues_count}} P1 High Priority** - Significant user impact  
+  • **{{total_issues_count - p0_issues_count - p1_issues_count}} P2-P3 Medium/Low** - Improvements and enhancements
+
+  **🔗 Repository:** {{github_repo_url}}/issues
+
+  **🎯 All issues include:**
+  ✅ Research evidence with participant quotes  
+  ✅ Behavioral observations from {{session_count}} sessions  
+  ✅ Clear acceptance criteria and implementation notes  
+  ✅ Proper labels and team assignments  
+  ✅ Links back to {{study_name}} research context
+
+  **📊 Research Context:**
+  • Data Sources: {{data_sources}}
+  • Quality Score: {{file_quality_score}}
+  • Participants: {{participant_count}} ({{completion_rate}} completion rate)
+  • Created in: {{creation_time}} seconds
 
   ---
 
-  ### ✅ Creation Results
+  **🚀 Next Steps:**
 
-  {{github_creation_results}}
+  **[🔗 View All Issues]({{github_repo_url}}/issues)** **[📋 Add to Current Sprint]** **[👥 Notify Dev Team]**
 
-  ---
-
-  ### 🔗 Next Steps
-
-  1. **Review created issues** at {{github_repo_url}}/issues
-  2. **Assign to sprints** using project board integration
-  3. **Add story points** and effort estimates
-  4. **Schedule work** based on research priorities
+  **[📊 Generate Sprint Report]** **[🏷️ Update Labels]** **[📅 Set Milestones]**
 
   ---
 
-  **🏷️ Tags:** `github-issues-created`, `{{total_issues_count}}-issues`, `research-to-dev`, `api-integration`
+  *Questions about research context?* Contact {{researcher_contact}} for detailed discussion about any issue.
 
-  ---
+  *🤖 {{total_issues_count}} Issues Created | Research → Implementation Complete*
 
-  *Issues created successfully!* View all at {{github_repo_url}}/issues or contact {{researcher_contact}} for research context.
+# Auto-generated/computed variables (simplified)
+auto_variables:
+  - total_issues_count: |
+      count_issues(ai_generated.github_issues_generation) || 0
+  - p0_issues_count: |
+      count_priority_issues(ai_generated.github_issues_generation, "P0") || 0
+  - p1_issues_count: |
+      count_priority_issues(ai_generated.github_issues_generation, "P1") || 0
+  - creation_time: |
+      estimate_creation_time(total_issues_count) || "8-10"
+  - github_repo_url: |
+      "https://github.com/{{github_repository}}"
+  - current_date: |
+      new Date().toISOString().split('T')[0]
 
-  *🤖 Direct GitHub Integration | {{total_issues_count}} Issues Created*
+# Output configuration (simplified)
+output_options:
+  default_delivery: "slack_only"  # Simple completion message
+  slack_format: "clean"
+  save_results: true
+  file_location: "06-implementation/"
+  file_name: "github_issues_created_{{study_name_slug}}_{{current_date}}.json"
 
-# Real-time progress tracking
-progress_tracking:
-  slack_updates:
-    start: "🔄 Starting GitHub issue creation..."
-    progress: "✅ Created issue {current}/{total}: {issue_title}"
-    error: "❌ Failed to create issue: {issue_title} - {error_message}"
-    success: "🎉 Successfully created all {{total_issues_count}} issues!"
-    failure: "⚠️ Created {success_count}/{total_issues_count} issues. {failure_count} failed."
+# Simple creation process
+creation_process:
+  workflow:
+    1. "validate_github_access"
+    2. "generate_issues_data" 
+    3. "create_issues_batch"
+    4. "apply_labels_and_assignments"
+    5. "post_completion_summary"
+  
+  status_updates:
+    start: "Creating GitHub issues..."
+    success: "✅ Created {{total_issues_count}} issues successfully!"
+    failure: "❌ Failed to create some issues. {{success_count}}/{{total_issues_count}} completed."
 
 # Error handling and recovery
 error_handling:
@@ -349,10 +387,10 @@ error_handling:
 
 notify:
   - role: dev_team
-    action: "GitHub issues created"
+    action: "GitHub issues ready for sprint planning"
     channel: "{{study_channel}}"
-    message: "🎉 {{total_issues_count}} GitHub issues created in {{github_repository}} from {{study_name}} research. {{p0_issues_count}} critical issues ready for immediate attention."
+    message: "✅ {{total_issues_count}} research-backed GitHub issues created in {{github_repository}}. {{p0_issues_count}} critical issues need immediate attention. Ready for sprint assignment."
   - role: researcher
-    action: "Issues created successfully"
+    action: "Research successfully converted to development tasks"
     slack_tag: "{{researcher_contact}}"
-    message: "Your research findings have been converted into {{total_issues_count}} live GitHub issues with full research context and evidence."
+    message: "Your {{study_name}} research has been converted into {{total_issues_count}} actionable GitHub issues with full research context. Development teams can now prioritize and implement user-centered improvements."
