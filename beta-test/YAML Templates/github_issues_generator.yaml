@@ -1,502 +1,281 @@
-id: insight_card
-name: run_insight_card
-label: 💡 Insight Card
-version: v2.1
+id: github_issues_generator
+name: run_github_issues_generator
+label: 🐛 GitHub Issues Generator
+version: v1.0
 description: |
-  Generate structured insight cards that automatically create GitHub issues for product backlog.
-  Enhanced to work with synthesis analysis results and router intelligence for optimal insight development.
-  Transform research findings into actionable development tasks with user stories, acceptance criteria, and research evidence.
-  Perfect for research-to-development handoff in the AI-enhanced synthesis workflow.
+  Transform research findings into actionable GitHub issues with proper labels, priorities, and implementation details.
+  Converts user research insights into development-ready tasks that engineering teams can immediately understand and act upon.
 
-author: CivicMind R&D
-created: 2025-06-26
-last_updated: 2025-08-15
+author: Qori R&D
+created: 2025-08-19
+last_updated: 2025-08-19
 
 input_type: text
 input_processing: summarize_if_long
+temperature: 0.3
 precision_mode: concise | detailed
 
 # LLM Configuration
 llm_config:
   model: "gpt-4o"
-  temperature: 0.4
-  max_tokens: 3000
+  temperature: 0.3
+  max_tokens: 4000
 
 input_variables:
-  # Core input - can be synthesis results or raw research
-  - input_text           # Synthesis analysis results or research findings (REQUIRED)
-  - synthesis_type       # Type of analysis this comes from (affinity, journey, persona, etc.) (OPTIONAL)
-  
-  # Study context
+  # Core analysis data
+  - input_text           # Research findings or readout data (REQUIRED)
   - study_name           # Title of study (REQUIRED)
-  - study_folder         # Study folder path (OPTIONAL)
   - researcher_contact   # Lead researcher (REQUIRED)
   - study_channel        # Where to post results (REQUIRED)
-  - study_link           # Link to study folder or documentation (OPTIONAL)
-  - team_members         # Who to notify/tag (OPTIONAL)
-  
-  # Router/Synthesis intelligence (when available from synthesis workflow)
-  - file_selection_quality    # Router's file quality assessment (OPTIONAL)
-  - analysis_preview         # Router's expected outcomes (OPTIONAL)
-  - recommendations          # Router's smart suggestions (OPTIONAL)
-  - synthesis_confidence     # Confidence level from synthesis analysis (OPTIONAL)
-  - analysis_id             # Analysis ID for tracking (OPTIONAL)
-  
-  # GitHub integration settings
-  - github_repo             # Target repository (OPTIONAL - defaults to product-backlog)
-  - target_milestone        # Target milestone (OPTIONAL)
+  - github_repo          # Target GitHub repository (OPTIONAL)
+  - product_area         # Specific product area for labeling (OPTIONAL)
 
 # AI GENERATION TASKS
 ai_generation_tasks:
-  # Analyze synthesis results and determine insight scope
-  - task_id: "insight_scope_analysis"
+  # Analyze findings for actionable issues
+  - task_id: "issue_analysis"
     prompt: |
       **MANDATORY WRITING REQUIREMENTS:**
       - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
       - ALWAYS use direct, concrete language - avoid vague aspirational phrases
       - ALWAYS use active voice and specific verbs
+      - Focus on specific, implementable changes
       
-      As an experienced product researcher and development liaison, analyze the synthesis results to determine insight scope:
+      Analyze research findings to identify actionable GitHub issues:
       
+      **Input Data:** {{input_text}}
       **Study:** {{study_name}}
-      **Synthesis Type:** {{synthesis_type}}
-      **Input Analysis:** {{input_text}}
-      **Synthesis Confidence:** {{synthesis_confidence}}
-      **Router Recommendations:** {{recommendations}}
+      **Product Area:** {{product_area}}
       
-      Analyze:
-      1. **Insight Potential:** How many actionable insights can be extracted for development?
-      2. **Implementation Complexity:** What's the technical complexity of potential solutions?
-      3. **User Impact Level:** How significantly would these insights affect user experience?
-      4. **Development Priority:** What priority level should these insights have?
-      5. **Confidence Assessment:** How confident are we in these insights for development decisions?
+      Identify issues that are:
+      1. **Technically implementable** (specific features, bug fixes, content changes)
+      2. **Well-supported by evidence** from research findings
+      3. **Clear in scope** (not too broad or vague)
+      4. **Actionable by development teams** (frontend, backend, content, design system)
+      
+      Categories to look for:
+      - **Bug fixes** (broken functionality users encountered)
+      - **Feature requests** (new functionality needed)
+      - **Content updates** (copy changes, help text improvements)
+      - **UX improvements** (interface changes, workflow optimizations)
+      - **Accessibility issues** (barriers users with disabilities face)
+      - **Performance issues** (slow loading, timeouts)
       
       **Format:**
-      **Insight Potential:** [High/Medium/Low] - [estimated number of actionable development insights]
-      **Implementation Complexity:** [Low/Medium/High] - [assessment of technical difficulty]
-      **User Impact Level:** [High/Medium/Low] - [potential effect on user experience]
-      **Development Priority:** [High/Medium/Low] - [recommended priority for product backlog]
-      **Confidence Assessment:** [High/Medium/Low] - [confidence level for development decisions]
-      **Primary Focus Area:** [Main area for development focus - UI, workflow, content, etc.]
+      **Potential Issues Identified:** [Count]
+      **Issue Categories:**
+      • Bug fixes: [Count and brief description]
+      • Feature requests: [Count and brief description]
+      • Content updates: [Count and brief description]
+      • UX improvements: [Count and brief description]
+      • Accessibility: [Count and brief description]
+      • Performance: [Count and brief description]
 
-  # Identify key insights for development
-  - task_id: "development_insight_identification"
+  # Generate specific GitHub issues
+  - task_id: "github_issues_creation"
     prompt: |
       **MANDATORY WRITING REQUIREMENTS:**
       - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
       - ALWAYS use direct, concrete language - avoid vague aspirational phrases
       - ALWAYS use active voice and specific verbs
-      - Focus on implementable, specific development opportunities
+      - Write clear, implementable issue descriptions
       
-      As an experienced product manager and UX researcher, identify key insights for development from the synthesis results:
+      Create specific GitHub issues from the research findings:
       
-      **Synthesis Results:**
-      {{input_text}}
-      
-      **Insight Context:**
-      {{ai_generated.insight_scope_analysis}}
-      
-      **Study Context:** {{study_name}}
-      **Synthesis Type:** {{synthesis_type}}
-      
-      Based on the synthesis analysis, identify actionable insights:
-      
-      1. **Primary Insights:** What are the most important findings for development?
-      2. **User Pain Points:** Which problems could be solved through development?
-      3. **Opportunity Areas:** Where could development create the most user value?
-      4. **Implementation Potential:** Which insights are most feasible to implement?
-      5. **Feature Implications:** What specific features or changes are suggested?
-      
-      **Format for each insight:**
-      **Insight [X]: "[Clear insight title]"**
-      - **Development Opportunity:** [Specific opportunity for product/feature development]
-      - **User Problem Addressed:** [Specific user pain point this would solve]
-      - **Feature Implication:** [What kind of feature/change this suggests]
-      - **Implementation Feasibility:** [High/Medium/Low - how feasible this is to build]
-      - **Supporting Evidence:** [Key evidence from synthesis that supports this insight]
-      - **User Value:** [Specific value this would provide to users]
-      
-      Requirements:
-      - Focus on insights that can become specific development tasks
-      - Ensure insights are grounded in synthesis evidence
-      - Make insights specific enough for developers to understand
-      - Prioritize insights that have clear user benefit
-      - Consider technical feasibility in insight selection
-
-  # Generate user stories and acceptance criteria
-  - task_id: "user_story_development"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Follow standard user story format exactly
-      
-      As an experienced product manager, convert insights into proper user stories with acceptance criteria:
-      
-      **Development Insights:**
-      {{ai_generated.development_insight_identification}}
-      
-      **Study Context:** {{study_name}}
-      **Synthesis Type:** {{synthesis_type}}
-      
-      For each insight, develop:
-      1. **User Story:** Standard "As a [user], I want [goal], so that [benefit]" format
-      2. **Epic Context:** How this story fits into larger user workflows
-      3. **Acceptance Criteria:** Specific, testable criteria for completion
-      4. **Definition of Done:** Clear completion requirements
-      5. **User Benefit:** Specific value delivered to users
-      
-      **Format for each insight:**
-      **Insight: "[Insight title]"**
-      
-      📝 **User Story:** As a [specific user type], I want [specific capability], so that [specific benefit].
-      
-      🏗️ **Epic Context:** [How this story fits into larger user workflows or product areas]
-      
-      ✅ **Acceptance Criteria:**
-      - [Specific, testable criterion 1]
-      - [Specific, testable criterion 2]
-      - [Specific, testable criterion 3]
-      - [Additional criteria as needed]
-      
-      🎯 **Definition of Done:** [Clear requirements for story completion - testing, documentation, etc.]
-      
-      💡 **User Benefit:** [Specific, measurable benefit users will experience]
-      
-      🔍 **Research Evidence:** [Key evidence from synthesis that justifies this story]
-      
-      Requirements:
-      - Use specific user types, not generic "user"
-      - Make acceptance criteria testable and specific
-      - Ensure user benefit is clear and measurable
-      - Connect to research evidence
-      - Write for development team understanding
-
-  # Assess priority and effort estimation
-  - task_id: "priority_effort_assessment"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Use consistent priority and effort criteria
-      
-      As an experienced product manager and technical lead, assess priority and effort for each user story:
-      
-      **User Stories:**
-      {{ai_generated.user_story_development}}
-      
-      **Insight Context:** {{ai_generated.insight_scope_analysis}}
+      **Issue Analysis:** {{ai_generated.issue_analysis}}
+      **Research Data:** {{input_text}}
       **Study Context:** {{study_name}}
       
-      For each story, assess:
-      1. **Priority Level:** High/Medium/Low based on user impact and business value
-      2. **Effort Estimate:** XS/S/M/L/XL based on development complexity
-      3. **Risk Assessment:** Technical or implementation risks
-      4. **Dependencies:** What other work this depends on
-      5. **Implementation Timeline:** Suggested sprint planning
-      
-      **Priority Criteria:**
-      - **High:** Critical user pain point, high impact, research strongly supports
-      - **Medium:** Important improvement, moderate impact, good research support
-      - **Low:** Nice-to-have enhancement, limited impact, exploratory insight
-      
-      **Effort Criteria:**
-      - **XS (1-2 days):** Simple content/copy changes, configuration updates
-      - **S (3-5 days):** Minor UI changes, simple feature additions
-      - **M (1-2 weeks):** Standard feature development, moderate complexity
-      - **L (2-4 weeks):** Complex features, multiple system integration
-      - **XL (4+ weeks):** Major features, significant architecture changes
-      
-      **Format for each story:**
-      **Story: "[Story title]"**
-      
-      ⭐ **Priority Level:** [High/Medium/Low] - [reasoning based on user impact and business value]
-      
-      ⏱️ **Effort Estimate:** [XS/S/M/L/XL] - [reasoning based on technical complexity]
-      
-      ⚠️ **Risk Assessment:** [Low/Medium/High] - [technical or implementation risks to consider]
-      
-      🔗 **Dependencies:** [Other stories, systems, or work this depends on]
-      
-      📅 **Implementation Timeline:** [Suggested sprint planning: "Next sprint" / "Within 2 sprints" / "Future epic"]
-      
-      🎯 **Quick Win Potential:** [Yes/No] - [whether this could deliver immediate user value]
-
-  # Generate supporting evidence and research context
-  - task_id: "evidence_context_generation"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Use actual quotes and evidence from synthesis results
-      
-      As an experienced user researcher, generate supporting evidence and context for each insight:
-      
-      **User Stories with Assessment:**
-      {{ai_generated.priority_effort_assessment}}
-      
-      **Original Synthesis Results:**
-      {{input_text}}
-      
-      **Study Context:** {{study_name}}
-      **Synthesis Type:** {{synthesis_type}}
-      
-      For each story, provide:
-      1. **Supporting Quotes:** Direct evidence from synthesis that supports this story
-      2. **Research Context:** Background from study that justifies this development
-      3. **Business Impact:** Why this matters for product/business goals
-      4. **Success Metrics:** How to measure if this story succeeds
-      5. **Validation Approach:** How to validate the solution with users
-      
-      **Format for each story:**
-      **Story: "[Story title]"**
-      
-      💬 **Supporting Quotes:**
-      > "[Direct quote from synthesis that supports this story]"
-      > "[Additional supporting quote if available]"
-      
-      📚 **Research Context:** [Background from study that justifies this development work]
-      
-      💼 **Business Impact:** [Why this matters for product success, user satisfaction, or business goals]
-      
-      📊 **Success Metrics:** [How to measure if this story successfully addresses the user need]
-      
-      ✅ **Validation Approach:** [How to validate the solution with users - testing, feedback, metrics]
-      
-      🏷️ **GitHub Labels:** [Suggested labels for issue: priority, effort, feature area, etc.]
-      
-      🔍 **Source Reference:** [Reference to original synthesis analysis and study]
-      
-      Requirements:
-      - Use actual quotes from synthesis results when available
-      - Connect business impact to specific user or product outcomes
-      - Suggest measurable success metrics
-      - Provide realistic validation approaches
-      - Include appropriate GitHub labels for issue tracking
-
-  # Generate GitHub issue formatting and metadata
-  - task_id: "github_issue_formatting"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Format for GitHub issue creation and developer readability
-      
-      As an experienced product manager and development team lead, format insights as GitHub issues:
-      
-      **Complete Story Analysis:**
-      {{ai_generated.user_story_development}}
-      {{ai_generated.priority_effort_assessment}}
-      {{ai_generated.evidence_context_generation}}
-      
-      **Study Context:** {{study_name}}
-      **Synthesis Type:** {{synthesis_type}}
-      
-      For each story, create GitHub issue format:
-      
-      1. **Issue Title:** Clear, specific title for GitHub issue
-      2. **Issue Description:** Complete description with user story, context, and acceptance criteria
-      3. **GitHub Metadata:** Labels, assignees, milestones, project assignments
-      4. **Implementation Notes:** Technical considerations for developers
-      5. **Research Links:** Links back to synthesis and original research
+      For each identified issue, create:
+      1. **Clear title** (50 characters or less)
+      2. **Problem description** with user impact
+      3. **Supporting evidence** from research
+      4. **Acceptance criteria** (specific, testable)
+      5. **Priority level** (P0, P1, P2, P3)
+      6. **Appropriate labels** 
+      7. **Implementation notes** for developers
       
       **Format for each issue:**
-      **Issue [X]: "[Clear, specific GitHub issue title]"**
       
-      📋 **GitHub Issue Description:**
-      ```
-      ## User Story
-      [User story from development]
+      ---
+      **Issue #[X]: [Clear, specific title]**
       
-      ## Research Context
-      [Background from synthesis]
+      **Labels:** `research-finding`, `[priority-level]`, `[feature-area]`, `[team-assignment]`
       
-      ## Acceptance Criteria
-      [Formatted acceptance criteria]
+      **Problem Statement:**
+      [Clear description of the problem from user perspective]
       
-      ## Supporting Evidence
-      [Research quotes and evidence]
+      **Research Evidence:**
+      [Specific findings, quotes, or data supporting this issue]
       
-      ## Implementation Notes
-      [Technical considerations]
+      **User Impact:**
+      [How this affects user success and experience]
       
-      ## Success Metrics
-      [How to measure success]
+      **Acceptance Criteria:**
+      - [ ] [Specific, testable criterion 1]
+      - [ ] [Specific, testable criterion 2]
+      - [ ] [Specific, testable criterion 3]
       
-      ## Research Source
-      [Links to synthesis and original study]
-      ```
+      **Implementation Notes:**
+      [Technical guidance for developers]
       
-      🏷️ **GitHub Metadata:**
-      - **Labels:** [priority-high/medium/low], [effort-xs/s/m/l/xl], [feature area], research-insight
-      - **Milestone:** [Suggested milestone]
-      - **Project:** Product Backlog
-      - **Assignee:** [Suggested assignee if applicable]
+      **Priority:** [P0/P1/P2/P3] - [Reasoning]
       
-      🛠️ **Implementation Notes:** [Technical considerations, constraints, or dependencies for developers]
+      **Estimated Effort:** [S/M/L/XL] - [Brief reasoning]
       
-      🔗 **Research Links:** [URLs to synthesis analysis, original study, and related research]
-      
-      ⚡ **Ready for Development:** [Yes/No] - [whether this issue has enough detail for development to start]
+      ---
 
-# Auto-generated/computed variables (enhanced with AI analysis)
+  # Create issue summary and prioritization
+  - task_id: "issue_prioritization"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Provide clear prioritization rationale
+      
+      Create a prioritized summary of all GitHub issues:
+      
+      **Generated Issues:** {{ai_generated.github_issues_creation}}
+      
+      Organize issues by:
+      1. **Priority levels** (P0 = Critical, P1 = High, P2 = Medium, P3 = Low)
+      2. **Implementation complexity** (effort estimates)
+      3. **Team assignments** (frontend, backend, content, design)
+      4. **Dependencies** (what needs to happen first)
+      
+      **Format:**
+      
+      **📊 Issue Summary**
+      
+      **Total Issues:** [Count]
+      **Priority Breakdown:**
+      • P0 (Critical): [Count] issues
+      • P1 (High): [Count] issues  
+      • P2 (Medium): [Count] issues
+      • P3 (Low): [Count] issues
+      
+      **Team Distribution:**
+      • Frontend: [Count] issues
+      • Backend: [Count] issues
+      • Content: [Count] issues
+      • Design System: [Count] issues
+      
+      **Recommended Implementation Order:**
+      1. **Week 1-2:** [P0 issues that can be implemented quickly]
+      2. **Month 1:** [P1 issues with moderate effort]
+      3. **Quarter 1:** [P2 issues requiring more planning]
+      4. **Future backlog:** [P3 issues for later consideration]
+      
+      **Dependencies & Blockers:**
+      [Any issues that depend on others or external factors]
+
+# Auto-generated/computed variables
 auto_variables:
-  - priority_level: |
-      # AI determines priority from insight assessment
-      extract_priority_level(ai_generated.priority_effort_assessment) || "Medium"
-  - effort_estimate: |
-      # AI estimates development effort from assessment
-      extract_effort_estimate(ai_generated.priority_effort_assessment) || "M"
-  - affected_users: |
-      # AI identifies user groups from user story development
-      extract_affected_users(ai_generated.user_story_development) || "Primary users"
-  - num_insights: |
-      # AI counts actionable insights identified
-      extract_insight_count(ai_generated.development_insight_identification) || 1
-  - github_repo: |
-      # Auto-determine target repository from study context
-      determine_target_repo(study_name) || "product-backlog"
+  - total_issues_count: |
+      count_issues(ai_generated.github_issues_creation) || 0
+  - p0_issues_count: |
+      count_priority_issues(ai_generated.github_issues_creation, "P0") || 0
   - current_date: |
-      # Auto-generate current date for issue creation
       new Date().toISOString().split('T')[0]
+  - github_file_link: |
+      generate_github_link(study_name, current_date) || null
 
-# Output configuration (enhanced)
+# Output configuration
 output_options:
-  default_delivery: "slack_and_github"
+  default_delivery: "slack_and_file"
   slack_format: "structured"
-  github_integration: true
-  github_repo: "{{github_repo}}"
-  issue_labels: ["research-insight", "{{priority_level}}", "{{effort_estimate}}", "needs-grooming"]
+  file_location: "06-implementation/"
+  file_name: "github_issues_{{study_name_slug}}_{{current_date}}.md"
 
 slack_output:
   post_in_channel: true
   create_thread: true
-  title_format: "💡 Insight Cards Created"
-  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
+  title_format: "🐛 GitHub Issues Generated"
+  ping_team: ["{{researcher_contact}}", "@dev-team", "@product-team"]
   interactive_elements:
-    - text: "🎯 View GitHub Issues"
-      url: "{{github_issues_url}}"
-    - text: "📋 Add to Sprint Planning"
-      action: "add_to_sprint"
-    - text: "🗂️ View Research Context"
-      url: "{{study_link}}"
-    - text: "📊 View Synthesis Analysis"
-      url: "{{synthesis_analysis_url}}"
-
-github_output:
-  create_issue: true
-  assign_to_pm: true
-  add_to_project: "Product Backlog"
-  milestone: "Research Insights"
+    - text: "📝 Create Issues in GitHub"
+      action: "create_github_issues"
+    - text: "📊 View Research Readout"
+      action: "run_research_readout"
+    - text: "🎯 Stakeholder Summary"
+      action: "run_stakeholder_summary"
+    - text: "🗂️ View in GitHub"
+      url: "{{github_file_link}}"
 
 output_use: |
-  Enhanced Insight Cards bridge the gap between synthesis analysis and product development. They automatically create 
-  GitHub issues with proper formatting, acceptance criteria, and research context for seamless research-to-development handoff.
-  Integrated with the AI synthesis workflow to leverage router intelligence and synthesis quality assessments.
+  GitHub Issues Generator transforms research findings into development-ready tasks with proper technical context,
+  clear acceptance criteria, and appropriate prioritization for engineering teams.
 
   Use this method to:
-    - Convert synthesis analysis results into actionable development tasks
-    - Provide clear user stories and acceptance criteria for developers
-    - Maintain research context and evidence throughout the development process
-    - Enable product managers to prioritize research-driven features with confidence levels
-    - Track implementation of research recommendations with full synthesis traceability
+    - Convert research insights into actionable development tasks
+    - Provide proper technical context for engineering teams
+    - Ensure research findings directly impact product improvements
+    - Track research-to-implementation progress
 
 output_notes: |
-  This method generates {{num_insights}} insight card(s) based on synthesis analysis results.
-  Priority level ({{priority_level}}) and effort estimate ({{effort_estimate}}) determined from AI assessment.
-  Affected users ({{affected_users}}) identified from user story development.
-  GitHub issues created in {{github_repo}} with synthesis context and research traceability.
+  Generated {{total_issues_count}} total issues with {{p0_issues_count}} critical priority items.
+  Issues include technical implementation guidance and clear acceptance criteria.
 
-# Enhanced output template using AI-generated content
-output_format: |
-  Hi team! 👋 I just created {{num_insights}} insight card(s) from our synthesis analysis that are ready for the product backlog. These insights have been automatically converted into GitHub issues with user stories, acceptance criteria, and research evidence.
+# Enhanced output template
+output_template: |
+  Hi dev team! 👋 I've converted our research findings from {{study_name}} into {{total_issues_count}} actionable GitHub issues ready for implementation.
 
-  {{team_members}} - these are ready for sprint planning and prioritization. The GitHub issues have been created and tagged appropriately with synthesis context.
+  @dev-team @product-team - these issues include technical context, acceptance criteria, and clear prioritization based on user impact.
 
   📂 *Study:* {{study_name}}  
-  🔬 *Synthesis Type:* {{synthesis_type}}  
-  🔗 *Research details:* {{study_link}}  
-  🎯 *GitHub issues:* {{github_issues_url}}
+  🔗 *Research Details:* {{study_link}}
+  🚨 *Critical Issues:* {{p0_issues_count}} P0 items need immediate attention
 
   ---
 
-  ## 📊 *INSIGHT DEVELOPMENT SCOPE*
+  ## 🐛 GITHUB ISSUES GENERATED
 
-  {{ai_generated.insight_scope_analysis}}
-
-  ---
-
-  ## 🔍 *IDENTIFIED DEVELOPMENT INSIGHTS*
-
-  {{ai_generated.development_insight_identification}}
+  **🤖 AI-Generated from Research Findings | {{current_date}}**
 
   ---
 
-  ## 📝 *USER STORIES & ACCEPTANCE CRITERIA*
+  ### 📊 Issue Analysis Summary
 
-  {{ai_generated.user_story_development}}
-
-  ---
-
-  ## ⭐ *PRIORITY & EFFORT ASSESSMENT*
-
-  {{ai_generated.priority_effort_assessment}}
+  {{ai_generated.issue_analysis}}
 
   ---
 
-  ## 📚 *SUPPORTING EVIDENCE & CONTEXT*
+  ### 📝 Generated GitHub Issues
 
-  {{ai_generated.evidence_context_generation}}
-
-  ---
-
-  ## 🎫 *GITHUB ISSUES READY FOR DEVELOPMENT*
-
-  {{ai_generated.github_issue_formatting}}
+  {{ai_generated.github_issues_creation}}
 
   ---
 
-  *Next Steps:*
-  • Review and refine acceptance criteria during grooming
-  • Estimate story points in sprint planning  
-  • Consider user research validation before implementation
-  • {{#if synthesis_confidence}}Synthesis confidence: {{synthesis_confidence}} - consider validation needs{{/if}}
+  ### 🎯 Prioritization & Implementation Plan
+
+  {{ai_generated.issue_prioritization}}
 
   ---
-  
-  *🤖 AI-Enhanced Insight Cards Generated*  
-  *Source Analysis: {{synthesis_type}} | Study: {{study_name}} | Analysis ID: {{analysis_id}}*
 
-# Processing workflow
-processing_workflow:
-  1. validate_inputs_and_synthesis_context
-  2. confirm_development_readiness
-  3. execute_insight_scope_analysis
-  4. execute_development_insight_identification
-  5. execute_user_story_development
-  6. execute_priority_effort_assessment
-  7. execute_evidence_context_generation
-  8. execute_github_issue_formatting
-  9. format_comprehensive_output
-  10. create_github_issues
-  11. send_team_notifications
-  12. track_insight_delivery
+  ### 🔗 Next Steps
+
+  1. **Review issues** in thread below
+  2. **Create in GitHub** using the "Create Issues" button
+  3. **Assign to sprint** based on priority recommendations
+  4. **Track progress** against research findings
+
+  ---
+
+  **🏷️ Tags:** `research-to-dev`, `github-issues`, `implementation-ready`, `{{product_area}}`
+
+  ---
+
+  *Questions about implementation?* Reply in thread or contact {{researcher_contact}} for research context.
+
+  *🤖 AI-Generated Issues | Ready for GitHub Creation*
 
 notify:
-  - role: product_manager
-    action: "New insight cards created from synthesis"
+  - role: dev_team
+    action: "Research-based GitHub issues ready"
     channel: "{{study_channel}}"
-    message: "{{num_insights}} research insights from {{synthesis_type}} analysis ready for backlog. GitHub issues created with {{priority_level}} priority."
+    message: "🐛 {{total_issues_count}} GitHub issues generated from {{study_name}} research. {{p0_issues_count}} critical issues need immediate attention."
   - role: researcher
-    action: "Insight cards delivered"
+    action: "Issues generated"
     slack_tag: "{{researcher_contact}}"
-    message: "Your {{num_insights}} insight card(s) have been created as GitHub issues and posted to {{study_channel}}. Synthesis: {{synthesis_type}}"
-  - role: github
-    action: "Issues created from synthesis"
-    repo: "{{github_repo}}"
-    assignee: "product-manager"
-    labels: ["research-insight", "{{synthesis_type}}", "{{priority_level}}", "{{effort_estimate}}", "needs-grooming"]
+    message: "GitHub issues have been generated from your research and are ready for development team review."
