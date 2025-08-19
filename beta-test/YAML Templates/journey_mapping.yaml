@@ -415,7 +415,7 @@ output_notes: |
   Router recommendations integrated for context-aware journey analysis approach.
 
 # Enhanced output template using AI-generated content
-output_format: |
+output_template: |
   Hi team! 👋 I just mapped out the user journey for *{{persona_name}}* based on our AI-enhanced analysis. Found {{max_steps}} key stages that show where users get stuck and where we have the biggest opportunities to improve their experience.
 
   {{team_members}} - would love your thoughts on this journey, especially which stages feel most critical or where you see quick wins.
