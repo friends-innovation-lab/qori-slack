@@ -22,13 +22,27 @@ llm_config:
   max_tokens: 4000
 
 input_variables:
-  # Core analysis data
-  - input_text           # Research findings or readout data (REQUIRED)
+  # ENHANCED FILE INPUT OPTIONS (inherited from research readout)
+  - research_readout_data # Full readout data for context (OPTIONAL)
+  - github_repo          # Target GitHub repository (OPTIONAL)
+  - product_area         # Specific product area for labeling (OPTIONAL)
+  - stakeholder_priorities # Priority guidance from stakeholders (OPTIONAL)
+  
+  # Core analysis data (backward compatible)
+  - input_text           # Research findings or readout data (OPTIONAL if readout_data provided)
   - study_name           # Title of study (REQUIRED)
   - researcher_contact   # Lead researcher (REQUIRED)
   - study_channel        # Where to post results (REQUIRED)
-  - github_repo          # Target GitHub repository (OPTIONAL)
-  - product_area         # Specific product area for labeling (OPTIONAL)
+  - team_members         # Who to notify/tag (OPTIONAL)
+  
+  # File processing context (passed from research readout)
+  - file_quality_score    # Quality of source files (OPTIONAL)
+  - data_sources         # What data sources were used (OPTIONAL)
+  - participant_count    # Number of participants (OPTIONAL)
+  - session_count        # Number of sessions (OPTIONAL)
+  - completion_rate      # Participant completion rate (OPTIONAL)
+  - session_quotes       # Specific quotes from session files (OPTIONAL)
+  - behavioral_evidence  # Behavioral patterns from sessions (OPTIONAL)
 
 # AI GENERATION TASKS
 ai_generation_tasks:
@@ -43,35 +57,53 @@ ai_generation_tasks:
       
       Analyze research findings to identify actionable GitHub issues:
       
+      **Research Readout Data:** {{research_readout_data}}
       **Input Data:** {{input_text}}
       **Study:** {{study_name}}
       **Product Area:** {{product_area}}
+      **File Quality Score:** {{file_quality_score}}
+      **Data Sources:** {{data_sources}}
+      **Participant Count:** {{participant_count}}
+      **Session Count:** {{session_count}}
+      **Behavioral Evidence:** {{behavioral_evidence}}
       
       Identify issues that are:
       1. **Technically implementable** (specific features, bug fixes, content changes)
-      2. **Well-supported by evidence** from research findings
+      2. **Well-supported by evidence** from research findings and session data
       3. **Clear in scope** (not too broad or vague)
       4. **Actionable by development teams** (frontend, backend, content, design system)
+      5. **Have measurable outcomes** (can be tested and validated)
+      6. **Frequency-validated** (multiple participants encountered the issue)
       
-      Categories to look for:
-      - **Bug fixes** (broken functionality users encountered)
-      - **Feature requests** (new functionality needed)
-      - **Content updates** (copy changes, help text improvements)
+      Categories to analyze:
+      - **Bug fixes** (broken functionality users encountered in sessions)
+      - **Feature requests** (new functionality needed based on user needs)
+      - **Content updates** (copy changes, help text improvements from user feedback)
       - **UX improvements** (interface changes, workflow optimizations)
       - **Accessibility issues** (barriers users with disabilities face)
-      - **Performance issues** (slow loading, timeouts)
+      - **Performance issues** (slow loading, timeouts, system delays observed)
+      - **Design system updates** (component improvements, new patterns)
       
       **Format:**
-      **Potential Issues Identified:** [Count]
-      **Issue Categories:**
-      • Bug fixes: [Count and brief description]
-      • Feature requests: [Count and brief description]
-      • Content updates: [Count and brief description]
-      • UX improvements: [Count and brief description]
-      • Accessibility: [Count and brief description]
-      • Performance: [Count and brief description]
+      **Total Issues Identified:** [Count]
+      **Evidence Strength:** [High/Medium/Low based on file quality and participant count]
+      **Issue Breakdown:**
+      • Bug fixes: [Count] - [Brief description with session evidence]
+      • Feature requests: [Count] - [Brief description with user needs]
+      • Content updates: [Count] - [Brief description with quote evidence]
+      • UX improvements: [Count] - [Brief description with behavioral evidence]
+      • Accessibility: [Count] - [Brief description with user barriers]
+      • Performance: [Count] - [Brief description with observed delays]
+      • Design system: [Count] - [Brief description with pattern needs]
+      
+      **Implementation Complexity Assessment:**
+      • Quick wins (1-2 days): [Count] issues
+      • Medium effort (1-2 weeks): [Count] issues
+      • Complex projects (1+ months): [Count] issues
+      
+      **Participant Validation:** [How many participants confirm each issue type]
 
-  # Generate specific GitHub issues
+  # Generate specific GitHub issues with technical details
   - task_id: "github_issues_creation"
     prompt: |
       **MANDATORY WRITING REQUIREMENTS:**
@@ -85,47 +117,64 @@ ai_generation_tasks:
       **Issue Analysis:** {{ai_generated.issue_analysis}}
       **Research Data:** {{input_text}}
       **Study Context:** {{study_name}}
+      **Product Area:** {{product_area}}
       
       For each identified issue, create:
-      1. **Clear title** (50 characters or less)
-      2. **Problem description** with user impact
-      3. **Supporting evidence** from research
-      4. **Acceptance criteria** (specific, testable)
-      5. **Priority level** (P0, P1, P2, P3)
-      6. **Appropriate labels** 
+      1. **Clear title** (50 characters or less, descriptive)
+      2. **Problem description** with user impact and evidence
+      3. **Supporting research evidence** with quotes and data
+      4. **Acceptance criteria** (specific, testable requirements)
+      5. **Priority level** (P0=Critical, P1=High, P2=Medium, P3=Low)
+      6. **Appropriate labels** for GitHub organization
       7. **Implementation notes** for developers
+      8. **Definition of done** (how to know it's complete)
       
       **Format for each issue:**
       
       ---
-      **Issue #[X]: [Clear, specific title]**
+      **Issue #[X]: [Clear, specific title under 50 chars]**
       
-      **Labels:** `research-finding`, `[priority-level]`, `[feature-area]`, `[team-assignment]`
+      **Labels:** `research-finding`, `[priority-level]`, `[feature-area]`, `[team-assignment]`, `[complexity-level]`
       
       **Problem Statement:**
-      [Clear description of the problem from user perspective]
+      [Clear description of the problem from user perspective, including impact on user goals]
       
       **Research Evidence:**
-      [Specific findings, quotes, or data supporting this issue]
+      [Specific findings, quotes, or behavioral data supporting this issue]
+      • Quote: "[Specific user quote]" - P[X]
+      • Behavior: [What users actually did during research]
+      • Frequency: [How often this issue occurred]
       
       **User Impact:**
-      [How this affects user success and experience]
+      [How this affects user success, completion rates, satisfaction, or trust]
       
       **Acceptance Criteria:**
       - [ ] [Specific, testable criterion 1]
       - [ ] [Specific, testable criterion 2]
       - [ ] [Specific, testable criterion 3]
+      - [ ] [Testing requirement]
+      - [ ] [Documentation requirement]
       
       **Implementation Notes:**
-      [Technical guidance for developers]
+      [Technical guidance for developers, including:]
+      • Affected components/pages
+      • Suggested approach
+      • Dependencies or blockers
+      • Testing considerations
       
-      **Priority:** [P0/P1/P2/P3] - [Reasoning]
+      **Definition of Done:**
+      - [ ] Feature implemented according to acceptance criteria
+      - [ ] User testing validates issue resolution
+      - [ ] Documentation updated
+      - [ ] Accessibility review completed
       
-      **Estimated Effort:** [S/M/L/XL] - [Brief reasoning]
+      **Priority:** [P0/P1/P2/P3] - [Reasoning based on user impact and business value]
+      **Effort Estimate:** [S/M/L/XL] - [Brief reasoning with time estimate]
+      **Team Assignment:** [Frontend/Backend/Content/Design/Full-stack]
       
       ---
 
-  # Create issue summary and prioritization
+  # Create issue prioritization and sprint planning
   - task_id: "issue_prioritization"
     prompt: |
       **MANDATORY WRITING REQUIREMENTS:**
@@ -134,41 +183,116 @@ ai_generation_tasks:
       - ALWAYS use active voice and specific verbs
       - Provide clear prioritization rationale
       
-      Create a prioritized summary of all GitHub issues:
+      Create a prioritized implementation plan for all GitHub issues:
       
       **Generated Issues:** {{ai_generated.github_issues_creation}}
+      **Stakeholder Priorities:** {{stakeholder_priorities}}
       
       Organize issues by:
-      1. **Priority levels** (P0 = Critical, P1 = High, P2 = Medium, P3 = Low)
-      2. **Implementation complexity** (effort estimates)
-      3. **Team assignments** (frontend, backend, content, design)
-      4. **Dependencies** (what needs to happen first)
+      1. **Priority levels** with business rationale
+      2. **Implementation complexity** with effort estimates
+      3. **Team assignments** with workload distribution
+      4. **Dependencies** and sequencing requirements
+      5. **Sprint planning recommendations**
       
       **Format:**
       
-      **📊 Issue Summary**
+      **📊 Issue Summary & Prioritization**
       
-      **Total Issues:** [Count]
-      **Priority Breakdown:**
-      • P0 (Critical): [Count] issues
-      • P1 (High): [Count] issues  
-      • P2 (Medium): [Count] issues
-      • P3 (Low): [Count] issues
+      **Total Issues Generated:** [Count]
       
-      **Team Distribution:**
-      • Frontend: [Count] issues
-      • Backend: [Count] issues
-      • Content: [Count] issues
-      • Design System: [Count] issues
+      **Priority Distribution:**
+      • P0 (Critical - Blocks user success): [Count] issues
+      • P1 (High - Significant user impact): [Count] issues  
+      • P2 (Medium - Improves experience): [Count] issues
+      • P3 (Low - Nice to have): [Count] issues
       
-      **Recommended Implementation Order:**
-      1. **Week 1-2:** [P0 issues that can be implemented quickly]
-      2. **Month 1:** [P1 issues with moderate effort]
-      3. **Quarter 1:** [P2 issues requiring more planning]
-      4. **Future backlog:** [P3 issues for later consideration]
+      **Team Workload Distribution:**
+      • Frontend: [Count] issues ([effort estimate])
+      • Backend: [Count] issues ([effort estimate])
+      • Content: [Count] issues ([effort estimate])
+      • Design System: [Count] issues ([effort estimate])
+      • Full-stack: [Count] issues ([effort estimate])
       
-      **Dependencies & Blockers:**
-      [Any issues that depend on others or external factors]
+      **Recommended Sprint Planning:**
+      
+      **Sprint 1 (Immediate - Next 2 weeks):**
+      • [P0 issue titles] - [Why these first]
+      • Quick wins: [P1/P2 issues that are small effort]
+      
+      **Sprint 2-3 (Short-term - Month 1):**
+      • [P1 issues with moderate effort]
+      • [P2 issues that enable other work]
+      
+      **Quarter Backlog (Long-term - Months 2-3):**
+      • [P2 issues requiring significant effort]
+      • [P3 issues for when capacity allows]
+      
+      **Dependencies & Sequencing:**
+      [List any issues that must be completed before others can start]
+      
+      **Success Metrics:**
+      [How to measure if implementing these issues improves user experience]
+      
+      **Research Validation Plan:**
+      [How to test that implemented changes solve the original user problems]
+
+  # Generate implementation guidance for development teams
+  - task_id: "implementation_guidance"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Provide specific technical guidance
+      
+      Create implementation guidance for development teams:
+      
+      **All Generated Issues:** {{ai_generated.github_issues_creation}}
+      **Prioritization Plan:** {{ai_generated.issue_prioritization}}
+      **Product Area:** {{product_area}}
+      
+      Provide guidance on:
+      1. **Technical approach recommendations**
+      2. **Cross-team coordination needs**
+      3. **Testing and validation strategies**
+      4. **User feedback collection plans**
+      5. **Success measurement approaches**
+      
+      **Format:**
+      
+      **🛠️ Implementation Guidance**
+      
+      **Technical Approach:**
+      • [Recommended development patterns or frameworks]
+      • [Shared components or libraries to leverage]
+      • [Code review focus areas based on research findings]
+      
+      **Cross-team Coordination:**
+      • [When design review is needed]
+      • [Content team involvement requirements]
+      • [Research team validation checkpoints]
+      
+      **Testing Strategy:**
+      • [Unit testing requirements for new features]
+      • [User acceptance testing approach]
+      • [Accessibility testing checkpoints]
+      • [Performance testing considerations]
+      
+      **User Feedback Collection:**
+      • [How to gather feedback on implemented changes]
+      • [Metrics to track post-implementation]
+      • [Research validation methods]
+      
+      **Success Measurement:**
+      • [KPIs that should improve after implementation]
+      • [User behavior metrics to monitor]
+      • [Timeline for measuring impact]
+      
+      **Risk Mitigation:**
+      • [Potential implementation challenges]
+      • [Rollback plans for major changes]
+      • [Communication plans for user-facing changes]
 
 # Auto-generated/computed variables
 auto_variables:
@@ -176,6 +300,10 @@ auto_variables:
       count_issues(ai_generated.github_issues_creation) || 0
   - p0_issues_count: |
       count_priority_issues(ai_generated.github_issues_creation, "P0") || 0
+  - p1_issues_count: |
+      count_priority_issues(ai_generated.github_issues_creation, "P1") || 0
+  - quick_wins_count: |
+      count_quick_wins(ai_generated.issue_analysis) || 0
   - current_date: |
       new Date().toISOString().split('T')[0]
   - github_file_link: |
@@ -192,7 +320,7 @@ slack_output:
   post_in_channel: true
   create_thread: true
   title_format: "🐛 GitHub Issues Generated"
-  ping_team: ["{{researcher_contact}}", "@dev-team", "@product-team"]
+  ping_team: ["{{researcher_contact}}", "@dev-team", "@product-team", "{{team_members}}"]
   interactive_elements:
     - text: "📝 Create Issues in GitHub"
       action: "create_github_issues"
@@ -200,32 +328,38 @@ slack_output:
       action: "run_research_readout"
     - text: "🎯 Stakeholder Summary"
       action: "run_stakeholder_summary"
+    - text: "👥 Generate Team Readouts"
+      action: "run_team_readouts"
     - text: "🗂️ View in GitHub"
       url: "{{github_file_link}}"
 
 output_use: |
   GitHub Issues Generator transforms research findings into development-ready tasks with proper technical context,
-  clear acceptance criteria, and appropriate prioritization for engineering teams.
+  clear acceptance criteria, and appropriate prioritization for engineering teams. Includes sprint planning
+  guidance and implementation strategies.
 
   Use this method to:
     - Convert research insights into actionable development tasks
     - Provide proper technical context for engineering teams
     - Ensure research findings directly impact product improvements
-    - Track research-to-implementation progress
+    - Track research-to-implementation progress with clear metrics
+    - Enable sprint planning based on user research priorities
 
 output_notes: |
-  Generated {{total_issues_count}} total issues with {{p0_issues_count}} critical priority items.
+  Generated {{total_issues_count}} total issues: {{p0_issues_count}} critical, {{p1_issues_count}} high priority.
+  Includes {{quick_wins_count}} quick wins for immediate implementation.
   Issues include technical implementation guidance and clear acceptance criteria.
 
 # Enhanced output template
-output_template: |
+output_format: |
   Hi dev team! 👋 I've converted our research findings from {{study_name}} into {{total_issues_count}} actionable GitHub issues ready for implementation.
 
-  @dev-team @product-team - these issues include technical context, acceptance criteria, and clear prioritization based on user impact.
+  @dev-team @product-team {{team_members}} - these issues include technical context, acceptance criteria, and clear prioritization based on user impact.
 
   📂 *Study:* {{study_name}}  
   🔗 *Research Details:* {{study_link}}
   🚨 *Critical Issues:* {{p0_issues_count}} P0 items need immediate attention
+  ⚡ *Quick Wins:* {{quick_wins_count}} issues can be completed in 1-2 days
 
   ---
 
@@ -247,35 +381,42 @@ output_template: |
 
   ---
 
-  ### 🎯 Prioritization & Implementation Plan
+  ### 🎯 Prioritization & Sprint Planning
 
   {{ai_generated.issue_prioritization}}
 
   ---
 
-  ### 🔗 Next Steps
+  ### 🛠️ Implementation Guidance
 
-  1. **Review issues** in thread below
-  2. **Create in GitHub** using the "Create Issues" button
-  3. **Assign to sprint** based on priority recommendations
-  4. **Track progress** against research findings
+  {{ai_generated.implementation_guidance}}
 
   ---
 
-  **🏷️ Tags:** `research-to-dev`, `github-issues`, `implementation-ready`, `{{product_area}}`
+  ### 🔗 Next Steps
+
+  1. **Review issues** in thread below for technical questions
+  2. **Create in GitHub** using the "Create Issues" button  
+  3. **Assign to sprints** based on priority recommendations
+  4. **Set up success metrics** to track user impact improvements
+  5. **Plan research validation** for implemented changes
+
+  ---
+
+  **🏷️ Tags:** `research-to-dev`, `github-issues`, `implementation-ready`, `{{product_area}}`, `sprint-planning`
 
   ---
 
   *Questions about implementation?* Reply in thread or contact {{researcher_contact}} for research context.
 
-  *🤖 AI-Generated Issues | Ready for GitHub Creation*
+  *🤖 AI-Generated Issues | Ready for GitHub Creation & Sprint Planning*
 
 notify:
   - role: dev_team
     action: "Research-based GitHub issues ready"
     channel: "{{study_channel}}"
-    message: "🐛 {{total_issues_count}} GitHub issues generated from {{study_name}} research. {{p0_issues_count}} critical issues need immediate attention."
+    message: "🐛 {{total_issues_count}} GitHub issues generated from {{study_name}} research. {{p0_issues_count}} critical issues need immediate attention, plus {{quick_wins_count}} quick wins available."
   - role: researcher
     action: "Issues generated"
     slack_tag: "{{researcher_contact}}"
-    message: "GitHub issues have been generated from your research and are ready for development team review."
+    message: "GitHub issues have been generated from your research and are ready for development team review with sprint planning guidance."
