@@ -490,7 +490,7 @@ output_notes: |
   Router recommendations integrated for context-aware opportunity development approach.
 
 # Enhanced output template using AI-generated content
-output_format: |
+output_template: |
   Hi team! 👋 I identified some exciting design opportunities from our AI-enhanced research analysis. Found {{num_opportunities}} key problem areas that could lead to really innovative solutions for users.
 
   {{team_members}} - these HMW questions are perfect for design workshops or ideation sessions. Would love your thoughts on which opportunities feel most promising to tackle first.
