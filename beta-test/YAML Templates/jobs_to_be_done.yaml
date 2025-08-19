@@ -500,7 +500,7 @@ persona_hinting: |
     - Immigrant navigating citizenship processes
 
 # Enhanced output template using AI-generated content
-output_format: |
+output_template: |
   Hi team! 👋 I just extracted the key jobs users are trying to get done from our AI-enhanced analysis. Found some really interesting patterns around what people are actually trying to accomplish and what's getting in their way.
 
   {{team_members}} - would love your thoughts on these jobs, especially which ones feel most urgent or where you see quick wins we could tackle.
