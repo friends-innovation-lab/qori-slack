@@ -404,8 +404,8 @@ auto_variables:
 output_options:
   default_delivery: "slack_and_file"
   slack_format: "structured"
-  file_location: "04-analysis/personas/"
-  file_name: "{{study_folder}}_personas_{{current_date}}.md"
+  path: "04-analysis/personas/"
+  filename: "{{study_folder}}_personas_{{current_date}}.md"
 
 slack_output:
   post_in_channel: true
@@ -443,7 +443,7 @@ output_notes: |
   Router recommendations integrated for context-aware persona development approach.
 
 # Enhanced output template using AI-generated content
-output_format: |
+output_template: |
   Hi team! 👋 I just created {{num_personas}} research-grounded persona(s) from our AI-enhanced analysis. Found some really clear patterns around user behaviors, goals, and frustrations that I think will help us make better decisions.
 
   {{team_members}} - would love your thoughts on these personas, especially how they connect to what we're building and where you see opportunities to better support these users.
