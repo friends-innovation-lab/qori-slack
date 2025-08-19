@@ -450,8 +450,8 @@ auto_variables:
 output_options:
   default_delivery: "slack_and_file"
   slack_format: "structured"
-  file_location: "04-analysis/jobs-to-be-done/"
-  file_name: "{{study_folder}}_jobs_to_be_done_{{current_date}}.md"
+  path: "04-analysis/jobs-to-be-done/"
+  filename: "{{study_folder}}_jobs_to_be_done_{{current_date}}.md"
 
 slack_output:
   post_in_channel: true
