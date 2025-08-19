@@ -11,4 +11,5 @@ This document explains the purpose of each folder in a typical research study di
 | **04-analysis/**     | Affinity mapping, coded transcripts, frameworks, insights mapping.         |
 | **05-findings/**     | Final reports, presentations, summary memos, quotebooks.                   |
 | **06-assets/**       | Diagrams, visuals, anonymized video clips, exportable outputs.             |
+| **07-implementation/** | Github issues, research recommendations                                  |
 | **README.md**        | A short description of the study: who, what, when, why.                    |
