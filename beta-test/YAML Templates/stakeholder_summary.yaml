@@ -1,42 +1,216 @@
 id: stakeholder_summary
 name: run_stakeholder_summary
 label: 🎯 Stakeholder Summary
-version: v1.1
+version: v2.0
 description: |
-  Compress research findings into a 1-minute read for busy stakeholders. Transform detailed insights into clear, scannable summaries with key takeaways, compelling quotes, and actionable recommendations perfect for executives and decision-makers.
+  Transform detailed research findings into executive-friendly 1-minute reads with AI-powered insight distillation.
+  Creates scannable summaries with compelling quotes, clear recommendations, and decision-ready formats 
+  optimized for busy stakeholders and leadership teams.
 
-author: CivicMind R&D
+author: Qori R&D
 created: 2025-06-26
-last_updated: 2025-07-02
+last_updated: 2025-08-19
 
 input_type: text
 input_processing: summarize_if_long
 temperature: 0.4
 precision_mode: concise | detailed
 
+# LLM Configuration
+llm_config:
+  model: "gpt-4o"
+  temperature: 0.4
+  max_tokens: 3000
+
 input_variables:
+  # Core analysis data
   - input_text           # Synthesized findings, insights, analysis results (REQUIRED)
   - study_name           # Title of study (REQUIRED)
   - researcher_contact   # Lead researcher (REQUIRED)
   - study_channel        # Where to post results (REQUIRED)
   - study_link           # Link to study folder or documentation (OPTIONAL)
   - team_members         # Who to notify/tag (OPTIONAL)
+  
+  # Context from research readout (if chained)
+  - research_readout_data # Full readout data for context (OPTIONAL)
+  - stakeholder_audience  # Specific audience (exec, product, design) (OPTIONAL)
+  
+  # Router intelligence (passed from parent analysis)
+  - file_selection_quality    # Router's file quality assessment (OPTIONAL)
+  - analysis_preview         # Router's expected outcomes (OPTIONAL)
+  - recommendations          # Router's smart suggestions (OPTIONAL)
+
+# AI GENERATION TASKS
+ai_generation_tasks:
+  # Identify audience and urgency level
+  - task_id: "audience_analysis"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Analyze the target audience and urgency level for this stakeholder summary:
+      
+      **Input Data:** {{input_text}}
+      **Study Name:** {{study_name}}
+      **Stakeholder Audience:** {{stakeholder_audience}}
+      **Router Quality:** {{file_selection_quality}}
+      
+      Identify:
+      1. **Primary audience type** (executives, product managers, design team, mixed stakeholders)
+      2. **Urgency level** (high, medium, low) based on findings severity
+      3. **Key decision points** stakeholders need to make
+      4. **Communication style** needed (formal, friendly, data-driven)
+      5. **Business impact level** of the research findings
+      
+      **Format:**
+      **Primary Audience:** [Specific stakeholder type]
+      **Urgency Level:** [High/Medium/Low] - [Reasoning based on findings severity]
+      **Key Decisions Needed:** [2-3 specific decisions stakeholders must make]
+      **Communication Style:** [Tone and approach for this audience]
+      **Business Impact:** [High/Medium/Low] - [How findings affect business goals]
+
+  # Extract top 3 insights for stakeholders
+  - task_id: "stakeholder_insights"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Focus on business impact and user outcomes
+      
+      Extract the top 3 insights most relevant for stakeholder decision-making:
+      
+      **Input Data:** {{input_text}}
+      **Audience:** {{ai_generated.audience_analysis.primary_audience}}
+      **Key Decisions:** {{ai_generated.audience_analysis.key_decisions}}
+      **Business Impact:** {{ai_generated.audience_analysis.business_impact}}
+      
+      Select insights that:
+      1. **Directly impact business goals** or user success metrics
+      2. **Require stakeholder action** or resource allocation
+      3. **Are well-supported** by research evidence
+      4. **Connect to strategic priorities** for the audience
+      5. **Have clear implications** for product direction
+      
+      **Format:**
+      **Insight 1:** [Clear, business-relevant insight with specific impact]
+      **Insight 2:** [Clear, business-relevant insight with specific impact]
+      **Insight 3:** [Clear, business-relevant insight with specific impact]
+      
+      **Examples of stakeholder-relevant insights:**
+      - "73% of users abandon applications due to unclear progress indicators, costing an estimated 2,400 lost applications monthly"
+      - "Veterans trust peer recommendations 3x more than official guidance when confused, indicating need for community features"
+      - "Current eligibility process creates 2-week delays that could be eliminated with automated verification"
+
+  # Find most compelling user quote
+  - task_id: "compelling_quote_selection"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Select quotes that emotionally resonate with stakeholders
+      
+      Select the most compelling user quote from the research data:
+      
+      **Input Data:** {{input_text}}
+      **Stakeholder Insights:** {{ai_generated.stakeholder_insights}}
+      **Target Audience:** {{ai_generated.audience_analysis.primary_audience}}
+      
+      Find a quote that:
+      1. **Illustrates user pain** or strong emotion
+      2. **Supports one of the key insights**
+      3. **Resonates with stakeholder concerns**
+      4. **Is complete and understandable** without context
+      5. **Shows real human impact** of the issues
+      6. **Motivates action** from decision-makers
+      
+      **Selection criteria:**
+      - Choose quotes that make stakeholders say "wow" or "that's concerning"
+      - Prefer emotional, specific quotes over generic feedback
+      - Ensure the quote directly relates to business decisions
+      - Select quotes that humanize the data
+      
+      **Format:**
+      **Selected Quote:** "[Complete, powerful quote from research]"
+      **Quote Context:** [Brief explanation of why this quote matters for stakeholders]
+      **Participant Context:** [P## or demographic info without identifying details]
+      **Connection to Business Impact:** [How this quote relates to business goals]
+
+  # Generate primary recommendation
+  - task_id: "primary_recommendation"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Make recommendations specific and immediately actionable
+      
+      Generate one primary recommendation for stakeholders:
+      
+      **Stakeholder Insights:** {{ai_generated.stakeholder_insights}}
+      **Audience:** {{ai_generated.audience_analysis.primary_audience}}
+      **Key Decisions:** {{ai_generated.audience_analysis.key_decisions}}
+      **Urgency Level:** {{ai_generated.audience_analysis.urgency_level}}
+      
+      Create a recommendation that:
+      1. **Addresses the highest-impact insight**
+      2. **Is specific and actionable**
+      3. **Fits stakeholder authority level**
+      4. **Has clear success metrics**
+      5. **Can be implemented in reasonable timeline**
+      6. **Addresses business impact directly**
+      
+      **Format:**
+      **Primary Recommendation:** [One clear, actionable recommendation]
+      **Business Rationale:** [Why this recommendation matters for business goals]
+      **Implementation Approach:** [2-3 specific steps to achieve it]
+      **Success Metrics:** [How to measure if it works]
+      **Timeline:** [Realistic timeframe for implementation]
+      **Resource Requirements:** [What's needed to make it happen]
+
+  # Assess evidence strength and confidence
+  - task_id: "evidence_assessment"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Assess the strength of evidence supporting the stakeholder summary:
+      
+      **Input Data:** {{input_text}}
+      **Stakeholder Insights:** {{ai_generated.stakeholder_insights}}
+      **Router Quality:** {{file_selection_quality}}
+      
+      Evaluate:
+      1. **Data quality** and participant representation
+      2. **Consistency** of findings across participants
+      3. **Evidence type** (behavioral observations, quotes, task data)
+      4. **Confidence level** for stakeholder decision-making
+      5. **Sample size adequacy** for conclusions drawn
+      
+      **Format:**
+      **Evidence Strength:** [Strong/Moderate/Limited] - [Specific reasoning]
+      **Participant Representation:** [How well participants represent target users]
+      **Finding Consistency:** [How consistent findings are across participants]
+      **Data Sources:** [Types of evidence: behavioral, interview, survey, etc.]
+      **Confidence for Decisions:** [High/Medium/Low confidence for recommended actions]
+      **Limitations:** [Any important caveats for decision-makers]
 
 # Auto-generated/computed variables
 auto_variables:
   - audience_type: |
-      # AI identifies target audience from input context
-      # Looks for stakeholder indicators, formality level
-      identify_audience_type(input_text) || "stakeholders"
+      extract_audience_type(ai_generated.audience_analysis) || "stakeholders"
   - urgency_level: |
-      # AI determines urgency from findings content
-      # Analyzes for critical issues, deadlines, impact level
-      assess_urgency_level(input_text) || "medium"
+      extract_urgency_level(ai_generated.audience_analysis) || "medium"
+  - business_impact: |
+      extract_business_impact(ai_generated.audience_analysis) || "medium"
   - current_date: |
-      # Auto-generate current date for file naming
       new Date().toISOString().split('T')[0]
   - github_file_link: |
-      # Auto-generate based on study name and date
       generate_github_link(study_name, current_date) || null
 
 # Output configuration
@@ -52,97 +226,90 @@ slack_output:
   title_format: "🎯 Stakeholder Summary"
   ping_team: ["{{researcher_contact}}", "{{team_members}}"]
   interactive_elements:
-    - text: "📋 Create Executive Readout"
-      action: "run_executive_readout"
-    - text: "📊 Generate Full Report"
-      action: "run_research_report"
+    - text: "📋 Generate Team Readouts"
+      action: "run_team_readouts"
+    - text: "💡 Create Insight Cards"
+      action: "run_insight_card"
+    - text: "🐛 Extract GitHub Issues"
+      action: "run_github_issues_generator"
+    - text: "📊 View Full Research Readout"
+      action: "run_research_readout"
     - text: "🗂️ View in GitHub"
       url: "{{github_file_link}}"
 
 output_use: |
-  CivicMind Stakeholder Summary transforms complex research findings into executive-friendly formats that busy decision-makers can quickly scan and act upon.
+  Enhanced Stakeholder Summary uses AI analysis to distill complex research findings into decision-ready 
+  formats for executives and busy stakeholders. Optimizes insights, quotes, and recommendations for 
+  maximum impact and clarity with business-focused context.
 
   Use this method to:
-    - Distill detailed research into digestible, scannable summaries
-    - Communicate key insights to executives and stakeholders efficiently
+    - Transform detailed research into executive-friendly summaries
+    - Communicate key insights to decision-makers efficiently
     - Provide clear recommendations with supporting evidence
     - Enable quick decision-making without losing research rigor
+    - Connect research findings to business impact and strategic goals
 
 output_notes: |
-  Target audience ({{audience_type}}) identified from content analysis.
-  Urgency level ({{urgency_level}}) determined from findings.
-  Write for busy stakeholders using a plain, professional tone at a 10th-grade level.
-  Do not explain methodology. Avoid business buzzwords, passive voice, and em-dashes.
-  Keep content brief and scannable with clear hierarchy.
-  Use Slack formatting: *text* for bold, > for quotes, bullet points for easy scanning.
+  Target audience ({{audience_type}}) and urgency level ({{urgency_level}}) identified from AI analysis.
+  Business impact level: {{business_impact}} based on findings assessment.
+  Optimized for {{audience_type}} decision-making with {{urgency_level}} priority level.
 
+# Enhanced output template using AI-generated content
 output_format: |
-  Hi there! 👋 Here's a quick summary of our recent research findings from {{study_name}}. We've distilled the key insights into a 1-minute read to help inform your decisions.
+  Hi there! 👋 Here's the executive summary of our research findings from {{study_name}}. I've distilled the key insights into a 1-minute read to help inform your decisions.
 
   {{team_members}}
 
   📂 *Study:* {{study_name}}  
   🔗 *Full details:* {{study_link}}
+  📊 *Audience:* {{audience_type}} | *Urgency:* {{urgency_level}} | *Business Impact:* {{business_impact}}
 
   ---
 
-  *🎯 RESEARCH SUMMARY*
+  ## 🎯 RESEARCH SUMMARY — {{study_name}}
 
-  *What We Learned*
-  • {{insight_1}}
-  • {{insight_2}}
-  • {{insight_3}}
+  **🤖 AI-Distilled for {{audience_type}} | {{current_date}}**
 
-  *💬 What Users Are Telling Us*
-  > "{{compelling_quote}}"
+  ---
 
-  *✅ What We Recommend*
-  {{recommendation}}
+  ### 💡 What We Learned
 
-  📊 *Based on:* {{evidence_strength}}  
-  📚 *Research:* {{study_name}}  
+  {{ai_generated.stakeholder_insights}}
 
-  `Tags: {{summary_tags}}`
+  ---
+
+  ### 💬 What Users Are Telling Us
+
+  {{ai_generated.compelling_quote_selection}}
+
+  ---
+
+  ### ✅ What We Recommend
+
+  {{ai_generated.primary_recommendation}}
+
+  ---
+
+  ### 📊 Evidence Strength
+
+  {{ai_generated.evidence_assessment}}
+
+  ---
+
+  **🏷️ Tags:** `stakeholder-summary`, `{{urgency_level}}-priority`, `{{audience_type}}`, `research-insights`, `{{business_impact}}-impact`
 
   ---
 
   *Questions about these findings?* Reply here or reach out to {{researcher_contact}} for more details.
 
-prompt: |
-  You are writing a TL;DR summary for government stakeholders and executives who need to make decisions quickly.
-
-  ANALYSIS CONTEXT:
-  - Study: {{study_name}}
-  - Target audience: {{audience_type}} (AI-identified from content)
-  - Urgency level: {{urgency_level}} (AI-determined from findings)
-
-  Transform the provided research findings into a concise stakeholder summary.
-
-  Return:
-  - 3 key insights (clear, specific, actionable)
-  - 1 compelling quote from research that illustrates user needs
-  - 1 high-level recommendation (concrete next step or action)
-  - Evidence strength indicator
-  - Relevant tags for categorization
-
-  Requirements:
-  - Use a plain, professional tone at a 10th-grade reading level
-  - Do not explain research methodology or process
-  - Avoid business buzzwords, passive voice, and em-dashes
-  - Keep insights brief and scannable
-  - Make recommendations specific and actionable
-  - Choose quotes that powerfully illustrate user experience
-
-  Focus on outcomes and impact that matter to decision-makers: user needs, business implications, policy impacts, resource requirements.
-
-  Format for Slack using *text* for bold, > for quotes, bullet points, and clear spacing.
+  *🤖 AI-Generated Summary | Optimized for {{audience_type}} Decision-Making*
 
 notify:
   - role: stakeholders
-    action: "Research summary delivered"
+    action: "AI-enhanced stakeholder summary delivered"
     channel: "{{study_channel}}"
-    message: "Research summary for {{study_name}} is now available. Key findings and recommendations included."
+    message: "🎯 Stakeholder summary for {{study_name}} is ready. Key insights optimized for {{audience_type}} with {{urgency_level}} priority and {{business_impact}} business impact."
   - role: researcher
     action: "Summary delivered"
     slack_tag: "{{researcher_contact}}"
-    message: "Your stakeholder summary has been delivered to {{study_channel}} and saved to GitHub."
+    message: "Your AI-enhanced stakeholder summary has been delivered to {{study_channel}} and saved to GitHub."
