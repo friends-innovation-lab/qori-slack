@@ -450,7 +450,7 @@ output_notes: |
   Analysis confidence: {{confidence_level}} based on router file selection assessment.
 
 # Enhanced output template using AI-generated content
-output_format: |
+output_template: |
   Hi team! 👋 I just extracted the key usability issues from our AI-enhanced testing analysis. Found {{num_issues}} specific UX problems that are impacting users, with most issues in {{primary_problem_area}}.
 
   {{team_members}} - these issues are ready for prioritization and fixing. The severity levels should help us tackle the most critical problems first.
