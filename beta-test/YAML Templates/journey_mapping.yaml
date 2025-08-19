@@ -376,8 +376,8 @@ auto_variables:
 output_options:
   default_delivery: "slack_and_file"
   slack_format: "structured"
-  file_location: "04-analysis/journey-mapping/"
-  file_name: "{{study_folder}}_journey_mapping_{{current_date}}.md"
+  path: "04-analysis/journey-mapping/"
+  filename: "{{study_folder}}_journey_mapping_{{current_date}}.md"
 
 slack_output:
   post_in_channel: true
