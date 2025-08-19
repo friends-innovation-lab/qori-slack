@@ -248,7 +248,7 @@ output_options:
   default_delivery: "slack_only"  # Real-time creation updates
   slack_format: "interactive"
   save_results: true
-  file_location: "06-implementation/"
+  file_location: "07-implementation/"
   file_name: "github_issues_created_{{study_name_slug}}_{{current_date}}.json"
 
 slack_output:
