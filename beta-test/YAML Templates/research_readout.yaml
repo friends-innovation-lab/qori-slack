@@ -1,51 +1,276 @@
 id: research_readout
 name: run_research_readout
 label: 📊 Research Readout
-version: v2.0
+version: v3.0
 description: |
-  Generate comprehensive VA-aligned research readouts with structured findings, participant details, recommendations, and next steps. Creates formal documentation for research teams, stakeholders, and project archives.
+  Generate comprehensive VA-aligned research readouts with AI-synthesized findings, participant analysis, 
+  and actionable recommendations. Creates formal documentation with intelligent insights extraction and 
+  stakeholder-ready formatting for research teams and project archives.
 
 author: Qori R&D
 created: 2025-06-26
-last_updated: 2025-07-02
+last_updated: 2025-08-19
 
 input_type: text
 input_processing: summarize_if_long
 temperature: 0.4
 precision_mode: concise | detailed
 
+# LLM Configuration
+llm_config:
+  model: "gpt-4o"
+  temperature: 0.4
+  max_tokens: 6000
+
 input_variables:
+  # Core analysis data
   - input_text           # Research findings, insights, session notes (REQUIRED)
   - study_name           # Title of study (REQUIRED)
   - researcher_contact   # Lead researcher (REQUIRED)
   - study_channel        # Where to post results (REQUIRED)
   - study_link           # Link to study folder or documentation (OPTIONAL)
   - team_members         # Who to notify/tag (OPTIONAL)
+  
+  # Router intelligence (from synthesize_router)
+  - file_selection_quality    # Router's file quality assessment (OPTIONAL)
+  - analysis_preview         # Router's expected outcomes (OPTIONAL)
+  - recommendations          # Router's smart suggestions (OPTIONAL)
+  - collaboration_plan       # Router's team coordination plan (OPTIONAL)
+  - routing_validation       # Router's methodology validation (OPTIONAL)
+  - selected_files_summary   # Summary of files used (OPTIONAL)
+  - data_combination_strategy # How files were combined (OPTIONAL)
+  
+  # Router metadata
+  - router_version           # Router version for tracking (OPTIONAL)
+  - preprocessing_timestamp  # When router processed (OPTIONAL)
+  - analysis_id             # Unique analysis identifier (OPTIONAL)
 
-# Auto-generated/computed variables
+# AI GENERATION TASKS
+ai_generation_tasks:
+  # Extract study context and methodology
+  - task_id: "study_context_analysis"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Analyze the research context and methodology from the provided data:
+      
+      **Input Data:** {{input_text}}
+      **Study Name:** {{study_name}}
+      **Router Assessment:** {{file_selection_quality}}
+      
+      Extract and identify:
+      1. **Research methodology type** (usability testing, interviews, surveys, etc.)
+      2. **Participant count** and demographics if available
+      3. **Session duration** estimates
+      4. **Product area** being researched
+      5. **Research goals** (3-4 clear objectives)
+      6. **Research questions** (3-4 specific questions addressed)
+      
+      **Format:**
+      **Methodology:** [Specific type identified from data]
+      **Participants:** [Count and brief demographics]
+      **Session Duration:** [Estimated length per session]
+      **Product Area:** [Specific VA service or digital area]
+      **Research Goals:**
+      • [Goal 1 - specific and measurable]
+      • [Goal 2 - specific and measurable]
+      • [Goal 3 - specific and measurable]
+      **Research Questions:**
+      • [Question 1 - specific inquiry]
+      • [Question 2 - specific inquiry]
+      • [Question 3 - specific inquiry]
+
+  # Generate participant overview table
+  - task_id: "participant_analysis"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Use participant aliases (P01, P02) for privacy
+      
+      Create a participant overview table from the research data:
+      
+      **Input Data:** {{input_text}}
+      **Study Context:** {{ai_generated.study_context_analysis}}
+      
+      Extract participant information and create a structured table showing:
+      - Participant ID (P01, P02, etc.)
+      - Demographics (age range, role, experience level)
+      - Session status (completed, rescheduled, etc.)
+      - Key characteristics relevant to study
+      
+      **Format as markdown table:**
+      | Participant | Demographics | Session Status | Key Notes |
+      |-------------|--------------|----------------|-----------|
+      | P01 | [Age/role info] | Completed | [Relevant context] |
+      | P02 | [Age/role info] | Completed | [Relevant context] |
+      
+      Include summary statistics:
+      **Total Participants:** [Count]
+      **Completion Rate:** [Percentage]
+      **Participant Types:** [Brief breakdown of user types]
+
+  # Extract and prioritize key insights
+  - task_id: "key_insights_extraction"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Make insights specific and actionable
+      
+      Extract 3-5 key insights from the research data:
+      
+      **Input Data:** {{input_text}}
+      **Study Goals:** {{ai_generated.study_context_analysis.goals}}
+      
+      Identify the most important insights that directly address research goals:
+      
+      1. **Prioritize insights** that are well-supported by evidence
+      2. **Focus on user tensions** and specific behaviors observed
+      3. **Include impact level** (high/medium/low) for each insight
+      4. **Make insights actionable** for design and product decisions
+      
+      **Format:**
+      **Key Insight 1:** [Specific, actionable insight]
+      **Key Insight 2:** [Specific, actionable insight]  
+      **Key Insight 3:** [Specific, actionable insight]
+      **Key Insight 4:** [Specific, actionable insight] (if supported by data)
+      **Key Insight 5:** [Specific, actionable insight] (if supported by data)
+      
+      **Examples of good insights:**
+      - "Veterans abandon applications when they can't save progress and return later"
+      - "Users create workarounds when official processes require information they don't have"
+      - "People assume government websites will fail based on past experiences"
+
+  # Generate detailed findings with evidence
+  - task_id: "detailed_findings_analysis"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Include specific quotes and behavioral evidence
+      
+      Create detailed findings with supporting evidence:
+      
+      **Input Data:** {{input_text}}
+      **Key Insights:** {{ai_generated.key_insights_extraction}}
+      **Methodology:** {{ai_generated.study_context_analysis.methodology}}
+      
+      For each key insight, develop a detailed finding that includes:
+      1. **Clear title** that summarizes the finding
+      2. **Detailed description** of what was observed
+      3. **Supporting quotes** from participants (2-3 per finding)
+      4. **Behavioral evidence** (what users did, not just what they said)
+      5. **Specific recommendations** (2-3 actionable next steps)
+      6. **Impact assessment** (how this affects user success)
+      
+      **Format for each finding:**
+      ## Finding [X]: [Clear, specific title]
+      
+      **What we observed:** [Detailed description of the pattern or issue]
+      
+      **Supporting evidence:**
+      > "[Complete quote from participant]" - P[X]
+      > "[Complete quote from participant]" - P[X]
+      > "[Complete quote from participant]" - P[X]
+      
+      **Behavioral indicators:** [What users actually did during sessions]
+      
+      **Recommendations:**
+      • [Specific action 1]
+      • [Specific action 2]  
+      • [Specific action 3]
+      
+      **Impact:** [How this affects user success and business goals]
+
+  # Create findings summary table
+  - task_id: "findings_summary_table"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Create a summary table of all findings:
+      
+      **Detailed Findings:** {{ai_generated.detailed_findings_analysis}}
+      
+      Summarize each finding in a scannable table format showing:
+      - Finding title
+      - Severity/Impact level
+      - Frequency (how often observed)
+      - Priority for action
+      
+      **Format as markdown table:**
+      | Finding | Severity | Frequency | Priority | Quick Summary |
+      |---------|----------|-----------|----------|---------------|
+      | [Title 1] | High/Med/Low | [X/Y participants] | High/Med/Low | [One-line summary] |
+      | [Title 2] | High/Med/Low | [X/Y participants] | High/Med/Low | [One-line summary] |
+      
+      **Severity Criteria:**
+      - **High:** Prevents task completion or causes significant frustration
+      - **Medium:** Creates friction but users can work around
+      - **Low:** Minor inconvenience with minimal impact
+
+  # Generate actionable next steps
+  - task_id: "next_steps_generation"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      - Make next steps specific and assignable
+      
+      Generate actionable next steps based on findings:
+      
+      **Findings:** {{ai_generated.detailed_findings_analysis}}
+      **Router Recommendations:** {{recommendations}}
+      
+      Create 4-6 specific next steps that address the findings:
+      
+      1. **Immediate actions** (next 2 weeks)
+      2. **Short-term initiatives** (next 1-2 months)
+      3. **Research follow-ups** (additional studies needed)
+      4. **Cross-team coordination** (who needs to be involved)
+      
+      **Format:**
+      **Immediate Actions (Next 2 Weeks):**
+      • [Specific action with owner/team]
+      • [Specific action with owner/team]
+      
+      **Short-term Initiatives (1-2 Months):**
+      • [Initiative with timeline and owner]
+      • [Initiative with timeline and owner]
+      
+      **Research Follow-ups:**
+      • [Additional research needed with rationale]
+      • [Validation studies or deeper dives]
+      
+      **Cross-team Coordination:**
+      • [Who needs to be involved and why]
+      • [Stakeholder communication plan]
+
+# Auto-generated/computed variables (enhanced with AI analysis)
 auto_variables:
   - methodology_type: |
-      # AI identifies research methodology from input content
-      # Usability Testing, Discovery Interviews, Survey Analysis, etc.
-      identify_methodology_type(input_text) || "Usability Testing"
+      extract_methodology(ai_generated.study_context_analysis) || "Usability Testing"
   - participant_count: |
-      # AI determines number of participants from session data
-      estimate_participant_count(input_text) || "multiple participants"
+      extract_participant_count(ai_generated.participant_analysis) || "multiple participants"
   - finding_count: |
-      # AI analyzes complexity to determine optimal finding count
-      # Default: 3, Range: 2-5 based on data richness
-      analyze_finding_complexity(input_text) || 3
+      count_findings(ai_generated.key_insights_extraction) || 3
   - session_duration: |
-      # AI estimates session length from methodology and scope
-      estimate_session_duration(input_text) || "60 minutes"
+      extract_session_duration(ai_generated.study_context_analysis) || "60 minutes"
   - product_area: |
-      # AI identifies product area from study context
-      identify_product_area(input_text, study_name) || "Digital Services"
+      extract_product_area(ai_generated.study_context_analysis) || "Digital Services"
   - current_date: |
-      # Auto-generate current date for file naming
-      new Date().toLocaleDateString('en-US', {year: 'numeric', month: '2-digit', day: '2-digit'})
+      new Date().toISOString().split('T')[0]
   - github_file_link: |
-      # Auto-generate based on study name and date
       generate_github_link(study_name, current_date) || null
 
 # Output configuration
@@ -61,162 +286,136 @@ slack_output:
   title_format: "📊 Research Readout"
   ping_team: ["{{researcher_contact}}", "{{team_members}}"]
   interactive_elements:
-    - text: "📋 Create Stakeholder Summary"
+    - text: "🎯 Create Stakeholder Summary"
       action: "run_stakeholder_summary"
     - text: "💡 Generate Insight Cards"
       action: "run_insight_card"
+    - text: "🐛 Extract GitHub Issues"
+      action: "run_github_issues_generator"
+    - text: "👥 Team-Specific Readouts"
+      action: "run_team_readouts"
     - text: "🗂️ View in GitHub"
       url: "{{github_file_link}}"
 
 output_use: |
-  Qori Research Readout generates comprehensive, VA-compliant research documentation that captures methodology, findings, recommendations, and next steps in a structured format for formal reporting and project archives.
+  Enhanced Research Readout leverages AI analysis to create comprehensive, VA-compliant research documentation 
+  with intelligent insights extraction and stakeholder-ready formatting. Integrates router intelligence for 
+  optimal data processing and confidence assessment.
 
   Use this method to:
-    - Create formal research documentation following VA standards
-    - Provide detailed findings with supporting evidence and quotes
-    - Document methodology and participant details for transparency
-    - Generate actionable recommendations with clear next steps
+    - Generate formal research documentation with AI-synthesized insights
+    - Create structured findings with supporting evidence and quotes
+    - Provide actionable recommendations with clear next steps
     - Support research handoffs and stakeholder decision-making
 
 output_notes: |
-  Methodology type ({{methodology_type}}) and participant count ({{participant_count}}) identified from input analysis.
-  Finding count ({{finding_count}}) determined based on data complexity.
+  Methodology type ({{methodology_type}}) and participant count ({{participant_count}}) extracted from AI analysis.
+  Finding count ({{finding_count}}) determined based on insight complexity.
   Session duration ({{session_duration}}) and product area ({{product_area}}) auto-detected.
   Write in clear, professional language at 10th-grade reading level.
   Use active voice, avoid business jargon and em-dashes.
   Include specific quotes and evidence to support findings.
   Format for formal documentation with clear hierarchy and scannable structure.
 
+# Enhanced output template using AI-generated content
 output_format: |
-  Hi team! 👋 I've just completed the research readout for {{study_name}}. This includes detailed findings, participant insights, and actionable recommendations for the team.
+  Hi team! 👋 I've completed the comprehensive research readout for {{study_name}}. This includes AI-synthesized findings, participant insights, and actionable recommendations ready for stakeholder review.
 
-  {{team_members}} - this readout is ready for stakeholder review and contains everything needed for the next phase of decision-making.
+  {{team_members}} - this readout contains {{finding_count}} key findings with detailed evidence and recommendations.
 
   📂 *Study:* {{study_name}}  
   🔗 *Full details:* {{study_link}}
 
   ---
 
-  # 📊 Usability Readout – {{study_name}}
+  # 📊 Research Readout — {{study_name}}
 
-  **Product Area:** {{product_area}}  
-  **Team:** {{researcher_contact}}  
-  **Date:** {{current_date}}  
-  **Research Lead:** {{researcher_contact}}  
-  **Methodology:** {{methodology_type}}  
-  **Participants:** {{participant_count}}  
+  **🤖 AI-Enhanced Analysis Complete**
+
+  {{ai_generated.study_context_analysis}}
+
+  **📊 Router Quality Assessment:** {{file_selection_quality}}
+  **🕐 Analysis Date:** {{current_date}}
 
   ---
 
   ## 🔍 Key Insights Summary
 
-  {{key_insights_list}}
-
-  ---
-
-  ## 🎯 Research Goals
-
-  {{research_goals}}
-
-  ---
-
-  ## ❓ Research Questions
-
-  {{research_questions}}
-
-  ---
-
-  ## 🧪 Methodology
-
-  - **Type:** {{methodology_type}}  
-  - **Session Length:** {{session_duration}}  
-  - **Platform:** Remote moderated sessions  
-  - **Tools:** Slack, GitHub, transcription tools  
+  {{ai_generated.key_insights_extraction}}
 
   ---
 
   ## 👥 Participant Overview
 
-  {{participant_table}}
+  {{ai_generated.participant_analysis}}
 
   ---
 
   ## 🧠 Detailed Findings & Recommendations
 
-  {{detailed_findings}}
+  {{ai_generated.detailed_findings_analysis}}
 
   ---
 
-  ## 📊 Summary Table
+  ## 📊 Findings Summary Table
 
-  {{findings_summary_table}}
-
-  ---
-
-  ## 📎 Linked Artifacts
-
-  - [Study Documentation]({{study_link}})
-  - [Research Notes](../data/notes)
-  - [GitHub Issues](https://github.com/department-of-veterans-affairs/va.gov-team/issues)
+  {{ai_generated.findings_summary_table}}
 
   ---
 
   ## ✅ Next Steps
 
-  {{next_steps}}
+  {{ai_generated.next_steps_generation}}
+
+  ---
+
+  ## 🔗 Linked Artifacts
+
+  - [Study Documentation]({{study_link}})
+  - [Research Notes](../04-analysis/)
+  - [GitHub Issues](https://github.com/department-of-veterans-affairs/va.gov-team/issues)
 
   ---
 
   ## 🏷️ Tags
 
-  `va`, `{{methodology_type | lower | replace(" ", "-")}}`, `research-readout`, `{{product_area | lower | replace(" ", "-")}}`, `civicmind`
+  `va`, `{{methodology_type | lower | replace(" ", "-")}}`, `research-readout`, `{{product_area | lower | replace(" ", "-")}}`, `qori`
 
   ---
 
   *Questions about these findings?* Reply in thread or contact {{researcher_contact}} for detailed discussion.
 
+  *🤖 AI-Generated Analysis | Router: {{router_version}} | Analysis ID: {{analysis_id}}*
+
+# Updated prompt to use AI-generated content
 prompt: |
   You are a senior UX researcher creating a comprehensive VA-compliant research readout for formal documentation and stakeholder review.
 
   ANALYSIS CONTEXT:
   - Study: {{study_name}}
-  - Methodology: {{methodology_type}} (AI-identified from input)
-  - Participants: {{participant_count}} (AI-estimated from data)
+  - Methodology: {{methodology_type}} (AI-extracted from analysis)
+  - Participants: {{participant_count}} (AI-identified from data)
   - Findings: {{finding_count}} (AI-determined from complexity)
   - Product area: {{product_area}} (AI-identified from context)
 
-  Create a structured research readout that includes:
+  The AI analysis tasks have already extracted:
+  - Study context and methodology details
+  - Participant overview and demographics
+  - Key insights with supporting evidence
+  - Detailed findings with quotes and recommendations
+  - Summary table with severity and frequency
+  - Actionable next steps with timelines
 
-  1. **Key Insights List** - {{finding_count}} high-level insights with clear titles
-  2. **Research Goals** - 3-4 goals based on study objectives
-  3. **Research Questions** - 3-4 specific questions the research addressed
-  4. **Participant Table** - Structured table with participant details (use aliases for privacy)
-  5. **Detailed Findings** - {{finding_count}} findings with:
-     - Clear title and summary
-     - Supporting evidence and quotes
-     - Specific recommendations
-  6. **Findings Summary Table** - Tabular view with severity and frequency
-  7. **Next Steps** - 3-5 actionable recommendations for the team
+  Your role is to ensure the AI-generated content is properly formatted, flows logically, and meets VA research standards for formal documentation and stakeholder review.
 
-  Requirements:
-  - Follow VA research standards and documentation practices
-  - Use clear, professional language at 10th-grade reading level
-  - Include specific quotes to support findings
-  - Make recommendations actionable and specific
-  - Use participant aliases (P01, P02) for privacy
-  - Avoid business jargon, passive voice, and em-dashes
-  - Structure for formal review and decision-making
-
-  Focus on creating documentation that enables stakeholders to understand research outcomes and make informed decisions about next steps.
-
-  Format using markdown structure with clear headings, tables, and bullet points for professional readability.
+  Focus on creating professional documentation that enables stakeholders to understand research outcomes and make informed decisions about next steps.
 
 notify:
   - role: research_team
-    action: "Research readout completed"
+    action: "AI-enhanced research readout completed"
     channel: "{{study_channel}}"
-    message: "📊 Research readout for {{study_name}} is complete. {{finding_count}} key findings with detailed recommendations ready for review."
+    message: "📊 Research readout for {{study_name}} complete. {{finding_count}} key findings with AI-synthesized insights ready for review."
   - role: researcher
     action: "Readout delivered"
     slack_tag: "{{researcher_contact}}"
-    message: "Your research readout has been posted to {{study_channel}} and saved to GitHub for stakeholder review."
+    message: "Your AI-enhanced research readout has been posted to {{study_channel}} and saved to GitHub for stakeholder review."
