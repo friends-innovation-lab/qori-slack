@@ -23,17 +23,24 @@ llm_config:
   max_tokens: 3000
 
 input_variables:
-  # Core analysis data
-  - input_text           # Synthesized findings, insights, analysis results (REQUIRED)
+  # ENHANCED FILE INPUT OPTIONS (inherited from research readout)
+  - research_readout_data # Full readout data for context (OPTIONAL)
+  - stakeholder_audience  # Specific audience (exec, product, design) (OPTIONAL)
+  
+  # Core analysis data (backward compatible)
+  - input_text           # Synthesized findings, insights, analysis results (OPTIONAL if readout_data provided)
   - study_name           # Title of study (REQUIRED)
   - researcher_contact   # Lead researcher (REQUIRED)
   - study_channel        # Where to post results (REQUIRED)
   - study_link           # Link to study folder or documentation (OPTIONAL)
   - team_members         # Who to notify/tag (OPTIONAL)
   
-  # Context from research readout (if chained)
-  - research_readout_data # Full readout data for context (OPTIONAL)
-  - stakeholder_audience  # Specific audience (exec, product, design) (OPTIONAL)
+  # File processing context (passed from research readout)
+  - file_quality_score    # Quality of source files (OPTIONAL)
+  - data_sources         # What data sources were used (OPTIONAL)
+  - participant_count    # Number of participants (OPTIONAL)
+  - session_count        # Number of sessions (OPTIONAL)
+  - completion_rate      # Participant completion rate (OPTIONAL)
   
   # Router intelligence (passed from parent analysis)
   - file_selection_quality    # Router's file quality assessment (OPTIONAL)
@@ -52,10 +59,15 @@ ai_generation_tasks:
       
       Analyze the target audience and urgency level for this stakeholder summary:
       
+      **Research Readout Data:** {{research_readout_data}}
       **Input Data:** {{input_text}}
       **Study Name:** {{study_name}}
       **Stakeholder Audience:** {{stakeholder_audience}}
+      **File Quality Score:** {{file_quality_score}}
+      **Data Sources:** {{data_sources}}
       **Router Quality:** {{file_selection_quality}}
+      **Participant Count:** {{participant_count}}
+      **Completion Rate:** {{completion_rate}}
       
       Identify:
       1. **Primary audience type** (executives, product managers, design team, mixed stakeholders)
@@ -63,6 +75,7 @@ ai_generation_tasks:
       3. **Key decision points** stakeholders need to make
       4. **Communication style** needed (formal, friendly, data-driven)
       5. **Business impact level** of the research findings
+      6. **Confidence level** based on data quality and participant coverage
       
       **Format:**
       **Primary Audience:** [Specific stakeholder type]
@@ -70,6 +83,7 @@ ai_generation_tasks:
       **Key Decisions Needed:** [2-3 specific decisions stakeholders must make]
       **Communication Style:** [Tone and approach for this audience]
       **Business Impact:** [High/Medium/Low] - [How findings affect business goals]
+      **Data Confidence:** [High/Medium/Low] - [Based on file quality and participant coverage]
 
   # Extract top 3 insights for stakeholders
   - task_id: "stakeholder_insights"
