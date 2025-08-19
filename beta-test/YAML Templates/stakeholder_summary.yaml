@@ -242,8 +242,6 @@ slack_output:
   interactive_elements:
     - text: "📋 Generate Team Readouts"
       action: "run_team_readouts"
-    - text: "💡 Create Insight Cards"
-      action: "run_insight_card"
     - text: "🐛 Extract GitHub Issues"
       action: "run_github_issues_generator"
     - text: "📊 View Full Research Readout"
