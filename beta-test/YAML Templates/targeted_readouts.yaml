@@ -1,0 +1,456 @@
+id: targeted_readouts
+name: run_targeted_readouts
+label: 🎯 Targeted Readouts
+version: v2.0
+description: |
+  Generate customized research readouts for any audience - from technical teams to executive stakeholders.
+  Automatically adapts content, tone, and recommendations based on target audience needs and responsibilities.
+  Combines team-specific implementation guidance with stakeholder decision-making insights.
+  
+  Includes specialized Congressional Briefing format for VA's Congressional oversight and reporting 
+  requirements (supports compliance with bills like S.423 and other Congressional mandates).
+
+author: Qori R&D
+created: 2025-08-19
+last_updated: 2025-08-19
+
+input_type: text
+input_processing: summarize_if_long
+temperature: 0.4
+precision_mode: detailed
+
+# LLM Configuration
+llm_config:
+  model: "gpt-4o"
+  temperature: 0.4
+  max_tokens: 4000
+
+input_variables:
+  # Core readout configuration
+  - research_folder_path  # Path to research folder in GitHub (REQUIRED)
+  - target_audience      # Who this readout is for (REQUIRED)
+  - study_name          # Title of study (REQUIRED)
+  - researcher_contact  # Lead researcher (REQUIRED)
+  - study_channel       # Where to post results (REQUIRED)
+  
+  # Context and data sources
+  - research_readout_data # Full readout data for context (OPTIONAL)
+  - input_text           # Research findings if not using folder (OPTIONAL)
+  - study_link          # Link to study documentation (OPTIONAL)
+  - team_members        # Specific people to notify (OPTIONAL)
+  
+  # Congressional context (for congressional_briefing audience)
+  - congressional_mandate # Specific mandate or bill this research addresses (OPTIONAL)
+  - oversight_committee  # Committee requesting oversight information (OPTIONAL)
+  - reporting_deadline   # When Congress expects updates (OPTIONAL)
+  
+  # Auto-detected from folder (if provided)
+  - detected_files      # Files found in research folder (AUTO-GENERATED)
+  - file_quality_score  # Quality assessment of files (AUTO-GENERATED)
+  - participant_count   # Number of participants detected (AUTO-GENERATED)
+  - session_count       # Number of sessions detected (AUTO-GENERATED)
+
+# Audience type detection and routing
+audience_routing:
+  team_audiences:
+    - "design"
+    - "engineering" 
+    - "content"
+    - "product"
+    - "accessibility"
+  
+  stakeholder_audiences:
+    - "executive"
+    - "product_leadership"
+    - "design_leadership"
+    - "congressional_briefing"
+    - "mixed_stakeholders"
+
+# AI GENERATION TASKS
+ai_generation_tasks:
+  # Determine audience type and content strategy
+  - task_id: "audience_strategy"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Analyze the target audience and determine content strategy:
+      
+      **Target Audience:** {{target_audience}}
+      **Study Context:** {{study_name}}
+      **Research Data:** {{input_text}} {{research_readout_data}}
+      **File Quality:** {{file_quality_score}}
+      **Participant Count:** {{participant_count}}
+      
+      Determine:
+      1. **Audience Category** (team vs stakeholder)
+      2. **Content Focus** (implementation vs decision-making)
+      3. **Communication Style** (technical vs business-focused)
+      4. **Key Priorities** for this audience
+      5. **Success Metrics** they care about
+      
+      **Team Audiences** (design, engineering, content, product, accessibility):
+      - Focus: Implementation guidance, technical solutions, workflows
+      - Style: Detailed, actionable, process-oriented
+      - Priorities: User problems they can solve directly
+      
+      **Stakeholder Audiences** (executive, leadership, congressional):
+      - Focus: Business impact, decisions needed, resource allocation, veteran outcomes
+      - Style: Concise, strategic, outcome-oriented, accountability-focused
+      - Priorities: Business goals, user success metrics, compliance, taxpayer value
+      
+      **Congressional Briefing Specific Requirements:**
+      - Veteran impact metrics and measurable outcomes
+      - Taxpayer ROI and resource justification  
+      - Compliance with veteran-focused legislation
+      - Systemic issues identified and solutions implemented
+      - Evidence-based improvements to veteran services
+      - Transparency about challenges and mitigation strategies
+      
+      **Format:**
+      **Audience Category:** [team/stakeholder]
+      **Content Focus:** [implementation/decision-making]
+      **Communication Style:** [technical/business-focused]
+      **Key Priorities:** [What this audience cares about most]
+      **Recommended Approach:** [How to structure content for maximum impact]
+
+  # Generate audience-specific insights (conditional)
+  - task_id: "audience_insights"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Generate insights specifically tailored to {{target_audience}}:
+      
+      **Research Data:** {{input_text}} {{research_readout_data}}
+      **Audience Strategy:** {{ai_generated.audience_strategy}}
+      **Target Audience:** {{target_audience}}
+      
+      # CONDITIONAL CONTENT BASED ON AUDIENCE TYPE
+      
+      **IF TEAM AUDIENCE (design, engineering, content, product, accessibility):**
+      
+      Extract 3-5 insights with implementation focus:
+      
+      **Team-Specific Focus Areas:**
+      - **Design:** Interface usability, interaction problems, accessibility barriers, design system needs
+      - **Engineering:** Technical requirements, performance issues, bug reproduction, API design
+      - **Content:** Copy clarity, help text effectiveness, error messages, voice/tone
+      - **Product:** Feature prioritization, user needs vs business goals, success metrics, roadmap impact
+      - **Accessibility:** WCAG compliance, assistive technology, inclusive design, testing requirements
+      
+      **Format for each insight:**
+      **{{target_audience}} Insight [X]: [Implementation-focused insight]**
+      
+      **Evidence:** [Quotes, behaviors, data supporting this]
+      **What this means for {{target_audience}}:** [Direct work implications]
+      **Recommended Actions:**
+      • [Specific action 1]
+      • [Specific action 2] 
+      • [Specific action 3]
+      **Priority:** [High/Medium/Low] - [Impact and effort reasoning]
+      **Success Metrics:** [How to measure improvement]
+      **Dependencies:** [What needed from other teams]
+      
+      ---
+      
+      **IF STAKEHOLDER AUDIENCE (executive, leadership, congressional):**
+      
+      Extract 3 business-focused insights:
+      
+      **FOR CONGRESSIONAL BRIEFING AUDIENCE:**
+      Focus on veteran outcomes, accountability, and systemic improvements:
+      
+      **Format for Congressional insights:**
+      **Congressional Briefing Point [X]: [Veteran impact statement with metrics]**
+      
+      **Veteran Outcomes:** [Measurable improvements to veteran experience]
+      **Systemic Issues Identified:** [Problems found that affect veteran services]
+      **Evidence-Based Solutions:** [Research-backed improvements implemented/recommended]
+      **Taxpayer Value:** [ROI and resource efficiency gains]
+      **Legislative Compliance:** [How findings support VA's Congressional mandates]
+      **Accountability Metrics:** [Specific measures of success and improvement]
+      
+      **FOR OTHER STAKEHOLDER AUDIENCES:**
+      **Format for each insight:**
+      **Business Insight [X]: [Clear business impact statement]**
+      
+      **Supporting Evidence:** [Data, quotes, metrics that matter to leadership]
+      **Business Implications:** [How this affects company goals]
+      **Resource Requirements:** [What's needed to address this]
+      **Success Metrics:** [Business KPIs that will improve]
+      **Timeline Impact:** [Urgency and implementation timeframe]
+
+  # Generate compelling evidence (quotes for stakeholders, detailed data for teams)
+  - task_id: "compelling_evidence"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Select the most compelling evidence for {{target_audience}}:
+      
+      **Research Data:** {{input_text}} {{research_readout_data}}
+      **Audience Insights:** {{ai_generated.audience_insights}}
+      **Audience Strategy:** {{ai_generated.audience_strategy}}
+      
+      **IF TEAM AUDIENCE:**
+      Select detailed behavioral evidence and user feedback that helps with implementation:
+      - Specific user behaviors and pain points
+      - Task completion data and error patterns  
+      - Detailed quotes about interface/process issues
+      - Technical problems and workarounds users create
+      
+      **IF STAKEHOLDER AUDIENCE:**
+      Select emotionally resonant quotes and business-relevant data:
+      
+      **FOR CONGRESSIONAL BRIEFING:**
+      - Veteran quotes that demonstrate service impact and mission alignment
+      - Data showing measurable improvements to veteran outcomes  
+      - Evidence of systemic issues being identified and addressed
+      - Metrics demonstrating taxpayer value and resource efficiency
+      - Examples of VA meeting Congressional mandates and veteran needs
+      
+      **FOR OTHER STAKEHOLDER AUDIENCES:**
+      - Quotes that show user frustration or strong emotion
+      - Data that connects to business metrics (conversion, retention, etc.)
+      - Evidence that motivates resource allocation decisions
+      - User impact that relates to company mission/values
+      
+      **Format:**
+      **Primary Evidence:** [Quote, data point, or behavioral observation]
+      **Context:** [Why this matters for the audience]
+      **Connection:** [How this supports key insights]
+      **Impact:** [What happens if this isn't addressed]
+
+  # Generate actionable recommendations (tactical for teams, strategic for stakeholders)
+  - task_id: "actionable_recommendations"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Create recommendations tailored to {{target_audience}} authority and scope:
+      
+      **Audience Insights:** {{ai_generated.audience_insights}}
+      **Compelling Evidence:** {{ai_generated.compelling_evidence}}
+      **Target Audience:** {{target_audience}}
+      
+      **IF TEAM AUDIENCE:**
+      Generate 3-5 tactical recommendations they can implement:
+      
+      **Format:**
+      **{{target_audience}} Recommendation [X]: [Specific implementation action]**
+      
+      **Implementation Steps:**
+      • [Step 1 with timeline]
+      • [Step 2 with timeline]
+      • [Step 3 with timeline]
+      
+      **Resources Needed:** [Tools, time, people]
+      **Success Criteria:** [How to know it's working]
+      **Collaboration Required:** [Dependencies with other teams]
+      **Template/Example:** [Practical example or template they can use]
+      
+      ---
+      
+      **IF STAKEHOLDER AUDIENCE:**
+      Generate 1 primary strategic recommendation with supporting actions:
+      
+      **FOR CONGRESSIONAL BRIEFING:**
+      Generate systemic improvement recommendation with accountability focus:
+      
+      **Format:**
+      **Congressional Recommendation:** [Veteran-focused systemic improvement]**
+      
+      **Veteran Impact:** [How this directly improves veteran outcomes and experience]
+      **Systemic Improvement:** [How this addresses broader VA service delivery issues]
+      **Implementation Plan:** [Specific steps, timeline, and accountability measures]
+      **Resource Justification:** [Why this investment serves veterans and taxpayers effectively]
+      **Success Metrics:** [Measurable veteran outcomes and service improvements]
+      **Legislative Alignment:** [How this supports Congressional mandates and VA mission]
+      **Risk Mitigation:** [Challenges identified and mitigation strategies]
+      **Reporting Schedule:** [How progress will be measured and reported to Congress]
+      
+      **FOR OTHER STAKEHOLDER AUDIENCES:**
+      **Format:**
+      **Primary Recommendation:** [High-level strategic action]
+      
+      **Business Rationale:** [Why this matters for company goals]
+      **Implementation Approach:** [2-3 key steps to achieve it]
+      **Resource Requirements:** [Budget, people, timeline]
+      **Success Metrics:** [Business KPIs to track]
+      **Risk Mitigation:** [What could go wrong and how to prevent it]
+      **Timeline:** [Realistic implementation schedule]
+
+  # Generate audience-appropriate deliverables
+  - task_id: "audience_deliverables"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Create ready-to-use deliverables for {{target_audience}}:
+      
+      **Recommendations:** {{ai_generated.actionable_recommendations}}
+      **Target Audience:** {{target_audience}}
+      
+      **IF TEAM AUDIENCE:**
+      Create practical implementation tools:
+      
+      **Ready-to-Use Templates:**
+      [2-3 specific templates this team can use immediately]
+      
+      **Implementation Checklists:**
+      [Step-by-step checklists for their most important actions]
+      
+      **Quality Criteria:**
+      [How to know if their work successfully addresses user needs]
+      
+      **Communication Templates:**
+      [Templates for updating leadership on progress]
+      
+      ---
+      
+      **IF STAKEHOLDER AUDIENCE:**
+      Create decision-making tools:
+      
+      **FOR CONGRESSIONAL BRIEFING:**
+      Create oversight and accountability tools:
+      
+      **Congressional Oversight Package:**
+      [Ready-to-use materials for Congressional reporting and briefings]
+      
+      **Veteran Outcome Dashboard:**
+      [Metrics showing measurable improvements to veteran experience]
+      
+      **Accountability Framework:**
+      [How progress will be tracked, measured, and reported to Congress]
+      
+      **Legislative Compliance Report:**
+      [How research findings support Congressional mandates and VA mission]
+      
+      **Taxpayer Value Documentation:**
+      [ROI analysis and resource efficiency improvements]
+      
+      **FOR OTHER STAKEHOLDER AUDIENCES:**
+      **Decision Framework:**
+      [How to prioritize the recommended actions]
+      
+      **Resource Planning:**
+      [What teams, budget, timeline needed]
+      
+      **Success Dashboard:**
+      [Key metrics to track progress]
+      
+      **Stakeholder Communication:**
+      [How to communicate progress to other leaders]
+
+# Auto-generated/computed variables
+auto_variables:
+  - audience_category: |
+      determine_audience_category(target_audience) || "team"
+  - content_focus: |
+      extract_content_focus(ai_generated.audience_strategy) || "implementation"
+  - current_date: |
+      new Date().toISOString().split('T')[0]
+  - github_file_link: |
+      generate_github_link(study_name, current_date, target_audience) || null
+
+# Output configuration
+output_options:
+  default_delivery: "slack_and_file"
+  slack_format: "structured"
+  file_location: "05-findings/"
+  file_name: "{{target_audience}}_readout_{{study_name_slug}}_{{current_date}}.md"
+
+slack_output:
+  post_in_channel: true
+  create_thread: true
+  title_format: "🎯 {{target_audience}} Readout"
+  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
+  interactive_elements:
+    - text: "📊 View Full Research Readout"
+      action: "run_research_readout"
+    - text: "🛠 Generate GitHub Issues"
+      action: "run_github_issues_generator"
+    - text: "🎯 Generate Another Targeted Readout"
+      action: "run_targeted_readouts"
+    - text: "🗂️ View in GitHub"
+      url: "{{github_file_link}}"
+
+# Conditional output template based on audience type
+output_format: |
+  Hi {{target_audience}}! 👋 I've created a customized readout from our {{study_name}} research with insights and actions specifically relevant to your {{content_focus}} needs.
+
+  {{team_members}}
+
+  📂 *Study:* {{study_name}}  
+  📁 *Research Folder:* {{research_folder_path}}
+  🎯 *Audience:* {{target_audience}} ({{audience_category}})
+
+  ---
+
+  ## 🎯 {{target_audience}} READOUT — {{study_name}}
+
+  **🤖 AI-Customized for {{target_audience}} | {{current_date}}**
+
+  ---
+
+  ### 💡 Key Insights for {{target_audience}}
+
+  {{ai_generated.audience_insights}}
+
+  ---
+
+  ### 📊 Compelling Evidence
+
+  {{ai_generated.compelling_evidence}}
+
+  ---
+
+  ### ✅ Recommended Actions
+
+  {{ai_generated.actionable_recommendations}}
+
+  ---
+
+  ### 🛠️ Ready-to-Use Resources
+
+  {{ai_generated.audience_deliverables}}
+
+  ---
+
+  ### 📁 Research Context
+
+  • **Data Sources:** {{detected_files}}
+  • **Quality Score:** {{file_quality_score}}
+  • **Participants:** {{participant_count}} 
+  • **Sessions:** {{session_count}}
+
+  ---
+
+  **🏷️ Tags:** `{{target_audience}}-readout`, `{{audience_category}}-focused`, `research-insights`, `{{content_focus}}`
+
+  ---
+
+  *Questions about implementation?* Reply in thread or contact {{researcher_contact}} for research context.
+
+  *🤖 AI-Generated Targeted Readout | Optimized for {{target_audience}} Workflow*
+
+notify:
+  - role: targeted_audience
+    action: "Targeted readout delivered"
+    channel: "{{study_channel}}"
+    message: "🎯 {{target_audience}} readout for {{study_name}} is ready with {{content_focus}}-focused insights and actions."
+  - role: researcher
+    action: "Readout generated"
+    slack_tag: "{{researcher_contact}}"
+    message: "Your {{target_audience}} targeted readout has been delivered with customized {{content_focus}} guidance."
