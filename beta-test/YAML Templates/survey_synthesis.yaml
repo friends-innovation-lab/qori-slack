@@ -3,7 +3,7 @@ name: survey_response_synthesizer
 label: 📊 Survey Synthesis
 version: v1.3
 description: Analyze open-ended survey responses for key themes, supporting quotes, and actionable insights
-author: CivicMind R&D
+author: Qori R&D
 created: 2025-08-11
 last_updated: 2025-08-11
 
@@ -17,6 +17,137 @@ llm_config:
   model: "gpt-4o"
   temperature: 0.1
   max_tokens: 4000
+
+# Router inputs (when called from synthesize_router)
+input_variables:
+  study_name: "{{study_name}}"
+  researcher_contact: "{{researcher_contact}}"
+  study_channel: "{{study_channel}}"
+  team_members: "{{team_members}}"
+  input_text: "{{input_text}}"
+  focus_area: "{{focus_area}}"
+
+# AI GENERATION TASKS
+ai_generation_tasks:
+  # Sentiment and emotional analysis
+  - task_id: "sentiment_analysis"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Analyze the emotional sentiment patterns across all survey responses:
+      
+      **Survey Data:** {{input}}
+      
+      Identify:
+      1. **Overall sentiment distribution** - positive, negative, neutral, mixed percentages
+      2. **Emotional intensity** - mild, moderate, strong feelings
+      3. **Sentiment triggers** - what topics cause positive vs negative reactions
+      4. **Emotional journey patterns** - how feelings change throughout responses
+      
+      **Format:**
+      **Sentiment Breakdown:**
+      - Positive: X% (Y responses) - mainly about [topic]
+      - Negative: X% (Y responses) - mainly about [topic]
+      - Mixed: X% (Y responses) - mainly about [topic]
+      - Neutral: X% (Y responses)
+      
+      **Emotional Triggers:**
+      - Positive reactions to: [specific features/aspects]
+      - Negative reactions to: [specific features/aspects]
+      - Frustration points: [specific pain points]
+
+  # Priority issue identification
+  - task_id: "priority_issues"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Identify and prioritize critical issues from survey responses:
+      
+      **Survey Data:** {{input}}
+      
+      Analyze:
+      1. **Frequency of mentions** - how often each issue appears
+      2. **Severity indicators** - language showing urgency or impact
+      3. **User impact scope** - how many users affected
+      4. **Business risk level** - potential consequences if unaddressed
+      
+      **Format:**
+      **Critical Issues (Immediate Action):**
+      1. **[Issue]** - mentioned X times, affects [user group], risk: High/Medium/Low
+      2. **[Issue]** - mentioned X times, affects [user group], risk: High/Medium/Low
+      3. **[Issue]** - mentioned X times, affects [user group], risk: High/Medium/Low
+      
+      **Emerging Concerns (Monitor):**
+      - [Issue] - early signals, mentioned by X users
+      - [Issue] - pattern developing, watch for increase
+
+  # Actionable recommendations
+  - task_id: "actionable_recommendations"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Generate specific, actionable recommendations based on survey feedback:
+      
+      **Survey Data:** {{input}}
+      
+      Create:
+      1. **Immediate fixes** - quick wins within 1-2 weeks
+      2. **Short-term improvements** - 1-3 month initiatives
+      3. **Long-term enhancements** - 3+ month projects
+      4. **Investigation needed** - areas requiring more research
+      
+      **Format:**
+      **Immediate Actions (1-2 weeks):**
+      - [Specific action] - addresses [user pain point], estimated effort: [time/resources]
+      - [Specific action] - addresses [user pain point], estimated effort: [time/resources]
+      
+      **Short-term Projects (1-3 months):**
+      - [Specific project] - solves [user problem], success metric: [measurable outcome]
+      - [Specific project] - solves [user problem], success metric: [measurable outcome]
+      
+      **Research Needed:**
+      - [Investigation area] - X users mentioned this, need deeper dive
+      - [Investigation area] - conflicting feedback, requires user interviews
+
+  # User suggestion synthesis
+  - task_id: "user_suggestions_synthesis"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Synthesize and prioritize user suggestions from survey responses:
+      
+      **Survey Data:** {{input}}
+      
+      Extract:
+      1. **Direct suggestions** - explicit feature requests or improvements
+      2. **Implied needs** - problems mentioned without solutions
+      3. **Popular requests** - suggestions mentioned by multiple users
+      4. **Implementation feasibility** - easy, moderate, complex to build
+      
+      **Format:**
+      **High-Priority Suggestions (Multiple Users):**
+      - "[User quote]" - mentioned by X users, feasibility: Easy/Moderate/Complex
+      - "[User quote]" - mentioned by X users, feasibility: Easy/Moderate/Complex
+      
+      **Individual Suggestions (Worth Considering):**
+      - "[User quote]" - novel idea, potential impact: High/Medium/Low
+      - "[User quote]" - addresses edge case, user segment: [description]
+      
+      **Implementation Roadmap:**
+      - Quick wins: [suggestions that are easy to implement]
+      - Strategic investments: [suggestions requiring significant effort but high impact]
 
 prompt: |
   **MANDATORY WRITING REQUIREMENTS:**
@@ -98,6 +229,22 @@ output_format: |
 
   ---
 
+  ## 🤖 AI-Enhanced Analysis
+
+  ### 📊 Sentiment Analysis
+  {{ai_generated.sentiment_analysis}}
+
+  ### 🚨 Priority Issues Assessment
+  {{ai_generated.priority_issues}}
+
+  ### 🎯 Actionable Recommendations
+  {{ai_generated.actionable_recommendations}}
+
+  ### 💡 User Suggestions Synthesis
+  {{ai_generated.user_suggestions_synthesis}}
+
+  ---
+
   ## 🔍 Cross-Response Pattern Analysis
 
   ### 🔥 Most Frequent Themes
@@ -161,15 +308,20 @@ output_options:
       message: |
         📊 **Survey Analysis Complete**
         
-        Synthesized {{response_count}} survey responses with key themes and actionable insights.
+        {{researcher_contact}} analyzed {{response_count}} survey responses for {{study_name}}.
         
-        **Top Issues:**
-        {{top_3_critical_issues}}
+        **AI-Enhanced Insights:**
         
-        **Key Suggestions:**
-        {{top_3_user_suggestions}}
+        🎯 **Top Priority Issues:**
+        {{ai_generated.priority_issues_summary}}
         
-        📋 Full analysis: {{output_file_link}}
+        💡 **Key User Suggestions:**
+        {{ai_generated.top_user_suggestions}}
+        
+        📈 **Sentiment Overview:**
+        {{ai_generated.sentiment_breakdown}}
+        
+        📋 Full analysis with actionable recommendations: {{output_file_link}}
       
       actions:
         - text: "📊 View Full Analysis"
@@ -186,15 +338,23 @@ output_options:
       pr_description: |
         ## Survey Response Analysis Results
         
+        **Study:** {{study_name}}
         **Responses Analyzed:** {{response_count}}
+        **Researcher:** {{researcher_contact}}
+        
+        ### 🎯 AI-Enhanced Insights:
         **Top Theme:** {{most_frequent_theme}}
         **Critical Issues:** {{critical_issue_count}}
+        **Sentiment Breakdown:** {{ai_generated.sentiment_overview}}
         
         ### Key Findings:
         {{key_findings_summary}}
         
-        ### Recommended Actions:
-        {{recommended_actions_summary}}
+        ### Priority Actions:
+        {{ai_generated.immediate_actions_summary}}
+        
+        ### User Suggestions:
+        {{ai_generated.top_suggestions_summary}}
 
 use_cases: |
-  Survey Synthesis analyzes open-ended survey responses to identify themes, extract supporting quotes, and provide actionable insights. Perfect for post-study feedback, user satisfaction surveys, feature request analysis, and customer feedback synthesis. Automatically counts theme frequency, identifies critical issues, extracts user suggestions, and provides sentiment analysis. Delivers structured reports with immediate action items and stakeholder summaries for quick decision-making.
+  Survey Synthesis with AI Enhancement analyzes open-ended survey responses to identify themes, extract supporting quotes, and provide actionable insights with intelligent prioritization. Perfect for post-study feedback, user satisfaction surveys, feature request analysis, and customer feedback synthesis. Uses AI to automatically perform sentiment analysis, identify critical issues, extract user suggestions, prioritize recommendations by feasibility and impact, and generate immediate action items. Automatically counts theme frequency, assesses emotional triggers, provides implementation roadmaps, and delivers structured reports with priority levels for quick decision-making. Integrates seamlessly with research workflows and provides both detailed analysis and executive summaries.
