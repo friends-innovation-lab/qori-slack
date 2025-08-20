@@ -77,6 +77,73 @@ ai_generation_tasks:
       **Critical Gaps:** [List missing files that would significantly improve analysis]
       **Recommendation:** [Keep current selection / Add specific files / Reconsider analysis type]
 
+  # Extract derived data from existing files
+  - task_id: "extract_emotional_data"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Extract emotional indicators and behavioral cues from the research data:
+      
+      **Data Sources:** {{combined_selected_content}}
+      
+      Identify and code:
+      1. **Emotional expressions** - frustration, confusion, delight, satisfaction, anxiety
+      2. **Behavioral indicators** - hesitation, confidence, abandonment, persistence
+      3. **Verbal cues** - "this is confusing," "oh great," sighs, excitement
+      4. **Context triggers** - what caused emotional responses
+      
+      **Format:**
+      **Emotional States Data:**
+      - P1: [Task 1: Frustrated - "I can't find the button"], [Task 2: Confident - completed quickly]
+      - P2: [Task 1: Confused - asked "what does this mean?"], [Task 2: Delighted - "oh that's clever!"]
+
+  - task_id: "extract_task_performance"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Extract task completion data from research sessions:
+      
+      **Data Sources:** {{combined_selected_content}}
+      
+      Code each task attempt:
+      1. **Success/Failure status** - completed, failed, partial, abandoned
+      2. **Time indicators** - quick, slow, timeout, gave up
+      3. **Error points** - where users got stuck or made mistakes
+      4. **Completion paths** - direct route vs. workarounds
+      
+      **Format:**
+      **Task Completion Data:**
+      - P1: Task1=Success(quick), Task2=Failed(couldn't find submit), Task3=Success(4min)
+      - P2: Task1=Failed(gave up at step 2), Task2=Success(direct path), Task3=Partial(incomplete)
+
+  - task_id: "extract_user_goals"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Extract user goals and motivations from research data:
+      
+      **Data Sources:** {{combined_selected_content}}
+      
+      Identify:
+      1. **Stated goals** - what users explicitly said they wanted to accomplish
+      2. **Inferred motivations** - underlying needs and drivers
+      3. **Usage context** - why they're using the product, their situation
+      4. **Priority indicators** - what matters most to them
+      
+      **Format:**
+      **User Goals Data:**
+      - P1: Primary="find affordable housing", Context="recently relocated", Motivation="urgent need", Priority="speed over features"
+      - P2: Primary="compare options", Context="planning ahead", Motivation="thoroughness", Priority="comprehensive info"
+
   # Smart analysis preview and expectations
   - task_id: "analysis_preview_generation"
     prompt: |
@@ -241,7 +308,7 @@ analysis_routes:
     version: "v1.6"
     description: "Group observations into themes with AI-determined optimal count"
     required_data: ["session_summaries"]
-    optimal_data: ["transcripts", "research_objectives", "raw_notes", "participant_tracker"]
+    optimal_data: ["transcripts", "research_plan", "raw_notes", "participant_tracker"]
     
   journey_mapping:
     target_yaml: "journey_mapping.yaml"
@@ -276,7 +343,14 @@ analysis_routes:
     version: "v2.0"
     description: "Generate HMW questions and design challenges with innovation scoring"
     required_data: ["session_summaries", "user_suggestions"]
-    optimal_data: ["user_goals_data", "task_completion_data", "competitive_analysis", "transcripts", "error_logs", "emotional_states_tracker", "research_objectives"]
+    optimal_data: ["user_goals_data", "task_completion_data", "competitive_analysis", "transcripts", "error_logs", "emotional_states_tracker", "research_plan"]
+    
+  survey_synthesis:
+    target_yaml: "survey_synthesis.yaml"
+    version: "v1.3"
+    description: "Analyze open-ended survey responses for themes and actionable insights"
+    required_data: ["user_feedback", "survey_responses"]
+    optimal_data: ["participant_tracker", "research_plan", "session_summaries"]
 
 # Data source mapping for each study
 study_data_mapping:
@@ -295,10 +369,14 @@ study_data_mapping:
     error_logs: "03-fieldwork/error-logs/{{study_folder}}_errors.log"
     
     # Research context files
-    research_objectives: "01-planning/{{study_folder}}_research_plan.md"
+    research_plan: "01-planning/{{study_folder}}_research_plan.md"
     competitive_analysis: "01-planning/competitive_analysis.md"
     user_suggestions: "03-fieldwork/feedback/{{study_folder}}_suggestions.md"
     emotional_states_tracker: "03-fieldwork/emotional-data/{{study_folder}}_emotions.md"
+    
+    # Survey and feedback data
+    survey_responses: "03-fieldwork/surveys/{{study_folder}}_survey_responses.csv"
+    user_feedback: "03-fieldwork/feedback/{{study_folder}}_open_ended_feedback.md"
     
   derived_sources:
     pain_points_analysis: "04-analysis/affinity-mapping/{{study_folder}}_affinity_mapping_*.md"
@@ -336,10 +414,14 @@ file_id_mapping:
   error_logs: "03-fieldwork/error-logs/{{study_folder}}_errors.log"
   
   # Research context
-  research_objectives: "01-planning/{{study_folder}}_research_plan.md"
+  research_plan: "01-planning/{{study_folder}}_research_plan.md"
   competitive_analysis: "01-planning/competitive_analysis.md"
   user_suggestions: "03-fieldwork/feedback/{{study_folder}}_suggestions.md"
   emotional_states_tracker: "03-fieldwork/emotional-data/{{study_folder}}_emotions.md"
+  
+  # Survey and feedback data
+  survey_responses: "03-fieldwork/surveys/{{study_folder}}_survey_responses.csv"
+  user_feedback: "03-fieldwork/feedback/{{study_folder}}_open_ended_feedback.md"
 
 # Router processing logic
 processing_workflow:
@@ -348,6 +430,9 @@ processing_workflow:
   - process_user_file_selection  # NEW: Validate and map selected files
   - validate_required_data_availability  # NEW: Check required files are selected
   - execute_file_selection_analysis  # AI: Assess file selection quality
+  - execute_extract_emotional_data  # AI: Extract emotional indicators
+  - execute_extract_task_performance  # AI: Extract task completion data
+  - execute_extract_user_goals  # AI: Extract user goals and motivations
   - execute_routing_validation  # AI: Validate analysis type choice
   - gather_selected_data_sources  # Updated: Only gather user-selected files
   - execute_analysis_preview_generation  # AI: Preview expected outcomes
@@ -391,6 +476,20 @@ file_selection_processing:
     research_context:
       header: "=== RESEARCH CONTEXT ==="
       format: "{{content}}\n\n"
+      
+    extracted_insights:
+      header: "=== AI-EXTRACTED INSIGHTS ==="
+      format: |
+        **Emotional States Analysis:**
+        {{ai_generated.extract_emotional_data}}
+        
+        **Task Performance Analysis:**
+        {{ai_generated.extract_task_performance}}
+        
+        **User Goals Analysis:**
+        {{ai_generated.extract_user_goals}}
+        
+        ---
 
 # Input preparation for target YAMLs
 target_yaml_inputs:
@@ -426,6 +525,10 @@ target_yaml_inputs:
   design_opportunities:
     input_text: "{{combined_selected_content}}"
     focus_area: "innovation opportunities and design challenges"
+    
+  survey_synthesis:
+    input_text: "{{combined_selected_content}}"
+    focus_area: "survey response themes and user feedback patterns"
 
 # Router intelligence report template (not the final analysis)
 output_template: |
@@ -448,6 +551,19 @@ output_template: |
   {{#each selected_file_details}}
   • {{file_category}}: {{file_name}} ({{file_type}})
   {{/each}}
+  
+  ---
+  
+  ## 🧠 Extracted Research Insights
+  
+  **Emotional States Analysis:**
+  {{ai_generated.extract_emotional_data}}
+  
+  **Task Performance Analysis:**
+  {{ai_generated.extract_task_performance}}
+  
+  **User Goals Analysis:**
+  {{ai_generated.extract_user_goals}}
   
   ---
   
@@ -548,6 +664,7 @@ yaml_integration:
     jobs_to_be_done: "extract_jobs_to_be_done"
     usability_issues: "run_usability_issues_extractor"
     design_opportunities: "run_design_opportunity_generator"
+    survey_synthesis: "run_survey_synthesis"
   
   # What gets passed to target YAML
   parameter_passthrough:
@@ -568,6 +685,11 @@ yaml_integration:
     recommendations: "{{ai_generated.intelligent_recommendations}}"
     collaboration_plan: "{{ai_generated.collaboration_optimization}}"
     routing_validation: "{{ai_generated.routing_validation}}"
+    
+    # Extracted research insights (NEW)
+    emotional_data: "{{ai_generated.extract_emotional_data}}"
+    task_performance: "{{ai_generated.extract_task_performance}}"
+    user_goals: "{{ai_generated.extract_user_goals}}"
     
     # Processing context
     preprocessing_timestamp: "{{current_timestamp}}"
@@ -614,4 +736,4 @@ selection_intelligence:
     - recommend_file_additions_mid_analysis
 
 output_use: |
-  AI-Enhanced Synthesis Router serves as an intelligent preprocessor that validates file selections, optimizes analysis inputs, and triggers specialized analysis YAMLs. The router produces routing intelligence log with file quality assessment, analysis preview, smart recommendations, and team collaboration planning, then passes prepared, formatted inputs to target analysis YAMLs (affinity_mapping.yaml, journey_mapping.yaml, etc.) for actual analysis execution. This ensures optimal data preparation, provides quality recommendations, sets realistic expectations, and maintains seamless integration with existing analysis workflows while preserving team collaboration features. The router transforms raw file selection into optimized analysis inputs, maximizing the quality of downstream analysis deliverables.
+  AI-Enhanced Synthesis Router serves as an intelligent preprocessor that validates file selections, extracts derived research insights, optimizes analysis inputs, and triggers specialized analysis YAMLs. The router produces routing intelligence log with file quality assessment, extracted emotional data, task performance data, user goals analysis, analysis preview, smart recommendations, and team collaboration planning, then passes prepared, formatted inputs to target analysis YAMLs (affinity_mapping.yaml, journey_mapping.yaml, etc.) for actual analysis execution. The router automatically extracts emotional indicators, task completion patterns, and user motivations from existing session summaries, transcripts, and notes, eliminating the need for separate tracking files. This ensures optimal data preparation, provides quality recommendations, sets realistic expectations, and maintains seamless integration with existing analysis workflows while preserving team collaboration features. The router transforms raw file selection into optimized, insight-rich analysis inputs, maximizing the quality of downstream analysis deliverables.
