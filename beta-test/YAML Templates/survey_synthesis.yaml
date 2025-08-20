@@ -1,45 +1,200 @@
 id: survey_synthesis
+name: survey_response_synthesizer
 label: 📊 Survey Synthesis
-description: Analyze open-ended survey responses for key themes and supporting quotes
+version: v1.3
+description: Analyze open-ended survey responses for key themes, supporting quotes, and actionable insights
+author: CivicMind R&D
+created: 2025-08-11
+last_updated: 2025-08-11
+
 input_type: text
 input_processing: summarize_if_long
 batch_mode: true
 batch_delimiter: "---"
-prompt: |
-  You are a research assistant helping synthesize insights from open-ended survey responses.
 
-  For each response in the batch:
-  - Identify 2 to 3 specific themes mentioned
-  - Extract one quote that illustrates a theme
+# LLM Configuration
+llm_config:
+  model: "gpt-4o"
+  temperature: 0.1
+  max_tokens: 4000
+
+prompt: |
+  **MANDATORY WRITING REQUIREMENTS:**
+  - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+  - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+  - ALWAYS use active voice and specific verbs
+  - Use plain language at a 10th-grade reading level
+  - Avoid jargon, em-dashes, or vague business speak
+  - Be concise, clear, and structured
+
+  You are an experienced UX research analyst synthesizing insights from open-ended survey responses.
+
+  **Analysis Instructions:**
+
+  For each individual response:
+  1. **Identify 2-3 specific themes** mentioned by the respondent
+  2. **Extract one powerful quote** that best illustrates their main point
+  3. **Note emotional tone** (positive, negative, neutral, mixed)
+  4. **Identify pain points** if mentioned
+  5. **Spot suggestions** if any are provided
 
   After processing all responses:
-  - Summarize the most frequently mentioned patterns across the full set
-  - Count how often each major theme appeared (if possible)
+  1. **Summarize most frequent patterns** across the full set
+  2. **Count theme frequency** with specific numbers
+  3. **Group related themes** together
+  4. **Identify actionable insights** for the team
+  5. **Highlight urgent issues** that need immediate attention
+  6. **Extract specific suggestions** users provided
 
-  Use plain language at a 10th-grade reading level. Avoid jargon, em-dashes, or vague business speak.
-  Be concise, clear, and structured.
-
-  Responses:
+  **Survey Responses:**
   {{input}}
+
 output_format: |
-  ## 📊 Survey Synthesis
+  # 📊 Survey Response Synthesis
+
+  ## Individual Response Analysis
 
   ### Response 1
-  - Theme 1: ...
-  - Theme 2: ...
-  - 💬 Quote: "..."
+  **Themes:**
+  - Theme 1: [Specific theme name]
+  - Theme 2: [Specific theme name]
+  - Theme 3: [Specific theme name]
+
+  **💬 Key Quote:** "[Most illustrative quote from this response]"
+  
+  **Tone:** [Positive/Negative/Neutral/Mixed]
+  
+  **Pain Points:** [Specific issues mentioned]
+  
+  **Suggestions:** [Any improvements they suggested]
 
   ### Response 2
-  - Theme 1: ...
-  - Theme 2: ...
-  - 💬 Quote: "..."
+  **Themes:**
+  - Theme 1: [Specific theme name]
+  - Theme 2: [Specific theme name]
+  - Theme 3: [Specific theme name]
 
- ### Response 3
-  - Theme 1: ...
-  - Theme 2: ...
-  - 💬 Quote: "..."
+  **💬 Key Quote:** "[Most illustrative quote from this response]"
+  
+  **Tone:** [Positive/Negative/Neutral/Mixed]
+  
+  **Pain Points:** [Specific issues mentioned]
+  
+  **Suggestions:** [Any improvements they suggested]
 
-  ## 🔁 Shared Themes Across All
-  - Trust in system (mentioned in 6 of 10)
-  - Confusion about next steps (mentioned in 4 of 10)
-  - Desire for live support (mentioned in 3 of 10)
+  ### Response 3
+  **Themes:**
+  - Theme 1: [Specific theme name]
+  - Theme 2: [Specific theme name]
+  - Theme 3: [Specific theme name]
+
+  **💬 Key Quote:** "[Most illustrative quote from this response]"
+  
+  **Tone:** [Positive/Negative/Neutral/Mixed]
+  
+  **Pain Points:** [Specific issues mentioned]
+  
+  **Suggestions:** [Any improvements they suggested]
+
+  ---
+
+  ## 🔍 Cross-Response Pattern Analysis
+
+  ### 🔥 Most Frequent Themes
+  1. **[Theme Name]** - mentioned in X of Y responses (XX%)
+     - *Supporting quotes: "[quote 1]", "[quote 2]"*
+  2. **[Theme Name]** - mentioned in X of Y responses (XX%)
+     - *Supporting quotes: "[quote 1]", "[quote 2]"*
+  3. **[Theme Name]** - mentioned in X of Y responses (XX%)
+     - *Supporting quotes: "[quote 1]", "[quote 2]"*
+
+  ### 🚨 Critical Issues (Immediate Attention)
+  - **[Issue 1]** - mentioned by X respondents
+  - **[Issue 2]** - mentioned by X respondents
+  - **[Issue 3]** - mentioned by X respondents
+
+  ### 💡 User Suggestions
+  - **[Suggestion 1]** - "Direct quote from user"
+  - **[Suggestion 2]** - "Direct quote from user"
+  - **[Suggestion 3]** - "Direct quote from user"
+
+  ### 📈 Sentiment Breakdown
+  - **Positive responses:** X of Y (XX%)
+  - **Negative responses:** X of Y (XX%)
+  - **Mixed responses:** X of Y (XX%)
+  - **Neutral responses:** X of Y (XX%)
+
+  ### 🎯 Actionable Insights for Team
+  1. **Fix immediately:** [Top priority issue]
+  2. **Investigate further:** [Areas needing more research]
+  3. **Consider implementing:** [Top user suggestions]
+  4. **Monitor:** [Emerging concerns]
+
+  ---
+
+  ## 📋 Summary for Stakeholders
+
+  **Key Findings:**
+  - [Most important finding 1]
+  - [Most important finding 2]
+  - [Most important finding 3]
+
+  **Recommended Actions:**
+  - [Specific action 1 with priority level]
+  - [Specific action 2 with priority level]
+  - [Specific action 3 with priority level]
+
+  **Next Steps:**
+  - [Follow-up research needed]
+  - [Additional data to collect]
+  - [Teams to involve]
+
+output_options:
+  filename: "survey_synthesis_{{current_date}}.md"
+  path: "04-analysis/survey-synthesis/"
+  template: "survey_analysis_report"
+  
+  delivery:
+    slack:
+      enabled: true
+      channel: "{{study_channel}}"
+      message: |
+        📊 **Survey Analysis Complete**
+        
+        Synthesized {{response_count}} survey responses with key themes and actionable insights.
+        
+        **Top Issues:**
+        {{top_3_critical_issues}}
+        
+        **Key Suggestions:**
+        {{top_3_user_suggestions}}
+        
+        📋 Full analysis: {{output_file_link}}
+      
+      actions:
+        - text: "📊 View Full Analysis"
+          style: "primary"
+          url: "{{output_file_url}}"
+        - text: "🔄 Run Follow-up Analysis"
+          style: "default"
+          action_id: "synthesize_modal"
+
+    github:
+      enabled: true
+      commit_message: "Add survey synthesis analysis - {{current_date}}"
+      pr_title: "Survey Analysis: Key Themes and User Feedback"
+      pr_description: |
+        ## Survey Response Analysis Results
+        
+        **Responses Analyzed:** {{response_count}}
+        **Top Theme:** {{most_frequent_theme}}
+        **Critical Issues:** {{critical_issue_count}}
+        
+        ### Key Findings:
+        {{key_findings_summary}}
+        
+        ### Recommended Actions:
+        {{recommended_actions_summary}}
+
+use_cases: |
+  Survey Synthesis analyzes open-ended survey responses to identify themes, extract supporting quotes, and provide actionable insights. Perfect for post-study feedback, user satisfaction surveys, feature request analysis, and customer feedback synthesis. Automatically counts theme frequency, identifies critical issues, extracts user suggestions, and provides sentiment analysis. Delivers structured reports with immediate action items and stakeholder summaries for quick decision-making.
