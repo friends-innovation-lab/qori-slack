@@ -401,7 +401,6 @@ target_yaml_inputs:
     study_channel: "{{study_channel}}"
     team_members: "{{team_members}}"
     study_link: "{{github_study_folder_link}}"
-    selected_files_summary: "{{selected_files_summary}}"
     
   # Analysis-specific input preparation
   affinity_mapping:
@@ -448,11 +447,6 @@ output_template: |
   **Files Selected by User:**
   {{#each selected_file_details}}
   • {{file_category}}: {{file_name}} ({{file_type}})
-  {{/each}}
-  
-  **Data Combination Strategy:**
-  {{#each content_sections}}
-  • {{section_name}}: {{file_count}} files combined
   {{/each}}
   
   ---
@@ -516,7 +510,7 @@ output_options:
         **Expected Results:** {{ai_generated.analysis_preview_summary}}
         
         ⏱️ ETA: {{estimated_completion_time}}
-        📁 Results will appear in this channel when complete
+        📝 Results will appear in this channel when complete
         
       dm_notification:
         enabled: true
@@ -575,12 +569,7 @@ yaml_integration:
     collaboration_plan: "{{ai_generated.collaboration_optimization}}"
     routing_validation: "{{ai_generated.routing_validation}}"
     
-    # File metadata
-    selected_files_summary: "{{selected_files_summary}}"
-    data_combination_strategy: "{{file_combination_metadata}}"
-    
     # Processing context
-    router_version: "v1.1"
     preprocessing_timestamp: "{{current_timestamp}}"
     analysis_id: "{{unique_analysis_id}}"
 
@@ -625,4 +614,4 @@ selection_intelligence:
     - recommend_file_additions_mid_analysis
 
 output_use: |
-  AI-Enhanced Synthesis Router serves as an intelligent preprocessor that validates file selections, optimizes analysis inputs, and triggers specialized analysis YAMLs. The router produces two key outputs: (1) routing intelligence log with file quality assessment, analysis preview, smart recommendations, and team collaboration planning, and (2) prepared, formatted inputs that are passed to target analysis YAMLs (affinity_mapping.yaml, journey_mapping.yaml, etc.) for actual analysis execution. This ensures optimal data preparation, provides quality recommendations, sets realistic expectations, and maintains seamless integration with existing analysis workflows while preserving team collaboration features. The router transforms raw file selection into optimized analysis inputs, maximizing the quality of downstream analysis deliverables.
+  AI-Enhanced Synthesis Router serves as an intelligent preprocessor that validates file selections, optimizes analysis inputs, and triggers specialized analysis YAMLs. The router produces routing intelligence log with file quality assessment, analysis preview, smart recommendations, and team collaboration planning, then passes prepared, formatted inputs to target analysis YAMLs (affinity_mapping.yaml, journey_mapping.yaml, etc.) for actual analysis execution. This ensures optimal data preparation, provides quality recommendations, sets realistic expectations, and maintains seamless integration with existing analysis workflows while preserving team collaboration features. The router transforms raw file selection into optimized analysis inputs, maximizing the quality of downstream analysis deliverables.
