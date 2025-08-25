@@ -12,8 +12,8 @@
 
 ## Project Metadata
 
-• *Project ID:** va-housing-ux-2025
-• *Start Date:** July 1, 2025
-• *Expected Duration:** 6 weeks
-• *Research Type:** Mixed methods (interviews, usability testing, survey)
-• *Stakeholders:** VA Digital Services, Housing Department, Veterans Affairs Office
+- Project ID:** va-housing-ux-2025
+- Start Date:** July 1, 2025
+- Expected Duration:** 6 weeks
+- Research Type:** Mixed methods (interviews, usability testing, survey)
+- Stakeholders:** VA Digital Services, Housing Department, Veterans Affairs Office
