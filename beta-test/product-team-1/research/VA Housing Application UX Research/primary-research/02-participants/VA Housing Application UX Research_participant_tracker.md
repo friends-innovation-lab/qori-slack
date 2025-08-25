@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – VA Housing Application UX Research
 
 **📊 Recruitment Summary**
-- **Total Participants:** 2
+- **Total Participants:** 3
 - **Confirmed Sessions:** 0
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 9 | PT003 | referral | 2025-09-02 1:00 PM EST | rescheduling_needed | Basic computer skills; may need technical support; prefers phone calls over email |
 | 8 | PT002 | email_outreach | 2025-09-03 2:00 PM EST | pending_response | Childcare considerations needed; prefers camera off during sessions |
 | 7 | PT001 | internal_va_panel | 2025-08-29 2:00 pm EST | recruited | Screen reader compatible; prefers morning sessions due to medication schedule |
 
@@ -23,11 +24,12 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 1 | 50% |
-| internal_va_panel | 1 | 50% |
+| 🤝 Referral | 1 | 33% |
+| 📧 Email Outreach | 1 | 33% |
+| internal_va_panel | 1 | 33% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 2 recruited)
+Recruitment effectiveness: 0% conversion rate (0 confirmed of 3 recruited)
 
 ---
 
@@ -74,6 +76,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 2 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 9: Basic computer skills; may need technical support; prefers phone calls over email
 - 8: Childcare considerations needed; prefers camera off during sessions
 - 7: Screen reader compatible; prefers morning sessions due to medication schedule
 
@@ -113,4 +116,4 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 2 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (1 more needed); Follow up with 1 pending participant(s); Schedule first confirmed session
+Follow up with 1 pending participant(s); Reschedule 1 session(s); Schedule first confirmed session
