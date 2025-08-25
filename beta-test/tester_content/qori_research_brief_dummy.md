@@ -34,5 +34,5 @@ Current VA housing application completion rate is only 66%, with high abandonmen
 **Research Approach:**
 Mixed-methods study combining user interviews (5 veterans) and moderated usability testing (5 veterans) to understand both attitudinal and behavioral barriers. Focus on veterans who attempted applications in the last 6 months, with emphasis on including participants who use assistive technologies. Sessions will be conducted remotely to accommodate participants across different geographic locations.
 
-**Prepared BY:**
+**Prepared By:**
 Jordan Martinez, Senior UX Researcher
