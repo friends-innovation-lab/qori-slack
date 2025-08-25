@@ -2,8 +2,8 @@
 
 ## Basic Information
 
-**Name:** VA Housing Application UX Research
-**Slash Command:** '/start-research'
+- **Name:** VA Housing Application UX Research
+- **Slash Command:** `/start-research`
 
 **Description:** Comprehensive user research study to identify pain points and improvement opportunities in the VA housing application process. Focus on veteran experiences, accessibility challenges, and process efficiency.
 
