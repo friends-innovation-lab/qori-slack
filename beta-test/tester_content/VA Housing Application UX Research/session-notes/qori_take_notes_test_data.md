@@ -81,6 +81,39 @@
 
 ---
 
+### Technical Issues and Platform Problems
+
+**Zoom Platform Issues:**
+- **Minute 8:** Participant's screen share froze for ~30 seconds. Had to stop and restart screen sharing. Caused brief interruption but didn't affect overall session flow.
+- **Minute 23:** Audio quality degraded significantly - participant sounded robotic. Asked participant to turn off video which resolved the issue. No data loss.
+- **Minute 41:** Zoom automatically updated participant's browser during session, causing 2-minute interruption. Participant rejoined quickly using same meeting link.
+
+**VA.gov Platform Issues:**
+- **Minute 15:** Page loading time extremely slow (30+ seconds) for eligibility screening section. Participant asked "Is this normal?" White screen with no loading indicator.
+- **Minute 28-30:** Document upload feature completely non-functional. Error messages inconsistent between attempts. No clear file size or format requirements displayed.
+- **Minute 34:** Form validation error messages appearing/disappearing rapidly, creating visual confusion. Participant couldn't read full error text.
+- **Minute 39:** Submit button appeared to do nothing - no loading state, no confirmation. Actually was processing but took 45+ seconds with no feedback.
+
+**Participant's Technical Environment:**
+- **Browser:** Chrome browser occasionally showing "page unresponsive" warnings
+- **Internet:** No connectivity issues, but participant mentioned "VA sites are always slow for me"
+- **Device:** Windows laptop running smoothly, no hardware issues
+- **Settings:** Had ad blocker enabled which may have interfered with some form elements
+
+**Research Platform Impact:**
+- Session extended by ~8 minutes total due to technical interruptions
+- Had to skip document upload task entirely due to platform failure
+- Participant frustration increased significantly after each technical issue
+- Some authentic reactions may have been influenced by technical problems rather than pure UX issues
+
+**Moderator Technical Notes:**
+- Recording quality good despite audio issues (auto-enhancement worked)
+- Screen recording captured all platform errors for later analysis
+- Backup note-taking in place due to platform instabilities
+- Post-session: recommended participant try different browser for future VA.gov use
+
+---
+
 ### Accessibility and Accommodation Observations
 
 **Positive Accessibility Features:**
