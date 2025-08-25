@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – VA Housing Application UX Research
 
 **📊 Recruitment Summary**
-- **Total Participants:** 3
+- **Total Participants:** 4
 - **Confirmed Sessions:** 0
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 10 | PT004 | calendly_signup | 2025-09-01 11:00 AM EST | backup_participant | Bilingual (Spanish/English); mobile-first user preference |
 | 9 | PT003 | referral | 2025-09-02 1:00 PM EST | rescheduling_needed | Basic computer skills; may need technical support; prefers phone calls over email |
 | 8 | PT002 | email_outreach | 2025-09-03 2:00 PM EST | pending_response | Childcare considerations needed; prefers camera off during sessions |
 | 7 | PT001 | internal_va_panel | 2025-08-29 2:00 pm EST | recruited | Screen reader compatible; prefers morning sessions due to medication schedule |
@@ -24,12 +25,13 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 🤝 Referral | 1 | 33% |
-| 📧 Email Outreach | 1 | 33% |
-| internal_va_panel | 1 | 33% |
+| calendly_signup | 1 | 25% |
+| 🤝 Referral | 1 | 25% |
+| 📧 Email Outreach | 1 | 25% |
+| internal_va_panel | 1 | 25% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 3 recruited)
+Recruitment effectiveness: 0% conversion rate (0 confirmed of 4 recruited)
 
 ---
 
@@ -76,6 +78,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 3 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 10: Bilingual (Spanish/English); mobile-first user preference
 - 9: Basic computer skills; may need technical support; prefers phone calls over email
 - 8: Childcare considerations needed; prefers camera off during sessions
 - 7: Screen reader compatible; prefers morning sessions due to medication schedule
