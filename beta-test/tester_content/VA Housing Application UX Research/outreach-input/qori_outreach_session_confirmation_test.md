@@ -1,4 +1,4 @@
-# Outreach Test Data - Session Confirmation
+# Outreach Test Data - Session Confirmation and Session Reminder
 
 ## `/outreach` Command - Session Confirmation Fields
 
