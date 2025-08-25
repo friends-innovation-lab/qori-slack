@@ -62,21 +62,3 @@ To participate in this research study, please reply to this email with your avai
 > jordan.martinez@va.gov
 
 ---
-
-## Alternative Test Variations
-
-### Formal Tone Version
-**Tone:** Formal  
-**Expected Change:** More professional language, "Dear Ms. Thompson," structured format, official VA terminology
-
-### Recruitment Agency Version  
-**Contact Method:** Recruitment agency  
-**Expected Change:** Instructions for agency coordinator, different signup process, agency-specific language
-
-### Higher Compensation Version
-**Recruitment Amount:** $150  
-**Expected Change:** Emphasis on compensation amount, may affect tone and positioning
-
-### Different Study Focus
-**Study Name:** VA Benefits Mobile App Usability Study  
-**Recruitment Details:** Focus on mobile app experience instead of housing applications
