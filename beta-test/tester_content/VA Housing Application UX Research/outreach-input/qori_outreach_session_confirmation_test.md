@@ -70,25 +70,3 @@
 > (555) 987-6543
 
 ---
-
-## Alternative Test Variations
-
-### Phone Confirmation Version
-**Contact Method:** Phone  
-**Expected Change:** Phone script format with verbal confirmation details, callback number emphasis
-
-### SMS Confirmation Version  
-**Contact Method:** SMS  
-**Expected Change:** Concise text message format with essential details only, shortened links
-
-### Different Time Zone
-**Session Time:** 11:00 AM PST  
-**Expected Change:** Time zone clarity, potential confusion mitigation
-
-### Longer Duration Session
-**Duration:** 90 minutes  
-**Expected Change:** Extended session expectations, break information
-
-### Different Platform
-**Meeting Link:** https://teams.microsoft.com/l/meetup-join/...  
-**Expected Change:** Microsoft Teams instructions instead of Zoom
