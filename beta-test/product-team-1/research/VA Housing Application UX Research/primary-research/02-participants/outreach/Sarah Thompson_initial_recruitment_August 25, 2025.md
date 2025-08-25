@@ -17,17 +17,17 @@ Subject: Invitation to Participate in VA Housing Application UX Research Study
 
 Hi Sarah Thompson,
 
-I hope you are doing well. We are looking for veterans to share their experiences in our VA Housing Application UX Research study. Your thoughts would be valuable in helping us improve the housing application process for veterans like yourself.
+I hope you are doing well. We are looking for veterans to share their experiences in our VA Housing Application UX Research study, and your thoughts would be valuable to us.
 
-We're conducting research to make it easier for veterans to access housing benefits. The study involves a 60-minute virtual session where you'll walk through the current housing application process and share your thoughts on how we can make improvements. Your feedback will directly help us identify pain points and design better digital experiences for veterans seeking housing assistance.
+We're conducting research to improve the VA housing application process and make it easier for veterans to access housing benefits. The study involves a 60-minute virtual session where you'll walk through the current housing application process and share your thoughts on how we can make improvements. Your feedback will directly help us identify pain points and design better digital experiences for veterans seeking housing assistance.
 
-As a token of our appreciation for your time and input, we are offering a compensation of $75 for your participation.
+As a token of our appreciation for your time, we are offering a compensation of $75 for participating in the study.
 
-To participate in this research study, please reply to this email with your availability for a 60-minute virtual session over the next two weeks. We can accommodate sessions Monday through Friday between 9 AM and 5 PM EST. You can also sign up directly using our scheduling link: https://calendly.com/va-housing-research/participant-session
+To participate, please reply to this email with your availability for a 60-minute virtual session over the next two weeks. We can accommodate sessions Monday through Friday between 9 AM and 5 PM EST. You can also sign up directly using our scheduling link: https://calendly.com/va-housing-research/participant-session
 
-Participation in this study is completely voluntary, and you can withdraw at any time. Your input will be kept confidential and will only be used for research purposes.
+Participation in this study is completely voluntary, and you are free to withdraw at any time.
 
-If you have any questions or need more information, feel free to reach out to me at jordan.martinez@va.gov.
+If you have any questions or would like more information, feel free to reach out to me at jordan.martinez@va.gov.
 
 Best regards,
 Jordan Martinez
@@ -37,22 +37,10 @@ Email: jordan.martinez@va.gov
 This research is conducted in accordance with VA research standards and IRB approval.
 ---
 ## 📋 Next Steps
-1. Follow up with a reminder email one week after the initial recruitment message to encourage potential participants to apply for the VA Housing Application UX Research study. 
-   - Timing: One week after initial recruitment message
-   - Potential participant responses or concerns: Some participants may have missed the initial message or need a reminder to take action.
-   - Next steps in the research process: Ensure a higher response rate and increase the pool of potential participants for the study.
-   - Documentation needs: Keep track of who has applied and who still needs to apply for the study.
+1. Follow up with a reminder email one week after the initial recruitment message to prompt potential participants who may have missed the first message or are still considering their participation.
 
-2. Send a personalized follow-up email to participants who have expressed interest but have not yet applied, addressing any concerns or questions they may have.
-   - Timing: Two weeks after initial recruitment message
-   - Potential participant responses or concerns: Some participants may have hesitations or questions about the study that need to be addressed before they apply.
-   - Next steps in the research process: Encourage more participants to apply and ensure a diverse pool of participants for the study.
-   - Documentation needs: Keep track of any concerns or questions raised by participants and how they were addressed.
+2. Send a personalized follow-up message to participants who have expressed interest but have not yet completed the application form two weeks after the initial recruitment message. Address any concerns they may have and provide additional information to encourage their participation.
 
-3. Provide alternative methods for participants to apply for the study, such as a phone number to call or a form to fill out in person for those who may have accessibility barriers to the online application process.
-   - Timing: Ongoing throughout the recruitment process
-   - Potential participant responses or concerns: Some participants may have limited access to technology or may require accommodations to apply for the study.
-   - Next steps in the research process: Ensure that all interested participants have the opportunity to apply and participate in the study.
-   - Documentation needs: Keep track of any accommodations provided to participants and ensure equal access to the study for all individuals.
+3. After receiving completed applications, schedule individual interviews with selected participants within two weeks to gather more in-depth insights and feedback on the VA Housing application user experience. Ensure that the interviews are conducted in a timely manner to keep the research process moving forward efficiently.
 ---
 *Generated by Qori v • Saved to *
