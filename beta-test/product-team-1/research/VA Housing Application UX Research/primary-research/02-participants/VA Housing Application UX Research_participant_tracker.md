@@ -1,9 +1,9 @@
 # 👥 Participant Tracker – VA Housing Application UX Research
 
 **📊 Recruitment Summary**
-- **Total Participants:** 1
+- **Total Participants:** 2
 - **Confirmed Sessions:** 0
-- **Pending Responses:** 0
+- **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
 - **Last Updated:** August 25, 2025 by U01SC2TNYKU
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 8 | PT002 | email_outreach | 2025-09-03 2:00 PM EST | pending_response | Childcare considerations needed; prefers camera off during sessions |
 | 7 | PT001 | internal_va_panel | 2025-08-29 2:00 pm EST | recruited | Screen reader compatible; prefers morning sessions due to medication schedule |
 
 ---
@@ -22,10 +23,11 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| internal_va_panel | 1 | 100% |
+| 📧 Email Outreach | 1 | 50% |
+| internal_va_panel | 1 | 50% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
+Recruitment effectiveness: 0% conversion rate (0 confirmed of 2 recruited)
 
 ---
 
@@ -34,6 +36,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 
 ## ⏳ Pending Sessions
 
+- **** -  ()
 
 ---
 
@@ -71,6 +74,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 8: Childcare considerations needed; prefers camera off during sessions
 - 7: Screen reader compatible; prefers morning sessions due to medication schedule
 
 **Preparation Checklist:**
@@ -109,4 +113,4 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (2 more needed); Schedule first confirmed session
+Continue recruiting to reach minimum of 3 participants (1 more needed); Follow up with 1 pending participant(s); Schedule first confirmed session
