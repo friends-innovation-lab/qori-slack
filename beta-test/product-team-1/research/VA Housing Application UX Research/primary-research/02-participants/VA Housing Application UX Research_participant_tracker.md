@@ -48,31 +48,17 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 4 recruited)
 
 **Session Observer Assignments:**
 
-| Session | Date/Time | Observers | Capacity | Pending Requests |
-|---------|-----------|-----------|----------|------------------|
+| Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
+|---------|-----------|-----------|----------|------------------|-----------------|
+| pt010 | 2025-09-01 11:00 AM EST | lapedra (👁️ Silent Observer) | 1/3 | 0 | ✅ Sent |
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker |  |  |
-| 👁️ Silent Observer |  |  |
-| 📊 PM Observer |  |  |
-| 🏛️ Stakeholder |  |  |
-
-**Observer Guidelines:** 
-- Review session plan before observing
-- Stay muted unless emergency
-- Take notes without interrupting
-- Share feedback after session
-
-{% if triggered_by_observer_request %}
-**🔄 Observer Updates:**
-- ✅  approved for  as 
-- 📤 Send observer guidelines to 
-- 📅 Add  to  calendar invite
-- 🔄 Update session capacity tracking
-{% endif %}
-
+| 📝 Note-taker | 0 | - |
+| 👁️ Silent Observer | 1 | pt010 |
+| 📊 PM Observer | 0 | - |
+| 🏛️ Stakeholder | 0 | - |
 ---
 
 ## 📝 Accessibility & Accommodations
