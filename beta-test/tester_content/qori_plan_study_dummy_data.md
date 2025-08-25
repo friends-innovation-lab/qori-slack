@@ -32,8 +32,6 @@ Identify the top 3-5 usability barriers that prevent veterans from successfully 
 **Number of Participants:**
 - **User Interviews:** 5 participants (1-hour sessions)
 - **Usability Testing:** 5 participants (45-minute task-based sessions) 
-- **Total:** 10 participants across both methods
-- **Compensation:** $75 per participant per session
 
 **Timeline Preference:** 
 ⚪ Rush (2-3 weeks)  
