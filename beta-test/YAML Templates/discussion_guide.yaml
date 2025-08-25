@@ -1,13 +1,13 @@
 id: discussion_guide
 name: run_discussion_guide
 label: 💬 Discussion Guide
-version: v2.4
+version: v3.0
 description: |
-  Generate VA-aligned conversation guides for moderated research sessions. Creates structured discussion guides with timing, tasks, warm-up questions, and observer instructions following VA research standards and best practices. Automatically refines informal inputs to create professional, actionable session guides.
+  Generate VA-aligned conversation guides for moderated research sessions from existing research plan documents. Creates structured discussion guides with timing, tasks, warm-up questions, and observer instructions following VA research standards and best practices. Reads research plan documents to automatically extract study context, objectives, and team information.
 
 author: CivicMind R&D
 created: 2025-06-26
-last_updated: 2025-07-10
+last_updated: 2025-08-25
 
 # LLM Configuration
 llm_config:
@@ -15,192 +15,192 @@ llm_config:
   temperature: 0.4
   max_tokens: 4000
 
-input_type: text
-input_processing: summarize_if_long
+input_type: document_link
+input_processing: read_and_parse
 precision_mode: detailed
 
 # Input schema for Slack UI
 input_variables:
-  - input_text           # Research objectives, tasks, participant info (REQUIRED)
-  - study_name           # Title of study (REQUIRED)
-  - researcher_contact   # Lead researcher name and contact (REQUIRED)
-  - study_channel        # Slack channel for notifications (REQUIRED)
-  - study_link           # Link to study folder or documentation (OPTIONAL)
-  - team_members         # Team members to notify, comma-separated (OPTIONAL)
+  - research_plan_document   # Path or link to research plan document (REQUIRED)
+  - session_length          # Session duration in minutes: 30/45/60/90 (REQUIRED)
+  - primary_focus           # Array of focus areas: usability,accessibility,mobile,painpoints,process (OPTIONAL)
 
 # AI Generation Tasks - These will be processed sequentially
 ai_generation_tasks:
-  - task_id: "refined_input_text"
+  - task_id: "parse_research_plan"
     prompt: |
-      Improve and clarify the research input provided: "{{input_text}}"
+      Read and parse the research plan document: "{{research_plan_document}}"
       
-      Rewrite to be more professional and specific while preserving the original intent:
-      - Fix informal language and grammar issues
-      - Make vague objectives more specific and actionable
-      - Clarify participant information and research context
-      - Maintain the core research goals and scope
-      - Use proper UX research terminology
+      Extract the following information and format as structured data:
       
-      Structure the improved version to clearly separate:
-      - Research objectives (what you want to learn)
-      - Tasks or scenarios (what participants will do)
-      - Participant context (who and why)
+      **STUDY METADATA:**
+      - Study name/title
+      - Lead researcher name and contact
+      - Team members and their roles
+      - Research timeline and duration
       
-      If input is very brief, expand appropriately based on apparent intent while staying true to the scope.
+      **RESEARCH CONTEXT:**
+      - Primary research objectives (what needs to be learned)
+      - Research questions being answered
+      - Target participant demographics and criteria
+      - Research methodology (interviews, usability testing, etc.)
+      
+      **STUDY SCOPE:**
+      - Product/feature areas being evaluated
+      - Specific user flows or touchpoints to test
+      - Key decisions this research will inform
+      - Success metrics or outcomes expected
+      
+      If any information is missing or unclear, note what's not available.
+      Maintain exact names, contact details, and technical specifications from the original document.
 
-  - task_id: "session_overview"
+  - task_id: "determine_session_approach"
     prompt: |
-      Analyze the refined research objectives and create a session overview in this exact format (fill in ALL fields with realistic values):
-      **Session Type:** [Choose: Usability Testing/Discovery Interview/Concept Validation/Card Sort/Tree Test/Focus Group]  
-      **Duration:** [Choose: 30/45/60/90] minutes  
-      **Participant:** [Choose: Veteran/Caregiver/Service Member/Dependent/VA Staff/General Public]
+      Based on the parsed research plan and session preferences:
+      - Session Length: {{session_length}} minutes
+      - Primary Focus: {{primary_focus}}
       
-      Base decisions on the refined research content, using these guidelines:
-      - If testing interfaces or specific tasks → Usability Testing (60-90 min)
-      - If exploring experiences or attitudes → Discovery Interview (45-60 min)
-      - If evaluating concepts or ideas → Concept Validation (30-45 min)
-      - If organizing information → Card Sort (45-60 min)
-      - Duration should match complexity and number of tasks
-      - Participant type should align with VA research context and stated objectives
+      Determine the optimal session approach and create overview in this format:
       
-      If input is still vague after refinement, use defaults: "Discovery Interview", "60 minutes", "Veteran"
+      **Session Type:** [Choose based on research methodology: Usability Testing/Discovery Interview/Concept Validation/Card Sort/Tree Test/Focus Group]  
+      **Duration:** {{session_length}} minutes  
+      **Participant:** [Use target demographic from research plan]
+      **Focus Areas:** [Incorporate primary_focus preferences with research objectives]
+      
+      Selection logic:
+      - If research plan mentions interface testing + "usability" in focus → Usability Testing
+      - If research plan is exploratory + "painpoints" in focus → Discovery Interview  
+      - If research plan tests concepts/prototypes → Concept Validation
+      - If research plan involves information organization → Card Sort
+      - Default to approach that best matches research methodology in plan
+      
+      Ensure session type aligns with both the research plan objectives and user-selected focus areas.
 
-  - task_id: "warmup_questions"
+  - task_id: "create_contextual_warmup"
     prompt: |
-      Create 3-4 warm-up questions based on the refined research context.
+      Create 3-4 warm-up questions based on the research plan context and target participants.
       
-      Questions should:
-      - Build rapport and make participants comfortable
-      - Be specific to the research domain identified in the refined input
-      - Use plain, conversational language
-      - Connect to the participant's relevant experience
+      Reference the parsed study scope and participant demographics to create questions that:
+      - Build rapport with the specific participant type identified in research plan
+      - Connect to the product/feature area being studied
+      - Use terminology and context from the research plan
+      - Feel natural and conversational
       
-      If refined input mentions:
-      - VA benefits → Ask about experience with VA services
-      - Healthcare → Ask about healthcare experiences  
-      - Digital tools/websites → Ask about technology comfort level
-      - Forms/applications → Ask about online form experiences
-      - Claims/status → Ask about previous claim experiences
+      If research plan focuses on:
+      - VA benefits applications → Ask about experience with VA benefit processes
+      - Healthcare systems → Ask about healthcare service experiences
+      - Digital tools mentioned in plan → Ask about technology comfort in that specific domain
+      - Claims or status processes → Ask about experience with government processes
       
-      If refined input is still general, create VA-focused questions about:
-      - Experience with VA services or websites
-      - Comfort with digital platforms
-      - Previous interactions with government services
-      
-      Format as bullet points with natural, friendly questions that feel conversational.
+      Format as bullet points with participant-appropriate language matching the research context.
 
-  - task_id: "task_sections"
+  - task_id: "generate_plan_based_tasks"
     prompt: |
-      Create 2-4 specific, actionable task sections based on the refined research objectives.
+      Create 2-4 specific task sections based on the research plan objectives, user flows, and session preferences.
+      
+      **Input Context:**
+      - Research objectives from plan
+      - User flows/touchpoints identified in plan  
+      - Session length: {{session_length}} minutes
+      - Primary focus areas: {{primary_focus}}
+      
+      **Task Creation Rules:**
+      - Total task time should be 60-70% of session length
+      - Each task should directly address research questions from the plan
+      - If "usability" in focus → Include task completion and error observation
+      - If "accessibility" in focus → Include screen reader/keyboard navigation notes
+      - If "mobile" in focus → Specify mobile device requirements
+      - If "painpoints" in focus → Include emotional response observation
+      - If "process" in focus → Include end-to-end workflow tasks
       
       Each task must include:
-      - Concrete, step-by-step moderator instructions based on refined objectives
-      - Specific observer notes (not generic "watch for confusion")
-      - Realistic 5-15 minute timing based on task complexity
-      - Clear objectives tied to the refined research goals
+      - Clear connection to specific research objective from plan
+      - Step-by-step moderator instructions for identified user flows
+      - Specific observer notes relevant to research questions
+      - Realistic timing that fits within session constraints
       
-      Task progression should be: simple → complex, broad → specific
-      
-      If refined input mentions specific features/processes, create tasks around those.
-      If refined input is still general, create realistic VA-focused tasks such as:
-      - Navigation/wayfinding tasks
-      - Form completion scenarios  
-      - Information-seeking tasks
-      - Status checking or account management
-      
-      Format each task exactly as:
-      ## 🎯 Task [Number]: [Specific Task Name] – [X Minutes]
+      Format each task as:
+      ## 🎯 Task [Number]: [Task Name] — [X Minutes]
+      **Research Objective:** [Which plan objective this addresses]
       
       **Instructions for Moderator:**
-      1. [Specific numbered step with clear action]
-      2. [Specific numbered step with clear action]
-      3. [Specific numbered step with clear action]
+      1. [Specific step based on user flows from plan]
+      2. [Specific step based on user flows from plan]
+      3. [Specific step based on user flows from plan]
       
       **Things to Watch For:**
-      - [Specific behavior, struggle, or success indicator]
-      - [Specific usability issue or user reaction]
-      - [Specific area of confusion or clarity]
-      
-      Make tasks concrete and actionable - avoid generic instructions like "explore the interface."
+      - [Specific to research questions from plan]
+      - [Relevant to primary focus areas selected]
+      - [Connected to success metrics from plan]
 
-  - task_id: "post_task_questions"
+  - task_id: "research_aligned_questions"
     prompt: |
-      Create 4-5 post-task interview questions based on the refined research objectives.
+      Create 4-5 post-task interview questions directly tied to the research plan objectives and decisions to be informed.
       
       Questions should:
-      - Focus on overall experience and impressions (not the research process itself)
-      - Gather actionable feedback for design/product decisions
-      - Be open-ended and encourage reflection
-      - Connect to specific research objectives from the refined input
+      - Address specific research questions identified in the plan
+      - Generate insights for the decisions this research will inform
+      - Connect to success metrics or outcomes expected from the plan
+      - Be relevant to primary focus areas: {{primary_focus}}
       
-      Avoid meta-questions about "the tasks" or "research objectives"
-      Instead focus on:
-      - Overall experience with the product/service/process tested
-      - What worked well vs. what was challenging
-      - Comparison to expectations or similar experiences
-      - Confidence in using the service independently
-      - Specific improvement suggestions
+      Reference the parsed research context to ensure questions will provide actionable data for:
+      - Key decisions identified in research plan
+      - Product/feature areas being evaluated
+      - Target outcomes and success metrics
       
-      If refined input mentions specific areas, tailor questions to those.
-      If refined input is still general, create VA-focused questions about:
-      - Overall experience with the digital service
-      - Comparison to other government services
-      - Confidence and comfort level using VA services
-      - Specific pain points or successes encountered
-      - Recommendations for improvement
+      Avoid generic questions. Instead, create questions that specifically help answer:
+      - The research questions listed in the plan
+      - Whether the approach meets user needs identified in plan scope
+      - How well the experience aligns with user expectations for this domain
+      - Specific improvements needed in areas identified by research objectives
       
-      Format as bullet points with thoughtful, open-ended questions.
+      Format as bullet points with questions that generate insights directly applicable to the research plan goals.
 
-  - task_id: "emergency_procedures"
+  - task_id: "team_emergency_procedures"
     prompt: |
-      Create comprehensive emergency exit procedures for VA research sessions. Write from the moderator's perspective with specific action steps for each scenario:
+      Create emergency exit procedures customized for this research team and study context.
+      
+      Use the team member information and study context from the research plan to create specific procedures:
       
       **Technical Difficulties:**
-      - Pause recording immediately and inform participant of technical issues
-      - Attempt basic troubleshooting (refresh browser, check connection, restart application)
-      - If issues persist beyond 5 minutes, offer to reschedule at participant's convenience
-      - Document technical problems encountered for future session planning
+      - Standard VA research session technical troubleshooting
+      - Specific escalation to lead researcher: [Use contact from research plan]
+      - Documentation requirements for this study
       
       **Participant Distress:**
-      - Immediately pause the session and ask if participant needs a break
-      - Remind participant that participation is voluntary and they can stop at any time
-      - Offer mental health resources if participant expresses distress related to military service
-      - Allow participant to collect themselves and decide whether to continue
-      
-      **Inappropriate Content/Behavior:**
-      - Calmly but firmly redirect conversation back to research topics
-      - If behavior continues, politely end the session: "I think we have enough information for today"
-      - Document incident details immediately after session
-      - Contact research supervisor within 24 hours for guidance on next steps
+      - Procedures specific to participant demographic from plan
+      - Mental health resources relevant to study population
+      - Team notification process using contacts from research plan
       
       **Session Termination:**
-      - Save and secure any recordings immediately
-      - Thank participant professionally regardless of reason for termination
-      - Complete incident documentation including time, reason, and participant response
-      - Follow up with participant via email if appropriate
+      - Data handling specific to this study's requirements
+      - Notification process for team members identified in plan
+      - Documentation requirements aligned with research timeline
       
       **Support Contacts:**
+      - Lead researcher: [Extract from research plan]
+      - Team members: [Extract from research plan]  
       - VA Research Ethics Office: research.ethics@va.gov | (202) 443-5930
-      - Study supervisor: [Insert supervisor contact from research protocol]
-      - Mental health crisis support: Veterans Crisis Line 1-800-273-8255
-      - For immediate emergencies: 911
+      - Veterans Crisis Line: 1-800-273-8255
+      - Emergency: 911
       
-      Remember: Participant well-being is always the top priority over research objectives.
+      Ensure procedures align with the research methodology and participant safeguards outlined in the research plan.
 
 # Processing workflow
 processing_workflow:
   1. validate_inputs
-  2. execute_ai_generation_tasks
-  3. validate_generated_content
-  4. populate_template
-  5. save_to_outputs
+  2. read_research_plan_document
+  3. execute_ai_generation_tasks
+  4. validate_generated_content
+  5. populate_template
+  6. save_to_outputs
 
-# Output template with refined content
+# Output template using extracted research plan data
 output_template: |
-  # 💬 Discussion Guide – {{study_name}}
+  # 💬 Discussion Guide — {{ai_generated.parse_research_plan.study_name}}
 
-  {{ai_generated.session_overview}}  
-  **Moderator:** {{researcher_contact}}
+  {{ai_generated.determine_session_approach}}  
+  **Moderator:** {{ai_generated.parse_research_plan.lead_researcher}}
 
   ---
 
@@ -208,117 +208,112 @@ output_template: |
 
   ### 2–3 Days Before Session
   - [ ] Schedule and confirm sessions with participants
-  - [ ] Review platform research checklist
-  - [ ] Complete project-specific prep tasks for {{study_name}}
-  - [ ] Send calendar invites to {{team_members}}
+  - [ ] Review platform research checklist  
+  - [ ] Complete project-specific prep tasks for {{ai_generated.parse_research_plan.study_name}}
+  - [ ] Send calendar invites to: {{ai_generated.parse_research_plan.team_members}}
 
   ### Day of the Session
   - [ ] Mute Slack notifications
   - [ ] Check screen sharing permissions
-  - [ ] Send observer instructions to {{team_members}}
-  - [ ] Join feedback Slack channel: {{study_channel}}
+  - [ ] Send observer instructions to research team
+  - [ ] Prepare session materials and prototypes
 
   ---
 
-  ## 🗣️ Intro – 5 Minutes
+  ## 🗣️ Intro — 5 Minutes
 
   Welcome the participant. Cover:
-  - Session duration and purpose
-  - That feedback is welcome and voluntary
+  - Session duration: {{session_length}} minutes
+  - Research purpose: {{ai_generated.parse_research_plan.primary_objective}}
+  - Voluntary participation and feedback welcome
   - Consent for screen/audio recording
   - Confirmation of observer presence
-  - If applicable, explain it's a prototype
+  - If applicable, explain prototype nature
   - Reconfirm VA clip usage consent
 
-  > **Prompt**: "Are you okay with being recorded and having observers? This helps our team learn from your experience."
+  > **Prompt**: "Are you okay with being recorded and having observers? This helps our team learn from your experience with [specific product/service from plan]."
 
   ---
 
-  ## ❄️ Warm-Up Questions – 5 Minutes
-  {{ai_generated.warmup_questions}}
+  ## ❄️ Warm-Up Questions — 5 Minutes
+  {{ai_generated.create_contextual_warmup}}
 
   ---
 
   ## 🧪 Task Sections
 
-  {{ai_generated.task_sections}}
+  {{ai_generated.generate_plan_based_tasks}}
 
   ---
 
-  ## 🎤 Post-Task Interview – 10 Minutes
-  {{ai_generated.post_task_questions}}
+  ## 🎤 Post-Task Interview — 10 Minutes
+  {{ai_generated.research_aligned_questions}}
 
   ---
 
-  ## 🔁 Reconfirm Clip Consent
-  "Are you still comfortable with us using a short video clip (with de-identified info) to share with internal VA teams? This helps us communicate your feedback to decision-makers."
+  ## 📝 Reconfirm Clip Consent
+  "Are you still comfortable with us using a short video clip (with de-identified info) to share with internal VA teams? This helps us communicate your feedback to decision-makers working on {{ai_generated.parse_research_plan.product_area}}."
 
   ---
 
-  ## 🙏 Thank You & Closing – 5 Minutes
+  ## 🙏 Thank You & Closing — 5 Minutes
   - Thank participant for their time and insights
-  - Mention follow-up/thank-you note timeline
+  - Mention follow-up timeline from research plan
   - Offer opt-in for future research opportunities
-  - Provide contact information: {{researcher_contact}}
+  - Provide contact: {{ai_generated.parse_research_plan.lead_researcher_contact}}
 
   ---
 
   ## 🚨 Emergency Exit Strategy
-  {{ai_generated.emergency_procedures}}
+  {{ai_generated.team_emergency_procedures}}
 
   ---
 
   ## 📝 Observer Instructions
-  **For {{team_members}}:**
-  - Take notes on participant reactions and quotes
-  - Note technical issues or usability problems
+  **For research team members:**
+  - Take notes on participant reactions and direct quotes
+  - Focus on research questions from plan: {{ai_generated.parse_research_plan.research_questions}}
+  - Note specific usability issues and success indicators
   - Avoid interrupting unless technical emergency
   - Upload notes using `/upload-notes` after session
 
   ---
   **Guide created:** {{current_date}}  
-  **Study details:** {{study_link}}
+  **Research plan:** {{research_plan_document}}
+  **Session focus:** {{primary_focus}}
 
 # Output configuration
 output_options:
   # File settings
-  filename: "discussion_guide_{{study_name}}_{{current_date}}.md"
+  filename: "discussion_guide_{{ai_generated.parse_research_plan.study_name_slug}}_{{current_date}}.md"
   path: "03-fieldwork/"
   
-  # Delivery methods (multiple can be enabled)
+  # Delivery methods
   delivery:
     github:
       enabled: true
-      repo: "your-research-repo"
-      commit_message: "Add discussion guide for {{study_name}}"
+      repo: "research-project-repo"
+      commit_message: "Add discussion guide for {{ai_generated.parse_research_plan.study_name}}"
       
     slack:
       enabled: true
-      channel: "{{study_channel}}"
-      notify_user: "{{researcher_contact}}"
-      team_members: "{{team_members}}"
-      message: "💬 Discussion guide for {{study_name}} has been created and saved. Research session guide ready for fieldwork."
-      include_preview: false
+      channel: "{{ai_generated.parse_research_plan.study_channel}}"
+      notify_user: "{{ai_generated.parse_research_plan.lead_researcher}}"
+      team_members: "{{ai_generated.parse_research_plan.team_members}}"
+      message: "💬 Discussion guide for {{ai_generated.parse_research_plan.study_name}} has been created. {{session_length}}-minute session guide ready for fieldwork."
+      include_preview: true
       actions:
-        - text: "📝 View Guide"
+        - text: "📄 View Guide"
           url: "{{github_file_link}}"
-        - text: "✅ Create Pre-Session Reminder"
-          action: "create_calendar_reminder"
-    
-    email:
-      enabled: false
-      # Future: email delivery options
-      
-    teams:
-      enabled: false
-      # Future: Teams delivery options
+        - text: "📅 Schedule Sessions"
+          action: "create_calendar_events"
 
 output_use: |
-  CivicMind Discussion Guide generator creates VA-compliant conversation guides for research sessions. Automatically refines informal or unclear research inputs to create professional, actionable session guides. Ensures consistent structure, timing, and coverage of key research objectives while maintaining VA standards for participant consent and ethics.
+  CivicMind Discussion Guide generator creates VA-compliant conversation guides by reading existing research plan documents. Automatically extracts study context, objectives, team information, and research methodology to generate focused session guides. Incorporates user session preferences (length, focus areas) while maintaining consistency with established research plans.
 
 output_notes: |
-  Input refinement: AI automatically improves clarity and professionalism of research objectives while preserving original intent.
-  Content quality: AI tasks include specific instructions for handling vague or incomplete research objectives.
-  VA compliance: All generated content follows VA research standards and ethical guidelines.
-  Quality control: Transforms informal inputs into professional moderator-ready session guides.
-  Format consistency: Maintain professional formatting with proper timing and clear moderator instructions.
+  Document parsing: AI reads research plan documents to extract study metadata, objectives, and team information.
+  Context preservation: Generated guides maintain consistency with research plan objectives and methodology.
+  Preference integration: User session preferences (length, focus) are incorporated into plan-based structure.
+  VA compliance: All generated content follows VA research standards and uses team contacts from research plan.
+  Quality assurance: Links generated content directly to established research objectives and success metrics.
