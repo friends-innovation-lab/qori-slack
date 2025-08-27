@@ -1,6 +1,3 @@
-# Participant Status Update - YAML Configuration
-
-```yaml
 id: participant_status_update
 label: 🔄 Update Participant Status
 description: Quick status updates for existing study participants with automatic tracker synchronization
@@ -163,5 +160,3 @@ This would be a much simpler modal:
 - **Updates** the same GitHub file  
 - **Preserves** all other participant data
 - **Triggers** appropriate follow-up actions
-
-Want me to create the Slack UI for this status update workflow?
