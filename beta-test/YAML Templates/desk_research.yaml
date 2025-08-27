@@ -383,5 +383,3 @@ This YAML configuration creates a comprehensive desk research processor that:
 - **📊 Creates structured outputs** including README, citations, and action items
 - **🔄 Integrates with Slack and GitHub** for seamless workflow
 - **📚 Organizes research repositories** with proper folder structures
-
-Save this file as `desk-research-processor.yaml` for your Qori research toolchain.
