@@ -23,9 +23,12 @@ precision_mode: comprehensive
 input_variables:
   - uploaded_documents      # Array of document paths/links from Slack upload (REQUIRED)
   - research_topic          # Main research topic or project name (REQUIRED)
-  - analysis_focus          # Array: competitive,trends,best_practices,user_needs,technical,regulatory (OPTIONAL)
-  - output_style           # brief/detailed/comprehensive (OPTIONAL, default: detailed)
-  - include_citations      # boolean: Include full citation format (OPTIONAL, default: true)
+
+# Smart defaults handled by AI
+ai_defaults:
+  output_style: "detailed"           # Always detailed for comprehensive analysis
+  include_citations: true            # Always include citations - why wouldn't you?
+  analysis_focus: "auto_detect"      # AI determines focus based on document content
 
 # AI Generation Tasks - Sequential processing
 ai_generation_tasks:
@@ -66,7 +69,13 @@ ai_generation_tasks:
     prompt: |
       Extract and synthesize key themes across all documents related to: {{research_topic}}
       
-      Analysis focus areas: {{analysis_focus}}
+      AUTOMATICALLY DETERMINE ANALYSIS FOCUS based on document content:
+      - If documents contain competitor mentions, pricing, market share → Include competitive analysis
+      - If documents discuss industry direction, future predictions → Include trends analysis  
+      - If documents highlight successful approaches, case studies → Include best practices
+      - If documents focus on user feedback, pain points, needs → Include user needs analysis
+      - If documents discuss implementation, architecture, tools → Include technical analysis
+      - If documents mention compliance, regulations, standards → Include regulatory analysis
       
       Identify and organize themes by:
       
@@ -372,14 +381,3 @@ output_notes: |
   Citation management: Generates proper academic citations and bibliography
   Quality assurance: Provides confidence scores and processing quality metrics
   Action-oriented: Focuses on actionable insights and next steps rather than just summaries
-```
-
-## Configuration Summary
-
-This YAML configuration creates a comprehensive desk research processor that:
-
-- **📁 Processes bulk document uploads** from Slack
-- **🧠 Generates AI-powered analysis** with cross-document insights
-- **📊 Creates structured outputs** including README, citations, and action items
-- **🔄 Integrates with Slack and GitHub** for seamless workflow
-- **📚 Organizes research repositories** with proper folder structures
