@@ -1,6 +1,3 @@
-# Qori Desk Research Processor - YAML Configuration
-
-```yaml
 id: desk_research_processor
 name: run_desk_research
 label: 📚 Desk Research Processor
