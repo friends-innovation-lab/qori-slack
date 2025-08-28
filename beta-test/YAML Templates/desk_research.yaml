@@ -322,8 +322,8 @@ output_template: |
 # Output configuration
 output_options:
   # File settings
-  filename: "README_{{research_topic_slug}}_{{current_date}}.md"
-  path: "research/desk-research/{{research_topic_slug}}/"
+  filename: "README_{{research_topic}}_{{current_date}}.md"
+  path: "{{research_topic}}/"
   
   # Additional files to create
   additional_outputs:
