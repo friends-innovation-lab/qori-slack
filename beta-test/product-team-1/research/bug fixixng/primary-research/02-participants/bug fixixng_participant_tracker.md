@@ -14,7 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
-| 3 | abdul | calendly_signup | 2025-08-24 1:00 PM | rescheduling_needed | nO |
+| 3 | abdul | calendly_signup | 2025-08-24 1:00 PM | backup_participant | i want for backup |
 | 2 | abdul | email_outreach | 2025-08-24 2:00 PM | confirmed | NO |
 | 1 | Tanzeel | internal_va_panel | 2025-08-31 1:00PM | confirmed | confimed |
 
@@ -79,7 +79,7 @@ Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
-- 3: nO
+- 3: i want for backup
 - 2: NO
 - 1: confimed
 
@@ -129,4 +129,4 @@ Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Reschedule 1 session(s)
+All participants are on track
