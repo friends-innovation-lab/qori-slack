@@ -2,11 +2,11 @@
 
 **📊 Recruitment Summary**
 - **Total Participants:** 4
-- **Confirmed Sessions:** 0
+- **Confirmed Sessions:** 1
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
-- **Last Updated:** August 25, 2025 by U01SC2TNYKU
+- **Last Updated:** August 29, 2025 by lapedra
 
 ---
 
@@ -14,7 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
-| 10 | PT004 | calendly_signup | 2025-09-01 11:00 AM EST | backup_participant | Bilingual (Spanish/English); mobile-first user preference |
+| 10 | PT004 | calendly_signup | 2025-09-01 11:00 AM EST | confirmed | Bilingual (Spanish/English); mobile-first user preference |
 | 9 | PT003 | referral | 2025-09-02 1:00 PM EST | rescheduling_needed | Basic computer skills; may need technical support; prefers phone calls over email |
 | 8 | PT002 | email_outreach | 2025-09-03 2:00 PM EST | pending_response | Childcare considerations needed; prefers camera off during sessions |
 | 7 | PT001 | internal_va_panel | 2025-08-29 2:00 pm EST | recruited | Screen reader compatible; prefers morning sessions due to medication schedule |
@@ -31,12 +31,14 @@
 | internal_va_panel | 1 | 25% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 4 recruited)
+Recruitment effectiveness: 25% conversion rate (1 confirmed of 4 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 
 ## ⏳ Pending Sessions
 
@@ -48,17 +50,31 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 4 recruited)
 
 **Session Observer Assignments:**
 
-| Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
-|---------|-----------|-----------|----------|------------------|-----------------|
-| pt010 | 2025-09-01 11:00 AM EST | lapedra (👁️ Silent Observer) | 1/3 | 0 | ✅ Sent |
+| Session | Date/Time | Observers | Capacity | Pending Requests |
+|---------|-----------|-----------|----------|------------------|
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker | 0 | - |
-| 👁️ Silent Observer | 1 | pt010 |
-| 📊 PM Observer | 0 | - |
-| 🏛️ Stakeholder | 0 | - |
+| 📝 Note-taker |  |  |
+| 👁️ Silent Observer |  |  |
+| 📊 PM Observer |  |  |
+| 🏛️ Stakeholder |  |  |
+
+**Observer Guidelines:** 
+- Review session plan before observing
+- Stay muted unless emergency
+- Take notes without interrupting
+- Share feedback after session
+
+{% if triggered_by_observer_request %}
+**🔄 Observer Updates:**
+- ✅  approved for  as 
+- 📤 Send observer guidelines to 
+- 📅 Add  to  calendar invite
+- 🔄 Update session capacity tracking
+{% endif %}
+
 ---
 
 ## 📝 Accessibility & Accommodations
@@ -105,4 +121,4 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 4 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Follow up with 1 pending participant(s); Reschedule 1 session(s); Schedule first confirmed session
+Follow up with 1 pending participant(s); Reschedule 1 session(s)
