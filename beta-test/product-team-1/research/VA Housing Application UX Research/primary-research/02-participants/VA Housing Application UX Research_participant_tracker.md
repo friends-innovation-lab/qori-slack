@@ -2,7 +2,7 @@
 
 **📊 Recruitment Summary**
 - **Total Participants:** 4
-- **Confirmed Sessions:** 1
+- **Confirmed Sessions:** 2
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -15,7 +15,7 @@
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
 | 10 | PT004 | calendly_signup | 2025-09-01 11:00 AM EST | confirmed | Bilingual (Spanish/English); mobile-first user preference |
-| 9 | PT003 | referral | 2025-09-02 1:00 PM EST | rescheduling_needed | Basic computer skills; may need technical support; prefers phone calls over email |
+| 9 | PT003 | referral | 2025-09-02 1:00 PM EST | confirmed | Basic computer skills; may need technical support; prefers phone calls over email |
 | 8 | PT002 | email_outreach | 2025-09-03 2:00 PM EST | pending_response | Childcare considerations needed; prefers camera off during sessions |
 | 7 | PT001 | internal_va_panel | 2025-08-29 2:00 pm EST | recruited | Screen reader compatible; prefers morning sessions due to medication schedule |
 
@@ -31,12 +31,14 @@
 | internal_va_panel | 1 | 25% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 25% conversion rate (1 confirmed of 4 recruited)
+Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 
@@ -121,4 +123,4 @@ Recruitment effectiveness: 25% conversion rate (1 confirmed of 4 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Follow up with 1 pending participant(s); Reschedule 1 session(s)
+Follow up with 1 pending participant(s)
