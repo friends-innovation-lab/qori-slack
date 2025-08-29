@@ -2,8 +2,8 @@
 
 **📊 Recruitment Summary**
 - **Total Participants:** 3
-- **Confirmed Sessions:** 1
-- **Pending Responses:** 1
+- **Confirmed Sessions:** 2
+- **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
 - **Last Updated:** August 29, 2025 by tanzeelsaleem10
@@ -16,7 +16,7 @@
 |----|-------|---------------|-----------|--------|----------------------|
 | 3 | abdul | calendly_signup | 2025-08-24 1:00 PM | rescheduling_needed | nO |
 | 2 | abdul | email_outreach | 2025-08-24 2:00 PM | confirmed | NO |
-| 1 | Tanzeel | internal_va_panel | 2025-08-31 1:00PM | pending_response | updated |
+| 1 | Tanzeel | internal_va_panel | 2025-08-31 1:00PM | confirmed | confimed |
 
 ---
 
@@ -29,7 +29,7 @@
 | internal_va_panel | 1 | 33% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 33% conversion rate (1 confirmed of 3 recruited)
+Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 
 ---
 
@@ -37,10 +37,11 @@ Recruitment effectiveness: 33% conversion rate (1 confirmed of 3 recruited)
 
 - **** -  at 
   - Observers: 
+- **** -  at 
+  - Observers: 
 
 ## ⏳ Pending Sessions
 
-- **** -  ()
 
 ---
 
@@ -80,7 +81,7 @@ Recruitment effectiveness: 33% conversion rate (1 confirmed of 3 recruited)
 **Special Needs Summary:**
 - 3: nO
 - 2: NO
-- 1: updated
+- 1: confimed
 
 **Preparation Checklist:**
 - [ ] Interpreter services arranged (if needed)
@@ -128,4 +129,4 @@ Recruitment effectiveness: 33% conversion rate (1 confirmed of 3 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Follow up with 1 pending participant(s); Reschedule 1 session(s)
+Reschedule 1 session(s)
