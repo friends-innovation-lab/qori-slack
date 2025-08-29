@@ -47,14 +47,14 @@ pre_processing_validation:
 
 # ENHANCED: Processing workflow with HARD STOPS
 processing_workflow:
-  1. validate_inputs_or_fail
-  2. extract_documents_or_abort          # NEW: Hard stop if extraction fails
-  3. validate_minimum_content_or_abort   # NEW: Hard stop if insufficient content
-  4. check_topic_relevance_or_abort      # NEW: Hard stop if not relevant
-  5. execute_ai_generation_with_gates    # NEW: Each task has validation gates
-  6. cross_validate_all_outputs          # NEW: Validates consistency across tasks
-  7. final_authenticity_check_or_abort   # NEW: Final check before output
-  8. generate_verified_output
+  - validate_inputs_or_fail
+  - extract_documents_or_abort          # NEW: Hard stop if extraction fails
+  - validate_minimum_content_or_abort   # NEW: Hard stop if insufficient content
+  - check_topic_relevance_or_abort      # NEW: Hard stop if not relevant
+  - execute_ai_generation_with_gates    # NEW: Each task has validation gates
+  - cross_validate_all_outputs          # NEW: Validates consistency across tasks
+  - final_authenticity_check_or_abort   # NEW: Final check before output
+  - generate_verified_output
 
 # CRITICAL: Global validation that applies to ALL AI tasks
 global_ai_validation:
@@ -84,11 +84,11 @@ ai_generation_tasks:
       **EXTRACTED CONTENT:** {{extracted_document_text}}
       
       CRITICAL VALIDATION TASKS:
-      1. Verify extracted_document_text contains ACTUAL readable content (not empty/placeholder)
-      2. Confirm content relates to research topic: "{{research_topic}}"
-      3. Count total extractable characters (minimum 2000 required)
-      4. Identify actual document titles from content (not filenames)
-      5. Verify topic-relevant keywords are present
+      - Verify extracted_document_text contains ACTUAL readable content (not empty/placeholder)
+      - Confirm content relates to research topic: "{{research_topic}}"
+      - Count total extractable characters (minimum 2000 required)
+      - Identify actual document titles from content (not filenames)
+      - Verify topic-relevant keywords are present
       
       RESPONSE FORMAT - MUST BE EXACTLY:
       
@@ -308,9 +308,9 @@ output_template: |
   ## 🔧 Required Actions
   
   **To proceed with analysis:**
-  1. **Document Issues:** {{document_extraction_issues}}
-  2. **Content Requirements:** {{content_requirements_not_met}}
-  3. **Manual Steps Needed:** {{manual_intervention_required}}
+  - **Document Issues:** {{document_extraction_issues}}
+  - **Content Requirements:** {{content_requirements_not_met}}
+  - **Manual Steps Needed:** {{manual_intervention_required}}
   
   **Alternative Approaches:**
   - Resubmit documents in different formats (PDF, DOCX, TXT)
@@ -384,6 +384,7 @@ output_options:
   
   delivery:
     slack:
+      enabled: true
       success_message: |
         ✅ **Desk Research Analysis Complete**
         
