@@ -1,332 +1,265 @@
 id: desk_research_processor
 name: run_desk_research
 label: 📚 Desk Research Processor
-version: v2.2
+version: v2.0
 description: |
-  ULTRA-STRICT document processing system that COMPLETELY FAILS if documents cannot be extracted.
-  NO TEMPLATE CONTENT GENERATION UNDER ANY CIRCUMSTANCES. System will abort entire pipeline
-  if document extraction fails rather than produce generic content.
+  Process multiple document uploads from Slack to create comprehensive desk research summaries. Automatically analyzes uploaded documents (PDFs, Word docs, research papers, reports, etc.) and generates structured README files with key insights, themes, and actionable recommendations. Supports batch processing and creates organized research repositories following VA research standards.
 
 author: Qori R&D
 created: 2025-08-27
-last_updated: 2025-08-28
+last_updated: 2025-08-27
 
 # LLM Configuration
 llm_config:
   model: "gpt-4"
   temperature: 0.3
   max_tokens: 6000
-  retry_attempts: 3
-  fallback_model: "gpt-3.5-turbo"
 
 input_type: document_batch
-input_processing: read_and_analyze_multiple_with_validation
+input_processing: read_and_analyze_multiple
 precision_mode: comprehensive
 
-# CRITICAL: Input schema for Slack UI
+# Input schema for Slack UI
 input_variables:
   - uploaded_documents      # Array of document paths/links from Slack upload (REQUIRED)
   - research_topic          # Main research topic or project name (REQUIRED)
-  - fallback_manual_text    # Optional manual text if extraction fails
 
-# STOP-GATE: Pre-processing validation that BLOCKS entire pipeline
-pre_processing_validation:
-  document_extraction_gate:
-    enabled: true
-    min_total_extractable_chars: 2000
-    min_documents_successfully_extracted: 1
-    min_topic_relevance_keywords: 2
-    failure_action: "ABORT_ENTIRE_PIPELINE"
-  
-  content_authenticity_gate:
-    enabled: true
-    require_actual_document_titles: true
-    require_topic_keyword_presence: true
-    block_generic_examples: true
-    failure_action: "ABORT_ENTIRE_PIPELINE"
+# Smart defaults handled by AI
+ai_defaults:
+  output_style: "detailed"           # Always detailed for comprehensive analysis
+  include_citations: true            # Always include citations - why wouldn't you?
+  analysis_focus: "auto_detect"      # AI determines focus based on document content
 
-# ENHANCED: Processing workflow with HARD STOPS
-processing_workflow:
-  - validate_inputs_or_fail
-  - extract_documents_or_abort          # NEW: Hard stop if extraction fails
-  - validate_minimum_content_or_abort   # NEW: Hard stop if insufficient content
-  - check_topic_relevance_or_abort      # NEW: Hard stop if not relevant
-  - execute_ai_generation_with_gates    # NEW: Each task has validation gates
-  - cross_validate_all_outputs          # NEW: Validates consistency across tasks
-  - final_authenticity_check_or_abort   # NEW: Final check before output
-  - generate_verified_output
-
-# CRITICAL: Global validation that applies to ALL AI tasks
-global_ai_validation:
-  mandatory_checks:
-    - extracted_content_present: true
-    - no_placeholder_content: true
-    - no_generic_examples: true
-    - topic_relevance_verified: true
-    - document_specific_references: true
-  
-  automatic_failures:
-    - if_no_extracted_content: "PIPELINE_ABORT"
-    - if_generic_examples_detected: "PIPELINE_ABORT" 
-    - if_placeholder_numbers_found: "PIPELINE_ABORT"
-    - if_unrelated_topics_mentioned: "PIPELINE_ABORT"
-
-# AI Generation Tasks - WITH ULTRA-STRICT VALIDATION
+# AI Generation Tasks - Sequential processing
 ai_generation_tasks:
-  - task_id: "validate_extraction_success"
-    priority: 1
-    blocking: true
-    prompt: |
-      EXTRACTION VALIDATION CHECKPOINT:
-      
-      **UPLOADED DOCUMENTS:** {{uploaded_documents}}
-      **RESEARCH TOPIC:** {{research_topic}}
-      **EXTRACTED CONTENT:** {{extracted_document_text}}
-      
-      CRITICAL VALIDATION TASKS:
-      - Verify extracted_document_text contains ACTUAL readable content (not empty/placeholder)
-      - Confirm content relates to research topic: "{{research_topic}}"
-      - Count total extractable characters (minimum 2000 required)
-      - Identify actual document titles from content (not filenames)
-      - Verify topic-relevant keywords are present
-      
-      RESPONSE FORMAT - MUST BE EXACTLY:
-      
-      **EXTRACTION_STATUS:** [SUCCESS/FAILED]
-      **TOTAL_CHARACTERS_EXTRACTED:** [actual number]
-      **DOCUMENTS_WITH_CONTENT:** [actual count]
-      **TOPIC_KEYWORDS_FOUND:** [list specific keywords found]
-      **ACTUAL_DOCUMENT_TITLES:** [titles extracted from content, not filenames]
-      **PROCEED_WITH_ANALYSIS:** [YES/NO]
-      
-      MANDATORY: If extracted_document_text is empty, contains "<no content>", or has <2000 characters:
-      Respond with: "EXTRACTION_STATUS: FAILED - ABORT_PIPELINE"
-      
-      If content doesn't contain keywords related to "{{research_topic}}":
-      Respond with: "EXTRACTION_STATUS: FAILED - TOPIC_MISMATCH - ABORT_PIPELINE"
-
   - task_id: "document_inventory"
-    depends_on: "validate_extraction_success"
-    validation_gate: "extraction_success_confirmed"
     prompt: |
-      GATE CHECK: Proceed ONLY if validate_extraction_success shows "PROCEED_WITH_ANALYSIS: YES"
+      Analyze all uploaded documents and create a comprehensive inventory:
       
-      If previous task result contains "ABORT_PIPELINE", respond with: 
-      "BLOCKED: Cannot generate inventory - document extraction failed"
+      **Documents Uploaded:** {{uploaded_documents}}
+      **Research Topic:** {{research_topic}}
       
-      EXTRACTED CONTENT TO ANALYZE:
-      {{extracted_document_text}}
-      
-      TOPIC FOCUS: {{research_topic}}
-      
-      Using ONLY the actual extracted content above, create inventory:
+      For each document, extract and format:
       
       **DOCUMENT INVENTORY:**
-      For each document with extractable content:
-      - **Actual Document Title:** [From content headers/metadata, NOT filename]
-      - **Content Type:** [Determined from content analysis]
-      - **Author/Source:** [From extracted metadata]
-      - **Topic Relevance to "{{research_topic}}":** [Specific evidence with quotes]
-      - **Extraction Quality:** [Percentage of content successfully extracted]
-      - **Key Sections Identified:** [Actual section titles from content]
-      - **Content Volume:** [Word count from actual text]
+      For each file:
+      - Document title/name
+      - Document type (PDF, Word, research paper, report, presentation, etc.)
+      - Source/author (if identifiable)
+      - Publication date (if available)
+      - Page count/length
+      - Primary subject matter
+      - Document quality/relevance score (1-10)
+      - Key sections or chapters identified
       
-      AUTHENTICATION REQUIREMENT: Each item must reference specific text from extracted content.
+      **COLLECTION OVERVIEW:**
+      - Total documents processed: [number]
+      - Document types breakdown
+      - Date range of materials
+      - Primary subject areas covered
+      - Overall collection quality assessment
+      - Any duplicate or related materials identified
       
-      FAIL-SAFE: If you cannot complete this inventory with specific content references, 
-      respond with: "INVENTORY_BLOCKED: Insufficient real content for analysis"
+      **PROCESSING NOTES:**
+      - Documents that couldn't be fully processed
+      - Missing or corrupted files
+      - Recommendations for additional materials needed
 
   - task_id: "extract_key_themes"
-    depends_on: "document_inventory" 
-    validation_gate: "inventory_completed_successfully"
     prompt: |
-      DEPENDENCY CHECK: Proceed ONLY if document_inventory was completed successfully
+      Extract and synthesize key themes across all documents related to: {{research_topic}}
       
-      If document_inventory contains "INVENTORY_BLOCKED" or "BLOCKED", respond with:
-      "THEMES_BLOCKED: Cannot extract themes - inventory failed"
+      AUTOMATICALLY DETERMINE ANALYSIS FOCUS based on document content:
+      - If documents contain competitor mentions, pricing, market share → Include competitive analysis
+      - If documents discuss industry direction, future predictions → Include trends analysis  
+      - If documents highlight successful approaches, case studies → Include best practices
+      - If documents focus on user feedback, pain points, needs → Include user needs analysis
+      - If documents discuss implementation, architecture, tools → Include technical analysis
+      - If documents mention compliance, regulations, standards → Include regulatory analysis
       
-      VALIDATED DOCUMENT CONTENT:
-      {{extracted_document_text}}
+      Identify and organize themes by:
       
-      RESEARCH FOCUS: {{research_topic}}
+      **PRIMARY THEMES** (5-8 major themes across all documents):
+      For each theme:
+      - Theme name and description
+      - Supporting evidence from specific documents
+      - Frequency/prevalence across the document set
+      - Relevance to {{research_topic}}
       
-      Extract themes ONLY from the actual document content above:
+      **SECONDARY PATTERNS** (3-5 emerging patterns):
+      - Cross-document connections
+      - Contradictory viewpoints or approaches
+      - Evolution of ideas over time (if date range available)
+      - Geographic or demographic variations
       
-      **PRIMARY THEMES FROM DOCUMENTS:**
-      For each theme found in the actual content:
-      - **Theme Name:** [Specific to {{research_topic}}]
-      - **Supporting Quote:** [Exact text from documents]
-      - **Source Document:** [Actual document title from inventory]
-      - **Relevance Score:** [1-10 based on content analysis]
+      **FOCUS AREA ANALYSIS:**
+      Based on selected focus areas {{analysis_focus}}, provide specific insights for:
+      - Competitive landscape (if competitive selected)
+      - Industry trends (if trends selected)
+      - Best practices (if best_practices selected)
+      - User needs/pain points (if user_needs selected)
+      - Technical considerations (if technical selected)
+      - Regulatory/compliance issues (if regulatory selected)
       
-      **TOPIC-SPECIFIC ANALYSIS FOR "{{research_topic}}":**
-      Based on what's ACTUALLY in the documents:
-      - User experience issues mentioned: [Yes/No with specific examples]
-      - Application process problems found: [Yes/No with specific examples]
-      - Housing-related concerns identified: [Yes/No with specific examples]
-      - VA-specific insights discovered: [Yes/No with specific examples]
-      
-      MANDATORY: Every theme must include direct quotes from extracted content.
-      
-      FAIL-SAFE: If themes cannot be supported by actual document content, respond with:
-      "THEMES_EXTRACTION_FAILED: Cannot identify themes from available content"
+      **THEME CONFIDENCE LEVELS:**
+      Rate each theme's strength based on:
+      - Number of supporting documents
+      - Quality of evidence
+      - Consistency across sources
 
   - task_id: "generate_executive_summary"
-    depends_on: ["document_inventory", "extract_key_themes"]
-    validation_gate: "themes_extraction_successful"
     prompt: |
-      DEPENDENCY VALIDATION:
-      - Document inventory status: {{ai_generated.document_inventory.status}}
-      - Themes extraction status: {{ai_generated.extract_key_themes.status}}
+      Create an executive summary of the desk research findings for {{research_topic}}.
       
-      If either contains "BLOCKED", "FAILED", or "INVENTORY_BLOCKED", respond with:
-      "SUMMARY_BLOCKED: Cannot generate summary - prerequisite tasks failed"
+      **Output Style:** {{output_style}}
       
-      VERIFIED CONTENT FOR SUMMARY:
-      - Themes identified: {{ai_generated.extract_key_themes}}
-      - Documents processed: {{ai_generated.document_inventory}}
-      
-      Create executive summary for "{{research_topic}}" using VERIFIED findings:
+      Structure the summary as:
       
       **🎯 RESEARCH OBJECTIVE**
-      - Research topic: {{research_topic}}
-      - Documents successfully analyzed: [From inventory]
-      - Content extraction confidence: [From validation]
+      - What this desk research aimed to understand
+      - Key questions addressed
+      - Scope and limitations
       
-      **📊 KEY FINDINGS** (Evidence-based only)
-      For each finding (minimum 3, maximum 5):
-      - **Finding:** [Specific insight about {{research_topic}}]
-      - **Supporting Evidence:** [Direct quote from documents]
-      - **Source:** [Actual document title]
-      - **Confidence:** [High/Medium/Low based on evidence strength]
+      **📊 KEY FINDINGS** (3-5 main findings)
+      Each finding should:
+      - Be actionable and specific
+      - Reference supporting document evidence
+      - Connect to {{research_topic}} objectives
+      - Include confidence level (high/medium/low)
       
-      **🔍 IMPLICATIONS FOR {{research_topic}}**
-      - Strategic implications based on documented evidence
-      - Opportunities identified in the documents
-      - Risks or challenges mentioned in content
+      **🔍 INSIGHTS & IMPLICATIONS**
+      - What these findings mean for {{research_topic}}
+      - Strategic implications
+      - Risks or opportunities identified
+      - Gaps in current understanding
       
-      AUTHENTICATION: Each finding must cite specific document content.
+      **💡 RECOMMENDATIONS** (3-5 specific recommendations)
+      - Immediate actions based on findings
+      - Further research needed
+      - Strategic considerations
+      - Resource requirements
       
-      FAIL-SAFE: If unable to generate evidence-based summary, respond with:
-      "SUMMARY_GENERATION_FAILED: Insufficient documented evidence for executive summary"
+      **📈 NEXT STEPS**
+      - Prioritized follow-up activities
+      - Additional research or validation needed
+      - Stakeholder engagement required
+      
+      Adjust depth and detail based on output_style preference (brief/detailed/comprehensive).
+
+  - task_id: "create_detailed_analysis"
+    prompt: |
+      Provide detailed analysis of each significant document with actionable insights.
+      
+      **DOCUMENT-BY-DOCUMENT ANALYSIS:**
+      
+      For each high-relevance document (scored 7+ in inventory):
+      
+      **Document: [Title]**
+      - **Source & Credibility:** [Author, publication, date, credibility assessment]
+      - **Key Contributions:** [What unique insights this document provides]
+      - **Relevant Findings:** [Specific findings related to {{research_topic}}]
+      - **Methodological Notes:** [Research methods used, sample sizes, limitations]
+      - **Actionable Insights:** [What can be directly applied]
+      - **Quotable Highlights:** [2-3 key quotes with page references]
+      - **Connection to Other Documents:** [How this relates to other materials]
+      
+      **CROSS-DOCUMENT SYNTHESIS:**
+      - **Convergent Evidence:** [What multiple documents agree on]
+      - **Conflicting Viewpoints:** [Where documents disagree and why]
+      - **Evidence Gaps:** [What's missing or under-represented]
+      - **Methodological Triangulation:** [How different research approaches support findings]
+      
+      **QUALITY ASSESSMENT:**
+      - **Strongest Evidence:** [Most reliable and actionable findings]
+      - **Weakest Evidence:** [Findings that need additional validation]
+      - **Research Limitations:** [What constrains the findings]
+
+  - task_id: "generate_citations_bibliography"
+    prompt: |
+      Create a comprehensive bibliography and citation system for all documents.
+      
+      **Include Citations:** {{include_citations}}
+      
+      **BIBLIOGRAPHY** (formatted in APA style):
+      For each document, provide:
+      - Full citation in proper academic format
+      - Document type classification
+      - Accessibility notes (public/restricted/internal)
+      - File location/path in research repository
+      
+      **CITATION INDEX:**
+      - Numerical reference system for in-text citations
+      - Cross-reference between document inventory and bibliography
+      - Quick-reference guide for team members
+      
+      **SOURCE EVALUATION:**
+      For each source, note:
+      - **Authority:** [Author credentials, institutional affiliation]
+      - **Currency:** [Publication recency, data freshness]
+      - **Accuracy:** [Fact-checking, peer review status]
+      - **Purpose:** [Research objective, potential bias]
+      - **Coverage:** [Scope, geographical/temporal limitations]
+      
+      **RESEARCH PROVENANCE:**
+      - Document upload date and source
+      - Processing date and analyst
+      - Version control information
+      - Related document clusters
 
   - task_id: "create_action_items"
-    depends_on: ["generate_executive_summary"]
-    validation_gate: "summary_completed_successfully"
     prompt: |
-      VALIDATION CHECKPOINT:
-      - Executive summary status: {{ai_generated.generate_executive_summary.status}}
+      Generate specific, actionable next steps based on the desk research findings.
       
-      If summary contains "BLOCKED", "FAILED", or "SUMMARY_GENERATION_FAILED", respond with:
-      "ACTIONS_BLOCKED: Cannot generate actions - summary generation failed"
+      **IMMEDIATE ACTIONS** (Week 1-2):
+      - [ ] [Specific task based on findings]
+      - [ ] [Specific task based on findings]
+      - [ ] [Specific task based on findings]
       
-      EVIDENCE BASE FOR ACTIONS:
-      {{ai_generated.generate_executive_summary}}
+      **SHORT-TERM PRIORITIES** (Month 1-2):
+      - [ ] [Research validation activities]
+      - [ ] [Stakeholder engagement]
+      - [ ] [Additional data collection]
       
-      Generate actions based EXCLUSIVELY on documented findings:
+      **LONG-TERM STRATEGY** (Quarter 1-2):
+      - [ ] [Strategic initiatives]
+      - [ ] [Resource allocation]
+      - [ ] [Process improvements]
       
-      **IMMEDIATE ACTIONS (Next 1-2 weeks):**
-      Based on specific findings from {{research_topic}} analysis:
-      - [ ] [Action directly supported by document evidence] - Source: [Document title]
-      - [ ] [Action based on identified gap in documents] - Evidence: [Specific quote]
-      - [ ] [Validation action for key finding] - Reference: [Document section]
+      **RESEARCH VALIDATION NEEDS:**
+      - **Primary Research Required:** [Where desk research needs field validation]
+      - **Stakeholder Interviews:** [Key people to speak with]
+      - **User Research:** [What to test with real users]
+      - **Additional Documentation:** [Missing pieces to investigate]
       
-      **RESEARCH VALIDATION NEEDED:**
-      - **Primary Research Gaps:** [Specific gaps identified in document content]
-      - **User Research Required:** [Gaps in user experience understanding]
-      - **Process Validation Needed:** [Application process issues to investigate]
-      - **Stakeholder Input Required:** [VA-specific expertise needed]
+      **SUCCESS METRICS:**
+      - How to measure progress on recommendations
+      - Key performance indicators related to {{research_topic}}
+      - Timeline for expected outcomes
       
-      AUTHENTICATION: Each action must reference specific document findings.
-      
-      MANDATORY: Do NOT include generic actions, placeholder numbers, or unrelated tasks.
-      
-      FAIL-SAFE: If actions cannot be based on real findings, respond with:
-      "ACTIONS_GENERATION_FAILED: Cannot create evidence-based action items"
+      **RESOURCE REQUIREMENTS:**
+      - Personnel needs
+      - Budget considerations  
+      - Tool or technology requirements
+      - Timeline estimates
 
-  - task_id: "create_citations"
-    depends_on: "document_inventory"
-    validation_gate: "real_documents_inventoried"
-    prompt: |
-      INVENTORY VALIDATION:
-      {{ai_generated.document_inventory}}
-      
-      If inventory contains "INVENTORY_BLOCKED" or lists no real documents, respond with:
-      "CITATIONS_BLOCKED: No successfully processed documents to cite"
-      
-      Create citations ONLY for documents that were successfully analyzed:
-      
-      **BIBLIOGRAPHY (APA Style):**
-      For each document from the inventory with successful content extraction:
-      - [Create proper citation using extracted author, title, date]
-      - Note: Content extraction method used
-      - Note: Relevance to {{research_topic}}
-      
-      **EXTRACTION REPORT:**
-      - Documents fully processed: [Count from inventory]
-      - Documents with partial extraction: [Count from inventory]  
-      - Documents failed to extract: [Count from inventory]
-      
-      CRITICAL: Only include documents that contributed actual content to the analysis.
-      Do NOT include generic example citations.
-      
-      FAIL-SAFE: If no real documents were processed, respond with:
-      "NO_CITATIONS_AVAILABLE: No documents successfully extracted for bibliography"
+# Processing workflow
+processing_workflow:
+  1. validate_inputs
+  2. process_document_uploads
+  3. extract_content_from_files
+  4. execute_ai_generation_tasks
+  5. validate_generated_content
+  6. populate_readme_template
+  7. create_document_index
+  8. save_to_outputs
 
-# ULTRA-STRICT Output validation
-output_validation:
-  blocking_checks:
-    - all_ai_tasks_completed_successfully: true
-    - no_blocked_or_failed_responses: true
-    - no_generic_examples_in_output: true
-    - topic_consistency_across_sections: true
-    - document_references_are_real: true
-  
-  auto_reject_triggers:
-    - contains_placeholder_examples: true
-    - contains_unrelated_citations: true
-    - contains_generic_action_items: true
-    - missing_document_specific_evidence: true
-
-# ENHANCED: Output template with HARD FAILURE STATES
+# Output template - Comprehensive README
 output_template: |
   # 📚 Desk Research: {{research_topic}}
 
-  {{#if pipeline_aborted}}
-  
-  # ⛔ PROCESSING ABORTED
-  
-  **Abort Reason:** {{abort_reason}}
-  **Processing Date:** {{current_date}}
-  **Documents Attempted:** {{uploaded_documents_count}}
-  **Analyst:** {{slack_user_name}}
-  
-  ## 🚨 Processing Failure Details
-  
-  {{pipeline_failure_details}}
-  
-  ## 🔧 Required Actions
-  
-  **To proceed with analysis:**
-  - **Document Issues:** {{document_extraction_issues}}
-  - **Content Requirements:** {{content_requirements_not_met}}
-  - **Manual Steps Needed:** {{manual_intervention_required}}
-  
-  **Alternative Approaches:**
-  - Resubmit documents in different formats (PDF, DOCX, TXT)
-  - Provide manual text extraction for problematic documents
-  - Verify documents are related to: {{research_topic}}
-  
-  ---
-  *Processing failed at: {{failure_stage}}*
-  *Contact analyst for manual processing: {{slack_user_contact}}*
-  
-  {{else}}
-  
   **Research Date:** {{current_date}}  
-  **Documents Successfully Processed:** {{ai_generated.document_inventory.success_count}}
-  **Extraction Confidence:** {{overall_extraction_confidence}}/10
-  **Analysis Focus:** {{research_topic}}
+  **Documents Processed:** {{ai_generated.document_inventory.total_count}}  
+  **Analysis Focus:** {{analysis_focus}}  
   **Analyst:** {{slack_user_name}}
 
   ---
@@ -343,78 +276,108 @@ output_template: |
 
   ---
 
-  ## 🎯 Key Themes & Evidence
+  ## 🎯 Key Themes & Patterns
 
   {{ai_generated.extract_key_themes}}
 
   ---
 
-  ## ✅ Evidence-Based Action Items
+  ## 🔍 Detailed Document Analysis
+
+  {{ai_generated.create_detailed_analysis}}
+
+  ---
+
+  ## ✅ Action Items & Recommendations
 
   {{ai_generated.create_action_items}}
 
   ---
 
-  ## 📖 Bibliography
+  ## 📖 Bibliography & Citations
 
-  {{ai_generated.create_citations}}
-
-  ---
-
-  ## ✅ Validation Confirmation
-
-  **Content Authenticity:** ✅ All analysis based on extracted document content
-  **Template Prevention:** ✅ No generic examples or placeholders used  
-  **Topic Consistency:** ✅ All sections focus on {{research_topic}}
-  **Evidence Requirement:** ✅ All findings supported by document quotes
+  {{ai_generated.generate_citations_bibliography}}
 
   ---
-  *Generated by Qori Desk Research Processor v2.2*
-  *Ultra-strict validation - Real content only*
 
-  {{/if}}
+  ## 📊 Research Metadata
 
-# CRITICAL: Delivery configuration with abort handling
+  **Processing Details:**
+  - Upload Date: {{upload_timestamp}}
+  - Processing Time: {{processing_duration}}
+  - Document Types: {{document_types_summary}}
+  - Analysis Confidence: {{overall_confidence_score}}
+
+  **Quality Assurance:**
+  - Documents fully processed: {{fully_processed_count}}
+  - Documents with extraction issues: {{issues_count}}
+  - Overall collection quality: {{collection_quality_score}}/10
+
+  **Next Review Date:** {{next_review_date}}
+
+  ---
+  *Generated by Qori Desk Research Processor v2.0*  
+  *For questions about this analysis, contact: {{slack_user_contact}}*
+
+# Output configuration
 output_options:
-  validation_before_output:
-    - abort_if_any_task_failed: true
-    - abort_if_generic_content_detected: true
-    - abort_if_unrelated_citations_found: true
-    - abort_if_placeholder_content_present: true
+  # File settings
+  filename: "README_{{research_topic}}_{{current_date}}.md"
+  path: "{{research_topic}}/"
   
+  # Additional files to create
+  additional_outputs:
+    - filename: "document_index.json"
+      content: "{{ai_generated.document_inventory.structured_data}}"
+      path: "research/desk-research/{{research_topic_slug}}/"
+    
+    - filename: "citations.bib"  
+      content: "{{ai_generated.generate_citations_bibliography.bibtex_format}}"
+      path: "research/desk-research/{{research_topic_slug}}/"
+    
+    - filename: "action_items.md"
+      content: "{{ai_generated.create_action_items}}"
+      path: "research/desk-research/{{research_topic_slug}}/"
+  
+  # Document organization
+  organize_uploads:
+    enabled: true
+    create_folders: true
+    folder_structure: "research/desk-research/{{research_topic_slug}}/source-documents/"
+    rename_files: true
+    naming_convention: "{{document_type}}_{{upload_order}}_{{original_name}}"
+
+  # Delivery methods
   delivery:
+    github:
+      enabled: true
+      repo: "research-project-repo"
+      commit_message: "Add desk research analysis for {{research_topic}}"
+      create_branch: "desk-research/{{research_topic_slug}}"
+      
     slack:
       enabled: true
-      success_message: |
-        ✅ **Desk Research Analysis Complete**
-        
-        **Topic:** {{research_topic}}
-        **Documents Processed:** {{successful_documents}}/{{total_documents}}
-        **Quality Score:** {{overall_confidence}}/10
-        **Key Findings:** {{findings_count}} evidence-based insights
-      
-      failure_message: |
-        ⛔ **Desk Research Processing Failed**
-        
-        **Topic:** {{research_topic}}
-        **Failure Stage:** {{failure_stage}}
-        **Issue:** {{failure_reason}}
-        
-        **Next Steps:**
-        {{manual_intervention_instructions}}
-        
-        Use 🔄 button below to reprocess with different document formats.
+      channel: "{{source_channel}}"
+      notify_user: "{{slack_user_id}}"
+      message: "📚 Desk research analysis complete for **{{research_topic}}**. Processed {{ai_generated.document_inventory.total_count}} documents with {{ai_generated.generate_executive_summary.key_findings_count}} key findings."
+      include_preview: true
+      attach_files: ["README_{{research_topic_slug}}_{{current_date}}.md"]
+      actions:
+        - text: "📖 View Full Analysis"
+          url: "{{github_file_link}}"
+        - text: "📋 Action Items"
+          url: "{{action_items_link}}"
+        - text: "📊 Process More Documents"
+          action: "trigger_new_analysis"
 
 # Usage instructions
 output_use: |
-  Ultra-strict desk research processor that COMPLETELY FAILS rather than generate template content.
-  System will abort entire pipeline if documents cannot be properly extracted and analyzed.
-  Only produces output when real, topic-relevant content is successfully processed.
+  Qori Desk Research Processor handles bulk document uploads from Slack and creates comprehensive research summaries. Upload documents via Slack file upload, specify research topic and analysis focus, and receive organized README files with key insights, themes, and actionable recommendations. Automatically organizes documents, creates citations, and generates follow-up action items.
 
 output_notes: |
-  Version 2.2 - ZERO TOLERANCE FOR TEMPLATE CONTENT:
-  - Complete pipeline abort if document extraction fails
-  - Ultra-strict validation on every AI generation task  
-  - Hard dependency checks between tasks
-  - No generic examples or placeholders under any circumstances
-  - Real content verification or complete failure
+  Document processing: Handles PDFs, Word docs, text files, presentations, and research papers
+  Batch analysis: Processes multiple documents simultaneously for cross-document insights  
+  Smart organization: Creates folder structures and renames files systematically
+  Citation management: Generates proper academic citations and bibliography
+  Quality assurance: Provides confidence scores and processing quality metrics
+  Action-oriented: Focuses on actionable insights and next steps rather than just summaries
