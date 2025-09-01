@@ -1,12 +1,12 @@
 # 👥 Participant Tracker – research study 5
 
 **📊 Recruitment Summary**
-- **Total Participants:** 1
+- **Total Participants:** 2
 - **Confirmed Sessions:** 0
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
-- **Last Updated:** August 11, 2025 by U08T1F4B347
+- **Last Updated:** September 1, 2025 by U08T1F4B347
 
 ---
 
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 11 | john | email_outreach | 2025-09-21 1:00 PM | rescheduling_needed | No |
 | 6 | tanzeel | calendly_signup | 2025-08-25 2:00 PM | recruited | NO |
 
 ---
@@ -22,10 +23,11 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| calendly_signup | 1 | 100% |
+| 📧 Email Outreach | 1 | 50% |
+| calendly_signup | 1 | 50% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
+Recruitment effectiveness: 0% conversion rate (0 confirmed of 2 recruited)
 
 ---
 
@@ -71,6 +73,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 11: No
 - 6: NO
 
 **Preparation Checklist:**
@@ -109,4 +112,4 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (2 more needed); Schedule first confirmed session
+Continue recruiting to reach minimum of 3 participants (1 more needed); Reschedule 1 session(s); Schedule first confirmed session
