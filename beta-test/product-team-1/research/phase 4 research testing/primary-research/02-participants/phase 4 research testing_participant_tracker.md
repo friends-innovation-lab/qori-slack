@@ -1,12 +1,12 @@
 # 👥 Participant Tracker – phase 4 research testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 2
-- **Confirmed Sessions:** 1
+- **Total Participants:** 1
+- **Confirmed Sessions:** 0
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
-- **Last Updated:** August 11, 2025 by U08T1F4B347
+- **Last Updated:** September 1, 2025 by U08T1F4B347
 
 ---
 
@@ -14,8 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
-| 32 | abdul | calendly_signup | 2025-08-26 9:00 PM | recruited | NO |
-| 31 | Tanzeel | phone_recruitment | 2025-08-12 1:00 PM | confirmed | NO |
+| 4 | John | calendly_signup | 2025-09-28 1:00 PM | rescheduling_needed | Yes |
 
 ---
 
@@ -23,18 +22,15 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| calendly_signup | 1 | 50% |
-| phone_recruitment | 1 | 50% |
+| calendly_signup | 1 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
+Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
-- **** -  at 
-  - Observers: 
 
 ## ⏳ Pending Sessions
 
@@ -45,25 +41,37 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 
 **Session Observer Assignments:**
 
-| Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
-|---------|-----------|-----------|----------|------------------|-----------------|
-| pt032 | 2025-08-26 9:00 PM | User U01SC2TNYKU (👁️ Silent Observer) | 1/3 | 0 | ✅ Sent |
-| pt031 | 2025-08-12 1:00 PM | User U08T1F4B347 (📊 PM Observer) | 1/3 | 0 | ✅ Sent |
+| Session | Date/Time | Observers | Capacity | Pending Requests |
+|---------|-----------|-----------|----------|------------------|
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker | 0 | - |
-| 👁️ Silent Observer | 1 | pt032 |
-| 📊 PM Observer | 1 | pt031 |
-| 🏛️ Stakeholder | 0 | - |
+| 📝 Note-taker |  |  |
+| 👁️ Silent Observer |  |  |
+| 📊 PM Observer |  |  |
+| 🏛️ Stakeholder |  |  |
+
+**Observer Guidelines:** 
+- Review session plan before observing
+- Stay muted unless emergency
+- Take notes without interrupting
+- Share feedback after session
+
+{% if triggered_by_observer_request %}
+**🔄 Observer Updates:**
+- ✅  approved for  as 
+- 📤 Send observer guidelines to 
+- 📅 Add  to  calendar invite
+- 🔄 Update session capacity tracking
+{% endif %}
+
 ---
 
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
-- 32: NO
-- 31: NO
+- 4: Yes
 
 **Preparation Checklist:**
 - [ ] Interpreter services arranged (if needed)
@@ -81,22 +89,19 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| Black or African American | 1 | 50% |
-| Asian | 1 | 50% |
+| Asian | 1 | 100% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 25-34 | 1 | 50% |
-| 18-24 | 1 | 50% |
+| 25-34 | 1 | 100% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Less than high school | 1 | 50% |
-| Some college | 1 | 50% |
+| Some college | 1 | 100% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Suburban | 2 | 100% |
+| Suburban | 1 | 100% |
 
 ---
 
@@ -108,4 +113,4 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (1 more needed)
+Continue recruiting to reach minimum of 3 participants (2 more needed); Reschedule 1 session(s); Schedule first confirmed session
