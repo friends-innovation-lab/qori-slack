@@ -858,72 +858,30 @@ slack_output:
     - text: "🗂️ View in GitHub"
       url: "{{github_file_link}}"
 
-# Enhanced output template with all advanced features
-output_template: |
-  Hi team! 👋 I just finished running comprehensive affinity mapping analysis with advanced research quality controls, privacy compliance, and performance optimization. Found some interesting patterns with full source attribution and bias assessment.
+# Output configuration
+output_options:
+  default_delivery: "slack_and_file"  # Post to Slack AND save to GitHub
+  slack_format: "research_focused"    # Primary research insights first
+  detailed_format: "comprehensive"    # Full technical details in file
+  path: "04-analysis/affinity-mapping/"
+  filename: "{{study_folder}}_affinity_mapping_{{current_date}}.md"
 
-  {{team_members}} - would love your thoughts on these themes, especially the quality assessments, privacy compliance, and validation recommendations.
+# Dual output templates - focused vs comprehensive
+slack_output_template: |
+  Hi team! 👋 I just finished running affinity mapping analysis on your research files. Found some clear patterns that I think you'll want to discuss.
 
-  📂 *Study:* {{study_name}} ({{analysis_version}})  
+  {{team_members}} - would love your thoughts on these themes and opportunities.
+
+  📂 *Study:* {{study_name}}  
   🔗 *Full details:* {{study_link}}
-  {{#if previous_analysis_id}}📊 *Previous version:* {{previous_analysis_id}} - [View comparison](#version-comparison){{/if}}
 
   ---
 
-  ## 🔒 *PRIVACY & COMPLIANCE STATUS*
-
-  {{#if privacy_controls.enable_pii_detection}}
-  **PII Detection & Masking:**
-  {{ai_generated.pii_detection_analysis}}
-
-  **Compliance Status:** ✅ Data processed with privacy controls active
-  {{/if}}
-
-  ---
-
-  ## 📊 *DATA QUALITY & COVERAGE ANALYSIS*
-
-  {{ai_generated.data_scope_analysis}}
-
-  **Files Analyzed:**
-  {{#each selected_files}}
-  • {{file_category}}: {{file_name}} ({{file_type}})
-  {{/each}}
-
-  ---
-
-  {{#if enable_bias_detection}}
-  ## 🔍 *RESEARCH QUALITY ASSESSMENT*
-
-  **Bias Detection Analysis:**
-  {{ai_generated.bias_detection_analysis}}
-
-  **Inter-rater Reliability Assessment:**
-  {{ai_generated.reliability_assessment}}
-
-  **Overall Quality Metrics:**
-  - **Analysis Confidence:** {{confidence_level}}
-  - **Bias Risk Level:** {{bias_risk_level}}  
-  - **Reliability Score:** {{reliability_score}}
-
-  ---
-  {{/if}}
-
-  ## 🧠 *AFFINITY MAPPING RESULTS*
+  ## 🧠 *KEY THEMES IDENTIFIED*
 
   {{ai_generated.quote_clustering}}
 
   ---
-
-  {{#if data_lineage.enable_quote_attribution}}
-  ## 📋 *SOURCE ATTRIBUTION & DATA LINEAGE*
-
-  {{ai_generated.data_lineage_tracking}}
-
-  **Citation Integrity:** All quotes verified and linked to original sources
-  
-  ---
-  {{/if}}
 
   ## 🔍 *INSIGHTS & EMOTIONAL DIMENSIONS*
 
@@ -931,76 +889,127 @@ output_template: |
 
   ---
 
-  {{#if quantitative_data}}
-  ## 📊 *QUANTITATIVE TRIANGULATION*
-
-  {{ai_generated.quantitative_triangulation}}
-
-  ---
-  {{/if}}
-
   ## 💡 *ACTIONABLE OPPORTUNITIES*
 
   {{ai_generated.opportunity_generation}}
 
   ---
 
-  ## 🎯 *CONFIDENCE & VALIDATION ASSESSMENT*
-
-  {{ai_generated.confidence_assessment}}
-
-  {{#if require_validation}}
-  **Stakeholder Validation Plan:**
-  {{ai_generated.validation_preparation}}
-  {{/if}}
-
-  ---
-
-  {{#if previous_analysis_id}}
-  ## 🔄 *VERSION COMPARISON*
-
-  {{ai_generated.version_comparison}}
-
-  ---
-  {{/if}}
-
-  {{#if performance_monitoring.enable_execution_tracking}}
-  ## ⚡ *PERFORMANCE & SYSTEM ANALYTICS*
-
-  {{ai_generated.performance_analysis}}
-
-  **Execution Summary:**
-  - **Processing Time:** {{execution_time}}
-  - **Quality Score:** {{overall_quality_score}}/10
-  - **Resource Efficiency:** {{resource_efficiency_rating}}
-
-  ---
-  {{/if}}
-
-  ## 🚀 *AUTOMATED NEXT STEPS*
+  ## 🚀 *RECOMMENDED NEXT STEPS*
 
   {{ai_generated.follow_up_recommendations}}
 
-  **Automated Workflow:**
-  {{ai_generated.workflow_automation}}
+  ---
+
+  ## 📊 *ANALYSIS SUMMARY*
+
+  **Quality Overview:**
+  - **Themes Generated:** {{max_themes}} themes from {{session_count}}
+  - **Analysis Confidence:** {{confidence_level}} 
+  - **Files Analyzed:** {{selected_files.length}} research files
+  {{#if bias_risk_level != "low"}}⚠️ **Note:** {{bias_risk_level}} bias risk detected - see detailed report{{/if}}
+  {{#if privacy_controls.enable_pii_detection}}🔒 **Privacy:** PII automatically detected and protected{{/if}}
 
   ---
 
   *What do you think?* Reply in thread with your thoughts:
   • Which themes feel most actionable?
-  • Any concerns about the bias/reliability assessments?
-  • Questions about the source attribution or privacy compliance?
-  • Should we proceed with the validation plan?
-  • Ready to trigger the automated follow-up workflows?
-  • Thoughts on the performance metrics?
+  • Any themes that need more investigation?  
+  • Ready to move forward with the recommended opportunities?
   • Connections you're seeing to other research?
+
+  📋 *[View detailed technical report with validation data, performance metrics, and source attribution]({{github_file_link}})*
 
   ---
   
-  🤖 *Advanced AI Affinity Mapping Complete*  
-  *Version: {{analysis_version}} | Confidence: {{confidence_level}} | Bias Risk: {{bias_risk_level}} | Reliability: {{reliability_score}} | Performance: {{resource_efficiency_rating}} | Themes: {{max_themes}}*
-  {{#if privacy_controls.enable_pii_detection}}*Privacy: ✅ PII Protected{{/if}}
-  {{#if data_lineage.enable_quote_attribution}}*Sources: ✅ Fully Attributed{{/if}}
+  🤖 *AI Affinity Mapping Complete*  
+  *Confidence: {{confidence_level}} | Themes: {{max_themes}}* {{#if privacy_controls.enable_pii_detection}}*| Privacy Protected*{{/if}}
+
+comprehensive_file_template: |
+  # Comprehensive Affinity Mapping Analysis Report
+  
+  **Study:** {{study_name}} ({{analysis_version}})  
+  **Generated:** {{current_date}}  
+  **Analyst:** {{researcher_contact}}
+  
+  ---
+  
+  ## EXECUTIVE SUMMARY
+  
+  {{ai_generated.quote_clustering}}
+  
+  {{ai_generated.insight_generation}}
+  
+  {{ai_generated.opportunity_generation}}
+  
+  {{ai_generated.follow_up_recommendations}}
+  
+  ---
+  
+  ## RESEARCH QUALITY & VALIDATION
+  
+  ### Data Coverage Analysis
+  {{ai_generated.data_scope_analysis}}
+  
+  **Files Analyzed:**
+  {{#each selected_files}}
+  • {{file_category}}: {{file_name}} ({{file_type}})
+  {{/each}}
+  
+  ### Research Quality Assessment
+  {{#if enable_bias_detection}}
+  **Bias Detection Analysis:**
+  {{ai_generated.bias_detection_analysis}}
+  
+  **Inter-rater Reliability Assessment:**  
+  {{ai_generated.reliability_assessment}}
+  {{/if}}
+  
+  ### Confidence Assessment
+  {{ai_generated.confidence_assessment}}
+  
+  {{#if require_validation}}
+  ### Stakeholder Validation Plan
+  {{ai_generated.validation_preparation}}
+  {{/if}}
+  
+  ---
+  
+  ## TECHNICAL APPENDIX
+  
+  {{#if privacy_controls.enable_pii_detection}}
+  ### Privacy & Compliance
+  {{ai_generated.pii_detection_analysis}}
+  {{/if}}
+  
+  {{#if data_lineage.enable_quote_attribution}}
+  ### Source Attribution & Data Lineage
+  {{ai_generated.data_lineage_tracking}}
+  {{/if}}
+  
+  {{#if performance_monitoring.enable_execution_tracking}}
+  ### Performance Analytics
+  {{ai_generated.performance_analysis}}
+  {{/if}}
+  
+  {{#if previous_analysis_id}}
+  ### Version Comparison
+  {{ai_generated.version_comparison}}
+  {{/if}}
+  
+  ### Automated Workflows
+  {{ai_generated.workflow_automation}}
+  
+  ---
+  
+  **Analysis Metadata:**
+  - Version: {{analysis_version}}
+  - Confidence: {{confidence_level}}
+  - Bias Risk: {{bias_risk_level}}
+  - Reliability: {{reliability_score}}
+  - Performance: {{resource_efficiency_rating}}
+  - Privacy: {{#if privacy_controls.enable_pii_detection}}✅ Protected{{else}}Not applicable{{/if}}
+  - Sources: {{#if data_lineage.enable_quote_attribution}}✅ Fully attributed{{else}}Basic attribution{{/if}}
 
 # Processing workflow (Enhanced with Advanced Features)
 processing_workflow:
