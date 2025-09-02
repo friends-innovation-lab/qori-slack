@@ -2,11 +2,11 @@
 
 **📊 Recruitment Summary**
 - **Total Participants:** 6
-- **Confirmed Sessions:** 2
-- **Pending Responses:** 2
+- **Confirmed Sessions:** 3
+- **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
-- **Last Updated:** September 2, 2025 by U01SC2TNYKU
+- **Last Updated:** September 2, 2025 by lapedra
 
 ---
 
@@ -14,7 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
-| 13 | PT1002 | email_outreach |   | pending_response | None |
+| 13 | PT1002 | email_outreach |   | confirmed | Participant confirmed with Tammy Davis |
 | 12 | PT001 | internal_va_panel | 2025-09-10 2:00 pm EST | recruited | Needs interpreter |
 | 10 | PT004 | calendly_signup | 2025-09-01 11:00 AM EST | confirmed | Bilingual (Spanish/English); mobile-first user preference |
 | 9 | PT003 | referral | 2025-09-02 1:00 PM EST | confirmed | Basic computer skills; may need technical support; prefers phone calls over email |
@@ -33,7 +33,7 @@
 | 🤝 Referral | 1 | 17% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 33% conversion rate (2 confirmed of 6 recruited)
+Recruitment effectiveness: 50% conversion rate (3 confirmed of 6 recruited)
 
 ---
 
@@ -43,10 +43,11 @@ Recruitment effectiveness: 33% conversion rate (2 confirmed of 6 recruited)
   - Observers: 
 - **** -  at 
   - Observers: 
+- **** -  at 
+  - Observers: 
 
 ## ⏳ Pending Sessions
 
-- **** -  ()
 - **** -  ()
 
 ---
@@ -85,7 +86,7 @@ Recruitment effectiveness: 33% conversion rate (2 confirmed of 6 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
-- 13: None
+- 13: Participant confirmed with Tammy Davis
 - 12: Needs interpreter
 - 10: Bilingual (Spanish/English); mobile-first user preference
 - 9: Basic computer skills; may need technical support; prefers phone calls over email
@@ -128,4 +129,4 @@ Recruitment effectiveness: 33% conversion rate (2 confirmed of 6 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Follow up with 2 pending participant(s)
+Follow up with 1 pending participant(s)
