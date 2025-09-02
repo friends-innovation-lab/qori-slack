@@ -1,9 +1,9 @@
 # 👥 Participant Tracker – VA Housing Application UX Research
 
 **📊 Recruitment Summary**
-- **Total Participants:** 5
+- **Total Participants:** 6
 - **Confirmed Sessions:** 2
-- **Pending Responses:** 1
+- **Pending Responses:** 2
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
 - **Last Updated:** September 2, 2025 by U01SC2TNYKU
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 13 | PT1002 | email_outreach |   | pending_response | None |
 | 12 | PT001 | internal_va_panel | 2025-09-10 2:00 pm EST | recruited | Needs interpreter |
 | 10 | PT004 | calendly_signup | 2025-09-01 11:00 AM EST | confirmed | Bilingual (Spanish/English); mobile-first user preference |
 | 9 | PT003 | referral | 2025-09-02 1:00 PM EST | confirmed | Basic computer skills; may need technical support; prefers phone calls over email |
@@ -26,13 +27,13 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| internal_va_panel | 2 | 40% |
-| calendly_signup | 1 | 20% |
-| 🤝 Referral | 1 | 20% |
-| 📧 Email Outreach | 1 | 20% |
+| 📧 Email Outreach | 2 | 33% |
+| internal_va_panel | 2 | 33% |
+| calendly_signup | 1 | 17% |
+| 🤝 Referral | 1 | 17% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 40% conversion rate (2 confirmed of 5 recruited)
+Recruitment effectiveness: 33% conversion rate (2 confirmed of 6 recruited)
 
 ---
 
@@ -45,6 +46,7 @@ Recruitment effectiveness: 40% conversion rate (2 confirmed of 5 recruited)
 
 ## ⏳ Pending Sessions
 
+- **** -  ()
 - **** -  ()
 
 ---
@@ -83,6 +85,7 @@ Recruitment effectiveness: 40% conversion rate (2 confirmed of 5 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 13: None
 - 12: Needs interpreter
 - 10: Bilingual (Spanish/English); mobile-first user preference
 - 9: Basic computer skills; may need technical support; prefers phone calls over email
@@ -125,4 +128,4 @@ Recruitment effectiveness: 40% conversion rate (2 confirmed of 5 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Follow up with 1 pending participant(s)
+Follow up with 2 pending participant(s)
