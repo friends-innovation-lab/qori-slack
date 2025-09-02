@@ -1,12 +1,12 @@
 # 👥 Participant Tracker – VA Housing Application UX Research
 
 **📊 Recruitment Summary**
-- **Total Participants:** 6
+- **Total Participants:** 7
 - **Confirmed Sessions:** 3
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
-- **Last Updated:** September 2, 2025 by lapedra
+- **Last Updated:** September 2, 2025 by U01SC2TNYKU
 
 ---
 
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 14 | PT3001 | referral | 2025-09-11 2:00 pm PST | backup_participant |  |
 | 13 | PT1002 | email_outreach |   | confirmed | Participant confirmed with Tammy Davis |
 | 12 | PT001 | internal_va_panel | 2025-09-10 2:00 pm EST | recruited | Needs interpreter |
 | 10 | PT004 | calendly_signup | 2025-09-01 11:00 AM EST | confirmed | Bilingual (Spanish/English); mobile-first user preference |
@@ -27,13 +28,13 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 2 | 33% |
-| internal_va_panel | 2 | 33% |
-| calendly_signup | 1 | 17% |
-| 🤝 Referral | 1 | 17% |
+| 🤝 Referral | 2 | 29% |
+| 📧 Email Outreach | 2 | 29% |
+| internal_va_panel | 2 | 29% |
+| calendly_signup | 1 | 14% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 50% conversion rate (3 confirmed of 6 recruited)
+Recruitment effectiveness: 43% conversion rate (3 confirmed of 7 recruited)
 
 ---
 
