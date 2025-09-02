@@ -1,12 +1,12 @@
 # 👥 Participant Tracker – phase 4 research testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 2
+- **Total Participants:** 3
 - **Confirmed Sessions:** 0
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
-- **Last Updated:** September 1, 2025 by U08T1F4B347
+- **Last Updated:** September 2, 2025 by U08T1F4B347
 
 ---
 
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 6 | alice | internal_va_panel | 2025-09-15 1:00 PM | recruited | NO |
 | 5 | Joy | email_outreach | 2025-09-22 2:00 PM | pending_response | NO |
 | 4 | John | calendly_signup | 2025-09-28 1:00 PM | rescheduling_needed | Yes |
 
@@ -23,11 +24,12 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 1 | 50% |
-| calendly_signup | 1 | 50% |
+| internal_va_panel | 1 | 33% |
+| 📧 Email Outreach | 1 | 33% |
+| calendly_signup | 1 | 33% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 2 recruited)
+Recruitment effectiveness: 0% conversion rate (0 confirmed of 3 recruited)
 
 ---
 
@@ -74,6 +76,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 2 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 6: NO
 - 5: NO
 - 4: Yes
 
@@ -93,22 +96,24 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 2 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| Black or African American | 1 | 50% |
-| Asian | 1 | 50% |
+| American Indian or Alaska Native | 1 | 33% |
+| Black or African American | 1 | 33% |
+| Asian | 1 | 33% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 35-44 | 1 | 50% |
-| 25-34 | 1 | 50% |
+| 25-34 | 2 | 67% |
+| 35-44 | 1 | 33% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Associate degree | 1 | 50% |
-| Some college | 1 | 50% |
+| Some college | 2 | 67% |
+| Associate degree | 1 | 33% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Suburban | 2 | 100% |
+| Urban | 1 | 33% |
+| Suburban | 2 | 67% |
 
 ---
 
@@ -120,4 +125,4 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 2 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (1 more needed); Follow up with 1 pending participant(s); Reschedule 1 session(s); Schedule first confirmed session
+Follow up with 1 pending participant(s); Reschedule 1 session(s); Schedule first confirmed session
