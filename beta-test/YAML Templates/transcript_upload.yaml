@@ -1,0 +1,455 @@
+id: transcript_upload
+label: 📝 Upload & Code Session Transcript
+description: Upload transcripts with automatic PII redaction and AI-powered research coding
+input_type: tabbed_upload
+input_processing: ai_enhanced_coding
+
+# Tab-based upload interface
+input_tabs:
+  file_upload:
+    label: "📁 Upload File"
+    description: "Upload transcript from Zoom, Otter.ai, or other source"
+    fields:
+      uploaded_file:
+        type: "file"
+        label: "Select Transcript File"
+        accept: [".txt", ".docx", ".pdf", ".md", ".vtt", ".srt"]
+        max_size: "15MB"
+        drag_drop: true
+        required: true
+        
+      transcript_source:
+        type: "select"
+        label: "Source (Optional)"
+        required: false
+        options:
+          - "Zoom Auto-Generated"
+          - "Otter.ai"
+          - "Rev.com"
+          - "Teams Auto-Generated"
+          - "Manual Notes"
+          - "Other"
+    
+  paste_text:
+    label: "📋 Paste Text"
+    description: "Copy and paste transcript directly"
+    fields:
+      manual_transcript:
+        type: "textarea"
+        label: "Transcript Content"
+        placeholder: "Paste your transcript here..."
+        rows: 20
+        word_count: true
+        required: true
+
+# Automatic PII protection
+privacy_protection:
+  pii_scrubbing:
+    enabled: true
+    auto_detect: true
+    
+    patterns_to_redact:
+      names: true
+      email_addresses: true
+      phone_numbers: true
+      ssn: true
+      addresses: true
+      veteran_ids: true
+      case_numbers: true
+      company_names: true
+    
+    replacement_strategy:
+      names: "{{auto_detected_participant_id}}"
+      email_addresses: "[EMAIL]"
+      phone_numbers: "[PHONE]"
+      addresses: "[ADDRESS]"
+      company_names: "[COMPANY]"
+      generic: "[REDACTED]"
+      
+    confidence_threshold: 0.85
+
+# AI processing for metadata extraction and content cleaning
+ai_processing:
+  metadata_extraction:
+    auto_detect_participant_id: true
+    auto_detect_session_info: true
+    auto_detect_study_context: true
+    
+    extraction_patterns:
+      participant_id:
+        filename_patterns: ["pt001", "participant_1", "p1", "user_01"]
+        content_patterns: ["Participant ID:", "Participant:", "User:"]
+        fallback: "participant_{{timestamp}}"
+        
+      session_id:
+        filename_patterns: ["session_1", "s1", "interview_1"]
+        content_patterns: ["Session:", "Interview #", "Meeting ID:"]
+        fallback: "session_{{date}}"
+        
+      study_name:
+        folder_context: true
+        filename_patterns: ["housing_study", "va_research"]
+        content_patterns: ["Study:", "Research Project:", "Project:"]
+        fallback: "research_study"
+        
+      session_date:
+        filename_date_patterns: true
+        content_patterns: ["Date:", "Session Date:", "Interview Date:"]
+        file_modified_date: true
+        fallback: "{{upload_date}}"
+    
+  transcript_cleaning:
+    fix_obvious_errors: true
+    auto_detect_speaker_format: true
+    standardize_speaker_labels: true
+    preserve_timestamps: true
+    remove_excessive_filler: false
+    
+    speaker_format_patterns:
+      - pattern: "Interviewer:|Moderator:|Researcher:"
+        standardize_to: "Interviewer:"
+      - pattern: "Participant:|User:|Respondent:|Interviewee:"
+        standardize_to: "Participant:"
+      - pattern: "Speaker 1:|Speaker1:|S1:"
+        standardize_to: "Interviewer:"
+      - pattern: "Speaker 2:|Speaker2:|S2:"
+        standardize_to: "Participant:"
+      - pattern: "^[A-Z][a-z]+ [A-Z][a-z]*:"
+        standardize_to: "{{detected_role}}:"
+        pii_redaction_required: true
+    
+  research_formatting:
+    paragraph_breaks_by_speaker: true
+    consistent_speaker_format: true
+    preserve_emotional_indicators: true
+    maintain_context_cues: true
+
+# AI-powered research coding
+ai_coding:
+  enabled: true
+  
+  coding_categories:
+    pain_points:
+      icon: "🔴"
+      description: "Frustrations, difficulties, problems, barriers"
+      severity_levels: ["Critical", "High", "Medium", "Low"]
+      extract_quotes: true
+      
+    opportunities:
+      icon: "🟡"  
+      description: "Unmet needs, suggestions, improvement areas"
+      impact_levels: ["High Impact", "Medium Impact", "Quick Win"]
+      extract_quotes: true
+      
+    insights:
+      icon: "💡"
+      description: "Key behaviors, patterns, revelations, mental models"
+      insight_types: ["User Behavior", "Mental Model", "Workflow", "Preference"]
+      extract_quotes: true
+      
+    positive_feedback:
+      icon: "🟢"
+      description: "What's working well, successful interactions"
+      extract_quotes: true
+      
+    feature_requests:
+      icon: "✨"
+      description: "Explicit requests for new features or changes"
+      priority_levels: ["Must Have", "Should Have", "Nice to Have"]
+      extract_quotes: true
+      
+    usability_issues:
+      icon: "⚠️"
+      description: "Interface problems, confusion, interaction failures"
+      severity_levels: ["Blocker", "Major", "Minor"]
+      extract_quotes: true
+      
+    emotions:
+      icon: "😊"
+      description: "Emotional reactions and sentiment"
+      emotion_types: ["Frustrated", "Confused", "Delighted", "Anxious", "Confident"]
+      extract_quotes: true
+
+  coding_confidence:
+    min_confidence: 0.75
+    flag_low_confidence: true
+    human_review_threshold: 0.60
+
+# File processing
+file_processing:
+  supported_formats:
+    text: [".txt", ".md"]
+    documents: [".docx", ".pdf"]
+    subtitles: [".vtt", ".srt"]
+    csv: [".csv"]
+    
+  max_file_size: "15MB"
+  
+  content_extraction:
+    pdf_ocr: true
+    docx_formatting: true
+    csv_parsing: true
+    subtitle_parsing: true
+    timestamp_preservation: true
+    speaker_diarization_preservation: true
+    filename_analysis: true
+
+# Output template with coding results
+output_template: |
+  # {{auto_detected_participant_id}} Session Analysis
+  
+  **Study:** {{auto_detected_study_name}}  
+  **Session:** {{auto_detected_session_id}}  
+  **Date:** {{auto_detected_date}}  
+  **Source:** {{transcript_source}}  
+  **Analysis:** AI-coded + PII redacted
+
+  ---
+
+  ## 🔴 Pain Points ({{pain_points_count}})
+
+  {{#each pain_points}}
+  **{{severity}} - {{title}}**
+  - *Issue:* {{description}}
+  - *Quote:* "{{supporting_quote}}"
+  - *Timestamp:* {{timestamp}}
+  {{/each}}
+
+  ---
+
+  ## 🟡 Opportunities ({{opportunities_count}})
+
+  {{#each opportunities}}
+  **{{impact_level}} - {{title}}**
+  - *Opportunity:* {{description}}
+  - *Quote:* "{{supporting_quote}}"
+  - *Timestamp:* {{timestamp}}
+  {{/each}}
+
+  ---
+
+  ## 💡 Key Insights ({{insights_count}})
+
+  {{#each insights}}
+  **{{insight_type}} - {{title}}**
+  - *Insight:* {{description}}
+  - *Quote:* "{{supporting_quote}}"
+  - *Timestamp:* {{timestamp}}
+  {{/each}}
+
+  ---
+
+  ## 🟢 Positive Feedback ({{positive_feedback_count}})
+
+  {{#each positive_feedback}}
+  **{{title}}**
+  - *What worked:* {{description}}
+  - *Quote:* "{{supporting_quote}}"
+  - *Timestamp:* {{timestamp}}
+  {{/each}}
+
+  ---
+
+  ## ✨ Feature Requests ({{feature_requests_count}})
+
+  {{#each feature_requests}}
+  **{{priority_level}} - {{title}}**
+  - *Request:* {{description}}
+  - *Quote:* "{{supporting_quote}}"
+  - *Timestamp:* {{timestamp}}
+  {{/each}}
+
+  ---
+
+  ## ⚠️ Usability Issues ({{usability_issues_count}})
+
+  {{#each usability_issues}}
+  **{{severity}} - {{title}}**
+  - *Issue:* {{description}}
+  - *Quote:* "{{supporting_quote}}"
+  - *Timestamp:* {{timestamp}}
+  {{/each}}
+
+  ---
+
+  ## 😊 Emotional Journey
+
+  {{#each emotions}}
+  **{{emotion_type}}** ({{timestamp}})
+  - *Context:* {{description}}
+  - *Quote:* "{{supporting_quote}}"
+  {{/each}}
+
+  ---
+
+  ## 📋 Full Transcript
+
+  {{processed_transcript_content}}
+
+  ---
+
+  ## 📊 Coding Summary
+
+  - **Total Codes:** {{total_codes_found}}
+  - **High-Confidence Codes:** {{high_confidence_codes}}
+  - **Flagged for Review:** {{flagged_codes}}
+  - **Processing Time:** {{processing_duration}}
+
+  *AI Coding Confidence: {{avg_confidence_score}}%*
+
+# File organization to existing folder structure
+output_options:
+  coded_analysis:
+    filename: "{{auto_detected_participant_id}}-coded-analysis.md"
+    path: "research/{{auto_detected_study_name}}/primary-research/03-fieldwork/{{auto_detected_session_id}}/coded-transcripts/"
+    
+  raw_transcript:
+    filename: "{{auto_detected_participant_id}}-transcript.md"
+    path: "research/{{auto_detected_study_name}}/primary-research/03-fieldwork/{{auto_detected_session_id}}/transcripts/"
+    
+  coding_export:
+    filename: "{{auto_detected_participant_id}}-codes.csv"
+    path: "research/{{auto_detected_study_name}}/primary-research/03-fieldwork/{{auto_detected_session_id}}/coding-data/"
+    format: "csv"
+    fields: ["code_type", "title", "description", "quote", "timestamp", "confidence"]
+    
+  delivery:
+    github:
+      enabled: true
+      commit_message: "📝 {{auto_detected_study_name}}/{{auto_detected_session_id}}/{{auto_detected_participant_id}} coded analysis - {{total_codes_found}} insights identified"
+      
+    slack:
+      enabled: true
+      message_template: |
+        🤖 **AI Coding Complete** for {{auto_detected_participant_id}}
+        
+        **Study:** {{auto_detected_study_name}} 
+        **Session:** {{auto_detected_session_id}}
+        **Insights Found:** {{total_codes_found}} codes identified
+        
+        🔴 {{pain_points_count}} Pain Points
+        🟡 {{opportunities_count}} Opportunities  
+        💡 {{insights_count}} Key Insights
+        ⚠️ {{usability_issues_count}} Usability Issues
+        
+      actions:
+        - text: "📖 View Coded Analysis"
+          url: "{{github_coded_analysis_url}}"
+        - text: "📊 Export Codes (CSV)"
+          url: "{{coding_export_url}}"
+
+# Quality assurance
+quality_assurance:
+  content_validation:
+    min_content_length: 200
+    verify_speaker_labels: true
+    check_pii_redaction: true
+    
+  folder_validation:
+    verify_session_folder_exists: true
+    check_subfolder_structure: true
+    expected_folders: ["coded-transcripts", "transcripts", "coding-data"]
+    
+  metadata_validation:
+    verify_auto_detection_accuracy: true
+    validate_participant_id_format: true
+    check_session_id_format: true
+    confirm_study_context: true
+    
+  coding_validation:
+    min_codes_expected: 5
+    verify_quote_accuracy: true
+    check_timestamp_alignment: true
+    flag_low_confidence_codes: true
+    
+  research_readiness:
+    verify_participant_id_consistency: true
+    check_coding_coverage: true
+    validate_insight_quality: true
+
+# Cross-session analysis support
+cross_session_analysis:
+  pattern_detection:
+    enabled: true
+    compare_with_existing_sessions: true
+    identify_recurring_themes: true
+    flag_new_patterns: true
+    
+  synthesis_triggers:
+    auto_trigger_synthesis: "session_count >= 5"
+    weekly_synthesis: true
+    pattern_alerts: true
+
+# Notifications
+notifications:
+  upload_complete:
+    message: |
+      ✅ **{{auto_detected_participant_id}} transcript is ready for coding**
+      
+      Privacy protected • Ready for analysis
+      
+    actions:
+      - text: "📖 Open Transcript"
+        url: "{{github_transcript_url}}"
+      - text: "📊 View All Transcripts"
+        url: "{{study_transcripts_folder_url}}"
+
+  coding_complete:
+    message: |
+      🤖 **AI Coding Complete: {{auto_detected_study_name}}/{{auto_detected_session_id}}/{{auto_detected_participant_id}}**
+      
+      **{{total_codes_found}} insights automatically coded**
+      
+      🔴 **{{pain_points_count}} Pain Points** ({{critical_pain_points}} critical)
+      🟡 **{{opportunities_count}} Opportunities** ({{high_impact_opportunities}} high-impact)
+      💡 **{{insights_count}} Key Insights**
+      
+      {% if flagged_codes > 0 %}
+      ⚠️ **{{flagged_codes}} codes** flagged for human review
+      {% endif %}
+      
+    actions:
+      - text: "📖 Review Coded Analysis"
+        url: "{{github_coded_analysis_url}}"
+      - text: "📊 Export All Codes"
+        url: "{{coding_export_url}}"
+      - text: "🔍 Compare with Other Sessions"
+        url: "{{cross_session_analysis_url}}"
+
+# Error handling
+error_handling:
+  file_too_large:
+    message: "File size exceeds 15MB limit. Please compress or split the file."
+    suggestion: "Try uploading as plain text or splitting into multiple files."
+    
+  unsupported_format:
+    message: "File format not supported. Please convert to .txt, .docx, .pdf, or .md"
+    suggestion: "Most transcription services can export to these formats."
+    
+  session_folder_not_found:
+    message: "Session folder does not exist. Please create the session folder first."
+    suggestion: "Expected path: research/{{auto_detected_study_name}}/primary-research/03-fieldwork/{{auto_detected_session_id}}/"
+    action: "halt_processing"
+    
+  pii_detection_failed:
+    message: "Unable to complete PII redaction. Manual review required."
+    action: "flag_for_manual_review"
+    
+  metadata_extraction_failed:
+    message: "Could not auto-detect session information. Using fallback values."
+    action: "proceed_with_fallbacks"
+    notification: "Please verify participant ID and session details in the generated file."
+    
+  transcription_unclear:
+    message: "Transcript quality may be low. Consider re-uploading with better source."
+    action: "proceed_with_warning"
+
+# Analytics
+analytics:
+  track_upload_method_preferences: true
+  measure_processing_time: true
+  monitor_pii_redaction_accuracy: true
+  track_file_format_usage: true
+  measure_transcript_quality: true
+  track_coding_accuracy: true
+  measure_cross_session_patterns: true
