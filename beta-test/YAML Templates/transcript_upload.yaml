@@ -198,22 +198,22 @@ file_processing:
 ai_generation_tasks:
   - task_id: "transcript_coding_payload"
     prompt: |
-      You are a meticulous research ops assistant. Perform the steps below on the provided transcript and notes, then return ONE strict JSON object that matches the schema. Do not include any extra keys or commentary.
+      You are a meticulous research ops assistant. Perform the steps below on the provided transcript and notes, then return ONE strict JSON object that matches the schema. Do not include extra keys or commentary.
 
       =========
       CONTEXT HINTS
-      - FILENAME: "{filename}"
-      - FOLDER_CONTEXT: "{folder_context}"
-      - UPLOAD_DATE_UTC: "{upload_date_utc}"
-      - TRANSCRIPT_SOURCE (optional): "{transcript_source}"
+      - FILENAME: "{{ filename }}"
+      - FOLDER_CONTEXT: "{{ folder_context }}"
+      - UPLOAD_DATE_UTC: "{{ upload_date_utc }}"
+      - TRANSCRIPT_SOURCE (optional): "{{ transcript_source | default('') }}"
 
       =========
       MANUAL NOTES
-      {manual_notes_text_or_blank}
+      {{ manual_notes_text_or_blank }}
 
       =========
       TRANSCRIPT
-      {full_transcript_text}
+      {{ full_transcript_text }}
 
       =========
       TASKS (in order)
@@ -291,9 +291,9 @@ ai_generation_tasks:
       =========
       OUTPUT FORMAT (STRICT JSON ONLY)
       Return ONLY this JSON object with exactly these keys.
-      Note: The doubled braces escape literal braces for the templating engine; the output must contain single braces.
 
-      {{
+      {% raw %}
+      {
         "auto_detected_participant_id": "string",
         "auto_detected_study_name": "string",
         "auto_detected_session_id": "string",
@@ -318,8 +318,9 @@ ai_generation_tasks:
         "flagged_codes": 0,
         "processing_duration": "unknown",
         "avg_confidence_score": 0
-      }}
-    
+      }
+      {% endraw %}
+
 
 # Output template with coding results
 output_template: |
