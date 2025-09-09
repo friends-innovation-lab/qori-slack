@@ -202,18 +202,18 @@ ai_generation_tasks:
 
       =========
       CONTEXT HINTS
-      - FILENAME: "{{ filename }}"
-      - FOLDER_CONTEXT: "{{ folder_context }}"
-      - UPLOAD_DATE_UTC: "{{ upload_date_utc }}"
-      - TRANSCRIPT_SOURCE (optional): "{{ transcript_source | default('') }}"
+      - FILENAME: "{filename}"
+      - FOLDER_CONTEXT: "{folder_context}"
+      - UPLOAD_DATE_UTC: "{upload_date_utc}"
+      - TRANSCRIPT_SOURCE (optional): "{transcript_source}"
 
       =========
       MANUAL NOTES
-      {{ manual_notes_text_or_blank }}
+      {manual_notes_text_or_blank}
 
       =========
       TRANSCRIPT
-      {{ full_transcript_text }}
+      {full_transcript_text}
 
       =========
       TASKS (in order)
@@ -292,8 +292,7 @@ ai_generation_tasks:
       OUTPUT FORMAT (STRICT JSON ONLY)
       Return ONLY this JSON object with exactly these keys.
 
-      {% raw %}
-      {
+      {{
         "auto_detected_participant_id": "string",
         "auto_detected_study_name": "string",
         "auto_detected_session_id": "string",
@@ -318,8 +317,7 @@ ai_generation_tasks:
         "flagged_codes": 0,
         "processing_duration": "unknown",
         "avg_confidence_score": 0
-      }
-      {% endraw %}
+      }}
 
 
 # Output template with coding results
