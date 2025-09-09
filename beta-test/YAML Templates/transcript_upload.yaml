@@ -312,10 +312,7 @@ ai_generation_tasks:
         - avg_confidence_score
 
       - Do not include any commentary outside the code block
-      - Example of the required fencing (structure only; not a schema sample):
-      ```json
-      { "example": "the real output must be a single JSON object" }
-      ```
+      - Example of the required fencing (structure only; not a schema sample)
 
 
 # Output template with coding results
