@@ -420,9 +420,8 @@ output_template: |
 
 # File organization to existing folder structure
 output_options:
-  coded_analysis:
     filename: "{{auto_detected_participant_id}}-coded-analysis.md"
-    path: "research/{{auto_detected_study_name}}/primary-research/03-fieldwork/{{auto_detected_session_id}}/coded-transcripts/"
+    path: "03-fieldwork/{{auto_detected_session_id}}/coded-transcripts/"
     
   raw_transcript:
     filename: "{{auto_detected_participant_id}}-transcript.md"
