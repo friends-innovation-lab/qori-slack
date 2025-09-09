@@ -198,126 +198,124 @@ file_processing:
 ai_generation_tasks:
   - task_id: "transcript_coding_payload"
     prompt: |
-      You are a meticulous research ops assistant. Perform the steps below on the provided transcript and notes, then return ONE strict JSON object that matches the schema. Do not include extra keys or commentary.
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language
+      - ALWAYS use active voice and specific verbs
+      - Follow all redaction and formatting rules below
 
-      =========
-      CONTEXT HINTS
-      - FILENAME: "{filename}"
-      - FOLDER_CONTEXT: "{folder_context}"
-      - UPLOAD_DATE_UTC: "{upload_date_utc}"
-      - TRANSCRIPT_SOURCE (optional): "{transcript_source}"
+      As a meticulous research ops assistant, do the following on the provided transcript and notes, then return ONE strict JSON object inside a fenced code block.
 
-      =========
-      MANUAL NOTES
-      {manual_notes_text_or_blank}
+      **Context Hints**
+      - Filename: {{filename}}
+      - Folder Context: {{folder_context}}
+      - Upload Date (UTC): {{upload_date_utc}}
+      - Transcript Source (optional): {{transcript_source}}
 
-      =========
-      TRANSCRIPT
-      {full_transcript_text}
+      **Manual Notes (optional)**
+      {{manual_notes_text_or_blank}}
 
-      =========
-      TASKS (in order)
+      **Transcript**
+      {{input_text}}
 
-      1) METADATA DETECTION
-         - auto_detected_participant_id:
-           • Look for patterns like pt001, participant_1, p1, user_01 in filename/folder/content.
-           • Fallback: participant_YYYYMMDDHHmmss (UTC).
-         - auto_detected_session_id:
-           • Look for session_1, s1, interview_1, etc.
-           • Fallback: session_YYYYMMDD.
-         - auto_detected_study_name:
-           • Use folder context or obvious content cues (e.g., housing_study, va_research).
-           • Fallback: research_study.
-         - auto_detected_date:
-           • Prefer transcript/notes date (ISO), else filename date, else UPLOAD_DATE_UTC.
-           • Format: YYYY-MM-DD.
-         - transcript_source:
-           • Use provided TRANSCRIPT_SOURCE if present; else infer (Zoom Auto-Generated, Otter.ai, Teams Auto-Generated, Rev.com, Manual Notes, Other).
+      ---
+      **PII Redaction Rules (apply before coding and in the final transcript)**
+      - Redact personal names, email addresses, phone numbers, street addresses, company names, veteran IDs, case numbers, SSNs
+      - Replacements:
+        - Names → auto_detected_participant_id
+        - Emails → [EMAIL]
+        - Phones → [PHONE]
+        - Addresses → [ADDRESS]
+        - Company names → [COMPANY]
+        - Anything else sensitive → [REDACTED]
+      - Redact inside quotes and speaker labels; preserve timestamps
 
-      2) PII REDACTION (apply before coding and in final transcript)
-         - Redact: personal names, email addresses, phone numbers, street addresses, company names, veteran IDs, case numbers, SSNs.
-         - Replacements:
-           • Names → auto_detected_participant_id
-           • Emails → [EMAIL]
-           • Phones → [PHONE]
-           • Addresses → [ADDRESS]
-           • Company names → [COMPANY]
-           • Anything else sensitive → [REDACTED]
-         - Redact inside quotes and speaker labels, but preserve timestamps.
+      **Speaker Normalization**
+      - Map Interviewer/Moderator/Researcher/Speaker 1/S1 to: Interviewer:
+      - Map Participant/User/Respondent/Speaker 2/S2 to: Participant:
+      - If a real name appears as a label, convert to the role and ensure it is redacted
+      - Preserve existing timestamps (e.g., 00:12:31.450). Do not invent timestamps
+      - Keep fillers; structure as paragraphs per speaker
+      - Output the cleaned, redacted text as processed_transcript_content
 
-      3) SPEAKER NORMALIZATION & CLEANING
-         - Map “Interviewer/Moderator/Researcher/Speaker 1/S1” → "Interviewer:"
-         - Map “Participant/User/Respondent/Speaker 2/S2” → "Participant:"
-         - If a real name appears as a label, convert to the role and ensure it is redacted.
-         - Preserve existing timestamps (e.g., 00:12:31.450 or 00:12:31). Do NOT invent timestamps.
-         - Keep fillers; structure as paragraphs per speaker.
-         - Output full cleaned, redacted text as processed_transcript_content.
+      **Metadata Detection (use hints, then fallbacks)**
+      - auto_detected_participant_id: detect from filename/folder/content (examples: pt001, participant_1, p1, user_01). Fallback: participant_YYYYMMDDHHmmss (UTC)
+      - auto_detected_session_id: detect session_1/s1/interview_1; fallback: session_YYYYMMDD
+      - auto_detected_study_name: detect from folder/content (examples: housing_study, va_research); fallback: research_study
+      - auto_detected_date: prefer date in transcript/notes, else filename date, else upload date; format YYYY-MM-DD
+      - transcript_source: use provided value if present; else infer (Zoom Auto-Generated, Otter.ai, Teams Auto-Generated, Rev.com, Manual Notes, Other)
 
-      4) AI CODING (each item MUST include a verbatim quote and a timestamp if available)
-         - Confidence in [0,1]; include items with confidence ≥ 0.75.
-         - If 0.60–0.74, include them but they count as flagged_for_review.
-         - If < 0.60 → exclude.
-         - Buckets and required fields:
-           • pain_points:
-             - severity: one of ["Critical","High","Medium","Low"]
-             - title, description, supporting_quote, timestamp, confidence
-           • opportunities:
-             - impact_level: one of ["High Impact","Medium Impact","Quick Win"]
-             - title, description, supporting_quote, timestamp, confidence
-           • insights:
-             - insight_type: one of ["User Behavior","Mental Model","Workflow","Preference"]
-             - title, description, supporting_quote, timestamp, confidence
-           • positive_feedback:
-             - title, description, supporting_quote, timestamp, confidence
-           • feature_requests:
-             - priority_level: one of ["Must Have","Should Have","Nice to Have"]
-             - title, description, supporting_quote, timestamp, confidence
-           • usability_issues:
-             - severity: one of ["Blocker","Major","Minor"]
-             - title, description, supporting_quote, timestamp, confidence
-           • emotions:
-             - emotion_type: one of ["Frustrated","Confused","Delighted","Anxious","Confident"]
-             - description, supporting_quote, timestamp, confidence
-         - If no timestamps exist anywhere, set item.timestamp to "" (empty string).
+      **AI Coding (include items only if directly supported by quotes in the transcript)**
+      - Confidence range: 0 to 1
+      - Include items with confidence >= 0.75
+      - If 0.60–0.74, include but they count toward flagged_codes
+      - If < 0.60, exclude
+      - Each item must include a verbatim supporting_quote and a timestamp if available; if no timestamps exist anywhere, set timestamp to empty string
 
-      5) COUNTS & SUMMARY
-         - pain_points_count, opportunities_count, insights_count, positive_feedback_count, feature_requests_count, usability_issues_count = sizes of the respective arrays (after gating).
-         - total_codes_found = total items across all buckets (after gating).
-         - high_confidence_codes = count of items with confidence ≥ 0.75.
-         - flagged_codes = count of items with confidence in [0.60, 0.74].
-         - avg_confidence_score = integer percentage = round(mean(confidence of all included items) × 100). If no items, return 0.
-         - processing_duration = "unknown".
+      **Buckets and required fields**
+      - pain_points:
+        - severity: one of "Critical", "High", "Medium", "Low"
+        - title, description, supporting_quote, timestamp, confidence
+      - opportunities:
+        - impact_level: one of "High Impact", "Medium Impact", "Quick Win"
+        - title, description, supporting_quote, timestamp, confidence
+      - insights:
+        - insight_type: one of "User Behavior", "Mental Model", "Workflow", "Preference"
+        - title, description, supporting_quote, timestamp, confidence
+      - positive_feedback:
+        - title, description, supporting_quote, timestamp, confidence
+      - feature_requests:
+        - priority_level: one of "Must Have", "Should Have", "Nice to Have"
+        - title, description, supporting_quote, timestamp, confidence
+      - usability_issues:
+        - severity: one of "Blocker", "Major", "Minor"
+        - title, description, supporting_quote, timestamp, confidence
+      - emotions:
+        - emotion_type: one of "Frustrated", "Confused", "Delighted", "Anxious", "Confident"
+        - description, supporting_quote, timestamp, confidence
 
-      =========
-      OUTPUT FORMAT (STRICT JSON ONLY)
-      Return ONLY this JSON object with exactly these keys.
+      **Counts and Summary**
+      - pain_points_count, opportunities_count, insights_count, positive_feedback_count, feature_requests_count, usability_issues_count: sizes of corresponding arrays after gating
+      - total_codes_found: total number of included items across all buckets
+      - high_confidence_codes: count of items with confidence >= 0.75
+      - flagged_codes: count of items with confidence between 0.60 and 0.74
+      - avg_confidence_score: integer percentage; mean confidence of all included items multiplied by 100 and rounded; if no items, return 0
+      - processing_duration: return "unknown"
 
-      {{
-        "auto_detected_participant_id": "string",
-        "auto_detected_study_name": "string",
-        "auto_detected_session_id": "string",
-        "auto_detected_date": "YYYY-MM-DD",
-        "transcript_source": "string",
-        "processed_transcript_content": "PII-redacted, normalized transcript with preserved timestamps",
-        "pain_points_count": 0,
-        "opportunities_count": 0,
-        "insights_count": 0,
-        "positive_feedback_count": 0,
-        "feature_requests_count": 0,
-        "usability_issues_count": 0,
-        "pain_points": [],
-        "opportunities": [],
-        "insights": [],
-        "positive_feedback": [],
-        "feature_requests": [],
-        "usability_issues": [],
-        "emotions": [],
-        "total_codes_found": 0,
-        "high_confidence_codes": 0,
-        "flagged_codes": 0,
-        "processing_duration": "unknown",
-        "avg_confidence_score": 0
-      }}
+      ---
+      **Return Format (STRICT)**
+      - Return ONLY a single JSON object inside a fenced code block labeled json
+      - Include exactly these top-level keys:
+        - auto_detected_participant_id
+        - auto_detected_study_name
+        - auto_detected_session_id
+        - auto_detected_date
+        - transcript_source
+        - processed_transcript_content
+        - pain_points_count
+        - opportunities_count
+        - insights_count
+        - positive_feedback_count
+        - feature_requests_count
+        - usability_issues_count
+        - pain_points
+        - opportunities
+        - insights
+        - positive_feedback
+        - feature_requests
+        - usability_issues
+        - emotions
+        - total_codes_found
+        - high_confidence_codes
+        - flagged_codes
+        - processing_duration
+        - avg_confidence_score
+
+      - Do not include any commentary outside the code block
+      - Example of the required fencing (structure only; not a schema sample):
+      ```json
+      { "example": "the real output must be a single JSON object" }
+      ```
 
 
 # Output template with coding results
