@@ -10,43 +10,31 @@
 
 ## 🗣️ Key Quotes & Reactions
 
-session_notes_submit
+*No quotes recorded for this session.*
 
 ---
 
 ## 😤 Emotional Moments & Body Language
 
-session_notes_submit
+*No emotional moments recorded for this session.*
 
 ---
 
 ## ✅ Task Completion & Errors
 
-session_notes_submit
+*No task observations recorded for this session.*
 
 ---
 
 ## 🐛 Technical Issues & Platform Problems
 
-session_notes_submit
-
----
-
-## ♿ Accessibility & Accommodation Observations
-
-session_notes_submit
+*No technical issues reported for this session.*
 
 ---
 
 ## ⭐ Top 3 Key Moments
 
-session_notes_submit
-
----
-
-## 📋 Additional Notes & Context
-
-session_notes_submit
+*No key moments identified for this session.*
 
 ---
 
