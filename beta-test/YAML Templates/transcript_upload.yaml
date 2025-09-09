@@ -204,7 +204,7 @@ ai_generation_tasks:
       - ALWAYS use active voice and specific verbs
       - Follow all redaction and formatting rules below
 
-      As a meticulous research ops assistant, do the following on the provided transcript and notes, then return ONE strict JSON object inside a fenced code block.
+      As a meticulous research ops assistant, do the following on the provided transcript and notes, then return ONE strict JSON object.
 
       **Context Hints**
       - Filename: {{filename}}
@@ -284,7 +284,8 @@ ai_generation_tasks:
 
       ---
       **Return Format (STRICT)**
-      - Return ONLY a single JSON object inside a fenced code block labeled json
+      - Return ONLY a single valid JSON object.
+      - No code fences. No backticks. No Markdown. No prose or explanation.
       - Include exactly these top-level keys:
         - auto_detected_participant_id
         - auto_detected_study_name
@@ -310,9 +311,12 @@ ai_generation_tasks:
         - flagged_codes
         - processing_duration
         - avg_confidence_score
+      - Arrays must exist even if empty; do not output null for lists.
+      - Use double quotes for all keys and string values.
+      - Numbers should be numeric (no quotes).
+      - No trailing commas.
+      - Begin output with { and end with }.
 
-      - Do not include any commentary outside the code block
-      - Example of the required fencing (structure only; not a schema sample)
 
 
 # Output template with coding results
