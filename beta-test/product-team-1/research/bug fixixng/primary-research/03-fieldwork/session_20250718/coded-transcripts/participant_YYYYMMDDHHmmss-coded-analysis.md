@@ -1,164 +1,84 @@
-# PT003 Session Analysis
+# auto_detected_participant_id Session Analysis
 
-**Study:** VA Housing Application UX Research  
-**Session:** pt001  
-**Date:** July 18, 2025  
-**Source:** Manual Notes  
-
----
-
-## 🔴 Pain Points (14)
-**Critical - Slow Website Loading**
-- *Issue:* Participant faced extreme delays in website loading due to slow rural internet.
-- *Quote:* "This is taking forever to load."
-- *Timestamp:* [00:07:22]
-
-**High - Session Timeout**
-- *Issue:* Session timed out abruptly, causing loss of all form data.
-- *Quote:* "The page looks different... it wants me to start over."
-- *Timestamp:* [00:14:17]
-
-**High - Document Upload Confusion**
-- *Issue:* Participant struggled with the concept of uploading documents, as they were all in paper form.
-- *Quote:* "I don't understand what 'upload' means."
-- *Timestamp:* [00:12:56]
-
-**High - Technical Jargon Confusion**
-- *Issue:* Participant was confused by technical terms like "dropdown menu" and "specifications."
-- *Quote:* "What's a dropdown menu?"
-- *Timestamp:* [00:09:26]
-
-**Medium - Phone Number Format Error**
-- *Issue:* Participant had difficulty entering phone number due to format requirements.
-- *Quote:* "Invalid phone number format."
-- *Timestamp:* [00:11:59]
-
-**Medium - Lack of Clear Guidance**
-- *Issue:* Lack of clear instructions on technical concepts and document requirements.
-- *Quote:* "Just tell me exactly what they want."
-- *Timestamp:* [00:11:29]
-
-**Medium - Session Restart Frustration**
-- *Issue:* Participant expressed frustration at having to restart the application after session timeout.
-- *Quote:* "I spent 15 minutes filling that out, and it's all gone."
-- *Timestamp:* [00:15:24]
-
-**Low - Internet Explorer Compatibility**
-- *Issue:* Participant faced compatibility issues with Internet Explorer.
-- *Quote:* "Let me open up... what's that browser called... Internet Explorer."
-- *Timestamp:* [00:03:52]
-
-**Low - Lack of Digital Literacy**
-- *Issue:* Participant's lack of familiarity with digital concepts hindered progress.
-- *Quote:* "I don't know how to take photos with this computer."
-- *Timestamp:* [00:13:24]
-
-**Low - Error Message Unhelpfulness**
-- *Issue:* Error messages did not provide clear guidance for non-technical users.
-- *Quote:* "But why didn't it just tell me that in the first place?"
-- *Timestamp:* [00:12:10]
-
-**Low - Lack of User-Friendly Design**
-- *Issue:* Participant found the website not user-friendly for individuals with limited computer experience.
-- *Quote:* "The website has some good parts, but it's not made for people like me."
-- *Timestamp:* [00:17:57]
-
-**Low - Need for Plain Language**
-- *Issue:* Participant suggested using plain language instead of technical terms.
-- *Quote:* "Don't use words like 'dropdown menu' without explaining what that means."
-- *Timestamp:* [00:18:22]
-
-**Low - Lack of Clear Instructions**
-- *Issue:* Lack of clear instructions on technical concepts and document requirements.
-- *Quote:* "Or give me a way to mail them in instead."
-- *Timestamp:* [00:18:53]
-
-**Low - Preference for In-Person Assistance**
-- *Issue:* Participant expressed a strong preference for in-person or phone assistance.
-- *Quote:* "Maybe I should just drive to the VA office."
-- *Timestamp:* [00:13:51]
+**Study:** auto_detected_study_name  
+**Session:** auto_detected_session_id  
+**Date:** auto_detected_date  
+**Source:** transcript_source  
+**Analysis:** AI-coded + PII redacted
 
 ---
 
-## 🟡 Opportunities (1)
-**High Impact - Simplified Instructions**
-- *Opportunity:* Provide simplified instructions using plain language for technical concepts.
-- *Quote:* "Explain things in plain English."
-- *Timestamp:* [00:18:22]
+## 🔴 Pain Points (pain_points_count)
+For each item in pain_points:
+**severity - title**
+- *Issue:* description
+- *Quote:* "supporting_quote"
+- *Timestamp:* timestamp
 
 ---
 
-## 💡 Key Insights (4)
-**User Behavior - Clear Instructions**
-- *Insight:* Clear and straightforward instructions are essential for users with limited computer experience.
-- *Quote:* "It tells me exactly what to do and doesn't use confusing words."
-- *Timestamp:* [00:17:25]
-
-**Mental Model - Digital Literacy Barriers**
-- *Insight:* Digital literacy barriers can significantly impact user experience.
-- *Quote:* "I don't know how to take photos with this computer."
-- *Timestamp:* [00:13:24]
-
-**Workflow - Session Timeout Impact**
-- *Insight:* Session timeouts can lead to frustration and loss of progress for users.
-- *Quote:* "I spent 15 minutes filling that out, and it's all gone."
-- *Timestamp:* [00:15:24]
-
-**Preference - In-Person Assistance**
-- *Insight:* Some users prefer in-person or phone assistance over online applications.
-- *Quote:* "Maybe I should just drive to the VA office."
-- *Timestamp:* [00:16:09]
+## 🟡 Opportunities (opportunities_count)
+For each item in opportunities:
+**impact_level - title**
+- *Opportunity:* description
+- *Quote:* "supporting_quote"
+- *Timestamp:* timestamp
 
 ---
 
-## 🟢 Positive Feedback (1)
-**Positive Experience**
-- *What worked:* Participant appreciated the interviewer's patience and understanding.
-- *Quote:* "You're very patient."
-- *Timestamp:* [00:19:44]
+## 💡 Key Insights (insights_count)
+For each item in insights:
+**insight_type - title**
+- *Insight:* description
+- *Quote:* "supporting_quote"
+- *Timestamp:* timestamp
 
 ---
 
-## ✨ Feature Requests (1)
-**Must Have - Clear Instructions**
-- *Request:* Provide clear and simple instructions using plain language.
-- *Quote:* "Don't use words like 'dropdown menu' without explaining what that means."
-- *Timestamp:* [00:18:22]
+## 🟢 Positive Feedback (positive_feedback_count)
+For each item in positive_feedback:
+**title**
+- *What worked:* description
+- *Quote:* "supporting_quote"
+- *Timestamp:* timestamp
 
 ---
 
-## ⚠️ Usability Issues (1)
-**Blocker - Session Timeout**
-- *Issue:* Session timeouts causing loss of progress are a significant usability issue.
-- *Quote:* "I spent 15 minutes filling that out, and it's all gone."
-- *Timestamp:* [00:15:24]
+## ✨ Feature Requests (feature_requests_count)
+For each item in feature_requests:
+**priority_level - title**
+- *Request:* description
+- *Quote:* "supporting_quote"
+- *Timestamp:* timestamp
+
+---
+
+## ⚠️ Usability Issues (usability_issues_count)
+For each item in usability_issues:
+**severity - title**
+- *Issue:* description
+- *Quote:* "supporting_quote"
+- *Timestamp:* timestamp
 
 ---
 
 ## 😊 Emotional Journey
-**Frustrated** ([00:15:39])
-- *Context:* Participant expressed frustration at the application process.
-- *Quote:* "Frustrated. I served this country for 20 years."
-
-**Confused** ([00:09:26])
-- *Context:* Participant was confused by technical terms like "dropdown menu."
-- *Quote:* "What's a dropdown menu?"
-
-**Frustrated** ([00:14:29])
-- *Context:* Participant was frustrated by the sudden session timeout.
-- *Quote:* "But I was using it! I was reading and filling things out."
+For each item in emotions:
+**emotion_type** (timestamp)
+- *Context:* description
+- *Quote:* "supporting_quote"
 
 ---
 
 ## 📋 Full Transcript
-The full transcript has been processed to remove PII and ensure compliance with guidelines.
+processed_transcript_content
 
 ---
 
 ## 📊 Coding Summary
-- **Total Codes:** 22
-- **High-Confidence Codes:** 15
-- **Flagged for Review:** 0
-- **Processing Time:** unknown
+- **Total Codes:** total_codes_found
+- **High-Confidence Codes:** high_confidence_codes
+- **Flagged for Review:** flagged_codes
+- **Processing Time:** processing_duration
 
-*AI Coding Confidence: 100%*
+*AI Coding Confidence: avg_confidence_score%*
