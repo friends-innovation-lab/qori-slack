@@ -1,162 +1,137 @@
-# PT003 Session Analysis
+# PT002 Session Analysis
 
 **Study:** VA Housing Application UX Research  
-**Session:** pt001  
-**Date:** July 18, 2025  
+**Session:** July 16, 2025  
 **Source:** Manual Notes  
+
 **Analysis:** AI-coded + PII redacted
 
 ---
 
-## 🔴 Pain Points (13)
+## 🔴 Pain Points (10)
+**Critical - Document Upload Failure**
+- *Issue:* Document upload repeatedly failed, causing frustration.
+- *Quote:* "I literally had to open each one in a new tab and read through them just to figure out what they were."
+- *Timestamp:* [00:03:35]
 
-**Critical - Slow Loading Times**
-- *Issue:* Slow internet connection causing delays in page loading.
-- *Quote:* "This is taking forever to load."
-- *Timestamp:* [00:04:05]
+**High - Slow Page Loading**
+- *Issue:* Slow loading times compared to other websites.
+- *Quote:* "It's been loading for like 30 seconds."
+- *Timestamp:* [00:05:35]
 
-**High - Session Timeout**
-- *Issue:* Session timing out without warning, resulting in loss of all form data.
-- *Quote:* "The page looks different. It's asking me to log in again."
-- *Timestamp:* [00:14:17]
+**High - Unresponsive Submit Button**
+- *Issue:* Submit button took a long time to respond, causing uncertainty.
+- *Quote:* "I've been clicking 'submit' for like 30 seconds and nothing is happening."
+- *Timestamp:* [00:09:28]
 
-**High - Document Upload Confusion**
-- *Issue:* Participant unable to comprehend the concept of uploading documents.
-- *Quote:* "I don't understand what 'upload' means."
-- *Timestamp:* [00:12:56]
+**Medium - Confusing Terminology**
+- *Issue:* Lack of clarity on program selection, leading to confusion.
+- *Quote:* "No clear explanation of which one I should pick."
+- *Timestamp:* [00:03:32]
 
-**High - Technical Jargon Confusion**
-- *Issue:* Participant confused by technical terms like "dropdown menu" and "specifications."
-- *Quote:* "What's a dropdown menu?"
-- *Timestamp:* [00:09:26]
-
-**High - Form Error Handling**
-- *Issue:* Unclear error messages leading to confusion, e.g., phone number format.
-- *Quote:* "Invalid phone number format."
-- *Timestamp:* [00:11:59]
-
-**High - Session Timeout Frustration**
-- *Issue:* Participant frustrated by session timeout and loss of progress.
-- *Quote:* "I spent 15 minutes filling that out, and it's all gone."
-- *Timestamp:* [00:15:31]
-
-**Medium - Lack of Clarity in Form Instructions**
-- *Issue:* Lack of clear guidance on specific form fields and requirements.
-- *Quote:* "What does that mean?"
-- *Timestamp:* [00:11:09]
-
-**Medium - Lack of Digital Literacy**
-- *Issue:* Participant unfamiliar with digital concepts like file management.
-- *Quote:* "I don't have a scanner."
-- *Timestamp:* [00:13:24]
-
-**Medium - Error Handling**
-- *Issue:* Error messages not providing clear instructions for resolution.
-- *Quote:* "But why didn't it just tell me that in the first place?"
-- *Timestamp:* [00:12:10]
-
-**Medium - Lack of Assistance**
-- *Issue:* Feeling overwhelmed and lacking confidence in completing the application independently.
-- *Quote:* "Not confident at all."
-- *Timestamp:* [00:18:59]
-
-**Low - Lack of Form Persistence**
-- *Issue:* Lack of auto-save feature leading to loss of data upon session timeout.
-- *Quote:* "None of my information is there."
-- *Timestamp:* [00:15:24]
-
-**Low - Complex Form Fields**
-- *Issue:* Participant struggling with complex form fields like dropdown menus.
-- *Quote:* "What's a dropdown menu?"
-- *Timestamp:* [00:09:26]
-
-**Low - Lack of Clarity in Error Messages**
-- *Issue:* Unclear error messages causing confusion and frustration.
-- *Quote:* "What's wrong with how I wrote it?"
-- *Timestamp:* [00:12:06]
+**Medium - Error Messages**
+- *Issue:* Lack of helpful error messages during document upload.
+- *Quote:* "There's no error message explaining what went wrong."
+- *Timestamp:* [00:07:10]
 
 ---
 
 ## 🟡 Opportunities (2)
+**High Impact - Clear Program Selection**
+- *Opportunity:* Implement a quiz to guide users to the right application.
+- *Quote:* "Have a quiz or something that asks about my situation and points me to the right application."
+- *Timestamp:* [00:12:07]
 
-**High Impact - Simplified Form Instructions**
-- *Opportunity:* Provide clear and concise instructions in plain language.
-- *Quote:* "Explain things in plain English."
-- *Timestamp:* [00:18:22]
-
-**High Impact - Improved Error Handling**
-- *Opportunity:* Enhance error messages to provide actionable guidance.
-- *Quote:* "Why didn't it just tell me that in the first place?"
-- *Timestamp:* [00:12:10]
+**Quick Win - Better Error Messages**
+- *Opportunity:* Provide detailed error messages with solutions for users.
+- *Quote:* "When something fails, tell me why and how to fix it."
+- *Timestamp:* [00:12:39]
 
 ---
 
-## 💡 Key Insights (4)
+## 💡 Key Insights (2)
+**User Behavior - Progress Bar**
+- *Insight:* The progress bar and autosave feature were helpful for the participant.
+- *Quote:* "The progress bar was helpful. The fact that it saves your work automatically is good."
+- *Timestamp:* [00:11:35]
 
-**User Behavior - Technical Assistance Preference**
-- *Insight:* Participants prefer phone support or in-person assistance.
-- *Quote:* "Maybe I should just drive to the VA office."
-- *Timestamp:* [00:13:51]
-
-**Mental Model - Digital Literacy Barriers**
-- *Insight:* Participant lacks familiarity with digital concepts like file management.
-- *Quote:* "I don't have a scanner."
-- *Timestamp:* [00:13:24]
-
-**Workflow - Session Timeout Impact**
-- *Insight:* Session timeouts lead to frustration and loss of progress.
-- *Quote:* "I spent 15 minutes filling that out, and it's all gone."
-- *Timestamp:* [00:15:31]
-
-**Preference - Clear Communication Preference**
-- *Insight:* Participants prefer clear and straightforward communication.
-- *Quote:* "Explain things in plain English."
-- *Timestamp:* [00:18:22]
+**Workflow - Status Checking**
+- *Insight:* The status checking function exceeded expectations and provided relief.
+- *Quote:* "The status checking actually worked, which was a nice surprise."
+- *Timestamp:* [00:10:53]
 
 ---
 
 ## 🟢 Positive Feedback (1)
-
-**Clear Instructions**
-- *What worked:* Clear and straightforward instructions on the status checking page.
-- *Quote:* "This part makes sense. It's straightforward."
-- *Timestamp:* [00:17:25]
-
----
-
-## ✨ Feature Requests (1)
-
-**Must Have - Improved Error Messaging**
-- *Request:* Provide more informative and actionable error messages.
-- *Quote:* "Why didn't it just tell me that in the first place?"
-- *Timestamp:* [00:12:10]
+**Smooth Status Checking**
+- *What worked:* The status checking feature functioned well and saved the participant's information.
+- *Quote:* "I was expecting it to be lost."
+- *Timestamp:* [00:10:50]
 
 ---
 
-## ⚠️ Usability Issues (1)
+## ✨ Feature Requests (2)
+**Must Have - Clear Program Guidance**
+- *Request:* Implement a clearer program selection process to reduce user confusion.
+- *Quote:* "Just make it clearer which program I need!"
+- *Timestamp:* [00:12:02]
 
-**Blocker - Session Timeout**
-- *Issue:* Session timeout without warning causing loss of data.
-- *Quote:* "The page looks different. It's asking me to log in again."
-- *Timestamp:* [00:14:17]
+**Should Have - Chat Support**
+- *Request:* Introduce chat support for users facing difficulties during the application process.
+- *Quote:* "And maybe some kind of chat support for when I get stuck."
+- *Timestamp:* [00:12:39]
+
+---
+
+## ⚠️ Usability Issues (4)
+**Blocker - Document Upload Failure**
+- *Issue:* Document upload repeatedly failed, hindering progress.
+- *Quote:* "Upload failed. That's helpful. Not."
+- *Timestamp:* [00:07:10]
+
+**Major - Confusing Program Selection**
+- *Issue:* Overwhelm due to unclear differentiation among housing programs.
+- *Quote:* "No clear explanation of which one I should pick."
+- *Timestamp:* [00:03:32]
+
+**Major - Lack of Error Messages**
+- *Issue:* Unhelpful error messages during document upload process.
+- *Quote:* "No error message explaining what went wrong."
+- *Timestamp:* [00:07:10]
+
+**Minor - Slow Page Loading**
+- *Issue:* Slow loading times experienced during the application process.
+- *Quote:* "It's been loading for like 30 seconds."
+- *Timestamp:* [00:05:35]
 
 ---
 
 ## 😊 Emotional Journey
-**Frustrated** ([00:15:39])
-- *Context:* Participant expresses frustration with the application process.
-- *Quote:* "Frustrated. I served this country for 20 years."
+**Frustrated** 
+- *Context:* Participant expressed frustration with the document upload failures and system issues.
+- *Quote:* "This is exactly why I hate dealing with VA stuff online."
+- *Timestamp:* [00:07:27]
+
+**Confused** 
+- *Context:* Participant felt overwhelmed by the program selection and terminology.
+- *Quote:* "Overwhelmed. I literally had to open each one in a new tab."
+- *Timestamp:* [00:03:35]
+
+**Relieved** 
+- *Context:* Relief experienced when status checking functioned correctly.
+- *Quote:* "Relieved, honestly. After all the problems with the upload."
+- *Timestamp:* [00:10:53]
 
 ---
 
 ## 📋 Full Transcript
-The full transcript has been processed to ensure anonymity and compliance with PII redaction rules.
+[Processed transcript content]
 
 ---
 
 ## 📊 Coding Summary
-- **Total Codes:** 23
-- **High-Confidence Codes:** 23
+- **Total Codes:** 19
+- **High-Confidence Codes:** 19
 - **Flagged for Review:** 0
 - **Processing Time:** unknown
 
