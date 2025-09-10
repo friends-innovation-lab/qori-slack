@@ -315,9 +315,7 @@ ai_generation_tasks:
       - Use double quotes for all keys and string values.
       - Numbers should be numeric (no quotes).
       - No trailing commas.
-      - Begin output with { and end with }.
-
-
+      - Output must be a single JSON object with an opening and a closing curly brace.
 
 # Output template with coding results
 output_template: |
