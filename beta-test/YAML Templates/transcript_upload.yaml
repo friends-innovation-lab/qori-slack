@@ -255,13 +255,26 @@ ai_generation_tasks:
       - Each item MUST include a verbatim supporting_quote and timestamp if available ("" if none in the transcript)
 
       **Buckets & required fields**
-      - pain_points: { severity: "Critical"|"High"|"Medium"|"Low", title, description, supporting_quote, timestamp, confidence }
-      - opportunities: { impact_level: "High Impact"|"Medium Impact"|"Quick Win", title, description, supporting_quote, timestamp, confidence }
-      - insights: { insight_type: "User Behavior"|"Mental Model"|"Workflow"|"Preference", title, description, supporting_quote, timestamp, confidence }
-      - positive_feedback: { title, description, supporting_quote, timestamp, confidence }
-      - feature_requests: { priority_level: "Must Have"|"Should Have"|"Nice to Have", title, description, supporting_quote, timestamp, confidence }
-      - usability_issues: { severity: "Blocker"|"Major"|"Minor", title, description, supporting_quote, timestamp, confidence }
-      - emotions: { emotion_type: "Frustrated"|"Confused"|"Delighted"|"Anxious"|"Confident", description, supporting_quote, timestamp, confidence }
+      - pain_points:
+        - Required fields: severity, title, description, supporting_quote, timestamp, confidence
+        - severity must be one of: "Critical", "High", "Medium", "Low"
+      - opportunities:
+        - Required fields: impact_level, title, description, supporting_quote, timestamp, confidence
+        - impact_level must be one of: "High Impact", "Medium Impact", "Quick Win"
+      - insights:
+        - Required fields: insight_type, title, description, supporting_quote, timestamp, confidence
+        - insight_type must be one of: "User Behavior", "Mental Model", "Workflow", "Preference"
+      - positive_feedback:
+        - Required fields: title, description, supporting_quote, timestamp, confidence
+      - feature_requests:
+        - Required fields: priority_level, title, description, supporting_quote, timestamp, confidence
+        - priority_level must be one of: "Must Have", "Should Have", "Nice to Have"
+      - usability_issues:
+        - Required fields: severity, title, description, supporting_quote, timestamp, confidence
+        - severity must be one of: "Blocker", "Major", "Minor"
+      - emotions:
+        - Required fields: emotion_type, description, supporting_quote, timestamp, confidence
+        - emotion_type must be one of: "Frustrated", "Confused", "Delighted", "Anxious", "Confident"
 
       **Counts & Summary (after gating)**
       - *_count fields are the lengths of their arrays
