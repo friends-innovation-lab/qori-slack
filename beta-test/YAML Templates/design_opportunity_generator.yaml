@@ -42,6 +42,104 @@ privacy_controls:
     phone: "[PHONE_REDACTED]" 
     ssn: "[SSN_REDACTED]"
 
+# Error handling and retry configuration
+error_handling:
+  max_retries: 3
+  retry_delay: 5000  # milliseconds
+  retry_backoff: "exponential"
+  
+  error_types:
+    file_not_found:
+      action: "log_and_continue"
+      fallback: "use_available_files"
+      
+    llm_timeout:
+      action: "retry_with_shorter_content"
+      max_content_length: 25000
+      
+    insufficient_content:
+      action: "request_additional_files"
+      min_threshold: 500
+      
+    pii_detection_failure:
+      action: "mask_all_potential_pii"
+      escalation: true
+
+# Performance and timeout configuration
+performance_config:
+  timeouts:
+    file_discovery: 30000      # 30 seconds
+    llm_generation: 120000     # 2 minutes
+    total_analysis: 600000     # 10 minutes
+    
+  rate_limits:
+    api_calls_per_minute: 10
+    concurrent_analyses: 3
+    max_queue_size: 20
+    
+  caching:
+    enable_file_cache: true
+    cache_duration: 3600  # 1 hour
+    cache_size_limit: "500MB"
+
+# Validation rules
+validation_rules:
+  input_validation:
+    selected_study:
+      required: true
+      type: "string"
+      allowed_values: ["VA Housing Application Usability Study", "Benefits Portal Navigation Research", "Veteran Onboarding Experience Study"]
+      
+    file_content:
+      min_length: 1000
+      max_length: 100000
+      encoding: "utf-8"
+      
+  output_validation:
+    hmw_questions:
+      min_count: 2
+      max_count: 8
+      format_pattern: "^How might we.*\\?$"
+      
+    opportunities:
+      required_fields: ["problem", "hmw", "why_this_matters", "design_challenge"]
+
+# Security and integration configuration
+security_config:
+  environment_variables:
+    required:
+      - OPENAI_API_KEY
+      - SLACK_WEBHOOK_URL
+      - GITHUB_API_TOKEN
+    optional:
+      - GOOGLE_DRIVE_CREDENTIALS
+      
+  access_control:
+    required_permissions: ["research.read", "analysis.generate"]
+    allowed_channels: ["#research-*", "#design-*"]
+    
+  data_retention:
+    raw_files_cache: "7_days"
+    analysis_outputs: "90_days"
+    error_logs: "30_days"
+
+# Logging and monitoring
+logging_config:
+  level: "INFO"
+  format: "json"
+  
+  log_events:
+    - analysis_start
+    - file_discovery_complete
+    - ai_generation_complete
+    - analysis_complete
+    - errors_and_warnings
+    
+  metrics:
+    track_analysis_duration: true
+    track_file_discovery_success_rate: true
+    track_ai_generation_quality: true
+
 # Slack modal input variables
 input_variables:
   - selected_study              # Study name from dropdown (REQUIRED)
