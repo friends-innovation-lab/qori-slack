@@ -196,19 +196,16 @@ file_processing:
     
 # AI Contentai_generation_tasks:
 ai_generation_tasks:
-  # 1) JSON source-of-truth (the filename/path tasks will read this)
-  - task_id: "transcript_coding_payload"
+  - task_id: "transcript_coding_markdown"
     prompt: |
       **MANDATORY WRITING REQUIREMENTS**
-      - Return ONLY a single valid JSON object.
-      - No code fences. No backticks. No Markdown. No prose.
-      - Use double quotes for keys and string values. No trailing commas.
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language
+      - ALWAYS use active voice and specific verbs
+      - Follow all redaction, normalization, and formatting rules below
+      - Return ONLY the final Markdown (no code fences, no backticks, no JSON, no prose outside the Markdown)
 
-      You are a meticulous research-ops assistant. Read the transcript and (optional) notes, then:
-      - Redact PII per rules
-      - Normalize speakers
-      - Extract coded findings with confidence gating
-      - Compute counts/summaries
+      You are a meticulous research-ops assistant. Read the transcript and (optional) notes, redact PII, normalize speakers, extract findings, and render a **complete Markdown report** in the exact section order specified.
 
       **Context Hints**
       - Filename: {{filename}}
@@ -223,95 +220,69 @@ ai_generation_tasks:
       {{input_text}}
 
       ---
-      **PII Redaction Rules**
-      - Redact: names, emails, phones, street addresses, company names, veteran IDs, case numbers, SSNs
+      **PII Redaction Rules (apply before coding and in the final transcript)**
+      - Redact personal names, email addresses, phone numbers, street addresses, company names, veteran IDs, case numbers, SSNs
       - Replace:
-        - Names → auto_detected_participant_id
+        - Names → auto_detected_participant_id (an ID you derive per rules below)
         - Emails → [EMAIL]
         - Phones → [PHONE]
         - Addresses → [ADDRESS]
         - Company names → [COMPANY]
-        - Other sensitive → [REDACTED]
+        - Anything else sensitive → [REDACTED]
       - Redact inside quotes and speaker labels; preserve timestamps if present
 
       **Speaker Normalization**
-      - Interviewer/Moderator/Researcher/Speaker 1/S1 → "Interviewer:"
-      - Participant/User/Respondent/Speaker 2/S2 → "Participant:"
-      - If a real name appears as a label, convert to the role and redact the name
-      - Preserve existing timestamps; do not invent any
+      - Map Interviewer/Moderator/Researcher/Speaker 1/S1 → Interviewer:
+      - Map Participant/User/Respondent/Speaker 2/S2 → Participant:
+      - If a real name appears as a label, convert to the role and ensure it is redacted
+      - Preserve existing timestamps (e.g., 00:12:31.450). Do not invent timestamps
+      - Keep fillers; structure as paragraphs per speaker
 
       **Metadata Detection (use hints, then fallbacks)**
-      - auto_detected_participant_id: detect from filename/folder/content (e.g., pt003, participant_1, p1). If you see a line like "**Participant:** James Wilson (PT003)", set "PT003". Fallback: "participant_YYYYMMDDHHmmss" (UTC).
-      - auto_detected_session_id: detect "session_20250718" style from content/hints; fallback "session_YYYYMMDD" (UTC upload date).
-      - auto_detected_study_name: detect from folder/content (e.g., "VA Housing Application UX Research"); fallback "research_study".
-      - auto_detected_date: prefer transcript/notes date; else filename date; else upload date; format "YYYY-MM-DD".
-      - transcript_source: use provided value if present; else infer: Zoom Auto-Generated, Otter.ai, Teams Auto-Generated, Rev.com, Manual Notes, Other.
+      - auto_detected_participant_id: detect from filename/folder/content (examples: pt001, participant_1, p1, user_01). Fallback: participant_YYYYMMDDHHmmss (UTC)
+      - auto_detected_session_id: detect session_1/s1/interview_1; fallback: session_YYYYMMDD
+      - auto_detected_study_name: detect from folder/content (examples: housing_study, va_research); fallback: research_study
+      - auto_detected_date: prefer date in transcript/notes, else filename date, else upload date; format YYYY-MM-DD
+      - transcript_source: use provided value if present; else infer one of: Zoom Auto-Generated, Otter.ai, Teams Auto-Generated, Rev.com, Manual Notes, Other
 
-      **AI Coding Rules**
-      - Confidence: 0–1
-      - Include if confidence ≥ 0.75
-      - If 0.60–0.74, include and count toward flagged_codes
+      **AI Coding Rules (include items only if directly supported by verbatim quotes in the transcript)**
+      - Confidence range: 0 to 1
+      - Include items with confidence ≥ 0.75
+      - If 0.60–0.74, include them but they count toward “Flagged for Review”
       - If < 0.60, exclude
-      - Each item MUST include a verbatim supporting_quote and timestamp if available ("" if none in the transcript)
+      - Each item must include a verbatim supporting_quote and a timestamp if available; if the transcript has no timestamps anywhere, set timestamp to an empty string
 
-      **Buckets & required fields**
+      **Buckets and required fields**
       - pain_points:
-        - Required fields: severity, title, description, supporting_quote, timestamp, confidence
-        - severity must be one of: "Critical", "High", "Medium", "Low"
+        - severity: one of "Critical", "High", "Medium", "Low"
+        - title, description, supporting_quote, timestamp, confidence
       - opportunities:
-        - Required fields: impact_level, title, description, supporting_quote, timestamp, confidence
-        - impact_level must be one of: "High Impact", "Medium Impact", "Quick Win"
+        - impact_level: one of "High Impact", "Medium Impact", "Quick Win"
+        - title, description, supporting_quote, timestamp, confidence
       - insights:
-        - Required fields: insight_type, title, description, supporting_quote, timestamp, confidence
-        - insight_type must be one of: "User Behavior", "Mental Model", "Workflow", "Preference"
+        - insight_type: one of "User Behavior", "Mental Model", "Workflow", "Preference"
+        - title, description, supporting_quote, timestamp, confidence
       - positive_feedback:
-        - Required fields: title, description, supporting_quote, timestamp, confidence
+        - title, description, supporting_quote, timestamp, confidence
       - feature_requests:
-        - Required fields: priority_level, title, description, supporting_quote, timestamp, confidence
-        - priority_level must be one of: "Must Have", "Should Have", "Nice to Have"
+        - priority_level: one of "Must Have", "Should Have", "Nice to Have"
+        - title, description, supporting_quote, timestamp, confidence
       - usability_issues:
-        - Required fields: severity, title, description, supporting_quote, timestamp, confidence
-        - severity must be one of: "Blocker", "Major", "Minor"
+        - severity: one of "Blocker", "Major", "Minor"
+        - title, description, supporting_quote, timestamp, confidence
       - emotions:
-        - Required fields: emotion_type, description, supporting_quote, timestamp, confidence
-        - emotion_type must be one of: "Frustrated", "Confused", "Delighted", "Anxious", "Confident"
+        - emotion_type: one of "Frustrated", "Confused", "Delighted", "Anxious", "Confident"
+        - description, supporting_quote, timestamp, confidence
 
-      **Counts & Summary (after gating)**
-      - *_count fields are the lengths of their arrays
-      - total_codes_found: total across all buckets
-      - high_confidence_codes: count with confidence ≥ 0.75
-      - flagged_codes: count with 0.60–0.74
-      - avg_confidence_score: integer percentage (mean×100, rounded); 0 if no items
-      - processing_duration: "unknown"
+      **Counts and Summary (compute after gating by confidence)**
+      - pain_points_count, opportunities_count, insights_count, positive_feedback_count, feature_requests_count, usability_issues_count: sizes of corresponding arrays
+      - total_codes_found: total number of included items across all buckets
+      - high_confidence_codes: count of items with confidence ≥ 0.75
+      - flagged_codes: count of items with confidence between 0.60 and 0.74
+      - avg_confidence_score: integer percentage; mean confidence of all included items × 100, rounded; if no items, return 0
+      - processing_duration: output “unknown”
 
-      **Top-level keys to include exactly**
-      "auto_detected_participant_id", "auto_detected_study_name", "auto_detected_session_id",
-      "auto_detected_date", "transcript_source", "processed_transcript_content",
-      "pain_points_count", "opportunities_count", "insights_count",
-      "positive_feedback_count", "feature_requests_count", "usability_issues_count",
-      "pain_points", "opportunities", "insights", "positive_feedback",
-      "feature_requests", "usability_issues", "emotions",
-      "total_codes_found", "high_confidence_codes", "flagged_codes",
-      "processing_duration", "avg_confidence_score"
-
-  # 2) Final Markdown (renders from JSON if present; else infers)
-  - task_id: "transcript_coding_markdown"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS**
-      - Return ONLY the final Markdown (no code fences, no backticks, no JSON, no prose).
-      - Use direct, concrete language and active voice.
-
-      **Primary Input (JSON text; preferred)**
-      {{ai_generated.transcript_coding_payload}}
-
-      **Transcript (fallback only)**
-      {{input_text}}
-
-      Rules:
-      - Parse the JSON string first. If parsing succeeds, use its fields verbatim.
-      - Only if JSON is missing/unparsable may you infer from the transcript.
-      - Preserve punctuation in quotes and timestamps exactly.
-
+      ---
       **RENDER THIS EXACT MARKDOWN STRUCTURE (fill with values)**
       # auto_detected_participant_id Session Analysis
 
@@ -398,7 +369,6 @@ ai_generation_tasks:
 
       *AI Coding Confidence: avg_confidence_score%*
 
-  # 3) Filename (prefer JSON → Markdown → fallback)
   - task_id: "transcript_coding_filename"
     prompt: |
       You will receive analysis outputs. Prefer JSON if present; otherwise parse the Markdown.
@@ -406,16 +376,13 @@ ai_generation_tasks:
       - Markdown (optional): {{ai_generated.transcript_coding_markdown}}
 
       Goal:
-      - Determine the participant id. Prefer the value from the JSON key "auto_detected_participant_id".
-        If not present, try to infer it from the Markdown title line that ends with "Session Analysis".
-        If nothing can be inferred, fall back to a value that looks like: participant_YYYYMMDDHHmmss.
-      - Produce a filename in the exact form: <participant_id>-coded-analysis.md
+      - Determine participant_id (prefer "auto_detected_participant_id" from JSON; fallback: try to infer from Markdown title line "X Session Analysis"; if not found, use "participant_YYYYMMDDHHmmss").
+      - Produce a filename in the form: participant_id-coded-analysis.md
 
-      Output rules:
+      Output Rules:
       - Return ONLY the filename as a single line (no quotes, no code fences, no extra text).
-      - Example shape (illustrative): pt003-coded-analysis.md
+      - Example shape (example only): pt003-coded-analysis.md
 
-  # 4) Path (prefer JSON → Markdown → fallback)
   - task_id: "transcript_coding_path"
     prompt: |
       You will receive analysis outputs. Prefer JSON if present; otherwise parse the Markdown.
@@ -423,16 +390,13 @@ ai_generation_tasks:
       - Markdown (optional): {{ai_generated.transcript_coding_markdown}}
 
       Goal:
-      - Determine the session id. Prefer the value from the JSON key "auto_detected_session_id".
-        If missing, infer it from the Markdown line starting with "Session:".
-        If nothing can be inferred, use a default that looks like: session_YYYYMMDD.
-      - Produce a relative repository path in the exact form:
-        03-fieldwork/<session_id>/coded-transcripts/
+      - Determine session_id (prefer "auto_detected_session_id" from JSON; otherwise infer from Markdown "Session:" line like "session_YYYYMMDD"; if not found, default to "session_YYYYMMDD").
+      - Produce a relative repository path in the form:
+        03-fieldwork/session_id/coded-transcripts/
 
-      Output rules:
+      Output Rules:
       - Return ONLY the path string as a single line (no quotes, no code fences, no leading slash).
-      - Example shape (illustrative): 03-fieldwork/session_20250718/coded-transcripts/
-
+      - Example shape (example only): 03-fieldwork/session_20250718/coded-transcripts/
     
 
 output_template: |
