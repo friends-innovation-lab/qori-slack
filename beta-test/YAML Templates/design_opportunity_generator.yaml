@@ -1,19 +1,20 @@
 id: design_opportunity_generator
 name: run_design_opportunity_generator
-label: 🎨 Design Opportunity Generator
-version: v3.0
-description: |
-  Generate design opportunities and "How Might We" questions from research themes and findings using AI-enhanced analysis.
-  Transform user problems into creative design challenges that inspire innovative solutions and guide design exploration workshops.
-  Enhanced with router intelligence for optimal data quality assessment and context-aware opportunity development.
 
-author: CivicMind R&D
+label: 💡 Design Opportunities
+version: "v2.0"
+
+description: >
+  Generate design opportunities and "How Might We" questions from research themes and findings.
+  Automatically discovers and analyzes research files from selected study folder with optional quality improvements.
+  Transforms user problems into creative design challenges that inspire innovative solutions and guide design exploration workshops.
+
+author: Qori R&D
 created: 2025-06-26
-last_updated: 2025-08-15
+last_updated: 2025-09-10
 
-input_type: text
-input_processing: summarize_if_long
-precision_mode: concise | detailed
+input_type: slack_modal_form
+input_processing: auto_file_discovery
 
 # LLM Configuration
 llm_config:
@@ -21,50 +22,119 @@ llm_config:
   temperature: 0.4
   max_tokens: 4000
 
-input_variables:
-  # Core analysis data (from router)
-  - input_text           # Research themes, findings, problem areas (REQUIRED)
-  - focus_area           # Analysis focus from router (REQUIRED)
-  
-  # Study context (from router)
-  - study_name           # Title of study (REQUIRED)
-  - study_folder         # Study folder path (REQUIRED)
-  - researcher_contact   # Lead researcher (REQUIRED)
-  - study_channel        # Where to post results (REQUIRED)
-  - study_link           # Link to study folder or documentation (OPTIONAL)
-  - team_members         # Who to notify/tag (OPTIONAL)
-  
-  # Router intelligence (from synthesize_router)
-  - file_selection_quality    # Router's file quality assessment
-  - analysis_preview         # Router's expected outcomes
-  - recommendations          # Router's smart suggestions
-  - collaboration_plan       # Router's team coordination plan
-  - routing_validation       # Router's methodology validation
-  - selected_files_summary   # Summary of files used
-  - data_combination_strategy # How files were combined
-  
-  # Router metadata
-  - router_version           # Router version for tracking
-  - preprocessing_timestamp  # When router processed
-  - analysis_id             # Unique analysis identifier
+# System limits
+system_limits:
+  max_total_tokens: 50000
+  min_content_threshold: 1000
+  max_file_size: 100000
+  supported_formats: [".md", ".txt", ".csv", ".json"]
+  max_files_per_analysis: 20
 
-# AI GENERATION TASKS
+# Privacy controls
+privacy_controls:
+  enable_pii_detection: true
+  pii_detection_patterns:
+    email: '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    phone: '\b\d{3}[-.]?\d{3}[-.]?\d{4}\b'
+    ssn: '\b\d{3}-\d{2}-\d{4}\b'
+  masking_strategy:
+    email: "[EMAIL_REDACTED]"
+    phone: "[PHONE_REDACTED]" 
+    ssn: "[SSN_REDACTED]"
+
+# Slack modal input variables
+input_variables:
+  - selected_study              # Study name from dropdown (REQUIRED)
+  - include_research_plan       # Boolean from checkbox (OPTIONAL)
+  - include_participant_notes   # Boolean from checkbox (OPTIONAL)  
+  - include_raw_transcripts     # Boolean from checkbox (OPTIONAL)
+  
+  # Auto-generated during processing
+  - discovered_files            # Files found by auto-discovery (GENERATED)
+  - combined_file_content       # Auto-combined content (GENERATED)
+  - quality_assessment          # Initial quality score (GENERATED)
+
+# Study metadata mapping
+study_metadata:
+  "VA Housing Application Usability Study":
+    folder: "va-housing-usability-2025"
+    researcher: "jordan.researcher"
+    channel: "#research-housing-app"
+    focus_area: "housing application design"
+    
+  "Benefits Portal Navigation Research":
+    folder: "benefits-portal-nav-2025"
+    researcher: "alex.ux"
+    channel: "#research-benefits"
+    focus_area: "benefits portal design"
+    
+  "Veteran Onboarding Experience Study":
+    folder: "veteran-onboarding-2025"
+    researcher: "casey.research"
+    channel: "#research-onboarding"
+    focus_area: "onboarding experience design"
+
+# File discovery system
+auto_file_discovery:
+  core_files:
+    session_summaries:
+      file_patterns: ["*session_summary*", "*summary*", "*session*"]
+      search_paths: ["01-sessions/", "sessions/", "summaries/"]
+      priority: "required"
+      confidence_weight: 50
+      
+    transcripts:
+      file_patterns: ["*transcript*", "*interview*", "*recording*"]
+      search_paths: ["01-sessions/", "transcripts/", "interviews/"]
+      priority: "high"
+      confidence_weight: 30
+  
+  enhancement_files:
+    research_plan:
+      enabled_when: "{{include_research_plan}} == true"
+      file_patterns: ["*research_plan*", "*study_plan*", "*methodology*"]
+      search_paths: ["00-planning/", "planning/", "research/"]
+      confidence_boost: 8
+      
+    participant_notes:
+      enabled_when: "{{include_participant_notes}} == true"
+      file_patterns: ["*participant*", "*notes*", "*observations*"]
+      search_paths: ["02-participants/", "participants/", "notes/"]
+      confidence_boost: 5
+      
+    raw_transcripts:
+      enabled_when: "{{include_raw_transcripts}} == true"
+      file_patterns: ["*raw*", "*unprocessed*", "*recording*"]
+      search_paths: ["01-sessions/raw/", "raw/", "recordings/"]
+      confidence_boost: 3
+
+# AI generation tasks
 ai_generation_tasks:
+  # File discovery and quality assessment
+  - task_id: "file_discovery_summary"
+    prompt: |
+      As a research operations specialist, analyze the discovered files and quality:
+      
+      **Selected Study:** {{selected_study}}
+      **Enhancement Options Selected:**
+      - Research plan: {{include_research_plan}}
+      - Participant notes: {{include_participant_notes}}
+      - Raw transcripts: {{include_raw_transcripts}}
+      
+      **Discovered Files:** {{discovered_files}}
+      **Total Content:** [Analyze character/word count of combined_file_content]
+      
+      Report on file coverage, content quality, enhancement impact, and analysis confidence for design opportunity generation.
+
   # Analyze problem diversity and determine optimal opportunity approach
   - task_id: "problem_diversity_analysis"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      
       As an experienced design strategist specializing in opportunity identification, analyze the problem diversity in this research data:
       
-      **Study:** {{study_name}}
+      **Study:** {{selected_study}}
       **Focus Area:** {{focus_area}}
-      **Input Data:** [Analyze the input_text for problem diversity indicators]
-      **Router Quality Assessment:** {{file_selection_quality}}
-      **Router Recommendations:** {{recommendations}}
+      **Input Data:** {{combined_file_content}}
+      **Quality Assessment:** {{ai_generated.file_discovery_summary}}
       
       Analyze:
       1. **Problem Diversity Level:** How many distinct problem areas are represented in the data?
@@ -72,7 +142,7 @@ ai_generation_tasks:
       3. **Primary Problem Categories:** What are the main themes or types of user problems?
       4. **Innovation Potential:** What level of innovation do these problems suggest?
       5. **Design Focus Area:** What primary design challenge emerges from the problems?
-      6. **Data Richness:** How well does the data support opportunity creation vs. other analysis types?
+      6. **Data Richness:** How well does the data support opportunity creation?
       
       **Format:**
       **Problem Diversity Level:** [High/Medium/Low] - [specific details about variety in problem types]
@@ -81,26 +151,16 @@ ai_generation_tasks:
       **Innovation Potential:** [Breakthrough/Significant/Incremental] - [reasoning based on problem complexity]
       **Design Focus Area:** [Primary design challenge area - e.g., "Trust & Transparency", "Process Simplification"]
       **Data Suitability:** [Excellent/Good/Adequate/Poor] for opportunity development - [reasoning]
-      **Analysis Confidence:** [High/Medium/Low] - [reasoning based on router assessment]
+      **Analysis Confidence:** [High/Medium/Low] - [reasoning based on file assessment]
 
   # Identify and categorize specific problems from research
   - task_id: "problem_identification"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Make problems specific and actionable
-      
       As an experienced UX researcher, identify specific problems from the research data:
       
-      **Input Data:**
-      {{input_text}}
-      
-      **Problem Diversity Context:**
-      {{ai_generated.problem_diversity_analysis}}
-      
-      **Study Context:** {{study_name}}
+      **Input Data:** {{combined_file_content}}
+      **Problem Diversity Context:** {{ai_generated.problem_diversity_analysis}}
+      **Study Context:** {{selected_study}}
       **Focus Area:** {{focus_area}}
       
       Based on the recommended opportunity count, identify each distinct problem area:
@@ -130,19 +190,11 @@ ai_generation_tasks:
   # Transform problems into "How Might We" opportunities
   - task_id: "hmw_opportunity_generation"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Create HMW questions that inspire breakthrough thinking
-      
       As an experienced design facilitator, transform identified problems into "How Might We" opportunities:
       
-      **Identified Problems:**
-      {{ai_generated.problem_identification}}
-      
-      **Study Context:** {{study_name}}
-      **Design Focus:** From analysis - {{ai_generated.problem_diversity_analysis}}
+      **Identified Problems:** {{ai_generated.problem_identification}}
+      **Study Context:** {{selected_study}}
+      **Design Focus:** {{ai_generated.problem_diversity_analysis}}
       
       For each problem, create:
       1. **HMW Question:** Open-ended question that invites creative solutions
@@ -155,17 +207,11 @@ ai_generation_tasks:
       **Opportunity [X]: [Problem Title]**
       
       **Problem:** [Brief restatement of core problem]
-      
       **HMW:** [How might we... question that opens creative possibilities]
-      
       **Why This Matters:** [Significance for users and business outcomes - specific impact]
-      
       **Design Challenge:** [Specific creative challenge for designers to tackle]
-      
       **Success Vision:** [What success would look like from user perspective]
-      
       **Creative Inspiration:** [Analogies, examples, or frameworks that could spark ideas]
-      
       **Supporting Quote:** "[Direct quote from research that illustrates the problem]"
       
       **HMW Requirements:**
@@ -184,19 +230,10 @@ ai_generation_tasks:
   # Assess design signals and evidence strength
   - task_id: "design_signal_assessment"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Make signal assessments specific and evidence-based
-      
       As an experienced design researcher, assess the design signals and evidence strength for each opportunity:
       
-      **HMW Opportunities:**
-      {{ai_generated.hmw_opportunity_generation}}
-      
-      **Input Data:**
-      {{input_text}}
+      **HMW Opportunities:** {{ai_generated.hmw_opportunity_generation}}
+      **Input Data:** {{combined_file_content}}
       
       For each opportunity, assess:
       1. **Signal Strength:** How strong is the evidence for this opportunity
@@ -209,20 +246,13 @@ ai_generation_tasks:
       **Opportunity: [Title]**
       
       📊 **Signal Strength:** [Strong/Moderate/Emerging] - [description of evidence quality and quantity]
-      
       🔄 **User Frequency:** [High/Medium/Low] - [how often users encounter this problem]
-      
       ⚡ **Impact Level:** [High/Medium/Low] - [severity when users face this problem]
-      
       🛠️ **Solution Readiness:** [Ready/Needs validation/Exploratory] - [assessment of design readiness]
-      
       🎯 **Workshop Suitability:** [Excellent/Good/Fair] - [how well this works for ideation sessions]
-      
       📈 **Expected Session Count:** [Single session/Multiple sessions/Workshop series] - [estimated ideation scope]
-      
       🎨 **Creative Constraints:** [Helpful constraints that could guide ideation without limiting solutions]
-      
-      🔍 **Validation Needs:** [What would strengthen confidence in this opportunity]
+      📝 **Validation Needs:** [What would strengthen confidence in this opportunity]
       
       Requirements:
       - Base signal strength on actual evidence quantity and quality
@@ -233,21 +263,11 @@ ai_generation_tasks:
   # Generate actionable next steps and workshop guidance
   - task_id: "workshop_guidance_generation"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Make guidance specific and immediately actionable
-      
       As an experienced design workshop facilitator, generate actionable guidance for using these opportunities:
       
-      **Assessed Opportunities:**
-      {{ai_generated.design_signal_assessment}}
-      
-      **Problem Context:**
-      {{ai_generated.problem_diversity_analysis}}
-      
-      **Study Context:** {{study_name}}
+      **Assessed Opportunities:** {{ai_generated.design_signal_assessment}}
+      **Problem Context:** {{ai_generated.problem_diversity_analysis}}
+      **Study Context:** {{selected_study}}
       
       Generate:
       1. **Priority Ranking:** Which opportunities to tackle first and why
@@ -313,271 +333,185 @@ ai_generation_tasks:
       
       **Long-term Strategy (Months 2-3):**
       - [Strategic action]: [How this creates lasting impact]
-      
-      **Router Integration:**
-      {{recommendations}}
-      [How router recommendations enhance workshop planning]
 
-  # Validate opportunities and generate comprehensive recommendations
-  - task_id: "opportunity_validation_and_follow_up"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Provide specific validation approaches and next steps
-      
-      As an experienced design strategy consultant, validate opportunities and recommend comprehensive follow-up actions:
-      
-      **Complete Opportunity Analysis:**
-      {{ai_generated.design_signal_assessment}}
-      {{ai_generated.workshop_guidance_generation}}
-      
-      **Router Quality Assessment:** {{file_selection_quality}}
-      **Router Recommendations:** {{recommendations}}
-      **Study Context:** {{study_name}}
-      
-      For the opportunity set, assess:
-      
-      1. **Opportunity Validation:** How confident are we in these opportunities?
-      2. **Evidence Quality:** How well-supported is each opportunity?
-      3. **Team Readiness:** How ready are teams to act on these opportunities?
-      4. **Follow-up Research:** What would strengthen opportunity confidence?
-      5. **Strategic Impact:** How these opportunities align with broader goals?
-      
-      **Format:**
-      
-      ## ✅ **OPPORTUNITY VALIDATION SUMMARY**
-      
-      **Overall Confidence:** [High/Medium/Low] - [reasoning based on data quality and router assessment]
-      
-      **Individual Opportunity Strength:**
-      [For each opportunity: Title - Confidence level and supporting evidence quality]
-      
-      **Evidence Quality Assessment:**
-      - **Strong Evidence:** [Which opportunities have solid research backing]
-      - **Moderate Evidence:** [Which need some validation but show promise]
-      - **Emerging Signals:** [Which are worth exploring but need more research]
-      
-      ## 🎯 **TEAM READINESS ASSESSMENT**
-      
-      **Design Team Preparation:**
-      - **Ready to Execute:** [What teams can start immediately]
-      - **Needs Support:** [What capabilities teams need to develop]
-      - **External Help:** [Where teams might need additional expertise]
-      
-      **Stakeholder Alignment:**
-      - **Aligned Opportunities:** [Which have clear stakeholder support]
-      - **Needs Buy-in:** [Which require additional stakeholder education]
-      
-      ## 🔍 **VALIDATION RECOMMENDATIONS**
-      
-      **Immediate Validation (Week 1-2):**
-      - [Validation method]: [What this would confirm about opportunities]
-      - [Quick test]: [How to rapidly validate assumptions]
-      
-      **Short-term Research (Weeks 3-8):**
-      - [Research approach]: [How to strengthen opportunity confidence]
-      - [User validation]: [How to confirm user needs and priorities]
-      
-      **Long-term Strategy (Months 2-6):**
-      - [Strategic research]: [How to build comprehensive opportunity understanding]
-      
-      ## 📈 **STRATEGIC IMPACT ASSESSMENT**
-      
-      **Business Value Potential:**
-      - [High impact]: [Which opportunities could drive significant value]
-      - [User satisfaction]: [Which would most improve user experience]
-      - [Innovation potential]: [Which could lead to breakthrough solutions]
-      
-      **Resource Requirements:**
-      - [Low effort, high impact]: [Quick wins to prioritize]
-      - [High effort, high impact]: [Major initiatives worth investment]
-      - [Exploration projects]: [Lower certainty but high learning potential]
-      
-      ## 🔄 **FOLLOW-UP ANALYSIS RECOMMENDATIONS**
-      
-      Based on router recommendations and opportunity findings:
-      - [Analysis type]: [How this would complement opportunity insights]
-      - [Research method]: [What additional perspective this would provide]
-      - [Validation approach]: [How to confirm opportunity priorities]
-      
-      **Router Integration:**
-      {{recommendations}}
-      [How router recommendations enhance opportunity development]
-      
-      ## 🎯 **SUCCESS METRICS FOR OPPORTUNITIES**
-      
-      **Adoption Metrics:**
-      - [Usage metric]: [How to measure opportunity adoption by teams]
-      - [Implementation metric]: [How to measure progress on solutions]
-      
-      **Impact Metrics:**
-      - [User metric]: [How to measure user experience improvement]
-      - [Business metric]: [How to measure business value creation]
-      
-      **Key Limitations:** [Any significant limitations from router assessment or data gaps that affect opportunity confidence]
+# Processing workflow
+processing_workflow:
+  1. validate_slack_modal_inputs
+  2. discover_files_from_study_selection
+  3. calculate_initial_quality_assessment
+  4. validate_discovered_files
+  5. combine_selected_files_with_truncation
+  6. execute_file_discovery_summary
+  7. execute_problem_diversity_analysis
+  8. execute_problem_identification
+  9. execute_hmw_opportunity_generation
+  10. execute_design_signal_assessment
+  11. execute_workshop_guidance_generation
+  12. format_slack_output
+  13. format_github_output
+  14. save_to_analysis_folder
+  15. send_team_notifications
 
-# Auto-generated/computed variables (enhanced with AI analysis)
-auto_variables:
-  - num_opportunities: |
-      # AI determines optimal opportunity count from problem diversity analysis
-      extract_opportunity_count(ai_generated.problem_diversity_analysis) || 4
-  - design_focus: |
-      # AI identifies primary design challenge area from diversity analysis
-      extract_design_focus(ai_generated.problem_diversity_analysis) || "User Experience"
-  - innovation_level: |
-      # AI assesses innovation potential from problem analysis
-      extract_innovation_level(ai_generated.problem_diversity_analysis) || "Significant"
-  - session_count: |
-      # AI estimates session count from workshop guidance
-      extract_session_count(ai_generated.workshop_guidance_generation) || "multiple sessions"
-  - confidence_level: |
-      # AI determines overall analysis confidence from validation task
-      extract_confidence_level(ai_generated.opportunity_validation_and_follow_up) || "medium"
-  - priority_opportunities: |
-      # AI extracts high priority opportunities from validation analysis
-      extract_priority_opportunities(ai_generated.opportunity_validation_and_follow_up) || []
-  - current_date: |
-      # Auto-generate current date for file naming
-      new Date().toISOString().split('T')[0]
-  - github_file_link: |
-      # Auto-generate based on study name and date
-      generate_github_link(study_name, current_date) || null
-
-# Output configuration (enhanced)
+# Output configuration
 output_options:
   default_delivery: "slack_and_file"
-  slack_format: "structured"
+  slack_format: "opportunities_focused"
+  file_format: "github_markdown"
   path: "04-analysis/design-opportunities/"
   filename: "{{study_folder}}_design_opportunities_{{current_date}}.md"
 
-slack_output:
-  post_in_channel: true
-  create_thread: true
-  title_format: "🎨 Design Opportunities"
-  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
-  interactive_elements:
-    - text: "💡 Create Insight Cards"
-      action: "run_insight_card"
-    - text: "🧠 Run Affinity Mapping"
-      action: "run_affinity_mapping"
-    - text: "🧭 Map User Journey"
-      action: "run_journey_mapping"
-    - text: "🗂️ View in GitHub"
-      url: "{{github_file_link}}"
-    - text: "📊 Router Intelligence Log"
-      url: "{{router_log_link}}"
+# Slack output template
+slack_output_template: |
+  💡 **Design Opportunities Generation Complete**
 
-output_use: |
-  Router-Enhanced Design Opportunity Generator leverages intelligent preprocessing to optimize design challenge identification and development.
-  Receives AI-validated file selections, quality assessments, and smart recommendations from the synthesize_router
-  to ensure optimal opportunity creation. By incorporating router intelligence, researchers can confidently develop
-  actionable design opportunities with full visibility into data quality, limitations, and optimization opportunities.
-
-  Use this method to:
-    - Benefit from intelligent file selection validation and optimization for design challenges
-    - Understand data quality impact on opportunity confidence and validation needs
-    - Generate HMW questions that inspire breakthrough thinking beyond incremental fixes
-    - Leverage router recommendations for comprehensive design strategy development
-    - Bridge research insights with design exploration through workshop-ready opportunities
-
-output_notes: |
-  This method generates {{num_opportunities}} design opportunities based on AI analysis of problem diversity and data quality.
-  Design focus ({{design_focus}}) and innovation level ({{innovation_level}}) identified from research themes.
-  Opportunity confidence level: {{confidence_level}} based on router file selection assessment.
-  Session count ({{session_count}}) estimated from workshop complexity analysis.
-  Router recommendations integrated for context-aware opportunity development approach.
-
-# Enhanced output template using AI-generated content
-output_template: |
-  Hi team! 👋 I identified some exciting design opportunities from our AI-enhanced research analysis. Found {{num_opportunities}} key problem areas that could lead to really innovative solutions for users.
-
-  {{team_members}} - these HMW questions are perfect for design workshops or ideation sessions. Would love your thoughts on which opportunities feel most promising to tackle first.
-
-  📂 *Study:* {{study_name}}  
-  🔗 *Full details:* {{study_link}}
-  📊 *Router Analysis:* [View preprocessing intelligence]({{router_log_link}})
+  **Study:** {{selected_study}}
+  **Analysis:** {{num_opportunities}} design opportunities identified with {{innovation_level}} innovation potential
 
   ---
 
-  ## 📊 *PROBLEM DIVERSITY & QUALITY ANALYSIS*
-
-  {{ai_generated.problem_diversity_analysis}}
-
-  **Router Quality Assessment:**
-  {{file_selection_quality}}
-
-  **Files Analyzed:**
-  {{selected_files_summary}}
-
-  ---
-
-  ## 🔍 *IDENTIFIED PROBLEMS*
+  ## **Problems Identified**
 
   {{ai_generated.problem_identification}}
 
   ---
 
-  ## 💡 *DESIGN OPPORTUNITIES & HMW QUESTIONS*
+  ## **How Might We Opportunities**
 
   {{ai_generated.hmw_opportunity_generation}}
 
   ---
 
-  ## 📊 *DESIGN SIGNALS & EVIDENCE*
+  ## **Design Signals & Evidence**
 
   {{ai_generated.design_signal_assessment}}
 
   ---
 
-  ## 🛠️ *WORKSHOP GUIDANCE & NEXT STEPS*
+  ## **Workshop Guidance**
 
   {{ai_generated.workshop_guidance_generation}}
 
   ---
 
-  ## ✅ *OPPORTUNITY VALIDATION & STRATEGY*
-
-  {{ai_generated.opportunity_validation_and_follow_up}}
-
-  **Router Recommendations Integration:**
-  {{recommendations}}
-
-  ---
-
-  *Ready for ideation?* Reply in thread with your thoughts:
+  **Ready for ideation?** Reply in thread:
   • Which opportunities feel most exciting to explore first?
   • Any HMW questions that spark immediate ideas?
   • Should we follow the recommended workshop structure?
-  • Where do you see the biggest potential for breakthrough solutions?
 
+  📋 [View detailed workshop guide and priorities]({{github_file_link}})
+
+# GitHub markdown file template
+github_file_template: |
+  # 💡 Design Opportunities Report
+  
   ---
   
-  *🤖 AI-Enhanced Design Opportunity Analysis Complete*  
-  *Preprocessing: {{preprocessing_timestamp}} | Router: {{router_version}} | Analysis ID: {{analysis_id}}*
+  ## 📋 **Study Overview**
+  
+  **Study:** {{selected_study}}  
+  **Analysis Date:** {{current_date}}  
+  **Researcher:** {{researcher_contact}}  
+  **Focus Area:** {{focus_area}}  
+  **Analysis Version:** {{analysis_version}}
+  
+  ---
+  
+  ## 📊 **Data Quality Assessment**
+  
+  {{ai_generated.file_discovery_summary}}
+  
+  ---
+  
+  ## 🔍 **Problem Diversity Analysis**
+  
+  {{ai_generated.problem_diversity_analysis}}
+  
+  **Methodology:** Systematic identification of user problems from research data, transformation into "How Might We" questions, and development of workshop-ready design opportunities that inspire creative solutions.
+  
+  ---
+  
+  ## 🔍 **Problems Identified**
+  
+  {{ai_generated.problem_identification}}
+  
+  ---
+  
+  ## 💡 **How Might We Opportunities**
+  
+  {{ai_generated.hmw_opportunity_generation}}
+  
+  ---
+  
+  ## 📊 **Design Signals & Evidence**
+  
+  {{ai_generated.design_signal_assessment}}
+  
+  ---
+  
+  ## 🛠️ **Workshop Guidance & Next Steps**
+  
+  {{ai_generated.workshop_guidance_generation}}
+  
+  ---
+  
+  ## 📚 **Methodology Notes**
+  
+  **Analysis Approach:** Design opportunities were generated by systematically identifying user problems from research data, transforming them into "How Might We" questions that invite creative solutions, and developing workshop guidance for effective ideation sessions. Each opportunity is grounded in evidence and designed to inspire breakthrough thinking.
+  
+  **Quality Controls:**
+  - ✅ Evidence validation performed for each opportunity
+  - ✅ HMW questions designed to inspire breakthrough thinking
+  - ✅ Workshop guidance tailored to opportunity complexity
+  
+  **Usage Guidelines:**
+  - Use HMW questions to frame design workshops and ideation sessions
+  - Follow priority rankings when planning design sprints
+  - Validate opportunities through user feedback and testing
+  - Measure success using recommended metrics
+  
+  ---
+  
+  ## 📞 **Contact & Follow-up**
+  
+  **Lead Researcher:** {{researcher_contact}}  
+  **Study Channel:** {{study_channel}}  
+  **Questions?** Reply in the study channel or contact the research team directly.
+  
+  **Related Analyses:** Consider running complementary synthesis methods:
+  - 🧠 Affinity Mapping - to identify broader themes
+  - 🧭 Journey Mapping - to understand process flow
+  - 👤 Persona Generation - to create user archetypes
+  - 🎯 Jobs to be Done - to identify functional needs
+  - 🐛 Usability Issues - to prioritize interface problems
+  
+  ---
+  
+  *Generated by Qori Research Synthesis • {{current_date}} • Version {{analysis_version}}*
 
-# Processing workflow
-processing_workflow:
-  1. validate_router_inputs
-  2. confirm_data_quality_context
-  3. execute_problem_diversity_analysis
-  4. execute_problem_identification
-  5. execute_hmw_opportunity_generation
-  6. execute_design_signal_assessment
-  7. execute_workshop_guidance_generation
-  8. execute_opportunity_validation_and_follow_up
-  9. format_comprehensive_output
-  10. save_to_analysis_folder
-  11. send_team_notifications
-  12. track_analysis_completion
+# Auto-generated variables
+auto_variables:
+  - num_opportunities: extract_opportunity_count(ai_generated.problem_diversity_analysis) || 4
+  - design_focus: extract_design_focus(ai_generated.problem_diversity_analysis) || "User Experience"
+  - innovation_level: extract_innovation_level(ai_generated.problem_diversity_analysis) || "Significant"
+  - current_date: new Date().toISOString().split('T')[0]
+  - analysis_version: generate_version_number() || "v1.0"
+  - github_file_link: generate_github_link(study_name, current_date)
 
 notify:
-  - role: design_team
-    action: "Router-enhanced design opportunities generated"
+  - role: team
+    action: "Design opportunities generation completed"
     channel: "{{study_channel}}"
-    message: "{{researcher_contact}} just identified {{num_opportunities}} design opportunities for {{study_name}} with {{confidence_level}} confidence. Perfect for workshops!"
-  - role: researcher
-    action: "Analysis saved"
-    slack_tag: "{{researcher_contact}}"
-    message: "Your router-enhanced design opportunity results have been posted to {{study_channel}} and saved to GitHub. Analysis confidence: {{confidence_level}} based on file quality assessment."
+    message: "{{researcher_contact}} identified {{num_opportunities}} design opportunities for {{selected_study}} with {{innovation_level}} innovation potential. Perfect for workshops!"
+
+output_use: |
+  Slack-Native Design Opportunities Generator automatically discovers research files from selected study folders,
+  systematically identifies user problems, transforms them into "How Might We" questions that inspire creative 
+  solutions, and develops workshop-ready guidance for design teams. Outputs concise Slack summaries focused on 
+  opportunities and HMW questions, plus detailed GitHub markdown reports for workshop facilitation.
+
+  Use this method to:
+    - Transform user problems into creative design challenges
+    - Generate "How Might We" questions that inspire breakthrough thinking
+    - Develop workshop-ready opportunities with evidence and guidance
+    - Bridge research insights with design exploration and ideation
+    - Create actionable opportunities for design teams and innovation sessions
