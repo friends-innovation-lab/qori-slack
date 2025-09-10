@@ -2,21 +2,19 @@ id: affinity_mapping
 name: run_affinity_mapping
 
 label: 🧠 Affinity Mapping
-version: "v2.0"
+version: "v2.1"
 
 description: >
   Group qualitative quotes, notes, or observations into clearly labeled themes using AI.
-  Users select their research files directly for analysis. This method replaces manual 
-  affinity mapping tools (like Miro) with a faster, scalable, and shareable format.
-  Designed to support synthesis across large datasets with clean Slack/GitHub export.
+  Automatically discovers and analyzes research files from selected study folder with 
+  optional quality improvements. Uses inductive clustering methodology with Senior UX Strategy perspective.
 
 author: Qori R&D  
 created: 2025-06-27  
-last_updated: 2025-09-02
+last_updated: 2025-09-10
 
-input_type: file_selection
-input_processing: combine_selected_files
-precision_mode: concise | detailed
+input_type: slack_modal_form
+input_processing: auto_file_discovery
 
 # LLM Configuration
 llm_config:
@@ -24,1066 +22,421 @@ llm_config:
   temperature: 0.4
   max_tokens: 4000
 
-# System limits and error handling
+# System limits
 system_limits:
-  max_total_tokens: 50000           # Combined file content limit
-  min_content_threshold: 1000       # Minimum characters for viable analysis
-  max_file_size: 100000            # Per-file character limit
+  max_total_tokens: 50000
+  min_content_threshold: 1000
+  max_file_size: 100000
   supported_formats: [".md", ".txt", ".csv", ".json"]
   max_files_per_analysis: 20
 
-# Privacy and security controls
+# Privacy controls
 privacy_controls:
-  enable_pii_detection: true        # Automatically detect and mask PII
+  enable_pii_detection: true
   pii_detection_patterns:
     email: '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
     phone: '\b\d{3}[-.]?\d{3}[-.]?\d{4}\b'
     ssn: '\b\d{3}-\d{2}-\d{4}\b'
-    address: '\b\d+\s+[A-Za-z\s]+\s+(Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Boulevard|Blvd)\b'
-    names_common: ['First Name', 'Last Name', 'Full Name']  # Field indicators
-  
   masking_strategy:
     email: "[EMAIL_REDACTED]"
     phone: "[PHONE_REDACTED]" 
     ssn: "[SSN_REDACTED]"
-    address: "[ADDRESS_REDACTED]"
-    names: "[NAME_REDACTED]"
-  
-  pii_audit_log: true              # Log all PII detections for compliance
 
-# Data lineage and source tracking
-data_lineage:
-  enable_quote_attribution: true   # Track which file each quote came from
-  enable_source_verification: true # Validate quotes against original sources
-  citation_format: "detailed"      # Include file path, line numbers, timestamps
-  
-  attribution_metadata:
-    track_file_source: true         # Which file the quote originated from
-    track_participant_id: true      # Which participant said it
-    track_session_context: true     # Session details when quote occurred
-    track_timestamp: true           # When quote was recorded
-    track_researcher_notes: true    # Any researcher context around quote
-  
-  verification_rules:
-    exact_quote_match: true         # Verify quotes appear exactly in source
-    context_window: 100             # Characters before/after to include
-    flag_paraphrased: true          # Flag if quote seems paraphrased
-    require_source_citation: true   # All quotes must link to source
-
-# Performance monitoring and analytics
-performance_monitoring:
-  enable_execution_tracking: true  # Track analysis performance
-  enable_resource_monitoring: true # Monitor memory and processing usage
-  enable_quality_metrics: true     # Track analysis quality over time
-  
-  metrics_to_track:
-    processing_time:
-      total_analysis_time: true    # End-to-end processing duration
-      task_breakdown: true         # Time per AI generation task
-      file_processing_time: true   # Time to combine and validate files
-      
-    resource_usage:
-      token_consumption: true      # Total tokens used
-      memory_usage: true           # Peak memory consumption
-      api_calls_count: true        # Number of LLM API calls
-      
-    quality_indicators:
-      theme_coherence_score: true  # How well themes cluster
-      quote_relevance_score: true  # How well quotes support themes
-      bias_detection_accuracy: true # Effectiveness of bias detection
-      reliability_validation: true # Inter-rater agreement when available
-      
-  benchmarking:
-    compare_to_baseline: true      # Compare performance to standard benchmarks
-    track_improvement: true        # Monitor quality improvements over time
-    alert_performance_issues: true # Flag unusually slow or poor analyses
-    
-  reporting:
-    generate_performance_report: true # Include performance data in output
-    save_metrics_to_dashboard: true  # Update system-wide performance dashboard
-    notify_on_anomalies: true        # Alert administrators to issues
-
-# File selection and data requirements
-data_requirements:
-  required_data: ["session_summaries"]
-  optimal_data: ["transcripts", "research_plan", "raw_notes", "participant_tracker"]
-  
-  file_categories:
-    session_summaries:
-      description: "Summary notes from user research sessions"
-      file_patterns: ["*session_summary*", "*summary*", "*session*"]
-      priority: "required"
-      
-    transcripts:
-      description: "Full interview or session transcripts"
-      file_patterns: ["*transcript*", "*interview*", "*recording*"]
-      priority: "optimal"
-      
-    research_plan:
-      description: "Study objectives and methodology context"
-      file_patterns: ["*research_plan*", "*study_plan*", "*methodology*"]
-      priority: "optimal"
-      
-    raw_notes:
-      description: "Raw field notes and observations"
-      file_patterns: ["*notes*", "*observations*", "*fieldwork*"]
-      priority: "optimal"
-      
-    participant_tracker:
-      description: "Participant demographics and context"
-      file_patterns: ["*participant*", "*demographics*", "*tracker*"]
-      priority: "optimal"
-
+# Slack modal input variables
 input_variables:
-  # Core analysis data
-  - selected_files           # Array of file IDs selected by user (REQUIRED)
-  - combined_file_content     # Auto-combined content from selected files (GENERATED)
-  - focus_area               # Analysis focus area (REQUIRED)
+  - selected_study              # Study name from dropdown (REQUIRED)
+  - include_research_plan       # Boolean from checkbox (OPTIONAL)
+  - include_participant_notes   # Boolean from checkbox (OPTIONAL)  
+  - include_raw_transcripts     # Boolean from checkbox (OPTIONAL)
   
-  # Study context
-  - study_name               # Title of study (REQUIRED)
-  - study_folder             # Study folder path (REQUIRED)
-  - researcher_contact       # Lead researcher (REQUIRED)
-  - study_channel            # Where to post results (REQUIRED)
-  - study_link               # Link to study folder or documentation (OPTIONAL)
-  - team_members             # Who to notify/tag (OPTIONAL)
-  
-  # Analysis preferences
-  - max_themes               # Maximum number of themes to generate (OPTIONAL, default: auto-determine)
-  - analysis_depth           # detailed | concise (OPTIONAL, default: detailed)
-  
-  # Research quality controls (NEW)
-  - enable_bias_detection    # Run bias analysis on data (OPTIONAL, default: true)
-  - require_validation       # Require stakeholder validation step (OPTIONAL, default: false)
-  - enable_version_tracking  # Track analysis iterations (OPTIONAL, default: true)
-  - quantitative_data        # Related survey/analytics data for triangulation (OPTIONAL)
-  - previous_analysis_id     # Link to compare with previous runs (OPTIONAL)
+  # Auto-generated during processing
+  - discovered_files            # Files found by auto-discovery (GENERATED)
+  - combined_file_content       # Auto-combined content (GENERATED)
+  - quality_assessment          # Initial quality score (GENERATED)
 
-# File processing and validation
-file_processing:
-  validation_rules:
-    - ensure_required_files_present
-    - validate_file_accessibility
-    - validate_file_formats
-    - check_minimum_content_threshold
-    - check_maximum_file_sizes
-    - verify_total_token_limit
-    - warn_if_optimal_files_missing
+# Study metadata mapping
+study_metadata:
+  "VA Housing Application Usability Study":
+    folder: "va-housing-usability-2025"
+    researcher: "jordan.researcher"
+    channel: "#research-housing-app"
+    focus_area: "housing application usability"
     
-  error_handling:
-    file_too_large: "File exceeds {{max_file_size}} characters. Consider splitting into smaller sections or summarizing key content."
-    unsupported_format: "File format not supported. Please use: {{supported_formats}}"
-    insufficient_content: "Selected files contain less than {{min_content_threshold}} characters. Add more detailed files for reliable analysis."
-    token_limit_exceeded: "Combined files exceed {{max_total_tokens}} token limit. Remove some files or use shorter excerpts."
+  "Benefits Portal Navigation Research":
+    folder: "benefits-portal-nav-2025"
+    researcher: "alex.ux"
+    channel: "#research-benefits"
+    focus_area: "benefits portal navigation"
     
-  auto_truncation:
-    enabled: true
-    strategy: "preserve_participant_quotes"  # Keep quotes intact, truncate context
-    priority_order: ["transcripts", "session_summaries", "raw_notes", "research_context"]
-    
-  combination_strategy:
+  "Veteran Onboarding Experience Study":
+    folder: "veteran-onboarding-2025"
+    researcher: "casey.research"
+    channel: "#research-onboarding"
+    focus_area: "veteran onboarding experience"
+
+# File discovery system
+auto_file_discovery:
+  core_files:
     session_summaries:
-      header: "=== SESSION SUMMARIES ==="
-      format: "**Session {{session_number}} - {{participant_details}}**\n{{content}}\n\n"
+      file_patterns: ["*session_summary*", "*summary*", "*session*"]
+      search_paths: ["01-sessions/", "sessions/", "summaries/"]
+      priority: "required"
+      confidence_weight: 50
       
     transcripts:
-      header: "=== INTERVIEW TRANSCRIPTS ==="
-      format: "**Transcript {{participant_number}}**\n{{content}}\n\n"
+      file_patterns: ["*transcript*", "*interview*", "*recording*"]
+      search_paths: ["01-sessions/", "transcripts/", "interviews/"]
+      priority: "high"
+      confidence_weight: 30
+  
+  enhancement_files:
+    research_plan:
+      enabled_when: "{{include_research_plan}} == true"
+      file_patterns: ["*research_plan*", "*study_plan*", "*methodology*"]
+      search_paths: ["00-planning/", "planning/", "research/"]
+      confidence_boost: 8
       
-    raw_notes:
-      header: "=== RAW FIELD NOTES ==="
-      format: "**{{note_date}} - {{note_title}}**\n{{content}}\n\n"
+    participant_notes:
+      enabled_when: "{{include_participant_notes}} == true"
+      file_patterns: ["*participant*", "*notes*", "*observations*"]
+      search_paths: ["02-participants/", "participants/", "notes/"]
+      confidence_boost: 5
       
-    participant_data:
-      header: "=== PARTICIPANT CONTEXT ==="
-      format: "{{content}}\n\n"
-      
-    research_context:
-      header: "=== RESEARCH CONTEXT ==="
-      format: "{{content}}\n\n"
+    raw_transcripts:
+      enabled_when: "{{include_raw_transcripts}} == true"
+      file_patterns: ["*raw*", "*unprocessed*", "*recording*"]
+      search_paths: ["01-sessions/raw/", "raw/", "recordings/"]
+      confidence_boost: 3
 
-# AI GENERATION TASKS
+# AI generation tasks
 ai_generation_tasks:
-  # Privacy and compliance - PII Detection and Scrubbing
-  - task_id: "pii_detection_analysis"
-    enabled_when: "{{privacy_controls.enable_pii_detection}} == true"
+  # File discovery and quality assessment
+  - task_id: "file_discovery_summary"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Be thorough in identifying potential PII
+      As a research operations specialist, analyze the discovered files and quality:
       
-      As a data privacy specialist, scan this research data for personally identifiable information:
+      **Selected Study:** {{selected_study}}
+      **Enhancement Options Selected:**
+      - Research plan: {{include_research_plan}}
+      - Participant notes: {{include_participant_notes}}
+      - Raw transcripts: {{include_raw_transcripts}}
       
-      **Research Data:**
-      {{combined_file_content}}
+      **Discovered Files:** {{discovered_files}}
+      **Total Content:** [Analyze character/word count of combined_file_content]
       
-      **Detection Patterns:**
-      - Email addresses: {{privacy_controls.pii_detection_patterns.email}}
-      - Phone numbers: {{privacy_controls.pii_detection_patterns.phone}}
-      - SSN patterns: {{privacy_controls.pii_detection_patterns.ssn}}
-      - Address patterns: {{privacy_controls.pii_detection_patterns.address}}
-      - Name indicators: {{privacy_controls.pii_detection_patterns.names_common}}
-      
-      Scan for and identify:
-      1. **Direct PII:** Email addresses, phone numbers, social security numbers, full names
-      2. **Indirect PII:** Specific locations, job titles with company names, unique identifiers
-      3. **Contextual PII:** Information that could identify individuals when combined
-      4. **Quasi-identifiers:** Demographics that could narrow identification
-      
-      **Format:**
-      **PII Detection Summary:** [High/Medium/Low risk]
-      
-      **Detected PII Items:**
-      - **Email addresses:** [Count and context examples] - Risk: [High/Medium/Low]
-      - **Phone numbers:** [Count and context examples] - Risk: [High/Medium/Low]
-      - **Names:** [Count and context examples] - Risk: [High/Medium/Low]
-      - **Addresses:** [Count and context examples] - Risk: [High/Medium/Low]
-      - **Other identifiers:** [Specific items found] - Risk: [High/Medium/Low]
-      
-      **Masking Recommendations:**
-      - [Specific PII type]: Replace with [recommended mask]
-      - [Specific PII type]: Replace with [recommended mask]
-      
-      **Compliance Assessment:** [Impact on data privacy compliance]
-      
-      **Masked Content Preview:** [Show examples of how data would look after masking]
+      Report on file coverage, content quality, enhancement impact, and analysis confidence.
 
-  # Data lineage and source attribution
-  - task_id: "data_lineage_tracking"
-    enabled_when: "{{data_lineage.enable_quote_attribution}} == true"
+  # Core affinity mapping process
+  - task_id: "affinity_clustering"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Provide precise source tracking information
+      As a Senior UX Strategist conducting affinity mapping, extract and cluster insights from this research data:
       
-      As a research data specialist, create detailed source attribution for all quotes and evidence:
-      
-      **Analysis Results with Quotes:**
-      {{ai_generated.quote_clustering}}
-      
-      **Selected Files with Metadata:**
-      {{selected_files_with_metadata}}
-      
-      For each quote used in the analysis, provide:
-      1. **Source Attribution:** Exact file, line number, timestamp if available
-      2. **Participant Context:** Which participant, session details, circumstances
-      3. **Quote Verification:** Confirm exact match or flag if paraphrased
-      4. **Context Window:** Surrounding content for full understanding
-      5. **Research Notes:** Any relevant researcher annotations
-      
-      **Format:**
-      **Data Lineage Report:**
-      
-      {{#each themes}}
-      **Theme: {{theme_name}}**
-      
-      **Quote Sources:**
-      {{#each quotes}}
-      > "{{quote_text}}"
-      - **Source File:** {{file_path}}:line {{line_number}}
-      - **Participant:** {{participant_id}} ({{participant_context}})
-      - **Session:** {{session_date}} {{session_time}}
-      - **Context:** {{surrounding_context}}
-      - **Researcher Notes:** {{researcher_annotations}}
-      - **Verification:** [Exact match / Paraphrased / Context-inferred]
-      - **Citation:** [Standardized citation format]
-      {{/each}}
-      {{/each}}
-      
-      **Source Distribution Analysis:**
-      - **Files represented:** [Count and coverage]
-      - **Participants represented:** [Count and distribution]
-      - **Quote quality assessment:** [Exact vs. paraphrased ratios]
-      - **Missing attributions:** [Any quotes without clear sources]
-      
-      **Verification Flags:**
-      - **Unverified quotes:** [Count and details]
-      - **Paraphrased content:** [Count and flagged items]
-      - **Missing context:** [Quotes needing more source context]
-
-  # Performance monitoring and system analytics
-  - task_id: "performance_analysis"
-    enabled_when: "{{performance_monitoring.enable_execution_tracking}} == true"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Provide specific performance metrics and benchmarks
-      
-      As a system performance analyst, evaluate this analysis execution against benchmarks:
-      
-      **Current Analysis Metrics:**
-      - Total processing time: {{execution_time}}
-      - Token consumption: {{total_tokens_used}}
-      - Memory usage: {{peak_memory_usage}}
-      - API calls made: {{api_calls_count}}
-      - Files processed: {{files_processed_count}}
-      - Content volume: {{total_content_characters}}
-      
-      **Quality Metrics:**
-      - Themes generated: {{themes_count}}
-      - Quotes attributed: {{quotes_count}}
-      - Evidence strength: {{evidence_quality_score}}
-      - Bias risk level: {{bias_risk_level}}
-      - Reliability score: {{reliability_score}}
-      
-      Analyze performance:
-      1. **Processing Efficiency:** How does execution time compare to expected benchmarks?
-      2. **Resource Optimization:** Is resource usage appropriate for content volume?
-      3. **Quality Consistency:** Are quality metrics within expected ranges?
-      4. **Scalability Assessment:** How would performance change with larger datasets?
-      5. **Bottleneck Identification:** What processes took longest or used most resources?
-      
-      **Format:**
-      **Performance Assessment:** [Excellent/Good/Acceptable/Poor]
-      
-      **Efficiency Metrics:**
-      - **Processing Speed:** {{processing_speed}} chars/second - [Above/At/Below baseline]
-      - **Token Efficiency:** {{tokens_per_theme}} tokens per theme - [Optimal/Standard/High]
-      - **Memory Efficiency:** {{memory_per_file}} MB per file - [Efficient/Standard/High]
-      
-      **Quality vs. Performance Trade-offs:**
-      - **Analysis Depth:** [Deep/Standard/Surface] for {{execution_time}} processing time
-      - **Accuracy/Speed Balance:** [Optimal/Acceptable/Needs adjustment]
-      
-      **Performance Benchmarking:**
-      - **Compared to similar analyses:** [Faster/Similar/Slower by X%]
-      - **Resource usage ranking:** [Efficient/Standard/Resource-intensive]
-      
-      **Optimization Recommendations:**
-      - **Speed improvements:** [Specific recommendations]
-      - **Resource optimization:** [Memory/token efficiency suggestions]
-      - **Quality maintenance:** [How to optimize without losing quality]
-      
-      **System Health Indicators:**
-      - **No performance anomalies detected** / **Alert: [specific issues]**
-      - **Scalability projection:** [Expected performance with 2x/5x/10x data volume]
-  # Research Quality Control - Bias Detection
-  - task_id: "bias_detection_analysis"
-    enabled_when: "{{enable_bias_detection}} == true"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Be objective and specific about potential biases
-      
-      As an experienced qualitative research methodologist, analyze this research data for potential biases:
-      
-      **Research Data:**
-      {{combined_file_content}}
-      
-      **Study Context:** {{study_name}}
-      **Researcher:** {{researcher_contact}}
-      
-      Examine for common research biases:
-      1. **Confirmation Bias:** Are questions or probes leading participants toward expected answers?
-      2. **Selection Bias:** Does participant recruitment or retention show systematic patterns?
-      3. **Researcher Bias:** Do notes/summaries reflect researcher assumptions or interpretations?
-      4. **Response Bias:** Are participants giving socially desirable answers?
-      5. **Framing Effects:** How questions are asked influencing responses?
-      6. **Sampling Bias:** Are certain user types over/under-represented?
-      
-      **Format:**
-      **Bias Risk Assessment:** [Low/Medium/High]
-      
-      **Detected Bias Indicators:**
-      - [Specific bias type]: [Evidence and impact] - Risk: [Low/Medium/High]
-      - [Specific bias type]: [Evidence and impact] - Risk: [Low/Medium/High]
-      
-      **Mitigation Recommendations:**
-      - [Specific action to address bias]
-      - [Specific action to address bias]
-      
-      **Data Reliability Impact:** [How identified biases might affect theme reliability]
-      
-      **Validation Needs:** [What additional validation would address bias concerns]
-
-  # Analyze data scope and determine optimal analysis approach
-  - task_id: "data_scope_analysis"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      
-      As an experienced qualitative researcher, analyze the scope and complexity of this research data:
-      
-      **Study:** {{study_name}}
+      **Research Data:** {{combined_file_content}}
+      **Study Context:** {{selected_study}}
       **Focus Area:** {{focus_area}}
-      **Selected Files:** {{selected_files}}
-      **Input Data Length:** [Analyze character/word count of combined_file_content]
+      **Business Context:** This analysis will inform product decisions and strategic priorities
       
-      Analyze:
-      1. **Data Volume Assessment:** How much data are we working with?
-      2. **Content Complexity:** What types of observations, quotes, and insights are present?
-      3. **File Coverage:** How well do selected files support affinity mapping?
-      4. **Optimal Theme Count:** Based on data volume and complexity, how many themes will best represent the data?
-      5. **Analysis Confidence:** What confidence level is appropriate for this data set?
-      6. **Missing Context:** What additional files would improve analysis quality?
+      **Affinity Mapping Process:**
       
-      **Format:**
-      **Data Volume:** [High/Medium/Low] - [specific details about data amount]
-      **Content Types:** [List types of content: quotes, observations, task data, etc.]
-      **File Coverage:** [Excellent/Good/Adequate/Insufficient] - [which file types are present/missing]
-      **Recommended Theme Count:** [2-7 themes] - [reasoning]
-      **Analysis Confidence:** [High/Medium/Low] - [reasoning based on data quality]
-      **Missing Files Impact:** [How absence of optimal files affects analysis quality]
+      **Step 1: Extract Individual Insights**
+      Read through all data and extract discrete observations, quotes, behaviors, and pain points. Focus on:
+      - Direct user quotes that reveal needs, frustrations, or motivations
+      - Observed behaviors and interaction patterns
+      - Emotional reactions and sentiment
+      - Functional needs and task breakdowns
+      - System/process gaps and opportunities
+      
+      **Step 2: Look for Natural Groupings**
+      Group related insights based on:
+      - Similar user needs or goals
+      - Common emotional experiences
+      - Related functional problems
+      - Shared behavioral patterns
+      - Connected system touchpoints
+      
+      **Step 3: Identify Strategic Patterns**
+      Focus on patterns that reveal:
+      - Unmet user needs with business impact
+      - Emotional barriers to adoption or success
+      - Process inefficiencies affecting multiple users
+      - Opportunities for competitive advantage
+      - Systemic issues requiring strategic response
+      
+      **Output Format:**
+      
+      **EXTRACTED INSIGHTS** (30-50 individual items)
+      
+      **User Quotes & Direct Feedback:**
+      • "Quote about specific need or frustration" - P1 (context)
+      • "Quote about emotional reaction or concern" - P3 (context)
+      • "Quote about desired outcome or expectation" - P2 (context)
+      
+      **Observed Behaviors:**
+      • Specific behavior pattern observed - Context/frequency
+      • User interaction or workaround - Context/impact
+      
+      **Pain Points & Friction:**
+      • Specific friction point - Where it occurs/impact
+      • System limitation or gap - User effect
+      
+      **Needs & Motivations:**
+      • Underlying need expressed - How it manifests
+      • Goal or desired outcome - Current barriers
+      
+      ---
+      
+      **NATURAL CLUSTERS**
+      
+      **Cluster A: [Descriptive Label]**
+      ▸ "Direct quote supporting this cluster" - P1
+      ▸ "Related quote showing same pattern" - P3
+      ▸ Observed behavior: [Specific behavior] - Multiple participants
+      ▸ "Another supporting quote" - P2
+      ▸ System gap: [Specific gap] - Affects workflow
+      
+      **Cluster Connection:** [What unites these insights - the underlying user need, emotional experience, or systemic issue]
+      **Strategic Implication:** [Why this matters for product/business decisions]
+      
+      **Cluster B: [Descriptive Label]**
+      [Continue same format...]
+      
+      ---
+      
+      **AFFINITY MAPPING SUMMARY**
+      
+      **Clustering Approach:** [How clusters naturally emerged - inductive process description]
+      **Pattern Strength:** [How consistently patterns appeared across participants]
+      **Strategic Focus Areas:** [Which clusters represent highest-impact opportunities]
+      **Cross-Cluster Connections:** [How different clusters relate or reinforce each other]
 
-  # Inter-rater reliability check
-  - task_id: "reliability_assessment"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Focus on objective reliability measures
-      
-      As a qualitative research methodology expert, assess the reliability of these identified themes:
-      
-      **Themes Identified:**
-      {{ai_generated.theme_identification}}
-      
-      **Supporting Evidence:**
-      {{ai_generated.quote_clustering}}
-      
-      Evaluate reliability factors:
-      1. **Theme Distinctiveness:** How clearly separable are themes from each other?
-      2. **Evidence Quality:** How well do quotes support each theme?
-      3. **Inter-coder Agreement Likelihood:** Would another analyst likely identify similar themes?
-      4. **Theme Stability:** How robust are themes to slight data variations?
-      5. **Boundary Clarity:** Are theme boundaries well-defined?
-      
-      **Format:**
-      **Overall Reliability Score:** [High/Medium/Low] - [Brief reasoning]
-      
-      **Theme Reliability Assessment:**
-      {{#each themes}}
-      - **{{theme_name}}:** [High/Medium/Low reliability] - [Specific reliability factors]
-      {{/each}}
-      
-      **Reliability Concerns:**
-      - [Specific concern]: [How this affects reliability]
-      - [Specific concern]: [How this affects reliability]
-      
-      **Validation Recommendations:**
-      - [Specific method to validate themes]: [Expected outcome]
-      - [Specific method to validate themes]: [Expected outcome]
-      
-      **Inter-rater Strategy:** [Recommended approach for independent validation]
-
-  # Quantitative data triangulation (if provided)
-  - task_id: "quantitative_triangulation"
-    enabled_when: "{{quantitative_data}} != null"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Focus on specific correlations and contradictions
-      
-      As a mixed-methods research analyst, triangulate qualitative themes with quantitative data:
-      
-      **Qualitative Themes:**
-      {{ai_generated.insight_generation}}
-      
-      **Quantitative Data:**
-      {{quantitative_data}}
-      
-      Compare and analyze:
-      1. **Convergence:** Where do qualitative themes align with quantitative patterns?
-      2. **Divergence:** Where do findings contradict each other?
-      3. **Explanation:** How do qualitative insights explain quantitative patterns?
-      4. **Gaps:** What gaps exist between the two data types?
-      
-      **Format:**
-      **Triangulation Summary:** [Strong/Moderate/Weak convergence]
-      
-      **Convergent Findings:**
-      - **Theme:** [Theme name] **aligns with** [Specific quantitative finding]
-      - **Theme:** [Theme name] **explains** [Quantitative pattern]
-      
-      **Divergent Findings:**
-      - **Theme:** [Theme name] **contradicts** [Quantitative finding] - [Possible explanations]
-      
-      **Enhanced Insights:**
-      - [How quantitative data strengthens qualitative theme]
-      - [How qualitative themes explain quantitative anomalies]
-      
-      **Research Implications:** [How triangulation affects confidence in findings]
-
-  # Stakeholder validation preparation
-  - task_id: "validation_preparation"
-    enabled_when: "{{require_validation}} == true"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Create actionable validation plans
-      
-      As a user research operations specialist, prepare stakeholder validation for these themes:
-      
-      **Themes for Validation:**
-      {{ai_generated.insight_generation}}
-      
-      **Study Context:** {{study_name}}
-      **Stakeholders:** {{team_members}}
-      
-      Create validation approach:
-      1. **Participant Validation:** How to get themes validated by original participants
-      2. **Expert Review:** Subject matter expert validation strategy  
-      3. **Stakeholder Workshops:** Team validation session planning
-      4. **Validation Criteria:** How to measure validation success
-      
-      **Format:**
-      **Validation Strategy:**
-      
-      **Participant Validation Plan:**
-      - **Method:** [Email survey / Follow-up interviews / Focus groups]
-      - **Key Questions:** [Specific validation questions for each theme]
-      - **Timeline:** [When to conduct validation]
-      - **Success Criteria:** [How to measure participant agreement]
-      
-      **Expert Review Plan:**
-      - **Expert Types Needed:** [Domain experts / UX experts / Subject matter experts]
-      - **Review Materials:** [What to share with experts]
-      - **Review Questions:** [Specific expert validation questions]
-      
-      **Stakeholder Workshop Plan:**
-      - **Workshop Format:** [Duration and structure]
-      - **Validation Activities:** [Specific exercises to validate themes]
-      - **Decision Framework:** [How to resolve disagreements]
-      
-      **Validation Timeline:** [Complete schedule for validation activities]
+  # Convert clusters to strategic themes
   - task_id: "theme_identification"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Focus on specific user tensions and needs, not generic categories
+      As a Senior UX Strategist, convert affinity clusters into strategic theme labels:
       
-      As an experienced qualitative researcher, identify potential themes and patterns in this research data:
+      **Affinity Clusters:** {{ai_generated.affinity_clustering}}
+      **Study Context:** {{selected_study}}
+      **Focus Area:** {{focus_area}}
+      **Strategic Objective:** Transform clusters into actionable themes that inform product decisions
       
-      **Input Data:**
-      {{combined_file_content}}
+      For each cluster, create a theme that:
+      1. Captures the core user tension or need (not just problems)
+      2. Suggests strategic direction or opportunity
+      3. Connects to business outcomes and user value
+      4. Uses language that stakeholders can act upon
       
-      **Context:**
-      - Study: {{study_name}}
-      - Focus: {{focus_area}}
-      - Recommended theme count: [Extract from data_scope_analysis]
-      - Data coverage assessment: [Extract from data_scope_analysis]
-      
-      Instructions:
-      1. Read through all the data and identify recurring patterns, tensions, and user needs
-      2. Look for quotes and observations that naturally cluster together
-      3. Identify themes that express specific user tensions (not generic categories)
-      4. Ensure themes are distinct and well-supported by evidence
-      5. Focus on actionable insights that teams can use for decision-making
-      
-      **Format each potential theme as:**
-      **Theme [X]: "[Specific user tension or need in quotes]"**
-      - **Evidence Pattern:** [What type of evidence supports this theme]
-      - **User Impact:** [How this affects users' experience]
-      - **Supporting Quote Examples:** [2-3 brief quote snippets]
-      - **Distinctiveness:** [How this differs from other themes]
-      
-      Generate themes that capture real user tensions like:
-      - "I don't know who to trust"
-      - "This process feels endless"
-      - "I'm worried I'll make a mistake"
-      
-      NOT generic categories like "communication issues" or "user experience problems"
+      **Format each theme as:**
+      **Theme [X]: "[Specific user tension or strategic need]"**
+      - **Strategic Insight:** [What this reveals about user strategy or business opportunity]
+      - **User Impact:** [How this affects users' success and satisfaction]
+      - **Business Implication:** [Why this matters for product/business decisions]
+      - **Evidence Strength:** [How strongly this pattern appears in the data]
 
-  # Cluster quotes and evidence by identified themes
+  # Map themes back to evidence
   - task_id: "quote_clustering"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Include complete, meaningful quotes that demonstrate the theme
+      As a Senior UX Strategist, map themes back to their strongest supporting evidence:
       
-      As an experienced qualitative researcher, cluster quotes and observations by the identified themes:
+      **Identified Themes:** {{ai_generated.theme_identification}}
+      **Original Affinity Clusters:** {{ai_generated.affinity_clustering}}
       
-      **Identified Themes:**
-      {{ai_generated.theme_identification}}
+      For each theme, select the strongest supporting evidence from the original clusters:
       
-      **Full Input Data:**
-      {{combined_file_content}}
-      
-      For each theme, find the best supporting quotes and evidence:
-      
-      1. **Select 3-5 strong quotes** that clearly demonstrate the theme
-      2. **Include participant context** when available (P1, P3, etc.)
-      3. **Ensure quote diversity** - different participants, different contexts
-      4. **Maintain quote integrity** - use complete thoughts, not fragments
-      5. **Show thematic coherence** - explain why these quotes cluster together
-      
-      **Format for each theme:**
-      **Theme: "[Theme label from identification]"**
-      
-      **Supporting Quotes:**
-      > "[Complete quote 1]" - [Participant context if available]
-      > "[Complete quote 2]" - [Participant context if available]  
-      > "[Complete quote 3]" - [Participant context if available]
-      > "[Complete quote 4]" - [Participant context if available]
-      
-      **Clustering Rationale:** [2-3 sentences explaining why these quotes naturally group together and what shared meaning or tension they represent]
-      
-      **Additional Evidence:** [Any non-quote observations, behaviors, or patterns that support this theme]
+      1. **Choose 4-6 most compelling pieces of evidence** per theme
+      2. **Prioritize direct user quotes** over researcher observations
+      3. **Include participant context** when available (P1, P3, etc.)
+      4. **Show evidence diversity** - different participants, different contexts
+      5. **Maintain quote integrity** - use complete thoughts, not fragments
+      6. **Demonstrate theme coherence** - show how evidence naturally supports the theme
 
-  # Develop insights and emotional dimensions for each theme
+  # Generate strategic insights
   - task_id: "insight_generation"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Make insights specific and actionable, not generic observations
+      As a Senior UX Strategist, develop strategic insights and emotional dimensions for each theme:
       
-      As an experienced qualitative researcher, develop insights and emotional dimensions for each theme:
-      
-      **Themes with Evidence:**
-      {{ai_generated.quote_clustering}}
-      
-      **Study Context:** {{study_name}}
+      **Themes with Evidence:** {{ai_generated.quote_clustering}}
+      **Study Context:** {{selected_study}}
       **Focus Area:** {{focus_area}}
       
       For each theme, generate:
-      
-      1. **Key Insight:** One concise, declarative statement revealing user behavior, belief, or tension
-      2. **Emotional Dimension:** Specific emotions users experience (frustration, anxiety, confidence, confusion, etc.)
-      3. **Signal Strength:** How strong/frequent this pattern is in the data
-      4. **User Impact:** How this theme affects users' ability to accomplish their goals
-      
-      **Format for each theme:**
-      **Theme: "[Theme label]"**
-      
-      🔍 **Insight:** [One clear, specific insight about user behavior or beliefs - avoid generic statements]
-      
-      ❤️ **Emotional Dimension:** [Specific emotions with brief explanation of when/why users feel this way]
-      
-      📊 **Signal Strength:** [How often this appears: "Consistent across all participants" / "Mentioned by majority" / "Recurring pattern" / "Strong but localized"]
-      
-      🎯 **User Impact:** [Specific way this affects users' success, confidence, or experience]
-      
-      **Examples of good insights:**
-      - "Users create mental shortcuts when official processes feel too complex"
-      - "Veterans assume government websites will fail them based on past experiences"
-      - "People abandon tasks when they can't predict how long they'll take"
-      
-      **NOT generic insights like:**
-      - "Users want better communication"
-      - "The interface needs improvement"
+      1. **Key Strategic Insight:** One concise statement revealing user behavior and business opportunity
+      2. **Emotional Dimension:** Specific emotions users experience and why
+      3. **Business Impact:** How this theme affects business outcomes
+      4. **User Success Factor:** How this theme affects users' ability to accomplish their goals
 
-  # Generate actionable opportunities for each theme
+  # Generate actionable opportunities
   - task_id: "opportunity_generation"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Make opportunities specific and actionable for design/product teams
+      As a Senior UX Strategist, generate actionable opportunities for each theme:
       
-      As an experienced UX researcher, generate actionable opportunities for each theme:
-      
-      **Themes with Insights:**
-      {{ai_generated.insight_generation}}
-      
-      **Study Context:** {{study_name}}
+      **Themes with Insights:** {{ai_generated.insight_generation}}
+      **Study Context:** {{selected_study}}
       **Focus Area:** {{focus_area}}
       
       For each theme, generate:
-      
-      1. **Primary Opportunity:** One concrete, actionable response (product, content, policy, or design change)
+      1. **Primary Opportunity:** One concrete, actionable response that addresses the user tension
       2. **Implementation Approach:** Specific steps teams could take
       3. **Success Metrics:** How to measure if the opportunity addresses the theme
-      4. **Priority Level:** High/Medium/Low based on user impact and evidence strength
-      
-      **Format for each theme:**
-      **Theme: "[Theme label]"**
-      
-      💡 **Primary Opportunity:** [Specific, actionable opportunity that directly addresses the user tension/need]
-      
-      🛠️ **Implementation Approach:** [2-3 specific steps teams could take to pursue this opportunity]
-      
-      📈 **Success Metrics:** [How to measure if this opportunity successfully addresses the theme]
-      
-      ⭐ **Priority Level:** [High/Medium/Low] - [Brief reasoning based on user impact and evidence strength]
-      
-      **Examples of good opportunities:**
-      - "Add progress indicators showing exact steps remaining and estimated time for each"
-      - "Create a 'confidence check' feature that previews what will happen before users submit"
-      - "Develop contextual help that appears based on where users typically get stuck"
-      
-      **NOT vague opportunities like:**
-      - "Improve communication"
-      - "Make interface more user-friendly"
-      - "Better user experience"
+      4. **Strategic Priority:** High/Medium/Low based on user impact and business value
 
-  # Assess confidence levels and identify follow-up needs
-  - task_id: "confidence_assessment"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Be specific about confidence levels and their implications
-      
-      As an experienced qualitative researcher, assess confidence levels for each theme and identify follow-up needs:
-      
-      **Data Scope Analysis:** {{ai_generated.data_scope_analysis}}
-      **Themes with Evidence:** {{ai_generated.quote_clustering}}
-      **Selected Files:** {{selected_files}}
-      
-      For each theme, assess:
-      
-      1. **Theme Confidence:** How confident are we in this theme based on evidence quality and quantity?
-      2. **Evidence Strength:** How strong is the supporting evidence?
-      3. **Generalizability:** How well might this theme apply beyond the current data?
-      4. **Follow-up Needs:** What additional research would strengthen confidence in this theme?
-      
-      **Format for each theme:**
-      **Theme: "[Theme label]"**
-      
-      🎯 **Theme Confidence:** [High/Medium/Low] - [Specific reasoning based on evidence quality and file coverage]
-      
-      📊 **Evidence Strength:** [Strong/Moderate/Limited] - [Details about quote quality, participant diversity, pattern consistency]
-      
-      🌍 **Generalizability:** [High/Medium/Low] - [How well this might apply to broader user population]
-      
-      🔍 **Follow-up Needs:** [Specific research activities that would strengthen confidence: more interviews, quantitative validation, etc.]
-      
-      **Overall Analysis Confidence:** [High/Medium/Low] based on file selection completeness and evidence strength across all themes
-      
-      **Key Limitations:** [Any significant limitations from missing optimal files or data gaps that affect confidence]
-
-  # Generate follow-up analysis recommendations
-  - task_id: "follow_up_recommendations"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Provide specific, actionable next steps
-      
-      As an experienced UX researcher, recommend follow-up analysis based on the affinity mapping results:
-      
-      **Identified Themes:** {{ai_generated.insight_generation}}
-      **Confidence Assessment:** {{ai_generated.confidence_assessment}}
-      **Study Context:** {{study_name}}
-      **File Coverage:** {{ai_generated.data_scope_analysis}}
-      
-      Based on the themes identified and file coverage analysis, recommend:
-      
-      1. **Immediate Next Analysis:** What analysis should the team run next to build on these themes?
-      2. **Research Gaps:** What additional research would strengthen the findings?
-      3. **Decision Support:** How can teams use these themes for immediate decisions?
-      4. **Long-term Research:** What future research would be valuable?
-      
-      **Format:**
-      **Immediate Next Steps (1-2 weeks):**
-      - [Specific analysis type]: [Why this builds on current themes]
-      - [Specific research activity]: [How this addresses identified gaps]
-      
-      **Short-term Research (1-2 months):**
-      - [Research approach]: [What this would validate or explore further]
-      - [Analysis method]: [How this complements current findings]
-      
-      **Decision Support:**
-      - [Specific decisions teams can make now]: [Based on which themes]
-      - [Areas needing more research]: [Before making major decisions]
-      
-      **File Enhancement Recommendations:**
-      Based on missing optimal files: [Specific recommendations for improving future analysis]
-      
-      **Priority Ranking:**
-      1. **High Priority:** [Most important next step]
-      2. **Medium Priority:** [Valuable but not urgent]
-      3. **Low Priority:** [Nice to have for comprehensive view]
-
-# Auto-generated/computed variables (Enhanced)
-auto_variables:
-  - max_themes: |
-      # AI determines optimal theme count from data scope analysis
-      extract_theme_count(ai_generated.data_scope_analysis) || 3
-  - session_count: |
-      # AI estimates session count from data scope analysis
-      extract_session_count(ai_generated.data_scope_analysis, selected_files) || "multiple sessions"
-  - confidence_level: |
-      # AI determines overall analysis confidence from confidence assessment
-      extract_confidence_level(ai_generated.confidence_assessment) || "medium"
-  - bias_risk_level: |
-      # AI determines bias risk from bias detection analysis
-      extract_bias_risk(ai_generated.bias_detection_analysis) || "low"
-  - reliability_score: |
-      # AI determines reliability from inter-rater assessment
-      extract_reliability_score(ai_generated.reliability_assessment) || "medium"
-  - current_date: |
-      # Auto-generate current date for file naming
-      new Date().toISOString().split('T')[0]
-  - analysis_version: |
-      # Generate version number for tracking
-      generate_version_number(previous_analysis_id) || "v1.0"
-  - github_file_link: |
-      # Auto-generate based on study name and date
-      generate_github_link(study_name, current_date) || null
+# Processing workflow
+processing_workflow:
+  1. validate_slack_modal_inputs
+  2. discover_files_from_study_selection
+  3. calculate_initial_quality_assessment
+  4. validate_discovered_files
+  5. combine_selected_files_with_truncation
+  6. execute_file_discovery_summary
+  7. execute_affinity_clustering
+  8. execute_theme_identification
+  9. execute_quote_clustering
+  10. execute_insight_generation
+  11. execute_opportunity_generation
+  12. format_slack_output
+  13. format_github_output
+  14. save_to_analysis_folder
+  15. send_team_notifications
 
 # Output configuration
 output_options:
-  default_delivery: "slack_and_file"  # Post to Slack AND save to GitHub
-  slack_format: "structured"          # Use the formatted output with sections
+  default_delivery: "slack_and_file"
+  slack_format: "affinity_focused"
+  file_format: "github_markdown"
   path: "04-analysis/affinity-mapping/"
   filename: "{{study_folder}}_affinity_mapping_{{current_date}}.md"
 
-slack_output:
-  post_in_channel: true
-  create_thread: true
-  title_format: "🧠 Affinity Mapping Results"
-  ping_team: ["{{researcher_contact}}", "{{team_members}}"]
-  interactive_elements:
-    - text: "💡 Generate Insight Cards"
-      action: "run_insight_card"
-    - text: "🎯 Jobs to be Done Analysis"
-      action: "run_jobs_to_be_done"
-    - text: "🔍 Usability Issues Analysis"
-      action: "run_usability_issues_extractor"
-    - text: "🗂️ View in GitHub"
-      url: "{{github_file_link}}"
-
-# Output configuration
-output_options:
-  default_delivery: "slack_and_file"  # Post to Slack AND save to GitHub
-  slack_format: "research_focused"    # Primary research insights first
-  detailed_format: "comprehensive"    # Full technical details in file
-  path: "04-analysis/affinity-mapping/"
-  filename: "{{study_folder}}_affinity_mapping_{{current_date}}.md"
-
-# Dual output templates - focused vs comprehensive
+# Slack output template
 slack_output_template: |
-  Hi team! 👋 I just finished running affinity mapping analysis on your research files. Found some clear patterns that I think you'll want to discuss.
+  🧠 **Affinity Mapping Complete**
 
-  {{team_members}} - would love your thoughts on these themes and opportunities.
-
-  📂 *Study:* {{study_name}}  
-  🔗 *Full details:* {{study_link}}
+  **Study:** {{selected_study}}
+  **Analysis:** {{max_themes}} themes identified from {{ai_generated.file_discovery_summary.participant_count}} participants
 
   ---
 
-  ## 🧠 *KEY THEMES IDENTIFIED*
+  ## **Key Themes**
 
-  {{ai_generated.quote_clustering}}
+  {{ai_generated.theme_identification}}
 
   ---
 
-  ## 🔍 *INSIGHTS & EMOTIONAL DIMENSIONS*
+  ## **Strategic Insights**
 
   {{ai_generated.insight_generation}}
 
   ---
 
-  ## 💡 *ACTIONABLE OPPORTUNITIES*
+  ## **Opportunities**
 
   {{ai_generated.opportunity_generation}}
 
   ---
 
-  ## 🚀 *RECOMMENDED NEXT STEPS*
-
-  {{ai_generated.follow_up_recommendations}}
-
-  ---
-
-  ## 📊 *ANALYSIS SUMMARY*
-
-  **Quality Overview:**
-  - **Themes Generated:** {{max_themes}} themes from {{session_count}}
-  - **Analysis Confidence:** {{confidence_level}} 
-  - **Files Analyzed:** {{selected_files.length}} research files
-  {{#if bias_risk_level != "low"}}⚠️ **Note:** {{bias_risk_level}} bias risk detected - see detailed report{{/if}}
-  {{#if privacy_controls.enable_pii_detection}}🔒 **Privacy:** PII automatically detected and protected{{/if}}
-
-  ---
-
-  *What do you think?* Reply in thread with your thoughts:
+  **What do you think?** Reply in thread:
   • Which themes feel most actionable?
   • Any themes that need more investigation?  
   • Ready to move forward with the recommended opportunities?
-  • Connections you're seeing to other research?
 
-  📋 *[View detailed technical report with validation data, performance metrics, and source attribution]({{github_file_link}})*
+  📋 [View detailed report with evidence]({{github_file_link}})
 
-  ---
-  
-  🤖 *AI Affinity Mapping Complete*  
-  *Confidence: {{confidence_level}} | Themes: {{max_themes}}* {{#if privacy_controls.enable_pii_detection}}*| Privacy Protected*{{/if}}
-
-comprehensive_file_template: |
-  # Comprehensive Affinity Mapping Analysis Report
-  
-  **Study:** {{study_name}} ({{analysis_version}})  
-  **Generated:** {{current_date}}  
-  **Analyst:** {{researcher_contact}}
+# GitHub markdown file template
+github_file_template: |
+  # 🧠 Affinity Mapping Analysis Report
   
   ---
   
-  ## EXECUTIVE SUMMARY
+  ## 📋 **Study Overview**
+  
+  **Study:** {{selected_study}}  
+  **Analysis Date:** {{current_date}}  
+  **Researcher:** {{researcher_contact}}  
+  **Focus Area:** {{focus_area}}  
+  **Analysis Version:** {{analysis_version}}
+  
+  ---
+  
+  ## 📊 **Data Quality Assessment**
+  
+  {{ai_generated.file_discovery_summary}}
+  
+  ---
+  
+  ## 🔍 **Affinity Mapping Process**
+  
+  {{ai_generated.affinity_clustering}}
+  
+  **Methodology:** Inductive clustering approach - patterns emerged naturally from data rather than predetermined categories.
+  
+  ---
+  
+  ## 🎯 **Key Themes Identified**
+  
+  {{ai_generated.theme_identification}}
+  
+  ---
+  
+  ## 💬 **Supporting Evidence**
   
   {{ai_generated.quote_clustering}}
   
+  ---
+  
+  ## 💡 **Strategic Insights & Emotional Dimensions**
+  
   {{ai_generated.insight_generation}}
+  
+  ---
+  
+  ## 🚀 **Actionable Opportunities**
   
   {{ai_generated.opportunity_generation}}
   
-  {{ai_generated.follow_up_recommendations}}
+  ---
+  
+  ## 📚 **Methodology Notes**
+  
+  **Analysis Approach:** This affinity mapping analysis used an inductive clustering methodology where individual observations and quotes were first extracted from research data, then naturally grouped based on similarity before theme identification. This bottom-up approach ensures themes emerge from data patterns rather than researcher assumptions.
+  
+  **Quality Controls:**
+  - ✅ Bias detection analysis performed
+  - ✅ Source attribution maintained for all quotes
+  - ✅ Privacy compliance verified
   
   ---
   
-  ## RESEARCH QUALITY & VALIDATION
+  ## 📞 **Contact & Follow-up**
   
-  ### Data Coverage Analysis
-  {{ai_generated.data_scope_analysis}}
+  **Lead Researcher:** {{researcher_contact}}  
+  **Study Channel:** {{study_channel}}  
+  **Questions?** Reply in the study channel or contact the research team directly.
   
-  **Files Analyzed:**
-  {{#each selected_files}}
-  • {{file_category}}: {{file_name}} ({{file_type}})
-  {{/each}}
-  
-  ### Research Quality Assessment
-  {{#if enable_bias_detection}}
-  **Bias Detection Analysis:**
-  {{ai_generated.bias_detection_analysis}}
-  
-  **Inter-rater Reliability Assessment:**  
-  {{ai_generated.reliability_assessment}}
-  {{/if}}
-  
-  ### Confidence Assessment
-  {{ai_generated.confidence_assessment}}
-  
-  {{#if require_validation}}
-  ### Stakeholder Validation Plan
-  {{ai_generated.validation_preparation}}
-  {{/if}}
+  **Related Analyses:** Consider running complementary synthesis methods:
+  - 🗺️ Journey Mapping - to understand process flow
+  - 👥 Persona Generation - to create user archetypes  
+  - 🎯 Jobs to be Done - to identify functional needs
+  - 🐛 Usability Issues - to prioritize interface problems
+  - 💡 Design Opportunities - to identify specific improvements
   
   ---
   
-  ## TECHNICAL APPENDIX
-  
-  {{#if privacy_controls.enable_pii_detection}}
-  ### Privacy & Compliance
-  {{ai_generated.pii_detection_analysis}}
-  {{/if}}
-  
-  {{#if data_lineage.enable_quote_attribution}}
-  ### Source Attribution & Data Lineage
-  {{ai_generated.data_lineage_tracking}}
-  {{/if}}
-  
-  {{#if performance_monitoring.enable_execution_tracking}}
-  ### Performance Analytics
-  {{ai_generated.performance_analysis}}
-  {{/if}}
-  
-  {{#if previous_analysis_id}}
-  ### Version Comparison
-  {{ai_generated.version_comparison}}
-  {{/if}}
-  
-  ### Automated Workflows
-  {{ai_generated.workflow_automation}}
-  
-  ---
-  
-  **Analysis Metadata:**
-  - Version: {{analysis_version}}
-  - Confidence: {{confidence_level}}
-  - Bias Risk: {{bias_risk_level}}
-  - Reliability: {{reliability_score}}
-  - Performance: {{resource_efficiency_rating}}
-  - Privacy: {{#if privacy_controls.enable_pii_detection}}✅ Protected{{else}}Not applicable{{/if}}
-  - Sources: {{#if data_lineage.enable_quote_attribution}}✅ Fully attributed{{else}}Basic attribution{{/if}}
+  *Generated by Qori Research Synthesis • {{current_date}} • Version {{analysis_version}}*
 
-# Processing workflow (Enhanced with Advanced Features)
-processing_workflow:
-  1. validate_study_inputs
-  2. validate_file_selection_and_formats           # Enhanced with format/size validation
-  3. check_system_limits                           # File size/token limits validation
-  4. execute_pii_detection_analysis                # NEW: Privacy compliance scanning
-  5. apply_pii_masking_to_content                  # NEW: Mask detected PII
-  6. assess_file_coverage_quality
-  7. combine_selected_files_with_truncation        # Enhanced with smart truncation
-  8. start_performance_monitoring                  # NEW: Begin tracking execution metrics
-  9. execute_bias_detection_analysis               # Research bias assessment
-  10. execute_data_scope_analysis
-  11. execute_theme_identification
-  12. execute_quote_clustering
-  13. execute_data_lineage_tracking                # NEW: Source attribution for all quotes
-  14. execute_reliability_assessment               # Inter-rater reliability check
-  15. execute_insight_generation
-  16. execute_opportunity_generation
-  17. execute_quantitative_triangulation           # If quantitative data provided
-  18. execute_confidence_assessment
-  19. execute_version_comparison                   # If previous analysis exists
-  20. execute_follow_up_recommendations
-  21. execute_validation_preparation               # If validation required
-  22. execute_workflow_automation                  # Create follow-up workflows
-  23. execute_performance_analysis                 # NEW: Analyze execution performance
-  24. generate_privacy_audit_report                # NEW: PII compliance documentation
-  25. format_comprehensive_output_with_all_features # Enhanced output with all metrics
-  26. save_to_analysis_folder_with_versioning     # Enhanced with version tracking
-  27. update_performance_dashboard                 # NEW: System-wide performance tracking
-  28. trigger_automated_workflows                  # Execute automation plan
-  29. send_enhanced_team_notifications             # Enhanced notifications
-  30. track_analysis_completion_and_full_metrics   # Complete performance tracking
+# Auto-generated variables
+auto_variables:
+  - max_themes: extract_theme_count(ai_generated.affinity_clustering) || 3
+  - current_date: new Date().toISOString().split('T')[0]
+  - analysis_version: generate_version_number() || "v1.0"
+  - github_file_link: generate_github_link(study_name, current_date)
 
 notify:
   - role: team
     action: "Affinity mapping completed"
     channel: "{{study_channel}}"
-    message: "{{researcher_contact}} just completed affinity mapping for {{study_name}}. {{session_count}} analyzed and clustered into {{max_themes}} key themes with {{confidence_level}} confidence - check it out!"
-  - role: researcher
-    action: "Analysis saved"
-    slack_tag: "{{researcher_contact}}"
-    message: "Your affinity mapping results have been posted to {{study_channel}} and saved to GitHub. Analysis confidence: {{confidence_level}} based on file selection quality."
+    message: "{{researcher_contact}} just completed affinity mapping for {{selected_study}}. {{max_themes}} themes identified - check it out!"
 
 output_use: |
-  Direct Affinity Mapping allows researchers to select their own research files and generate thematic analysis 
-  with comprehensive quality controls, privacy protection, and performance optimization. The system validates 
-  file selection against required and optimal data specifications, automatically detects and masks PII, 
-  tracks data lineage for all quotes, monitors performance metrics, and provides quality assessment and 
-  recommendations for improving analysis confidence. Users benefit from transparent file coverage analysis, 
-  direct control over data inputs, complete source attribution, privacy compliance, and actionable insights 
-  about how their file selection affects analysis quality.
-
-  Use this method to:
-    - Generate thematic analysis directly from selected research files with full privacy protection
-    - Track exact sources and attribution for all quotes and evidence used
-    - Understand how file selection impacts analysis confidence and reliability
-    - Get specific recommendations for improving data coverage and research quality
-    - Maintain full control over what data feeds into analysis with PII safeguards
-    - Receive actionable insights and opportunities from themes with performance analytics
-    - Ensure research meets professional standards with bias detection and reliability assessment
-    - Maintain privacy compliance with automated PII detection and masking
-    - Track analysis performance and system optimization metrics
-
-output_notes: |
-  This method returns up to {{max_themes}} themes based on data analysis and file coverage quality.
-  Analysis confidence level: {{confidence_level}} based on selected file completeness.
-  Session count ({{session_count}}) estimated from input patterns and file content.
-  File coverage assessment guides confidence levels and recommendations.
-
-persona_hinting: |
-  Common personas include:
-    - First-time applicant
-    - Veteran seeking housing
-    - Caregiver supporting an elder
-    - Small business owner
-    - Young adult navigating benefits
+  Slack-Native Affinity Mapping with Senior UX Strategy approach automatically discovers research files 
+  from selected study folders, performs inductive clustering analysis to identify natural patterns, 
+  then converts clusters into strategic themes with business implications. Outputs concise 
+  Slack summaries focused on themes and opportunities, plus detailed GitHub markdown reports 
+  for stakeholder sharing and documentation.
