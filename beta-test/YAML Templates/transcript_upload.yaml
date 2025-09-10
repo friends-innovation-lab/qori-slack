@@ -400,42 +400,38 @@ ai_generation_tasks:
 
   # 3) Filename (prefer JSON → Markdown → fallback)
   - task_id: "transcript_coding_filename"
-    prompt: |
-      You will receive analysis outputs. Prefer JSON if present; otherwise parse the Markdown.
-      - JSON (optional): {{ai_generated.transcript_coding_payload}}
-      - Markdown (optional): {{ai_generated.transcript_coding_markdown}}
+  prompt: |
+    You will receive analysis outputs. Prefer JSON if present; otherwise parse the Markdown.
+    - JSON (optional): {{ai_generated.transcript_coding_payload}}
+    - Markdown (optional): {{ai_generated.transcript_coding_markdown}}
 
-      Extraction rules (order of precedence):
-      1) If JSON parses, use the exact value of "auto_detected_participant_id".
-      2) Else, from Markdown title "# X Session Analysis", take X.
-      3) Else, fallback: "participant_YYYYMMDDHHmmss" using {{upload_date_utc}} (UTC).
+    Goal:
+    - Determine the participant id. Prefer the value from the JSON key "auto_detected_participant_id".
+      If not present, try to infer it from the Markdown title line that ends with "Session Analysis".
+      If nothing can be inferred, fall back to a value that looks like: participant_YYYYMMDDHHmmss.
+    - Produce a filename in the exact form: <participant_id>-coded-analysis.md
 
-      Normalize:
-      - Keep original casing (PT003 vs pt003) if present.
-      - Strip surrounding parentheses, spaces; allow only letters, digits, "-", "_".
+    Output rules:
+    - Return ONLY the filename as a single line (no quotes, no code fences, no extra text).
+    - Example shape (illustrative): pt003-coded-analysis.md
 
-      Output:
-      - Return ONLY: {participantId}-coded-analysis.md
-      - Single line, no quotes, no extra text.
-
-  # 4) Path (prefer JSON → Markdown → fallback)
   - task_id: "transcript_coding_path"
-    prompt: |
-      You will receive analysis outputs. Prefer JSON if present; otherwise parse the Markdown.
-      - JSON (optional): {{ai_generated.transcript_coding_payload}}
-      - Markdown (optional): {{ai_generated.transcript_coding_markdown}}
+  prompt: |
+    You will receive analysis outputs. Prefer JSON if present; otherwise parse the Markdown.
+    - JSON (optional): {{ai_generated.transcript_coding_payload}}
+    - Markdown (optional): {{ai_generated.transcript_coding_markdown}}
 
-      Extraction rules (order of precedence):
-      1) If JSON parses, use the exact value of "auto_detected_session_id".
-      2) Else, from Markdown line "**Session:** X", take X.
-      3) Else, fallback: "session_YYYYMMDD" using {{upload_date_utc}} (UTC).
+    Goal:
+    - Determine the session id. Prefer the value from the JSON key "auto_detected_session_id".
+      If missing, infer it from the Markdown line starting with "Session:".
+      If nothing can be inferred, use a default that looks like: session_YYYYMMDD.
+    - Produce a relative repository path in the exact form:
+      03-fieldwork/<session_id>/coded-transcripts/
 
-      Normalize:
-      - Trim spaces. Allow letters, digits, "-", "_".
-
-      Output:
-      - Return ONLY: 03-fieldwork/{sessionId}/coded-transcripts/
-      - Single line, no quotes, no leading slash.    
+    Output rules:
+    - Return ONLY the path string as a single line (no quotes, no code fences, no leading slash).
+    - Example shape (illustrative): 03-fieldwork/session_20250718/coded-transcripts/
+    
 
 output_template: |
   {{ai_generated.transcript_coding_markdown}}
