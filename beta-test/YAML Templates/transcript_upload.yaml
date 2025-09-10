@@ -369,6 +369,36 @@ ai_generation_tasks:
 
       *AI Coding Confidence: avg_confidence_score%*
 
+  - task_id: "transcript_coding_filename"
+    prompt: |
+      You will receive analysis outputs. Prefer JSON if present; otherwise parse the Markdown.
+      - JSON (optional): {{ai_generated.transcript_coding_payload}}
+      - Markdown (optional): {{ai_generated.transcript_coding_markdown}}
+
+      Goal:
+      - Determine participant_id (prefer "auto_detected_participant_id" from JSON; fallback: try to infer from Markdown title line "X Session Analysis"; if not found, use "participant_YYYYMMDDHHmmss").
+      - Produce a filename in the form: participant_id-coded-analysis.md
+
+      Output Rules:
+      - Return ONLY the filename as a single line (no quotes, no code fences, no extra text).
+      - Example shape (example only): pt003-coded-analysis.md
+
+  - task_id: "transcript_coding_path"
+    prompt: |
+      You will receive analysis outputs. Prefer JSON if present; otherwise parse the Markdown.
+      - JSON (optional): {{ai_generated.transcript_coding_payload}}
+      - Markdown (optional): {{ai_generated.transcript_coding_markdown}}
+
+      Goal:
+      - Determine session_id (prefer "auto_detected_session_id" from JSON; otherwise infer from Markdown "Session:" line like "session_YYYYMMDD"; if not found, default to "session_YYYYMMDD").
+      - Produce a relative repository path in the form:
+        03-fieldwork/session_id/coded-transcripts/
+
+      Output Rules:
+      - Return ONLY the path string as a single line (no quotes, no code fences, no leading slash).
+      - Example shape (example only): 03-fieldwork/session_20250718/coded-transcripts/     
+
+
 output_template: |
   {{ai_generated.transcript_coding_markdown}}
 
@@ -478,8 +508,11 @@ output_templates: |
 
 # File organization to existing folder structure
 output_options:
-  filename: "{{auto_detected_participant_id}}-coded-analysis.md"
-  path: "03-fieldwork/{{auto_detected_session_id}}/coded-transcripts/"
+  filename: "{{ai_generated.transcript_coding_filename}}"
+  path: "{{ai_generated.transcript_coding_path}}"
+
+#   filename: "{{auto_detected_participant_id}}-coded-analysis.md"
+#   path: "03-fieldwork/{{auto_detected_session_id}}/coded-transcripts/"
     
   raw_transcript:
     filename: "{{auto_detected_participant_id}}-transcript.md"
