@@ -1,37 +1,15 @@
-id: github_issues_creator
-name: run_github_issues_creator
-label: 🐛 GitHub Issues Creator
-version: v2.0
+id: github_issues_generator
+name: run_github_issues_generator
+label: 🛠 GitHub Issues Generator
+version: v3.0
 description: |
-  Automatically create GitHub issues directly from research findings using GitHub API integration.
-  Transforms user research insights into live GitHub issues with proper labels, assignments, and project integration.
+  Generate GitHub issues directly from research findings with automatic prioritization by impact and effort.
+  Creates actionable development tasks with research evidence, quotes, and clear acceptance criteria.
+  Issues go directly to repository backlog for sprint planning.
 
 author: Qori R&D
 created: 2025-08-19
 last_updated: 2025-08-19
-
-# GITHUB API INTEGRATION CONFIGURATION
-github_integration:
-  required_permissions:
-    oauth_scopes: ["repo", "issues:write", "project:write"]
-    oauth_app_id: "{{env.GITHUB_OAUTH_APP_ID}}"
-    oauth_client_secret: "{{env.GITHUB_OAUTH_CLIENT_SECRET}}"
-  
-  api_configuration:
-    base_url: "https://api.github.com"
-    endpoints:
-      create_issue: "/repos/{owner}/{repo}/issues"
-      add_labels: "/repos/{owner}/{repo}/issues/{issue_number}/labels" 
-      assign_users: "/repos/{owner}/{repo}/issues/{issue_number}/assignees"
-      add_to_project: "/projects/{project_id}/cards"
-    rate_limits:
-      requests_per_hour: 5000
-      authenticated_requests_per_hour: 5000
-  
-  authentication:
-    type: "oauth_token"
-    storage: "encrypted_user_tokens"
-    refresh_strategy: "automatic"
 
 input_type: text
 input_processing: summarize_if_long
@@ -45,352 +23,308 @@ llm_config:
   max_tokens: 4000
 
 input_variables:
-  # GITHUB REPOSITORY CONFIGURATION (REQUIRED)
+  # GitHub Repository Configuration (REQUIRED)
   - github_repository      # Format: "owner/repo-name" (REQUIRED)
-  - github_labels          # Default labels to apply (OPTIONAL)
-  - github_assignees       # Default assignees (OPTIONAL)
-  - github_project_id      # Project board ID for auto-assignment (OPTIONAL)
-  - github_milestone       # Milestone for issues (OPTIONAL)
+  - github_token          # User's GitHub personal access token (REQUIRED)
   
-  # RESEARCH DATA (inherited from research readout)
-  - research_readout_data  # Full readout data for context (OPTIONAL)
-  - input_text            # Research findings or readout data (OPTIONAL if readout_data provided)
+  # Research Readout Data (PRIMARY SOURCE)
+  - research_readout_data  # Full research readout with recommendations (REQUIRED)
   - study_name            # Title of study (REQUIRED)
   - researcher_contact    # Lead researcher (REQUIRED)
   - study_channel         # Where to post results (REQUIRED)
-  - team_members          # Who to notify/tag (OPTIONAL)
   
-  # File processing context (passed from research readout)
-  - file_quality_score    # Quality of source files (OPTIONAL)
-  - data_sources         # What data sources were used (OPTIONAL)
-  - participant_count    # Number of participants (OPTIONAL)
-  - session_count        # Number of sessions (OPTIONAL)
-  - completion_rate      # Participant completion rate (OPTIONAL)
-  - session_quotes       # Specific quotes from session files (OPTIONAL)
-  - behavioral_evidence  # Behavioral patterns from sessions (OPTIONAL)
+  # Optional Configuration
+  - team_members          # Who to notify (OPTIONAL)
+  - github_labels         # Custom labels to add (OPTIONAL - defaults provided)
+  - github_assignees      # Default assignees (OPTIONAL)
+  - max_issues           # Maximum issues to create (OPTIONAL - default: 5)
 
-# AI GENERATION TASKS (Generate issue data for API calls)
+# AI GENERATION TASKS
 ai_generation_tasks:
-  # Validate GitHub repository access
-  - task_id: "github_repository_validation"
+  # Extract actionable recommendations from research readout
+  - task_id: "recommendations_extraction"
     prompt: |
       **MANDATORY WRITING REQUIREMENTS:**
       - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
       - ALWAYS use direct, concrete language - avoid vague aspirational phrases
       - ALWAYS use active voice and specific verbs
       
-      Validate GitHub repository configuration and access:
+      Extract actionable recommendations from research readout for GitHub issue creation:
       
-      **Repository:** {{github_repository}}
-      **User OAuth Status:** {{github_oauth_status}}
-      **Repository Permissions:** {{github_permissions}}
+      **Research Readout:** {{research_readout_data}}
+      **Study Name:** {{study_name}}
+      **Max Issues:** {{max_issues}} (default: 5)
       
-      Validate:
-      1. **Repository format** (owner/repo-name)
-      2. **User permissions** (can create issues, add labels)
-      3. **Repository accessibility** (exists and user has access)
-      4. **Label configuration** (default labels available)
-      5. **Assignee validation** (specified users exist in repo)
+      Focus on extracting:
+      1. **Immediate Actions** (next 2 weeks) - These become P0-P1 issues
+      2. **Short-term Initiatives** (1-2 months) - These become P2 issues
+      3. **Supporting evidence** from detailed findings for each recommendation
+      
+      Prioritize recommendations that are:
+      - **Development-focused** (can be implemented by engineering/design teams)
+      - **Specific and actionable** (clear what needs to be built)
+      - **Well-supported by evidence** (have user quotes and behavioral data)
+      - **High user impact** (address major pain points)
+      
+      **Skip recommendations that are:**
+      - Research follow-ups or additional studies
+      - Organizational/process changes
+      - Vague or aspirational goals
       
       **Format:**
-      **Repository Valid:** [Yes/No] - [Reason if invalid]
-      **User Permissions:** [Write/Read/None] - [Specific permissions available]
-      **Repository Access:** [Accessible/Restricted/Not Found]
-      **Default Labels:** [Available labels in repository]
-      **Assignee Status:** [Valid assignees from provided list]
-      **Ready for Issue Creation:** [Yes/No] - [Requirements met/missing]
+      **High Priority (P0-P1) - Immediate Actions:**
+      • [Action 1]: [Specific development task] - [User impact]
+      • [Action 2]: [Specific development task] - [User impact]
+      
+      **Medium Priority (P2) - Short-term Initiatives:**
+      • [Initiative 1]: [Specific development task] - [User impact]  
+      • [Initiative 2]: [Specific development task] - [User impact]
+      
+      **Evidence Available:**
+      • [Action 1]: [Supporting evidence from findings - quotes, behavioral data]
+      • [Action 2]: [Supporting evidence from findings - quotes, behavioral data]
 
-  # Generate GitHub-ready issue data structures
-  - task_id: "github_issues_generation"
+  # Convert recommendations into GitHub issues with full context
+  - task_id: "github_issues_creation"
     prompt: |
       **MANDATORY WRITING REQUIREMENTS:**
       - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
       - ALWAYS use direct, concrete language - avoid vague aspirational phrases
       - ALWAYS use active voice and specific verbs
-      - Generate issues in GitHub API format
+      - Use GitHub markdown formatting
       
-      Generate GitHub issues data for API creation:
+      Convert research recommendations into {{max_issues}} focused GitHub issues:
       
-      **Research Data:** {{research_readout_data}} {{input_text}}
-      **Study Context:** {{study_name}}
-      **File Quality:** {{file_quality_score}}
-      **Participant Evidence:** {{session_quotes}} {{behavioral_evidence}}
+      **Recommendations:** {{ai_generated.recommendations_extraction}}
+      **Research Readout:** {{research_readout_data}}
+      **Study Name:** {{study_name}}
+      
+      Create 3-6 focused issues maximum. For each recommendation, create:
+      
+      1. **Clear title** (under 50 characters, action-oriented)
+      2. **Problem statement** (why this matters to users)
+      3. **Research evidence** (specific quotes and behavioral observations)
+      4. **Acceptance criteria** (specific, testable requirements)
+      5. **Implementation guidance** (technical considerations)
+      
+      **Format each issue:**
+      
+      ---
+      **ISSUE [X]:**
+      **TITLE:** [Action-oriented title under 50 chars]
+      **PRIORITY:** P[0-2] - [Critical/High/Medium]  
+      **EFFORT:** [Small/Medium] ([1-2 weeks]/[3-4 weeks])
+      **LABELS:** research-finding, [priority-level], [component], [type]
+      
+      **BODY:**
+      ## Problem Statement
+      
+      [Clear description of user problem from research readout findings]
+      
+      ## Research Evidence  
+      
+      **Study:** {{study_name}}
+      **User Impact:** [How this affects user success]
+      **Research Source:** [Link back to research readout]
+      
+      **Evidence from Research:**
+      > "[User quote from findings]" - Participant P[X]  
+      > "[Behavioral observation from findings]"
+      
+      ## Acceptance Criteria
+      
+      - [ ] [Specific, testable requirement 1]
+      - [ ] [Specific, testable requirement 2]
+      - [ ] [Specific, testable requirement 3]
+      
+      ## Implementation Notes
+      
+      [Technical guidance from research readout recommendations]
+      
+      **Definition of Done:**
+      - [ ] Implementation completed and tested
+      - [ ] User experience validates the research recommendation
+      - [ ] Solution addresses the specific user pain point identified
+      
+      ---
+      
+      **Create only 3-6 issues total - focus on highest impact recommendations.**
+
+  # Create implementation summary  
+  - task_id: "implementation_summary"
+    prompt: |
+      **MANDATORY WRITING REQUIREMENTS:**
+      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
+      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
+      - ALWAYS use active voice and specific verbs
+      
+      Summarize the GitHub issues created and implementation plan:
+      
+      **GitHub Issues:** {{ai_generated.github_issues_creation}}
       **Repository:** {{github_repository}}
       
-      Create 5-12 issues in GitHub API JSON format:
-      
-      Each issue must include:
-      1. **Title** (50 characters max, clear and specific)
-      2. **Body** (GitHub markdown with research evidence)
-      3. **Labels** (array of label names)
-      4. **Assignees** (array of GitHub usernames)
-      5. **Priority** (P0/P1/P2/P3 for sorting)
-      6. **Research context** (links to study and evidence)
-      
-      **Format as valid GitHub API JSON:**
-      ```json
-      [
-        {
-          "title": "Add progress indicator to application flow",
-          "body": "## Problem Statement\\n\\nUsers abandon applications because they can't see progress...\\n\\n## Research Evidence\\n\\n- Quote: \"I don't know if this will take 5 minutes or 5 hours\" - P03\\n- Behavioral: 8/8 participants looked for progress info\\n- Study: {{study_name}}\\n\\n## Acceptance Criteria\\n\\n- [ ] Show current step and total steps\\n- [ ] Display estimated time remaining\\n\\n## Implementation Notes\\n\\nAffected components: ApplicationFlow, ProgressBar\\n\\n**Priority:** P1-High\\n**Effort:** Medium (1-2 weeks)\\n**Research Source:** {{study_link}}",
-          "labels": ["research-finding", "P1-high", "frontend", "ux-improvement"],
-          "assignees": ["frontend-lead", "ux-designer"]
-        },
-        {
-          "title": "Improve error messages for eligibility validation",
-          "body": "## Problem Statement\\n\\nUsers receive generic error messages...\\n\\n## Research Evidence\\n\\n- Quote: \"It just says 'error' - no idea what I did wrong\" - P05\\n\\n## Acceptance Criteria\\n\\n- [ ] Replace generic errors with specific guidance\\n\\n**Priority:** P0-Critical\\n**Research Source:** {{study_link}}",
-          "labels": ["research-finding", "P0-critical", "content", "error-handling"],
-          "assignees": ["content-team", "frontend-lead"]
-        }
-      ]
-      ```
-      
-      **Requirements:**
-      - Generate 5-12 issues based on research findings
-      - Prioritize by user impact and frequency
-      - Include specific participant quotes and behavioral evidence
-      - Use proper GitHub markdown formatting
-      - Reference study context and links
-
-  # Prepare batch creation strategy
-  - task_id: "batch_creation_strategy"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      
-      Create batch issue creation strategy:
-      
-      **Generated Issues:** {{ai_generated.github_issues_generation}}
-      **Repository Validation:** {{ai_generated.github_repository_validation}}
-      **GitHub Configuration:** {{github_labels}} {{github_assignees}}
-      
-      Plan the batch creation process:
-      1. **Creation order** (P0 first, then P1, etc.)
-      2. **Rate limiting** (respect GitHub API limits)
-      3. **Error handling** (what to do if creation fails)
-      4. **Progress tracking** (how to report status to user)
-      5. **Rollback strategy** (if batch fails partway through)
+      Create implementation summary:
+      1. **Total issues created** and priority breakdown
+      2. **Development effort estimate** (total sprint impact)
+      3. **User impact summary** (what problems these solve)
+      4. **Sprint planning guidance** (how to prioritize)
       
       **Format:**
-      **Total Issues to Create:** [Count]
-      **Creation Order:** [Priority-based sequence]
-      **Estimated Time:** [Seconds/minutes for full batch]
-      **Rate Limit Buffer:** [Requests per minute to stay under limits]
-      **Error Handling:** [Strategy for failed creations]
-      **Progress Updates:** [How to update user during creation]
-      **Success Criteria:** [How to measure successful completion]
+      **Implementation Summary:**
+      **Total Issues:** [Count] focused issues created from {{study_name}} recommendations
+      
+      **Priority Breakdown:**
+      • **P0-P1 Critical/High:** [Count] issues - Address major user blockers
+      • **P2 Medium:** [Count] issues - Improve user experience
+      
+      **Estimated Development:**
+      • **Total Effort:** [X-Y] weeks of development work
+      • **Sprint Impact:** Recommend [X] issues per sprint for manageable implementation
+      
+      **User Problems Addressed:**
+      • [Problem 1]: [Solution approach]
+      • [Problem 2]: [Solution approach]
+      • [Problem 3]: [Solution approach]
+      
+      **Sprint Planning Recommendation:**
+      Start with P0-P1 issues that have the highest user impact and strongest research evidence.
 
-# GITHUB API ACTIONS (New section for actual API calls)
-github_api_actions:
-  # Authenticate user with GitHub
-  - action_id: "authenticate_github_user"
-    type: "oauth_flow"
-    oauth_scopes: ["repo", "issues:write"]
-    oauth_redirect: "{{slack_app_url}}/oauth/github/callback"
-    success_message: "✅ GitHub authentication successful"
-    failure_message: "❌ GitHub authentication failed"
-    
-  # Validate repository access
-  - action_id: "validate_repository_access"
-    type: "api_call" 
-    method: "GET"
-    endpoint: "/repos/{{github_repository}}"
-    headers:
-      Authorization: "token {{user_github_token}}"
-      Accept: "application/vnd.github.v3+json"
-    success_criteria: "status_code == 200"
-    error_handling: "return_permissions_error"
-    
-  # Create issues in batch
-  - action_id: "create_issues_batch"
-    type: "api_batch"
-    method: "POST" 
-    endpoint: "/repos/{{github_repository}}/issues"
-    headers:
-      Authorization: "token {{user_github_token}}"
-      Accept: "application/vnd.github.v3+json"
-    payload_source: "{{ai_generated.github_issues_generation}}"
-    rate_limit: "30_requests_per_minute"
-    retry_strategy: "exponential_backoff"
-    progress_callback: "update_slack_message"
-    
-  # Apply additional labels and assignments
-  - action_id: "enhance_created_issues"
-    type: "api_batch"
-    method: "POST"
-    depends_on: "create_issues_batch"
-    operations:
-      - endpoint: "/repos/{{github_repository}}/issues/{issue_number}/labels"
-        payload: "{{github_labels}}"
-      - endpoint: "/repos/{{github_repository}}/issues/{issue_number}/assignees" 
-        payload: "{{github_assignees}}"
-    conditional: "if github_labels or github_assignees provided"
-
-# Auto-generated/computed variables
+# Auto-generated variables (focused on recommendation-based issues)
 auto_variables:
-  - total_issues_count: |
-      count_issues(ai_generated.github_issues_generation) || 0
-  - p0_issues_count: |
-      count_priority_issues(ai_generated.github_issues_generation, "P0") || 0
-  - p1_issues_count: |
-      count_priority_issues(ai_generated.github_issues_generation, "P1") || 0
-  - estimated_creation_time: |
-      calculate_creation_time(ai_generated.batch_creation_strategy) || "2-3 minutes"
+  - total_issues: |
+      count_issues(ai_generated.github_issues_creation) || 0
+  - p0_p1_count: |
+      count_priority_issues(ai_generated.github_issues_creation, "P0-P1") || 0
+  - p2_count: |
+      count_priority_issues(ai_generated.github_issues_creation, "P2") || 0
+  - estimated_weeks: |
+      calculate_total_effort(ai_generated.github_issues_creation) || "3-4"
   - github_repo_url: |
       "https://github.com/{{github_repository}}"
   - current_date: |
       new Date().toISOString().split('T')[0]
 
+# GitHub API Integration (Simplified)
+github_api:
+  authentication: "personal_access_token"
+  required_scopes: ["repo", "issues:write"]
+  
+  issue_creation:
+    endpoint: "POST /repos/{{github_repository}}/issues"
+    headers:
+      Authorization: "token {{github_token}}"
+      Accept: "application/vnd.github.v3+json"
+    
+    default_labels: ["research-finding", "user-experience", "needs-triage"]
+    
+    batch_creation: true
+    rate_limit_buffer: "1_request_per_second"
+    
+  error_handling:
+    authentication_failure: "Invalid GitHub token or insufficient permissions"
+    repository_not_found: "Repository {{github_repository}} not accessible"
+    rate_limit_exceeded: "GitHub API rate limit reached, retrying with backoff"
+
 # Output configuration
 output_options:
-  default_delivery: "slack_only"  # Real-time creation updates
-  slack_format: "interactive"
-  save_results: true
+  default_delivery: "slack_and_github_api"
+  slack_format: "creation_summary"
+  save_issues_locally: true
   file_location: "07-implementation/"
-  file_name: "github_issues_created_{{study_name_slug}}_{{current_date}}.json"
+  file_name: "github_issues_{{study_name_slug}}_{{current_date}}.json"
 
 slack_output:
   post_in_channel: true
   create_thread: true
-  title_format: "🐛 GitHub Issues Created"
+  title_format: "🛠 GitHub Issues Created"
   ping_team: ["{{researcher_contact}}", "@dev-team", "@product-team", "{{team_members}}"]
   
-  # Simple creation flow
-  creation_flow:
-    start_message: "🔄 Creating {{total_issues_count}} GitHub issues from research findings..."
-    progress_indicator: "simple_status"  # No individual updates
-    completion_time: "{{creation_time}} seconds"
-    
-  # Focus on post-creation actions
   interactive_elements:
     - text: "🔗 View All Issues"
-      url: "{{github_repo_url}}/issues"
-    - text: "📋 Add to Current Sprint"
-      action: "add_issues_to_sprint"
-    - text: "👥 Notify Dev Team"
-      action: "notify_development_teams"
-    - text: "📊 Generate Sprint Report"
-      action: "create_sprint_planning_report"
-    - text: "🏷️ Update Labels" 
-      action: "bulk_update_issue_labels"
-    - text: "📅 Set Milestones"
-      action: "assign_issues_to_milestones"
+      url: "{{github_repo_url}}/issues?q=is:issue+label:research-finding"
+    - text: "📋 Add to Current Sprint"  
+      action: "add_to_sprint_board"
+    - text: "🏷 Update Labels"
+      action: "bulk_update_labels"
+    - text: "👥 Assign Teams"
+      action: "bulk_assign_issues"
 
-# Simple Before/After output template  
+# Clean output format focused on recommendation conversion
 output_format: |
-  Hi dev team! 👋 Creating {{total_issues_count}} GitHub issues directly in {{github_repository}} from our {{study_name}} research findings...
-
-  📂 *Study:* {{study_name}}  
-  🔗 *Repository:* {{github_repo_url}}
-  🚨 *Critical Issues:* {{p0_issues_count}} P0 items
-
+  🛠 **GitHub Issues Created from Research Recommendations!**
+  
+  Hi dev teams! {{team_members}} I've converted {{total_issues}} key recommendations from the {{study_name}} research readout into actionable GitHub issues in {{github_repository}}.
+  
+  📊 **Issues Created:**
+  • **{{p0_p1_count}} Critical/High Priority** - Address major user blockers identified in research
+  • **{{p2_count}} Medium Priority** - User experience improvements with clear evidence
+  
+  ⚡ **Implementation Summary:**
+  • **Estimated Development:** {{estimated_weeks}} weeks total
+  • **Research-backed** with participant quotes and behavioral evidence
+  • **Ready for sprint planning** with clear acceptance criteria
+  
+  🔗 **View Issues:** {{github_repo_url}}/issues?q=is:issue+label:research-finding
+  
   ---
-
-  ## 🔄 Creating GitHub Issues...
-
-  **🤖 Processing {{total_issues_count}} research-backed issues**
-
+  
+  {{ai_generated.implementation_summary}}
+  
   ---
-
-  ## ✅ GitHub Issues Created Successfully!
-
-  **📊 Issues Created:**
-  • **{{p0_issues_count}} P0 Critical** - Block user success, need immediate attention
-  • **{{p1_issues_count}} P1 High Priority** - Significant user impact  
-  • **{{total_issues_count - p0_issues_count - p1_issues_count}} P2-P3 Medium/Low** - Improvements and enhancements
-
-  **🔗 Repository:** {{github_repo_url}}/issues
-
-  **🎯 All issues include:**
-  ✅ Research evidence with participant quotes  
-  ✅ Behavioral observations from {{session_count}} sessions  
-  ✅ Clear acceptance criteria and implementation notes  
-  ✅ Proper labels and team assignments  
-  ✅ Links back to {{study_name}} research context
-
-  **📊 Research Context:**
-  • Data Sources: {{data_sources}}
-  • Quality Score: {{file_quality_score}}
-  • Participants: {{participant_count}} ({{completion_rate}} completion rate)
-  • Created in: {{creation_time}} seconds
-
+  
+  **🚀 Sprint Planning Guidance:**
+  1. **Start with P0-P1 issues** - These address critical user blockers
+  2. **Each issue includes research context** - User quotes and behavioral evidence  
+  3. **Clear acceptance criteria** - Ready for development estimation
+  4. **Research source links** - Connect back to {{study_name}} findings
+  
+  **[🔗 View All Issues]({{github_repo_url}}/issues)** | **[📋 Add to Sprint]** | **[🏷 Update Labels]** | **[👥 Assign Teams]**
+  
   ---
+  
+  *Questions about research context?* Contact {{researcher_contact}} for details about any recommendation.
+  
+  *🤖 {{total_issues}} Issues Created | Research Recommendations → Development Tasks Complete*
 
-  **🚀 Next Steps:**
-
-  **[🔗 View All Issues]({{github_repo_url}}/issues)** **[📋 Add to Current Sprint]** **[👥 Notify Dev Team]**
-
-  **[📊 Generate Sprint Report]** **[🏷️ Update Labels]** **[📅 Set Milestones]**
-
-  ---
-
-  *Questions about research context?* Contact {{researcher_contact}} for detailed discussion about any issue.
-
-  *🤖 {{total_issues_count}} Issues Created | Research → Implementation Complete*
-
-# Auto-generated/computed variables (simplified)
-auto_variables:
-  - total_issues_count: |
-      count_issues(ai_generated.github_issues_generation) || 0
-  - p0_issues_count: |
-      count_priority_issues(ai_generated.github_issues_generation, "P0") || 0
-  - p1_issues_count: |
-      count_priority_issues(ai_generated.github_issues_generation, "P1") || 0
-  - creation_time: |
-      estimate_creation_time(total_issues_count) || "8-10"
-  - github_repo_url: |
-      "https://github.com/{{github_repository}}"
-  - current_date: |
-      new Date().toISOString().split('T')[0]
-
-# Output configuration (simplified)
-output_options:
-  default_delivery: "slack_only"  # Simple completion message
-  slack_format: "clean"
-  save_results: true
-  file_location: "07-implementation/"
-  file_name: "github_issues_created_{{study_name_slug}}_{{current_date}}.json"
-
-# Simple creation process
-creation_process:
-  workflow:
+# Simplified issue creation process
+creation_workflow:
+  steps:
     1. "validate_github_access"
-    2. "generate_issues_data" 
-    3. "create_issues_batch"
-    4. "apply_labels_and_assignments"
-    5. "post_completion_summary"
+    2. "analyze_research_findings" 
+    3. "generate_issue_content"
+    4. "create_issues_via_api"
+    5. "apply_default_labels"
+    6. "post_completion_summary"
   
-  status_updates:
-    start: "Creating GitHub issues..."
-    success: "✅ Created {{total_issues_count}} issues successfully!"
-    failure: "❌ Failed to create some issues. {{success_count}}/{{total_issues_count}} completed."
+  validation:
+    github_token: "Check token validity and repository access"
+    repository: "Verify repository exists and user has write access"
+    issue_content: "Ensure all issues have required fields"
 
-# Error handling and recovery
-error_handling:
-  authentication_failure:
-    message: "❌ GitHub authentication required. Click below to connect your account."
-    action: "show_oauth_button"
-  
-  permission_denied:
-    message: "❌ Insufficient permissions for {{github_repository}}. Need 'Issues: Write' access."
-    action: "show_permission_help"
-  
-  api_rate_limit:
-    message: "⏳ GitHub API rate limit reached. Retrying in {retry_seconds} seconds..."
-    action: "exponential_backoff_retry"
-  
-  partial_failure:
-    message: "⚠️ Created {success_count}/{total_count} issues. Retrying failed issues..."
-    action: "retry_failed_issues"
+# Error handling
+error_scenarios:
+  invalid_token:
+    message: "❌ Invalid GitHub token. Please check your personal access token has 'repo' and 'issues:write' permissions."
+    action: "show_token_setup_guide"
+    
+  repository_access:
+    message: "❌ Cannot access repository {{github_repository}}. Check repository name and permissions."
+    action: "show_repository_help"
+    
+  api_failure:
+    message: "⚠️ Created {{success_count}}/{{total_issues}} issues. Retrying failed issues..."
+    action: "retry_failed_with_backoff"
+    
+  partial_success:
+    message: "✅ Created {{success_count}}/{{total_issues}} issues successfully. {{failed_count}} issues need manual creation."
+    action: "provide_failed_issue_templates"
 
 notify:
-  - role: dev_team
-    action: "GitHub issues ready for sprint planning"
+  - role: dev_teams
+    action: "Research issues ready for development"
     channel: "{{study_channel}}"
-    message: "✅ {{total_issues_count}} research-backed GitHub issues created in {{github_repository}}. {{p0_issues_count}} critical issues need immediate attention. Ready for sprint assignment."
+    message: "🛠 {{total_issues}} research-backed GitHub issues created in {{github_repository}}. {{p0_count}} critical issues need immediate sprint attention."
   - role: researcher
-    action: "Research successfully converted to development tasks"
+    action: "Research findings converted to development tasks"
     slack_tag: "{{researcher_contact}}"
-    message: "Your {{study_name}} research has been converted into {{total_issues_count}} actionable GitHub issues with full research context. Development teams can now prioritize and implement user-centered improvements."
+    message: "Your {{study_name}} research has been converted into {{total_issues}} actionable GitHub issues with full research evidence. Ready for development prioritization."
