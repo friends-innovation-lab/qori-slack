@@ -1,11 +1,13 @@
 id: targeted_readouts
 name: run_targeted_readouts
 label: 🎯 Targeted Readouts
-version: v2.0
+version: v2.1
 description: |
   Generate customized research readouts for any audience - from technical teams to executive stakeholders.
   Automatically adapts content, tone, and recommendations based on target audience needs and responsibilities.
   Combines team-specific implementation guidance with stakeholder decision-making insights.
+  
+  Outputs minimal notification in Slack with link to comprehensive GitHub document for clean workflow.
   
   Includes specialized Congressional Briefing format for VA's Congressional oversight and reporting 
   requirements (supports compliance with bills like S.423 and other Congressional mandates).
@@ -43,12 +45,113 @@ input_variables:
   - congressional_mandate # Specific mandate or bill this research addresses (OPTIONAL)
   - oversight_committee  # Committee requesting oversight information (OPTIONAL)
   - reporting_deadline   # When Congress expects updates (OPTIONAL)
-  
-  # Auto-detected from folder (if provided)
-  - detected_files      # Files found in research folder (AUTO-GENERATED)
-  - file_quality_score  # Quality assessment of files (AUTO-GENERATED)
-  - participant_count   # Number of participants detected (AUTO-GENERATED)
-  - session_count       # Number of sessions detected (AUTO-GENERATED)
+
+# Required core research files (must be present)
+core_files:
+  research_plan:
+    file: "research_plan.md"
+    required: true
+    extract: ["objectives", "methods", "success_criteria", "timeline"]
+    description: "Study objectives, research methods, and success criteria"
+    
+  session_notes:
+    folder: "session-notes/"
+    required: true
+    extract: ["key_findings", "patterns", "insights", "recommendations", "user_behaviors", "quotes"]
+    description: "Individual session observations, findings, and user feedback from each research session"
+    file_pattern: "*.md"
+    processing: "aggregate_insights_from_multiple_sessions"
+    
+  participant_tracker:
+    file: "participant_tracker.md"
+    required: true
+    extract: ["demographics", "sample_size", "recruitment_method", "completion_status"]
+    description: "Participant demographics, sample size, and study completion data"
+
+# Optional research files (enhance readout quality when present)
+optional_files:
+  affinity_mapping:
+    file: "affinity_mapping.md"
+    extract: ["themes", "grouped_insights", "patterns", "user_needs"]
+    description: "Thematic analysis and grouped insights from research data"
+    audience_value: "Provides structured insights for all audiences"
+    
+  user_journey:
+    file: "user_journey_maps.md"
+    extract: ["touchpoints", "pain_points", "emotions", "opportunities"]
+    description: "User experience flows, pain points, and journey mapping"
+    audience_value: "Critical for design and product teams; strategic context for leadership"
+    
+  personas:
+    file: "personas.md"
+    extract: ["user_types", "behaviors", "goals", "frustrations", "contexts"]
+    description: "User archetypes, behaviors, goals, and contextual needs"
+    audience_value: "Essential for design, content, and product teams"
+    
+  jobs_to_be_done:
+    file: "jobs_to_be_done.md"
+    extract: ["user_jobs", "job_context", "success_criteria", "barriers"]
+    description: "Jobs users are trying to accomplish and barriers to success"
+    audience_value: "Strategic for product and executive audiences; tactical for design teams"
+    
+  usability_issues:
+    file: "usability_issues.md"
+    extract: ["issues", "severity", "frequency", "user_impact", "solutions"]
+    description: "Specific usability problems, severity ratings, and potential solutions"
+    audience_value: "Critical for design, engineering, and accessibility teams"
+    
+  design_opportunities:
+    file: "design_opportunities.md"
+    extract: ["opportunities", "user_value", "business_impact", "implementation_effort"]
+    description: "Design improvement opportunities with impact and effort estimates"
+    audience_value: "Key for design teams; strategic context for leadership and product"
+
+# File processing and validation rules
+file_processing:
+  validation_rules:
+    core_files_check: "All core files must be present for readout generation"
+    optional_files_bonus: "Optional files enhance readout quality and audience specificity"
+    session_notes_processing: "Aggregate insights from multiple session files in session-notes/ folder"
+    
+  data_extraction:
+    quotes_priority: "Extract emotionally resonant quotes for stakeholders, detailed feedback for teams"
+    metrics_focus: "Business metrics for stakeholders, task metrics for teams" 
+    evidence_selection: "Compelling evidence matched to audience decision-making needs"
+    session_aggregation: "Combine individual session insights into audience-relevant patterns"
+    
+  audience_data_mapping:
+    team_audiences: 
+      priority_files: ["usability_issues", "design_opportunities", "user_journey", "personas", "session-notes"]
+      data_focus: "Implementation details, specific problems, user behaviors, tactical solutions"
+      
+    stakeholder_audiences:
+      priority_files: ["jobs_to_be_done", "affinity_mapping", "session-notes"] 
+      data_focus: "Business impact, strategic insights, user outcomes, resource decisions"
+      
+    congressional_briefing:
+      priority_files: ["session-notes", "participant_tracker", "research_plan"]
+      data_focus: "Veteran outcomes, systemic issues, measurable improvements, accountability"
+
+# Auto-generated/computed variables from file analysis
+auto_variables:
+  - audience_category: |
+      determine_audience_category(target_audience) || "team"
+  - content_focus: |
+      extract_content_focus(ai_generated.audience_strategy) || "implementation"
+  - current_date: |
+      new Date().toISOString().split('T')[0]
+  - github_file_link: |
+      generate_github_link(study_name, current_date, target_audience) || null
+  - detected_files: |
+      scan_research_folder(research_folder_path, core_files, optional_files)
+  - file_quality_score: |
+      assess_file_completeness(detected_files, core_files, optional_files)
+  - participant_count: |
+      extract_from_md(participant_tracker, "participants") || "Unknown"
+  - session_count: |
+      count_completed_sessions(participant_tracker, "completed") || "Unknown"
+  - available_insights: |
+      map_files_to_audience_insights(detected_files, target_audience)
 
 # Audience type detection and routing
 audience_routing:
@@ -80,9 +183,8 @@ ai_generation_tasks:
       
       **Target Audience:** {{target_audience}}
       **Study Context:** {{study_name}}
-      **Research Data:** {{input_text}} {{research_readout_data}}
-      **File Quality:** {{file_quality_score}}
-      **Participant Count:** {{participant_count}}
+      **Available Files:** {{detected_files}}
+      **Available Data:** {{available_insights}}
       
       Determine:
       1. **Audience Category** (team vs stakeholder)
@@ -90,16 +192,19 @@ ai_generation_tasks:
       3. **Communication Style** (technical vs business-focused)
       4. **Key Priorities** for this audience
       5. **Success Metrics** they care about
+      6. **Relevant File Priorities** based on audience needs
       
       **Team Audiences** (design, engineering, content, product, accessibility):
       - Focus: Implementation guidance, technical solutions, workflows
       - Style: Detailed, actionable, process-oriented
       - Priorities: User problems they can solve directly
+      - File Priority: usability_issues, design_opportunities, user_journey, personas
       
       **Stakeholder Audiences** (executive, leadership, congressional):
       - Focus: Business impact, decisions needed, resource allocation, veteran outcomes
       - Style: Concise, strategic, outcome-oriented, accountability-focused
       - Priorities: Business goals, user success metrics, compliance, taxpayer value
+      - File Priority: jobs_to_be_done, affinity_mapping, session-notes
       
       **Congressional Briefing Specific Requirements:**
       - Veteran impact metrics and measurable outcomes
@@ -114,9 +219,10 @@ ai_generation_tasks:
       **Content Focus:** [implementation/decision-making]
       **Communication Style:** [technical/business-focused]
       **Key Priorities:** [What this audience cares about most]
+      **Relevant Files:** [Which available files are most valuable for this audience]
       **Recommended Approach:** [How to structure content for maximum impact]
 
-  # Generate audience-specific insights (conditional)
+  # Generate audience-specific insights using available files
   - task_id: "audience_insights"
     prompt: |
       **MANDATORY WRITING REQUIREMENTS:**
@@ -124,17 +230,24 @@ ai_generation_tasks:
       - ALWAYS use direct, concrete language - avoid vague aspirational phrases
       - ALWAYS use active voice and specific verbs
       
-      Generate insights specifically tailored to {{target_audience}}:
+      Generate insights specifically tailored to {{target_audience}} using available research files:
       
-      **Research Data:** {{input_text}} {{research_readout_data}}
       **Audience Strategy:** {{ai_generated.audience_strategy}}
       **Target Audience:** {{target_audience}}
+      **Available Files:** {{detected_files}}
       
-      # CONDITIONAL CONTENT BASED ON AUDIENCE TYPE
+      # CONDITIONAL CONTENT BASED ON AUDIENCE TYPE AND AVAILABLE FILES
       
       **IF TEAM AUDIENCE (design, engineering, content, product, accessibility):**
       
-      Extract 3-5 insights with implementation focus:
+      Extract 3-5 insights with implementation focus using prioritized files:
+      
+      **File-Based Insight Generation:**
+      - **FROM usability_issues.md:** Specific problems, severity, reproduction steps
+      - **FROM session-notes/ folder:** Individual session insights, user behaviors, researcher observations
+      - **FROM design_opportunities.md:** Implementation guidance, effort estimates
+      - **FROM user_journey_maps.md:** Workflow pain points, touchpoint issues
+      - **FROM personas.md:** User context affecting implementation decisions
       
       **Team-Specific Focus Areas:**
       - **Design:** Interface usability, interaction problems, accessibility barriers, design system needs
@@ -144,9 +257,10 @@ ai_generation_tasks:
       - **Accessibility:** WCAG compliance, assistive technology, inclusive design, testing requirements
       
       **Format for each insight:**
-      **{{target_audience}} Insight [X]: [Implementation-focused insight]**
+      **{{target_audience}} Insight [X]: [Implementation-focused insight from available files]**
       
-      **Evidence:** [Quotes, behaviors, data supporting this]
+      **Evidence:** [Specific data from research files supporting this]
+      **Source Files:** [Which files provided this evidence]
       **What this means for {{target_audience}}:** [Direct work implications]
       **Recommended Actions:**
       • [Specific action 1]
@@ -160,32 +274,41 @@ ai_generation_tasks:
       
       **IF STAKEHOLDER AUDIENCE (executive, leadership, congressional):**
       
-      Extract 3 business-focused insights:
+      Extract 3 business-focused insights using strategic files:
+      
+      **File-Based Insight Generation:**
+      - **FROM jobs_to_be_done.md:** Strategic user needs, business context
+      - **FROM affinity_mapping.md:** High-level themes, patterns, systemic issues  
+      - **FROM session-notes/ folder:** Individual session insights aggregated for business implications
+      - **FROM participant_tracker.md:** Sample representativeness, completion rates
+      - **FROM research_plan.md:** Study objectives alignment with business goals
       
       **FOR CONGRESSIONAL BRIEFING AUDIENCE:**
       Focus on veteran outcomes, accountability, and systemic improvements:
       
       **Format for Congressional insights:**
-      **Congressional Briefing Point [X]: [Veteran impact statement with metrics]**
+      **Congressional Briefing Point [X]: [Veteran impact statement with metrics from files]**
       
-      **Veteran Outcomes:** [Measurable improvements to veteran experience]
-      **Systemic Issues Identified:** [Problems found that affect veteran services]
-      **Evidence-Based Solutions:** [Research-backed improvements implemented/recommended]
-      **Taxpayer Value:** [ROI and resource efficiency gains]
-      **Legislative Compliance:** [How findings support VA's Congressional mandates]
-      **Accountability Metrics:** [Specific measures of success and improvement]
+      **Veteran Outcomes:** [Measurable improvements from research data]
+      **Source Evidence:** [Specific file data supporting veteran impact]
+      **Systemic Issues Identified:** [Problems affecting veteran services from research]
+      **Evidence-Based Solutions:** [Research-backed improvements from available files]
+      **Taxpayer Value:** [ROI and efficiency data from research]
+      **Legislative Compliance:** [How findings support Congressional mandates]
+      **Accountability Metrics:** [Specific measures from research data]
       
       **FOR OTHER STAKEHOLDER AUDIENCES:**
       **Format for each insight:**
-      **Business Insight [X]: [Clear business impact statement]**
+      **Business Insight [X]: [Clear business impact statement from research files]**
       
-      **Supporting Evidence:** [Data, quotes, metrics that matter to leadership]
+      **Supporting Evidence:** [Specific data from files that matter to leadership]
+      **Source Files:** [Which research files provided this evidence] 
       **Business Implications:** [How this affects company goals]
-      **Resource Requirements:** [What's needed to address this]
-      **Success Metrics:** [Business KPIs that will improve]
-      **Timeline Impact:** [Urgency and implementation timeframe]
+      **Resource Requirements:** [What's needed based on research findings]
+      **Success Metrics:** [Business KPIs that research shows will improve]
+      **Timeline Impact:** [Urgency based on user needs identified in research]
 
-  # Generate compelling evidence (quotes for stakeholders, detailed data for teams)
+  # Generate compelling evidence from available files
   - task_id: "compelling_evidence"
     prompt: |
       **MANDATORY WRITING REQUIREMENTS:**
@@ -193,70 +316,78 @@ ai_generation_tasks:
       - ALWAYS use direct, concrete language - avoid vague aspirational phrases
       - ALWAYS use active voice and specific verbs
       
-      Select the most compelling evidence for {{target_audience}}:
+      Select the most compelling evidence for {{target_audience}} from available research files:
       
-      **Research Data:** {{input_text}} {{research_readout_data}}
       **Audience Insights:** {{ai_generated.audience_insights}}
       **Audience Strategy:** {{ai_generated.audience_strategy}}
+      **Available Files:** {{detected_files}}
       
       **IF TEAM AUDIENCE:**
-      Select detailed behavioral evidence and user feedback that helps with implementation:
-      - Specific user behaviors and pain points
-      - Task completion data and error patterns  
-      - Detailed quotes about interface/process issues
-      - Technical problems and workarounds users create
+      Extract detailed evidence that helps with implementation from relevant files:
+      - **From usability_issues.md:** Specific problems, severity, reproduction steps
+      - **From session-notes/ folder:** Behavioral patterns, user feedback, and researcher observations
+      - **From user_journey_maps.md:** Workflow breakdowns, touchpoint failures
+      - **From personas.md:** User contexts affecting design decisions
+      - **From design_opportunities.md:** Specific improvement areas with implementation details
       
       **IF STAKEHOLDER AUDIENCE:**
-      Select emotionally resonant quotes and business-relevant data:
+      Extract business-relevant evidence from strategic files:
       
       **FOR CONGRESSIONAL BRIEFING:**
-      - Veteran quotes that demonstrate service impact and mission alignment
-      - Data showing measurable improvements to veteran outcomes  
-      - Evidence of systemic issues being identified and addressed
-      - Metrics demonstrating taxpayer value and resource efficiency
-      - Examples of VA meeting Congressional mandates and veteran needs
+      - **From session-notes/ folder:** Veteran impact evidence and systemic issues from individual sessions
+      - **From participant_tracker.md:** Representative sample evidence and veteran demographics  
+      - **From jobs_to_be_done.md:** Evidence of veteran needs and service gaps
+      - **From research_plan.md:** Evidence of VA mission alignment and legislative compliance
       
       **FOR OTHER STAKEHOLDER AUDIENCES:**
-      - Quotes that show user frustration or strong emotion
-      - Data that connects to business metrics (conversion, retention, etc.)
-      - Evidence that motivates resource allocation decisions
-      - User impact that relates to company mission/values
+      - **From jobs_to_be_done.md:** Evidence of user needs affecting business goals
+      - **From affinity_mapping.md:** High-level patterns affecting business outcomes
+      - **From session-notes/ folder:** Individual session evidence connecting user problems to business impact
+      - **From design_opportunities.md:** Evidence of ROI and competitive advantage
       
       **Format:**
-      **Primary Evidence:** [Quote, data point, or behavioral observation]
+      **Primary Evidence:** [Quote, data point, or behavioral observation from files]
+      **Source:** [Specific file(s) where this evidence was found]
       **Context:** [Why this matters for the audience]
       **Connection:** [How this supports key insights]
       **Impact:** [What happens if this isn't addressed]
 
-  # Generate actionable recommendations (tactical for teams, strategic for stakeholders)
-  - task_id: "actionable_recommendations"
+  # Generate actionable recommendations using file insights
+  - task_id: "actionable_recommendations" 
     prompt: |
       **MANDATORY WRITING REQUIREMENTS:**
       - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
       - ALWAYS use direct, concrete language - avoid vague aspirational phrases
       - ALWAYS use active voice and specific verbs
       
-      Create recommendations tailored to {{target_audience}} authority and scope:
+      Create recommendations tailored to {{target_audience}} using insights from research files:
       
       **Audience Insights:** {{ai_generated.audience_insights}}
       **Compelling Evidence:** {{ai_generated.compelling_evidence}}
       **Target Audience:** {{target_audience}}
       
       **IF TEAM AUDIENCE:**
-      Generate 3-5 tactical recommendations they can implement:
+      Generate 3-5 tactical recommendations based on implementation-focused files:
+      
+      **Recommendations rooted in file data:**
+      - **From usability_issues.md:** Specific fixes with priority and effort estimates
+      - **From design_opportunities.md:** Implementation roadmaps and resource needs
+      - **From user_journey_maps.md:** Workflow improvements and touchpoint fixes
+      - **From personas.md:** User-centered design decisions and context considerations
       
       **Format:**
-      **{{target_audience}} Recommendation [X]: [Specific implementation action]**
+      **{{target_audience}} Recommendation [X]: [Specific implementation action from file insights]**
       
+      **Based on:** [Which files provided evidence for this recommendation]
       **Implementation Steps:**
       • [Step 1 with timeline]
       • [Step 2 with timeline]
       • [Step 3 with timeline]
       
-      **Resources Needed:** [Tools, time, people]
-      **Success Criteria:** [How to know it's working]
-      **Collaboration Required:** [Dependencies with other teams]
-      **Template/Example:** [Practical example or template they can use]
+      **Resources Needed:** [Tools, time, people based on file analysis]
+      **Success Criteria:** [How to know it's working, metrics from research]
+      **File Evidence:** [Specific data supporting this approach]
+      **Collaboration Required:** [Dependencies identified from research]
       
       ---
       
@@ -267,29 +398,30 @@ ai_generation_tasks:
       Generate systemic improvement recommendation with accountability focus:
       
       **Format:**
-      **Congressional Recommendation:** [Veteran-focused systemic improvement]**
+      **Congressional Recommendation:** [Veteran-focused systemic improvement from research files]**
       
-      **Veteran Impact:** [How this directly improves veteran outcomes and experience]
-      **Systemic Improvement:** [How this addresses broader VA service delivery issues]
-      **Implementation Plan:** [Specific steps, timeline, and accountability measures]
-      **Resource Justification:** [Why this investment serves veterans and taxpayers effectively]
-      **Success Metrics:** [Measurable veteran outcomes and service improvements]
-      **Legislative Alignment:** [How this supports Congressional mandates and VA mission]
-      **Risk Mitigation:** [Challenges identified and mitigation strategies]
-      **Reporting Schedule:** [How progress will be measured and reported to Congress]
+      **Research Foundation:** [Which files and data support this recommendation]
+      **Veteran Impact:** [How this improves outcomes based on research findings]
+      **Systemic Improvement:** [How this addresses broader issues identified in files]
+      **Implementation Plan:** [Steps, timeline, accountability based on research insights]
+      **Resource Justification:** [Why investment serves veterans based on file evidence]
+      **Success Metrics:** [Measurable outcomes from research data]
+      **Legislative Alignment:** [How research supports Congressional mandates]
+      **Evidence Base:** [Specific file data supporting this approach]
       
       **FOR OTHER STAKEHOLDER AUDIENCES:**
       **Format:**
-      **Primary Recommendation:** [High-level strategic action]
+      **Primary Recommendation:** [Strategic action based on research file insights]
       
-      **Business Rationale:** [Why this matters for company goals]
-      **Implementation Approach:** [2-3 key steps to achieve it]
-      **Resource Requirements:** [Budget, people, timeline]
-      **Success Metrics:** [Business KPIs to track]
-      **Risk Mitigation:** [What could go wrong and how to prevent it]
-      **Timeline:** [Realistic implementation schedule]
+      **Research Foundation:** [Which files provided evidence for this recommendation]
+      **Business Rationale:** [Why this matters based on research findings]
+      **Implementation Approach:** [Steps rooted in file insights]
+      **Resource Requirements:** [Budget, people, timeline based on research]
+      **Success Metrics:** [KPIs identified from research data]
+      **Risk Mitigation:** [Challenges identified in files and solutions]
+      **File Evidence:** [Specific research data supporting this approach]
 
-  # Generate audience-appropriate deliverables
+  # Generate audience-appropriate deliverables from file insights
   - task_id: "audience_deliverables"
     prompt: |
       **MANDATORY WRITING REQUIREMENTS:**
@@ -297,160 +429,181 @@ ai_generation_tasks:
       - ALWAYS use direct, concrete language - avoid vague aspirational phrases
       - ALWAYS use active voice and specific verbs
       
-      Create ready-to-use deliverables for {{target_audience}}:
+      Create ready-to-use deliverables for {{target_audience}} based on research insights:
       
       **Recommendations:** {{ai_generated.actionable_recommendations}}
+      **Available Files:** {{detected_files}}
       **Target Audience:** {{target_audience}}
       
       **IF TEAM AUDIENCE:**
-      Create practical implementation tools:
+      Create practical implementation tools from research files:
       
       **Ready-to-Use Templates:**
-      [2-3 specific templates this team can use immediately]
+      [2-3 specific templates derived from research files that {{target_audience}} can use immediately]
+      - Based on usability_issues.md: [Issue tracking and fix prioritization templates]
+      - Based on user_journey_maps.md: [Workflow improvement checklists]
+      - Based on design_opportunities.md: [Implementation planning templates]
       
       **Implementation Checklists:**
-      [Step-by-step checklists for their most important actions]
+      [Step-by-step checklists for their most important actions, derived from file insights]
       
       **Quality Criteria:**
-      [How to know if their work successfully addresses user needs]
+      [How to know if their work addresses user needs identified in research files]
       
-      **Communication Templates:**
-      [Templates for updating leadership on progress]
+      **File-Based Resources:**
+      [Links to specific research files most relevant to their implementation work]
       
       ---
       
       **IF STAKEHOLDER AUDIENCE:**
-      Create decision-making tools:
+      Create decision-making tools from strategic research insights:
       
       **FOR CONGRESSIONAL BRIEFING:**
       Create oversight and accountability tools:
       
       **Congressional Oversight Package:**
-      [Ready-to-use materials for Congressional reporting and briefings]
+      [Materials derived from research files for Congressional reporting]
+      - **Veteran Outcome Evidence:** [Specific data from files showing veteran impact]
+      - **Research File Summary:** [Key files and findings for Congressional review]
+      - **Accountability Framework:** [Based on research plan and session notes]
       
-      **Veteran Outcome Dashboard:**
-      [Metrics showing measurable improvements to veteran experience]
+      **Research-Based Metrics Dashboard:**
+      [Key performance indicators identified from research files]
       
-      **Accountability Framework:**
-      [How progress will be tracked, measured, and reported to Congress]
-      
-      **Legislative Compliance Report:**
-      [How research findings support Congressional mandates and VA mission]
-      
-      **Taxpayer Value Documentation:**
-      [ROI analysis and resource efficiency improvements]
+      **Legislative Compliance Documentation:**
+      [How research findings support VA's Congressional mandates, based on file analysis]
       
       **FOR OTHER STAKEHOLDER AUDIENCES:**
       **Decision Framework:**
-      [How to prioritize the recommended actions]
+      [How to prioritize actions based on research file insights]
       
       **Resource Planning:**
-      [What teams, budget, timeline needed]
+      [Teams, budget, timeline needs identified from research analysis]
       
-      **Success Dashboard:**
-      [Key metrics to track progress]
+      **Research-Based Success Metrics:**
+      [KPIs to track, derived from research file analysis]
       
-      **Stakeholder Communication:**
-      [How to communicate progress to other leaders]
+      **File Reference Guide:**
+      [Which research files are most relevant for ongoing decision-making]
 
-# Auto-generated/computed variables
-auto_variables:
-  - audience_category: |
-      determine_audience_category(target_audience) || "team"
-  - content_focus: |
-      extract_content_focus(ai_generated.audience_strategy) || "implementation"
-  - current_date: |
-      new Date().toISOString().split('T')[0]
-  - github_file_link: |
-      generate_github_link(study_name, current_date, target_audience) || null
-
-# Output configuration
-output_options:
-  default_delivery: "slack_and_file"
-  slack_format: "structured"
-  file_location: "05-findings/"
-  file_name: "{{target_audience}}_readout_{{study_name_slug}}_{{current_date}}.md"
+# =============================================================================
+# SLACK OUTPUT (Minimal notification with link)
+# =============================================================================
 
 slack_output:
   post_in_channel: true
-  create_thread: true
-  title_format: "🎯 {{target_audience}} Readout"
+  create_thread: false
+  title_format: "🎯 {{target_audience}} Readout Ready"
   ping_team: ["{{researcher_contact}}", "{{team_members}}"]
   interactive_elements:
-    - text: "📊 View Full Research Readout"
-      action: "run_research_readout"
-    - text: "🛠 Generate GitHub Issues"
-      action: "run_github_issues_generator"
+    - text: "📋 View Full Readout in GitHub"
+      url: "{{github_file_link}}"
     - text: "🎯 Generate Another Targeted Readout"
       action: "run_targeted_readouts"
-    - text: "🗂️ View in GitHub"
-      url: "{{github_file_link}}"
+    - text: "📊 View Research Overview"
+      action: "run_research_readout"
 
-# Conditional output template based on audience type
-output_format: |
-  Hi {{target_audience}}! 👋 I've created a customized readout from our {{study_name}} research with insights and actions specifically relevant to your {{content_focus}} needs.
+slack_message_format: |
+  🎯 **{{target_audience}} Readout Ready**
+  
+  Hi {{team_members}}! I've generated a customized readout from our {{study_name}} research specifically for {{target_audience}}.
+  
+  📋 **Key Focus:** {{content_focus}} insights and actionable recommendations
+  📊 **Research Context:** {{participant_count}} participants, {{session_count}} sessions
+  
+  👆 **View Full Readout:** [{{target_audience}}_readout_{{study_name_slug}}_{{current_date}}.md]({{github_file_link}})
+  
+  *Questions?* Contact {{researcher_contact}} | *Generate another audience?* Use `/readouts [audience]`
 
-  {{team_members}}
+# =============================================================================
+# GITHUB OUTPUT (Comprehensive reference document)
+# =============================================================================
 
-  📂 *Study:* {{study_name}}  
-  📁 *Research Folder:* {{research_folder_path}}
-  🎯 *Audience:* {{target_audience}} ({{audience_category}})
+github_output:
+  location: "05-findings/"
+  file_name: "{{target_audience}}_readout_{{study_name_slug}}_{{current_date}}.md"
+  format: "comprehensive_reference"
+
+github_document_format: |
+  # {{target_audience}} Readout — {{study_name}}
+
+  **🤖 AI-Customized for {{target_audience}} | Generated {{current_date}}**
+
+  ## Study Overview
+
+  - **Study Name:** {{study_name}}
+  - **Research Folder:** {{research_folder_path}}
+  - **Target Audience:** {{target_audience}} ({{audience_category}} focus)
+  - **Content Focus:** {{content_focus}}
+  - **Lead Researcher:** {{researcher_contact}}
+  - **Generated:** {{current_date}}
+
+  ## Research Context
+
+  - **Participants:** {{participant_count}}
+  - **Sessions:** {{session_count}}
+  - **Available Files:** {{detected_files}}
+  - **File Quality Score:** {{file_quality_score}}
 
   ---
 
-  ## 🎯 {{target_audience}} READOUT — {{study_name}}
-
-  **🤖 AI-Customized for {{target_audience}} | {{current_date}}**
-
-  ---
-
-  ### 💡 Key Insights for {{target_audience}}
+  ## 💡 Key Insights for {{target_audience}}
 
   {{ai_generated.audience_insights}}
 
   ---
 
-  ### 📊 Compelling Evidence
+  ## 📊 Compelling Evidence
 
   {{ai_generated.compelling_evidence}}
 
   ---
 
-  ### ✅ Recommended Actions
+  ## ✅ Recommended Actions
 
   {{ai_generated.actionable_recommendations}}
 
   ---
 
-  ### 🛠️ Ready-to-Use Resources
+  ## 🛠️ Ready-to-Use Resources
 
   {{ai_generated.audience_deliverables}}
 
   ---
 
-  ### 📁 Research Context
+  ## Research Files Reference
 
-  • **Data Sources:** {{detected_files}}
-  • **Quality Score:** {{file_quality_score}}
-  • **Participants:** {{participant_count}} 
-  • **Sessions:** {{session_count}}
+  ### Core Files (Required)
+  - **Research Plan:** `research_plan.md` - Study objectives, methods, success criteria
+  - **Session Notes:** `session-notes/` folder - Individual session observations and findings
+  - **Participant Tracker:** `participant_tracker.md` - Demographics, sample size, completion data
+
+  ### Optional Files Available
+  {{#each detected_files}}
+  - **{{this.name}}:** `{{this.file}}` - {{this.description}}
+  {{/each}}
 
   ---
 
-  **🏷️ Tags:** `{{target_audience}}-readout`, `{{audience_category}}-focused`, `research-insights`, `{{content_focus}}`
+  ## Metadata
+
+  - **Audience Category:** {{audience_category}}
+  - **Communication Style:** Extracted from audience strategy
+  - **Key Priorities:** {{target_audience}}-specific priorities
+  - **Tags:** `{{target_audience}}-readout`, `{{audience_category}}-focused`, `research-insights`, `{{content_focus}}`
 
   ---
 
-  *Questions about implementation?* Reply in thread or contact {{researcher_contact}} for research context.
+  **📞 Questions?** Contact {{researcher_contact}} for research context and implementation guidance.
 
-  *🤖 AI-Generated Targeted Readout | Optimized for {{target_audience}} Workflow*
+  **🤖 Generated by:** Qori Targeted Readouts v2.1 | Optimized for {{target_audience}} workflow
 
 notify:
   - role: targeted_audience
-    action: "Targeted readout delivered"
+    action: "Readout notification sent"
     channel: "{{study_channel}}"
-    message: "🎯 {{target_audience}} readout for {{study_name}} is ready with {{content_focus}}-focused insights and actions."
+    message: "🎯 {{target_audience}} readout notification posted with link to comprehensive GitHub analysis."
   - role: researcher
-    action: "Readout generated"
+    action: "Readout generated and delivered"
     slack_tag: "{{researcher_contact}}"
-    message: "Your {{target_audience}} targeted readout has been delivered with customized {{content_focus}} guidance."
+    message: "Your {{target_audience}} targeted readout is ready: minimal Slack notification sent + comprehensive GitHub document created."
