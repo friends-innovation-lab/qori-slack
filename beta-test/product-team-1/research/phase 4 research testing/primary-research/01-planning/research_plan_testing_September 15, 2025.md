@@ -1,6 +1,6 @@
 # 🧭 Research Plan – testing
 
-**📦 Product/Feature Area:** "Testing - Evaluating user experience to ensure Veteran satisfaction. Crucial for identifying usability issues and improving VA services. Helps streamline processes and enhance overall user satisfaction."
+**📦 Product/Feature Area:** "Testing in VA UX research involves evaluating user experiences to ensure optimal functionality and usability for Veterans. This process is crucial for identifying pain points and improving digital services within the VA ecosystem."
 
 **🏛️ Team/Office:** testing  
 **👩🏽‍🔬 Lead Researcher:** testing  
@@ -10,82 +10,79 @@
 
 ## 🔎 Background
 
-This research will inform improvements to the testing process, ensuring a more user-friendly experience for Veterans. The streamlined testing procedures will result in quicker access to essential services and resources, ultimately enhancing the overall efficiency of VA operations. By optimizing the testing experience, we aim to prioritize Veterans' needs and deliver a more effective and user-centric service.
+This research will inform improvements to the testing process for Veterans, ensuring a more efficient and user-friendly experience. By streamlining the testing procedures, Veterans will benefit from quicker access to essential services. This change will ultimately lead to increased satisfaction among Veterans and improved operational efficiency for the VA.
 
 ---
 
 ## 🎯 OCTO Priorities
 
-**Primary OCTO Priority:** Fast-track disability claims, starting with PACT Act claims
+**Primary OCTO Priority:** Solidify the VA.gov platform
 
-**Explanation:** Testing the efficiency and effectiveness of the fast-track disability claims process for veterans will ensure a smoother and quicker experience for those seeking benefits.
+**Explanation:** Testing will ensure that the VA.gov platform is stable, reliable, and user-friendly for veterans accessing important resources and information.
 
-**Additional Priorities:**
-- **Improve the Veteran login experience:** Enhancing the login experience for veterans during the testing phase will ensure seamless access to their accounts and benefits.
-- **Expand the flagship mobile app:** Testing the mobile app's functionality and user experience will provide valuable insights for further development and improvement.
+**Additional Priorities (if applicable):**
+- **Fast-track disability claims, starting with PACT Act claims:** Testing will help streamline the claims process and ensure timely and accurate processing for veterans in need.
+- **Drive OIT's Digital Transformation Strategy:** Testing will play a crucial role in implementing digital solutions that improve the overall user experience for veterans interacting with VA services online.
 
 ---
 
 ## 🧭 User Journey
 
-**User Journey Connection:** Testing is integrated into the VA Employee Workflow Map during the Daily operations and Process improvement phases to ensure the efficiency and effectiveness of systems and processes.
+**User Journey Connection:** Testing plays a crucial role in ensuring the effectiveness and efficiency of the user's workflow.
 
 **Key Moments/Phases:**
-- **Daily operations:** Conducting user acceptance testing to validate system functionalities and identify any issues.
-- **Process improvement:** Gathering feedback from users through usability testing to inform iterative improvements.
-- **Career development:** Providing training on testing methodologies and tools to enhance employees' skills.
+- **Onboarding:** Conducting usability testing to familiarize new VA employees with the systems and processes.
+- **Daily operations:** Running A/B testing to optimize the user experience for VA employees during their day-to-day tasks.
+- **Process improvement:** Gathering feedback through testing to identify areas for enhancement and optimization in the workflow.
 
-**Critical Pain Points (if applicable):** Ensuring that testing does not disrupt daily operations and that feedback from testing is effectively incorporated into process improvement efforts.
+**Critical Pain Points (if applicable):** Ensuring that testing is seamlessly integrated into the workflow to avoid disruptions and delays in the user's tasks.
 
 ---
 
 ## 🎓 Research Goals
 
-**Primary Goal:** Conduct concept testing to identify usability issues and gather feedback to improve the overall user experience of the product in the testing phase.
+**Primary Goal:** Identify and address usability issues in the testing process to improve overall user experience and increase efficiency.
 
 **Supporting Goals:**
-- Identify pain points in the user journey through concept testing to prioritize areas for improvement.
-- Gather specific feedback on features related to testing to inform iterative design decisions.
-- Evaluate user satisfaction and task completion rates in the testing phase to validate the effectiveness of design changes.
+- Gather feedback from participants to pinpoint pain points and areas for improvement in the testing workflow.
+- Analyze survey data to uncover user preferences and behaviors that impact the testing experience.
+- Implement usability testing to validate design changes and ensure a seamless testing process for users.
 
 ---
 
 ## ✅ Success Criteria & Expected Deliverables
 
 **Success Criteria:**
-1. **Decision Support:** By the end of the research project, provide clear recommendations on which testing strategies to implement based on user feedback and data analysis. These recommendations should be delivered within 2 weeks of completing the research, allowing stakeholders to make informed decisions promptly.
-
-2. **Quality Threshold:** Ensure that all research findings meet a minimum standard of actionability, with at least 80% of insights directly contributing to actionable improvements in the testing process. This standard should be reviewed and maintained throughout the research project to ensure quality outcomes.
-
-3. **Timeline Success:** Complete the UX research project within the agreed-upon timeline, delivering all findings and recommendations to stakeholders by the specified deadline. Stakeholders should have at least 1 week to review and provide feedback on the research before final decisions are made.
-
-4. **Impact Measurement:** Measure the success of the research project by tracking the implementation of recommended testing strategies and monitoring key metrics, such as user engagement and conversion rates. Success will be determined by a noticeable improvement in these metrics within 3 months of implementing the research findings.
+1. **Decision Support:** Findings from usability testing and surveys will inform testing decisions for the next product release within 2 weeks of research completion.
+2. **Quality Threshold:** Research findings must meet a minimum standard of 80% actionability, as assessed by the UX Research team, to ensure that insights can be effectively implemented by the testing team.
+3. **Timeline Success:** Research findings must be delivered to stakeholders for review within 1 week of completion, with a final decision on testing strategies made within 2 weeks of delivery.
+4. **Impact Measurement:** The success of the research will be measured by the number of identified usability issues that are addressed in the testing process, with a target of at least 70% of issues being resolved in the next product release.
 
 **Key Outputs:**
 **Primary Deliverables:**
-- Detailed usability report highlighting key findings and actionable insights - delivered within 2 days of research completion
-- Prioritized list of usability issues with recommended solutions - delivered within 1 day of research completion
-- Video highlights reel showcasing user interactions and pain points - delivered within 3 days of research completion
+- Usability testing report - delivered within 2 days of research completion
+- Survey findings presentation - delivered within 1 day of research completion
+- Recommendations for testing improvements - delivered within 3 days of research completion
 
 **Supporting Materials:**
-- Annotated wireframes with suggested improvements based on user feedback - delivered within 4 days of research completion
-- Summary presentation for stakeholders outlining key takeaways and next steps - delivered within 2 days of research completion
+- User personas based on research data - delivered within 4 days of research completion
+- Executive summary highlighting key insights - delivered within 1 day of research completion
 
 ---
 
 ## 🛠️ Methodology
 
-**Methodology Rationale:** The concept methodology is optimal for this research as it allows for direct testing of ideas and concepts with participants, providing actionable insights for product development.
+**Methodology Rationale:** Usability testing and surveys are optimal for gathering direct feedback from participants on the VA product, allowing for actionable insights to improve user experience.
 
 **Implementation Approach:**
-- Conducting individual testing sessions lasting 60 minutes each to gather in-depth feedback.
-- Utilizing task-based activities and direct observation for data collection, supplemented by post-session interviews.
-- Implementing strict guidelines for testing evaluation to ensure consistency and accuracy in results.
+- Conducting usability testing sessions with participants for direct feedback on product usability
+- Administering surveys to gather quantitative data on user satisfaction and preferences
+- Implementing specific protocols for data collection and analysis to evaluate testing outcomes
 
 **VA Compliance Notes:**
-- Collaboration Cycle to include stakeholder feedback and approval within a 2-week timeline.
-- Incorporating trauma-informed practices in recruitment and research interactions.
-- Providing accessibility accommodations such as screen readers and sign language interpreters for all participants.
+- Collaboration Cycle requirements will be met with regular updates and feedback from VA stakeholders
+- Trauma-informed research considerations will be integrated into participant interactions and data collection
+- Accessibility accommodations will be provided for participants with disabilities to ensure inclusive research practices.
 
 ---
 
@@ -98,17 +95,21 @@ This research will inform improvements to the testing process, ensuring a more u
 **👥 Demographic Targets:**
 **Demographic targets:**
 Based on testing participants, calculate realistic numbers:
-- Service era diversity: 2-3 participants from each era (WWII, Korean War, Vietnam War, Gulf War, Post-9/11)
-- Income diversity: 2-3 participants from low, medium, and high-income brackets
-- Racial/ethnic diversity: 2-3 participants from different racial/ethnic backgrounds
+
+**If veterans detected:**
+- Service era: 3-5 participants from each era (WWII, Korean War, Vietnam War, Gulf War, Post-9/11)
+- Income: 2-3 participants from low, middle, and high-income brackets
+- Racial/ethnic diversity: 4-6 participants representing different races/ethnicities
 - Gender diversity: Equal representation of male and female participants
-- Age diversity: 2-3 participants from each age group (18-25, 26-35, 36-45, 46-55, 56+)
-- Education diversity: 2-3 participants with high school diploma, some college, bachelor's degree, and advanced degree
-- Accessibility needs: 1-2 participants with specific accessibility needs (visual impairment, mobility issues)
+- Age diversity: 2-3 participants from each age group (20-30, 31-40, 41-50, 51-60, 61+)
+- Education diversity: 2-3 participants with high school, associate's, bachelor's, and master's degrees
+- Accessibility needs: 1-2 participants with visual, auditory, or mobility impairments
 
 **Secondary targets:**
-- Testing usage patterns: 2-3 frequent users and 2-3 infrequent users
-- Training background: 2-3 participants with formal training and 2-3 self-taught users
+- Testing usage patterns: 4-6 frequent users and 2-3 infrequent users
+- Training background: 3-4 participants with formal training and 3-4 self-taught users
+
+**CRITICAL:** Ensure the numbers provided align with the total participant count for testing.
 
 ---
 
@@ -116,49 +117,48 @@ Based on testing participants, calculate realistic numbers:
 
 | Phase              | Duration | Start Date | End Date   | Key Deliverables |
 |--------------------|----------|------------|------------|------------------|
-| Planning           | 2 days   | 2023-10-06 | 2023-10-09 | Project Brief    |
-| Collaboration Cycle| 5 days   | 2023-10-10 | 2023-10-16 | Stakeholder Alignment |
-| Recruiting         | 7 days   | 2023-10-17 | 2023-10-27 | Participant Selection |
-| Research           | 5 days   | 2023-10-30 | 2023-11-06 | Data Collection   |
-| Analysis           | 1 day    | 2023-11-07 | 2023-11-08 | Insights Synthesis |
-| Reporting          | 1 day    | 2023-11-09 | 2023-11-10 | Final Report      |
+| Planning           | 3 days   | 2022-10-20 | 2022-10-24 | Project Brief    |
+| Collaboration Cycle| 10 days  | 2022-10-25 | 2022-11-09 | Stakeholder Meeting, Research Plan |
+| Recruiting         | 14 days  | 2022-11-10 | 2022-11-29 | Participant Profiles |
+| Research           | 7 days   | 2022-11-30 | 2022-12-08 | Usability Test, Survey |
+| Analysis           | 2 days   | 2022-12-09 | 2022-12-12 | Data Synthesis    |
+| Reporting          | 2 days   | 2022-12-13 | 2022-12-16 | Insights Report   |
 
 ---
 
 ## ⚠️ Risk Assessment
 
-**Recruitment challenges:** Difficulty in finding qualified testing participants
+**Recruitment challenges:** Difficulty finding qualified testing participants
 - **Likelihood:** High
-- **Mitigation:** Expand recruitment efforts to include a diverse range of sources such as social media, online communities, and professional networks. Offer incentives to encourage participation.
+- **Mitigation:** Expand recruitment efforts to include multiple channels such as social media, online forums, and professional networks. Consider offering incentives to attract qualified participants.
 
-**Execution issues:** Problems with concept implementation
+**Execution issues:** Usability and survey implementation problems
 - **Likelihood:** Medium
-- **Mitigation:** Conduct thorough pilot testing to identify and address any potential issues before full-scale implementation. Provide clear guidelines and training for team members responsible for executing the concept.
+- **Mitigation:** Conduct thorough pilot testing of usability and survey instruments before full implementation. Provide clear instructions and training to team members responsible for executing the research methods.
 
-**Timeline risks:** Delays that affect standard
+**Timeline risks:** Delays impacting extended timeline
 - **Likelihood:** Medium
-- **Mitigation:** Develop a detailed project timeline with clear milestones and deadlines. Regularly monitor progress and address any issues promptly to prevent delays. Consider building in buffer time for unexpected setbacks.
+- **Mitigation:** Develop a detailed project plan with clear milestones and deadlines. Regularly monitor progress and address any issues promptly to prevent delays. Consider allocating additional resources if necessary to stay on track.
 
 **Quality concerns:** Data validity and stakeholder satisfaction
 - **Likelihood:** High
-- **Mitigation:** Implement rigorous quality control measures, such as double-checking data accuracy and conducting regular check-ins with stakeholders to ensure their needs are being met. Seek feedback throughout the project to make necessary adjustments.
+- **Mitigation:** Implement rigorous quality control measures such as double-checking data entry, conducting regular quality assurance checks, and seeking feedback from stakeholders throughout the research process. Prioritize transparency and open communication to ensure stakeholder satisfaction.
 
 ---
 
 ## 🚀 Next Steps
 
 **Immediate Actions (Week 1 post-research):**
-- Design and conduct a workshop to share research findings with the testing team, led by the VA UX Researcher
-- Create a detailed report summarizing key insights and recommendations for testing improvements, due within 5 days
+- Conduct a debrief meeting with the UX research team to discuss key findings and insights - Responsible party: VA UX Research Lead - Timeline: Within 3 days post-research completion
+- Share top-line research highlights with the testing team to kickstart implementation planning - Responsible party: VA UX Research Lead - Timeline: Within 5 days post-research completion
 
 **Short-term Actions (Weeks 2-4):**
-- Develop a testing improvement roadmap outlining specific changes to be implemented, led by the Product Manager
-- Hold a stakeholder meeting to review and approve the testing improvement roadmap, scheduled for week 3
-- Allocate necessary resources, including budget and personnel, for implementing testing improvements, decision to be made by the Director of Product Development
+- Develop a detailed implementation plan for integrating research insights into the testing process - Responsible party: VA UX Research Lead - Timeline: By end of Week 2
+- Hold a decision-making milestone meeting with key stakeholders to prioritize testing improvements based on research findings - Responsible party: VA UX Research Lead - Timeline: By end of Week 3
+- Allocate resources for necessary tools and training to support the implementation of research-driven testing improvements - Responsible party: VA UX Research Lead in collaboration with Testing Team Lead - Timeline: By end of Week 4
 
 **Success Metrics:**
-- Measure the increase in user engagement and task completion rates on the testing platform post-implementation
-- Conduct a follow-up research study to assess the effectiveness of the testing improvements and identify any additional areas for enhancement
+- Measure the increase in testing efficiency and effectiveness based on the implementation of research-driven improvements - Responsible party: VA UX Research Lead - Follow-up research needs assessment to identify any gaps or areas for further optimization in the testing process - Responsible party: VA UX Research Lead
 
 ---
 
