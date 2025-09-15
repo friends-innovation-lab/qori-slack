@@ -374,20 +374,24 @@ ai_generation_tasks:
       You will receive only the Manual Notes and Transcript text. Extract a participant id and output a filename.
 
       **Manual Notes (optional)**
-      {manual_notes_text_or_blank}
+      {{manual_notes_text_or_blank}}
 
       **Transcript**
-      {input_text}
+      {{input_text}}
 
       Detection Rules:
-      - Look for explicit IDs: pt\d{{1,4}}, participant[_-]?\d{{1,4}}, p\d{{1,4}}, user[_-]?\d{{1,4}}
-      - Normalize: "Participant PT003" → pt003, "User 07" → pt007
-      - Ignore human names (treat as no ID)
-      - Fallback: participant_YYYYMMDDHHmmss (UTC), based on first date/time in text; if date only, append 000000; if none, use participant_00000000000000
+      - Look for explicit IDs such as: PT7, PT12, participant-15, participant_9, p23, user_7, user-42
+      - Normalize examples:
+        - "Participant PT003" → pt003
+        - "User 07" → pt007
+      - If only a human name appears (e.g., "Participant: John"), treat as no ID found.
+      - Fallback when no ID is found:
+        - Build participant_YYYYMMDDHHmmss (UTC) from the first date/time found in the text.
+        - If only a date (no time) is found, append 000000.
+        - If no date/time is found at all, use participant_00000000000000.
 
       Output Rules:
-      - Produce: {{participant_id}}-coded-analysis.md
-      - Lowercase participant_id
+      - Produce: PARTICIPANT_ID-coded-analysis.md (replace PARTICIPANT_ID with the detected/normalized id, in lowercase)
       - Return ONLY the filename as one line
       - Example: pt003-coded-analysis.md
 
@@ -396,21 +400,21 @@ ai_generation_tasks:
       You will receive only the Manual Notes and Transcript text. Extract a session id and output a relative path.
 
       **Manual Notes (optional)**
-      {manual_notes_text_or_blank}
+      {{manual_notes_text_or_blank}}
 
       **Transcript**
-      {input_text}
+      {{input_text}}
 
       Detection Rules:
-      - Prefer explicit tokens: session[_-]?\d{{4,14}}, s\d{{1,4}}
-      - Normalize: s1 → session_0001
-      - If a session date appears (e.g., July 18, 2025 or 2025-07-18), build session_YYYYMMDD
-      - If multiple, choose earliest in text
-      - If nothing, use session_unknown
+      - Prefer explicit session tokens such as: session_20250718, session-202507181300, session2, s1
+      - Normalize examples:
+        - "s1" → session_0001
+        - "session2" → session_0002
+      - If a clear session date appears (e.g., "July 18, 2025" or "2025-07-18"), build session_YYYYMMDD from that date (choose the earliest if multiple).
+      - If nothing can be detected, use session_unknown.
 
       Output Rules:
-      - Produce ONLY: 03-fieldwork/{{session_id}}/coded-transcripts/
-      - session_id lowercase
+      - Produce ONLY: 03-fieldwork/SESSION_ID/coded-transcripts/ (replace SESSION_ID with the detected/normalized id, in lowercase)
       - Return ONLY the path as one line
       - Example: 03-fieldwork/session_20250718/coded-transcripts/
 
