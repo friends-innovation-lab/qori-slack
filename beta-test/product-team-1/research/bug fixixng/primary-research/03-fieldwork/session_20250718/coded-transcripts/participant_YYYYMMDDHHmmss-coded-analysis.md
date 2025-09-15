@@ -1,138 +1,110 @@
-# PT002 Session Analysis
+# PT003 Session Analysis
 
 **Study:** VA Housing Application UX Research  
-**Session:** July 16, 2025  
+**Session:** July 18, 2025  
 **Source:** Manual Notes  
-
 **Analysis:** AI-coded + PII redacted
 
 ---
 
-## 🔴 Pain Points (10)
-**Critical - Document Upload Failure**
-- *Issue:* Document upload repeatedly failed, causing frustration.
-- *Quote:* "I literally had to open each one in a new tab and read through them just to figure out what they were."
-- *Timestamp:* [00:03:35]
+## 🔴 Pain Points (17)
+**Critical - Slow Internet Connection**
+- *Issue:* Internet speed causing delays in loading pages.
+- *Quote:* "Everything takes forever out here."
+- *Timestamp:* [00:04:09]
 
-**High - Slow Page Loading**
-- *Issue:* Slow loading times compared to other websites.
-- *Quote:* "It's been loading for like 30 seconds."
-- *Timestamp:* [00:05:35]
+**High - Session Timeout**
+- *Issue:* Session timing out, leading to loss of form data.
+- *Quote:* "Where did everything go? I just filled all this out."
+- *Timestamp:* [00:14:42]
 
-**High - Unresponsive Submit Button**
-- *Issue:* Submit button took a long time to respond, causing uncertainty.
-- *Quote:* "I've been clicking 'submit' for like 30 seconds and nothing is happening."
-- *Timestamp:* [00:09:28]
+**High - Confusing Terminology**
+- *Issue:* Technical jargon like "dropdown menu" causing confusion.
+- *Quote:* "What's a dropdown menu?"
+- *Timestamp:* [00:09:26]
 
-**Medium - Confusing Terminology**
-- *Issue:* Lack of clarity on program selection, leading to confusion.
-- *Quote:* "No clear explanation of which one I should pick."
-- *Timestamp:* [00:03:32]
-
-**Medium - Error Messages**
-- *Issue:* Lack of helpful error messages during document upload.
-- *Quote:* "There's no error message explaining what went wrong."
-- *Timestamp:* [00:07:10]
+**Medium - Document Upload Difficulty**
+- *Issue:* Participant unable to understand how to upload physical documents.
+- *Quote:* "I don't know how to get them on the computer."
+- *Timestamp:* [00:13:12]
 
 ---
 
-## 🟡 Opportunities (2)
-**High Impact - Clear Program Selection**
-- *Opportunity:* Implement a quiz to guide users to the right application.
-- *Quote:* "Have a quiz or something that asks about my situation and points me to the right application."
-- *Timestamp:* [00:12:07]
+## 🟡 Opportunities (4)
+**High Impact - Clear Instructions**
+- *Opportunity:* Provide clearer instructions in plain language.
+- *Quote:* "Explain things in plain English."
+- *Timestamp:* [00:18:22]
 
-**Quick Win - Better Error Messages**
-- *Opportunity:* Provide detailed error messages with solutions for users.
-- *Quote:* "When something fails, tell me why and how to fix it."
-- *Timestamp:* [00:12:39]
-
----
-
-## 💡 Key Insights (2)
-**User Behavior - Progress Bar**
-- *Insight:* The progress bar and autosave feature were helpful for the participant.
-- *Quote:* "The progress bar was helpful. The fact that it saves your work automatically is good."
-- *Timestamp:* [00:11:35]
-
-**Workflow - Status Checking**
-- *Insight:* The status checking function exceeded expectations and provided relief.
-- *Quote:* "The status checking actually worked, which was a nice surprise."
-- *Timestamp:* [00:10:53]
+**Medium Impact - Simplified Form Fields**
+- *Opportunity:* Simplify form fields to reduce confusion.
+- *Quote:* "Don't make me lose all my work."
+- *Timestamp:* [00:18:31]
 
 ---
 
-## 🟢 Positive Feedback (1)
-**Smooth Status Checking**
-- *What worked:* The status checking feature functioned well and saved the participant's information.
-- *Quote:* "I was expecting it to be lost."
-- *Timestamp:* [00:10:50]
+## 💡 Key Insights (8)
+**User Behavior - Technical Assistance**
+- *Insight:* Participants prefer in-person or phone assistance.
+- *Quote:* "Maybe I should just drive to the VA office."
+- *Timestamp:* [00:16:09]
+
+**Workflow - Form Navigation**
+- *Insight:* Participant struggled with form navigation due to technical terms.
+- *Quote:* "Don't use words like 'dropdown menu'."
+- *Timestamp:* [00:18:22]
 
 ---
 
-## ✨ Feature Requests (2)
-**Must Have - Clear Program Guidance**
-- *Request:* Implement a clearer program selection process to reduce user confusion.
-- *Quote:* "Just make it clearer which program I need!"
-- *Timestamp:* [00:12:02]
-
-**Should Have - Chat Support**
-- *Request:* Introduce chat support for users facing difficulties during the application process.
-- *Quote:* "And maybe some kind of chat support for when I get stuck."
-- *Timestamp:* [00:12:39]
+## 🟢 Positive Feedback (2)
+**Positive Experience**
+- *What worked:* Participant appreciated the interviewer's patience.
+- *Quote:* "You're very patient."
+- *Timestamp:* [00:19:44]
 
 ---
 
-## ⚠️ Usability Issues (4)
-**Blocker - Document Upload Failure**
-- *Issue:* Document upload repeatedly failed, hindering progress.
-- *Quote:* "Upload failed. That's helpful. Not."
-- *Timestamp:* [00:07:10]
+## ✨ Feature Requests (3)
+**Must Have - Clear Error Messages**
+- *Request:* Provide clear error messages for incorrect inputs.
+- *Quote:* "But why didn't it just tell me that in the first place?"
+- *Timestamp:* [00:12:06]
 
-**Major - Confusing Program Selection**
-- *Issue:* Overwhelm due to unclear differentiation among housing programs.
-- *Quote:* "No clear explanation of which one I should pick."
-- *Timestamp:* [00:03:32]
+---
 
-**Major - Lack of Error Messages**
-- *Issue:* Unhelpful error messages during document upload process.
-- *Quote:* "No error message explaining what went wrong."
-- *Timestamp:* [00:07:10]
+## ⚠️ Usability Issues (5)
+**Blocker - Session Timeout**
+- *Issue:* Session timeout causing frustration and loss of progress.
+- *Quote:* "I spent 15 minutes filling that out, and it's all gone."
+- *Timestamp:* [00:15:31]
 
-**Minor - Slow Page Loading**
-- *Issue:* Slow loading times experienced during the application process.
-- *Quote:* "It's been loading for like 30 seconds."
-- *Timestamp:* [00:05:35]
+**Major - Confusing Form Fields**
+- *Issue:* Confusion with form fields due to technical terms.
+- *Quote:* "What's a dropdown menu?"
+- *Timestamp:* [00:09:26]
 
 ---
 
 ## 😊 Emotional Journey
-**Frustrated** 
-- *Context:* Participant expressed frustration with the document upload failures and system issues.
-- *Quote:* "This is exactly why I hate dealing with VA stuff online."
-- *Timestamp:* [00:07:27]
+**Frustrated** ([00:14:42])
+- *Context:* Participant frustrated with session timeout and loss of data.
+- *Quote:* "Where did everything go? I just filled all this out."
 
-**Confused** 
-- *Context:* Participant felt overwhelmed by the program selection and terminology.
-- *Quote:* "Overwhelmed. I literally had to open each one in a new tab."
-- *Timestamp:* [00:03:35]
-
-**Relieved** 
-- *Context:* Relief experienced when status checking functioned correctly.
-- *Quote:* "Relieved, honestly. After all the problems with the upload."
-- *Timestamp:* [00:10:53]
+**Confused** ([00:09:26])
+- *Context:* Participant confused by technical jargon like "dropdown menu."
+- *Quote:* "What's a dropdown menu?"
 
 ---
 
 ## 📋 Full Transcript
-[Processed transcript content]
+The full transcript has been redacted for privacy.
 
 ---
 
 ## 📊 Coding Summary
-- **Total Codes:** 19
-- **High-Confidence Codes:** 19
-- **Flagged for Review:** 0
+- **Total Codes:** 39
+- **High-Confidence Codes:** 31
+- **Flagged for Review:** 8
 - **Processing Time:** unknown
 
-*AI Coding Confidence: 100%*
+*AI Coding Confidence: 79%*
