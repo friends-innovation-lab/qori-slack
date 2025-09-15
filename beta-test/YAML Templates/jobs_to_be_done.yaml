@@ -383,7 +383,7 @@ output_options:
   filename: "{{study_folder}}_jobs_to_be_done_{{current_date}}.md"
 
 # Slack output template
-slack_output_template: |
+output_template: |
   🎯 **Jobs to be Done Analysis Complete**
 
   **Study:** {{selected_study}}
