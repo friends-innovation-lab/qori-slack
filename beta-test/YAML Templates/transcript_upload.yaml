@@ -371,34 +371,57 @@ ai_generation_tasks:
 
   - task_id: "transcript_coding_filename"
     prompt: |
-      You will receive analysis outputs. Prefer JSON if present; otherwise parse the Markdown.
-      - JSON (optional): {{ai_generation_tasks.transcript_coding_payload}}
-      - Markdown (optional): {{transcript_coding_markdown}}
+      You will receive only the Manual Notes and Transcript text. Extract a participant id from these texts and output a filename.
 
-      Goal:
-      - Determine participant_id (prefer "auto_detected_participant_id" from JSON; fallback: try to infer from Markdown title line "X Session Analysis"; if not found, use "participant_YYYYMMDDHHmmss").
-      - Produce a filename in the form: participant_id-coded-analysis.md
+      Input:
+      **Manual Notes (optional)**
+      {{manual_notes_text_or_blank}}
+
+      **Transcript**
+      {{input_text}}
+
+      Detection Rules (participant_id):
+      - Look for explicit IDs in either section, case-insensitive:
+        - Patterns to prefer (first match wins): pt\d{1,4}, participant[_-]?\d{1,4}, p\d{1,4}, user[_-]?\d{1,4}
+        - Lines like "Participant PT003", "Participant: PT12", "User 07" → normalize to "pt003", "pt012", "pt007"
+      - If you see a human name only (e.g., "Participant: John"), do NOT keep the name; treat as no ID found.
+      - Fallback if nothing valid found: build "participant_YYYYMMDDHHmmss" where:
+        - YYYYMMDDHHmmss comes from any explicit date/time in the text (Transcript or Notes).
+        - If multiple, choose the earliest in the text.
+        - If date only (no time), use "000000" for HHmmss.
+        - If no date anywhere, use "participant_00000000000000".
 
       Output Rules:
+      - Produce: {participant_id}-coded-analysis.md
+      - Lowercase the participant_id
       - Return ONLY the filename as a single line (no quotes, no code fences, no extra text).
       - Example shape (example only): pt003-coded-analysis.md
 
   - task_id: "transcript_coding_path"
     prompt: |
-      You will receive analysis outputs. Prefer JSON if present; otherwise parse the Markdown.
-      - JSON (optional): {{ai_generation_tasks.transcript_coding_payload}}
-      - Markdown (optional): {{transcript_coding_markdown}}
+      You will receive only the Manual Notes and Transcript text. Extract a session id from these texts and output a relative path.
 
-      Goal:
-      - Determine session_id (prefer "auto_detected_session_id" from JSON; otherwise infer from Markdown "Session:" line like "session_YYYYMMDD"; if not found, default to "session_YYYYMMDD").
-      - Produce a relative repository path in the form:
-        03-fieldwork/session_id/coded-transcripts/
+      Input:
+      **Manual Notes (optional)**
+      {{manual_notes_text_or_blank}}
+
+      **Transcript**
+      {{input_text}}
+
+      Detection Rules (session_id):
+      - Prefer explicit tokens in either section (first match wins), case-insensitive:
+        - session[_-]?\d{4,14} (e.g., session_20250718, session-202507181300)
+        - s(?:ession)?[_-]?\d{1,4} (e.g., s1, session2) → normalize to "session_0002"
+      - If there is a clear session date in the text (e.g., "July 18, 2025" or "2025-07-18"):
+        - Build "session_YYYYMMDD" from that date (pick the most prominent or earliest date mentioned).
+      - If multiple candidates exist, choose the earliest mentioned in the text.
+      - If nothing found at all, use "session_unknown".
 
       Output Rules:
+      - Produce ONLY: 03-fieldwork/{session_id}/coded-transcripts/
+      - session_id must be lowercase
       - Return ONLY the path string as a single line (no quotes, no code fences, no leading slash).
       - Example shape (example only): 03-fieldwork/session_20250718/coded-transcripts/
-    
-
 output_template: |
   {{ai_generated.transcript_coding_markdown}}
 
