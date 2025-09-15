@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – phase 4 research testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 4
+- **Total Participants:** 5
 - **Confirmed Sessions:** 0
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 8 | Joi | internal_va_panel | 2025-09-21 1:00 PM | recruited | No |
 | 7 | John | email_outreach | 2025-09-28 1:00pM | rescheduling_needed | No |
 | 6 | alice | internal_va_panel | 2025-09-15 1:00 PM | recruited | NO |
 | 5 | Joy | email_outreach | 2025-09-22 2:00 PM | pending_response | NO |
@@ -25,12 +26,12 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 2 | 50% |
-| internal_va_panel | 1 | 25% |
-| calendly_signup | 1 | 25% |
+| internal_va_panel | 2 | 40% |
+| 📧 Email Outreach | 2 | 40% |
+| calendly_signup | 1 | 20% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 4 recruited)
+Recruitment effectiveness: 0% conversion rate (0 confirmed of 5 recruited)
 
 ---
 
@@ -77,6 +78,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 4 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 8: No
 - 7: No
 - 6: NO
 - 5: NO
@@ -98,24 +100,24 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 4 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| American Indian or Alaska Native | 1 | 25% |
-| Black or African American | 1 | 25% |
-| Asian | 1 | 25% |
+| American Indian or Alaska Native | 2 | 40% |
+| Black or African American | 1 | 20% |
+| Asian | 1 | 20% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 25-34 | 2 | 50% |
-| 35-44 | 1 | 25% |
+| 25-34 | 3 | 60% |
+| 35-44 | 1 | 20% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Some college | 2 | 50% |
-| Associate degree | 1 | 25% |
+| Some college | 3 | 60% |
+| Associate degree | 1 | 20% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Urban | 1 | 25% |
-| Suburban | 2 | 50% |
+| Suburban | 3 | 60% |
+| Urban | 1 | 20% |
 
 ---
 
