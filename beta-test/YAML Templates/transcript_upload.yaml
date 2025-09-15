@@ -373,7 +373,7 @@ ai_generation_tasks:
     prompt: |
       You will receive analysis outputs. Prefer JSON if present; otherwise parse the Markdown.
       - JSON (optional): {{ai_generation_tasks.transcript_coding_payload}}
-      - Markdown (optional): {{ai_generation_tasks.transcript_coding_markdown}}
+      - Markdown (optional): {{transcript_coding_markdown}}
 
       Goal:
       - Determine participant_id (prefer "auto_detected_participant_id" from JSON; fallback: try to infer from Markdown title line "X Session Analysis"; if not found, use "participant_YYYYMMDDHHmmss").
@@ -387,7 +387,7 @@ ai_generation_tasks:
     prompt: |
       You will receive analysis outputs. Prefer JSON if present; otherwise parse the Markdown.
       - JSON (optional): {{ai_generation_tasks.transcript_coding_payload}}
-      - Markdown (optional): {{ai_generation_tasks.transcript_coding_markdown}}
+      - Markdown (optional): {{transcript_coding_markdown}}
 
       Goal:
       - Determine session_id (prefer "auto_detected_session_id" from JSON; otherwise infer from Markdown "Session:" line like "session_YYYYMMDD"; if not found, default to "session_YYYYMMDD").
