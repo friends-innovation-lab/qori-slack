@@ -1,7 +1,7 @@
 id: research_readout
 name: run_research_readout
 label: 📊 Research Readout
-version: v3.0
+version: v3.1
 description: |
   Generate comprehensive VA-aligned research readouts with AI-synthesized findings, participant analysis, 
   and actionable recommendations. Creates formal documentation with intelligent insights extraction and 
@@ -14,7 +14,7 @@ last_updated: 2025-08-19
 input_type: text
 input_processing: summarize_if_long
 temperature: 0.4
-precision_mode: concise | detailed
+precision_mode: detailed
 
 # LLM Configuration
 llm_config:
@@ -23,217 +23,106 @@ llm_config:
   max_tokens: 6000
 
 input_variables:
-  # ENHANCED FILE INPUT OPTIONS
-  - study_folder_path        # GitHub folder path (e.g., "va-studies/housing-app") (OPTIONAL)
-  - research_plan_file       # Research plan document URL or content (OPTIONAL)
-  - participant_tracker_file # Participant CSV/sheet URL or content (OPTIONAL)
-  - session_files_folder     # Folder containing session notes (OPTIONAL)
-  - analysis_files_folder    # Folder containing existing analysis (OPTIONAL)
-  - uploaded_files           # Files uploaded directly to Slack (OPTIONAL)
-  
-  # Core analysis data (backward compatible)
-  - input_text           # Research findings, insights, session notes (OPTIONAL if files provided)
+  # Core readout configuration
+  - research_folder_path  # Path to research folder in GitHub (REQUIRED)
   - study_name           # Title of study (REQUIRED)
   - researcher_contact   # Lead researcher (REQUIRED)
   - study_channel        # Where to post results (REQUIRED)
-  - study_link           # Link to study folder or documentation (OPTIONAL)
-  - team_members         # Who to notify/tag (OPTIONAL)
   
-  # Router intelligence (from synthesize_router OR file processing)
-  - file_selection_quality    # Router's file quality assessment (OPTIONAL)
-  - analysis_preview         # Router's expected outcomes (OPTIONAL)
-  - recommendations          # Router's smart suggestions (OPTIONAL)
-  - collaboration_plan       # Router's team coordination plan (OPTIONAL)
-  - routing_validation       # Router's methodology validation (OPTIONAL)
-  - selected_files_summary   # Summary of files used (OPTIONAL)
-  - data_combination_strategy # How files were combined (OPTIONAL)
-  
-  # Router metadata
-  - router_version           # Router version for tracking (OPTIONAL)
-  - preprocessing_timestamp  # When router processed (OPTIONAL)
-  - analysis_id             # Unique analysis identifier (OPTIONAL)
+  # Context and data sources  
+  - research_readout_data # Full readout data for context (OPTIONAL)
+  - input_text           # Research findings if not using folder (OPTIONAL)
+  - study_link          # Link to study documentation (OPTIONAL)
+  - team_members        # Specific people to notify (OPTIONAL)
+
+# Required core research files (must be present)
+core_files:
+  research_plan:
+    file: "research_plan.md"
+    required: true
+    extract: ["objectives", "methods", "success_criteria", "timeline"]
+    description: "Study objectives, research methods, and success criteria"
+    
+  session_notes:
+    folder: "session-notes/"
+    required: true
+    extract: ["key_findings", "patterns", "insights", "recommendations", "user_behaviors", "quotes"]
+    description: "Individual session observations, findings, and user feedback from each research session"
+    file_pattern: "*.md"
+    processing: "aggregate_insights_from_multiple_sessions"
+    
+  participant_tracker:
+    file: "participant_tracker.md"
+    required: true
+    extract: ["demographics", "sample_size", "recruitment_method", "completion_status"]
+    description: "Participant demographics, sample size, and study completion data"
+
+# Optional research files (enhance readout quality when present)
+optional_files:
+  affinity_mapping:
+    file: "affinity_mapping.md"
+    extract: ["themes", "grouped_insights", "patterns", "user_needs"]
+    description: "Thematic analysis and grouped insights from research data"
+    
+  user_journey:
+    file: "user_journey_maps.md"
+    extract: ["touchpoints", "pain_points", "emotions", "opportunities"]
+    description: "User experience flows, pain points, and journey mapping"
+    
+  personas:
+    file: "personas.md"
+    extract: ["user_types", "behaviors", "goals", "frustrations", "contexts"]
+    description: "User archetypes, behaviors, goals, and contextual needs"
+    
+  jobs_to_be_done:
+    file: "jobs_to_be_done.md"
+    extract: ["user_jobs", "job_context", "success_criteria", "barriers"]
+    description: "Jobs users are trying to accomplish and barriers to success"
+    
+  usability_issues:
+    file: "usability_issues.md"
+    extract: ["issues", "severity", "frequency", "user_impact", "solutions"]
+    description: "Specific usability problems, severity ratings, and potential solutions"
+    
+  design_opportunities:
+    file: "design_opportunities.md"
+    extract: ["opportunities", "user_value", "business_impact", "implementation_effort"]
+    description: "Design improvement opportunities with impact and effort estimates"
+
+# File processing and validation rules
+file_processing:
+  validation_rules:
+    core_files_check: "All core files must be present for readout generation"
+    optional_files_bonus: "Optional files enhance readout quality and completeness"
+    session_notes_processing: "Aggregate insights from multiple session files in session-notes/ folder"
+    
+  data_extraction:
+    quotes_priority: "Extract compelling quotes from session files for evidence"
+    metrics_focus: "Task completion rates, error patterns, success metrics" 
+    evidence_selection: "Strong evidence from multiple participants and sessions"
+    session_aggregation: "Combine individual session insights into comprehensive patterns"
+
+# Auto-generated/computed variables from file analysis
+auto_variables:
+  - current_date: |
+      new Date().toISOString().split('T')[0]
+  - github_file_link: |
+      generate_github_link(study_name, current_date) || null
+  - detected_files: |
+      scan_research_folder(research_folder_path, core_files, optional_files)
+  - file_quality_score: |
+      assess_file_completeness(detected_files, core_files, optional_files)
+  - participant_count: |
+      extract_from_md(participant_tracker, "participants") || "Unknown"
+  - session_count: |
+      count_completed_sessions(participant_tracker, "completed") || "Unknown"
+  - methodology_type: |
+      extract_methodology(research_plan) || "Usability Testing"
+  - product_area: |
+      extract_product_area(research_plan) || "Digital Services"
 
 # AI GENERATION TASKS
 ai_generation_tasks:
-  # FILE PROCESSING TASKS (NEW)
-  
-  # Process GitHub folder or file inputs
-  - task_id: "file_input_processing"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      
-      Process and validate file inputs for research analysis:
-      
-      **Study Folder Path:** {{study_folder_path}}
-      **Research Plan File:** {{research_plan_file}}
-      **Participant Tracker:** {{participant_tracker_file}}
-      **Session Files Folder:** {{session_files_folder}}
-      **Analysis Files Folder:** {{analysis_files_folder}}
-      **Uploaded Files:** {{uploaded_files}}
-      
-      Analyze available file inputs:
-      1. **File availability assessment** - What files are provided?
-      2. **File type identification** - Research plan, tracker, sessions, analysis?
-      3. **File relationship validation** - Do participant IDs match across files?
-      4. **Data completeness scoring** - How complete is the dataset?
-      5. **Processing strategy** - How to best synthesize these files?
-      
-      **Format:**
-      **Available Files:** [List of detected/provided files]
-      **File Types Identified:** [Research plan: Yes/No, Tracker: Yes/No, Sessions: Count, Analysis: Yes/No]
-      **Data Quality Score:** [High/Medium/Low] - [Reasoning]
-      **Participant Coverage:** [How many participants, any gaps?]
-      **Processing Strategy:** [How to synthesize these files for best analysis]
-      **Missing Elements:** [What would improve the analysis if available]
-
-  # Extract research context from plan file
-  - task_id: "research_plan_extraction"
-    condition: "research_plan_file is provided"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      
-      Extract research context from the provided research plan:
-      
-      **Research Plan Content:** {{research_plan_file}}
-      
-      Extract key information:
-      1. **Study objectives** and research goals
-      2. **Research questions** being investigated
-      3. **Methodology** and session approach
-      4. **Participant criteria** and recruitment strategy
-      5. **Success metrics** and KPIs
-      6. **Timeline** and milestones
-      
-      **Format:**
-      **Study Objectives:** [3-4 main research objectives]
-      **Research Questions:** [3-4 specific questions the study addresses]
-      **Methodology:** [Research approach, session type, duration]
-      **Participant Criteria:** [Who was recruited and why]
-      **Success Metrics:** [How to measure study success]
-      **Timeline:** [Study duration and key milestones]
-
-  # Extract participant demographics and completion data
-  - task_id: "participant_tracker_extraction"
-    condition: "participant_tracker_file is provided"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Use participant aliases (P01, P02) for privacy
-      
-      Extract participant information from the tracker file:
-      
-      **Participant Tracker Content:** {{participant_tracker_file}}
-      
-      Extract and analyze:
-      1. **Total participant count** and completion rate
-      2. **Demographics breakdown** (age, role, experience)
-      3. **Recruitment channels** and success rates
-      4. **Session completion status** for each participant
-      5. **Notable participant characteristics** relevant to study
-      6. **Any recruitment or completion challenges**
-      
-      **Format:**
-      **Total Participants:** [Count] with [X%] completion rate
-      **Demographics Breakdown:**
-      • Age ranges: [breakdown]
-      • Roles/backgrounds: [breakdown]
-      • Experience levels: [breakdown]
-      **Recruitment Success:**
-      • [Channel 1]: [Count] participants
-      • [Channel 2]: [Count] participants
-      **Session Status:** [Completed/Scheduled/Cancelled breakdown]
-      **Key Participant Characteristics:** [Relevant traits for study context]
-      **Completion Challenges:** [Any issues encountered]
-
-  # Synthesize insights from session files
-  - task_id: "session_files_synthesis"
-    condition: "session_files_folder is provided OR uploaded_files contains session data"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Include specific quotes with participant IDs
-      
-      Synthesize insights from all available session files:
-      
-      **Session Files:** {{session_files_folder}} {{uploaded_files}}
-      
-      For each session, extract:
-      1. **Participant ID** and session context
-      2. **Key insights** and observations per session
-      3. **Direct user quotes** that illustrate findings
-      4. **Behavioral patterns** observed during sessions
-      5. **Usability issues** and pain points encountered
-      6. **Positive moments** and successful interactions
-      
-      Then synthesize across all sessions:
-      1. **Common themes** that appear across multiple participants
-      2. **Frequency patterns** (how often issues occur)
-      3. **Contradictions** or edge cases between participants
-      4. **Strongest evidence** for key insights
-      
-      **Format:**
-      **Per-Session Summary:**
-      • P01: [Key insights and notable quotes]
-      • P02: [Key insights and notable quotes]
-      • [Continue for each session]
-      
-      **Cross-Session Themes:**
-      • Theme 1: [Description] - [Frequency: X/Y participants]
-      • Theme 2: [Description] - [Frequency: X/Y participants]
-      
-      **Compelling Quotes:**
-      • "[Quote 1]" - P[X] [Context]
-      • "[Quote 2]" - P[X] [Context]
-      
-      **Evidence Strength:** [Assessment of consistency and reliability]
-
-  # Integrate existing analysis files
-  - task_id: "existing_analysis_integration"
-    condition: "analysis_files_folder is provided"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      
-      Integrate existing analysis files with current research processing:
-      
-      **Analysis Files:** {{analysis_files_folder}}
-      
-      Review and integrate:
-      1. **Existing themes** or findings from prior analysis
-      2. **Validation opportunities** - Do session files confirm existing themes?
-      3. **Gaps or contradictions** between existing analysis and session data
-      4. **Additional insights** not captured in previous analysis
-      5. **Confidence assessment** of existing vs. new findings
-      
-      **Format:**
-      **Existing Themes Identified:**
-      • [Theme 1]: [Description and source]
-      • [Theme 2]: [Description and source]
-      
-      **Validation Results:**
-      • [Theme 1]: [Confirmed/Contradicted/Partially supported by session data]
-      • [Theme 2]: [Confirmed/Contradicted/Partially supported by session data]
-      
-      **New Insights from Session Data:**
-      • [Insight 1]: [Not captured in existing analysis]
-      • [Insight 2]: [Not captured in existing analysis]
-      
-      **Confidence Assessment:** [How existing analysis aligns with fresh session data]
-
-  # CORE ANALYSIS TASKS (Enhanced with file context)
-  
   # Extract study context and methodology
   - task_id: "study_context_analysis"
     prompt: |
@@ -244,13 +133,12 @@ ai_generation_tasks:
       
       Analyze the research context using all available sources:
       
-      **File Processing Results:** {{ai_generated.file_input_processing}}
-      **Research Plan Context:** {{ai_generated.research_plan_extraction}}
+      **Research Folder:** {{research_folder_path}}
+      **Available Files:** {{detected_files}}
       **Manual Input Data:** {{input_text}}
       **Study Name:** {{study_name}}
-      **Router Assessment:** {{file_selection_quality}}
       
-      Synthesize and identify:
+      Extract and synthesize:
       1. **Research methodology type** (usability testing, interviews, surveys, etc.)
       2. **Participant count** and demographics 
       3. **Session duration** estimates
@@ -261,18 +149,18 @@ ai_generation_tasks:
       **Prioritize file-extracted data** over manual input when available.
       
       **Format:**
-      **Methodology:** [Specific type - prioritize from research plan if available]
-      **Participants:** [Count and demographics - use tracker data if available]
+      **Methodology:** [Specific type from research plan or inferred]
+      **Participants:** [Count and demographics from tracker or estimated]
       **Session Duration:** [From plan or estimated from session files]
       **Product Area:** [Specific VA service or digital area]
       **Research Goals:**
-      • [Goal 1 - from research plan or inferred from data]
-      • [Goal 2 - from research plan or inferred from data]
-      • [Goal 3 - from research plan or inferred from data]
+      • [Goal 1 from research plan or inferred from data]
+      • [Goal 2 from research plan or inferred from data]
+      • [Goal 3 from research plan or inferred from data]
       **Research Questions:**
-      • [Question 1 - from research plan or inferred]
-      • [Question 2 - from research plan or inferred]
-      • [Question 3 - from research plan or inferred]
+      • [Question 1 from research plan or inferred]
+      • [Question 2 from research plan or inferred]
+      • [Question 3 from research plan or inferred]
 
   # Generate participant overview table
   - task_id: "participant_analysis"
@@ -283,33 +171,29 @@ ai_generation_tasks:
       - ALWAYS use active voice and specific verbs
       - Use participant aliases (P01, P02) for privacy
       
-      Create a participant overview table using all available data sources:
+      Create a participant overview using available data sources:
       
-      **Participant Tracker Data:** {{ai_generated.participant_tracker_extraction}}
-      **Session Synthesis:** {{ai_generated.session_files_synthesis}}
+      **Available Files:** {{detected_files}}
       **Manual Input Data:** {{input_text}}
-      **Study Context:** {{ai_generated.study_context_analysis}}
+      **Study Context:** {{study_name}}
       
-      **Prioritize tracker file data** when available, supplement with session and manual data.
-      
-      Extract participant information and create a structured table showing:
+      Extract participant information and create a structured overview showing:
       - Participant ID (P01, P02, etc.)
       - Demographics (age range, role, experience level)
       - Session status (completed, rescheduled, etc.)
       - Key characteristics relevant to study
-      - Recruitment channel (if available from tracker)
+      - Recruitment channel (if available)
       
       **Format as markdown table:**
-      | Participant | Demographics | Session Status | Recruitment | Key Notes |
-      |-------------|--------------|----------------|-------------|-----------|
-      | P01 | [Age/role info] | Completed | [Channel] | [Relevant context] |
-      | P02 | [Age/role info] | Completed | [Channel] | [Relevant context] |
+      | Participant | Demographics | Session Status | Key Notes |
+      |-------------|--------------|----------------|-----------|
+      | P01 | [Age/role info] | Completed | [Relevant context] |
+      | P02 | [Age/role info] | Completed | [Relevant context] |
       
-      Include summary statistics:
-      **Total Participants:** [Count from tracker or session files]
-      **Completion Rate:** [Percentage from tracker or calculated]
+      **Summary statistics:**
+      **Total Participants:** [Count from files or estimated]
+      **Completion Rate:** [Percentage calculated or estimated]
       **Participant Types:** [Brief breakdown of user types]
-      **Recruitment Channels:** [Breakdown by channel if available]
 
   # Extract and prioritize key insights
   - task_id: "key_insights_extraction"
@@ -322,21 +206,17 @@ ai_generation_tasks:
       
       Extract 3-5 key insights using all available data sources:
       
-      **Session Synthesis:** {{ai_generated.session_files_synthesis}}
-      **Existing Analysis:** {{ai_generated.existing_analysis_integration}}
-      **Research Goals:** {{ai_generated.study_context_analysis.goals}}
+      **Available Files:** {{detected_files}}
+      **Research Goals:** From study context analysis
       **Manual Input Data:** {{input_text}}
-      **File Quality:** {{ai_generated.file_input_processing}}
-      
-      **Prioritize insights from session synthesis** when available, validate against existing analysis.
+      **File Quality:** {{file_quality_score}}
       
       Identify the most important insights that directly address research goals:
       
-      1. **Prioritize insights** that are well-supported by evidence across multiple sources
-      2. **Focus on user tensions** and specific behaviors observed in sessions
+      1. **Prioritize insights** that are well-supported by evidence
+      2. **Focus on user behaviors** and specific problems observed
       3. **Include impact level** (high/medium/low) for each insight
       4. **Make insights actionable** for design and product decisions
-      5. **Cross-validate** with existing analysis when available
       
       **Format:**
       **Key Insight 1:** [Specific, actionable insight]
@@ -344,11 +224,6 @@ ai_generation_tasks:
       **Key Insight 3:** [Specific, actionable insight]
       **Key Insight 4:** [Specific, actionable insight] (if supported by data)
       **Key Insight 5:** [Specific, actionable insight] (if supported by data)
-      
-      **Examples of good insights:**
-      - "Veterans abandon applications when they can't save progress and return later (observed in 6/8 sessions)"
-      - "Users create workarounds when official processes require information they don't have (P02, P05, P07)"
-      - "People assume government websites will fail based on past experiences (validated by existing analysis)"
 
   # Generate detailed findings with evidence
   - task_id: "detailed_findings_analysis"
@@ -359,20 +234,17 @@ ai_generation_tasks:
       - ALWAYS use active voice and specific verbs
       - Include specific quotes and behavioral evidence
       
-      Create detailed findings with supporting evidence from all data sources:
+      Create detailed findings with supporting evidence:
       
-      **Session Synthesis:** {{ai_generated.session_files_synthesis}}
       **Key Insights:** {{ai_generated.key_insights_extraction}}
-      **Research Methodology:** {{ai_generated.study_context_analysis.methodology}}
-      **Participant Data:** {{ai_generated.participant_tracker_extraction}}
+      **Available Files:** {{detected_files}}
+      **Participant Data:** From participant analysis
       **Manual Input Data:** {{input_text}}
-      
-      **Use session file quotes and participant IDs** when available for strongest evidence.
       
       For each key insight, develop a detailed finding that includes:
       1. **Clear title** that summarizes the finding
       2. **Detailed description** of what was observed
-      3. **Supporting quotes** from participants (2-3 per finding, with P## IDs when available)
+      3. **Supporting quotes** from participants (2-3 per finding)
       4. **Behavioral evidence** (what users did, not just what they said)
       5. **Frequency data** (X out of Y participants when available)
       6. **Specific recommendations** (2-3 actionable next steps)
@@ -384,12 +256,12 @@ ai_generation_tasks:
       **What we observed:** [Detailed description of the pattern or issue]
       
       **Supporting evidence:**
-      > "[Complete quote from participant]" - P[X] (from session data)
-      > "[Complete quote from participant]" - P[X] (from session data)
-      > "[Complete quote from participant]" - P[X] (from session data)
+      > "[Complete quote from participant]" - P[X]
+      > "[Complete quote from participant]" - P[X]
+      > "[Complete quote from participant]" - P[X]
       
-      **Behavioral indicators:** [What users actually did during sessions - from session files]
-      **Frequency:** [X out of Y participants experienced this - when session data available]
+      **Behavioral indicators:** [What users actually did during sessions]
+      **Frequency:** [X out of Y participants experienced this]
       
       **Recommendations:**
       • [Specific action 1]
@@ -421,11 +293,6 @@ ai_generation_tasks:
       |---------|----------|-----------|----------|---------------|
       | [Title 1] | High/Med/Low | [X/Y participants] | High/Med/Low | [One-line summary] |
       | [Title 2] | High/Med/Low | [X/Y participants] | High/Med/Low | [One-line summary] |
-      
-      **Severity Criteria:**
-      - **High:** Prevents task completion or causes significant frustration
-      - **Medium:** Creates friction but users can work around
-      - **Low:** Minor inconvenience with minimal impact
 
   # Generate actionable next steps
   - task_id: "next_steps_generation"
@@ -439,7 +306,6 @@ ai_generation_tasks:
       Generate actionable next steps based on findings:
       
       **Findings:** {{ai_generated.detailed_findings_analysis}}
-      **Router Recommendations:** {{recommendations}}
       
       Create 4-6 specific next steps that address the findings:
       
@@ -465,102 +331,75 @@ ai_generation_tasks:
       • [Who needs to be involved and why]
       • [Stakeholder communication plan]
 
-# Auto-generated/computed variables (enhanced with file processing)
-auto_variables:
-  - methodology_type: |
-      extract_methodology(ai_generated.research_plan_extraction) || 
-      extract_methodology(ai_generated.study_context_analysis) || "Usability Testing"
-  - participant_count: |
-      extract_participant_count(ai_generated.participant_tracker_extraction) || 
-      extract_participant_count(ai_generated.participant_analysis) || "multiple participants"
-  - finding_count: |
-      count_findings(ai_generated.key_insights_extraction) || 3
-  - session_duration: |
-      extract_session_duration(ai_generated.research_plan_extraction) || 
-      extract_session_duration(ai_generated.study_context_analysis) || "60 minutes"
-  - product_area: |
-      extract_product_area(ai_generated.research_plan_extraction) || 
-      extract_product_area(ai_generated.study_context_analysis) || "Digital Services"
-  - completion_rate: |
-      extract_completion_rate(ai_generated.participant_tracker_extraction) || "high"
-  - session_count: |
-      count_sessions(ai_generated.session_files_synthesis) || 
-      estimate_sessions(input_text) || "multiple sessions"
-  - file_quality_score: |
-      extract_quality_score(ai_generated.file_input_processing) || "medium"
-  - data_sources: |
-      identify_data_sources(ai_generated.file_input_processing) || "manual input"
-  - current_date: |
-      new Date().toISOString().split('T')[0]
-  - github_file_link: |
-      generate_github_link(study_name, current_date) || null
-
 # Output configuration
 output_options:
-  default_delivery: "slack_and_file"
-  slack_format: "structured"
-  file_location: "05-shareouts/"
-  file_name: "research_readout_{{study_name_slug}}_{{current_date}}.md"
+  default_delivery: "slack_notification_and_github"
+  slack_format: "minimal_notification_with_link"
+  github_format: "comprehensive_research_document"
+  github_location: "05-shareouts/"
+  github_file_name: "research_readout_{{study_name_slug}}_{{current_date}}.md"
+
+# =============================================================================
+# SLACK OUTPUT (Minimal notification with link)
+# =============================================================================
 
 slack_output:
   post_in_channel: true
-  create_thread: true
-  title_format: "📊 Research Readout"
+  create_thread: false
+  title_format: "📊 Research Readout Ready"
   ping_team: ["{{researcher_contact}}", "{{team_members}}"]
   interactive_elements:
-    - text: "🎯 Create Stakeholder Summary"
-      action: "run_stakeholder_summary"
-    - text: "💡 Generate Insight Cards"
-      action: "run_insight_card"
-    - text: "🐛 Extract GitHub Issues"
-      action: "run_github_issues_generator"
-    - text: "👥 Team-Specific Readouts"
-      action: "run_team_readouts"
-    - text: "🗂️ View in GitHub"
+    - text: "📋 View Full Research Readout in GitHub"
       url: "{{github_file_link}}"
+    - text: "🎯 Create Targeted Readouts"
+      action: "run_targeted_readouts"
+    - text: "🛠 Generate GitHub Issues"
+      action: "run_github_issues_generator"
 
-output_use: |
-  Enhanced Research Readout leverages AI analysis to create comprehensive, VA-compliant research documentation 
-  with intelligent insights extraction and stakeholder-ready formatting. Integrates router intelligence for 
-  optimal data processing and confidence assessment.
+slack_message_format: |
+  📊 **Research Readout Complete**
+  
+  Hi {{team_members}}! I've completed the comprehensive research analysis for {{study_name}} with detailed findings and actionable recommendations.
+  
+  📋 **Study Overview:** {{methodology_type}} with {{participant_count}} participants, {{session_count}} sessions
+  📊 **Data Quality:** {{file_quality_score}} - {{detected_files}}
+  
+  👆 **View Full Readout:** [research_readout_{{study_name_slug}}_{{current_date}}.md]({{github_file_link}})
+  
+  *Questions?* Contact {{researcher_contact}} | *Create audience-specific versions?* Use `/readouts [audience]`
 
-  Use this method to:
-    - Generate formal research documentation with AI-synthesized insights
-    - Create structured findings with supporting evidence and quotes
-    - Provide actionable recommendations with clear next steps
-    - Support research handoffs and stakeholder decision-making
+# =============================================================================
+# GITHUB OUTPUT (Comprehensive research document)
+# =============================================================================
 
-output_notes: |
-  Methodology type ({{methodology_type}}) and participant count ({{participant_count}}) extracted from AI analysis.
-  Finding count ({{finding_count}}) determined based on insight complexity.
-  Session duration ({{session_duration}}) and product area ({{product_area}}) auto-detected.
-  Write in clear, professional language at 10th-grade reading level.
-  Use active voice, avoid business jargon and em-dashes.
-  Include specific quotes and evidence to support findings.
-  Format for formal documentation with clear hierarchy and scannable structure.
+github_output:
+  location: "05-shareouts/"
+  file_name: "research_readout_{{study_name_slug}}_{{current_date}}.md"
+  format: "comprehensive_research_document"
 
-# Enhanced output template using AI-generated content and file processing
-output_format: |
-  Hi team! 👋 I've completed the comprehensive research readout for {{study_name}}. This includes AI-synthesized findings from {{data_sources}} with {{file_quality_score}} data quality.
+github_document_format: |
+  # 📊 Research Readout — {{study_name}}
 
-  {{team_members}} - this readout contains {{finding_count}} key findings with detailed evidence and recommendations.
+  **🤖 AI-Enhanced Analysis Complete | Generated {{current_date}}**
 
-  📂 *Study:* {{study_name}}  
-  🔗 *Full details:* {{study_link}}
-  📊 *Data Sources:* {{data_sources}}
-  🎯 *Quality Score:* {{file_quality_score}}
+  ## Study Overview
+
+  - **Study Name:** {{study_name}}
+  - **Research Folder:** {{research_folder_path}}
+  - **Methodology:** {{methodology_type}}
+  - **Lead Researcher:** {{researcher_contact}}
+  - **Analysis Date:** {{current_date}}
+
+  ## Research Context
+
+  - **Participants:** {{participant_count}}
+  - **Sessions:** {{session_count}}
+  - **Available Files:** {{detected_files}}
+  - **File Quality Score:** {{file_quality_score}}
 
   ---
 
-  # 📊 Research Readout — {{study_name}}
-
-  **🤖 AI-Enhanced Analysis Complete**
-
   {{ai_generated.study_context_analysis}}
-
-  **📁 File Processing Results:** {{ai_generated.file_input_processing}}
-  **📊 Router Quality Assessment:** {{file_selection_quality}}
-  **🕐 Analysis Date:** {{current_date}}
 
   ---
 
@@ -597,7 +436,7 @@ output_format: |
   ## 🔗 Linked Artifacts
 
   - [Study Documentation]({{study_link}})
-  - [Research Notes](../04-analysis/)
+  - [Research Files]({{research_folder_path}})
   - [GitHub Issues](https://github.com/department-of-veterans-affairs/va.gov-team/issues)
 
   ---
@@ -608,38 +447,15 @@ output_format: |
 
   ---
 
-  *Questions about these findings?* Reply in thread or contact {{researcher_contact}} for detailed discussion.
+  **📞 Questions?** Contact {{researcher_contact}} for detailed discussion about findings.
 
-  *🤖 AI-Generated Analysis | Files: {{data_sources}} | Quality: {{file_quality_score}} | Router: {{router_version}} | Analysis ID: {{analysis_id}}*
-
-# Updated prompt to use AI-generated content
-prompt: |
-  You are a senior UX researcher creating a comprehensive VA-compliant research readout for formal documentation and stakeholder review.
-
-  ANALYSIS CONTEXT:
-  - Study: {{study_name}}
-  - Methodology: {{methodology_type}} (AI-extracted from analysis)
-  - Participants: {{participant_count}} (AI-identified from data)
-  - Findings: {{finding_count}} (AI-determined from complexity)
-  - Product area: {{product_area}} (AI-identified from context)
-
-  The AI analysis tasks have already extracted:
-  - Study context and methodology details
-  - Participant overview and demographics
-  - Key insights with supporting evidence
-  - Detailed findings with quotes and recommendations
-  - Summary table with severity and frequency
-  - Actionable next steps with timelines
-
-  Your role is to ensure the AI-generated content is properly formatted, flows logically, and meets VA research standards for formal documentation and stakeholder review.
-
-  Focus on creating professional documentation that enables stakeholders to understand research outcomes and make informed decisions about next steps.
+  **🤖 Generated by:** Qori Research Readout v3.1 | AI-Enhanced Analysis
 
 notify:
   - role: research_team
     action: "AI-enhanced research readout completed"
     channel: "{{study_channel}}"
-    message: "📊 Research readout for {{study_name}} complete. {{finding_count}} key findings with AI-synthesized insights ready for review."
+    message: "📊 Research readout for {{study_name}} complete. Detailed findings with AI-synthesized insights ready for review."
   - role: researcher
     action: "Readout delivered"
     slack_tag: "{{researcher_contact}}"
