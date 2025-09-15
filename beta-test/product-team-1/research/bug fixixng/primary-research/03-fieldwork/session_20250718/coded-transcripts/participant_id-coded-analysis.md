@@ -2,109 +2,105 @@
 
 **Study:** VA Housing Application UX Research  
 **Session:** July 18, 2025  
-**Date:** July 18, 2025  
 **Source:** Manual Notes  
+**Analysis:** AI-coded + PII redacted
 
 ---
 
-## 🔴 Pain Points (25)
+## 🔴 Pain Points (24)
 **Critical - Slow Loading Times**
-- *Issue:* Internet speed causing delays in loading pages.
-- *Quote:* "This is taking forever to load."
-- *Timestamp:* [00:07:22]
-
-**High - Session Timeout**
-- *Issue:* Unexpected session timeout leading to loss of form data.
-- *Quote:* "The page looks different... it wants me to start over."
-- *Timestamp:* [00:14:17]
-
-**Medium - Confusion with Technical Jargon**
-- *Issue:* Participant struggled with understanding terms like "dropdown menu" and "upload."
-- *Quote:* "What's a dropdown menu?"
-- *Timestamp:* [00:09:26]
-
----
-
-## 🟡 Opportunities (10)
-**High Impact - Simplified Instructions**
-- *Opportunity:* Provide clearer and simplified instructions for technical concepts.
-- *Quote:* "Explain things in plain English."
-- *Timestamp:* [00:18:22]
-
-**Medium Impact - Document Submission Alternatives**
-- *Opportunity:* Offer alternative methods for document submission (e.g., mail-in options).
-- *Quote:* "Give me a way to mail them in instead."
-- *Timestamp:* [00:18:43]
-
----
-
-## 💡 Key Insights (5)
-**User Behavior - Internet Limitations**
-- *Insight:* Rural internet limitations impact user experience.
+- *Issue:* Slow internet connection causing delays in website loading.
 - *Quote:* "Everything takes forever out here."
 - *Timestamp:* [00:04:09]
 
-**Workflow - Session Management**
-- *Insight:* Session timeout functionality needs improvement.
-- *Quote:* "I was just filling out the form and now it wants me to start over."
+**High - Session Timeout**
+- *Issue:* Session timeout erased 15+ minutes of form data without warning.
+- *Quote:* "I was reading and filling things out. That's ridiculous."
 - *Timestamp:* [00:14:29]
+
+**High - Confusing Technical Jargon**
+- *Issue:* Participant struggled with terms like "dropdown menu" and "specifications."
+- *Quote:* "Don't use words like 'dropdown menu' without explaining what that means."
+- *Timestamp:* [00:18:22]
 
 ---
 
-## 🟢 Positive Feedback (3)
-**Improved Clarity**
-- *What worked:* Clear and straightforward status checking page.
-- *Quote:* "It's actually pretty clear."
-- *Timestamp:* [00:17:25]
+## 🟡 Opportunities (7)
+**High Impact - Clear Instructions**
+- *Opportunity:* Provide clearer instructions and explanations in plain language.
+- *Quote:* "Explain things in plain English."
+- *Timestamp:* [00:18:22]
+
+**Medium Impact - Simplified Form Fields**
+- *Opportunity:* Simplify form fields to reduce confusion for users.
+- *Quote:* "Don't use fancy words like specifications."
+- *Timestamp:* [00:11:29]
+
+---
+
+## 💡 Key Insights (12)
+**User Behavior - Technical Assistance**
+- *Insight:* Participants prefer in-person or phone assistance over online applications.
+- *Quote:* "Maybe I should just drive to the VA office."
+- *Timestamp:* [00:16:09]
+
+**Workflow - Document Upload**
+- *Insight:* Participants struggle with the concept of uploading documents online.
+- *Quote:* "I don't know how to get them on the computer."
+- *Timestamp:* [00:13:24]
+
+---
+
+## 🟢 Positive Feedback (4)
+**Positive Experience**
+- *What worked:* Patient and respectful demeanor of the interviewer.
+- *Quote:* "You're very patient."
+- *Timestamp:* [00:19:44]
 
 ---
 
 ## ✨ Feature Requests (5)
-**Must Have - Plain Language Instructions**
-- *Request:* Provide instructions in simple, understandable language.
-- *Quote:* "Explain things in plain English."
-- *Timestamp:* [00:18:22]
+**Must Have - Clear Form Instructions**
+- *Request:* Provide step-by-step guidance in plain language.
+- *Quote:* "Just tell me exactly what they want."
+- *Timestamp:* [00:11:29]
 
-**Should Have - Document Submission Guidance**
-- *Request:* Clearly outline document submission requirements and methods.
-- *Quote:* "Tell me upfront what documents I need."
-- *Timestamp:* [00:18:43]
+**Should Have - Improved Error Messages**
+- *Request:* Provide clearer error messages for incorrect inputs.
+- *Quote:* "But why didn't it just tell me that in the first place?"
+- *Timestamp:* [00:12:06]
 
 ---
 
-## ⚠️ Usability Issues (7)
-**Blocker - Form Data Loss**
-- *Issue:* Session timeout causing loss of filled form data.
-- *Quote:* "I spent 15 minutes filling that out, and it's all gone."
-- *Timestamp:* [00:15:31]
+## ⚠️ Usability Issues (9)
+**Blocker - Lack of Document Upload Knowledge**
+- *Issue:* Participant unable to upload paper documents due to lack of digital literacy.
+- *Quote:* "I don't know how to get them on the computer."
+- *Timestamp:* [00:13:24]
 
-**Major - Lack of Clarity on Technical Terms**
-- *Issue:* Participant confusion with technical terminology.
-- *Quote:* "Don't use words like 'dropdown menu' without explaining."
-- *Timestamp:* [00:18:22]
+**Major - Session Timeout**
+- *Issue:* Session timeout erased completed form data without warning.
+- *Quote:* "That's ridiculous."
+- *Timestamp:* [00:14:29]
 
 ---
 
 ## 😊 Emotional Journey
-**Frustrated** (00:15:36)
-- *Context:* Participant expressed frustration over session timeout and loss of data.
-- *Quote:* "Frustrated. I served this country for 20 years."
-
-**Confused** (00:09:26)
-- *Context:* Participant struggled to understand the concept of a dropdown menu.
-- *Quote:* "What's a dropdown menu?"
+**Frustrated** (00:15:39)
+- *Context:* Participant expressed frustration at losing completed form data.
+- *Quote:* "Frustrated."
 
 ---
 
 ## 📋 Full Transcript
-The full transcript has been redacted and is available for review.
+The full transcript has been redacted for privacy and confidentiality.
 
 ---
 
 ## 📊 Coding Summary
-- **Total Codes:** 55
-- **High-Confidence Codes:** 48
-- **Flagged for Review:** 7
-- **Processing Time:** Unknown
+- **Total Codes:** 61
+- **High-Confidence Codes:** 57
+- **Flagged for Review:** 4
+- **Processing Time:** unknown
 
-*AI Coding Confidence: 87%*
+*AI Coding Confidence: 93%*
