@@ -291,7 +291,7 @@ integration:
 # Output configuration
 output_options:
   filename: "{{selected_session}}_notes_{{user_name}}_{{current_date}}.md"
-  path: "03-fieldwork/session-notes/"
+  path: "03-fieldwork/session-{{study_name}}/session-notes/"
   generate_index: true
   index_filename: "README.md"
   
