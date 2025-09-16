@@ -2,108 +2,84 @@
 
 **Study:** VA Housing Application UX Research  
 **Session:** July 18, 2025  
+**Date:** 1:00 PM - 2:15 PM EST  
 **Source:** Manual Notes  
-**Analysis:** AI-coded + PII redacted
 
 ---
 
-## 🔴 Pain Points (22)
-**Critical - Slow Page Loading**
-- *Issue:* Slow internet connection causing delays.
+## 🔴 Pain Points (18)
+**Critical - Slow Loading Times**
+- *Issue:* Slow website loading due to rural internet.
 - *Quote:* "Everything takes forever out here."
 - *Timestamp:* [00:04:09]
 
-**High - Confusing Terminology**
-- *Issue:* Difficulty understanding "dropdown menu" and "specifications."
+**High - Session Timeout**
+- *Issue:* Session timeout erased 15+ minutes of work.
+- *Quote:* "I was just filling out the form and now it wants me to start over."
+- *Timestamp:* [00:14:29]
+
+**Medium - Confusing Terminology**
+- *Issue:* Technical jargon like "dropdown menu" caused confusion.
 - *Quote:* "What's a dropdown menu?"
 - *Timestamp:* [00:09:26]
 
-**Medium - Form Data Loss**
-- *Issue:* Session timeout erased 15+ minutes of work.
-- *Quote:* "I spent 15 minutes filling that out, and it's all gone."
-- *Timestamp:* [00:15:31]
-
 ---
 
-## 🟡 Opportunities (8)
-**High Impact - Clear Instructions**
+## 🟡 Opportunities (4)
+**High Impact - Simplified Instructions**
 - *Opportunity:* Provide clear, plain English explanations.
 - *Quote:* "Explain things in plain English."
 - *Timestamp:* [00:18:22]
 
-**Medium Impact - Document Guidance**
-- *Opportunity:* Offer upfront document requirements and submission options.
-- *Quote:* "Tell me upfront what documents I need."
-- *Timestamp:* [00:18:43]
-
 ---
 
-## 💡 Key Insights (8)
-**User Behavior - Technical Assistance**
-- *Insight:* Participants prefer phone support for step-by-step guidance.
-- *Quote:* "Maybe a phone number I could call."
-- *Timestamp:* [00:19:13]
-
-**Workflow - Application Clarity**
-- *Insight:* Simplified, step-by-step processes are more user-friendly.
-- *Quote:* "One thing at a time."
+## 💡 Key Insights (5)
+**User Behavior - Clear Instructions**
+- *Insight:* Participants appreciated straightforward, one-step instructions.
+- *Quote:* "One thing at a time. It tells me exactly what to do."
 - *Timestamp:* [00:17:25]
 
 ---
 
 ## 🟢 Positive Feedback (3)
-**Clear Instructions**
-- *What worked:* Status checking page clarity.
+**Ease of Status Checking**
+- *What worked:* Clear and intuitive status checking page.
 - *Quote:* "It's straightforward."
-- *Timestamp:* [00:17:25]
+- *Timestamp:* [00:17:30]
 
 ---
 
-## ✨ Feature Requests (5)
-**Must Have - Plain Language**
-- *Request:* Use simple language in instructions.
-- *Quote:* "Don't use words like 'dropdown menu'."
-- *Timestamp:* [00:18:22]
-
-**Nice to Have - Document Submission**
-- *Request:* Provide alternative document submission methods.
-- *Quote:* "Give me a way to mail them in."
-- *Timestamp:* [00:18:43]
+## ✨ Feature Requests (6)
+**Must Have - Simplified Terminology**
+- *Request:* Use user-friendly language in instructions.
+- *Quote:* "Don't use words like 'dropdown menu' without explaining."
+- *Timestamp:* [00:18:31]
 
 ---
 
-## ⚠️ Usability Issues (4)
-**Blocker - Internet Speed**
-- *Issue:* Rural broadband causing slow loading times.
-- *Quote:* "Everything takes forever out here."
-- *Timestamp:* [00:04:09]
-
-**Major - Technical Jargon**
-- *Issue:* Difficulty with technical terms like "dropdown menu."
-- *Quote:* "What's a dropdown menu?"
-- *Timestamp:* [00:09:26]
+## ⚠️ Usability Issues (6)
+**Blocker - Document Upload**
+- *Issue:* Complete inability to upload physical documents.
+- *Quote:* "I don't know how to get them on the computer."
+- *Timestamp:* [00:13:24]
 
 ---
 
 ## 😊 Emotional Journey
 **Frustrated** ([00:15:39])
-- *Context:* Frustration over lost work due to session timeout.
-- *Quote:* "Frustrated."
-
-**Confused** ([00:18:07])
-- *Context:* Confusion over the application process complexity.
-- *Quote:* "The website has some good parts, but it's not made for people like me."
+- *Context:* Participant felt frustrated with the session's technical challenges.
+- *Quote:* "Frustrated. I served this country for 20 years."
 
 ---
 
 ## 📋 Full Transcript
-The full transcript has been redacted for privacy.
+The full transcript has been redacted and analyzed for insights.
 
 ---
 
 ## 📊 Coding Summary
-- **Total Codes:** 50
-- **High-Confidence Codes:** 50
+- **Total Codes:** 42
+- **High-Confidence Codes:** 42
 - **Flagged for Review:** 0
 - **Processing Time:** unknown
 
