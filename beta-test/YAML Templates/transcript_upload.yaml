@@ -395,29 +395,6 @@ ai_generation_tasks:
       - Return ONLY the filename as one line
       - Example: pt003-coded-analysis.md
 
-  - task_id: "transcript_coding_path"
-    prompt: |
-      You will receive only the Manual Notes and Transcript text. Extract a session id and output a relative path.
-
-      **Manual Notes (optional)**
-      {{manual_notes_text_or_blank}}
-
-      **Transcript**
-      {{input_text}}
-
-      Detection Rules:
-      - Prefer explicit session tokens such as: session_20250718, session-202507181300, session2, s1
-      - Normalize examples:
-        - "s1" → session_0001
-        - "session2" → session_0002
-      - If a clear session date appears (e.g., "July 18, 2025" or "2025-07-18"), build session_YYYYMMDD from that date (choose the earliest if multiple).
-      - If nothing can be detected, use session_unknown.
-
-      Output Rules:
-      - Produce ONLY: 03-fieldwork/SESSION_ID/coded-transcripts/ (replace SESSION_ID with the detected/normalized id, in lowercase)
-      - Return ONLY the path as one line
-      - Example: 03-fieldwork/session_20250718/coded-transcripts/
-
 
 output_template: |
   {{ai_generated.transcript_coding_markdown}}
@@ -529,7 +506,8 @@ output_templates: |
 # File organization to existing folder structure
 output_options:
   filename: "{{ai_generated.transcript_coding_filename}}"
-  path: "{{ai_generated.transcript_coding_path}}"
+  path: "03-fieldwork/session-{{study_name}}/coded-transcripts/"
+  # path: "{{ai_generated.transcript_coding_path}}"
 
 #   filename: "{{auto_detected_participant_id}}-coded-analysis.md"
 #   path: "03-fieldwork/{{auto_detected_session_id}}/coded-transcripts/"
