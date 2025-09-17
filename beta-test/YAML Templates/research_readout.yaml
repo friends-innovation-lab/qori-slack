@@ -442,9 +442,7 @@ output_template: |
   ---
 
   ## 🏷️ Tags
-
-  `va`, `{{methodology_type | lower | replace(" ", "-")}}`, `research-readout`, `{{product_area | lower | replace(" ", "-")}}`, `qori`, `{{file_quality_score}}-quality`
-
+  
   ---
 
   **📞 Questions?** Contact {{researcher_contact}} for detailed discussion about findings.
