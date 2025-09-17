@@ -519,12 +519,12 @@ slack_message_format: |
 # GITHUB OUTPUT (Comprehensive reference document)
 # =============================================================================
 
-github_output:
-  location: "05-findings/"
-  file_name: "{{target_audience}}_readout_{{study_name_slug}}_{{current_date}}.md"
+output_options:
+  path: "05-findings/"
+  filename: "{{target_audience}}_readout_{{study_name_slug}}_{{current_date}}.md"
   format: "comprehensive_reference"
 
-github_document_format: |
+output_template: |
   # {{target_audience}} Readout — {{study_name}}
 
   **🤖 AI-Customized for {{target_audience}} | Generated {{current_date}}**
