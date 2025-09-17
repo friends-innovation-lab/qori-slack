@@ -230,8 +230,8 @@ output_options:
   default_delivery: "slack_and_github_api"
   slack_format: "creation_summary"
   save_issues_locally: true
-  file_location: "07-implementation/"
-  file_name: "github_issues_{{study_name_slug}}_{{current_date}}.json"
+  path: "07-implementation/"
+  filename: "github_issues_{{study_name}}_{{current_date}}.json"
 
 slack_output:
   post_in_channel: true
@@ -250,7 +250,7 @@ slack_output:
       action: "bulk_assign_issues"
 
 # Clean output format focused on recommendation conversion
-output_format: |
+output_template: |
   🛠 **GitHub Issues Created from Research Recommendations!**
   
   Hi dev teams! {{team_members}} I've converted {{total_issues}} key recommendations from the {{study_name}} research readout into actionable GitHub issues in {{github_repository}}.
