@@ -336,8 +336,8 @@ output_options:
   default_delivery: "slack_notification_and_github"
   slack_format: "minimal_notification_with_link"
   github_format: "comprehensive_research_document"
-  github_location: "05-shareouts/"
-  github_file_name: "research_readout_{{study_name_slug}}_{{current_date}}.md"
+  path: "05-shareouts/"
+  filename: "research_readout_{{study_name}}_{{current_date}}.md"
 
 # =============================================================================
 # SLACK OUTPUT (Minimal notification with link)
@@ -377,7 +377,7 @@ github_output:
   file_name: "research_readout_{{study_name_slug}}_{{current_date}}.md"
   format: "comprehensive_research_document"
 
-github_document_format: |
+output_template: |
   # 📊 Research Readout — {{study_name}}
 
   **🤖 AI-Enhanced Analysis Complete | Generated {{current_date}}**
