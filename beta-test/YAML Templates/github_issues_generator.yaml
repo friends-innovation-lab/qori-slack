@@ -259,32 +259,9 @@ output_template: |
   • **{{p0_p1_count}} Critical/High Priority** - Address major user blockers identified in research
   • **{{p2_count}} Medium Priority** - User experience improvements with clear evidence
   
-  ⚡ **Implementation Summary:**
-  • **Estimated Development:** {{estimated_weeks}} weeks total
-  • **Research-backed** with participant quotes and behavioral evidence
-  • **Ready for sprint planning** with clear acceptance criteria
-  
   🔗 **View Issues:** {{github_repo_url}}/issues?q=is:issue+label:research-finding
   
-  ---
-  
-  {{ai_generated.implementation_summary}}
-  
-  ---
-  
-  **🚀 Sprint Planning Guidance:**
-  1. **Start with P0-P1 issues** - These address critical user blockers
-  2. **Each issue includes research context** - User quotes and behavioral evidence  
-  3. **Clear acceptance criteria** - Ready for development estimation
-  4. **Research source links** - Connect back to {{study_name}} findings
-  
-  **[🔗 View All Issues]({{github_repo_url}}/issues)** | **[📋 Add to Sprint]** | **[🏷 Update Labels]** | **[👥 Assign Teams]**
-  
-  ---
-  
   *Questions about research context?* Contact {{researcher_contact}} for details about any recommendation.
-  
-  *🤖 {{total_issues}} Issues Created | Research Recommendations → Development Tasks Complete*
 
 # Simplified issue creation process
 creation_workflow:
