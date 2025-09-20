@@ -12,46 +12,38 @@
 
 Positive Reactions:
 
-"Well, at least the writing is bigger than it used to be. I can actually read this without my reading glasses."
-"The phone number is right there at the top. That's good - I might need to call someone."
-"This part with the checkboxes makes sense. Just like filling out forms at the doctor's office."
-
+"Oh, this part actually makes sense. I like how it shows the different types of housing help right up front."
+"The progress bar at the top is helpful - at least I know I'm not stuck in some endless form."
+"I appreciate that it saves my information as I go. I've lost forms before when my internet cuts out."
 Frustration Points:
-"Why does it keep asking me the same information over and over? I already told you my name and address."
-"I don't understand what 'upload' means. Where am I supposed to get these documents from on my computer?"
-"This is taking forever to load. Is my internet broken or is this website just slow?"
 
+"What does 'household composition' even mean? Am I supposed to count my kids who don't live with me full time?"
+"This is asking for documents I don't have with me. Why didn't they tell me this upfront?"
+"I've been clicking 'submit' for like 30 seconds and nothing is happening. Is it broken?"
 Confusion Moments:
-"What's a 'dropdown menu'? You keep saying click the dropdown but I don't see anything dropping."
-"Am I supposed to type the whole address or just the city? These boxes are all different sizes."
-"It says 'required field' in red but I filled it out. What's wrong with what I wrote?"
 
-Technology Struggles:
-"I clicked it but nothing happened. Should I click it again?"
-"How do I go back to the previous page? I can't find a back button anywhere."
-"My grandson usually helps me with this computer stuff. This is harder than I thought."
+"Wait, am I applying for a loan or for rental assistance? I thought I clicked on rental help but this looks like home buying stuff."
+"It says my disability rating is 'invalid' but I'm literally looking at my letter that says 60%. What's wrong with it?"
 Emotional Reactions:
 
-"I served this country for 20 years. I shouldn't have to jump through hoops like this for housing help." [voice rising]
-"Maybe I should just drive to the VA office. At least there I can talk to a real person." [sighing heavily]
+"This is exactly why I hate dealing with VA stuff online. It never works the way it should." [frustrated sigh]
+"I just want a place for me and my daughter to live. Why is this so complicated?" [voice getting quieter]
 
 ---
 
 ## 😤 Emotional Moments & Body Language
 
-Minute 5: Participant squinting at screen, adjusting glasses repeatedly. Asked if he could make the text bigger. Visible relief when moderator helped him zoom to 150%.
+Minute 12: Participant visibly frustrated when document upload failed twice. Leaned back in chair, rubbed forehead. Said "Here we go again" under breath.
 
-Minute 11: Became visibly frustrated when trying to understand dropdown instructions. Started clicking multiple areas of screen randomly. Muttered "This is ridiculous" under his breath.
+Minute 18: Became animated when talking about previous housing struggles. Gesturing with hands, speaking faster. Clear emotional investment in the topic.
 
-Minute 19: Long pause when asked to upload documents. Stared at screen for almost 3 minutes. Started to sound defeated: "I don't think I can do this part."
+Minute 25: Visible relief when finally found the rental assistance section. Shoulders relaxed, leaned forward toward screen again. "Okay, now we're getting somewhere."
 
-Minute 27: Showed pride when successfully completed eligibility section without help. Sat up straighter, smiled: "Well, look at that. I figured it out."
+Minute 31: Confusion about disability rating field caused participant to pause for nearly 2 minutes, staring at screen. Started second-guessing herself: "Maybe I'm remembering wrong?"
 
-Minute 34: Became agitated when form seemed to lose his information. Raised voice slightly: "Where did everything go? I just filled all this out."
+Minute 38: Participant apologized multiple times for "not being good at this" when encountering technical issues. Self-deprecating comments increased toward end of session.
 
-Minute 42: Expressed genuine gratitude when moderator offered to send him written instructions for later. "That would be really helpful. You're very patient with an old soldier."
-
-Minute 58: Visible exhaustion by end of session. Rubbing eyes, slumped shoulders. "This is a lot for one sitting."
+Minute 45: Genuine surprise and happiness when application status page actually worked: "Wait, it actually saved everything? That's... actually pretty good."
 
 ---
 
@@ -59,49 +51,39 @@ Minute 58: Visible exhaustion by end of session. Rubbing eyes, slumped shoulders
 
 Task 1: Find and begin housing application
 
-⚠️ Partial completion: 8 minutes
-Issues: Confused by multiple program options, needed guidance to understand differences
-Recovery: Moderator provided clarification, participant successfully selected correct program
+✅ Completed: 3 minutes
+❌ Error: Initially clicked on home loan section instead of rental assistance
+Recovery: Self-corrected after reading page content
 Task 2: Complete eligibility screening
 
-✅ Completed: 15 minutes
-Issues: Multiple format errors (phone number, date formatting)
-Recovery: Participant learned pattern after first few corrections, completed independently
+⚠️ Partial completion: 8 minutes
+❌ Errors:
+Confused by "household composition" terminology
+Entered disability rating incorrectly (format issue)
+Recovery: Required moderator clarification for household question
 Task 3: Upload required documents
 
-❌ Failed: Could not complete
+❌ Failed: Multiple attempts, technical issues
 Errors:
-Didn't understand concept of file location/browsing
-Documents not saved digitally on computer
-File upload interface too complex
-Outcome: Moderator explained alternative mail-in process
-Task 4: Submit application
-
-❌ Could not attempt: Due to incomplete document upload
-Alternative: Moderator showed what submit process would look like
-Understanding: Participant grasped concept once demonstrated
+File size too large (not communicated clearly)
+PDF format not accepted for one document type
+Abandoned: After 3 failed attempts, moved to next task
 
 ---
 
 ## 🐛 Technical Issues & Platform Problems
 
-nternet Connectivity Issues:
+Zoom Platform Issues:
 
-Minute 16: Page loading extremely slow (2+ minutes) due to participant's rural internet connection. Participant asked "Is this normal? Everything takes forever out here."
-Minute 25: Connection dropped briefly during form submission attempt. Participant thought he had "broken something."
-Minute 35: Images and icons loading very slowly, creating confusion about clickable elements.
-Platform Usability Problems:
+Minute 8: Participant's screen share froze for ~30 seconds. Had to stop and restart screen sharing. Caused brief interruption but didn't affect overall session flow.
+Minute 23: Audio quality degraded significantly - participant sounded robotic. Asked participant to turn off video which resolved the issue. No data loss.
+Minute 41: Zoom automatically updated participant's browser during session, causing 2-minute interruption. Participant rejoined quickly using same meeting link.
+VA.gov Platform Issues:
 
-Minute 12: Dropdown menus not clearly identified as interactive elements. Participant couldn't locate dropdown arrow indicators.
-Minute 20: File upload dialog box appeared but participant's browser blocked pop-ups. Error message not helpful.
-Minute 38: Form session timeout occurred without warning. Lost 10 minutes of data entry work.
-Minute 44: Back button functionality broken - used browser back and received error message.
-Participant's Technical Environment:
-
-Internet: Very slow rural broadband (estimated 5 Mbps down)
-Browser: Internet Explorer (older version) - compatibility issues
-Device: Desktop PC, approximately 8 years old, running slowly
-Settings: Default browser settings, no ad blockers, pop-up blocker enabled
+Minute 15: Page loading time extremely slow (30+ seconds) for eligibility screening section. Participant asked "Is this normal?" White screen with no loading indicator.
+Minute 28-30: Document upload feature completely non-functional. Error messages inconsistent between attempts. No clear file size or format requirements displayed.
+Minute 34: Form validation error messages appearing/disappearing rapidly, creating visual confusion. Participant couldn't read full error text.
+Minute 39: Submit button appeared to do nothing - no loading state, no confirmation. Actually was processing but took 45+ seconds with no feedback.
 
 ---
 
@@ -109,39 +91,38 @@ Settings: Default browser settings, no ad blockers, pop-up blocker enabled
 
 Positive Accessibility Features:
 
-Text size adjustable through browser zoom worked well
-High contrast mode available and functional
-Form labels clear and readable at larger sizes
-Simple navigation structure easier for older users
+Form labels properly associated with input fields
+Clear heading structure for screen reader navigation
+Good color contrast throughout most of the interface
+Keyboard navigation worked for most elements
 Accessibility Issues Observed:
 
-Default text size too small for participant's vision needs
-Dropdown indicators not obvious enough for users with limited digital literacy
-Error messages too technical/complex for average user understanding
-No clear indication of required vs. optional fields until error occurred
+Error messages not announced by screen reader properly
+File upload area lacks clear instructions for keyboard users
+Progress bar not descriptive enough for screen reader users
+Some buttons missing accessible names/labels
 
 ---
 
 ## ⭐ Top 3 Key Moments
 
-1. Document Upload Barrier (Minute 20) Complete task failure due to digital divide. Participant couldn't understand file management concepts and didn't have documents stored digitally. This represents a fundamental accessibility barrier for older veterans in rural areas. His comment: "My grandson usually helps me with this computer stuff" highlights the dependency many older users have on family tech support.
+1. Moment of Truth - Document Upload Failure (Minute 28) Most critical usability breakdown. Participant attempted to upload required documents 3 times with no clear feedback about file requirements. This is where users abandon applications. Her comment: "This is exactly why I hate dealing with VA stuff online" captures the emotional cost of poor UX.
 
-2. Form Timeout Without Warning (Minute 38)
-System failure with devastating user impact. After 15 minutes of careful data entry, session timeout lost all progress without warning. Participant became visibly distressed: "Where did everything go?" This represents poor technical design that particularly impacts slower users who need more time.
+2. Disability Rating Validation Error (Minute 31)
+Trust and credibility crisis. System rejected her disability rating as "invalid" despite being accurate. Caused participant to question her own information and VA competency. This type of error damages user confidence in the entire system.
 
-3. Successful Status Check Understanding (Minute 55) Moment of user empowerment. Despite earlier struggles, participant quickly understood the status checking feature. His pride was evident: "Well, look at that. I figured it out." Shows that when interface design matches user mental models, even users with limited digital skills can succeed.
+3. Successful Status Check (Minute 45) Redemption and relief. After multiple failures, the status tracking actually worked well and showed her saved information. Participant's visible relief and surprise: "Wait, it actually saved everything?" shows how low expectations have become, but also the potential for positive experiences.
 
 ---
 
 ## 📋 Additional Notes & Context
 
-Pre-Session Context:
+Technical Environment:
 
-Army veteran, served 20 years (1995-2015), retired as Sergeant First Class
-Lives in rural Montana, 45 minutes from nearest VA office
-Recently widowed, needs housing modifications for mobility issues
-Limited experience with computers, mostly uses for email and basic web browsing
-Son lives nearby but not available for regular tech support
+Using Chrome browser on Windows laptop
+Stable internet connection throughout session
+Screen sharing worked without issues
+No audio/video problems
 
 ---
 
