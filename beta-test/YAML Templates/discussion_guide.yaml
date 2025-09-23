@@ -2,216 +2,70 @@ id: discussion_guide_v4
 name: run_discussion_guide
 label: 💬 Discussion Guide
 version: v4.0
-description: |
-  Generate VA-compliant discussion guides for moderated research sessions. Creates structured guides with session timing, moderator scripts, and observer instructions from simple study context.
 
-author: Qori R&D
-created: 2025-08-27
-last_updated: 2025-08-27
-
-# LLM Configuration
-llm_config:
-  model: "gpt-4"
-  temperature: 0.3
-  max_tokens: 4000
-
-input_type: simple_context
-input_processing: standalone_generation
-precision_mode: structured
-
-# Simplified input variables matching UI exactly
+# Simplified input variables
 input_variables:
-  - research_focus          # "What are you researching?" 
-  - research_questions      # "What specific questions..."
-  - participants           # "Who are your participants?"
-  - testing_url           # Optional URL
-  - session_length        # 30/45/60/90 minutes
+  - research_focus          
+  - research_questions      
+  - participants           
+  - testing_url           
+  - session_length        
 
-# AI generation tasks
+# Single AI task for everything
 ai_generation_tasks:
-  - task_id: "generate_guide_content"
+  - task_id: "generate_complete_guide"
     prompt: |
-      Create discussion guide content from:
+      Create a complete discussion guide from:
+      
       Research Focus: {{research_focus}}
-      Key Questions: {{research_questions}} 
+      Research Questions: {{research_questions}}
       Participants: {{participants}}
       Session Length: {{session_length}} minutes
       Testing URL: {{testing_url}}
       
-      Generate:
-      - Study name from research focus
-      - 3-4 warm-up questions specific to participants
-      - 2-4 tasks based on session length and research focus
-      - Post-session interview questions
+      Generate a clean, structured discussion guide with:
+      1. Study name (derived from research focus)
+      2. Session timing breakdown
+      3. 3-4 warm-up questions specific to participants
+      4. 2-4 tasks based on session length and research focus
+      5. Post-session interview questions
+      
+      Format as clean markdown with proper headers and timing.
 
-  - task_id: "calculate_timing"
-    prompt: |
-      Calculate session timing for {{session_length}} minutes:
-      - Intro: 5 min
-      - Warm-up: 5 min  
-      - Tasks: {{calculate_task_time}} min (60-70% of remaining time)
-      - Interview: 10-15 min
-      - Closing: 5 min
-
-# Processing workflow
-processing_workflow:
-  1. validate_core_inputs
-  2. execute_ai_generation_tasks
-  3. calculate_session_timing
-  4. validate_generated_content
-  5. populate_discussion_guide
-  6. save_to_study_folder
-
-# Simplified output template with direct variable substitution
+# Clean, minimal output template
 output_template: |
-  # 💬 Discussion Guide — {{study_name}}
-  
+  # 💬 Discussion Guide — {{generated_study_name}}
+
   **Duration:** {{session_length}} minutes  
-  **Research Focus:** {{research_focus}}
-  **Participants:** {{participants}}
-  **Date Created:** {{current_date}}
-  
-  ## Session Overview
-  {{generated_overview}}
-  
-  ## Timing Breakdown
-  {{calculated_timing}}
-  
-  ## Tasks
-  {{generated_tasks}}
+  **Participants:** {{participants}}  
+  **Date:** {{current_date}}
 
-  ---
-
-  ## 📋 Research Overview
-
-  **Objective:** {{ai_generated.extract_study_info.research_objective}}
-
-  **Participants:** {{ai_generated.extract_study_info.participant_type}}
-
-  **Key Questions:**
-  {{ai_generated.extract_study_info.key_questions}}
-
-  ---
-
-  ## ⏱️ Session Timing
-
-  {{ai_generated.create_session_structure}}
-
-  ---
-
-  ## 🗣️ Session Script
-
-  ### Intro — 5 Minutes
-  
-  "Hi [Name], thanks for joining us today. I'm [Moderator Name] and we're going to spend the next {{session_length}} minutes learning about your experience with [specific focus area].
-
-  **Quick housekeeping:**
-  - This session is being recorded for our team to review later
-  - There are no wrong answers - we're testing the design, not you  
-  - Please think out loud as you go through tasks
-  - Feel free to ask questions or stop anytime
-
-  **About today's session:**
-  {{ai_generated.extract_study_info.session_description}}
-
-  Any questions before we start?"
-
-  ### Warm-Up Questions — 5 Minutes
-
-  {{ai_generated.generate_warm_up_questions}}
-
-  ### Tasks
-
-  {{ai_generated.create_task_instructions}}
-
-  ### Post-Task Interview — {{interview_time}} Minutes
-
-  {{ai_generated.generate_interview_questions}}
-
-  ### Closing — 5 Minutes
-
-  - Thank participant for their time and insights
-  - Confirm recording consent one final time  
-  - Ask about future research participation
-  - Provide researcher contact for follow-up questions
+  {% if testing_url %}
+  **Testing URL:** {{testing_url}}
+  {% endif %}
 
   ---
 
   ## 🚨 Emergency Procedures
 
   **Technical Issues:**
-  - Check internet connection and screen sharing
   - Have backup meeting link ready
-  - Contact technical support: [IT contact]
+  - Contact technical support if needed
 
   **Participant Distress:**
-  - Pause session and check participant comfort level
-  - Remind about voluntary participation  
-  - End session if participant requests
+  - Pause session and check comfort level
+  - Remind about voluntary participation
   - VA Crisis Line: 988, Press 1
 
-  **Session Termination:**
-  - Thank participant professionally
-  - Stop recording immediately
-  - Document reason for early termination
-  - Notify research team
+  ---
+
+  {{generated_complete_guide}}
 
   ---
 
-  ## 📝 Observer Notes
+  **Generated:** {{current_date}}
 
-  **Focus Areas:**
-  - Direct quotes about pain points or confusion
-  - Emotional reactions (frustration, delight, surprise)
-  - Unexpected workflows or workarounds
-  - Feature requests or improvement suggestions
-
-  **Note-Taking Tips:**
-  - Use participant's exact words in quotes
-  - Note timestamps for key moments
-  - Observe non-verbal reactions
-  - Document both successes and failures
-
-  ---
-
-  **Study Folder:** {{study_folder}}  
-  **Generated:** {{current_date}} by {{moderator_name}}
-
-# Output configuration
+# Simple delivery
 output_options:
   filename: "discussion_guide_{{current_date}}.md"
   path: "01-planning/"
-  
-  delivery:
-    slack:
-      enabled: true
-      channel: "{{source_channel}}"
-      notify_user: "{{slack_user_id}}"
-      message: |
-        💬 **Discussion Guide Created**
-        
-        **{{ai_generated.extract_study_info.study_name}}**
-        {{session_length}}-minute {{ai_generated.extract_study_info.research_method}}
-        
-        📁 Saved to: `{{study_folder}}/primary-research/01-planning/`
-        
-        Ready for moderated sessions with {{ai_generated.extract_study_info.participant_type}}
-        
-      actions:
-        - text: "📖 View Guide"
-          url: "{{github_file_link}}"
-        - text: "📅 Schedule Sessions"
-          action: "create_calendar_events"
-
-# Quality checks
-validation_rules:
-  - session_timing_adds_up_correctly
-  - task_count_appropriate_for_length
-  - questions_align_with_objectives
-  - emergency_procedures_included
-
-output_notes: |
-  Standalone discussion guide generation from simple context input
-  No dependencies on research plan documents
-  Works with pre-selected study folders from main UI
-  Generates VA-compliant session structure and emergency procedures
