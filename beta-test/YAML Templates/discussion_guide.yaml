@@ -19,101 +19,39 @@ input_type: simple_context
 input_processing: standalone_generation
 precision_mode: structured
 
-# Simple input schema matching Slack UI
+# Simplified input variables matching UI exactly
 input_variables:
-  - study_context          # What you're researching (REQUIRED)
-  - session_length         # 30/45/60/90 minutes (REQUIRED) 
-  - testing_url           # Optional prototype/product URL (OPTIONAL)
-  
-  # Auto-populated from workflow
-  - study_folder          # Pre-selected from main UI (REQUIRED)
-  - moderator_name        # From Slack user (OPTIONAL)
+  - research_focus          # "What are you researching?" 
+  - research_questions      # "What specific questions..."
+  - participants           # "Who are your participants?"
+  - testing_url           # Optional URL
+  - session_length        # 30/45/60/90 minutes
 
 # AI generation tasks
 ai_generation_tasks:
-  - task_id: "extract_study_info"
+  - task_id: "generate_guide_content"
     prompt: |
-      Extract key information from the study context and generate study details:
+      Create discussion guide content from:
+      Research Focus: {{research_focus}}
+      Key Questions: {{research_questions}} 
+      Participants: {{participants}}
+      Session Length: {{session_length}} minutes
+      Testing URL: {{testing_url}}
       
-      **Study Context:** {{study_context}}
-      **Testing URL:** {{testing_url}}
-      **Session Length:** {{session_length}} minutes
-      
-      Extract and format:
-      - **Study Name:** Generate clear, descriptive name
-      - **Research Objective:** What needs to be learned
-      - **Participant Type:** Who should participate (infer from context)
-      - **Research Method:** Usability testing, interviews, concept validation, etc.
-      - **Key Tasks:** What participants will do
-      
-      If testing URL provided, focus on interface/usability testing.
-      If no URL, focus on interview/discovery approach.
+      Generate:
+      - Study name from research focus
+      - 3-4 warm-up questions specific to participants
+      - 2-4 tasks based on session length and research focus
+      - Post-session interview questions
 
-  - task_id: "create_session_structure"
+  - task_id: "calculate_timing"
     prompt: |
-      Create session timing breakdown for {{session_length}} minutes:
-      
-      **Standard VA Session Structure:**
-      - Intro & Consent: 5 minutes
-      - Warm-up Questions: 5 minutes  
-      - Main Tasks: 60-70% of total time
-      - Post-task Interview: 10-15 minutes
-      - Closing: 2-5 minutes
-      
-      Calculate specific timing for {{session_length}}-minute session.
-      Create 2-4 task sections based on study context and available time.
-
-  - task_id: "generate_warm_up_questions"
-    prompt: |
-      Create 3-4 warm-up questions specific to the study context:
-      
-      Base questions on:
-      - Study context: {{study_context}}
-      - Participant type identified
-      - Product/service area being studied
-      
-      Make questions conversational and relevant.
-      Build rapport while gathering relevant background.
-      Format as bullet points with natural language.
-
-  - task_id: "create_task_instructions"
-    prompt: |
-      Create detailed task instructions based on study context and timing:
-      
-      **Study Context:** {{study_context}}
-      **Testing URL:** {{testing_url}}
-      **Available Task Time:** {{calculated_task_time}} minutes
-      
-      For each task, include:
-      - Clear objective linked to research goal
-      - Step-by-step moderator instructions
-      - Specific things to observe
-      - Success criteria
-      
-      Format as:
-      ## Task [Number]: [Name] — [X Minutes]
-      **Objective:** [What this task tests]
-      
-      **Instructions:**
-      1. [Specific moderator step]
-      2. [Specific moderator step]
-      
-      **Watch for:**
-      - [Specific behaviors/reactions]
-      - [Pain points or confusion]
-
-  - task_id: "generate_interview_questions"
-    prompt: |
-      Create 4-6 post-task interview questions that probe deeper:
-      
-      Questions should:
-      - Explore emotional reactions and motivations
-      - Uncover improvement opportunities  
-      - Address the "why" behind observed behaviors
-      - Generate actionable insights
-      
-      Avoid questions answered by observation alone.
-      Focus on understanding user mental models and preferences.
+      Calculate session timing for {{session_length}} minutes:
+      - Intro: 5 min
+      - Warm-up: 5 min  
+      - Tasks: {{calculate_task_time}} min (60-70% of remaining time)
+      - Interview: 10-15 min
+      - Closing: 5 min
 
 # Processing workflow
 processing_workflow:
@@ -124,18 +62,23 @@ processing_workflow:
   5. populate_discussion_guide
   6. save_to_study_folder
 
-# Output template
+# Simplified output template with direct variable substitution
 output_template: |
-  # 💬 Discussion Guide — {{ai_generated.extract_study_info.study_name}}
-
-  **Session Type:** {{ai_generated.extract_study_info.research_method}}  
+  # 💬 Discussion Guide — {{study_name}}
+  
   **Duration:** {{session_length}} minutes  
-  **Moderator:** {{moderator_name}}  
+  **Research Focus:** {{research_focus}}
+  **Participants:** {{participants}}
   **Date Created:** {{current_date}}
-
-  {% if testing_url %}
-  **Testing Materials:** {{testing_url}}
-  {% endif %}
+  
+  ## Session Overview
+  {{generated_overview}}
+  
+  ## Timing Breakdown
+  {{calculated_timing}}
+  
+  ## Tasks
+  {{generated_tasks}}
 
   ---
 
