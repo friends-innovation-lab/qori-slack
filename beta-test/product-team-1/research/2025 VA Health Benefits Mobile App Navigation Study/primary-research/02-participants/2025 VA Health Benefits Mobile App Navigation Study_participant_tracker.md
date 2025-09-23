@@ -3,7 +3,7 @@
 **📊 Recruitment Summary**
 - **Total Participants:** 5
 - **Confirmed Sessions:** 1
-- **Pending Responses:** 0
+- **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
 - **Last Updated:** September 23, 2025 by lapedra
@@ -18,7 +18,7 @@
 | 19 | PT004 | internal_va_panel | 2025-08-15 1:30 PM EST | recruited | Prefers Spanish interface when available; uses both iOS and Android devices |
 | 18 | PT003 | internal_va_panel | 2025-08-14 10:00 AM EST | confirmed | Limited data plan; prefers Wi-Fi only sessions; uses large text settings |
 | 17 | PT002 | internal_va_panel | 2025-08-13 3:00 PM EST | recruited | Android user; works irregular hours so flexible timing needed |
-| 16 | PT001 | internal_va_panel | 2025-08-12 11:00 am EST | recruited | Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
+| 16 | PT001 | internal_va_panel | 2025-08-12 11:00 am EST | pending_response | Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
 
 ---
 
@@ -40,6 +40,7 @@ Recruitment effectiveness: 20% conversion rate (1 confirmed of 5 recruited)
 
 ## ⏳ Pending Sessions
 
+- **** -  ()
 
 ---
 
@@ -119,4 +120,4 @@ Recruitment effectiveness: 20% conversion rate (1 confirmed of 5 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-All participants are on track
+Follow up with 1 pending participant(s)
