@@ -1,4 +1,4 @@
-# Research Brief - Dummy Text for Slack UI
+# Research Brief 
 
 ## Research Brief Fields
 
