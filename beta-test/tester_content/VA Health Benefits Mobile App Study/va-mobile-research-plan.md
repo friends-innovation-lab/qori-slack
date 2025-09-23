@@ -1,4 +1,4 @@
-# Research Plan - `/plan-mobile-study` Command
+# Research Plan
 
 ## Study Planning Details
 
