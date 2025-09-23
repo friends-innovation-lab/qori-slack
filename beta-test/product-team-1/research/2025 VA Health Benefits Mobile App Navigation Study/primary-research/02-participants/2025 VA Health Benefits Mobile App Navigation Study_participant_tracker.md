@@ -2,11 +2,11 @@
 
 **📊 Recruitment Summary**
 - **Total Participants:** 5
-- **Confirmed Sessions:** 0
+- **Confirmed Sessions:** 1
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
-- **Last Updated:** September 23, 2025 by U01SC2TNYKU
+- **Last Updated:** September 23, 2025 by lapedra
 
 ---
 
@@ -16,7 +16,7 @@
 |----|-------|---------------|-----------|--------|----------------------|
 | 20 | PT005 | internal_va_panel | 2025-08-16 4:00 PM EST | recruited | Uses TalkBack on Android; tech-savvy user who may complete tasks quickly |
 | 19 | PT004 | internal_va_panel | 2025-08-15 1:30 PM EST | recruited | Prefers Spanish interface when available; uses both iOS and Android devices |
-| 18 | PT003 | internal_va_panel | 2025-08-14 10:00 AM EST | recruited | Limited data plan; prefers Wi-Fi only sessions; uses large text settings |
+| 18 | PT003 | internal_va_panel | 2025-08-14 10:00 AM EST | confirmed | Limited data plan; prefers Wi-Fi only sessions; uses large text settings |
 | 17 | PT002 | internal_va_panel | 2025-08-13 3:00 PM EST | recruited | Android user; works irregular hours so flexible timing needed |
 | 16 | PT001 | internal_va_panel | 2025-08-12 11:00 am EST | recruited | Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
 
@@ -29,12 +29,14 @@
 | internal_va_panel | 5 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 5 recruited)
+Recruitment effectiveness: 20% conversion rate (1 confirmed of 5 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 
 ## ⏳ Pending Sessions
 
@@ -45,19 +47,31 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 5 recruited)
 
 **Session Observer Assignments:**
 
-| Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
-|---------|-----------|-----------|----------|------------------|-----------------|
-| pt018 | 2025-08-14 10:00 AM EST | lapedra (📝 Note-taker), lapedra (🏛️ Stakeholder) | 2/3 | 0 | ✅ Sent |
-| pt019 | 2025-08-15 1:30 PM EST | lapedra (📝 Note-taker), lapedra (👁️ Silent Observer) | 2/3 | 0 | ✅ Sent |
-| pt020 | 2025-08-16 4:00 PM EST | lapedra (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
+| Session | Date/Time | Observers | Capacity | Pending Requests |
+|---------|-----------|-----------|----------|------------------|
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker | 3 | pt018, pt019, pt020 |
-| 👁️ Silent Observer | 1 | pt019 |
-| 📊 PM Observer | 0 | - |
-| 🏛️ Stakeholder | 1 | pt018 |
+| 📝 Note-taker |  |  |
+| 👁️ Silent Observer |  |  |
+| 📊 PM Observer |  |  |
+| 🏛️ Stakeholder |  |  |
+
+**Observer Guidelines:** 
+- Review session plan before observing
+- Stay muted unless emergency
+- Take notes without interrupting
+- Share feedback after session
+
+{% if triggered_by_observer_request %}
+**🔄 Observer Updates:**
+- ✅  approved for  as 
+- 📤 Send observer guidelines to 
+- 📅 Add  to  calendar invite
+- 🔄 Update session capacity tracking
+{% endif %}
+
 ---
 
 ## 📝 Accessibility & Accommodations
@@ -105,4 +119,4 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 5 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Schedule first confirmed session
+All participants are on track
