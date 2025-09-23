@@ -47,14 +47,14 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 5 recruited)
 
 | Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
 |---------|-----------|-----------|----------|------------------|-----------------|
+| pt018 | 2025-08-14 10:00 AM EST | lapedra (📝 Note-taker), lapedra (🏛️ Stakeholder) | 2/3 | 0 | ✅ Sent |
 | pt019 | 2025-08-15 1:30 PM EST | lapedra (📝 Note-taker), lapedra (👁️ Silent Observer) | 2/3 | 0 | ✅ Sent |
-| pt018 | 2025-08-14 10:00 AM EST | lapedra (🏛️ Stakeholder) | 1/3 | 0 | ✅ Sent |
 | pt020 | 2025-08-16 4:00 PM EST | lapedra (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker | 2 | pt019, pt020 |
+| 📝 Note-taker | 3 | pt018, pt019, pt020 |
 | 👁️ Silent Observer | 1 | pt019 |
 | 📊 PM Observer | 0 | - |
 | 🏛️ Stakeholder | 1 | pt018 |
