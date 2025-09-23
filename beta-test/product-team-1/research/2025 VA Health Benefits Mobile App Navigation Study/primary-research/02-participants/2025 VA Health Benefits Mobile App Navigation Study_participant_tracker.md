@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – 2025 VA Health Benefits Mobile App Navigation Study
 
 **📊 Recruitment Summary**
-- **Total Participants:** 3
+- **Total Participants:** 4
 - **Confirmed Sessions:** 0
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 19 | PT004 | internal_va_panel | 2025-08-15 1:30 PM EST | recruited | Prefers Spanish interface when available; uses both iOS and Android devices |
 | 18 | PT003 | internal_va_panel | 2025-08-14 10:00 AM EST | recruited | Limited data plan; prefers Wi-Fi only sessions; uses large text settings |
 | 17 | PT002 | internal_va_panel | 2025-08-13 3:00 PM EST | recruited | Android user; works irregular hours so flexible timing needed |
 | 16 | PT001 | internal_va_panel | 2025-08-12 11:00 am EST | recruited | Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
@@ -24,10 +25,10 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| internal_va_panel | 3 | 100% |
+| internal_va_panel | 4 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 3 recruited)
+Recruitment effectiveness: 0% conversion rate (0 confirmed of 4 recruited)
 
 ---
 
@@ -73,6 +74,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 3 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 19: Prefers Spanish interface when available; uses both iOS and Android devices
 - 18: Limited data plan; prefers Wi-Fi only sessions; uses large text settings
 - 17: Android user; works irregular hours so flexible timing needed
 - 16: Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows
