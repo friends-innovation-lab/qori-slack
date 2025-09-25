@@ -2,7 +2,7 @@
 
 ## Research Brief Fields
 
-**Project Title/Focus:** VA Health and Benefits Mobile App Navigation - Information Architecture and User Flow Optimization
+**Project Title/Focus:** VA Health and Benefits Mobile App Navigation 
 
 **Study context and motivation:** Current VA mobile app has a 4.2/10 user satisfaction rating with 45% of veterans abandoning tasks mid-completion. Navigation analytics show users frequently use the search function to find basic features, indicating poor information architecture. App store reviews consistently mention "can't find what I need" and "too confusing to navigate." With 78% of veteran interactions happening on mobile devices, improving navigation is critical for veteran access to essential services. Leadership needs actionable insights for mobile app redesign scheduled for Q1 2026.
 
