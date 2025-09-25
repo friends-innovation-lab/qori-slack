@@ -5,7 +5,7 @@
   
   Message Type: follow_up 
   
-  Subject: Follow-up: 2026 VA Health Benefits Mobile App Navigation Study - Action Needed
+  Subject: Follow-up: 2026 VA Health Benefits Mobile App Navigation Study Update
   
   To: David Chen  
   
@@ -13,24 +13,24 @@
 
 ---
 ## 📧 Email Content
-Subject: Quick Check-In: Are You Still Interested in Participating in the 2026 VA Health Benefits Mobile App Navigation Study?
+Subject: Quick Check-In: 2026 VA Health Benefits Mobile App Navigation Study
 
 Hi David Chen,
 
-I hope this email finds you well. We are reaching out to see if you are still interested in participating in the 2026 VA Health Benefits Mobile App Navigation Study. Your insights would be incredibly valuable to our research.
+I hope this email finds you well. We are reaching out to see if you are still interested in participating in the 2026 VA Health Benefits Mobile App Navigation Study. Your thoughts and experiences would be incredibly valuable to our research.
 
-Participation in the study involves testing out the VA Health Benefits mobile app and providing feedback on your user experience. Your input will help us improve the app for all veterans. As a token of our appreciation for your time and feedback, participants will receive a compensation of [Incentive Amount] for their participation.
+Participation in the study involves testing out the VA Health Benefits mobile app and providing feedback on your user experience. Your input will help us improve the app for all veterans.
 
-If you are still interested in joining the study, please follow the signup instructions below:
-1. Click on the following link to sign up: [Signup Instructions]
-2. Complete the registration form with your contact information.
-3. Our team will reach out to schedule a convenient time for you to participate in the study.
+As a token of our appreciation for your time and feedback, we are offering a compensation of [insert Incentive Amount if provided].
 
-Please remember that participation in this study is completely voluntary, and you can withdraw at any time. Your privacy and comfort are our top priorities.
+If you are still interested in participating, please follow the signup instructions below:
+1. Click on the following link to sign up: [insert Signup Instructions]
+2. Complete the registration form with your information.
+3. You will receive further instructions on how to access the study session.
 
-If you have any questions or need further information, please feel free to reach out to me at lapedra@cityfriends.tech or [Researcher Phone].
+Please remember that participation in this study is completely voluntary, and you can withdraw at any time.
 
-We truly appreciate your consideration and look forward to the possibility of working together on this important research study.
+If you have any questions or need further information, please feel free to reach out to me at lapedra@cityfriends.tech.
 
 Best regards,
 Lapedra Tolson
@@ -40,19 +40,10 @@ Email: lapedra@cityfriends.tech
 This research is conducted in accordance with VA research standards and IRB approval.
 ---
 ## 📋 Next Steps
-1. Follow-up email to participants who have not completed the study within one week of initial invitation:
-- Include a reminder of the study purpose and benefits
-- Provide a deadline extension and offer assistance if needed
-- Request feedback on any barriers to participation
+1. Send a follow-up email to participants who have not completed the VA Health Benefits Mobile App Navigation Study within one week of the initial invitation. Include a reminder of the importance of their participation and any additional support or resources available to assist them in completing the study.
 
-2. Phone call follow-up to participants who have completed the study but have not submitted feedback within two weeks of completion:
-- Thank them for their participation and remind them of the importance of their feedback
-- Offer to walk them through the feedback submission process if needed
-- Inquire about any difficulties they may have encountered during the study
+2. Conduct a follow-up phone call to participants who have expressed interest in the study but have not yet signed up or completed the necessary steps within two weeks of the initial invitation. Offer to walk them through the process, address any concerns or questions they may have, and provide any necessary accommodations for accessibility.
 
-3. Schedule a debrief meeting with the research team to discuss participant responses, any issues encountered, and next steps in the research process:
-- Document key findings, participant feedback, and potential areas for improvement
-- Discuss strategies for addressing participant concerns and improving the study experience
-- Determine the timeline for analyzing data and reporting results to stakeholders
+3. Update the research documentation with detailed notes on all follow-up communications, participant responses, and any additional support provided. This will ensure that the research process is well-documented and transparent, and can help inform future research studies or participant outreach efforts.
 ---
 *Generated by Qori v • Saved to *
