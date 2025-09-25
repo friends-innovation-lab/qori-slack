@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – 2026 VA Health Benefits Mobile App Navigation Study
 
 **📊 Recruitment Summary**
-- **Total Participants:** 1
+- **Total Participants:** 2
 - **Confirmed Sessions:** 0
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 22 | PT002 | internal_va_panel | 2025-09-30  | recruited |  |
 | 21 | PT001 | internal_va_panel | 2025-10-01  | recruited | Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
 
 ---
@@ -22,10 +23,10 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| internal_va_panel | 1 | 100% |
+| internal_va_panel | 2 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
+Recruitment effectiveness: 0% conversion rate (0 confirmed of 2 recruited)
 
 ---
 
@@ -109,4 +110,4 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (2 more needed); Schedule first confirmed session
+Continue recruiting to reach minimum of 3 participants (1 more needed); Schedule first confirmed session
