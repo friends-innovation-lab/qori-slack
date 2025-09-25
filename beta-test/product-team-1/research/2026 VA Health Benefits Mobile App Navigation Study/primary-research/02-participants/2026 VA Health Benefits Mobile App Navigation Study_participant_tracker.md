@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – 2026 VA Health Benefits Mobile App Navigation Study
 
 **📊 Recruitment Summary**
-- **Total Participants:** 4
+- **Total Participants:** 5
 - **Confirmed Sessions:** 0
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 25 | PT005 | internal_va_panel | 2025-10-06  | recruited | Uses TalkBack on Android; tech-savvy user who may complete tasks quickly |
 | 24 | PT004 | internal_va_panel | 2025-10-03  | recruited | Prefers Spanish interface when available; uses both iOS and Android devices |
 | 23 | PT003 | internal_va_panel | 2025-10-02  | recruited | Limited data plan; prefers Wi-Fi only sessions; uses large text settings |
 | 22 | PT002 | internal_va_panel | 2025-09-30  | recruited |  |
@@ -25,10 +26,10 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| internal_va_panel | 4 | 100% |
+| internal_va_panel | 5 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 4 recruited)
+Recruitment effectiveness: 0% conversion rate (0 confirmed of 5 recruited)
 
 ---
 
@@ -74,6 +75,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 4 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 25: Uses TalkBack on Android; tech-savvy user who may complete tasks quickly
 - 24: Prefers Spanish interface when available; uses both iOS and Android devices
 - 23: Limited data plan; prefers Wi-Fi only sessions; uses large text settings
 - 21: Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows
