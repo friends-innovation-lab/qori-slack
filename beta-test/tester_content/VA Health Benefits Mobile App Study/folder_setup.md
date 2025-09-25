@@ -8,12 +8,5 @@
 
 **User:** Taylor Kim
 
-**Role:** Mobile UX Researcher
+**Role:** Researcher
 
-## Project Metadata
-
-- **Project ID:** va-mobile-nav-2025
-- **Start Date:** August 5, 2025
-- **Expected Duration:** 5 weeks
-- **Research Type:** Mixed methods (card sorting, prototype testing, analytics review)
-- **Stakeholders:** VA Mobile Development Team, Veterans Health Administration, Digital Experience Office
