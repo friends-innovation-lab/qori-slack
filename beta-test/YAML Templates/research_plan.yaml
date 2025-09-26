@@ -108,29 +108,29 @@ ai_generation_tasks:
       Format: "{{product_area}} - [what it does for Veterans]. [Brief context]."
 
   # OCTO Priorities with audience detection
-  task_id: "octo_priorities"
-  prompt: |
-    Select appropriate OCTO-DE priorities based on target participants: "{{target_participants}}"
-  
-  Available priorities:
-  1. Improve the Veteran login experience
-  2. Solidify the VA.gov platform  
-  3. Integrate health portal features into VA.gov
-  4. Expand the flagship mobile app
-  5. Refresh VA.gov homepage and IA
-  6. Enhance Veterans' personalized online experience
-  7. Fast-track disability claims, starting with PACT Act claims
-  
-  Format your response WITHOUT numbers - use clean names only:
-  **Primary OCTO Priority:** [Select priority name only, no numbers]
-  
-  **Explanation:** [1 sentence connecting {{product_area}} to this priority]
-  
-  **Additional Priorities:**
-  - **[Priority Name Only]:** [Brief explanation]
-  - **[Priority Name Only]:** [Brief explanation]
-  
-  IMPORTANT: Do not include the numbers (1, 2, 3, etc.) in your final output - just use the priority names.
+  - task_id: "octo_priorities"
+    prompt: |
+      Select appropriate OCTO-DE priorities based on target participants: "{{target_participants}}"
+    
+      Available priorities:
+      1. Improve the Veteran login experience
+      2. Solidify the VA.gov platform  
+      3. Integrate health portal features into VA.gov
+      4. Expand the flagship mobile app
+      5. Refresh VA.gov homepage and IA
+      6. Enhance Veterans' personalized online experience
+      7. Fast-track disability claims, starting with PACT Act claims
+    
+      Format your response WITHOUT numbers - use clean names only:
+      **Primary OCTO Priority:** [Select priority name only, no numbers]
+    
+      **Explanation:** [1 sentence connecting {{product_area}} to this priority]
+    
+      **Additional Priorities:**
+      - **[Priority Name Only]:** [Brief explanation]
+      - **[Priority Name Only]:** [Brief explanation]
+    
+      IMPORTANT: Do not include the numbers (1, 2, 3, etc.) in your final output - just use the priority names.
 
   # User Journey
   - task_id: "user_journey"
@@ -173,11 +173,12 @@ ai_generation_tasks:
   # Success Criteria
   - task_id: "success_criteria"
     prompt: |
-      # Start numbering from 1:
-      1. **Decision Support:** [description]
-      2. **Quality Threshold:** [description]
-      3. **Timeline Success:** [description]
-      4. **Impact Measurement:** [description]
+      Create practical success criteria for {{timeline_preference}} research:
+      
+      1. **Decision Support:** How findings will inform {{product_area}} decisions with specific timeline
+      2. **Quality Threshold:** Standards for research quality and actionability
+      3. **Timeline Success:** Delivery expectations for {{timeline_preference}} timeline
+      4. **Impact Measurement:** How success will be measured after research completion
 
   # Key Deliverables
   - task_id: "deliverables"
