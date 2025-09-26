@@ -274,33 +274,16 @@ ai_generation_tasks:
       - Support business decision-making about {{product_area}}
       - Avoid repetitive or generic language
 
-  # NEW - Accurate timeline calculation (fix placeholder dates!)
+  # Accurate timeline calculation 
   - task_id: "accurate_timeline"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - ALWAYS calculate actual business day dates starting from {{current_date}}
-      
-      As an experienced VA UX Researcher, calculate realistic project timeline starting from TODAY ({{current_date}}) for {{timeline_preference}}:
-      
-      **Base Timeline Templates (AI-accelerated):**
-      - Rush: Planning(1d), Collaboration Cycle(2d), Recruiting(3d), Research(3d), Analysis(1d), Reporting(1d) = 11 business days
-      - Standard: Planning(2d), Collaboration Cycle(5d), Recruiting(7d), Research(5d), Analysis(1d), Reporting(1d) = 21 business days  
-      - Extended: Planning(3d), Collaboration Cycle(10d), Recruiting(14d), Research(7d), Analysis(2d), Reporting(2d) = 38 business days
-      
-      Consider:
-      - Methodology: {{methodology}}
-      - Participant count: {{participant_count}}
-      - Skip weekends and major holidays
-      - Include buffer time for {{methodology}} complexity
-      
-      Format as clean markdown table:
-      | Phase | Duration | Start Date | End Date | Key Deliverables |
-      |-------|----------|------------|----------|------------------|
-      
-      Use actual business day dates starting from {{current_date}}. Include specific milestones and dependencies.
+      Create a timeline table using relative business days from project start:
+    
+      | Phase | Duration | Start Day | End Day | Key Deliverables |
+      |-------|----------|-----------|---------|------------------|
+      | Planning | 2 days | Day 1 | Day 2 | Project Brief, Research Plan |
+    
+      Note: "Day 1 = First business day after plan approval"
 
   # NEW - Risk assessment (critical missing piece)
   - task_id: "risk_assessment"
@@ -497,41 +480,46 @@ ai_generation_tasks:
 
 # STREAMLINED OUTPUT TEMPLATE - Keeps strong sections, adds critical pieces, removes bloat
 output_template: |
-  # 🧭 Research Plan – {{project_title}}
+  # ðŸ§­ Research Plan â€" {{project_title}}
 
-  **📦 Product/Feature Area:** {{ai_generated.concise_product_area}}
-
-  **🏛️ Team/Office:** {{team_office}}  
-  **👩🏽‍🔬 Lead Researcher:** {{lead_researcher}}  
-  **🗓️ Date:** {{current_date}}
+  > **ðŸ"¦ Product Area:** {{ai_generated.concise_product_area}} &nbsp;&nbsp;|&nbsp;&nbsp; **ðŸ'©ðŸ½â€ðŸ"¬ Lead Researcher:** {{lead_researcher}} &nbsp;&nbsp;|&nbsp;&nbsp; **ðŸ—"ï¸ Date:** {{current_date}}
 
   ---
 
-  ## 🔎 Background
+  ## ðŸ"‹ Project Overview
+
+  **Product/Feature Scope:** {{ai_generated.concise_product_area}}
+
+  **Team Structure:**
+  - **Primary Team:** {{team_office}}
+
+  ---
+
+  ## ðŸ"Ž Background
 
   {{ai_generated.decision_context}}
 
   ---
 
-  ## 🎯 OCTO Priorities
+  ## ðŸŽ¯ OCTO Priorities
 
   {{ai_generated.octo_priorities}}
 
   ---
 
-  ## 🧭 User Journey
+  ## ðŸ§­ User Journey
 
   {{ai_generated.user_journey}}
 
   ---
 
-  ## 🎓 Research Goals
+  ## ðŸŽ" Research Goals
 
   {{ai_generated.research_goals}}
 
   ---
 
-  ## ✅ Success Criteria & Expected Deliverables
+  ## âœ… Success Criteria & Expected Deliverables
 
   **Success Criteria:**
   {{ai_generated.success_criteria}}
@@ -541,49 +529,49 @@ output_template: |
 
   ---
 
-  ## 🛠️ Methodology
+  ## ðŸ› ï¸ Methodology
 
   {{ai_generated.methodology_optimization}}
 
   ---
 
-  ## 🧲 Recruitment Plan
+  ## ðŸ§² Recruitment Plan
 
-  **🎯 Target Participants:** {{target_participants}}  
+  **ðŸŽ¯ Target Participants:** {{target_participants}}  
 
-  **🧍 Participant Count:** {{participant_count}}
+  **ðŸ§ Participant Count:** {{participant_count}}
 
-  **👥 Demographic Targets:**
+  **ðŸ'¥ Demographic Targets:**
   {{ai_generated.demographic_targets}}
 
   ---
 
-  ## ⏰ Timeline Overview
+  ## â° Timeline Overview
 
   {{ai_generated.accurate_timeline}}
 
   ---
 
-  ## ⚠️ Risk Assessment
+  ## âš ï¸ Risk Assessment
 
   {{ai_generated.risk_assessment}}
 
   ---
 
-  ## 🚀 Next Steps
+  ## ðŸš€ Next Steps
 
   {{ai_generated.next_steps}}
 
   ---
 
-  ## 👥 Team Roles
+  ## ðŸ'¥ Team Roles
 
   | Team Member | Role |
   |-------------|------|
   | {{lead_researcher}} | Lead Researcher |
   | [To be assigned] | Note-taker |
   | [To be assigned] | Observer |
-
+  
 # Output configuration (same as current)
 output_options:
   filename: "research_plan_{{project_title}}_{{current_date}}.md"
