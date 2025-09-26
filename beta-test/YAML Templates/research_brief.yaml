@@ -5,7 +5,7 @@ version: v3.0
 description: |
   Generate VA-aligned research briefs for scoping studies with design and product partners. Creates structured research briefs that capture and refine stakeholder thinking to inform detailed research plans. Automatically improves informal or unclear stakeholder inputs while preserving original intent.
 
-author: Qori R&D
+author: CivicMind R&D
 created: 2025-06-26
 last_updated: 2025-09-26
 
@@ -206,67 +206,102 @@ processing_workflow:
   4. populate_template
   5. save_to_outputs
 
-# Modern GitHub-optimized output template
+# Modern GitHub-optimized output template with advanced formatting
 output_template: |
   # Research Brief — {{project_title}}
   
-  **Project Area:** {{ai_generated.project_scope}} | **Prepared by:** {{prepared_by}} | **Date:** {{current_date}}
+  📦 **Project Area:** {{ai_generated.project_scope}}
+
+
+  👩🏽‍🔬 **Prepared by:** {{prepared_by}}
+
+
+  🗓️ **Date:** {{current_date}}
+
 
   ---
 
-  ## Business Context
+  ## 🎯 Business Context
 
   {{ai_generated.refined_context}}
 
   > [!WARNING]
   > **Critical Issues Driving This Research**
+  > 
   > {{ai_generated.stakeholder_concerns}}
 
-  ## Research Objectives
+  ---
+
+  ## 🎯 Research Objectives
 
   {{ai_generated.learning_objectives}}
 
   <details>
-  <summary><strong>User Journey in Scope</strong></summary>
+  <summary><strong>📋 User Journey in Scope</strong> <kbd>Click to expand</kbd></summary>
+  
+  > **What this covers:** The complete end-to-end user experience we'll be researching
   
   {{ai_generated.refined_user_flows}}
   
   </details>
 
-  ## Target Barriers
+  ---
+
+  ## 🎯 Target Barriers
 
   {{ai_generated.refined_barriers}}
 
-  ## Key Questions & Hypotheses
+  ---
 
-  ### Primary Research Questions
+  ## 🤔 Key Questions & Hypotheses
+
+  ### 🔍 Primary Research Questions
   {{ai_generated.key_questions}}
 
-  ### Team Hypotheses
+  ### 💭 Team Hypotheses
   {{ai_generated.team_hypotheses}}
 
-  ## Proposed Research Approach
+  ---
 
-  | Aspect | Details |
-  |--------|---------|
+  ## 🧭 Proposed Research Approach
+
+  | 🔬 **Aspect** | 📝 **Details** |
+  |---------------|-----------------|
   | **Method** | {{ai_generated.refined_research_approach}} |
   | **Rationale** | {{ai_generated.research_rationale}} |
 
-  ## Expected Outcomes
+  ---
+
+  ## 🎯 Expected Outcomes
 
   {{ai_generated.expected_outcomes}}
 
-  ## Next Steps
+  ---
 
+  ## 🚀 Next Steps
+
+  ```diff
+  + IMMEDIATE (This Week)
+  ```
   - [ ] **Stakeholder review** of this brief and alignment on objectives
+
+  ```diff
+  ! SHORT-TERM (Next 2 Weeks)
+  ```
   - [ ] **Detailed research plan** development with specific methodology  
   - [ ] **Participant recruitment** strategy and timeline
+
+  ```diff
+  - LONGER-TERM (Month 2)
+  ```
   - [ ] **Resource allocation** and team coordination
 
   ---
 
   > [!NOTE]
   > **Ready to proceed:** Once stakeholders approve this brief → Develop detailed research plan → Begin execution
+
+  <sub>*Generated with ❤️ for better Veteran experiences*</sub>
 
 # Output configuration
 output_options:
@@ -302,7 +337,7 @@ output_options:
       # Future: Teams delivery options
 
 output_use: |
-  Qori Research Brief generator creates VA-compliant research scoping documents that capture and refine stakeholder thinking. Automatically improves informal or unclear stakeholder inputs to create professional, coherent research briefs. Focuses on problem definition and learning goals to inform detailed research plan development.
+  CivicMind Research Brief generator creates VA-compliant research scoping documents that capture and refine stakeholder thinking. Automatically improves informal or unclear stakeholder inputs to create professional, coherent research briefs. Focuses on problem definition and learning goals to inform detailed research plan development.
 
 output_notes: |
   Input refinement: AI automatically improves clarity and professionalism of stakeholder inputs while preserving original intent.
