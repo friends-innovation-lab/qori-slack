@@ -2,11 +2,11 @@
 
 **📊 Recruitment Summary**
 - **Total Participants:** 5
-- **Confirmed Sessions:** 0
+- **Confirmed Sessions:** 1
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
-- **Last Updated:** September 25, 2025 by U01SC2TNYKU
+- **Last Updated:** September 26, 2025 by lapedra
 
 ---
 
@@ -18,7 +18,7 @@
 | 24 | PT004 | internal_va_panel | 2025-10-03  | recruited | Prefers Spanish interface when available; uses both iOS and Android devices |
 | 23 | PT003 | internal_va_panel | 2025-10-02  | recruited | Limited data plan; prefers Wi-Fi only sessions; uses large text settings |
 | 22 | PT002 | internal_va_panel | 2025-09-30  | recruited |  |
-| 21 | PT001 | internal_va_panel | 2025-10-01  | recruited | Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
+| 21 | PT001 | internal_va_panel | 2025-10-01  | confirmed | Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
 
 ---
 
@@ -29,12 +29,14 @@
 | internal_va_panel | 5 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 5 recruited)
+Recruitment effectiveness: 20% conversion rate (1 confirmed of 5 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 
 ## ⏳ Pending Sessions
 
@@ -45,18 +47,31 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 5 recruited)
 
 **Session Observer Assignments:**
 
-| Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
-|---------|-----------|-----------|----------|------------------|-----------------|
-| pt023 | 2025-10-02  | lapedra (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
-| pt025 | 2025-10-06  | lapedra (📊 PM Observer) | 1/3 | 0 | ✅ Sent |
+| Session | Date/Time | Observers | Capacity | Pending Requests |
+|---------|-----------|-----------|----------|------------------|
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker | 1 | pt023 |
-| 👁️ Silent Observer | 0 | - |
-| 📊 PM Observer | 1 | pt025 |
-| 🏛️ Stakeholder | 0 | - |
+| 📝 Note-taker |  |  |
+| 👁️ Silent Observer |  |  |
+| 📊 PM Observer |  |  |
+| 🏛️ Stakeholder |  |  |
+
+**Observer Guidelines:** 
+- Review session plan before observing
+- Stay muted unless emergency
+- Take notes without interrupting
+- Share feedback after session
+
+{% if triggered_by_observer_request %}
+**🔄 Observer Updates:**
+- ✅  approved for  as 
+- 📤 Send observer guidelines to 
+- 📅 Add  to  calendar invite
+- 🔄 Update session capacity tracking
+{% endif %}
+
 ---
 
 ## 📝 Accessibility & Accommodations
@@ -103,4 +118,4 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 5 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Schedule first confirmed session
+All participants are on track
