@@ -1,17 +1,17 @@
-# OPTIMIZED RESEARCH PLAN - Targeted Improvements Implementation
+# OPTIMIZED RESEARCH PLAN - Modern GitHub Formatting
 
 id: research_plan
 name: run_research_plan
-label: 🧭 Research Plan
-version: v3.1
+label: Research Plan
+version: v4.0
 description: |
-  🧭 **Research Idea → Complete Execution Plan**
+  **Research Idea → Complete Execution Plan**
   
-  Transform your research concept into a comprehensive, VA-compliant plan in minutes. Streamlined for faster stakeholder approval while maintaining professional quality. Optimized to keep your strong VA-specific sections while adding critical planning elements and removing bloat.
+  Transform your research concept into a comprehensive, VA-compliant plan in minutes. Streamlined for faster stakeholder approval while maintaining professional quality. Optimized to keep your strong VA-specific sections while adding critical planning elements and modern GitHub formatting.
 
-author: CivicMind R&D
+author: Qori R&D
 created: 2025-06-26
-last_updated: 2025-07-16
+last_updated: 2025-09-26
 
 # Character encoding fix
 encoding: utf-8
@@ -19,7 +19,7 @@ output_encoding: utf-8
 
 # LLM Configuration
 llm_config:
-  model: "gpt-3.5-turbo"
+  model: "gpt-4o"
   temperature: 0.2
   max_tokens: 4000
 
@@ -103,7 +103,7 @@ ai_generation_tasks:
       - 1-2 sentences maximum
       - Explain what it does for Veterans
       - Use clear, direct language
-      - No marketing speak
+      - No marketing speak or repetitive phrases
       
       Format: "{{product_area}} - [what it does for Veterans]. [Brief context]."
 
@@ -111,7 +111,7 @@ ai_generation_tasks:
   - task_id: "octo_priorities"
     prompt: |
       Select appropriate OCTO-DE priorities based on target participants: "{{target_participants}}"
-    
+      
       Available priorities:
       1. Improve the Veteran login experience
       2. Solidify the VA.gov platform  
@@ -120,16 +120,16 @@ ai_generation_tasks:
       5. Refresh VA.gov homepage and IA
       6. Enhance Veterans' personalized online experience
       7. Fast-track disability claims, starting with PACT Act claims
-    
+      
       Format your response WITHOUT numbers - use clean names only:
       **Primary OCTO Priority:** [Select priority name only, no numbers]
-    
+      
       **Explanation:** [1 sentence connecting {{product_area}} to this priority]
-    
+      
       **Additional Priorities:**
       - **[Priority Name Only]:** [Brief explanation]
       - **[Priority Name Only]:** [Brief explanation]
-    
+      
       IMPORTANT: Do not include the numbers (1, 2, 3, etc.) in your final output - just use the priority names.
 
   # User Journey
@@ -156,19 +156,21 @@ ai_generation_tasks:
       - How this will benefit Veterans
       - The business impact for VA
       
-      Use direct, professional language. No jargon.
+      Use direct, professional language. No jargon. Focus on specific outcomes.
 
   # Research Goals
   - task_id: "research_goals"
     prompt: |
       Create clear research goals based on: "{{research_goal}}"
       
-      **Primary Goal:** [Improved version of the input goal - 1-2 sentences]
+      **Primary Goal:** [Improved version of the input goal - 1-2 sentences, specific and measurable]
       
       **Supporting Goals:**
-      - [Specific goal achievable through {{methodology}}]
-      - [Specific goal related to {{product_area}}]
-      - [Specific goal that supports decision-making]
+      - [Specific goal achievable through {{methodology}} that provides actionable insights]
+      - [Specific goal related to {{product_area}} that addresses user needs]
+      - [Specific goal that supports decision-making with concrete outcomes]
+      
+      Avoid generic language. Make each goal specific to {{product_area}} and {{methodology}}.
 
   # Success Criteria
   - task_id: "success_criteria"
@@ -187,52 +189,60 @@ ai_generation_tasks:
   # Key Deliverables
   - task_id: "deliverables"
     prompt: |
-      List essential deliverables for {{methodology}} research:
+      List essential deliverables for {{methodology}} research on {{product_area}}:
       
       **Primary Deliverables:**
-      - [Essential deliverable 1] - delivered within 2 days of research completion
-      - [Essential deliverable 2] - delivered within 3 days of research completion
+      - [Essential deliverable 1 specific to {{methodology}}] - delivered within 2 days of research completion
+      - [Essential deliverable 2 that addresses {{product_area}} decisions] - delivered within 3 days of research completion
+      - [Essential deliverable 3 for stakeholder decision-making] - delivered within 3 days of research completion
       
       **Supporting Materials:**
-      - [Supporting deliverable] - delivered within 1 day of research completion
+      - [Supporting deliverable for implementation] - delivered within 1 day of research completion
+      - [Supporting deliverable for validation] - delivered within 2 days of research completion
+      
+      Make each deliverable specific and actionable, not generic.
 
   # Methodology Details
   - task_id: "methodology_details"
     prompt: |
-      Provide methodology details for {{methodology}}:
+      Provide methodology details for {{methodology}} research on {{product_area}}:
       
-      **Methodology Rationale:** [Why {{methodology}} is right for this research - 1-2 sentences]
+      **Methodology Rationale:** [Why {{methodology}} is specifically right for {{product_area}} research - 1-2 sentences explaining the connection]
       
       **Implementation Approach:**
-      - Session format and duration for {{methodology}}
-      - Key activities and data collection
-      - Specific protocols for {{product_area}}
+      - Session format and duration appropriate for {{methodology}}
+      - Key activities and data collection techniques specific to {{product_area}}
+      - Specific protocols for evaluating {{product_area}} user experience
       
       **VA Compliance Notes:**
-      - Collaboration Cycle requirements
-      - Trauma-informed research considerations
-      - Accessibility accommodations
+      - Collaboration Cycle requirements and timeline
+      - Trauma-informed research considerations for veteran participants
+      - Accessibility accommodations for diverse participant needs
+      
+      Be specific about why this methodology answers the research questions about {{product_area}}.
 
   # Demographics
   - task_id: "demographics"
     prompt: |
-      Create demographic targets for {{participant_count}} participants:
+      Create demographic targets for {{participant_count}} participants researching {{product_area}}:
       
       **Demographic targets:**
       Based on {{participant_count}} participants:
-      - Service era: [realistic breakdown]
-      - Age: [realistic breakdown]
-      - Gender: [realistic breakdown]
-      - Accessibility needs: [realistic breakdown]
+      - Service era: [realistic breakdown that adds up to total]
+      - Age: [realistic breakdown that adds up to total]
+      - Gender: [realistic breakdown that adds up to total]
+      - Accessibility needs: [realistic breakdown for inclusive research]
       
       **Secondary targets:**
-      - {{product_area}} usage patterns
-      - Technology comfort levels
+      - {{product_area}} usage patterns: [frequency and experience levels]
+      - Technology comfort levels: [range of digital literacy]
+      
+      Ensure all numbers add up logically to {{participant_count}}.
 
-  # Simplified Timeline
+  # Enhanced Timeline
   - task_id: "timeline"
     prompt: |
-      Create a timeline table for {{timeline_preference}} research:
+      Create a detailed timeline table for {{timeline_preference}} research:
       
       Use these phases for {{timeline_preference}}:
       - Planning: 2 days
@@ -254,45 +264,49 @@ ai_generation_tasks:
       
       Note: Timeline begins after stakeholder approval
 
-  # Risk Assessment
+  # Enhanced Risk Assessment
   - task_id: "risks"
     prompt: |
-      Identify top 4 risks for this research:
+      Identify top 4 risks for {{methodology}} research on {{product_area}}:
       
-      **Recruitment Challenges:** [Risk related to finding {{target_participants}}]
+      **Recruitment Challenges:** [Risk related to finding {{target_participants}} for {{product_area}} research]
       - **Likelihood:** High/Medium/Low
-      - **Mitigation:** [Specific action]
+      - **Mitigation:** [Specific action to address recruitment issues]
       
-      **Execution Issues:** [Risk related to {{methodology}}]
+      **Execution Issues:** [Risk related to {{methodology}} implementation for {{product_area}}]
       - **Likelihood:** High/Medium/Low  
-      - **Mitigation:** [Specific action]
+      - **Mitigation:** [Specific action to ensure quality execution]
       
-      **Timeline Risks:** [Risk related to {{timeline_preference}}]
+      **Timeline Risks:** [Risk related to {{timeline_preference}} affecting {{product_area}} decisions]
       - **Likelihood:** High/Medium/Low
-      - **Mitigation:** [Specific action]
+      - **Mitigation:** [Specific action to stay on schedule]
       
-      **Quality Concerns:** [Risk related to research quality]
+      **Quality Concerns:** [Risk related to data validity for {{product_area}} recommendations]
       - **Likelihood:** High/Medium/Low
-      - **Mitigation:** [Specific action]
+      - **Mitigation:** [Specific action to ensure research quality]
+      
+      Make each risk and mitigation specific to this research project.
 
-  # Next Steps
+  # Enhanced Next Steps
   - task_id: "next_steps"
     prompt: |
-      Create actionable next steps for post-research:
+      Create actionable next steps for {{product_area}} research implementation:
       
       **Immediate Actions (Week 1 post-research):**
-      - [Specific action with owner]
-      - [Specific action with timeline]
+      - [Specific action with owner and timeline for {{product_area}} decisions]
+      - [Specific action for stakeholder engagement with timeline]
       
       **Short-term Actions (Weeks 2-4):**
-      - [Implementation step]
-      - [Decision milestone]
+      - [Implementation planning step for {{product_area}} improvements]
+      - [Decision milestone for {{product_area}} changes]
       
       **Success Metrics:**
-      - [How impact will be measured]
-      - [Follow-up assessment plan]
+      - [How {{product_area}} improvements will be measured]
+      - [Follow-up assessment plan for {{product_area}} success]
+      
+      Make each step specific to {{product_area}} and actionable for the team.
 
-# GITHUB-OPTIMIZED OUTPUT TEMPLATE
+# MODERN GITHUB-OPTIMIZED OUTPUT TEMPLATE
 output_template: |
   # Research Plan — {{project_title}}
 
@@ -302,7 +316,11 @@ output_template: |
 
   🗓️ **Date:** {{current_date}}
 
+  <br>
+
   ---
+
+  <br>
 
   ## 📋 Project Overview
 
@@ -314,9 +332,17 @@ output_template: |
 
   <br>
 
+  ---
+
+  <br>
+
   ## 🔎 Background
 
   {{ai_generated.background}}
+
+  <br>
+
+  ---
 
   <br>
 
@@ -326,15 +352,27 @@ output_template: |
 
   <br>
 
+  ---
+
+  <br>
+
   ## 🧭 User Journey
 
   {{ai_generated.user_journey}}
 
   <br>
 
+  ---
+
+  <br>
+
   ## 🎓 Research Goals
 
   {{ai_generated.research_goals}}
+
+  <br>
+
+  ---
 
   <br>
 
@@ -348,9 +386,29 @@ output_template: |
 
   <br>
 
+  ---
+
+  <br>
+
   ## 🛠️ Methodology
 
   {{ai_generated.methodology_details}}
+
+  <details>
+  <summary><strong>📋 Detailed Research Protocols</strong> <kbd>Click to expand</kbd></summary>
+  
+  > **What this covers:** Complete methodology implementation details and session protocols
+  
+  - Session scheduling and logistics
+  - Data collection procedures
+  - Analysis frameworks
+  - Quality assurance measures
+  
+  </details>
+
+  <br>
+
+  ---
 
   <br>
 
@@ -365,7 +423,17 @@ output_template: |
 
   <br>
 
+  ---
+
+  <br>
+
   ## ⏰ Project Timeline
+
+  ```diff
+  + Phase 1: Planning & Setup (Days 1-7)
+  ! Phase 2: Data Collection (Days 8-17) 
+  - Phase 3: Analysis & Reporting (Days 18-21)
+  ```
 
   {{ai_generated.timeline}}
 
@@ -373,15 +441,44 @@ output_template: |
 
   <br>
 
+  ---
+
+  <br>
+
   ## ⚠️ Risk Management
+
+  > [!WARNING]
+  > **High-Risk Areas Requiring Immediate Mitigation**
+
+  > [!CAUTION] 
+  > **Medium-Risk Areas to Monitor Closely**
 
   {{ai_generated.risks}}
 
   <br>
 
+  ---
+
+  <br>
+
   ## 🚀 Implementation Plan
 
+  ```diff
+  + IMMEDIATE (Week 1 post-research)
+  ```
   {{ai_generated.next_steps}}
+
+  ```diff
+  ! SHORT-TERM (Weeks 2-4)
+  ```
+
+  ```diff
+  - LONGER-TERM (Month 2+)
+  ```
+
+  <br>
+
+  ---
 
   <br>
 
@@ -395,7 +492,7 @@ output_template: |
 
   ---
 
-  *Generated on {{current_date}}*
+  <sub>*Generated with ❤️ for better Veteran experiences*</sub>
 
 # Processing workflow
 processing_workflow:
