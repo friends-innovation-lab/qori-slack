@@ -299,21 +299,76 @@ ai_generation_tasks:
   # Enhanced Next Steps
   - task_id: "next_steps"
     prompt: |
-      Create actionable next steps for {{product_area}} research implementation:
+      Create actionable next steps for {{ai_generated.clean_product_area}} research implementation with color-coded priority sections:
       
-      **Immediate Actions (Week 1 post-research):**
-      - [Specific action with owner and timeline for {{product_area}} decisions]
+      Format as:
+      
+      ```diff
+      + IMMEDIATE (Week 1 post-research)
+      ```
+      - [Specific action with owner and timeline for {{ai_generated.clean_product_area}} decisions]
       - [Specific action for stakeholder engagement with timeline]
       
-      **Short-term Actions (Weeks 2-4):**
-      - [Implementation planning step for {{product_area}} improvements]
-      - [Decision milestone for {{product_area}} changes]
+      ```diff
+      ! SHORT-TERM (Weeks 2-4)
+      ```
+      - [Implementation planning step for {{ai_generated.clean_product_area}} improvements]
+      - [Decision milestone for {{ai_generated.clean_product_area}} changes]
       
+      ```diff
+      - LONGER-TERM (Month 2+)
+      ```
       **Success Metrics:**
-      - [How {{product_area}} improvements will be measured]
-      - [Follow-up assessment plan for {{product_area}} success]
+      - [How {{ai_generated.clean_product_area}} improvements will be measured - use short product name]
+      - [Follow-up assessment plan for {{ai_generated.clean_product_area}} success - use short product name]
       
-      Make each step specific to {{product_area}} and actionable for the team.
+      Make each step specific but concise. Use "{{ai_generated.clean_product_area}}" not the full description.
+      Include the exact color-coded diff blocks in your response.
+
+  # Detailed Research Protocols
+  - task_id: "detailed_protocols"
+    prompt: |
+      Generate specific research protocols for {{methodology}} methodology studying {{product_area}}:
+      
+      Based on the methodology {{methodology}}, provide detailed protocols:
+      
+      **For Usability Testing:**
+      - Task scenarios: [3-4 specific tasks participants will complete with {{product_area}}]
+      - Think-aloud protocol: [Instructions for facilitating concurrent verbalization]
+      - Data collection: [Screen recording setup, observation notes template, timing protocols]
+      - Post-session interviews: [Key follow-up questions about {{product_area}} experience]
+      
+      **For User Interviews:**
+      - Interview guide structure: [Opening, main topics, probing questions about {{product_area}}]
+      - Question types: [Behavioral, attitudinal, and contextual questions]
+      - Recording protocols: [Audio/video setup and consent procedures]
+      - Analysis approach: [Thematic analysis, affinity mapping, coding framework]
+      
+      **For Card Sorting:**
+      - Card preparation: [How to create cards from {{product_area}} content/features]
+      - Sorting methodology: [Open vs. closed sort, hybrid approaches]
+      - Analysis procedures: [Statistical measures, dendrograms, similarity matrices]
+      - Results interpretation: [How to translate findings into {{product_area}} recommendations]
+      
+      **For Survey Research:**
+      - Question design: [Scale types, validation approaches for {{product_area}} metrics]
+      - Sampling strategy: [Target demographics, sample size calculations]
+      - Distribution methods: [Platform selection, timing, reminder protocols]
+      - Statistical analysis: [Descriptive statistics, significance testing, reporting standards]
+      
+      **For Concept Testing:**
+      - Concept presentation: [Prototype fidelity, scenario setup for {{product_area}}]
+      - Testing protocol: [Task completion, feedback collection, preference ranking]
+      - Measurement criteria: [Usability metrics, comprehension testing, appeal assessment]
+      - Iteration framework: [How to incorporate feedback into {{product_area}} design]
+      
+      **For Competitive Analysis:**
+      - Evaluation framework: [Heuristics, feature comparison matrices for {{product_area}}]
+      - Documentation standards: [Screenshots, interaction flows, usability notes]
+      - Analysis criteria: [Strengths/weaknesses identification, best practice extraction]
+      - Synthesis approach: [How to translate competitive insights into {{product_area}} recommendations]
+      
+      Only include protocols relevant to the selected {{methodology}}. Be specific and actionable.
 
 # MODERN GITHUB-OPTIMIZED OUTPUT TEMPLATE
 output_template: |
@@ -408,10 +463,7 @@ output_template: |
   
   > **What this covers:** Complete methodology implementation details and session protocols
   
-  - Session scheduling and logistics
-  - Data collection procedures
-  - Analysis frameworks
-  - Quality assurance measures
+  {{ai_generated.detailed_protocols}}
   
   </details>
 
@@ -472,18 +524,7 @@ output_template: |
 
   ## 🚀 Implementation Plan
 
-  ```diff
-  + IMMEDIATE (Week 1 post-research)
-  ```
   {{ai_generated.next_steps}}
-
-  ```diff
-  ! SHORT-TERM (Weeks 2-4)
-  ```
-
-  ```diff
-  - LONGER-TERM (Month 2+)
-  ```
 
   <br>
 
