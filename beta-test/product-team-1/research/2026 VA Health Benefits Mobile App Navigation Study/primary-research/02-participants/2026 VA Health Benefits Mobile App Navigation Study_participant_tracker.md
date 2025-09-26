@@ -2,7 +2,7 @@
 
 **📊 Recruitment Summary**
 - **Total Participants:** 5
-- **Confirmed Sessions:** 2
+- **Confirmed Sessions:** 3
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -16,7 +16,7 @@
 |----|-------|---------------|-----------|--------|----------------------|
 | 25 | PT005 | internal_va_panel | 2025-10-06  | recruited | Uses TalkBack on Android; tech-savvy user who may complete tasks quickly |
 | 24 | PT004 | internal_va_panel | 2025-10-03  | recruited | Prefers Spanish interface when available; uses both iOS and Android devices |
-| 23 | PT003 | internal_va_panel | 2025-10-02  | recruited | Limited data plan; prefers Wi-Fi only sessions; uses large text settings |
+| 23 | PT003 | internal_va_panel | 2025-10-02  | confirmed | Limited data plan; prefers Wi-Fi only sessions; uses large text settings |
 | 22 | PT002 | internal_va_panel | 2025-09-30  | confirmed |  |
 | 21 | PT001 | internal_va_panel | 2025-10-01  | confirmed | Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
 
@@ -29,12 +29,14 @@
 | internal_va_panel | 5 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 40% conversion rate (2 confirmed of 5 recruited)
+Recruitment effectiveness: 60% conversion rate (3 confirmed of 5 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 - **** -  at 
