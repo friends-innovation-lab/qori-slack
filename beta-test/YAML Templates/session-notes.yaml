@@ -270,6 +270,99 @@ data_processing:
       datetime: "MMMM DD, YYYY at HH:mm"
       iso: "YYYY-MM-DDTHH:mm:ssZ"
 
+  # NEW: Text formatting functions
+  text_cleanup:
+    normalize_whitespace:
+      enabled: true
+      trim_lines: true
+      collapse_multiple_spaces: true
+      remove_trailing_spaces: true
+      
+    punctuation_cleanup:
+      enabled: true
+      add_periods_to_sentences: true
+      fix_quote_spacing: true
+      normalize_dashes: true
+      fix_apostrophes: true
+      
+    paragraph_formatting:
+      enabled: true
+      double_line_breaks_to_paragraphs: true
+      minimum_paragraph_length: 10
+      max_consecutive_breaks: 2
+      
+  quote_formatting:
+    enabled: true
+    quote_indicators: ['"', "'", "said:", "commented:", "mentioned:"]
+    quote_format: '"{content}"'
+    attribution_format: "- {speaker}"
+    group_similar_quotes: true
+    
+  task_formatting:
+    enabled: true
+    task_indicators: ["task", "completed", "failed", "✅", "❌", "⏱️"]
+    standardize_status_icons:
+      completed: "✅"
+      failed: "❌"
+      in_progress: "⏳"
+      partial: "🔄"
+    time_format: "{duration} minutes"
+    
+  section_formatting:
+    enabled: true
+    auto_generate_subheaders: true
+    subheader_patterns:
+      positive_reactions: ["positive", "liked", "appreciated", "good"]
+      frustration_points: ["frustrated", "annoyed", "difficult", "problem"]
+      technology_struggles: ["slow", "loading", "technical", "error"]
+      suggestions: ["recommend", "suggest", "improve", "should"]
+    
+  time_reference_formatting:
+    enabled: true
+    patterns:
+      minute_markers: "Minute {number}:"
+      duration_format: "{number} minutes"
+      time_ranges: "{start}-{end} minutes"
+    standardize_timestamps: true
+
+# Field processing rules (ADD this new section)
+field_processing:
+  quotes_reactions:
+    apply_formatting: ["text_cleanup", "quote_formatting", "section_formatting"]
+    auto_categorize: true
+    categories:
+      - "Positive Reactions:"
+      - "Frustration Points:"
+      - "Technology Struggles:"
+      - "Suggestions:"
+      
+  emotional_moments:
+    apply_formatting: ["text_cleanup", "time_reference_formatting"]
+    emotion_indicators: ["frustrated", "pleased", "confused", "surprised", "angry", "satisfied"]
+    standardize_emotions: true
+    
+  task_observations:
+    apply_formatting: ["text_cleanup", "task_formatting"]
+    auto_structure: true
+    
+  technical_issues:
+    apply_formatting: ["text_cleanup", "section_formatting"]
+    issue_categories:
+      - "Performance Issues:"
+      - "Connectivity Problems:"
+      - "Interface Problems:"
+      - "Error Messages:"
+      
+  accessibility_notes:
+    apply_formatting: ["text_cleanup"]
+    
+  key_moments:
+    apply_formatting: ["text_cleanup", "time_reference_formatting"]
+    
+  additional_notes:
+    apply_formatting: ["text_cleanup", "section_formatting"]
+    auto_organize: true
+
 # Integration settings
 integration:
   qori:
