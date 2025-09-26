@@ -1,13 +1,13 @@
 id: research_brief
 name: run_research_brief
-label: 📄 Research Brief
-version: v2.5
+label: Research Brief
+version: v3.0
 description: |
   Generate VA-aligned research briefs for scoping studies with design and product partners. Creates structured research briefs that capture and refine stakeholder thinking to inform detailed research plans. Automatically improves informal or unclear stakeholder inputs while preserving original intent.
 
 author: Qori R&D
 created: 2025-06-26
-last_updated: 2025-07-10
+last_updated: 2025-09-26
 
 # Character encoding fix
 encoding: utf-8
@@ -198,22 +198,6 @@ ai_generation_tasks:
       
       Focus on how insights will be applied to {{project_title}}, not what the insights might be.
 
-  - task_id: "formatted_stakeholders"
-    prompt: |
-      Format the stakeholder input "{{stakeholders}}" into a clean, readable bulleted list:
-      
-      Take each stakeholder mentioned and format as:
-      - **[Name], [Title]** - [their contribution/input]
-      
-      Example:
-      - **David Park, Mobile Product Manager** - provided app analytics and feature usage data
-      - **Angela Foster, VA.gov Information Architect** - shared previous card sorting research findings
-      
-      Keep each bullet concise and scannable. If stakeholders are listed without clear roles, format as:
-      - **[Name]** - [their contribution]
-      
-      If the input is unclear or poorly formatted, do your best to organize it logically.
-
 # Processing workflow
 processing_workflow:
   1. validate_inputs
@@ -222,86 +206,67 @@ processing_workflow:
   4. populate_template
   5. save_to_outputs
 
-# Output template - improved structure with better formatting
+# Modern GitHub-optimized output template
 output_template: |
-  # 📄 Research Brief — {{project_title}}
+  # Research Brief — {{project_title}}
   
-  📦 **Project Area:** {{ai_generated.project_scope}}
-
-  👩🏽‍🔬 **Prepared by:** {{prepared_by}}
-
-  🗓️ **Date:** {{current_date}}
+  **Project Area:** {{ai_generated.project_scope}} | **Prepared by:** {{prepared_by}} | **Date:** {{current_date}}
 
   ---
 
-  ## 🎯 Business Context
+  ## Business Context
 
   {{ai_generated.refined_context}}
 
-  **Stakeholder Concerns:**
-  {{ai_generated.stakeholder_concerns}}
+  > [!WARNING]
+  > **Critical Issues Driving This Research**
+  > {{ai_generated.stakeholder_concerns}}
 
-  <br>
-
-  ## 🎯 Research Objectives
+  ## Research Objectives
 
   {{ai_generated.learning_objectives}}
 
-  **User journey in scope:**
+  <details>
+  <summary><strong>User Journey in Scope</strong></summary>
+  
   {{ai_generated.refined_user_flows}}
+  
+  </details>
 
-  <br>
-
-  ## 🎯 Target Barriers
+  ## Target Barriers
 
   {{ai_generated.refined_barriers}}
 
-  <br>
+  ## Key Questions & Hypotheses
 
-  ## 🤔 Key Questions & Hypotheses
-
-  **Primary questions:**
+  ### Primary Research Questions
   {{ai_generated.key_questions}}
 
-  **Team hypotheses:**
+  ### Team Hypotheses
   {{ai_generated.team_hypotheses}}
 
-  <br>
+  ## Proposed Research Approach
 
-  ## 🧭 Proposed Research Approach
+  | Aspect | Details |
+  |--------|---------|
+  | **Method** | {{ai_generated.refined_research_approach}} |
+  | **Rationale** | {{ai_generated.research_rationale}} |
 
-  **High-level approach:** {{ai_generated.refined_research_approach}}
-
-  **Reasoning:** {{ai_generated.research_rationale}}
-
-  <br>
-
-  ## 👥 Stakeholder Input
-
-  ### Consulted Stakeholders
-  {{ai_generated.formatted_stakeholders}}
-
-  ### Key Insights from Stakeholders
-  - [This will be filled based on stakeholder conversations and input gathered during brief creation]
-
-  <br>
-
-  ## 🎯 Expected Outcomes
+  ## Expected Outcomes
 
   {{ai_generated.expected_outcomes}}
 
-  <br>
+  ## Next Steps
 
-  ## 🚀 Next Steps
-
-  1. **Stakeholder review** of this brief and alignment on objectives
-  2. **Detailed research plan** development with specific methodology
-  3. **Participant recruitment** strategy and timeline
-  4. **Resource allocation** and team coordination
+  - [ ] **Stakeholder review** of this brief and alignment on objectives
+  - [ ] **Detailed research plan** development with specific methodology  
+  - [ ] **Participant recruitment** strategy and timeline
+  - [ ] **Resource allocation** and team coordination
 
   ---
 
-  > 💡 **Ready to proceed:** Once stakeholders approve this brief → Develop detailed research plan → Begin execution
+  > [!NOTE]
+  > **Ready to proceed:** Once stakeholders approve this brief → Develop detailed research plan → Begin execution
 
 # Output configuration
 output_options:
@@ -320,12 +285,12 @@ output_options:
       enabled: true
       channel: "#research-planning"
       notify_user: "{{prepared_by}}"
-      message: "📄 Research brief for {{project_title}} has been generated and saved to GitHub."
+      message: "Research brief for {{project_title}} has been generated and saved to GitHub."
       include_preview: false  # Set to true to include brief summary in Slack
       actions:
-        - text: "📄 View Brief"
+        - text: "View Brief"
           url: "{{github_file_link}}"
-        - text: "🧭 Create Research Plan"
+        - text: "Create Research Plan"
           action: "run_research_plan"
     
     email:
