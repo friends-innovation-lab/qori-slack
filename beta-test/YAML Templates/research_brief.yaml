@@ -1,19 +1,23 @@
 id: research_brief
 name: run_research_brief
 label: 📄 Research Brief
-version: v2.4
+version: v2.5
 description: |
   Generate VA-aligned research briefs for scoping studies with design and product partners. Creates structured research briefs that capture and refine stakeholder thinking to inform detailed research plans. Automatically improves informal or unclear stakeholder inputs while preserving original intent.
 
-author: CivicMind R&D
+author: Qori R&D
 created: 2025-06-26
 last_updated: 2025-07-10
 
-# LLM Configuration
+# Character encoding fix
+encoding: utf-8
+output_encoding: utf-8
+
+# LLM Configuration - Upgraded for better quality
 llm_config:
-  model: "gpt-3.5-turbo"
-  temperature: 0.4
-  max_tokens: 3000
+  model: "gpt-4o"
+  temperature: 0.2
+  max_tokens: 4000
 
 input_type: text
 input_processing: summarize_if_long
@@ -56,6 +60,7 @@ ai_generation_tasks:
       - Be 2-3 sentences that set up the research need
       - Fix any grammatical or clarity issues
       - Maintain the core message and intent
+      - Focus on VA and Veteran-specific challenges
       
       If the input is very brief or unclear, expand it appropriately while staying true to the apparent intent.
 
@@ -69,6 +74,7 @@ ai_generation_tasks:
       - Fixes grammatical issues
       - Maintains the original intent
       - Formats consistently
+      - Focuses on user experience and interface barriers
       
       Format as:
       - [Clear, specific barrier description]
@@ -85,6 +91,7 @@ ai_generation_tasks:
       - Fixes any unclear language
       - Maintains logical flow order
       - Uses action-oriented language
+      - Focuses on Veteran user actions
       
       Format as:
       1. [Clear action/step]
@@ -101,30 +108,31 @@ ai_generation_tasks:
       - Be more specific about methods (e.g., "talk to users" → "user interviews")
       - Fix informal language
       - Maintain the core approach and scope
+      - Reference VA research standards
       
       Keep it concise - just 1-2 sentences describing the high-level methodology.
 
   - task_id: "stakeholder_concerns"
     prompt: |
-      Based on the refined barriers and context, identify 2-3 key stakeholder concerns or problems that are driving this research.
+      Based on the refined barriers "{{target_barriers}}" and study context "{{study_context}}", identify 2-3 key stakeholder concerns that are driving this VA research.
       
       Format as bullet points focusing on:
-      - Business problems (not research questions)
-      - User pain points that have been observed
-      - Specific issues stakeholders want to address
+      - Specific user experience problems Veterans are facing
+      - Business impact on VA operations or service delivery
+      - Technical or design issues affecting the product/service
       
       Example format:
-      - [Specific problem] is causing [impact on users/business]
-      - [Observed issue] preventing [desired outcome]
+      - [Specific UX problem] is causing [impact on Veterans/VA operations]
+      - [Observed usability issue] preventing [desired outcome for Veterans]
       
-      Keep focused on problems, not solutions.
+      Keep focused on problems directly related to {{project_title}}, not generic business issues.
 
   - task_id: "learning_objectives"
     prompt: |
       Create 3-4 clear learning objectives based on:
-      - Refined barriers: Use the improved barrier descriptions
+      - Refined barriers: {{target_barriers}}
       - User flows: {{user_flows}}
-      - Study context: Use the refined context
+      - Study context: {{study_context}}
       
       Format as "What we want to learn:" with bullet points that start with:
       - "Where veterans..." (understand pain points)
@@ -132,13 +140,13 @@ ai_generation_tasks:
       - "Why..." (understand root causes)
       - "How..." (understand current state)
       
-      Focus on learning goals, not research methods or solutions.
+      Focus on learning goals specific to {{project_title}}, not research methods or solutions.
       Keep each objective to one sentence.
 
   - task_id: "key_questions"
     prompt: |
       Create 3-4 primary research questions based on:
-      - Refined barriers and context
+      - Refined barriers: {{target_barriers}}
       - User flows: {{user_flows}}
       - Research approach: {{research_approach}}
       
@@ -146,6 +154,7 @@ ai_generation_tasks:
       - Be specific and answerable through research
       - Focus on understanding problems, not validating solutions
       - Connect to the user flows and barriers mentioned
+      - Be relevant to {{project_title}}
       
       Format as numbered questions starting with:
       - "How do veterans currently..."
@@ -157,17 +166,15 @@ ai_generation_tasks:
 
   - task_id: "team_hypotheses"
     prompt: |
-      Generate 2-3 brief team hypotheses based on:
-      - Refined barriers and context
-      - Stakeholder input and context
+      Generate 2-3 brief team hypotheses specifically related to {{project_title}} and the barriers mentioned in "{{target_barriers}}":
       
-      Format as simple statements of what the team currently believes, such as:
-      - "[Specific barrier] increases [measurable outcome]"
-      - "Veterans with [condition] face more [type of problem]"
-      - "[Current approach] leads to [negative outcome]"
+      Format as simple statements of what the research team currently believes about the specific product/service being studied:
+      - "[Specific barrier from target_barriers] increases [measurable user outcome]"
+      - "Veterans with [specific condition] face more [specific type of problem with the product]"
+      - "[Current design/approach] leads to [specific negative outcome]"
       
-      Keep hypotheses brief and focused on current team assumptions that research will test.
-      Avoid detailed measurement criteria - save that for the research plan.
+      Keep hypotheses brief and focused on assumptions that research will test about {{project_title}}.
+      Do not generate generic hypotheses about transportation, childcare, or unrelated topics.
 
   - task_id: "research_rationale"
     prompt: |
@@ -189,7 +196,23 @@ ai_generation_tasks:
       - [Area] prioritization or strategy
       - [Process] optimization or changes
       
-      Focus on how insights will be applied, not what the insights might be.
+      Focus on how insights will be applied to {{project_title}}, not what the insights might be.
+
+  - task_id: "formatted_stakeholders"
+    prompt: |
+      Format the stakeholder input "{{stakeholders}}" into a clean, readable bulleted list:
+      
+      Take each stakeholder mentioned and format as:
+      - **[Name], [Title]** - [their contribution/input]
+      
+      Example:
+      - **David Park, Mobile Product Manager** - provided app analytics and feature usage data
+      - **Angela Foster, VA.gov Information Architect** - shared previous card sorting research findings
+      
+      Keep each bullet concise and scannable. If stakeholders are listed without clear roles, format as:
+      - **[Name]** - [their contribution]
+      
+      If the input is unclear or poorly formatted, do your best to organize it logically.
 
 # Processing workflow
 processing_workflow:
@@ -199,11 +222,15 @@ processing_workflow:
   4. populate_template
   5. save_to_outputs
 
-# Output template - proper brief structure with refined content
+# Output template - improved structure with better formatting
 output_template: |
-  # 📄 Research Brief – {{project_title}}
+  # 📄 Research Brief — {{project_title}}
   
-  > **📦 Project Area:** {{ai_generated.project_scope}} &nbsp;&nbsp;|&nbsp;&nbsp; **👩🏽‍🔬 Prepared by:** {{prepared_by}} &nbsp;&nbsp;|&nbsp;&nbsp; **🗓️ Date:** {{current_date}}
+  📦 **Project Area:** {{ai_generated.project_scope}}
+
+  👩🏽‍🔬 **Prepared by:** {{prepared_by}}
+
+  🗓️ **Date:** {{current_date}}
 
   ---
 
@@ -214,7 +241,7 @@ output_template: |
   **Stakeholder Concerns:**
   {{ai_generated.stakeholder_concerns}}
 
-  ---
+  <br>
 
   ## 🎯 Research Objectives
 
@@ -223,13 +250,13 @@ output_template: |
   **User journey in scope:**
   {{ai_generated.refined_user_flows}}
 
-  ---
+  <br>
 
   ## 🎯 Target Barriers
 
   {{ai_generated.refined_barriers}}
 
-  ---
+  <br>
 
   ## 🤔 Key Questions & Hypotheses
 
@@ -239,7 +266,7 @@ output_template: |
   **Team hypotheses:**
   {{ai_generated.team_hypotheses}}
 
-  ---
+  <br>
 
   ## 🧭 Proposed Research Approach
 
@@ -247,22 +274,23 @@ output_template: |
 
   **Reasoning:** {{ai_generated.research_rationale}}
 
-  ---
+  <br>
 
   ## 👥 Stakeholder Input
 
-  **Consulted:** {{stakeholders}}
+  ### Consulted Stakeholders
+  {{ai_generated.formatted_stakeholders}}
 
-  **Key insights from stakeholders:**
+  ### Key Insights from Stakeholders
   - [This will be filled based on stakeholder conversations and input gathered during brief creation]
 
-  ---
+  <br>
 
   ## 🎯 Expected Outcomes
 
   {{ai_generated.expected_outcomes}}
 
-  ---
+  <br>
 
   ## 🚀 Next Steps
 
@@ -309,7 +337,7 @@ output_options:
       # Future: Teams delivery options
 
 output_use: |
-  CivicMind Research Brief generator creates VA-compliant research scoping documents that capture and refine stakeholder thinking. Automatically improves informal or unclear stakeholder inputs to create professional, coherent research briefs. Focuses on problem definition and learning goals to inform detailed research plan development.
+  Qori Research Brief generator creates VA-compliant research scoping documents that capture and refine stakeholder thinking. Automatically improves informal or unclear stakeholder inputs to create professional, coherent research briefs. Focuses on problem definition and learning goals to inform detailed research plan development.
 
 output_notes: |
   Input refinement: AI automatically improves clarity and professionalism of stakeholder inputs while preserving original intent.
