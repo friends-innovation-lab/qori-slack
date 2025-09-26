@@ -94,8 +94,17 @@ input_variables:
 
 # ENHANCED AI GENERATION TASKS
 ai_generation_tasks:
-  # Clean product area description
+  # Clean product area name and description
   - task_id: "clean_product_area"
+    prompt: |
+      Create a concise product name and description for "{{product_area}}":
+      
+      Return only the core product name (e.g., "VA Mobile App", "Debt Letters", "Claims Portal")
+      Do not include lengthy descriptions or feature lists.
+      
+      Example: If input is "VA Mobile App navigation and search" return "VA Mobile App"
+
+  - task_id: "product_description"
     prompt: |
       Create a concise, professional description for "{{product_area}}":
       
@@ -105,7 +114,7 @@ ai_generation_tasks:
       - Use clear, direct language
       - No marketing speak or repetitive phrases
       
-      Format: "{{product_area}} - [what it does for Veterans]. [Brief context]."
+      Format: "[Product] - [what it does for Veterans]. [Brief context]."
 
   # OCTO Priorities with audience detection
   - task_id: "octo_priorities"
@@ -177,12 +186,12 @@ ai_generation_tasks:
     prompt: |
       IMPORTANT: Generate exactly these 4 success criteria numbered 1-4. Do not create different content or start from a different number.
       
-      Create success criteria for {{product_area}} research using {{timeline_preference}} timeline:
+      Create success criteria for {{ai_generated.clean_product_area}} research using {{timeline_preference}} timeline:
       
-      1. **Decision Support:** By [end of research period], findings will inform specific {{product_area}} improvements, addressing identified barriers and providing clear direction for implementation decisions
-      2. **Quality Threshold:** All recommendations will be actionable, evidence-based, and directly tied to observed user behavior with {{product_area}}, meeting stakeholder standards for implementation  
+      1. **Decision Support:** By [end of research period], findings will inform specific {{ai_generated.clean_product_area}} improvements, addressing identified barriers and providing clear direction for implementation decisions
+      2. **Quality Threshold:** All recommendations will be actionable, evidence-based, and directly tied to observed user behavior with {{ai_generated.clean_product_area}}, meeting stakeholder standards for implementation  
       3. **Timeline Success:** Research report and recommendations delivered within {{timeline_preference}} timeline, allowing stakeholders adequate time for review and approval before implementation planning begins
-      4. **Impact Measurement:** Establish baseline metrics for {{product_area}} user satisfaction and task completion rates, with clear success indicators for measuring post-implementation improvements
+      4. **Impact Measurement:** Establish baseline metrics for {{ai_generated.clean_product_area}} user satisfaction and task completion rates, with clear success indicators for measuring post-implementation improvements
       
       Use exactly this format and numbering. Do not generate alternative content.
 
@@ -310,7 +319,7 @@ ai_generation_tasks:
 output_template: |
   # Research Plan — {{project_title}}
 
-  📦 **Product Area:** {{ai_generated.clean_product_area}}
+  📦 **Product Area:** {{ai_generated.product_description}}
 
   👩🏽‍🔬 **Lead Researcher:** {{lead_researcher}}
 
