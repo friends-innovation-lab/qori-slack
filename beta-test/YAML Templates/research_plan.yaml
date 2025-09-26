@@ -173,12 +173,12 @@ ai_generation_tasks:
   # Success Criteria
   - task_id: "success_criteria"
     prompt: |
-      Create practical success criteria for {{timeline_preference}} research:
+      Create practical success criteria for {{timeline_preference}} research on {{product_area}}:
       
-      1. **Decision Support:** How findings will inform {{product_area}} decisions with specific timeline
-      2. **Quality Threshold:** Standards for research quality and actionability
-      3. **Timeline Success:** Delivery expectations for {{timeline_preference}} timeline
-      4. **Impact Measurement:** How success will be measured after research completion
+      1. **Decision Support:** By [specific timeframe], research findings will inform specific {{product_area}} improvements, addressing identified barriers and providing clear direction for Q1 2026 redesign decisions
+      2. **Quality Threshold:** All recommendations will be actionable, evidence-based, and directly tied to observed user behavior with {{product_area}}, meeting stakeholder standards for implementation
+      3. **Timeline Success:** Research report and recommendations delivered within {{timeline_preference}} timeline, allowing stakeholders 2 weeks for review and approval before implementation planning begins  
+      4. **Impact Measurement:** Establish baseline metrics for {{product_area}} user satisfaction and task completion rates, with clear success indicators for measuring post-implementation improvements
 
   # Key Deliverables
   - task_id: "deliverables"
@@ -292,7 +292,11 @@ ai_generation_tasks:
 output_template: |
   # Research Plan — {{project_title}}
 
-  📦 **Product Area:** {{ai_generated.clean_product_area}} &nbsp;&nbsp;&nbsp;&nbsp; 👩🏽‍🔬 **Lead Researcher:** {{lead_researcher}} &nbsp;&nbsp;&nbsp;&nbsp; 🗓️ **Date:** {{current_date}}
+  📦 **Product Area:** {{ai_generated.clean_product_area}}
+
+  👩🏽‍🔬 **Lead Researcher:** {{lead_researcher}}
+
+  🗓️ **Date:** {{current_date}}
 
   ---
 
