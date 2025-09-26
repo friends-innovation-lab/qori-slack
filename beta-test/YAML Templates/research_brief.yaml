@@ -5,7 +5,7 @@ version: v3.0
 description: |
   Generate VA-aligned research briefs for scoping studies with design and product partners. Creates structured research briefs that capture and refine stakeholder thinking to inform detailed research plans. Automatically improves informal or unclear stakeholder inputs while preserving original intent.
 
-author: CivicMind R&D
+author: Qori R&D
 created: 2025-06-26
 last_updated: 2025-09-26
 
@@ -230,7 +230,7 @@ output_template: |
   > 
   > {{ai_generated.stakeholder_concerns}}
 
-  ---
+  <br><br>
 
   ## 🎯 Research Objectives
 
@@ -245,13 +245,13 @@ output_template: |
   
   </details>
 
-  ---
+  <br><br>
 
   ## 🎯 Target Barriers
 
   {{ai_generated.refined_barriers}}
 
-  ---
+  <br><br>
 
   ## 🤔 Key Questions & Hypotheses
 
@@ -261,7 +261,7 @@ output_template: |
   ### 💭 Team Hypotheses
   {{ai_generated.team_hypotheses}}
 
-  ---
+  <br><br>
 
   ## 🧭 Proposed Research Approach
 
@@ -270,13 +270,13 @@ output_template: |
   | **Method** | {{ai_generated.refined_research_approach}} |
   | **Rationale** | {{ai_generated.research_rationale}} |
 
-  ---
+  <br><br>
 
   ## 🎯 Expected Outcomes
 
   {{ai_generated.expected_outcomes}}
 
-  ---
+  <br><br>
 
   ## 🚀 Next Steps
 
@@ -337,7 +337,7 @@ output_options:
       # Future: Teams delivery options
 
 output_use: |
-  CivicMind Research Brief generator creates VA-compliant research scoping documents that capture and refine stakeholder thinking. Automatically improves informal or unclear stakeholder inputs to create professional, coherent research briefs. Focuses on problem definition and learning goals to inform detailed research plan development.
+  Qori Research Brief generator creates VA-compliant research scoping documents that capture and refine stakeholder thinking. Automatically improves informal or unclear stakeholder inputs to create professional, coherent research briefs. Focuses on problem definition and learning goals to inform detailed research plan development.
 
 output_notes: |
   Input refinement: AI automatically improves clarity and professionalism of stakeholder inputs while preserving original intent.
