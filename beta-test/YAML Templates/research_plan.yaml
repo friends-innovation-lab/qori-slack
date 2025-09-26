@@ -1,9 +1,9 @@
-# FINAL OPTIMIZED RESEARCH PLAN - Targeted Improvements Implementation
+# OPTIMIZED RESEARCH PLAN - Targeted Improvements Implementation
 
 id: research_plan
 name: run_research_plan
 label: 🧭 Research Plan
-version: v3.0
+version: v3.1
 description: |
   🧭 **Research Idea → Complete Execution Plan**
   
@@ -12,6 +12,10 @@ description: |
 author: CivicMind R&D
 created: 2025-06-26
 last_updated: 2025-07-16
+
+# Character encoding fix
+encoding: utf-8
+output_encoding: utf-8
 
 # LLM Configuration
 llm_config:
@@ -90,74 +94,25 @@ input_variables:
 
 # ENHANCED AI GENERATION TASKS
 ai_generation_tasks:
-  # SIMPLE - Input validation (runs first)
-  - task_id: "input_validation"
+  # Clean product area description
+  - task_id: "clean_product_area"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      
-      As an experienced VA UX Researcher, review and improve these user inputs for clarity:
-      
-      **Project Title:** {{project_title}}
-      **Product Area:** {{product_area}}
-      **Decision Context:** {{decision_context}}
-      **Research Goal:** {{research_goal}}
-      **Target Participants:** {{target_participants}}
-      
-      For each input, provide:
-      1. **Validation:** Is it clear and specific enough?
-      2. **Improvements:** Any suggested refinements for VA research standards
-      3. **Compliance Notes:** Any VA-specific considerations
-      
-      Return improved versions that maintain the user's intent but improve clarity and specificity.
-
-  # IMPROVED - Concise product area (replace verbose description)
-  - task_id: "concise_product_area"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Maximum 2-3 sentences ONLY
-      
-      As an experienced VA UX Researcher, create a concise, professional description of "{{product_area}}":
+      Create a concise, professional description for "{{product_area}}":
       
       Requirements:
-      - Explain what it is and why it matters to Veterans
-      - Include business context within VA ecosystem
-      - Use clear, professional language
-      - NO marketing speak or verbose descriptions
+      - 1-2 sentences maximum
+      - Explain what it does for Veterans
+      - Use clear, direct language
+      - No marketing speak
       
-      Example format: "[Product] - [what it does] serving [Veterans' need]. [Brief business context or impact]."
+      Format: "{{product_area}} - [what it does for Veterans]. [Brief context]."
 
-  # SIMPLE - OCTO Priorities (with embedded audience detection)
+  # OCTO Priorities with audience detection
   - task_id: "octo_priorities"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS format Additional Priorities with bold priority names: **[Priority Name]:** [description]
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
+      Select appropriate OCTO-DE priorities based on target participants: "{{target_participants}}"
       
-      As an experienced VA UX Researcher, analyze the target participants and select appropriate OCTO-DE priorities:
-      
-      **Target Participants:** "{{target_participants}}"
-      **Product Area:** {{product_area}}
-      
-      **STEP 1: Determine audience by keywords**
-      - If target participants mention "veterans," "former military," "service members" → Use veteran-facing priorities
-      - If target participants mention "VA staff," "VA employees," "nurses," "physicians," "claims processors," "clinical staff" → Use internal efficiency priorities
-      - If target participants mention "accredited representatives," "attorneys," "VSO representatives" → Use external-facing priorities
-      
-      **STEP 2: Select appropriate priorities**
-      
-      **For veterans:** Choose from priorities 1, 2, 3, 4, 5, 6, 7
-      **For VA employees:** Choose from priorities 2, 7, 8, 9, 10  
-      **For external stakeholders:** Choose from priorities 2, 7, 10
-      
-      **OCTO-DE Priorities 2025:**
+      Available priorities:
       1. Improve the Veteran login experience
       2. Solidify the VA.gov platform  
       3. Integrate health portal features into VA.gov
@@ -165,414 +120,274 @@ ai_generation_tasks:
       5. Refresh VA.gov homepage and IA
       6. Enhance Veterans' personalized online experience
       7. Fast-track disability claims, starting with PACT Act claims
-      8. Grow the OCTO team
-      9. Formalize the VA Innovation Unit and innovation process
-      10. Drive OIT's Digital Transformation Strategy
       
-      **Required format:**
-      **Primary OCTO Priority:** [Select exact title from appropriate list above]
+      Format:
+      **Primary OCTO Priority:** [Select one priority from list above]
       
-      **Explanation:** One sentence connecting {{product_area}} to this priority for the target audience.
+      **Explanation:** [1 sentence connecting {{product_area}} to this priority]
       
-      **Additional Priorities (if applicable):**
+      **Additional Priorities:**
       - **[Priority Name]:** [Brief explanation]
-      - **[Priority Name]:** [Brief explanation]
-      
-      **Project-Specific Priorities:**
-      - [2-3 specific priorities for {{product_area}}]
 
-  # ADAPTIVE - User Journey (varies by audience type)
+  # User Journey
   - task_id: "user_journey"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline," "play a role"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - ALWAYS bold the stage/phase names: **[Stage]:** [description]
+      Map {{product_area}} to the VA Journey of Veterans Map:
       
-      As an experienced VA UX Researcher, map {{product_area}} to the appropriate user journey framework based on the detected audience:
+      **User Journey Connection:** [1 sentence explaining where {{product_area}} fits in veteran journey]
       
-      **Detected Audience:** {{ai_generated.audience_detection}}
-      **Product Area:** {{product_area}}
+      **Key Moments/Phases:**
+      - **Taking care of myself:** [relevant moment]
+      - **Putting down roots:** [relevant moment]  
+      - **Retiring:** [relevant moment]
       
-      **IF PRIMARY AUDIENCE = Veterans:**
-      Use VA Journey of Veterans Map:
-      *Life Stages:* Taking care of myself, Putting down roots, Retiring, Aging, etc.
-      
-      **IF PRIMARY AUDIENCE = VA Employees:**
-      Use VA Employee Workflow Map:
-      *Work Phases:* Onboarding, Daily operations, Process improvement, Career development, Knowledge transfer
-      *Key Workflows:* Case management, System navigation, Collaboration with colleagues, Training and compliance, Performance evaluation
-      
-      **IF PRIMARY AUDIENCE = External Stakeholders:**
-      Use Professional Service Journey:
-      *Service Phases:* Client acquisition, Case preparation, VA system interaction, Case management, Resolution and follow-up
-      *Key Touchpoints:* Initial consultation, Documentation gathering, VA portal access, Status tracking, Client communication
-      
-      **Required Format:**
-      **User Journey Connection:** 1-2 sentences explaining where {{product_area}} fits into the user's workflow
-      
-      **Key Moments/Phases:** List 3-5 specific moments using this EXACT format:
-      - **[Stage/Phase]:** [Specific moment description]
-      - **[Stage/Phase]:** [Specific moment description]
-      
-      **Critical Pain Points (if applicable):** Reference any specific pain points particularly relevant to {{product_area}}
-      
-      CRITICAL: Always bold the stage/phase names before the colon. Use the appropriate framework for the detected audience.
+      **Critical Pain Points:** [Any specific pain points for {{product_area}}]
 
-  # IMPROVED - Clear decision context (replace basic background)
-  - task_id: "decision_context"
+  # Background/Decision Context
+  - task_id: "background"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - NEVER use numbered lists - write as flowing paragraphs
-      - Maximum 75 words total
+      Transform this decision context into clear background: "{{decision_context}}"
       
-      As an experienced VA UX Researcher, transform decision context into clear, structured background section:
+      Create 2-3 sentences that explain:
+      - What decision this research will inform about {{product_area}}
+      - How this will benefit Veterans
+      - The business impact for VA
       
-      Input context: "{{decision_context}}"
-      Product area: "{{product_area}}"
-      
-      Create 2-3 clean sentences (NO numbered lists) using this structure:
-      "This research will inform [specific decision about {{product_area}}]. This decision will [specific benefit for Veterans] and [business outcome for VA]. [Brief context if needed]."
-      
-      Requirements:
-      - Mention {{product_area}} by name in the first sentence
-      - Be specific about the change being considered
-      - Include measurable impact on Veterans
-      - Use plain language - avoid jargon
-      - Write as flowing paragraphs, not numbered points
+      Use direct, professional language. No jargon.
 
-  # IMPROVED - Streamlined research goals (replace verbose current version)
+  # Research Goals
   - task_id: "research_goals"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Maximum 2 sentences for Primary Goal
+      Create clear research goals based on: "{{research_goal}}"
       
-      As an experienced VA UX Researcher, create concise, actionable research goals:
-      
-      Primary goal input: "{{research_goal}}"
-      Methodology: {{methodology}}
-      Participants: "{{target_participants}}"
-      Product area: "{{product_area}}"
-      
-      Required format:
-      **Primary Goal:** [Improved, concise version of input goal - maximum 2 sentences]
+      **Primary Goal:** [Improved version of the input goal - 1-2 sentences]
       
       **Supporting Goals:**
-      [2-3 bullet points that complement primary goal and are achievable through {{methodology}}]
-      
-      Requirements:
-      - Keep goals specific and measurable
-      - Directly connect to {{methodology}} capabilities
-      - Reference {{product_area}} specifically
-      - Support business decision-making about {{product_area}}
-      - Avoid repetitive or generic language
+      - [Specific goal achievable through {{methodology}}]
+      - [Specific goal related to {{product_area}}]
+      - [Specific goal that supports decision-making]
 
-  # Accurate timeline calculation 
-  - task_id: "accurate_timeline"
-    prompt: |
-      Create a timeline table using relative business days from project start:
-    
-      | Phase | Duration | Start Day | End Day | Key Deliverables |
-      |-------|----------|-----------|---------|------------------|
-      | Planning | 2 days | Day 1 | Day 2 | Project Brief, Research Plan |
-    
-      Note: "Day 1 = First business day after plan approval"
-
-  # NEW - Risk assessment (critical missing piece)
-  - task_id: "risk_assessment"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Focus on practical, actionable mitigation strategies
-      
-      As an experienced VA UX Researcher, identify the top 3-4 risks for this research project:
-      
-      Project: {{project_title}}
-      Methodology: {{methodology}}
-      Participants: {{target_participants}} (n={{participant_count}})
-      Timeline: {{timeline_preference}}
-      Product area: {{product_area}}
-      
-      Format each risk as:
-      **[Risk Type]:** [Specific risk description]
-      - **Likelihood:** High/Medium/Low
-      - **Mitigation:** [Specific action to prevent or reduce this risk]
-      
-      Focus on practical risks:
-      - Recruitment challenges (finding qualified {{target_participants}})
-      - Execution issues ({{methodology}} implementation problems)
-      - Timeline risks (delays that affect {{timeline_preference}})
-      - Quality concerns (data validity, stakeholder satisfaction)
-      - VA-specific risks (Collaboration Cycle delays, compliance issues)
-      
-      Keep mitigation strategies actionable and specific.
-
-  # IMPROVED - Streamlined success criteria (replace verbose percentages)
+  # Success Criteria
   - task_id: "success_criteria"
     prompt: |
-      As an experienced VA UX Researcher, create 3-4 clear, measurable success criteria:
+      Create practical success criteria for {{timeline_preference}} research:
       
-      Research goal: "{{research_goal}}"
-      Timeline: {{timeline_preference}}
-      Methodology: {{methodology}}
-      Product area: {{product_area}}
-      
-      Format as specific, business-focused outcomes:
-      1. **Decision Support:** [How findings will inform {{product_area}} decisions - include timeline]
-      2. **Quality Threshold:** [Standards for research quality and actionability]  
-      3. **Timeline Success:** [Delivery expectations and stakeholder review requirements]
-      4. **Impact Measurement:** [How success will be measured after research completion]
-      
-      Requirements:
-      - Avoid complex percentages and unrealistic metrics
-      - Focus on practical business outcomes
-      - Include specific timelines for decision-making
-      - Make criteria measurable but achievable
+      1. **Decision Support:** How findings will inform {{product_area}} decisions
+      2. **Quality Threshold:** Standards for research quality
+      3. **Timeline Success:** Delivery expectations for {{timeline_preference}}
+      4. **Impact Measurement:** How success will be measured
 
-  # IMPROVED - Essential deliverables only (replace lengthy list)
-  - task_id: "key_deliverables"
+  # Key Deliverables
+  - task_id: "deliverables"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS tie timing to "research completion" not arbitrary day numbers
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Maximum 5 total deliverables
+      List essential deliverables for {{methodology}} research:
       
-      As an experienced VA UX Researcher, list essential deliverables that support {{product_area}} decision-making:
-      
-      Methodology: {{methodology}}
-      Research goal: "{{research_goal}}"
-      Timeline: {{timeline_preference}}
-      
-      Required format:
       **Primary Deliverables:**
-      - [Essential deliverable 1] - [delivered within X days of research completion]
-      - [Essential deliverable 2] - [delivered within X days of research completion]  
-      - [Essential deliverable 3] - [delivered within X days of research completion]
+      - [Essential deliverable 1] - delivered within 2 days of research completion
+      - [Essential deliverable 2] - delivered within 3 days of research completion
       
       **Supporting Materials:**
-      - [Nice-to-have deliverable 1] - [timing]
-      - [Nice-to-have deliverable 2] - [timing]
-      
-      Requirements:
-      - Limit to maximum 5 total deliverables
-      - Focus on decision-making value, not busy work
-      - Include realistic delivery timelines based on AI-accelerated synthesis (1-2 days for analysis, 1 day for reporting)
-      - Tie timing to "research completion" not arbitrary day numbers
-      - Avoid redundant or overlapping deliverables
-      - Prioritize stakeholder needs over comprehensive documentation
+      - [Supporting deliverable] - delivered within 1 day of research completion
 
-  # IMPROVED - Practical methodology (replace verbose implementation)
-  - task_id: "methodology_optimization"
+  # Methodology Details
+  - task_id: "methodology_details"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Maximum 2 sentences for Methodology Rationale
+      Provide methodology details for {{methodology}}:
       
-      As an experienced VA UX Researcher, provide concise methodology details and implementation approach:
-      
-      Selected methodology: {{methodology}}
-      Research goals: "{{research_goal}}"
-      Participants: {{target_participants}} (n={{participant_count}})
-      Product area: {{product_area}}
-      
-      Required format:
-      **Methodology Rationale:** [Why {{methodology}} is optimal for this research - maximum 2 sentences]
+      **Methodology Rationale:** [Why {{methodology}} is right for this research - 1-2 sentences]
       
       **Implementation Approach:**
-      - Session format and duration appropriate for {{methodology}}
-      - Key activities and data collection techniques
-      - Specific protocols for {{product_area}} evaluation
+      - Session format and duration for {{methodology}}
+      - Key activities and data collection
+      - Specific protocols for {{product_area}}
       
       **VA Compliance Notes:**
-      - Collaboration Cycle requirements and approval timeline
+      - Collaboration Cycle requirements
       - Trauma-informed research considerations
-      - Accessibility accommodations for participants
-      
-      Keep practical and implementation-focused. Avoid theoretical discussions. Focus on what researchers need to execute this plan.
+      - Accessibility accommodations
 
-  # SIMPLE - Demographic targets (with embedded audience detection)  
-  - task_id: "demographic_targets"
+  # Demographics
+  - task_id: "demographics"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - ALWAYS provide specific realistic numbers that add up logically
+      Create demographic targets for {{participant_count}} participants:
       
-      As an experienced VA UX Researcher, analyze the target participants and provide appropriate demographic targets:
-      
-      **Target Participants:** "{{target_participants}}"
-      **Participant Count:** {{participant_count}}
-      **Product Area:** {{product_area}}
-      
-      **STEP 1: Determine audience by keywords**
-      - If target participants mention "veterans," "former military," "service members" → Use Veteran Demographics
-      - If target participants mention "VA staff," "VA employees," "nurses," "physicians," "claims processors," "clinical staff" → Use Employee Demographics  
-      - If target participants mention "accredited representatives," "attorneys," "VSO representatives" → Use External Demographics
-      
-      **STEP 2: Apply appropriate demographic framework**
-      
-      **If veterans detected:** Use service era, income, racial/ethnic diversity, gender diversity, age diversity, education diversity, accessibility needs
-      
-      **If VA employees detected:** Use role diversity (clinical, administrative, technical), experience diversity (new vs experienced), GS level diversity, location diversity (different facilities), department diversity (VHA, VBA, NCA), technology comfort diversity
-      
-      **If external stakeholders detected:** Use organization type diversity (VSO, attorneys, claims agents), experience diversity, caseload diversity, geographic diversity, practice size diversity, technology comfort diversity
-      
-      **Required Format:**
-      **Demographic targets (aim for when possible):**
-      Based on {{participant_count}} participants, calculate realistic numbers:
-      [List appropriate demographic categories with specific numbers like "2-3 participants" that add up logically]
+      **Demographic targets:**
+      Based on {{participant_count}} participants:
+      - Service era: [realistic breakdown]
+      - Age: [realistic breakdown]
+      - Gender: [realistic breakdown]
+      - Accessibility needs: [realistic breakdown]
       
       **Secondary targets:**
-      - {{product_area}} usage patterns: Mix of frequent and infrequent users when possible
-      - Training background: Mix of formal training and self-taught users
-      
-      **CRITICAL:** Only provide demographics appropriate for the detected audience. Provide specific numbers that are realistic for the participant count.
+      - {{product_area}} usage patterns
+      - Technology comfort levels
 
-  # NEW - Next steps (critical missing piece for stakeholder value)
+  # Simplified Timeline
+  - task_id: "timeline"
+    prompt: |
+      Create a timeline table for {{timeline_preference}} research:
+      
+      Use these phases for {{timeline_preference}}:
+      - Planning: 2 days
+      - Collaboration Cycle: 5 days
+      - Recruiting: 7 days  
+      - Research: 5 days
+      - Analysis: 1 day
+      - Reporting: 1 day
+      
+      Format as:
+      | Phase | Duration | Key Deliverables |
+      |-------|----------|------------------|
+      | Planning | 2 days | Project Brief, Research Plan |
+      | Collaboration Cycle | 5 days | Stakeholder Alignment |
+      | Recruiting | 7 days | Participant Selection |
+      | Research | 5 days | Data Collection |
+      | Analysis | 1 day | Insights Synthesis |
+      | Reporting | 1 day | Final Report |
+      
+      Note: Timeline begins after stakeholder approval
+
+  # Risk Assessment
+  - task_id: "risks"
+    prompt: |
+      Identify top 4 risks for this research:
+      
+      **Recruitment Challenges:** [Risk related to finding {{target_participants}}]
+      - **Likelihood:** High/Medium/Low
+      - **Mitigation:** [Specific action]
+      
+      **Execution Issues:** [Risk related to {{methodology}}]
+      - **Likelihood:** High/Medium/Low  
+      - **Mitigation:** [Specific action]
+      
+      **Timeline Risks:** [Risk related to {{timeline_preference}}]
+      - **Likelihood:** High/Medium/Low
+      - **Mitigation:** [Specific action]
+      
+      **Quality Concerns:** [Risk related to research quality]
+      - **Likelihood:** High/Medium/Low
+      - **Mitigation:** [Specific action]
+
+  # Next Steps
   - task_id: "next_steps"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Focus on actionable, specific steps with clear ownership
+      Create actionable next steps for post-research:
       
-      As an experienced VA UX Researcher, create actionable post-research timeline and decision framework:
-      
-      Research completion: [Based on {{timeline_preference}} timeline]
-      Product area: {{product_area}}
-      Research goal: "{{research_goal}}"
-      
-      Required format:
       **Immediate Actions (Week 1 post-research):**
-      - [Specific action with responsible party]
+      - [Specific action with owner]
       - [Specific action with timeline]
       
       **Short-term Actions (Weeks 2-4):**
-      - [Implementation planning step]
-      - [Decision-making milestone]
-      - [Resource allocation decision]
+      - [Implementation step]
+      - [Decision milestone]
       
       **Success Metrics:**
-      - [How research impact will be measured]
-      - [Follow-up research needs assessment]
-      
-      Requirements:
-      - Focus on turning research insights into {{product_area}} improvements
-      - Include realistic timelines for stakeholder decision-making
-      - Specify who is responsible for each action
-      - Connect actions to business value and veteran impact
-      - Make steps concrete and achievable
+      - [How impact will be measured]
+      - [Follow-up assessment plan]
 
-# STREAMLINED OUTPUT TEMPLATE - Keeps strong sections, adds critical pieces, removes bloat
+# CLEAN OUTPUT TEMPLATE
 output_template: |
-  # ðŸ§­ Research Plan â€" {{project_title}}
+  # 🧭 Research Plan — {{project_title}}
 
-  > **ðŸ"¦ Product Area:** {{ai_generated.concise_product_area}} &nbsp;&nbsp;|&nbsp;&nbsp; **ðŸ'©ðŸ½â€ðŸ"¬ Lead Researcher:** {{lead_researcher}} &nbsp;&nbsp;|&nbsp;&nbsp; **ðŸ—"ï¸ Date:** {{current_date}}
+  > **📦 Product Area:** {{ai_generated.clean_product_area}} &nbsp;&nbsp;|&nbsp;&nbsp; **👩🏽‍🔬 Lead Researcher:** {{lead_researcher}} &nbsp;&nbsp;|&nbsp;&nbsp; **🗓️ Date:** {{current_date}}
 
   ---
 
-  ## ðŸ"‹ Project Overview
+  ## 📋 Project Overview
 
-  **Product/Feature Scope:** {{ai_generated.concise_product_area}}
+  **Product/Feature Scope:** {{ai_generated.clean_product_area}}
 
   **Team Structure:**
   - **Primary Team:** {{team_office}}
 
   ---
 
-  ## ðŸ"Ž Background
+  ## 🔎 Background
 
-  {{ai_generated.decision_context}}
+  {{ai_generated.background}}
 
   ---
 
-  ## ðŸŽ¯ OCTO Priorities
+  ## 🎯 OCTO Priorities
 
   {{ai_generated.octo_priorities}}
 
   ---
 
-  ## ðŸ§­ User Journey
+  ## 🧭 User Journey
 
   {{ai_generated.user_journey}}
 
   ---
 
-  ## ðŸŽ" Research Goals
+  ## 🎓 Research Goals
 
   {{ai_generated.research_goals}}
 
   ---
 
-  ## âœ… Success Criteria & Expected Deliverables
+  ## ✅ Success Criteria & Expected Deliverables
 
   **Success Criteria:**
   {{ai_generated.success_criteria}}
 
   **Key Outputs:**
-  {{ai_generated.key_deliverables}}
+  {{ai_generated.deliverables}}
 
   ---
 
-  ## ðŸ› ï¸ Methodology
+  ## 🛠️ Methodology
 
-  {{ai_generated.methodology_optimization}}
-
-  ---
-
-  ## ðŸ§² Recruitment Plan
-
-  **ðŸŽ¯ Target Participants:** {{target_participants}}  
-
-  **ðŸ§ Participant Count:** {{participant_count}}
-
-  **ðŸ'¥ Demographic Targets:**
-  {{ai_generated.demographic_targets}}
+  {{ai_generated.methodology_details}}
 
   ---
 
-  ## â° Timeline Overview
+  ## 🧲 Recruitment Plan
 
-  {{ai_generated.accurate_timeline}}
+  **🎯 Target Participants:** {{target_participants}}
+
+  **🧠 Participant Count:** {{participant_count}}
+
+  **👥 Demographic Targets:**
+  {{ai_generated.demographics}}
 
   ---
 
-  ## âš ï¸ Risk Assessment
+  ## ⏰ Timeline Overview
 
-  {{ai_generated.risk_assessment}}
+  {{ai_generated.timeline}}
 
   ---
 
-  ## ðŸš€ Next Steps
+  ## ⚠️ Risk Assessment
+
+  {{ai_generated.risks}}
+
+  ---
+
+  ## 🚀 Next Steps
 
   {{ai_generated.next_steps}}
 
   ---
 
-  ## ðŸ'¥ Team Roles
+  ## 👥 Team Roles
 
   | Team Member | Role |
   |-------------|------|
   | {{lead_researcher}} | Lead Researcher |
   | [To be assigned] | Note-taker |
   | [To be assigned] | Observer |
-  
-# Output configuration (same as current)
+
+# Processing workflow
+processing_workflow:
+  1. validate_inputs
+  2. execute_ai_generation_tasks
+  3. validate_generated_content
+  4. populate_template
+  5. save_to_outputs
+
+# Output configuration
 output_options:
   filename: "research_plan_{{project_title}}_{{current_date}}.md"
   path: "01-planning/"
@@ -600,22 +415,9 @@ output_options:
           style: "default"
           action: "trigger_discussion_guide"
 
-# Same Slack UI as current
+# Slack UI configuration
 slack_ui:
   modal:
     title: "🧭 Create Research Plan"
     submit_label: "Generate Plan"
     close_label: "Cancel"
-    # ... existing form structure
-
-# Enhanced processing
-processing_workflow:
-  1. validate_inputs
-  2. execute_input_validation_task
-  3. check_methodology_alignment
-  4. execute_ai_generation_tasks
-  5. validate_timeline_accuracy
-  6. format_output
-  7. save_to_github
-  8. send_slack_notification
-  9. track_analytics
