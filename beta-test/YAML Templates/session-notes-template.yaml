@@ -97,94 +97,152 @@ field_mapping:
     format_type: "preserve_line_breaks"
     optional: true
 
-# Markdown template structure
+# Markdown template structure with modern GitHub formatting
 output_template: |
-  # Session Notes: {{selected_session}} - {{participant_name}}
-  
-  **📝 Note Taker:** {{user_name}}  
-  **⏰ Submitted:** {{current_date}}  
-  **📂 Session:** {{selected_session}} - {{participant_name}}  
-  **📅 Session Date:** {{session_date}} at {{session_time}}  
-  **👨‍🔬 Researcher:** {{researcher}}
-  
+  # Session Notes: {{selected_session}}
+
+  📝 **Note Taker:** {{user_name}}
+
+  📅 **Session Date:** {{session_date}} at {{session_time}}
+
+  👨‍🔬 **Researcher:** {{researcher}}
+
+  ⏰ **Submitted:** {{current_date}}
+
+  <br>
+
   ---
-  
+
+  <br>
+
   ## 🗣️ Key Quotes & Reactions
-  
+
   {{#if quotes}}
   {{quotes}}
   {{else}}
-  *No quotes recorded for this session.*
+  > [!NOTE]
+  > *No quotes recorded for this session.*
   {{/if}}
-  
+
+  <br>
+
   ---
-  
+
+  <br>
+
   ## 😤 Emotional Moments & Body Language
-  
+
   {{#if emotions}}
+  <details>
+  <summary><strong>📊 Emotional Journey Throughout Session</strong> <kbd>Click to expand</kbd></summary>
+
   {{emotions}}
+
+  </details>
   {{else}}
-  *No emotional moments recorded for this session.*
+  > [!NOTE]
+  > *No emotional moments recorded for this session.*
   {{/if}}
-  
+
+  <br>
+
   ---
-  
+
+  <br>
+
   ## ✅ Task Completion & Errors
-  
+
   {{#if tasks}}
   {{tasks}}
   {{else}}
-  *No task observations recorded for this session.*
+  > [!NOTE]
+  > *No task observations recorded for this session.*
   {{/if}}
-  
+
+  <br>
+
   ---
-  
-  ## 🐛 Technical Issues & Platform Problems
-  
+
+  <br>
+
+  ## 🛠 Technical Issues & Platform Problems
+
   {{#if tech_issues}}
+  > [!WARNING]
+  > **Technical Barriers Observed**
+
   {{tech_issues}}
   {{else}}
-  *No technical issues reported for this session.*
+  > [!NOTE]
+  > *No technical issues reported for this session.*
   {{/if}}
-  
+
+  <br>
+
   ---
-  
+
+  <br>
+
   {{#if accessibility}}
   ## ♿ Accessibility & Accommodation Observations
-  
+
+  > [!IMPORTANT]
+  > **Accessibility Insights**
+
   {{accessibility}}
-  
+
+  <br>
+
   ---
-  
+
+  <br>
+
   {{/if}}
   ## ⭐ Top 3 Key Moments
-  
+
   {{#if moments}}
   {{moments}}
   {{else}}
-  *No key moments identified for this session.*
+  > [!NOTE]
+  > *No key moments identified for this session.*
   {{/if}}
-  
+
+  <br>
+
   ---
-  
+
+  <br>
+
   {{#if additional}}
   ## 📋 Additional Notes & Context
-  
+
+  <details>
+  <summary><strong>Additional Context & Background</strong> <kbd>Click to expand</kbd></summary>
+
   {{additional}}
-  
+
+  </details>
+
+  <br>
+
   ---
-  
+
+  <br>
+
   {{/if}}
   ## 📊 Session Metadata
-  
-  - **GitHub Path:** `03-fieldwork/session-notes/{{filename}}`
-  - **Submission Method:** Slack Modal
-  - **Note Taker Slack ID:** {{slack_user_id}}
-  - **Timestamp:** {{current_date}}
-  
+
+  | Attribute | Value |
+  |-----------|-------|
+  | **Session ID** | {{selected_session}} |
+  | **Note Taker** | {{user_name}} ({{slack_user_id}}) |
+  | **Submission Date** | {{current_date}} |
+  | **GitHub Path** | `03-fieldwork/session-notes/{{filename}}` |
+  | **Submission Method** | Slack Modal |
+
   ---
-  
-  *This file was automatically generated from Slack modal submission and saved to the primary-research repository.*
+
+  <sub>*Generated automatically from Slack modal submission • Saved to primary-research repository*</sub>
 
 # Post-processing actions
 post_actions:
