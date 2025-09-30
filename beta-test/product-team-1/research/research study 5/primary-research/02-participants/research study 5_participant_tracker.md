@@ -1,9 +1,9 @@
 # 👥 Participant Tracker – research study 5
 
 **📊 Recruitment Summary**
-- **Total Participants:** 2
+- **Total Participants:** 5
 - **Confirmed Sessions:** 1
-- **Pending Responses:** 0
+- **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
 - **Last Updated:** September 30, 2025 by U08T1F4B347
@@ -14,8 +14,11 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
-| 11 | ali | calendly_signup | 2025-10-10  | recruited | NO |
-| 10 | jon | calendly_signup | 2025-09-26  | confirmed | NO |
+| 28 | trump | internal_va_panel | 2025-10-01  | recruited | NO |
+| 27 | john | internal_va_panel | 2025-09-29  | pending_response | NO |
+| 26 | jon | email_outreach | 2026-10-15  | confirmed | NO |
+| 11 | john | email_outreach | 2025-09-21 1:00 PM | rescheduling_needed | No |
+| 6 | tanzeel | calendly_signup | 2025-08-25 2:00 PM | recruited | NO |
 
 ---
 
@@ -23,10 +26,12 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| calendly_signup | 2 | 100% |
+| internal_va_panel | 2 | 40% |
+| 📧 Email Outreach | 2 | 40% |
+| calendly_signup | 1 | 20% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
+Recruitment effectiveness: 20% conversion rate (1 confirmed of 5 recruited)
 
 ---
 
@@ -37,6 +42,7 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 
 ## ⏳ Pending Sessions
 
+- **** -  ()
 
 ---
 
@@ -74,8 +80,11 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
-- 11: NO
-- 10: NO
+- 28: NO
+- 27: NO
+- 26: NO
+- 11: No
+- 6: NO
 
 **Preparation Checklist:**
 - [ ] Interpreter services arranged (if needed)
@@ -93,23 +102,15 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| White | 1 | 50% |
-| American Indian or Alaska Native | 1 | 50% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 55-64 | 1 | 50% |
-| 25-34 | 1 | 50% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Master's degree | 1 | 50% |
-| High school diploma/GED | 1 | 50% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Prefer not to say | 1 | 50% |
-| Urban | 1 | 50% |
 
 ---
 
@@ -121,4 +122,4 @@ Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (1 more needed)
+Follow up with 1 pending participant(s); Reschedule 1 session(s)
