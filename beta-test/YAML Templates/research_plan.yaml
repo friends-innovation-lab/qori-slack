@@ -253,14 +253,15 @@ ai_generation_tasks:
     prompt: |
       Create a detailed timeline table for {{timeline_preference}} research.
 
-      Use {{current_date}} as the starting point (timeline begins after stakeholder approval).  
+      Use **today’s date (in US timezone)** as the starting point (timeline begins after stakeholder approval).  
+      Timezone: US Eastern Time (ET). Format: ISO (YYYY-MM-DD).
+
       Rules:
-      - Planning starts at {{current_date}}.
+      - Planning starts today.
       - Each next phase starts the day after the previous phase ends.
       - End Date = Start Date + (Duration - 1) days.
-      - Show Duration, Start Date, and End Date in the table.
-      - Use ISO format (YYYY-MM-DD).
-      - Count all calendar days (don’t skip weekends/holidays).
+      - Count all calendar days (no skipping weekends/holidays).
+      - Show actual computed dates (not relative placeholders).
 
       Phases and durations (calendar days):
       - Planning: 2 days
@@ -274,7 +275,7 @@ ai_generation_tasks:
 
       | Phase | Duration | Start Date | End Date | Key Deliverables |
       |-------|----------|------------|----------|------------------|
-      | Planning | 2 days | ({{current_date}}) | ({{current_date}} + 1 day) | Project Brief, Research Plan |
+      | Planning | 2 days | (today) | (today + 1 day) | Project Brief, Research Plan |
       | Collaboration Cycle | 5 days | (day after Planning end) | (start + 4 days) | Stakeholder Alignment |
       | Recruiting | 7 days | (day after Collaboration end) | (start + 6 days) | Participant Selection |
       | Research | 5 days | (day after Recruiting end) | (start + 4 days) | Data Collection |
