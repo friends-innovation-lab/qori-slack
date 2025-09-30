@@ -1,12 +1,12 @@
 # 👥 Participant Tracker – research study 5
 
 **📊 Recruitment Summary**
-- **Total Participants:** 2
-- **Confirmed Sessions:** 0
+- **Total Participants:** 3
+- **Confirmed Sessions:** 1
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
-- **Last Updated:** September 1, 2025 by U08T1F4B347
+- **Last Updated:** September 30, 2025 by U08T1F4B347
 
 ---
 
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 26 | jon | email_outreach | 2026-10-15  | confirmed | NO |
 | 11 | john | email_outreach | 2025-09-21 1:00 PM | rescheduling_needed | No |
 | 6 | tanzeel | calendly_signup | 2025-08-25 2:00 PM | recruited | NO |
 
@@ -23,16 +24,18 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 1 | 50% |
-| calendly_signup | 1 | 50% |
+| 📧 Email Outreach | 2 | 67% |
+| calendly_signup | 1 | 33% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 2 recruited)
+Recruitment effectiveness: 33% conversion rate (1 confirmed of 3 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 
 ## ⏳ Pending Sessions
 
@@ -73,6 +76,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 2 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 26: NO
 - 11: No
 - 6: NO
 
@@ -112,4 +116,4 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 2 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (1 more needed); Reschedule 1 session(s); Schedule first confirmed session
+Reschedule 1 session(s)
