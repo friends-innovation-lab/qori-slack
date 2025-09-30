@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – research study 5
 
 **📊 Recruitment Summary**
-- **Total Participants:** 5
+- **Total Participants:** 6
 - **Confirmed Sessions:** 1
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 29 | test | internal_va_panel | 2025-09-23  | rescheduling_needed | NO |
 | 28 | trump | internal_va_panel | 2025-10-01  | recruited | NO |
 | 27 | john | internal_va_panel | 2025-09-29  | pending_response | NO |
 | 26 | jon | email_outreach | 2026-10-15  | confirmed | NO |
@@ -26,12 +27,12 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| internal_va_panel | 2 | 40% |
-| 📧 Email Outreach | 2 | 40% |
-| calendly_signup | 1 | 20% |
+| internal_va_panel | 3 | 50% |
+| 📧 Email Outreach | 2 | 33% |
+| calendly_signup | 1 | 17% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 20% conversion rate (1 confirmed of 5 recruited)
+Recruitment effectiveness: 17% conversion rate (1 confirmed of 6 recruited)
 
 ---
 
@@ -80,6 +81,7 @@ Recruitment effectiveness: 20% conversion rate (1 confirmed of 5 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 29: NO
 - 28: NO
 - 27: NO
 - 26: NO
@@ -122,4 +124,4 @@ Recruitment effectiveness: 20% conversion rate (1 confirmed of 5 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Follow up with 1 pending participant(s); Reschedule 1 session(s)
+Follow up with 1 pending participant(s); Reschedule 2 session(s)
