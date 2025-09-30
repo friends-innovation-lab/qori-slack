@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – research study 5
 
 **📊 Recruitment Summary**
-- **Total Participants:** 3
+- **Total Participants:** 1
 - **Confirmed Sessions:** 1
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
@@ -14,9 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
-| 26 | jon | email_outreach | 2026-10-15  | confirmed | NO |
-| 11 | john | email_outreach | 2025-09-21 1:00 PM | rescheduling_needed | No |
-| 6 | tanzeel | calendly_signup | 2025-08-25 2:00 PM | recruited | NO |
+| 10 | jon | calendly_signup | 2025-09-26  | confirmed | NO |
 
 ---
 
@@ -24,11 +22,10 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 2 | 67% |
-| calendly_signup | 1 | 33% |
+| calendly_signup | 1 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 33% conversion rate (1 confirmed of 3 recruited)
+Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 
 ---
 
@@ -76,9 +73,7 @@ Recruitment effectiveness: 33% conversion rate (1 confirmed of 3 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
-- 26: NO
-- 11: No
-- 6: NO
+- 10: NO
 
 **Preparation Checklist:**
 - [ ] Interpreter services arranged (if needed)
@@ -96,15 +91,19 @@ Recruitment effectiveness: 33% conversion rate (1 confirmed of 3 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
+| American Indian or Alaska Native | 1 | 100% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
+| 25-34 | 1 | 100% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
+| High school diploma/GED | 1 | 100% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
+| Urban | 1 | 100% |
 
 ---
 
@@ -116,4 +115,4 @@ Recruitment effectiveness: 33% conversion rate (1 confirmed of 3 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Reschedule 1 session(s)
+Continue recruiting to reach minimum of 3 participants (2 more needed)
