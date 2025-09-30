@@ -1,12 +1,12 @@
 # 👥 Participant Tracker – phase 4 research testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 5
+- **Total Participants:** 6
 - **Confirmed Sessions:** 0
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
-- **Last Updated:** September 15, 2025 by U08T1F4B347
+- **Last Updated:** September 30, 2025 by U08T1F4B347
 
 ---
 
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 9 | jony | calendly_signup | 2025-09-23  | recruited | NPO |
 | 8 | Joi | internal_va_panel | 2025-09-21 1:00 PM | recruited | No |
 | 7 | John | email_outreach | 2025-09-28 1:00pM | rescheduling_needed | No |
 | 6 | alice | internal_va_panel | 2025-09-15 1:00 PM | recruited | NO |
@@ -26,12 +27,12 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| internal_va_panel | 2 | 40% |
-| 📧 Email Outreach | 2 | 40% |
-| calendly_signup | 1 | 20% |
+| calendly_signup | 2 | 33% |
+| internal_va_panel | 2 | 33% |
+| 📧 Email Outreach | 2 | 33% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 5 recruited)
+Recruitment effectiveness: 0% conversion rate (0 confirmed of 6 recruited)
 
 ---
 
@@ -48,22 +49,37 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 5 recruited)
 
 **Session Observer Assignments:**
 
-| Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
-|---------|-----------|-----------|----------|------------------|-----------------|
-| pt008 | 2025-09-21 1:00 PM | tanzeelsaleem10 (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
+| Session | Date/Time | Observers | Capacity | Pending Requests |
+|---------|-----------|-----------|----------|------------------|
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker | 1 | pt008 |
-| 👁️ Silent Observer | 0 | - |
-| 📊 PM Observer | 0 | - |
-| 🏛️ Stakeholder | 0 | - |
+| 📝 Note-taker |  |  |
+| 👁️ Silent Observer |  |  |
+| 📊 PM Observer |  |  |
+| 🏛️ Stakeholder |  |  |
+
+**Observer Guidelines:** 
+- Review session plan before observing
+- Stay muted unless emergency
+- Take notes without interrupting
+- Share feedback after session
+
+{% if triggered_by_observer_request %}
+**🔄 Observer Updates:**
+- ✅  approved for  as 
+- 📤 Send observer guidelines to 
+- 📅 Add  to  calendar invite
+- 🔄 Update session capacity tracking
+{% endif %}
+
 ---
 
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 9: NPO
 - 8: No
 - 7: No
 - 6: NO
@@ -86,24 +102,26 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 5 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| American Indian or Alaska Native | 2 | 40% |
-| Black or African American | 1 | 20% |
-| Asian | 1 | 20% |
+| Native Hawaiian or Other Pacific Islander | 1 | 17% |
+| American Indian or Alaska Native | 2 | 33% |
+| Black or African American | 1 | 17% |
+| Asian | 1 | 17% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 25-34 | 3 | 60% |
-| 35-44 | 1 | 20% |
+| 35-44 | 2 | 33% |
+| 25-34 | 3 | 50% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Some college | 3 | 60% |
-| Associate degree | 1 | 20% |
+| High school diploma/GED | 1 | 17% |
+| Some college | 3 | 50% |
+| Associate degree | 1 | 17% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Suburban | 3 | 60% |
-| Urban | 1 | 20% |
+| Suburban | 4 | 67% |
+| Urban | 1 | 17% |
 
 ---
 
