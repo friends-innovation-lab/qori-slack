@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – research study 5
 
 **📊 Recruitment Summary**
-- **Total Participants:** 6
-- **Confirmed Sessions:** 1
+- **Total Participants:** 7
+- **Confirmed Sessions:** 2
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 30 | final | calendly_signup | 2025-10-02  | confirmed | NO |
 | 29 | test | internal_va_panel | 2025-09-23  | rescheduling_needed | NO |
 | 28 | trump | internal_va_panel | 2025-10-01  | recruited | NO |
 | 27 | john | internal_va_panel | 2025-09-29  | pending_response | NO |
@@ -27,17 +28,19 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| internal_va_panel | 3 | 50% |
-| 📧 Email Outreach | 2 | 33% |
-| calendly_signup | 1 | 17% |
+| calendly_signup | 2 | 29% |
+| internal_va_panel | 3 | 43% |
+| 📧 Email Outreach | 2 | 29% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 17% conversion rate (1 confirmed of 6 recruited)
+Recruitment effectiveness: 29% conversion rate (2 confirmed of 7 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 
@@ -81,6 +84,7 @@ Recruitment effectiveness: 17% conversion rate (1 confirmed of 6 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 30: NO
 - 29: NO
 - 28: NO
 - 27: NO
@@ -104,15 +108,31 @@ Recruitment effectiveness: 17% conversion rate (1 confirmed of 6 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
+| Asian | 2 | 29% |
+| Hispanic or Latino | 2 | 29% |
+| Two or More Races | 1 | 14% |
+| American Indian or Alaska Native | 2 | 29% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
+| 35-44 | 3 | 43% |
+| 45-54 | 1 | 14% |
+| 25-34 | 1 | 14% |
+| 18-24 | 2 | 29% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
+| Associate degree | 1 | 14% |
+| Some college | 3 | 43% |
+| High school diploma/GED | 1 | 14% |
+| Doctorate degree | 1 | 14% |
+| Professional degree | 1 | 14% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
+| Suburban | 4 | 57% |
+| Rural | 2 | 29% |
+| Urban | 1 | 14% |
 
 ---
 
