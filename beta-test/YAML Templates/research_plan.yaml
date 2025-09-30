@@ -250,28 +250,37 @@ ai_generation_tasks:
 
   # Enhanced Timeline
   - task_id: "timeline"
-    prompt: |
-      Create a detailed timeline table for {{timeline_preference}} research:
-      
-      Use these phases for {{timeline_preference}}:
-      - Planning: 2 days
-      - Collaboration Cycle: 5 days
-      - Recruiting: 7 days  
-      - Research: 5 days
-      - Analysis: 1 day
-      - Reporting: 1 day
-      
-      Format as:
-      | Phase | Duration | Key Deliverables |
-      |-------|----------|------------------|
-      | Planning | 2 days | Project Brief, Research Plan |
-      | Collaboration Cycle | 5 days | Stakeholder Alignment |
-      | Recruiting | 7 days | Participant Selection |
-      | Research | 5 days | Data Collection |
-      | Analysis | 1 day | Insights Synthesis |
-      | Reporting | 1 day | Final Report |
-      
-      Note: Timeline begins after stakeholder approval
+  prompt: |
+    Create a detailed timeline table for {{timeline_preference}} research.
+
+    Use {{current_date}} as the starting point (timeline begins after stakeholder approval).  
+    Rules:
+    - Planning starts at {{current_date}}.
+    - Each next phase starts the day after the previous phase ends.
+    - End Date = Start Date + (Duration - 1) days.
+    - Show Duration, Start Date, and End Date in the table.
+    - Use ISO format (YYYY-MM-DD).
+    - Count all calendar days (don’t skip weekends/holidays).
+
+    Phases and durations (calendar days):
+    - Planning: 2 days
+    - Collaboration Cycle: 5 days
+    - Recruiting: 7 days
+    - Research: 5 days
+    - Analysis: 1 day
+    - Reporting: 1 day
+
+    Output as a markdown table:
+
+    | Phase | Duration | Start Date | End Date | Key Deliverables |
+    |-------|----------|------------|----------|------------------|
+    | Planning | 2 days | ({{current_date}}) | ({{current_date}} + 1 day) | Project Brief, Research Plan |
+    | Collaboration Cycle | 5 days | (day after Planning end) | (start + 4 days) | Stakeholder Alignment |
+    | Recruiting | 7 days | (day after Collaboration end) | (start + 6 days) | Participant Selection |
+    | Research | 5 days | (day after Recruiting end) | (start + 4 days) | Data Collection |
+    | Analysis | 1 day | (day after Research end) | (same day) | Insights Synthesis |
+    | Reporting | 1 day | (day after Analysis end) | (same day) | Final Report |
+
 
   # Enhanced Risk Assessment
   - task_id: "risks"
