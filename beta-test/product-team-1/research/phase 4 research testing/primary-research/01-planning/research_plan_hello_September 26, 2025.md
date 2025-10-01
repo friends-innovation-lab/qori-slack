@@ -10,7 +10,7 @@
 
 ## 🔎 Background
 
-This research will inform the decision to revamp the hello feature on the VA website. This change will simplify the process for Veterans to access important resources, leading to increased user satisfaction and engagement. By streamlining the hello experience, we aim to improve overall usability and efficiency for our users.
+This research will inform the decision to revamp the hello this is dummy name feature on the VA website. This change will simplify the process for Veterans to access important resources, leading to increased user satisfaction and engagement. By streamlining the hello experience, we aim to improve overall usability and efficiency for our users.
 
 ---
 
