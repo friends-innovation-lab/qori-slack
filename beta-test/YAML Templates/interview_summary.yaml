@@ -100,12 +100,6 @@ ai_generation_tasks:
 output_template: |
   # 📝 Session Summary - {{participant_ids}}
 
-  👋 Hi team! Here's the summary for **{{participant_ids}}** from the **{{study_name}}** study.
-
-  *📁 Study:* {{study_name}}  
-  *📝 Notes by:* {{note_takers}} • {{current_date}}  
-  *📊 Files analyzed:* {{selected_files_count}} note files
-
   ## ⚠️ Top 3 Pain Points
 
   {{ai_generated.pain_points}}
@@ -123,7 +117,6 @@ output_template: |
   {{ai_generated.action_items}}
 
   ---
-  *Analysis by {{analyzer}} • 📎 [View source notes]({{source_file_links}})*
 
 # Output configuration
 output_options:
