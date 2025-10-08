@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – Qori Testing v2
 
 **📊 Recruitment Summary**
-- **Total Participants:** 2
-- **Confirmed Sessions:** 2
+- **Total Participants:** 3
+- **Confirmed Sessions:** 3
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 43 | PT003 | internal_va_panel | 2025-10-13  | confirmed |  |
 | 42 | PT002 | internal_va_panel | 2025-10-15  | confirmed | Android user; works irregular hours so flexible timing needed |
 | 41 | PT001 | internal_va_panel | 2025-10-16  | confirmed | Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
 
@@ -23,15 +24,17 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| internal_va_panel | 2 | 100% |
+| internal_va_panel | 3 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
+Recruitment effectiveness: 100% conversion rate (3 confirmed of 3 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 - **** -  at 
@@ -95,23 +98,27 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| White | 1 | 50% |
-| Asian | 1 | 50% |
+| Black or African American | 1 | 33% |
+| White | 1 | 33% |
+| Asian | 1 | 33% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 35-44 | 1 | 50% |
-| 45-54 | 1 | 50% |
+| 55-64 | 1 | 33% |
+| 35-44 | 1 | 33% |
+| 45-54 | 1 | 33% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Some college | 1 | 50% |
-| Bachelor's degree | 1 | 50% |
+| High school diploma/GED | 1 | 33% |
+| Some college | 1 | 33% |
+| Bachelor's degree | 1 | 33% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Suburban | 1 | 50% |
-| Urban | 1 | 50% |
+| Rural | 1 | 33% |
+| Suburban | 1 | 33% |
+| Urban | 1 | 33% |
 
 ---
 
@@ -123,4 +130,4 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (1 more needed)
+All participants are on track
