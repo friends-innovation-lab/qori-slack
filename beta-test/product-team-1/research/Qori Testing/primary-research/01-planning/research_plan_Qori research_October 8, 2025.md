@@ -1,6 +1,6 @@
 # Research Plan — Qori research
 
-📦 **Product Area:** Research - Provides valuable insights and data to improve the quality of care and services for Veterans. Research helps identify trends, best practices, and areas for improvement within the VA healthcare system.
+📦 **Product Area:** Research - Provides valuable changes done insights and data to improve the quality of care and services for Veterans. Research helps identify trends, best practices, and areas for improvement within the VA healthcare system.
 
 👩🏽‍🔬 **Lead Researcher:** research
 
