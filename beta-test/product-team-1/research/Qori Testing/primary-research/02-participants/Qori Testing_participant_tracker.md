@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – Qori Testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 3
-- **Confirmed Sessions:** 2
+- **Total Participants:** 4
+- **Confirmed Sessions:** 3
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 39 | jony | email_outreach | 2025-10-27  | confirmed | Yes |
 | 38 | jane | calendly_signup | 2025-10-23  | pending_response | Yes |
 | 37 | Joi | internal_va_panel | 2025-10-22  | confirmed | NO |
 | 36 | john | internal_va_panel | 2025-10-20  | confirmed | No |
@@ -24,16 +25,19 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| calendly_signup | 1 | 33% |
-| internal_va_panel | 2 | 67% |
+| 📧 Email Outreach | 1 | 25% |
+| calendly_signup | 1 | 25% |
+| internal_va_panel | 2 | 50% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
+Recruitment effectiveness: 75% conversion rate (3 confirmed of 4 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 - **** -  at 
@@ -79,6 +83,7 @@ Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 39: Yes
 - 38: Yes
 - 37: NO
 - 36: No
@@ -99,21 +104,24 @@ Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| White | 1 | 33% |
-| Black or African American | 1 | 33% |
+| Black or African American | 2 | 50% |
+| White | 1 | 25% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 25-34 | 2 | 67% |
+| 35-44 | 1 | 25% |
+| 25-34 | 2 | 50% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Associate degree | 1 | 33% |
-| High school diploma/GED | 1 | 33% |
+| Master's degree | 1 | 25% |
+| Associate degree | 1 | 25% |
+| High school diploma/GED | 1 | 25% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Suburban | 2 | 67% |
+| Rural | 1 | 25% |
+| Suburban | 2 | 50% |
 
 ---
 
