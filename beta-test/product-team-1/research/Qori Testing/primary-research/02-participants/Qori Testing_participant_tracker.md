@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – Qori Testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 4
+- **Total Participants:** 5
 - **Confirmed Sessions:** 3
 - **Pending Responses:** 1
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 40 | JIya | phone_recruitment | 2025-10-31  | rescheduling_needed | YES |
 | 39 | jony | email_outreach | 2025-10-27  | confirmed | Yes |
 | 38 | jane | calendly_signup | 2025-10-23  | pending_response | Yes |
 | 37 | Joi | internal_va_panel | 2025-10-22  | confirmed | NO |
@@ -25,12 +26,13 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 1 | 25% |
-| calendly_signup | 1 | 25% |
-| internal_va_panel | 2 | 50% |
+| phone_recruitment | 1 | 20% |
+| 📧 Email Outreach | 1 | 20% |
+| calendly_signup | 1 | 20% |
+| internal_va_panel | 2 | 40% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 75% conversion rate (3 confirmed of 4 recruited)
+Recruitment effectiveness: 60% conversion rate (3 confirmed of 5 recruited)
 
 ---
 
@@ -83,6 +85,7 @@ Recruitment effectiveness: 75% conversion rate (3 confirmed of 4 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 40: YES
 - 39: Yes
 - 38: Yes
 - 37: NO
@@ -104,24 +107,26 @@ Recruitment effectiveness: 75% conversion rate (3 confirmed of 4 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| Black or African American | 2 | 50% |
-| White | 1 | 25% |
+| Hispanic or Latino | 1 | 20% |
+| Black or African American | 2 | 40% |
+| White | 1 | 20% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 35-44 | 1 | 25% |
-| 25-34 | 2 | 50% |
+| 45-54 | 1 | 20% |
+| 35-44 | 1 | 20% |
+| 25-34 | 2 | 40% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Master's degree | 1 | 25% |
-| Associate degree | 1 | 25% |
-| High school diploma/GED | 1 | 25% |
+| Associate degree | 2 | 40% |
+| Master's degree | 1 | 20% |
+| High school diploma/GED | 1 | 20% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Rural | 1 | 25% |
-| Suburban | 2 | 50% |
+| Rural | 2 | 40% |
+| Suburban | 2 | 40% |
 
 ---
 
@@ -133,4 +138,4 @@ Recruitment effectiveness: 75% conversion rate (3 confirmed of 4 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Follow up with 1 pending participant(s)
+Follow up with 1 pending participant(s); Reschedule 1 session(s)
