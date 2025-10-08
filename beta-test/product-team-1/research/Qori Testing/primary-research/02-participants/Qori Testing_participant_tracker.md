@@ -1,9 +1,9 @@
 # 👥 Participant Tracker – Qori Testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 2
+- **Total Participants:** 3
 - **Confirmed Sessions:** 2
-- **Pending Responses:** 0
+- **Pending Responses:** 1
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
 - **Last Updated:** October 8, 2025 by U08T1F4B347
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 38 | jane | calendly_signup | 2025-10-23  | pending_response | Yes |
 | 37 | Joi | internal_va_panel | 2025-10-22  | confirmed | NO |
 | 36 | john | internal_va_panel | 2025-10-20  | confirmed | No |
 
@@ -23,10 +24,11 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| internal_va_panel | 2 | 100% |
+| calendly_signup | 1 | 33% |
+| internal_va_panel | 2 | 67% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
+Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 
 ---
 
@@ -39,6 +41,7 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 ## ⏳ Pending Sessions
 
+- **** -  ()
 
 ---
 
@@ -76,6 +79,7 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 38: Yes
 - 37: NO
 - 36: No
 
@@ -95,19 +99,21 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| Black or African American | 1 | 50% |
+| White | 1 | 33% |
+| Black or African American | 1 | 33% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 25-34 | 1 | 50% |
+| 25-34 | 2 | 67% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| High school diploma/GED | 1 | 50% |
+| Associate degree | 1 | 33% |
+| High school diploma/GED | 1 | 33% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Suburban | 1 | 50% |
+| Suburban | 2 | 67% |
 
 ---
 
@@ -119,4 +125,4 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (1 more needed)
+Follow up with 1 pending participant(s)
