@@ -47,7 +47,7 @@ For the VA, implementing research-informed navigation improvements will result i
 
 ## 🎯 OCTO Priorities
 
-**Primary OCTO Priority:** Improve the Veteran login experience
+**#1 Primary OCTO Priority:** Improve the Veteran login experience
 
 **Explanation:** Enhancing the login experience will directly impact the usability and accessibility of the VA mobile app for active users, ensuring a seamless and efficient entry point for their tasks and transactions.
 
