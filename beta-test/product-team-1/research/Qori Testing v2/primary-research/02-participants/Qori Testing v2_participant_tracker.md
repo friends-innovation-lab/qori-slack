@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – Qori Testing v2
 
 **📊 Recruitment Summary**
-- **Total Participants:** 4
-- **Confirmed Sessions:** 4
+- **Total Participants:** 5
+- **Confirmed Sessions:** 5
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 45 | PT005 | internal_va_panel | 2025-10-15  | confirmed | Uses TalkBack on Android; tech-savvy user who may complete tasks quickly |
 | 44 | PT004 | internal_va_panel | 2025-10-14  | confirmed | Prefers Spanish interface when available; uses both iOS and Android devices |
 | 43 | PT003 | internal_va_panel | 2025-10-13  | confirmed |  |
 | 42 | PT002 | internal_va_panel | 2025-10-15  | confirmed | Android user; works irregular hours so flexible timing needed |
@@ -25,15 +26,17 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| internal_va_panel | 4 | 100% |
+| internal_va_panel | 5 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 100% conversion rate (4 confirmed of 4 recruited)
+Recruitment effectiveness: 100% conversion rate (5 confirmed of 5 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 - **** -  at 
@@ -82,6 +85,7 @@ Recruitment effectiveness: 100% conversion rate (4 confirmed of 4 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 45: Uses TalkBack on Android; tech-savvy user who may complete tasks quickly
 - 44: Prefers Spanish interface when available; uses both iOS and Android devices
 - 42: Android user; works irregular hours so flexible timing needed
 - 41: Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows
@@ -102,30 +106,31 @@ Recruitment effectiveness: 100% conversion rate (4 confirmed of 4 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| Hispanic or Latino | 1 | 25% |
-| Black or African American | 1 | 25% |
-| White | 1 | 25% |
-| Asian | 1 | 25% |
+| Asian | 2 | 40% |
+| Hispanic or Latino | 1 | 20% |
+| Black or African American | 1 | 20% |
+| White | 1 | 20% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 25-34 | 1 | 25% |
-| 55-64 | 1 | 25% |
-| 35-44 | 1 | 25% |
-| 45-54 | 1 | 25% |
+| 35-44 | 2 | 40% |
+| 25-34 | 1 | 20% |
+| 55-64 | 1 | 20% |
+| 45-54 | 1 | 20% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Associate degree | 1 | 25% |
-| High school diploma/GED | 1 | 25% |
-| Some college | 1 | 25% |
-| Bachelor's degree | 1 | 25% |
+| Master's degree | 1 | 20% |
+| Associate degree | 1 | 20% |
+| High school diploma/GED | 1 | 20% |
+| Some college | 1 | 20% |
+| Bachelor's degree | 1 | 20% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Urban | 2 | 50% |
-| Rural | 1 | 25% |
-| Suburban | 1 | 25% |
+| Urban | 3 | 60% |
+| Rural | 1 | 20% |
+| Suburban | 1 | 20% |
 
 ---
 
