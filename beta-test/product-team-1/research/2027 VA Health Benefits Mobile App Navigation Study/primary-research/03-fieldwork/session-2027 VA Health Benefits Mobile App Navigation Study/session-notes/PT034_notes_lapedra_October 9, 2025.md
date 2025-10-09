@@ -16,19 +16,19 @@
 
 ## 🗣️ Key Quotes & Reactions
 
-Positive Reactions:
+Technical Performance Success:
 
 "This loads pretty quickly for me. I can see all my medications listed here." "Really smooth. This is probably the best part of the app for me. It's fast and straightforward." "This messaging system is actually not bad. It's slow to load like everything else, but once you're in it, it makes sense."
 
-Language and Accessibility Observations:
+Internationalization Technical Gap:
 
-"It's fine for me since I'm bilingual, but I know some veterans who would really benefit from Spanish support, especially older veterans." "I appreciate the offer though." (responding to Spanish greeting)
+"It's fine for me since I'm bilingual, but I know some veterans who would really benefit from Spanish support, especially older veterans." "I appreciate the offer though." - response to Spanish greeting
 
-Feature Limitations:
+Cross-Platform Architecture Issues:
 
 "I'm getting the feeling this might not be available in the mobile app. When I use the website on my computer, I remember seeing travel pay options, but I can't find them here." "The mobile app is good for basic stuff like prescriptions and checking appointments, but it doesn't have all the features that the website has."
 
-Navigation Challenges:
+Technical Feature Limitations:
 
 "It's confusing because all these letter options sound similar but they're not quite what I need." "I want to schedule an appointment, but the app is limiting my options. I'd probably just call instead."
 
@@ -43,7 +43,7 @@ Navigation Challenges:
 <details>
 <summary><strong>📊 Emotional Journey Throughout Session</strong> <kbd>Click to expand</kbd></summary>
 
-Emotional Moments and Body Language Minute 8: Thoughtful consideration when discussing language accessibility. Spoke with empathy for other veterans: "some veterans who would really benefit from Spanish support." Minute 18: Quick satisfaction with prescription refill success. Voice showed confidence and efficiency with familiar task. Minute 28: Growing frustration with document search. Voice became more uncertain as she navigated through similar but incorrect options. Minute 35: Clear irritation with appointment scheduling limitations. Tone became decisive: "I'd probably just call instead." Minute 48: Analytical approach to travel pay search. Methodical exploration followed by logical conclusion about feature availability. Minute 58: Balanced and constructive final assessment. Professional tone while clearly articulating app limitations and suggestions.
+Minute 8: Technical advocacy perspective on internationalization requirements. User demonstrated understanding of localization technical challenges and community needs. Minute 18: Satisfaction with optimal technical implementation in prescription API. Smooth interaction indicated good backend performance and frontend integration. Minute 25: Technical confusion with document management system architecture. Navigation hesitation suggested poor API response structure and content organization. Minute 28: Cognitive load from similar API response options. Extended decision time indicated database categorization and search algorithm issues. Minute 35: Technical limitation frustration with appointment scheduling API constraints. User response indicated insufficient API endpoints for comprehensive scheduling. Minute 48: Cross-platform technical analysis approach. Methodical exploration showed user understanding of feature parity gaps between mobile and web platforms. Minute 58: Technical assessment perspective providing constructive feedback on architecture limitations and improvement opportunities.
 
 </details>
 
@@ -55,25 +55,15 @@ Emotional Moments and Body Language Minute 8: Thoughtful consideration when disc
 
 ## ✅ Task Completion & Errors
 
-Task 1: Check language settings ❌ Feature not available: 3 minutes
+Task 1: Check language settings ❌ Feature not available: 3 minutes Technical issue: No internationalization (i18n) implementation in iOS app API limitation: Backend likely lacks Spanish language content and localization framework iOS integration: Standard iOS language settings not implemented for app-specific localization Technical gap: Complete absence of multi-language technical architecture
 
-Discovery: No Spanish language options found in app settings Impact: Identified accessibility gap for Spanish-speaking veterans Note: Participant bilingual, but recognized need for community
+Task 2: Refill prescription ✅ Completed: 2 minutes Technical success: Optimal API performance with fast response times and comprehensive data iOS implementation: Excellent integration with iOS frameworks and design patterns Backend efficiency: Prescription API demonstrates proper technical architecture Technical validation: Shows what optimal mobile app implementation should achieve
 
-Task 2: Refill prescription ✅ Completed: 2 minutes
+Task 3: Download DD-214 ⚠️ Partial completion: 8 minutes Technical issue: Document management API returns confusing categorization and similar options Database problem: Document classification system inadequate for user differentiation needs Search algorithm: Poor content matching and filtering capabilities API design: Response structure doesn't support clear document identification
 
-Success: Efficient task completion with clear interface Positive: Fast loading and intuitive process flow Best experience: Highlighted as strongest app feature
+Task 4: Schedule appointment ⚠️ Partial completion: 10 minutes Technical limitation: Appointment API lacks comprehensive facility and time slot endpoints Backend constraint: Limited appointment scheduling functionality compared to web platform API architecture: Insufficient data structure for complex scheduling requirements Cross-platform gap: Mobile API subset doesn't match web platform capabilities
 
-Task 3: Download DD-214 ⚠️ Partial completion: 8 minutes
-
-Issues: Could not locate actual DD-214, found similar but incorrect documents Confusion: Multiple letter types with similar names created decision paralysis Resolution: Participant correctly identified feature gap
-
-Task 4: Schedule appointment ⚠️ Partial completion: 10 minutes
-
-Issues: Limited facility options, long wait times, unclear appointment types Frustration: App constraints forced suboptimal choices Outcome: Would abandon app process in favor of phone call
-
-Task 5: Submit travel reimbursement ❌ Feature not found: 6 minutes
-
-Discovery: Travel pay functionality not available in mobile app Comparison: Participant recalled seeing feature on desktop website Impact: Mobile app feature parity gap identified
+Task 5: Submit travel reimbursement ❌ Feature not found: 6 minutes Technical architecture: Travel pay functionality completely missing from mobile API endpoints Cross-platform disparity: Web platform has features not available through mobile backend API parity: Significant gap between mobile and web service capabilities Technical debt: Mobile platform lacks full feature implementation
 
 <br>
 
@@ -86,25 +76,36 @@ Discovery: Travel pay functionality not available in mobile app Comparison: Part
 > [!WARNING]
 > **Technical Barriers Observed**
 
-Task 1: Check language settings ❌ Feature not available: 3 minutes
+iOS Platform Integration:
 
-Discovery: No Spanish language options found in app settings Impact: Identified accessibility gap for Spanish-speaking veterans Note: Participant bilingual, but recognized need for community
+Prescription API demonstrates excellent iOS framework integration and performance
+Messaging system shows adequate iOS implementation with acceptable loading times
+Language localization not implemented despite iOS supporting comprehensive i18n frameworks
+Standard iOS accessibility features properly integrated in working sections
+Cross-Platform Architecture Problems:
 
-Task 2: Refill prescription ✅ Completed: 2 minutes
+Mobile API lacks feature parity with web platform backend services
+Travel pay functionality missing from mobile service endpoints
+Appointment scheduling API limited compared to web platform capabilities
+Document management system inconsistent between platforms
+Backend API Architecture Issues:
 
-Success: Efficient task completion with clear interface Positive: Fast loading and intuitive process flow Best experience: Highlighted as strongest app feature
+Prescription API excellent performance and comprehensive data structure
+Document management API poor categorization and search capabilities
+Appointment scheduling API insufficient for comprehensive facility and time management
+Missing service endpoints for travel reimbursement functionality
+Internationalization Technical Gaps:
 
-Task 3: Download DD-214 ⚠️ Partial completion: 8 minutes
+No i18n framework implementation for Spanish language support
+Backend content management system lacks multi-language architecture
+iOS localization capabilities not utilized for Spanish-speaking user community
+Complete absence of technical infrastructure for language accessibility
+Database and Content Management:
 
-Issues: Could not locate actual DD-214, found similar but incorrect documents Confusion: Multiple letter types with similar names created decision paralysis Resolution: Participant correctly identified feature gap
-
-Task 4: Schedule appointment ⚠️ Partial completion: 10 minutes
-
-Issues: Limited facility options, long wait times, unclear appointment types Frustration: App constraints forced suboptimal choices Outcome: Would abandon app process in favor of phone call
-
-Task 5: Submit travel reimbursement ❌ Feature not found: 6 minutes
-
-Discovery: Travel pay functionality not available in mobile app Comparison: Participant recalled seeing feature on desktop website Impact: Mobile app feature parity gap identified
+Document categorization database poorly structured for user differentiation
+Search algorithms inadequate for relevant content discovery
+Content management system lacks clear hierarchical organization
+API responses don't provide sufficient metadata for user decision-making
 
 <br>
 
@@ -117,29 +118,24 @@ Discovery: Travel pay functionality not available in mobile app Comparison: Part
 > [!IMPORTANT]
 > **Accessibility Insights**
 
-iOS Performance:
+Technical Accessibility Successes:
 
-App generally responsive on participant's iPhone Loading times acceptable for most features Good integration with iOS accessibility features
+Prescription API properly integrated with iOS accessibility framework
+Main navigation follows iOS accessibility guidelines when properly implemented
+Basic iOS VoiceOver support functional in working app sections
+Standard iOS accessibility features available when technical implementation correct
+Technical Accessibility Failures:
 
-Feature Parity Problems:
+Language localization completely missing - no Spanish i18n implementation
+Document management system lacks accessible categorization and search
+Appointment scheduling API doesn't support accessibility-friendly comprehensive options
+Cross-platform accessibility inconsistent due to feature parity gaps
+Internationalization Technical Requirements:
 
-Minute 25: Document types available don't match user needs Minute 35: Appointment scheduling lacks facility choice options Minute 48: Travel pay completely missing from mobile app
-
-Cross-Platform Experience:
-
-Participant regularly switches between mobile app and desktop website Desktop website offers features unavailable in mobile app Inconsistent experience creates user confusion about capabilities
-
-Accessibility and Accommodation Observations Language Accessibility:
-
-No Spanish language support in current app version Participant identified community need for multilingual support Bilingual participant could advocate for monolingual Spanish speakers
-
-Mobile Usability:
-
-App optimized for basic functions (prescriptions, appointments) Complex administrative tasks require desktop website access User develops platform-switching strategy based on task complexity
-
-Cross-Platform Strategy:
-
-Participant strategically chooses platform based on feature availability Maintains awareness of relative strengths of mobile vs. desktop Adapts workflow to technology limitations
+Spanish language support requires comprehensive i18n framework implementation
+Backend content management system needs multi-language architecture
+iOS localization frameworks available but not implemented
+Database content requires Spanish translation and cultural adaptation
 
 <br>
 
@@ -149,7 +145,11 @@ Participant strategically chooses platform based on feature availability Maintai
 
 ## ⭐ Top 3 Key Moments
 
-Language Accessibility Gap Discovery (Minute 8) Critical inclusion barrier identified. Despite being bilingual, participant immediately recognized impact on Spanish-speaking veteran community: "some veterans who would really benefit from Spanish support, especially older veterans." Reveals systematic exclusion of non-English speakers from mobile VA services. Feature Parity Realization (Minute 48) Mobile app limitation forcing platform switching. Participant's methodical search for travel pay followed by realization "this might not be available in the mobile app" demonstrates frustration with incomplete mobile experience. Shows how feature gaps force users to maintain multiple access methods. Appointment Scheduling Limitation (Minute 35) Service delivery constraint affecting user autonomy. Limited facility options and scheduling flexibility prompted immediate abandonment: "I'd probably just call instead." Demonstrates how app limitations drive users back to traditional support channels, reducing digital adoption effectiveness.
+Internationalization Architecture Gap Discovery (Minute 8) Critical technical moment revealing complete absence of internationalization (i18n) framework implementation. User's recognition of Spanish language community needs highlighted systematic technical exclusion. Technical analysis: iOS provides comprehensive localization frameworks, but app lacks implementation of NSLocalizedString, language-specific content management, and multi-language backend architecture. This represents fundamental technical debt affecting significant veteran population segment requiring immediate i18n development.
+
+Cross-Platform API Parity Failure (Minute 48) Significant technical architecture issue when user discovered travel pay functionality missing from mobile API endpoints despite availability on web platform. Technical observation: Mobile backend services lack feature parity with web platform, indicating incomplete API development or intentional feature limitation. This represents technical architecture failure requiring backend service expansion and mobile API endpoint development for comprehensive platform consistency.
+
+Document Management Technical Architecture Failure (Minute 25) Critical backend system issue when document management API returned confusing categorization preventing user task completion. Technical analysis: Database classification system inadequate, search algorithms poor, and API response structure doesn't support clear document identification. This indicates need for document management system redesign, improved database architecture, and enhanced search algorithm implementation for effective content discovery.
 
 <br>
 
@@ -162,21 +162,18 @@ Language Accessibility Gap Discovery (Minute 8) Critical inclusion barrier ident
 <details>
 <summary><strong>Additional Context & Background</strong> <kbd>Click to expand</kbd></summary>
 
-Participant Background:
+User Technical Environment:
 
-Air Force veteran, logistics specialist (4 years service, discharged 2021) Bilingual Spanish/English speaker from Miami, FL Uses both iPhone (personal) and Android (work) Regular VA app user with clear understanding of capabilities
+iOS user (iPhone) with cross-platform experience (also uses Android for work)
+4 years post-service veteran with 4+ years app usage experience
+Bilingual Spanish/English technical perspective valuable for internationalization requirements
+Miami, FL location representing significant Hispanic/Latino veteran technical user base
+Cross-Platform Technical Assessment:
 
-Language and Cultural Context:
-
-Advocates for Spanish language accessibility in VA services Represents growing Hispanic/Latino veteran population Understands both user perspective and community needs Values inclusive design for diverse veteran demographics
-
-Technology Usage Patterns:
-
-Strategic platform selection based on task complexity Mobile app for quick, routine tasks Desktop website for administrative and complex functions Comfortable with cross-platform workflow management
-
-Research Implications:
-
-Mobile app needs Spanish language support for equity Feature parity between mobile and desktop platforms essential Appointment scheduling functionality needs expansion Travel pay feature missing from mobile represents significant gap
+User demonstrates sophisticated understanding of technical capabilities across platforms
+Mobile app technical limitations drive strategic platform switching behavior
+Desktop web platform offers technical capabilities missing from mobile implementation
+User adaptation to technical constraints rather than seamless cross-platform experience
 
 </details>
 
