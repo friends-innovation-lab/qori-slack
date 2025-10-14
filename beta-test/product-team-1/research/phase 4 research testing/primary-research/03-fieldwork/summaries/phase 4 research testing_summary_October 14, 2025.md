@@ -2,41 +2,46 @@
 
 ## ⚠️ Top 3 Pain Points
 
-**1. Critical - Slow Loading:** Slow internet causing delays in page loading, leading to frustration and impeding the user's progress.
-**2. Critical - Document Upload Failure:** Document upload repeatedly failed without clear error messages, hindering the completion of essential tasks.
-**3. High - Confusing Terminology:** Lack of clarity on technical terms and program selection led to confusion and uncertainty, impacting the user's ability to navigate the application effectively.
+**1. Critical - Document Upload Failure:** Document upload repeatedly failed without clear error messages, hindering progress for users.
+**2. High - Slow Page Loading:** Pages loaded slowly, causing frustration and potentially leading to user abandonment.
+**3. High - Confusing Terminology:** Lack of clarity on program selection led to confusion among users, impacting their ability to proceed with the application process.
 
 ## 💬 Key Quotes
 
-1. *"This is taking forever to load."*
-   [Context: Participant expressing frustration with slow loading internet causing delays in page loading.]
+1. *"Upload failed."*
+   
+   [Context: Participant expressing frustration with document upload failure without clear error messages.]
 
-2. *"What does that mean?"*
-   [Context: Participant confused by unclear instructions on providing detailed specifications for modifications.]
+2. *"Is this normal? It's been loading for like 30 seconds."*
+   
+   [Context: Participant experiencing frustration due to slow page loading.]
 
-3. *"Explain things in plain English."*
-   [Context: Participant requesting simpler language and clearer instructions for better understanding.]
+3. *"No clear explanation of which one I should pick."*
+   
+   [Context: Participant highlighting confusion caused by lack of clarity on program selection.]
 
-4. *"Upload failed."*
-   [Context: Participant facing repeated document upload failures without clear error messages, leading to frustration.]
+4. *"The progress bar was helpful."*
+   
+   [Context: Participant appreciating the effectiveness of the progress bar and auto-save feature.]
 
-5. *"It's like they don't want me to apply."*
-   [Context: Participant expressing frustration with system hindrances and lack of clarity in the application process.]
+5. *"The system keeps blocking me at every step."*
+   
+   [Context: Participant expressing frustration with document upload issues leading to significant obstacles.]
 
 ## 👀 Notable Observations
 
-1. **Slow Loading Impact:** Both sessions highlighted the frustration caused by slow loading times, impacting user experience and leading to negative emotions like frustration.
-   
-2. **Confusion with Terminology:** Participants in both sessions struggled with technical terms and unclear instructions, emphasizing the importance of using plain language and providing clear explanations to improve user understanding.
-   
-3. **Document Upload Challenges:** Document upload issues were a common pain point in both sessions, indicating a need for clearer guidance and error messages to assist users in completing this task successfully.
-   
-4. **Positive Feedback on Features:** Users appreciated features like progress bars and auto-save functionality, showing that these elements can positively impact the user experience and contribute to a smoother workflow.
+1. **Document Upload Failure:** Users experienced frustration and hindrance due to repeated document upload failures without clear error messages, indicating a critical pain point in the user journey.
+
+2. **Slow Page Loading:** Slow page loading times led to user frustration, with one user questioning the normalcy of the delay after waiting for 30 seconds, highlighting a high pain point in the user experience.
+
+3. **Confusing Program Selection:** Users expressed confusion and uncertainty in selecting the appropriate program due to unclear terminology, emphasizing the need for clearer guidance and explanations to improve the user experience.
+
+4. **Unresponsive Submit Button:** Users encountered delays and uncertainty with an unresponsive submit button, indicating a medium pain point that could be addressed to enhance the usability of the application.
 
 ## ✅ Quick Action Items
 
-- [ ] Implement a progress bar and auto-save feature to address frustration with session timeouts and data loss.
-- [ ] Simplify language and provide clearer instructions to address confusion around technical terms like "dropdown menu" and form specifications.
-- [ ] Offer chat support for users facing difficulties with document uploads and program selection to improve user guidance and experience.
+- [ ] Implement clearer program selection process to reduce confusion.
+- [ ] Enhance error messages for better user guidance during document upload failures.
+- [ ] Explore the feasibility of adding a chat support feature for users facing difficulties.
 
 ---
