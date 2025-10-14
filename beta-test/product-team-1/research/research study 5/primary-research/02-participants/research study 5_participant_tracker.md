@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – research study 5
 
 **📊 Recruitment Summary**
-- **Total Participants:** 3
+- **Total Participants:** 4
 - **Confirmed Sessions:** 2
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 13 | micheal | internal_va_panel | 2025-10-27  | backup_participant | NO |
 | 12 | Trump | internal_va_panel | 2025-10-20  | confirmed | NO |
 | 11 | ali | calendly_signup | 2025-10-10  | recruited | NO |
 | 10 | jon | calendly_signup | 2025-09-26  | confirmed | NO |
@@ -24,11 +25,11 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| internal_va_panel | 1 | 33% |
-| calendly_signup | 2 | 67% |
+| internal_va_panel | 2 | 50% |
+| calendly_signup | 2 | 50% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
+Recruitment effectiveness: 50% conversion rate (2 confirmed of 4 recruited)
 
 ---
 
@@ -78,6 +79,7 @@ Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 13: NO
 - 12: NO
 - 11: NO
 - 10: NO
@@ -98,26 +100,29 @@ Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| Native Hawaiian or Other Pacific Islander | 1 | 33% |
-| White | 1 | 33% |
-| American Indian or Alaska Native | 1 | 33% |
+| Asian | 1 | 25% |
+| Native Hawaiian or Other Pacific Islander | 1 | 25% |
+| White | 1 | 25% |
+| American Indian or Alaska Native | 1 | 25% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 35-44 | 1 | 33% |
-| 55-64 | 1 | 33% |
-| 25-34 | 1 | 33% |
+| 45-54 | 1 | 25% |
+| 35-44 | 1 | 25% |
+| 55-64 | 1 | 25% |
+| 25-34 | 1 | 25% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Some college | 1 | 33% |
-| Master's degree | 1 | 33% |
-| High school diploma/GED | 1 | 33% |
+| High school diploma/GED | 2 | 50% |
+| Some college | 1 | 25% |
+| Master's degree | 1 | 25% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Urban | 2 | 67% |
-| Prefer not to say | 1 | 33% |
+| Suburban | 1 | 25% |
+| Urban | 2 | 50% |
+| Prefer not to say | 1 | 25% |
 
 ---
 
