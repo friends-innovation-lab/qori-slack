@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – research study 9
 
 **📊 Recruitment Summary**
-- **Total Participants:** 1
-- **Confirmed Sessions:** 0
+- **Total Participants:** 2
+- **Confirmed Sessions:** 1
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 47 | PT002 | calendly_signup | 2025-10-29  | confirmed | NO |
 | 46 | PT001 | calendly_signup | 2025-10-21  | recruited | NO |
 
 ---
@@ -22,15 +23,17 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| calendly_signup | 1 | 100% |
+| calendly_signup | 2 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
+Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 
 ## ⏳ Pending Sessions
 
@@ -71,6 +74,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 47: NO
 - 46: NO
 
 **Preparation Checklist:**
@@ -89,19 +93,22 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| Black or African American | 1 | 100% |
+| Asian | 1 | 50% |
+| Black or African American | 1 | 50% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 25-34 | 1 | 100% |
+| 55-64 | 1 | 50% |
+| 25-34 | 1 | 50% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Some college | 1 | 100% |
+| Some college | 2 | 100% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Suburban | 1 | 100% |
+| Urban | 1 | 50% |
+| Suburban | 1 | 50% |
 
 ---
 
@@ -113,4 +120,4 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (2 more needed); Schedule first confirmed session
+Continue recruiting to reach minimum of 3 participants (1 more needed)
