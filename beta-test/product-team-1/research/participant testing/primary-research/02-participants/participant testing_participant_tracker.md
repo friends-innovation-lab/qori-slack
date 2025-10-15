@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – participant testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 1
+- **Total Participants:** 2
 - **Confirmed Sessions:** 0
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 15 | PT002 | email_outreach | 2025-10-28  | rescheduling_needed | NO |
 | 14 | PT001 | calendly_signup | 2025-10-28  | recruited | NO |
 
 ---
@@ -22,10 +23,11 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| calendly_signup | 1 | 100% |
+| 📧 Email Outreach | 1 | 50% |
+| calendly_signup | 1 | 50% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
+Recruitment effectiveness: 0% conversion rate (0 confirmed of 2 recruited)
 
 ---
 
@@ -71,6 +73,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 15: NO
 - 14: NO
 
 **Preparation Checklist:**
@@ -89,19 +92,23 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| Asian | 1 | 100% |
+| Hispanic or Latino | 1 | 50% |
+| Asian | 1 | 50% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 25-34 | 1 | 100% |
+| 35-44 | 1 | 50% |
+| 25-34 | 1 | 50% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Some college | 1 | 100% |
+| High school diploma/GED | 1 | 50% |
+| Some college | 1 | 50% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Suburban | 1 | 100% |
+| Rural | 1 | 50% |
+| Suburban | 1 | 50% |
 
 ---
 
@@ -113,4 +120,4 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (2 more needed); Schedule first confirmed session
+Continue recruiting to reach minimum of 3 participants (1 more needed); Reschedule 1 session(s); Schedule first confirmed session
