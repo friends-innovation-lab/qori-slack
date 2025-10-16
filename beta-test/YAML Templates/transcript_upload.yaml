@@ -437,11 +437,6 @@ ai_generation_tasks:
 
       ---
 
-      ## 📋 Full Transcript
-      processed_transcript_content
-
-      ---
-
       ## 📊 Coding Summary
       - **Total Codes:** total_codes_found
       - **High-Confidence Codes:** high_confidence_codes
@@ -501,7 +496,8 @@ ai_generation_tasks:
       - Produce: 03-fieldwork/participant-PARTICIPANT_ID/coded-transcripts/ (replace PARTICIPANT_ID with the detected/normalized id, in lowercase)
       - Return ONLY the path as one line
       - Example: 03-fieldwork/participant-pt003/coded-transcripts/
-      - task_id: "transcript_coding_filename_base"
+
+  - task_id: "transcript_coding_filename_base"
     prompt: |
       You will receive only the Manual Notes and Transcript text. Extract a participant id.
 
@@ -551,31 +547,6 @@ ai_generation_tasks:
       - Produce: 03-fieldwork/participant-PARTICIPANT_ID/transcripts/
       - Return ONLY the path as one line
       - Example: 03-fieldwork/participant-pt003/transcripts/
-
-  ai_generation_tasks:
-  - task_id: "transcript_coding_markdown"
-    prompt: |
-      [existing long prompt]
-
-  - task_id: "transcript_coding_filename"
-    prompt: |
-      [existing filename prompt]
-
-  - task_id: "transcript_coding_path"
-    prompt: |
-      [NEW - path generation prompt]
-
-  - task_id: "transcript_coding_filename_base"
-    prompt: |
-      [NEW - base filename prompt]
-
-  - task_id: "transcript_coding_path_transcripts"
-    prompt: |
-      [NEW - transcripts path prompt]
-
-  - task_id: "transcript_coding_path_coding_data"
-    prompt: |
-      [NEW - coding data path prompt]
 
   - task_id: "transcript_coding_path_coding_data"
     prompt: |
