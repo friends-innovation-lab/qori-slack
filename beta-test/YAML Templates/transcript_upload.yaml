@@ -260,50 +260,108 @@ ai_generation_tasks:
       You MUST carefully analyze the transcript to identify opportunities and insights. These are HIGH PRIORITY categories.
 
       **🟡 OPPORTUNITIES - What to Look For:**
-      Opportunities are different from pain points. Look for:
-      - Unmet needs the participant expresses (e.g., "I wish there was a way to...", "It would be helpful if...")
-      - Implicit needs revealed by workarounds (e.g., participant uses spreadsheets because the system lacks a feature)
-      - Gaps in the current experience (e.g., "There's no way to track...", "I have to go to another tool to...")
-      - Participant suggestions for improvement (e.g., "Maybe you could add...", "What if it had...")
-      - Desires for missing functionality (e.g., "I'd love to be able to...", "I need something that...")
-      - Areas where the participant shows interest in new capabilities
-      - Moments where the participant expresses wanting more from the system
-      
-      Examples of opportunities:
-      - Participant mentions manually tracking something that could be automated
-      - Participant wishes they could see information that isn't currently visible
-      - Participant describes using multiple tools when one integrated solution would help
-      - Participant expresses desire for notifications, reminders, or alerts
-      - Participant wishes for better organization, filtering, or search capabilities
+      Opportunities are DIFFERENT from pain points. Opportunities are about what COULD BE, not what's currently broken.
+
+      **DO Include as Opportunities:**
+      - Unmet needs: "I wish I could...", "It would be helpful if...", "I'd love to be able to..."
+      - Workarounds revealing gaps: User describes using spreadsheets/other tools because the system lacks a feature
+      - Implicit desires: "I have to manually check...", "I always have to remember to..."
+      - Future capabilities: User shows interest in new features or expresses curiosity about possibilities
+      - Efficiency desires: "If only there was a way to...", "I waste time doing..."
+      - Integration wishes: "I have to switch between X and Y", "I use multiple tools for..."
+      - Customization desires: "I wish I could rearrange...", "I'd prefer to see..."
+      - Automation opportunities: Any manual process the user repeats regularly
+      - Proactive features: User wants notifications, reminders, alerts for things they currently track manually
+
+      **DO NOT Include as Opportunities (these are pain points or usability issues):**
+      - Things that are currently broken or frustrating
+      - Problems with existing features
+      - Error messages or bugs
+      - Anything starting with "This doesn't work..." or "The problem is..."
+      - Just restating a pain point with words like "improve", "enhance", or "fix"
+
+      **Good Opportunity Examples:**
+      - User says "I keep a separate note to track which applications I've submitted" → Opportunity: Application tracking dashboard
+      - User says "I check three different places to see my benefits status" → Opportunity: Unified status view
+      - User says "I wish I could customize which items appear on my home screen" → Opportunity: Customizable home screen
+      - User says "I have to manually calculate..." → Opportunity: Automatic calculation feature
+      - User says "It would save me time if I could..." → Opportunity: Time-saving feature
+
+      **Bad Opportunity Examples (these are actually pain points):**
+      - "Improve data table accessibility" (This is fixing a broken thing = pain point)
+      - "Enhanced error messages" (This is fixing a broken thing = pain point)
+      - "Better focus management" (This is fixing a broken thing = pain point)
 
       **💡 KEY INSIGHTS - What to Look For:**
-      Insights reveal how users think and behave. Look for:
-      - **User Behavior:** How the participant actually uses the system (workflows, habits, patterns)
-        - Example: "I always check X before doing Y" or "I've learned to do it this way because..."
-      - **Mental Models:** How the participant thinks about the system or their tasks
-        - Example: "I think of it like..." or "To me, this represents..." or misunderstandings that reveal their conceptual model
-      - **Workflow Patterns:** How the participant completes tasks or achieves goals
-        - Example: "My process is..." or "First I do X, then Y, then Z"
-      - **Preferences:** What the participant values or prioritizes
-        - Example: "Speed is more important than..." or "I prefer to see..." or "What matters most is..."
-      - **Context about their environment:** Information about when/where/how they work
-        - Example: "In the field, I need..." or "When I'm on call..." or "My team does it differently because..."
-      - **Surprising revelations:** Unexpected uses, workarounds, or perspectives
-      - **Contradictions or conflicts:** When what they say differs from what they do
-      
-      Examples of insights:
-      - Participant has developed a workaround that reveals their true need
-      - Participant's explanation of their process reveals a mental model
-      - Participant prioritizes certain information over others (reveals values)
-      - Participant describes context that shapes their needs (mobile, urgent situations, etc.)
-      - Participant reveals assumptions about how the system works
+      Insights reveal HOW users think and work. They are observations about behavior, not problems or suggestions.
 
-      **Differentiation Guide:**
-      - Pain Point 🔴: "This is broken/frustrating/doesn't work"
-      - Opportunity 🟡: "I wish I could..." or "It would help if..." or implicit needs
-      - Insight 💡: "This is HOW I work" or "This is WHY I do it this way" or behavioral patterns
-      - Positive Feedback 🟢: "This works well" or "I like this"
-      - Feature Request ✨: Explicit "Can you add..." or "I want..." (very specific functionality)
+      **DO Include as Insights:**
+      - **User Behavior Patterns:** 
+        - "I always check X before doing Y"
+        - "My first step is always..."
+        - "I've learned to..."
+        - Observable habits or sequences
+      
+      - **Mental Models (how they think about the system):**
+        - "I think of it like..."
+        - "To me, this represents..."
+        - Misunderstandings that reveal their conceptual model
+        - What they EXPECT vs. what actually happens
+      
+      - **Workflow Patterns:**
+        - "My process is: first I..., then I..., then I..."
+        - How they accomplish their goals
+        - Dependencies between tasks
+        - Context switching patterns
+      
+      - **Preferences and Values:**
+        - "Speed is more important to me than..."
+        - "I prefer X over Y because..."
+        - "What matters most is..."
+        - What they prioritize
+      
+      - **Context Clues:**
+        - "When I'm in the field, I need..."
+        - "During busy times, I..."
+        - "My team does it differently because..."
+        - Environmental factors affecting behavior
+
+      **DO NOT Include as Insights (these are pain points or just descriptions):**
+      - Restating problems: "User faces challenges with error messages" (this is a pain point)
+      - Generic observations: "Navigation is inefficient" (this is a pain point)
+      - Anything that just describes what's broken
+      - Anything that doesn't reveal HOW or WHY the user works
+
+      **Good Insight Examples:**
+      - Mental Model: "User treats the app like a filing cabinet, expecting everything to be in folders" (reveals their conceptual model)
+      - User Behavior: "User checks benefits status multiple times per day, indicating anxiety about changes" (reveals emotional driver)
+      - Workflow: "User switches between messaging and benefits repeatedly in every session, suggesting these tasks are connected in their mind" (reveals task relationship)
+      - Preference: "User prioritizes speed over accuracy when searching, using partial terms rather than full queries" (reveals values)
+      - Context: "User always has the app open during phone calls with VA, using it as a reference tool during conversations" (reveals usage context)
+
+      **Bad Insight Examples (these don't reveal behavior or mental models):**
+      - "User expects detailed data table descriptions" (This is just restating a pain point)
+      - "Navigation process has inefficiencies" (This is describing a problem, not revealing HOW/WHY user works)
+      - "Error handling challenges impact user experience" (Generic statement about a problem)
+
+      **🔴 PAIN POINTS vs ⚠️ USABILITY ISSUES - How to Differentiate:**
+      These categories overlap significantly. Use this guide:
+
+      **Pain Points (🔴):** Broader problems, barriers, frustrations
+      - Systemic issues
+      - Repeated frustrations
+      - High-level barriers to goals
+      - Critical accessibility violations
+      - Example: "Screen reader users can't access data tables effectively"
+
+      **Usability Issues (⚠️):** Specific interface/interaction problems
+      - Specific UI elements that don't work right
+      - Interaction design problems
+      - Visual design issues
+      - Confusing labels or terminology
+      - Example: "Submit button has no aria-label"
+
+      **General Rule:** If you code something as a pain point and it's related to a specific interface element or interaction, ALSO code it as a usability issue.
 
       **Buckets and required fields**
       - pain_points:
@@ -329,12 +387,14 @@ ai_generation_tasks:
 
       **Coding Process:**
       1. Read the ENTIRE transcript carefully
-      2. Identify ALL pain points, usability issues, and problems
-      3. ACTIVELY LOOK for opportunities - unmet needs, wishes, gaps, workarounds that suggest missing features
-      4. ACTIVELY LOOK for insights - behaviors, workflows, mental models, preferences, context
+      2. Identify ALL pain points and usability issues (these should significantly overlap)
+      3. ACTIVELY LOOK for opportunities - focus on UNMET NEEDS and WORKAROUNDS, not just problems
+      4. ACTIVELY LOOK for insights - focus on HOW/WHY the user works, not just what's broken
       5. Note positive feedback and explicit feature requests
       6. Capture emotional reactions throughout
       7. Ensure each finding has a direct supporting quote from the transcript
+      8. VALIDATE: Review your opportunities - do they describe future possibilities or just restate problems?
+      9. VALIDATE: Review your insights - do they reveal behavior/mental models or just describe problems?
 
       **Counts and Summary (compute after gating by confidence)**
       - pain_points_count, opportunities_count, insights_count, positive_feedback_count, feature_requests_count, usability_issues_count: sizes of corresponding arrays
@@ -768,6 +828,8 @@ quality_assurance:
     flag_low_confidence_codes: true
     require_opportunities: true
     require_insights: true
+    validate_opportunities_are_not_pain_points: true
+    validate_insights_reveal_behavior: true
     
   research_readiness:
     verify_participant_id_consistency: true
@@ -862,3 +924,5 @@ analytics:
   measure_cross_session_patterns: true
   track_opportunities_identification_rate: true
   track_insights_identification_rate: true
+  track_opportunities_vs_pain_points_confusion: true
+  track_insights_quality_score: true
