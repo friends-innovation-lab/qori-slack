@@ -257,16 +257,16 @@ ai_generation_tasks:
       - Each item must include a verbatim supporting_quote and a timestamp if available; if the transcript has no timestamps anywhere, set timestamp to an empty string
 
       ---
-      **💡 INSIGHTS - ULTRA-EXPLICIT RULES**
+      **💡 INSIGHTS - What They Are**
       
       Insights reveal HOW users think and work, NOT problems or suggestions.
 
-      **THE INSIGHT TEST (EVERY insight must pass ALL 3 questions):**
-      1. ❓ Does this describe HOW or WHY the user does something? (If NO → REJECT)
-      2. ❓ Would this be true even if the feature worked perfectly? (If NO → REJECT)
-      3. ❓ Does this reveal user behavior, mental model, workflow, or preference? (If NO → REJECT)
+      **THE INSIGHT TEST (An insight should pass at least 2 of these 3 questions):**
+      1. ❓ Does this describe HOW or WHY the user does something?
+      2. ❓ Would this be true even if the feature worked perfectly?
+      3. ❓ Does this reveal user behavior, mental model, workflow, or preference?
 
-      **SMOKING GUN PHRASES that signal insights:**
+      **SIGNAL PHRASES that often indicate insights:**
       - "I always..." / "I never..." / "I typically..."
       - "My process is..." / "First I... then I..."
       - "I think of it like..." / "To me, this means..."
@@ -274,130 +274,116 @@ ai_generation_tasks:
       - "When I'm [context], I need..." / "In [situation], I..."
       - "I've learned to..." / "I discovered that..."
 
-      **✅ VALID INSIGHT EXAMPLES (from similar transcripts):**
+      **✅ VALID INSIGHT EXAMPLES:**
       
-      Example 1 - User Behavior:
-      - Title: "Multi-verification pattern before task commitment"
-      - Description: User checks Benefits section 3-4 times per session before taking action, revealing anxiety-driven verification behavior
-      - Quote: "I always check my status multiple times before I call, just to make sure nothing changed"
-      - Why it passes: Describes HOW user works (multiple checks), would be true even if UI perfect (it's about user's anxiety), reveals behavioral pattern
+      User Behavior: "Technical testing approach to app evaluation"
+      - User systematically tests accessibility features using screen reader, focusing on ARIA labels rather than completing typical user tasks
+      - Quote: "I'm testing with TalkBack to see how it announces content"
+      - Why valid: Describes HOW user evaluates apps, reveals professional workflow
 
-      Example 2 - Mental Model:
-      - Title: "Treats mobile app as reference tool, not action tool"
-      - Description: User opens app during phone calls as a reference rather than completing tasks within the app itself
-      - Quote: "I usually have the app open when I'm on the phone with VA, so I can look things up while we talk"
-      - Why it passes: Reveals mental model (app = reference tool), would be true even with perfect UI, shows user's conceptual framework
-
-      Example 3 - Workflow:
-      - Title: "Messaging and benefits checks are linked in user workflow"
-      - Description: User alternates between messaging and benefits sections within same session, indicating connected tasks in their mental workflow
-      - Quote: "I go back and forth - check my claim status, then message my case worker, then check again to see if anything updated"
-      - Why it passes: Describes workflow pattern, independent of UI quality, reveals task relationships
-
-      **❌ INVALID "INSIGHTS" (these are actually PAIN POINTS - DO NOT CODE AS INSIGHTS):**
-      
-      Example 1 - This is a PAIN POINT, not an insight:
-      - ❌ "User faces inefficiencies due to multi-step navigation"
-      - Why it fails: Describes a PROBLEM, not behavior. Would NOT be true if navigation worked well.
-      
-      Example 2 - This is a PAIN POINT, not an insight:
-      - ❌ "User expects detailed data table descriptions"
-      - Why it fails: Describes what's BROKEN, not how user works. This is a problem statement.
-      
-      Example 3 - This is a PAIN POINT, not an insight:
-      - ❌ "User faces challenges identifying errors"
-      - Why it fails: Describes a PROBLEM with error messages, not user behavior or mental model.
-
-      **FROM THE ACTUAL TRANSCRIPT - WHAT REAL INSIGHTS WOULD LOOK LIKE:**
-      Based on the PT005 transcript, here are what REAL insights would be:
-
-      ✅ User Behavior: "Technical testing approach to app evaluation"
-      - Description: User systematically tests accessibility features using screen reader, checking specific ARIA labels and focus management rather than completing typical user tasks
-      - Quote: "Let me check the accessibility of the Claims section... I'm testing with TalkBack to see how it announces content"
-      - Passes test: Describes HOW user evaluates apps (technical testing), would be true even with perfect accessibility, reveals professional evaluator workflow
-
-      ✅ Mental Model: "Expects desktop web accessibility patterns on mobile"
-      - Description: User applies desktop screen reader expectations to mobile app, evaluating modal behavior against web overlay standards
+      Mental Model: "Expects desktop web accessibility patterns on mobile"
+      - User applies desktop screen reader expectations to mobile app
       - Quote: "When I open modal dialogs or overlays, the focus isn't being trapped properly"
-      - Passes test: Reveals mental model (mobile should work like web), independent of whether feature is broken, shows user's conceptual framework
+      - Why valid: Reveals mental model (mobile should work like web)
+
+      Workflow: "Multi-step navigation becomes memorized sequence"
+      - User has memorized navigation path and recites it automatically
+      - Quote: "To send a message to my doctor, I have to go: Health → Messages → Select Care Team → Choose Topic → Compose"
+      - Why valid: Shows how user has adapted to workflow through repetition
+
+      **❌ INVALID "INSIGHTS" (these are pain points - do NOT code as insights):**
+      - "User faces inefficiencies due to navigation" → This describes a PROBLEM
+      - "User expects detailed descriptions" → This describes what's MISSING
+      - "User has challenges with errors" → This describes a PROBLEM
 
       ---
-      **🟡 OPPORTUNITIES - ULTRA-EXPLICIT RULES**
+      **🟡 OPPORTUNITIES - What They Are**
       
-      Opportunities are about UNMET NEEDS and NEW CAPABILITIES, NOT fixing broken things.
+      Opportunities are about UNMET NEEDS for NEW capabilities, not fixing broken things.
 
-      **THE OPPORTUNITY TEST (EVERY opportunity must pass ALL 3 questions):**
-      1. ❓ Does this describe something the user WISHES existed? (If NO → REJECT)
-      2. ❓ Is this about a NEW capability, not fixing a broken one? (If NO → it's a pain point, REJECT)
-      3. ❓ Does the quote show desire/need for something currently MISSING? (If NO → REJECT)
+      **THE OPPORTUNITY TEST (An opportunity should pass at least 2 of these 3 questions):**
+      1. ❓ Does the user express desire for something that doesn't exist?
+      2. ❓ Is this about adding NEW capability (not fixing broken functionality)?
+      3. ❓ Would this still be valuable even if current features worked perfectly?
 
-      **SMOKING GUN PHRASES that signal opportunities:**
+      **SIGNAL PHRASES that often indicate opportunities:**
       - "I wish..." / "I'd love to..." / "It would be great if..."
-      - "If only there was..." / "I need a way to..."
+      - "There should be..." / "A well-designed app would..."
+      - "If only..." / "I need a way to..."
       - "I use [other tool] because..." / "I have to go to [other app] to..."
       - "I manually track..." / "I keep a separate..."
-      - "There's no way to..." (when expressing desire for new capability)
+      - Describing workarounds that reveal missing capabilities
 
-      **✅ VALID OPPORTUNITY EXAMPLES (from similar transcripts):**
+      **✅ VALID OPPORTUNITY EXAMPLES:**
       
-      Example 1 - Quick Win:
-      - Title: "Customizable quick-access shortcuts"
-      - Description: User desires ability to customize home screen with shortcuts to frequently-used features
-      - Quote: "I wish I could pin my most-used features to the top, like a customizable dashboard"
-      - Why it passes: Expresses WISH for new capability, NOT fixing broken feature, quote shows desire for missing functionality
-
-      Example 2 - High Impact:
-      - Title: "Integrated status tracking dashboard"
-      - Description: User wants unified view combining claims, messages, and appointments rather than navigating separately
-      - Quote: "I check three different places to get my full picture - it would help if there was one dashboard showing everything"
-      - Why it passes: Describes missing integration feature, NOT fixing broken navigation, quote shows explicit unmet need
-
-      Example 3 - Medium Impact:
-      - Title: "Voice command navigation for accessibility"
-      - Description: User desires voice commands as alternative navigation method for accessibility
-      - Quote: "It would be great if I could just say 'open messages' or 'check my claims' instead of tapping through menus"
-      - Why it passes: Expresses wish for NEW capability, not fixing existing navigation, quote shows clear unmet need
-
-      **❌ INVALID "OPPORTUNITIES" (these are actually PAIN POINTS - DO NOT CODE AS OPPORTUNITIES):**
-      
-      Example 1 - This is a PAIN POINT, not an opportunity:
-      - ❌ "Improve data table accessibility by providing proper header associations"
-      - Why it fails: This is FIXING something broken, not a new capability. The quote is about accessibility problems, not expressing desire for something new.
-      
-      Example 2 - This is a PAIN POINT, not an opportunity:
-      - ❌ "Enhance error message announcements for forms"
-      - Why it fails: This is FIXING broken error messages, not a new capability. Just restating the problem with different words.
-      
-      Example 3 - This is a PAIN POINT, not an opportunity:
-      - ❌ "Implement proper focus management for modals"
-      - Why it fails: This is FIXING broken focus behavior, not a new capability the user desires.
-
-      **FROM THE ACTUAL TRANSCRIPT - WHAT REAL OPPORTUNITIES WOULD LOOK LIKE:**
-      Based on the PT005 transcript, here are what REAL opportunities would be:
-
-      ✅ Quick Win: "Messaging shortcut from home screen"
-      - Description: User desires direct shortcut to compose message without multi-step navigation
+      Quick Win: "Quick compose shortcut"
+      - User desires direct shortcut to compose messages without multi-step navigation
       - Quote: "A well-designed app would let me shortcut to recent conversations or have a quick compose feature"
-      - Passes test: Expresses explicit WISH ("would let me"), about NEW shortcut capability, quote shows desire for missing feature
+      - Why valid: Expresses wish for NEW shortcut capability (not just fixing navigation)
 
-      ✅ Medium Impact: "Expandable help text for status descriptions"  
-      - Description: User wants optional detailed explanations for brief status messages
+      Quick Win: "Expandable help text for status descriptions"
+      - User wants optional detailed explanations alongside brief status messages
       - Quote: "There should be expandable help text or better descriptions for screen reader users"
-      - Passes test: User says what "should" exist (expressing desire), about ADDING help feature (not fixing status), quote shows unmet need
+      - Why valid: Desires NEW help feature (not just making descriptions longer)
+
+      Medium Impact: "Customizable dashboard"
+      - User wants to personalize which information appears on home screen
+      - Quote: "I wish I could see my most important stuff first, like customize what shows up"
+      - Why valid: Expresses desire for NEW customization capability
+
+      **❌ INVALID "OPPORTUNITIES" (these are pain points - do NOT code as opportunities):**
+      - "Improve data table accessibility" → This is FIXING broken accessibility
+      - "Better error message announcements" → This is FIXING broken errors
+      - "Proper focus management" → This is FIXING broken focus
+
+      **KEY DISTINCTION:**
+      - Opportunity = "I wish there was a shortcut to compose" (adding something new)
+      - Pain Point = "Too many taps to compose" (fixing something inefficient)
 
       ---
-      **🔴 PAIN POINTS - When to Use This Category:**
-      - Things that are BROKEN or FRUSTRATING
-      - Problems with existing features
-      - Error messages or bugs
+      **🔴 PAIN POINTS - What They Are:**
+      Things that are BROKEN, FRUSTRATING, or INEFFICIENT:
+      - Broken functionality or bugs
       - Accessibility violations
-      - Inefficient processes caused by poor design
+      - Confusing interfaces
+      - Inefficient workflows caused by poor design
+      - Missing information that should be present
 
-      From PT005 transcript, these ARE pain points:
-      - "Data tables lack proper header associations" → BROKEN accessibility
-      - "Error messages not announced by TalkBack" → BROKEN error handling
-      - "Focus not trapped in modal dialogs" → BROKEN focus management
-      - "Too many taps to get to common functions" → INEFFICIENT design
+      Examples from transcripts:
+      - "Data tables lack proper headers" → Broken accessibility
+      - "Error messages not announced" → Broken error handling
+      - "Too many taps for common tasks" → Inefficient design
+
+      ---
+      **⚠️ USABILITY ISSUES - What They Are:**
+      Specific interface or interaction problems. Often OVERLAPS with pain points.
+
+      **IMPORTANT:** Many pain points are ALSO usability issues. Code them in BOTH categories when:
+      - The pain point involves specific UI elements
+      - The pain point is about interaction design
+      - The pain point is about confusing interface elements
+
+      Examples that should be BOTH pain point AND usability issue:
+      - "Data tables lack proper header associations" → Interface-specific problem
+      - "Error messages not announced by TalkBack" → Interface-specific problem
+      - "Focus not trapped in modal dialogs" → Interface-specific problem
+      - "No focus indicators on buttons" → Interface-specific problem
+
+      ---
+      **🟢 POSITIVE FEEDBACK - What to Include:**
+      
+      Include ALL positive comments, even brief ones:
+      - Praise for specific features
+      - Acknowledgment of good design
+      - Appreciation for responsiveness or performance
+      - Any statement about what works well
+
+      Examples to include:
+      - "The main navigation is well done"
+      - "Button labels are clear"
+      - "It's responsive"
+      - "Loading times are reasonable"
+      - "I like the [feature]"
 
       ---
 
@@ -423,18 +409,18 @@ ai_generation_tasks:
         - emotion_type: one of "Frustrated", "Confused", "Delighted", "Anxious", "Confident"
         - description, supporting_quote, timestamp, confidence
 
-      **MANDATORY Coding Process:**
+      **CODING PROCESS:**
       1. Read the ENTIRE transcript carefully
-      2. Identify ALL pain points and usability issues (broken things, problems, frustrations)
-      3. Look for opportunities by searching for SMOKING GUN PHRASES: "I wish", "I'd love to", "if only", "I use [other tool]", "I manually", "there's no way to"
-      4. For EACH potential opportunity: Run THE OPPORTUNITY TEST. If it fails ANY question, it's a pain point instead.
-      5. Look for insights by searching for SMOKING GUN PHRASES: "I always", "my process is", "I think of it like", "what matters is", "when I'm [context]"
-      6. For EACH potential insight: Run THE INSIGHT TEST. If it fails ANY question, reject it or reclassify as pain point.
-      7. Note positive feedback and explicit feature requests
-      8. Capture emotional reactions throughout
-      9. Ensure each finding has a direct supporting quote from the transcript
-      10. FINAL VALIDATION: Review every opportunity - if it's about fixing something broken, MOVE IT TO PAIN POINTS
-      11. FINAL VALIDATION: Review every insight - if it describes a problem rather than behavior/mental model, REJECT IT
+      2. Identify ALL pain points (broken things, problems, frustrations)
+      3. For each pain point: If it's about a specific UI element or interaction, ALSO code as usability issue
+      4. Look for opportunities using SIGNAL PHRASES: "I wish", "there should be", "would let me", "I use [other tool]"
+      5. Test each potential opportunity: Does user want something NEW (not fixing broken thing)?
+      6. Look for insights using SIGNAL PHRASES: "I always", "my process", "I think of it", "when I'm [context]"
+      7. Test each potential insight: Does it describe HOW/WHY user works (not just problems)?
+      8. Include ALL positive feedback, even brief mentions
+      9. Note explicit feature requests
+      10. Capture emotional reactions
+      11. Ensure each finding has a direct supporting quote
 
       **Counts and Summary (compute after gating by confidence)**
       - pain_points_count, opportunities_count, insights_count, positive_feedback_count, feature_requests_count, usability_issues_count: sizes of corresponding arrays
@@ -864,10 +850,11 @@ quality_assurance:
     verify_quote_accuracy: true
     check_timestamp_alignment: true
     flag_low_confidence_codes: true
-    require_opportunities: true
-    require_insights: true
+    require_opportunities: false
+    require_insights: false
     validate_opportunities_are_not_pain_points: true
     validate_insights_reveal_behavior: true
+    ensure_usability_overlap_with_pain_points: true
     
   research_readiness:
     verify_participant_id_consistency: true
@@ -964,3 +951,4 @@ analytics:
   track_insights_identification_rate: true
   track_opportunities_vs_pain_points_confusion: true
   track_insights_quality_score: true
+  track_usability_pain_point_overlap: true
