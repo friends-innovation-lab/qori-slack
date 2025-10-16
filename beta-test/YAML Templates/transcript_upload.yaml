@@ -142,12 +142,14 @@ ai_coding:
       description: "Unmet needs, suggestions, improvement areas"
       impact_levels: ["High Impact", "Medium Impact", "Quick Win"]
       extract_quotes: true
+      priority: "high"
       
     insights:
       icon: "💡"
       description: "Key behaviors, patterns, revelations, mental models"
       insight_types: ["User Behavior", "Mental Model", "Workflow", "Preference"]
       extract_quotes: true
+      priority: "high"
       
     positive_feedback:
       icon: "🟢"
@@ -254,6 +256,55 @@ ai_generation_tasks:
       - If < 0.60, exclude
       - Each item must include a verbatim supporting_quote and a timestamp if available; if the transcript has no timestamps anywhere, set timestamp to an empty string
 
+      **CRITICAL: Actively Look for Opportunities and Key Insights**
+      You MUST carefully analyze the transcript to identify opportunities and insights. These are HIGH PRIORITY categories.
+
+      **🟡 OPPORTUNITIES - What to Look For:**
+      Opportunities are different from pain points. Look for:
+      - Unmet needs the participant expresses (e.g., "I wish there was a way to...", "It would be helpful if...")
+      - Implicit needs revealed by workarounds (e.g., participant uses spreadsheets because the system lacks a feature)
+      - Gaps in the current experience (e.g., "There's no way to track...", "I have to go to another tool to...")
+      - Participant suggestions for improvement (e.g., "Maybe you could add...", "What if it had...")
+      - Desires for missing functionality (e.g., "I'd love to be able to...", "I need something that...")
+      - Areas where the participant shows interest in new capabilities
+      - Moments where the participant expresses wanting more from the system
+      
+      Examples of opportunities:
+      - Participant mentions manually tracking something that could be automated
+      - Participant wishes they could see information that isn't currently visible
+      - Participant describes using multiple tools when one integrated solution would help
+      - Participant expresses desire for notifications, reminders, or alerts
+      - Participant wishes for better organization, filtering, or search capabilities
+
+      **💡 KEY INSIGHTS - What to Look For:**
+      Insights reveal how users think and behave. Look for:
+      - **User Behavior:** How the participant actually uses the system (workflows, habits, patterns)
+        - Example: "I always check X before doing Y" or "I've learned to do it this way because..."
+      - **Mental Models:** How the participant thinks about the system or their tasks
+        - Example: "I think of it like..." or "To me, this represents..." or misunderstandings that reveal their conceptual model
+      - **Workflow Patterns:** How the participant completes tasks or achieves goals
+        - Example: "My process is..." or "First I do X, then Y, then Z"
+      - **Preferences:** What the participant values or prioritizes
+        - Example: "Speed is more important than..." or "I prefer to see..." or "What matters most is..."
+      - **Context about their environment:** Information about when/where/how they work
+        - Example: "In the field, I need..." or "When I'm on call..." or "My team does it differently because..."
+      - **Surprising revelations:** Unexpected uses, workarounds, or perspectives
+      - **Contradictions or conflicts:** When what they say differs from what they do
+      
+      Examples of insights:
+      - Participant has developed a workaround that reveals their true need
+      - Participant's explanation of their process reveals a mental model
+      - Participant prioritizes certain information over others (reveals values)
+      - Participant describes context that shapes their needs (mobile, urgent situations, etc.)
+      - Participant reveals assumptions about how the system works
+
+      **Differentiation Guide:**
+      - Pain Point 🔴: "This is broken/frustrating/doesn't work"
+      - Opportunity 🟡: "I wish I could..." or "It would help if..." or implicit needs
+      - Insight 💡: "This is HOW I work" or "This is WHY I do it this way" or behavioral patterns
+      - Positive Feedback 🟢: "This works well" or "I like this"
+      - Feature Request ✨: Explicit "Can you add..." or "I want..." (very specific functionality)
+
       **Buckets and required fields**
       - pain_points:
         - severity: one of "Critical", "High", "Medium", "Low"
@@ -275,6 +326,15 @@ ai_generation_tasks:
       - emotions:
         - emotion_type: one of "Frustrated", "Confused", "Delighted", "Anxious", "Confident"
         - description, supporting_quote, timestamp, confidence
+
+      **Coding Process:**
+      1. Read the ENTIRE transcript carefully
+      2. Identify ALL pain points, usability issues, and problems
+      3. ACTIVELY LOOK for opportunities - unmet needs, wishes, gaps, workarounds that suggest missing features
+      4. ACTIVELY LOOK for insights - behaviors, workflows, mental models, preferences, context
+      5. Note positive feedback and explicit feature requests
+      6. Capture emotional reactions throughout
+      7. Ensure each finding has a direct supporting quote from the transcript
 
       **Counts and Summary (compute after gating by confidence)**
       - pain_points_count, opportunities_count, insights_count, positive_feedback_count, feature_requests_count, usability_issues_count: sizes of corresponding arrays
@@ -377,6 +437,11 @@ ai_generation_tasks:
 
       ---
 
+      ## 📋 Full Transcript
+      processed_transcript_content
+
+      ---
+
       ## 📊 Coding Summary
       - **Total Codes:** total_codes_found
       - **High-Confidence Codes:** high_confidence_codes
@@ -410,6 +475,133 @@ ai_generation_tasks:
       - Produce: PARTICIPANT_ID-coded-analysis.md (replace PARTICIPANT_ID with the detected/normalized id, in lowercase)
       - Return ONLY the filename as one line
       - Example: pt003-coded-analysis.md
+
+  - task_id: "transcript_coding_path"
+    prompt: |
+      You will receive only the Manual Notes and Transcript text. Extract a participant id and output a folder path.
+
+      **Manual Notes (optional)**
+      {{manual_notes_text_or_blank}}
+
+      **Transcript**
+      {{input_text}}
+
+      Detection Rules:
+      - Look for explicit IDs such as: PT7, PT12, participant-15, participant_9, p23, user_7, user-42
+      - Normalize examples:
+        - "Participant PT003" → pt003
+        - "User 07" → pt007
+      - If only a human name appears (e.g., "Participant: John"), treat as no ID found.
+      - Fallback when no ID is found:
+        - Build participant_YYYYMMDDHHmmss (UTC) from the first date/time found in the text.
+        - If only a date (no time) is found, append 000000.
+        - If no date/time is found at all, use participant_00000000000000.
+
+      Output Rules:
+      - Produce: 03-fieldwork/participant-PARTICIPANT_ID/coded-transcripts/ (replace PARTICIPANT_ID with the detected/normalized id, in lowercase)
+      - Return ONLY the path as one line
+      - Example: 03-fieldwork/participant-pt003/coded-transcripts/
+      - task_id: "transcript_coding_filename_base"
+    prompt: |
+      You will receive only the Manual Notes and Transcript text. Extract a participant id.
+
+      **Manual Notes (optional)**
+      {{manual_notes_text_or_blank}}
+
+      **Transcript**
+      {{input_text}}
+
+      Detection Rules:
+      - Look for explicit IDs such as: PT7, PT12, participant-15, participant_9, p23, user_7, user-42
+      - Normalize examples:
+        - "Participant PT003" → pt003
+        - "User 07" → pt007
+      - If only a human name appears (e.g., "Participant: John"), treat as no ID found.
+      - Fallback when no ID is found:
+        - Build participant_YYYYMMDDHHmmss (UTC) from the first date/time found in the text.
+        - If only a date (no time) is found, append 000000.
+        - If no date/time is found at all, use participant_00000000000000.
+
+      Output Rules:
+      - Return ONLY the participant ID in lowercase
+      - Example: pt003
+
+  - task_id: "transcript_coding_path_transcripts"
+    prompt: |
+      You will receive only the Manual Notes and Transcript text. Extract a participant id and output the transcripts folder path.
+
+      **Manual Notes (optional)**
+      {{manual_notes_text_or_blank}}
+
+      **Transcript**
+      {{input_text}}
+
+      Detection Rules:
+      - Look for explicit IDs such as: PT7, PT12, participant-15, participant_9, p23, user_7, user-42
+      - Normalize examples:
+        - "Participant PT003" → pt003
+        - "User 07" → pt007
+      - If only a human name appears (e.g., "Participant: John"), treat as no ID found.
+      - Fallback when no ID is found:
+        - Build participant_YYYYMMDDHHmmss (UTC) from the first date/time found in the text.
+        - If only a date (no time) is found, append 000000.
+        - If no date/time is found at all, use participant_00000000000000.
+
+      Output Rules:
+      - Produce: 03-fieldwork/participant-PARTICIPANT_ID/transcripts/
+      - Return ONLY the path as one line
+      - Example: 03-fieldwork/participant-pt003/transcripts/
+
+  ai_generation_tasks:
+  - task_id: "transcript_coding_markdown"
+    prompt: |
+      [existing long prompt]
+
+  - task_id: "transcript_coding_filename"
+    prompt: |
+      [existing filename prompt]
+
+  - task_id: "transcript_coding_path"
+    prompt: |
+      [NEW - path generation prompt]
+
+  - task_id: "transcript_coding_filename_base"
+    prompt: |
+      [NEW - base filename prompt]
+
+  - task_id: "transcript_coding_path_transcripts"
+    prompt: |
+      [NEW - transcripts path prompt]
+
+  - task_id: "transcript_coding_path_coding_data"
+    prompt: |
+      [NEW - coding data path prompt]
+
+  - task_id: "transcript_coding_path_coding_data"
+    prompt: |
+      You will receive only the Manual Notes and Transcript text. Extract a participant id and output the coding data folder path.
+
+      **Manual Notes (optional)**
+      {{manual_notes_text_or_blank}}
+
+      **Transcript**
+      {{input_text}}
+
+      Detection Rules:
+      - Look for explicit IDs such as: PT7, PT12, participant-15, participant_9, p23, user_7, user-42
+      - Normalize examples:
+        - "Participant PT003" → pt003
+        - "User 07" → pt007
+      - If only a human name appears (e.g., "Participant: John"), treat as no ID found.
+      - Fallback when no ID is found:
+        - Build participant_YYYYMMDDHHmmss (UTC) from the first date/time found in the text.
+        - If only a date (no time) is found, append 000000.
+        - If no date/time is found at all, use participant_00000000000000.
+
+      Output Rules:
+      - Produce: 03-fieldwork/participant-PARTICIPANT_ID/coding-data/
+      - Return ONLY the path as one line
+      - Example: 03-fieldwork/participant-pt003/coding-data/
 
 output_template: |
   {{ai_generated.transcript_coding_markdown}}
@@ -542,15 +734,15 @@ output_templates: |
 # File organization to existing folder structure
 output_options:
   filename: "{{ai_generated.transcript_coding_filename}}"
-  path: "03-fieldwork/participant-{{auto_detected_participant_id}}/coded-transcripts/"
+  path: "{{ai_generated.transcript_coding_path}}"
     
   raw_transcript:
-    filename: "{{auto_detected_participant_id}}-transcript.md"
-    path: "03-fieldwork/participant-{{auto_detected_participant_id}}/transcripts/"
+    filename: "{{ai_generated.transcript_coding_filename_base}}-transcript.md"
+    path: "{{ai_generated.transcript_coding_path_transcripts}}"
     
   coding_export:
-    filename: "{{auto_detected_participant_id}}-codes.csv"
-    path: "03-fieldwork/participant-{{auto_detected_participant_id}}/coding-data/"
+    filename: "{{ai_generated.transcript_coding_filename_base}}-codes.csv"
+    path: "{{ai_generated.transcript_coding_path_coding_data}}"
     format: "csv"
     fields: ["code_type", "title", "description", "quote", "timestamp", "confidence"]
     
@@ -603,6 +795,8 @@ quality_assurance:
     verify_quote_accuracy: true
     check_timestamp_alignment: true
     flag_low_confidence_codes: true
+    require_opportunities: true
+    require_insights: true
     
   research_readiness:
     verify_participant_id_consistency: true
@@ -695,3 +889,5 @@ analytics:
   measure_transcript_quality: true
   track_coding_accuracy: true
   measure_cross_session_patterns: true
+  track_opportunities_identification_rate: true
+  track_insights_identification_rate: true
