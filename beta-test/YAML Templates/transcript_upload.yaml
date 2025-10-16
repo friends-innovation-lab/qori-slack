@@ -4,7 +4,6 @@ description: Upload transcripts with automatic PII redaction and AI-powered rese
 input_type: tabbed_upload
 input_processing: ai_enhanced_coding
 
-# Tab-based upload interface
 input_tabs:
   file_upload:
     label: "📁 Upload File"
@@ -42,7 +41,6 @@ input_tabs:
         word_count: true
         required: true
 
-# Automatic PII protection
 privacy_protection:
   pii_scrubbing:
     enabled: true
@@ -73,7 +71,6 @@ privacy_protection:
       
     confidence_threshold: 0.85
 
-# AI processing for metadata extraction and content cleaning
 ai_processing:
   metadata_extraction:
     auto_detect_participant_id: true
@@ -126,7 +123,6 @@ ai_processing:
     preserve_emotional_indicators: true
     maintain_context_cues: true
 
-# AI-powered research coding
 ai_coding:
   enabled: true
   
@@ -179,7 +175,6 @@ ai_coding:
     flag_low_confidence: true
     human_review_threshold: 0.60
 
-# File processing
 file_processing:
   supported_formats:
     text: [".txt", ".md"]
@@ -197,8 +192,7 @@ file_processing:
     timestamp_preservation: true
     speaker_diarization_preservation: true
     filename_analysis: true
-    
-# AI Content Generation Tasks
+
 ai_generation_tasks:
   - task_id: "transcript_coding_markdown"
     prompt: |
@@ -435,7 +429,7 @@ ai_generation_tasks:
 
       ---
       **RENDER THIS EXACT MARKDOWN STRUCTURE (fill with values)**
-      # auto_detected_participant_id Coded Transcript Analysis
+      # auto_detected_participant_id Coded Transcript
 
       **Study:** auto_detected_study_name  
       **Participant:** auto_detected_participant_id  
@@ -555,256 +549,17 @@ ai_generation_tasks:
       - Return ONLY the filename as one line
       - Example: pt003-coded-transcript-analysis.md
 
-  - task_id: "transcript_coding_path"
-    prompt: |
-      You will receive only the Manual Notes and Transcript text. Extract a participant id and output a folder path.
-
-      **Manual Notes (optional)**
-      {{manual_notes_text_or_blank}}
-
-      **Transcript**
-      {{input_text}}
-
-      Detection Rules:
-      - Look for explicit IDs such as: PT7, PT12, participant-15, participant_9, p23, user_7, user-42
-      - Normalize examples:
-        - "Participant PT003" → pt003
-        - "User 07" → pt007
-      - If only a human name appears (e.g., "Participant: John"), treat as no ID found.
-      - Fallback when no ID is found:
-        - Build participant_YYYYMMDDHHmmss (UTC) from the first date/time found in the text.
-        - If only a date (no time) is found, append 000000.
-        - If no date/time is found at all, use participant_00000000000000.
-
-      Output Rules:
-      - Produce: 03-fieldwork/participant-PARTICIPANT_ID/coded-transcripts-analysis/ (replace PARTICIPANT_ID with the detected/normalized id, in lowercase)
-      - Return ONLY the path as one line
-      - Example: 03-fieldwork/participant-pt003/coded-transcripts-analysis/
-
-  - task_id: "transcript_coding_filename_base"
-    prompt: |
-      You will receive only the Manual Notes and Transcript text. Extract a participant id.
-
-      **Manual Notes (optional)**
-      {{manual_notes_text_or_blank}}
-
-      **Transcript**
-      {{input_text}}
-
-      Detection Rules:
-      - Look for explicit IDs such as: PT7, PT12, participant-15, participant_9, p23, user_7, user-42
-      - Normalize examples:
-        - "Participant PT003" → pt003
-        - "User 07" → pt007
-      - If only a human name appears (e.g., "Participant: John"), treat as no ID found.
-      - Fallback when no ID is found:
-        - Build participant_YYYYMMDDHHmmss (UTC) from the first date/time found in the text.
-        - If only a date (no time) is found, append 000000.
-        - If no date/time is found at all, use participant_00000000000000.
-
-      Output Rules:
-      - Return ONLY the participant ID in lowercase
-      - Example: pt003
-
-  - task_id: "transcript_coding_path_transcripts"
-    prompt: |
-      You will receive only the Manual Notes and Transcript text. Extract a participant id and output the transcripts folder path.
-
-      **Manual Notes (optional)**
-      {{manual_notes_text_or_blank}}
-
-      **Transcript**
-      {{input_text}}
-
-      Detection Rules:
-      - Look for explicit IDs such as: PT7, PT12, participant-15, participant_9, p23, user_7, user-42
-      - Normalize examples:
-        - "Participant PT003" → pt003
-        - "User 07" → pt007
-      - If only a human name appears (e.g., "Participant: John"), treat as no ID found.
-      - Fallback when no ID is found:
-        - Build participant_YYYYMMDDHHmmss (UTC) from the first date/time found in the text.
-        - If only a date (no time) is found, append 000000.
-        - If no date/time is found at all, use participant_00000000000000.
-
-      Output Rules:
-      - Produce: 03-fieldwork/participant-PARTICIPANT_ID/transcripts/
-      - Return ONLY the path as one line
-      - Example: 03-fieldwork/participant-pt003/transcripts/
-
-  - task_id: "transcript_coding_path_coding_data"
-    prompt: |
-      You will receive only the Manual Notes and Transcript text. Extract a participant id and output the coding data folder path.
-
-      **Manual Notes (optional)**
-      {{manual_notes_text_or_blank}}
-
-      **Transcript**
-      {{input_text}}
-
-      Detection Rules:
-      - Look for explicit IDs such as: PT7, PT12, participant-15, participant_9, p23, user_7, user-42
-      - Normalize examples:
-        - "Participant PT003" → pt003
-        - "User 07" → pt007
-      - If only a human name appears (e.g., "Participant: John"), treat as no ID found.
-      - Fallback when no ID is found:
-        - Build participant_YYYYMMDDHHmmss (UTC) from the first date/time found in the text.
-        - If only a date (no time) is found, append 000000.
-        - If no date/time is found at all, use participant_00000000000000.
-
-      Output Rules:
-      - Produce: 03-fieldwork/participant-PARTICIPANT_ID/coding-data/
-      - Return ONLY the path as one line
-      - Example: 03-fieldwork/participant-pt003/coding-data/
-
 output_template: |
   {{ai_generated.transcript_coding_markdown}}
 
-# Output template with coding results
-output_templates: |
-  # {{auto_detected_participant_id}} Coded Transcript Analysis
-  
-  **Study:** {{auto_detected_study_name}}  
-  **Participant:** {{auto_detected_participant_id}}  
-  **Date:** {{auto_detected_date}}  
-  **Source:** {{transcript_source}}  
-  **Analysis:** AI-coded + PII redacted
-
-  ---
-
-  ## 🔴 Pain Points ({{pain_points_count}})
-
-  {{#each pain_points}}
-  **{{severity}} - {{title}}**
-  - *Issue:* {{description}}
-  - *Quote:* "{{supporting_quote}}"
-  - *Timestamp:* {{timestamp}}
-  {{/each}}
-
-  {{#if (eq pain_points_count 0)}}
-  *No pain points were identified in this session.*
-  {{/if}}
-
-  ---
-
-  ## 🟡 Opportunities ({{opportunities_count}})
-
-  {{#each opportunities}}
-  **{{impact_level}} - {{title}}**
-  - *Opportunity:* {{description}}
-  - *Quote:* "{{supporting_quote}}"
-  - *Timestamp:* {{timestamp}}
-  {{/each}}
-
-  {{#if (eq opportunities_count 0)}}
-  *No opportunities were identified in this session.*
-  {{/if}}
-
-  ---
-
-  ## 💡 Key Insights ({{insights_count}})
-
-  {{#each insights}}
-  **{{insight_type}} - {{title}}**
-  - *Insight:* {{description}}
-  - *Quote:* "{{supporting_quote}}"
-  - *Timestamp:* {{timestamp}}
-  {{/each}}
-
-  {{#if (eq insights_count 0)}}
-  *No key insights were identified in this session.*
-  {{/if}}
-
-  ---
-
-  ## 🟢 Positive Feedback ({{positive_feedback_count}})
-
-  {{#each positive_feedback}}
-  **{{title}}**
-  - *What worked:* {{description}}
-  - *Quote:* "{{supporting_quote}}"
-  - *Timestamp:* {{timestamp}}
-  {{/each}}
-
-  {{#if (eq positive_feedback_count 0)}}
-  *No positive feedback was identified in this session.*
-  {{/if}}
-
-  ---
-
-  ## ✨ Feature Requests ({{feature_requests_count}})
-
-  {{#each feature_requests}}
-  **{{priority_level}} - {{title}}**
-  - *Request:* {{description}}
-  - *Quote:* "{{supporting_quote}}"
-  - *Timestamp:* {{timestamp}}
-  {{/each}}
-
-  {{#if (eq feature_requests_count 0)}}
-  *No feature requests were identified in this session.*
-  {{/if}}
-
-  ---
-
-  ## ⚠️ Usability Issues ({{usability_issues_count}})
-
-  {{#each usability_issues}}
-  **{{severity}} - {{title}}**
-  - *Issue:* {{description}}
-  - *Quote:* "{{supporting_quote}}"
-  - *Timestamp:* {{timestamp}}
-  {{/each}}
-
-  {{#if (eq usability_issues_count 0)}}
-  *No usability issues were identified in this session.*
-  {{/if}}
-
-  ---
-
-  ## 😊 Emotional Journey
-
-  {{#each emotions}}
-  **{{emotion_type}}** ({{timestamp}})
-  - *Context:* {{description}}
-  - *Quote:* "{{supporting_quote}}"
-  {{/each}}
-
-  {{#if (eq emotions_count 0)}}
-  *No notable emotional reactions were identified in this session.*
-  {{/if}}
-
-  ---
-
-  ## 📊 Coding Summary
-
-  - **Total Codes:** {{total_codes_found}}
-  - **High-Confidence Codes:** {{high_confidence_codes}}
-  - **Flagged for Review:** {{flagged_codes}}
-  - **Processing Time:** {{processing_duration}}
-
-  *AI Coding Confidence: {{avg_confidence_score}}%*
-
-# File organization to existing folder structure
 output_options:
   filename: "{{ai_generated.transcript_coding_filename}}"
-  path: "{{ai_generated.transcript_coding_path}}"
-    
-  raw_transcript:
-    filename: "{{ai_generated.transcript_coding_filename_base}}-transcript.md"
-    path: "{{ai_generated.transcript_coding_path_transcripts}}"
-    
-  coding_export:
-    filename: "{{ai_generated.transcript_coding_filename_base}}-codes.csv"
-    path: "{{ai_generated.transcript_coding_path_coding_data}}"
-    format: "csv"
-    fields: ["code_type", "title", "description", "quote", "timestamp", "confidence"]
+  path: "03-fieldwork/coded-transcript-analysis/"
     
   delivery:
     github:
       enabled: true
-      commit_message: "📝 participant-{{auto_detected_participant_id}} coded analysis - {{total_codes_found}} insights identified"
+      commit_message: "📝 {{auto_detected_participant_id}} coded transcript analysis - {{total_codes_found}} insights identified"
       
     slack:
       enabled: true
@@ -824,20 +579,12 @@ output_options:
       actions:
         - text: "📖 View Coded Analysis"
           url: "{{github_coded_analysis_url}}"
-        - text: "📊 Export Codes (CSV)"
-          url: "{{coding_export_url}}"
 
-# Quality assurance
 quality_assurance:
   content_validation:
     min_content_length: 200
     verify_speaker_labels: true
     check_pii_redaction: true
-    
-  folder_validation:
-    verify_participant_folder_exists: true
-    check_subfolder_structure: true
-    expected_folders: ["coded-transcripts", "transcripts", "coding-data"]
     
   metadata_validation:
     verify_auto_detection_accuracy: true
@@ -861,7 +608,6 @@ quality_assurance:
     check_coding_coverage: true
     validate_insight_quality: true
 
-# Cross-session analysis support
 cross_session_analysis:
   pattern_detection:
     enabled: true
@@ -874,7 +620,6 @@ cross_session_analysis:
     weekly_synthesis: true
     pattern_alerts: true
 
-# Notifications
 notifications:
   upload_complete:
     message: |
@@ -885,8 +630,6 @@ notifications:
     actions:
       - text: "📖 Open Transcript"
         url: "{{github_transcript_url}}"
-      - text: "📊 View All Transcripts"
-        url: "{{study_transcripts_folder_url}}"
 
   coding_complete:
     message: |
@@ -905,12 +648,7 @@ notifications:
     actions:
       - text: "📖 Review Coded Analysis"
         url: "{{github_coded_analysis_url}}"
-      - text: "📊 Export All Codes"
-        url: "{{coding_export_url}}"
-      - text: "🔍 Compare with Other Participants"
-        url: "{{cross_session_analysis_url}}"
 
-# Error handling
 error_handling:
   file_too_large:
     message: "File size exceeds 15MB limit. Please compress or split the file."
@@ -919,11 +657,6 @@ error_handling:
   unsupported_format:
     message: "File format not supported. Please convert to .txt, .docx, .pdf, or .md"
     suggestion: "Most transcription services can export to these formats."
-    
-  participant_folder_not_found:
-    message: "Participant folder does not exist. Creating folder structure automatically."
-    suggestion: "Expected path: 03-fieldwork/participant-{{auto_detected_participant_id}}/"
-    action: "create_folder_structure"
     
   pii_detection_failed:
     message: "Unable to complete PII redaction. Manual review required."
@@ -938,7 +671,6 @@ error_handling:
     message: "Transcript quality may be low. Consider re-uploading with better source."
     action: "proceed_with_warning"
 
-# Analytics
 analytics:
   track_upload_method_preferences: true
   measure_processing_time: true
