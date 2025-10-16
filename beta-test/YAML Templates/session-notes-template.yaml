@@ -4,47 +4,39 @@ description: Convert Slack modal submissions to structured GitHub markdown files
 trigger_type: slack_modal_submission
 callback_id: session_notes_modal
 
-# External data sources
 external_data_sources:
   participant_tracker:
     file_path: "participant_tracker.yaml"
     endpoint: "/api/slack/options/sessions"
     cache_duration: "5 minutes"
     
-    # How to format dropdown options from participant tracker
     option_mapping:
-      value: "{{session_id}}"  # What gets submitted when selected
-      label: "{{session_id}} - {{participant_name}} ({{session_date}})"  # What user sees
-      description: "{{session_time}} | {{researcher}} | {{session_type}}"  # Additional context
+      value: "{{session_id}}"
+      label: "{{session_id}} - {{participant_name}} ({{session_date}})"
+      description: "{{session_time}} | {{researcher}} | {{session_type}}"
       
-    # Filter criteria for available sessions
     filters:
-      - status: "scheduled|in_progress|completed"  # Only show relevant sessions
-      - session_date: "within_7_days"  # Only recent/upcoming sessions
-      - has_observers: true  # Only sessions that allow observers
+      - status: "scheduled|in_progress|completed"
+      - session_date: "within_7_days"
+      - has_observers: true
       
-    # Fallback if participant tracker unavailable
     fallback:
       enabled: true
       fallback_to: "text_input"
       placeholder: "Enter session ID manually (e.g., P001-SessionA)"
 
-# GitHub configuration
 github:
   repository: "primary-research"
   branch: "main"
   base_path: "03-fieldwork/session-notes"
-  commit_message: "Session notes: {{selected_session}} by {{slack_user_display_name}}"
+  commit_message: "Session notes: {{participant_id}} by {{slack_user_display_name}}"
 
-# File naming convention
 filename:
-  pattern: "{{session_id}}_notes_{{user_name}}_{{date}}.md"
+  pattern: "{{user_name}}_notes_{{date}}.md"
   variables:
-    session_id: "{{selected_session}}"  # Session ID from dropdown selection
-    user_name: "{{slack_user_display_name | slugify}}"   # Slack user's display name, URL-safe
+    user_name: "{{slack_user_display_name | slugify}}"
     date: "{{submission_timestamp | format_date:'YYYY-MM-DD'}}"
 
-# Field mapping from Slack modal to markdown
 field_mapping:
   session_selection:
     block_id: "session_selection"
@@ -97,7 +89,6 @@ field_mapping:
     format_type: "preserve_line_breaks"
     optional: true
 
-# Markdown template structure with modern GitHub formatting
 output_template: |
   # Session Notes: {{selected_session}}
 
@@ -237,14 +228,13 @@ output_template: |
   | **Session ID** | {{selected_session}} |
   | **Note Taker** | {{user_name}} ({{slack_user_id}}) |
   | **Submission Date** | {{current_date}} |
-  | **GitHub Path** | `03-fieldwork/session-notes/{{filename}}` |
+  | **GitHub Path** | `03-fieldwork/session-notes/{{participant_id}}/{{filename}}` |
   | **Submission Method** | Slack Modal |
 
   ---
 
   <sub>*Generated automatically from Slack modal submission • Saved to primary-research repository*</sub>
 
-# Post-processing actions
 post_actions:
   slack_notification:
     enabled: true
@@ -264,7 +254,7 @@ post_actions:
         ✅ **Your session notes have been saved!**
         
         **File:** `{{filename}}`
-        **Location:** `03-fieldwork/session-notes/`
+        **Location:** `03-fieldwork/session-notes/{{participant_id}}/`
         
         📂 View your notes: {{github_file_url}}
         
@@ -272,15 +262,13 @@ post_actions:
 
   email_notification:
     enabled: false
-    # Could be configured for stakeholder notifications
     
   update_index:
     enabled: true
     index_file: "03-fieldwork/session-notes/README.md"
     append_entry: |
-      - [{{selected_session}}]({{filename}}) - {{slack_user_display_name}} - {{submission_date}}
+      - [{{selected_session}}]({{participant_id}}/{{filename}}) - {{slack_user_display_name}} - {{submission_date}}
 
-# Data validation rules
 validation:
   required_fields:
     - session_selection.selected_session
@@ -288,7 +276,7 @@ validation:
     - key_moments.moments
     
   field_limits:
-    selected_session: 200  # characters
+    selected_session: 200
     quotes: 5000
     emotions: 3000
     tasks: 3000
@@ -307,28 +295,24 @@ validation:
       message: "⚠️ There was an issue saving to GitHub. Your notes have been saved temporarily and the research team has been notified."
       fallback_action: "save_to_slack_thread"
 
-# Helper functions for data processing
 data_processing:
-  extract_session_id:
-    # Extract session ID from the beginning of session_info field
+  extract_participant_id:
     regex: "^([A-Za-z0-9_-]+)"
-    fallback: "unknown_session"
+    fallback: "unknown_participant"
     
   slugify:
-    # Convert display name to URL-safe string
     replace_spaces: "_"
     remove_special_chars: true
     lowercase: true
     max_length: 20
     
   format_timestamps:
-    timezone: "America/New_York"  # VA timezone
+    timezone: "America/New_York"
     formats:
       date: "YYYY-MM-DD"
       datetime: "MMMM DD, YYYY at HH:mm"
       iso: "YYYY-MM-DDTHH:mm:ssZ"
 
-  # NEW: Text formatting functions
   text_cleanup:
     normalize_whitespace:
       enabled: true
@@ -383,7 +367,6 @@ data_processing:
       time_ranges: "{start}-{end} minutes"
     standardize_timestamps: true
 
-# Field processing rules (ADD this new section)
 field_processing:
   quotes_reactions:
     apply_formatting: ["text_cleanup", "quote_formatting", "section_formatting"]
@@ -421,7 +404,6 @@ field_processing:
     apply_formatting: ["text_cleanup", "section_formatting"]
     auto_organize: true
 
-# Integration settings
 integration:
   qori:
     enabled: true
@@ -431,7 +413,7 @@ integration:
   github_api:
     enabled: true
     api_version: "2022-11-28"
-    create_pr: false  # Direct commit to main branch
+    create_pr: false
     
   slack_api:
     scopes_required:
@@ -439,10 +421,9 @@ integration:
       - "users:read"
       - "channels:read"
 
-# Output configuration
 output_options:
-  filename: "{{selected_session}}_notes_{{user_name}}_{{current_date}}.md"
-  path: "03-fieldwork/session-{{study_name}}/session-notes/"
+  filename: "{{user_name}}_notes_{{current_date}}.md"
+  path: "03-fieldwork/session-notes/{{participant_id}}/"
   generate_index: true
   index_filename: "README.md"
   
@@ -450,8 +431,8 @@ output_options:
     github:
       enabled: true
       repo: "primary-research"
-      path: "03-fieldwork/session-notes/"
-      commit_message: "Session notes: {{selected_session}} by {{slack_user_display_name}}"
+      path: "03-fieldwork/session-notes/{{participant_id}}/"
+      commit_message: "Session notes: {{participant_id}} by {{slack_user_display_name}}"
       
     slack:
       enabled: true
@@ -465,7 +446,7 @@ output_options:
         
         **Session:** {{selected_session}}
         **File:** `{{filename}}`
-        **Location:** `03-fieldwork/session-notes/`
+        **Location:** `03-fieldwork/session-notes/{{participant_id}}/`
         
         📂 View your notes: {{github_file_url}}
         
@@ -482,7 +463,6 @@ output_options:
           action_type: "url"
           url: "{{github_directory_url}}"
 
-# Workflow integration points
 workflow_integration:
   triggered_by:
     - "slack_modal_submission"
@@ -506,12 +486,12 @@ workflow_integration:
     
     participant_tracker:
       maps_to:
+        participant_id: "participant_id"
         participant_name: "participant_name"
         session_date: "session_date"
         session_time: "session_time"
         researcher: "researcher"
 
-# Notification routing
 notification_routing:
   primary_submitter: "{{slack_user_id}}"
   research_team: "#research-team"
