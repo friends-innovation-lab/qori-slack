@@ -8,7 +8,6 @@ author: Research Ops Team
 created: 2025-10-16
 last_updated: 2025-10-16
 
-# LLM Configuration
 llm_config:
   model: "claude-sonnet-4"
   temperature: 0.3
@@ -17,7 +16,6 @@ llm_config:
 input_type: coded_transcript
 input_processing: synthesize_and_summarize
 
-# Input variables
 input_variables:
   participant_id: "{{participant_id}}"
   coded_transcript_path: "{{coded_transcript_path}}"
@@ -27,7 +25,6 @@ input_variables:
   current_date: "{{current_date}}"
   analyzer: "{{analyzer}}"
 
-# AI generation tasks - synthesizing already-coded data
 ai_generation_tasks:
   
   - task_id: "top_pain_points"
@@ -139,8 +136,7 @@ output_template: |
   # 📋 Session Summary - {{participant_id}}
 
   **Study:** {{study_name}}  
-  **Date:** {{session_date}}  
-  **Coded Transcript:** [{{participant_id}}-coded-transcript-analysis.md](../coded-transcripts/{{participant_id}}-coded-transcript-analysis.md)
+  **Date:** {{session_date}}
 
   ---
 
@@ -275,3 +271,49 @@ notes: |
   - Includes opportunities and insights (not just pain points)
   - Central folder structure: 03-fieldwork/session-summaries/ (all summaries in one place)
   - Filename includes participant ID: pt005-session-summary-2025-10-16.md
+```
+
+---
+
+## Message to Your Developer:
+```
+Hi [Developer Name],
+
+I'm working on the session summary YAML configuration and ran into an issue with variable passing. 
+
+**Problem:**
+The generated output shows empty values for key variables:
+- `{{participant_id}}` → empty (title shows "Session Summary - ")
+- `{{session_date}}` → empty (shows "Date: ")  
+- `{{coded_transcript_content}}` → empty (AI is hallucinating generic content instead of using the actual coded transcript)
+
+**What I Need:**
+The session_summary.yaml file expects these variables to be passed when invoked:
+
+Required inputs:
+1. `participant_id` (e.g., "pt005")
+2. `session_date` (e.g., "2025-10-16")
+3. `coded_transcript_content` (full markdown content from the coded transcript file)
+4. `study_name` (e.g., "VA Mobile App Navigation Research")
+5. `coded_transcript_path` (file path to the coded transcript)
+6. `current_date` (today's date)
+7. `analyzer` (username of person running the summary)
+
+**Expected Flow:**
+1. User selects a coded transcript file (e.g., pt005-coded-transcript-analysis.md)
+2. System extracts participant_id from filename → "pt005"
+3. System reads the full file content → passes as `coded_transcript_content`
+4. System extracts session_date from the coded transcript metadata
+5. All variables get passed to the YAML template
+6. AI synthesizes the coded transcript into a summary
+7. Output saved as: pt005-session-summary-2025-10-16.md
+
+**Current Issue:**
+It appears the system isn't reading or passing these variables correctly. Can you check:
+- How is participant_id being extracted from the filename?
+- Is the coded transcript file content being read and passed as `coded_transcript_content`?
+- Is the session_date being extracted from the coded transcript's metadata?
+
+The YAML structure is correct - this appears to be an integration/variable-passing issue.
+
+Thanks!
