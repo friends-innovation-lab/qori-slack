@@ -1,151 +1,219 @@
-# STREAMLINED INTERVIEW SUMMARY - Simple Note Analysis
+id: session_summary
+name: generate_session_summary
+label: 📋 Generate Session Summary
+version: v3.0
+description: Generate concise session summary from coded transcript with top pain points, opportunities, insights, quotes, and action items
 
-id: analyze_notes
-name: analyze_session_notes
-label: 📝 Analyze Notes
-version: v2.0
-description: Generate quick summary with top pain points, quotes, and observations from session notes for easy team sharing
-
-author: CivicMind R&D
-created: 2025-08-11
-last_updated: 2025-08-12
+author: Research Ops Team
+created: 2025-10-16
+last_updated: 2025-10-16
 
 # LLM Configuration
 llm_config:
-  model: "gpt-4"
+  model: "claude-sonnet-4"
   temperature: 0.3
-  max_tokens: 2000
+  max_tokens: 3000
 
-input_type: structured
-input_processing: combine_and_analyze
+input_type: coded_transcript
+input_processing: synthesize_and_summarize
 
-# Simple inputs matching current Slack UI
+# Input variables
 input_variables:
-  study_folder: "{{study_folder}}"                   # Selected research study folder (e.g., "Benefits Portal Usability")
-  study_name: "{{study_name}}"                       # Display name of the study
-  selected_note_files: "{{selected_note_files}}"     # Array of selected note file paths
-  note_content: "{{note_content}}"                   # Combined content from all selected files
-  note_takers: "{{note_takers}}"                     # Auto-extracted from file names (jordan, sarah.m, mike.t)
-  participant_ids: "{{participant_ids}}"             # Auto-detected from file names (bp001, bp002, bp003)
-  current_date: "{{current_date}}"
-  analyzer: "{{analyzer}}"                           # User who ran the analysis
+  participant_id: "{{participant_id}}"                           # pt005
+  coded_transcript_path: "{{coded_transcript_path}}"             # Path to coded-transcript-analysis.md
+  coded_transcript_content: "{{coded_transcript_content}}"       # Full coded transcript markdown
+  session_date: "{{session_date}}"                               # 2025-10-16
+  study_name: "{{study_name}}"                                   # VA Mobile App Navigation Research
+  current_date: "{{current_date}}"                               # Date summary was generated
+  analyzer: "{{analyzer}}"                                       # User who generated summary
 
-# Simple AI generation tasks
+# AI generation tasks - synthesizing already-coded data
 ai_generation_tasks:
-  # Extract top 3 pain points
-  - task_id: "pain_points"
+  
+  # Extract top 3 pain points from coded transcript
+  - task_id: "top_pain_points"
     prompt: |
-      As a UX researcher, extract the TOP 3 most significant pain points from these session notes:
-
-      **Notes to analyze:**
-      {{note_content}}
-
+      You are creating a session summary from an already-coded research transcript.
+      
+      **Coded Transcript:**
+      {{coded_transcript_content}}
+      
+      From the Pain Points section, extract the TOP 3 most critical issues.
+      Use the EXACT severity levels and descriptions already provided in the coded transcript.
+      
       Requirements:
-      - Focus on the most impactful user problems
-      - Be specific and actionable
-      - Use clear, direct language
-      - Prioritize by user impact and frequency mentioned
+      - Select based on severity (Critical > High > Medium > Low)
+      - Use exact wording from the coded transcript
+      - Keep descriptions concise (1-2 sentences max)
+      
+      Format each as:
+      **[Severity] - [Title]**
+      [Description from coded transcript]
 
-      Format each as: **[Pain Point Category]:** [Specific description]
-
-  # Extract key quotes
-  - task_id: "key_quotes"
+  # Extract top 2-3 opportunities
+  - task_id: "key_opportunities"
     prompt: |
-      Extract 3-5 key participant quotes that best illustrate important insights:
-
-      **Notes:**
-      {{note_content}}
-
+      From the Opportunities section of the coded transcript, extract the TOP 2-3 opportunities.
+      
+      **Coded Transcript:**
+      {{coded_transcript_content}}
+      
       Requirements:
-      - Use exact participant words
-      - Choose quotes that show emotions, pain points, or key insights
-      - Include brief context for each quote
+      - Prioritize High Impact and Quick Win items
+      - Use exact titles and descriptions from coded transcript
+      - Keep descriptions concise
+      
+      Format each as:
+      **[Impact Level] - [Title]**
+      [Description from coded transcript]
+      
+      If there are no opportunities in the coded transcript, output: "*No opportunities were identified in this session.*"
 
-      Format as:
-      > *"[exact quote]"*
-      > 
-      > [Context: when/why this was said]
-
-  # Identify notable observations
-  - task_id: "observations"
+  # Extract top 2-3 insights
+  - task_id: "key_insights"
     prompt: |
-      Identify 3-4 notable observations about user behavior or patterns:
-
-      **Notes:**
-      {{note_content}}
-
+      From the Key Insights section of the coded transcript, extract the TOP 2-3 most revealing insights.
+      
+      **Coded Transcript:**
+      {{coded_transcript_content}}
+      
       Requirements:
-      - Focus on observable behaviors, not assumptions
-      - Include emotional responses and workflow patterns
-      - Keep observations actionable for design decisions
+      - Prioritize insights that reveal user behavior, mental models, or workflow patterns
+      - Use exact insight types and descriptions from coded transcript
+      - Keep descriptions concise
+      
+      Format each as:
+      **[Insight Type] - [Title]**
+      [Description from coded transcript]
+      
+      If there are no insights in the coded transcript, output: "*No key insights were identified in this session.*"
 
-      Format as: 🔸 [Specific observation]
+  # Extract top 3-5 quotes
+  - task_id: "top_quotes"
+    prompt: |
+      Extract 3-5 of the most impactful participant quotes from the coded transcript.
+      
+      **Coded Transcript:**
+      {{coded_transcript_content}}
+      
+      Requirements:
+      - Use EXACT quotes (verbatim) from the coded transcript
+      - Include timestamps
+      - Prioritize quotes that illustrate pain points, opportunities, or insights
+      - Choose quotes that are specific and revealing
+      
+      Format each as:
+      *"[Exact quote]"* [timestamp]
 
-  # Generate action items
+  # Generate action items based on coded findings
   - task_id: "action_items"
     prompt: |
-      Generate 2-3 quick action items the team should consider:
-
-      **Notes:**
-      {{note_content}}
-
+      Based on the coded transcript findings, generate 3-5 prioritized action items for the team.
+      
+      **Coded Transcript:**
+      {{coded_transcript_content}}
+      
       Requirements:
+      - Prioritize by severity/impact (Critical pain points → Quick wins → High impact opportunities)
       - Make actions specific and achievable
-      - Focus on addressing the main pain points
-      - Include mix of immediate and short-term actions
+      - Reference the specific pain points or opportunities
+      - Use action-oriented language
+      
+      Format each as:
+      - **[Priority Level]:** [Specific action item]
 
-      Format as: - [ ] [Specific action item]
+  # Generate summary statistics
+  - task_id: "summary_stats"
+    prompt: |
+      Extract the coding summary statistics from the coded transcript.
+      
+      **Coded Transcript:**
+      {{coded_transcript_content}}
+      
+      From the "Coding Summary" section, extract:
+      - Total codes found
+      - Pain points count
+      - Opportunities count
+      - Insights count
+      - Positive feedback count
+      - Usability issues count
+      
+      Format as:
+      **Total Codes:** [number] ([x] pain points, [y] opportunities, [z] insights, [n] positive feedback, [m] usability issues)
 
-# Simple output template
+# Output template
 output_template: |
-  # 📝 Session Summary - {{participant_ids}}
+  # 📋 Session Summary - {{participant_id}}
 
-  ## ⚠️ Top 3 Pain Points
+  **Study:** {{study_name}}  
+  **Date:** {{session_date}}  
+  **Coded Transcript:** [{{participant_id}}-coded-transcript-analysis.md](../coded-transcripts/{{participant_id}}-coded-transcript-analysis.md)
 
-  {{ai_generated.pain_points}}
+  ---
 
-  ## 💬 Key Quotes
+  ## 🔴 Top Pain Points
 
-  {{ai_generated.key_quotes}}
+  {{ai_generated.top_pain_points}}
 
-  ## 👀 Notable Observations
+  ---
 
-  {{ai_generated.observations}}
+  ## 🟡 Key Opportunities
 
-  ## ✅ Quick Action Items
+  {{ai_generated.key_opportunities}}
+
+  ---
+
+  ## 💡 Key Insights
+
+  {{ai_generated.key_insights}}
+
+  ---
+
+  ## 💬 Top Quotes
+
+  {{ai_generated.top_quotes}}
+
+  ---
+
+  ## ✅ Recommended Actions
 
   {{ai_generated.action_items}}
 
   ---
 
+  **📊 Analysis Overview:** {{ai_generated.summary_stats}}
+
 # Output configuration
 output_options:
-  filename: "{{participant_ids}}_{{study_folder}}_summary_{{current_date}}.md"
-  path: "03-fieldwork/summaries/"
+  filename: "{{participant_id}}-session-summary-{{session_date}}.md"
+  path: "03-fieldwork/session-summaries/"
   
-  # Simple delivery
+  # Delivery options
   delivery:
-    # Save to GitHub repository
+    # Save to GitHub
     github:
       enabled: true
-      repo: "primary-research"
-      path: "03-fieldwork/summaries/{{study_folder}}/"
-      commit_message: "Add {{study_name}} summary for {{participant_ids}} - {{current_date}}"
+      commit_message: "📋 {{participant_id}} session summary - {{session_date}}"
       
     # Share via Slack
     slack:
       enabled: true
       
-      # Send to analyzer first
+      # DM to analyzer first
       dm_notification:
         enabled: true
         target_user: "{{analyzer}}"
         message: |
-          ✅ *Summary Ready* - **{{participant_ids}}**
+          ✅ **Session Summary Ready** - {{participant_id}}
           
-          📂 *Study:* {{study_name}}
-          📁 *Analyzed:* {{selected_files_count}} note files
-          🕒 *Generated:* {{current_date}}
+          📂 **Study:** {{study_name}}
+          📅 **Session Date:** {{session_date}}
+          🕐 **Generated:** {{current_date}}
+          
+          Quick preview:
+          🔴 {{pain_points_count}} pain points identified
+          🟡 {{opportunities_count}} opportunities found
+          💡 {{insights_count}} key insights
           
           Ready to share with your team? 👇
         
@@ -153,58 +221,84 @@ output_options:
           - text: "📤 Share to Channel"
             style: "primary"
             action_id: "share_summary_to_channel"
-          - text: "📝 View Full Summary"
+          - text: "📖 View Full Summary"
             style: "default"
             url: "{{github_file_url}}"
-          - text: "🔄 Analyze More Notes"
+          - text: "🔍 View Coded Transcript"
             style: "default"
-            action_id: "analyze_notes_modal"
-
-# Slack formatting
-slack_formatting:
-  use_slack_markdown: true
-  max_channel_message_length: 2000
-  prefer_slack_emoji: true
-  chunk_long_lists: true
+            url: "{{coded_transcript_url}}"
 
 # Channel sharing (when user clicks "Share to Channel")
 sharing_workflow:
   channel_message: |
-    📝 **Session Summary** – {{participant_ids}}
+    📋 **Session Summary** — {{participant_id}}
     
-    **Study:** {{study_name}} | **Notes:** {{note_takers}}
+    **Study:** {{study_name}} | **Date:** {{session_date}}
     
-    **⚠️ Top Pain Points:**
-    {{#each top_pain_points}}
-    `{{@index}}.` {{this}}
-    {{/each}}
+    **🔴 Top Pain Point:**
+    {{top_pain_point_preview}}
     
-    **💬 Key Quote:**
-    > {{top_quote}}
+    **🟡 Top Opportunity:**
+    {{top_opportunity_preview}}
     
-    **✅ Action Items:**
-    {{#each priority_actions}}
-    🔸 {{this}}
-    {{/each}}
+    **💡 Key Insight:**
+    {{top_insight_preview}}
     
-    📎 [Full summary]({{github_file_url}})
+    📖 [Read full summary]({{github_summary_url}}) | 🔍 [View coded transcript]({{github_coded_transcript_url}})
   
   channel_actions:
     - text: "📖 Read Full Summary"
-      url: "{{github_file_url}}"
+      url: "{{github_summary_url}}"
+    - text: "🔍 View Coded Transcript"
+      url: "{{github_coded_transcript_url}}"
     - text: "💬 Start Discussion"
       action_id: "start_discussion_thread"
 
-# Simple processing rules
+# Processing rules
 processing_rules:
-  auto_detect_participant_ids: true  # Extract from file names (bp001, bp002, etc.)
-  combine_multiple_files: true       # Merge content when multiple files selected
-  auto_extract_note_takers: true     # Get from file names (jordan, sarah.m, etc.)
+  source_is_coded_transcript: true       # Pull from already-coded data
+  preserve_exact_quotes: true            # Use verbatim quotes from transcript
+  prioritize_by_severity: true           # Order by Critical > High > Medium > Low
+  link_to_coded_transcript: true         # Always include link to full analysis
   
 validation_rules:
-  minimum_content_length: 200
-  require_at_least_one_quote: true
-  require_at_least_two_pain_points: true
+  require_coded_transcript: true         # Must have coded transcript as input
+  minimum_pain_points: 1                 # Need at least 1 pain point
+  validate_quote_format: true            # Ensure quotes are verbatim
+  check_timestamp_presence: true         # Verify timestamps in quotes
+
+# Quality checks
+quality_assurance:
+  verify_quote_accuracy: true            # Quotes match coded transcript exactly
+  check_severity_labels: true            # Severity levels are preserved
+  validate_impact_levels: true           # Opportunity impact levels preserved
+  ensure_insight_types: true             # Insight types are preserved
+  cross_reference_codes: true            # Stats match coded transcript
 
 output_use: |
-  Quick session summary generator for research teams. Transforms raw session notes into shareable summaries with key pain points, quotes, and observations. Perfect for rapid insights and team communication.
+  Session summary generator that synthesizes already-coded research transcripts into concise, 
+  shareable summaries. Pulls top pain points, opportunities, insights, and quotes from coded 
+  analysis for quick team communication and decision-making.
+
+# Notes
+notes: |
+  Key Design Decisions:
+  - Pulls from coded transcript (not raw notes) to avoid re-analysis
+  - Preserves exact severity/impact labels from coding
+  - Uses verbatim quotes with timestamps
+  - Links to full coded transcript for details
+  - Prioritizes by severity/impact for action planning
+  - Includes opportunities and insights (not just pain points)
+  - Central folder structure: 03-fieldwork/session-summaries/ (all summaries in one place)
+  - Filename includes participant ID: pt005-session-summary-2025-10-16.md
+```
+
+Perfect! Now you'll have:
+```
+03-fieldwork/
+  session-summaries/
+    ├── pt005-session-summary-2025-10-16.md
+    ├── pt006-session-summary-2025-10-17.md
+    ├── pt007-session-summary-2025-10-18.md
+    ├── pt008-session-summary-2025-10-19.md
+    └── pt009-session-summary-2025-10-20.md
