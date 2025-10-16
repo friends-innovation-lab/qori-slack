@@ -435,7 +435,7 @@ ai_generation_tasks:
 
       ---
       **RENDER THIS EXACT MARKDOWN STRUCTURE (fill with values)**
-      # auto_detected_participant_id Session Analysis
+      # auto_detected_participant_id Coded Transcript Analysis
 
       **Study:** auto_detected_study_name  
       **Participant:** auto_detected_participant_id  
@@ -551,9 +551,9 @@ ai_generation_tasks:
         - If no date/time is found at all, use participant_00000000000000.
 
       Output Rules:
-      - Produce: PARTICIPANT_ID-coded-analysis.md (replace PARTICIPANT_ID with the detected/normalized id, in lowercase)
+      - Produce: PARTICIPANT_ID-coded-transcript-analysis.md (replace PARTICIPANT_ID with the detected/normalized id, in lowercase)
       - Return ONLY the filename as one line
-      - Example: pt003-coded-analysis.md
+      - Example: pt003-coded-transcript-analysis.md
 
   - task_id: "transcript_coding_path"
     prompt: |
@@ -577,9 +577,9 @@ ai_generation_tasks:
         - If no date/time is found at all, use participant_00000000000000.
 
       Output Rules:
-      - Produce: 03-fieldwork/participant-PARTICIPANT_ID/coded-transcripts/ (replace PARTICIPANT_ID with the detected/normalized id, in lowercase)
+      - Produce: 03-fieldwork/participant-PARTICIPANT_ID/coded-transcripts-analysis/ (replace PARTICIPANT_ID with the detected/normalized id, in lowercase)
       - Return ONLY the path as one line
-      - Example: 03-fieldwork/participant-pt003/coded-transcripts/
+      - Example: 03-fieldwork/participant-pt003/coded-transcripts-analysis/
 
   - task_id: "transcript_coding_filename_base"
     prompt: |
@@ -663,7 +663,7 @@ output_template: |
 
 # Output template with coding results
 output_templates: |
-  # {{auto_detected_participant_id}} Session Analysis
+  # {{auto_detected_participant_id}} Coded Transcript Analysis
   
   **Study:** {{auto_detected_study_name}}  
   **Participant:** {{auto_detected_participant_id}}  
