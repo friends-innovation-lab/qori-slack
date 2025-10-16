@@ -48,6 +48,11 @@ privacy_protection:
     enabled: true
     auto_detect: true
     
+    speaker_label_redaction:
+      enabled: true
+      replace_name_labels_with: "Speaker {{number}}"
+      auto_assign_speaker_numbers: true
+    
     patterns_to_redact:
       names: true
       email_addresses: true
@@ -106,17 +111,14 @@ ai_processing:
     remove_excessive_filler: false
     
     speaker_format_patterns:
-      - pattern: "Interviewer:|Moderator:|Researcher:"
-        standardize_to: "Interviewer:"
-      - pattern: "Participant:|User:|Respondent:|Interviewee:"
-        standardize_to: "Participant:"
-      - pattern: "Speaker 1:|Speaker1:|S1:"
-        standardize_to: "Interviewer:"
-      - pattern: "Speaker 2:|Speaker2:|S2:"
-        standardize_to: "Participant:"
+      - pattern: "Interviewer:|Moderator:|Researcher:|Speaker 1:|Speaker1:|S1:"
+        standardize_to: "Speaker 1:"
+      - pattern: "Participant:|User:|Respondent:|Interviewee:|Speaker 2:|Speaker2:|S2:"
+        standardize_to: "Speaker 2:"
       - pattern: "^[A-Z][a-z]+ [A-Z][a-z]*:"
-        standardize_to: "{{detected_role}}:"
+        standardize_to: "Speaker {{auto_number}}:"
         pii_redaction_required: true
+        auto_number_speakers: true
     
   research_formatting:
     paragraph_breaks_by_speaker: true
@@ -194,7 +196,7 @@ file_processing:
     speaker_diarization_preservation: true
     filename_analysis: true
     
-# AI Contentai_generation_tasks:
+# AI Content Generation Tasks
 ai_generation_tasks:
   - task_id: "transcript_coding_markdown"
     prompt: |
@@ -232,9 +234,9 @@ ai_generation_tasks:
       - Redact inside quotes and speaker labels; preserve timestamps if present
 
       **Speaker Normalization**
-      - Map Interviewer/Moderator/Researcher/Speaker 1/S1 → Interviewer:
-      - Map Participant/User/Respondent/Speaker 2/S2 → Participant:
-      - If a real name appears as a label, convert to the role and ensure it is redacted
+      - Map Interviewer/Moderator/Researcher/Speaker 1/S1 → Speaker 1:
+      - Map Participant/User/Respondent/Interviewee/Speaker 2/S2 → Speaker 2:
+      - If a real name appears as a speaker label (e.g., "John:"), convert to the appropriate Speaker number and ensure the name is redacted
       - Preserve existing timestamps (e.g., 00:12:31.450). Do not invent timestamps
       - Keep fillers; structure as paragraphs per speaker
 
@@ -248,7 +250,7 @@ ai_generation_tasks:
       **AI Coding Rules (include items only if directly supported by verbatim quotes in the transcript)**
       - Confidence range: 0 to 1
       - Include items with confidence ≥ 0.75
-      - If 0.60–0.74, include them but they count toward “Flagged for Review”
+      - If 0.60–0.74, include them but they count toward "Flagged for Review"
       - If < 0.60, exclude
       - Each item must include a verbatim supporting_quote and a timestamp if available; if the transcript has no timestamps anywhere, set timestamp to an empty string
 
@@ -280,14 +282,19 @@ ai_generation_tasks:
       - high_confidence_codes: count of items with confidence ≥ 0.75
       - flagged_codes: count of items with confidence between 0.60 and 0.74
       - avg_confidence_score: integer percentage; mean confidence of all included items × 100, rounded; if no items, return 0
-      - processing_duration: output “unknown”
+      - processing_duration: output "unknown"
+
+      **Empty Section Handling**
+      - If feature_requests array is empty, output: "*No feature requests were identified in this session.*"
+      - If usability_issues array is empty, output: "*No usability issues were identified in this session.*"
+      - For other empty sections, output: "*No [section name] identified in this session.*"
 
       ---
       **RENDER THIS EXACT MARKDOWN STRUCTURE (fill with values)**
       # auto_detected_participant_id Session Analysis
 
       **Study:** auto_detected_study_name  
-      **Session:** auto_detected_session_id  
+      **Participant:** auto_detected_participant_id  
       **Date:** auto_detected_date  
       **Source:** transcript_source  
       **Analysis:** AI-coded + PII redacted
@@ -301,6 +308,8 @@ ai_generation_tasks:
       - *Quote:* "supporting_quote"
       - *Timestamp:* timestamp
 
+      If pain_points is empty, output: *No pain points were identified in this session.*
+
       ---
 
       ## 🟡 Opportunities (opportunities_count)
@@ -309,6 +318,8 @@ ai_generation_tasks:
       - *Opportunity:* description
       - *Quote:* "supporting_quote"
       - *Timestamp:* timestamp
+
+      If opportunities is empty, output: *No opportunities were identified in this session.*
 
       ---
 
@@ -319,6 +330,8 @@ ai_generation_tasks:
       - *Quote:* "supporting_quote"
       - *Timestamp:* timestamp
 
+      If insights is empty, output: *No key insights were identified in this session.*
+
       ---
 
       ## 🟢 Positive Feedback (positive_feedback_count)
@@ -327,6 +340,8 @@ ai_generation_tasks:
       - *What worked:* description
       - *Quote:* "supporting_quote"
       - *Timestamp:* timestamp
+
+      If positive_feedback is empty, output: *No positive feedback was identified in this session.*
 
       ---
 
@@ -337,6 +352,8 @@ ai_generation_tasks:
       - *Quote:* "supporting_quote"
       - *Timestamp:* timestamp
 
+      If feature_requests is empty, output: *No feature requests were identified in this session.*
+
       ---
 
       ## ⚠️ Usability Issues (usability_issues_count)
@@ -346,6 +363,8 @@ ai_generation_tasks:
       - *Quote:* "supporting_quote"
       - *Timestamp:* timestamp
 
+      If usability_issues is empty, output: *No usability issues were identified in this session.*
+
       ---
 
       ## 😊 Emotional Journey
@@ -354,10 +373,7 @@ ai_generation_tasks:
       - *Context:* description
       - *Quote:* "supporting_quote"
 
-      ---
-
-      ## 📋 Full Transcript
-      processed_transcript_content
+      If emotions is empty, output: *No notable emotional reactions were identified in this session.*
 
       ---
 
@@ -395,17 +411,15 @@ ai_generation_tasks:
       - Return ONLY the filename as one line
       - Example: pt003-coded-analysis.md
 
-
 output_template: |
   {{ai_generated.transcript_coding_markdown}}
 
- 
 # Output template with coding results
 output_templates: |
   # {{auto_detected_participant_id}} Session Analysis
   
   **Study:** {{auto_detected_study_name}}  
-  **Session:** {{auto_detected_session_id}}  
+  **Participant:** {{auto_detected_participant_id}}  
   **Date:** {{auto_detected_date}}  
   **Source:** {{transcript_source}}  
   **Analysis:** AI-coded + PII redacted
@@ -421,6 +435,10 @@ output_templates: |
   - *Timestamp:* {{timestamp}}
   {{/each}}
 
+  {{#if (eq pain_points_count 0)}}
+  *No pain points were identified in this session.*
+  {{/if}}
+
   ---
 
   ## 🟡 Opportunities ({{opportunities_count}})
@@ -431,6 +449,10 @@ output_templates: |
   - *Quote:* "{{supporting_quote}}"
   - *Timestamp:* {{timestamp}}
   {{/each}}
+
+  {{#if (eq opportunities_count 0)}}
+  *No opportunities were identified in this session.*
+  {{/if}}
 
   ---
 
@@ -443,6 +465,10 @@ output_templates: |
   - *Timestamp:* {{timestamp}}
   {{/each}}
 
+  {{#if (eq insights_count 0)}}
+  *No key insights were identified in this session.*
+  {{/if}}
+
   ---
 
   ## 🟢 Positive Feedback ({{positive_feedback_count}})
@@ -453,6 +479,10 @@ output_templates: |
   - *Quote:* "{{supporting_quote}}"
   - *Timestamp:* {{timestamp}}
   {{/each}}
+
+  {{#if (eq positive_feedback_count 0)}}
+  *No positive feedback was identified in this session.*
+  {{/if}}
 
   ---
 
@@ -465,6 +495,10 @@ output_templates: |
   - *Timestamp:* {{timestamp}}
   {{/each}}
 
+  {{#if (eq feature_requests_count 0)}}
+  *No feature requests were identified in this session.*
+  {{/if}}
+
   ---
 
   ## ⚠️ Usability Issues ({{usability_issues_count}})
@@ -476,6 +510,10 @@ output_templates: |
   - *Timestamp:* {{timestamp}}
   {{/each}}
 
+  {{#if (eq usability_issues_count 0)}}
+  *No usability issues were identified in this session.*
+  {{/if}}
+
   ---
 
   ## 😊 Emotional Journey
@@ -486,11 +524,9 @@ output_templates: |
   - *Quote:* "{{supporting_quote}}"
   {{/each}}
 
-  ---
-
-  ## 📋 Full Transcript
-
-  {{processed_transcript_content}}
+  {{#if (eq emotions_count 0)}}
+  *No notable emotional reactions were identified in this session.*
+  {{/if}}
 
   ---
 
@@ -506,26 +542,22 @@ output_templates: |
 # File organization to existing folder structure
 output_options:
   filename: "{{ai_generated.transcript_coding_filename}}"
-  path: "03-fieldwork/session-{{study_name}}/coded-transcripts/"
-  # path: "{{ai_generated.transcript_coding_path}}"
-
-#   filename: "{{auto_detected_participant_id}}-coded-analysis.md"
-#   path: "03-fieldwork/{{auto_detected_session_id}}/coded-transcripts/"
+  path: "03-fieldwork/participant-{{auto_detected_participant_id}}/coded-transcripts/"
     
   raw_transcript:
     filename: "{{auto_detected_participant_id}}-transcript.md"
-    path: "research/{{auto_detected_study_name}}/primary-research/03-fieldwork/{{auto_detected_session_id}}/transcripts/"
+    path: "03-fieldwork/participant-{{auto_detected_participant_id}}/transcripts/"
     
   coding_export:
     filename: "{{auto_detected_participant_id}}-codes.csv"
-    path: "research/{{auto_detected_study_name}}/primary-research/03-fieldwork/{{auto_detected_session_id}}/coding-data/"
+    path: "03-fieldwork/participant-{{auto_detected_participant_id}}/coding-data/"
     format: "csv"
     fields: ["code_type", "title", "description", "quote", "timestamp", "confidence"]
     
   delivery:
     github:
       enabled: true
-      commit_message: "📝 {{auto_detected_study_name}}/{{auto_detected_session_id}}/{{auto_detected_participant_id}} coded analysis - {{total_codes_found}} insights identified"
+      commit_message: "📝 participant-{{auto_detected_participant_id}} coded analysis - {{total_codes_found}} insights identified"
       
     slack:
       enabled: true
@@ -533,7 +565,8 @@ output_options:
         🤖 **AI Coding Complete** for {{auto_detected_participant_id}}
         
         **Study:** {{auto_detected_study_name}} 
-        **Session:** {{auto_detected_session_id}}
+        **Participant:** {{auto_detected_participant_id}}
+        **Session Date:** {{auto_detected_date}}
         **Insights Found:** {{total_codes_found}} codes identified
         
         🔴 {{pain_points_count}} Pain Points
@@ -555,7 +588,7 @@ quality_assurance:
     check_pii_redaction: true
     
   folder_validation:
-    verify_session_folder_exists: true
+    verify_participant_folder_exists: true
     check_subfolder_structure: true
     expected_folders: ["coded-transcripts", "transcripts", "coding-data"]
     
@@ -605,7 +638,7 @@ notifications:
 
   coding_complete:
     message: |
-      🤖 **AI Coding Complete: {{auto_detected_study_name}}/{{auto_detected_session_id}}/{{auto_detected_participant_id}}**
+      🤖 **AI Coding Complete: {{auto_detected_study_name}}/{{auto_detected_participant_id}}**
       
       **{{total_codes_found}} insights automatically coded**
       
@@ -622,7 +655,7 @@ notifications:
         url: "{{github_coded_analysis_url}}"
       - text: "📊 Export All Codes"
         url: "{{coding_export_url}}"
-      - text: "🔍 Compare with Other Sessions"
+      - text: "🔍 Compare with Other Participants"
         url: "{{cross_session_analysis_url}}"
 
 # Error handling
@@ -635,17 +668,17 @@ error_handling:
     message: "File format not supported. Please convert to .txt, .docx, .pdf, or .md"
     suggestion: "Most transcription services can export to these formats."
     
-  session_folder_not_found:
-    message: "Session folder does not exist. Please create the session folder first."
-    suggestion: "Expected path: research/{{auto_detected_study_name}}/primary-research/03-fieldwork/{{auto_detected_session_id}}/"
-    action: "halt_processing"
+  participant_folder_not_found:
+    message: "Participant folder does not exist. Creating folder structure automatically."
+    suggestion: "Expected path: 03-fieldwork/participant-{{auto_detected_participant_id}}/"
+    action: "create_folder_structure"
     
   pii_detection_failed:
     message: "Unable to complete PII redaction. Manual review required."
     action: "flag_for_manual_review"
     
   metadata_extraction_failed:
-    message: "Could not auto-detect session information. Using fallback values."
+    message: "Could not auto-detect participant information. Using fallback values."
     action: "proceed_with_fallbacks"
     notification: "Please verify participant ID and session details in the generated file."
     
