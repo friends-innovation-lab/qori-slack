@@ -19,18 +19,17 @@ input_processing: synthesize_and_summarize
 
 # Input variables
 input_variables:
-  participant_id: "{{participant_id}}"                           # pt005
-  coded_transcript_path: "{{coded_transcript_path}}"             # Path to coded-transcript-analysis.md
-  coded_transcript_content: "{{coded_transcript_content}}"       # Full coded transcript markdown
-  session_date: "{{session_date}}"                               # 2025-10-16
-  study_name: "{{study_name}}"                                   # VA Mobile App Navigation Research
-  current_date: "{{current_date}}"                               # Date summary was generated
-  analyzer: "{{analyzer}}"                                       # User who generated summary
+  participant_id: "{{participant_id}}"
+  coded_transcript_path: "{{coded_transcript_path}}"
+  coded_transcript_content: "{{coded_transcript_content}}"
+  session_date: "{{session_date}}"
+  study_name: "{{study_name}}"
+  current_date: "{{current_date}}"
+  analyzer: "{{analyzer}}"
 
 # AI generation tasks - synthesizing already-coded data
 ai_generation_tasks:
   
-  # Extract top 3 pain points from coded transcript
   - task_id: "top_pain_points"
     prompt: |
       You are creating a session summary from an already-coded research transcript.
@@ -50,7 +49,6 @@ ai_generation_tasks:
       **[Severity] - [Title]**
       [Description from coded transcript]
 
-  # Extract top 2-3 opportunities
   - task_id: "key_opportunities"
     prompt: |
       From the Opportunities section of the coded transcript, extract the TOP 2-3 opportunities.
@@ -69,7 +67,6 @@ ai_generation_tasks:
       
       If there are no opportunities in the coded transcript, output: "*No opportunities were identified in this session.*"
 
-  # Extract top 2-3 insights
   - task_id: "key_insights"
     prompt: |
       From the Key Insights section of the coded transcript, extract the TOP 2-3 most revealing insights.
@@ -88,7 +85,6 @@ ai_generation_tasks:
       
       If there are no insights in the coded transcript, output: "*No key insights were identified in this session.*"
 
-  # Extract top 3-5 quotes
   - task_id: "top_quotes"
     prompt: |
       Extract 3-5 of the most impactful participant quotes from the coded transcript.
@@ -105,7 +101,6 @@ ai_generation_tasks:
       Format each as:
       *"[Exact quote]"* [timestamp]
 
-  # Generate action items based on coded findings
   - task_id: "action_items"
     prompt: |
       Based on the coded transcript findings, generate 3-5 prioritized action items for the team.
@@ -122,7 +117,6 @@ ai_generation_tasks:
       Format each as:
       - **[Priority Level]:** [Specific action item]
 
-  # Generate summary statistics
   - task_id: "summary_stats"
     prompt: |
       Extract the coding summary statistics from the coded transcript.
@@ -141,7 +135,6 @@ ai_generation_tasks:
       Format as:
       **Total Codes:** [number] ([x] pain points, [y] opportunities, [z] insights, [n] positive feedback, [m] usability issues)
 
-# Output template
 output_template: |
   # 📋 Session Summary - {{participant_id}}
 
@@ -183,23 +176,18 @@ output_template: |
 
   **📊 Analysis Overview:** {{ai_generated.summary_stats}}
 
-# Output configuration
 output_options:
   filename: "{{participant_id}}-session-summary-{{session_date}}.md"
   path: "03-fieldwork/session-summaries/"
   
-  # Delivery options
   delivery:
-    # Save to GitHub
     github:
       enabled: true
       commit_message: "📋 {{participant_id}} session summary - {{session_date}}"
       
-    # Share via Slack
     slack:
       enabled: true
       
-      # DM to analyzer first
       dm_notification:
         enabled: true
         target_user: "{{analyzer}}"
@@ -228,7 +216,6 @@ output_options:
             style: "default"
             url: "{{coded_transcript_url}}"
 
-# Channel sharing (when user clicks "Share to Channel")
 sharing_workflow:
   channel_message: |
     📋 **Session Summary** — {{participant_id}}
@@ -254,33 +241,30 @@ sharing_workflow:
     - text: "💬 Start Discussion"
       action_id: "start_discussion_thread"
 
-# Processing rules
 processing_rules:
-  source_is_coded_transcript: true       # Pull from already-coded data
-  preserve_exact_quotes: true            # Use verbatim quotes from transcript
-  prioritize_by_severity: true           # Order by Critical > High > Medium > Low
-  link_to_coded_transcript: true         # Always include link to full analysis
+  source_is_coded_transcript: true
+  preserve_exact_quotes: true
+  prioritize_by_severity: true
+  link_to_coded_transcript: true
   
 validation_rules:
-  require_coded_transcript: true         # Must have coded transcript as input
-  minimum_pain_points: 1                 # Need at least 1 pain point
-  validate_quote_format: true            # Ensure quotes are verbatim
-  check_timestamp_presence: true         # Verify timestamps in quotes
+  require_coded_transcript: true
+  minimum_pain_points: 1
+  validate_quote_format: true
+  check_timestamp_presence: true
 
-# Quality checks
 quality_assurance:
-  verify_quote_accuracy: true            # Quotes match coded transcript exactly
-  check_severity_labels: true            # Severity levels are preserved
-  validate_impact_levels: true           # Opportunity impact levels preserved
-  ensure_insight_types: true             # Insight types are preserved
-  cross_reference_codes: true            # Stats match coded transcript
+  verify_quote_accuracy: true
+  check_severity_labels: true
+  validate_impact_levels: true
+  ensure_insight_types: true
+  cross_reference_codes: true
 
 output_use: |
   Session summary generator that synthesizes already-coded research transcripts into concise, 
   shareable summaries. Pulls top pain points, opportunities, insights, and quotes from coded 
   analysis for quick team communication and decision-making.
 
-# Notes
 notes: |
   Key Design Decisions:
   - Pulls from coded transcript (not raw notes) to avoid re-analysis
@@ -291,14 +275,3 @@ notes: |
   - Includes opportunities and insights (not just pain points)
   - Central folder structure: 03-fieldwork/session-summaries/ (all summaries in one place)
   - Filename includes participant ID: pt005-session-summary-2025-10-16.md
-```
-
-Perfect! Now you'll have:
-```
-03-fieldwork/
-  session-summaries/
-    ├── pt005-session-summary-2025-10-16.md
-    ├── pt006-session-summary-2025-10-17.md
-    ├── pt007-session-summary-2025-10-18.md
-    ├── pt008-session-summary-2025-10-19.md
-    └── pt009-session-summary-2025-10-20.md
