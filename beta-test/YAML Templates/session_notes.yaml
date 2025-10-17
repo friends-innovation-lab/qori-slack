@@ -1,4 +1,4 @@
-id: session_notes_template
+id: session_notes
 label: "📝 Session Notes Generator"
 description: Convert Slack modal submissions to structured GitHub markdown files
 trigger_type: slack_modal_submission
