@@ -3,43 +3,129 @@ name: run_discussion_guide
 label: 💬 Discussion Guide
 version: v4.0
 
-# Simplified input variables
+# Input variables - these MUST match exactly what Slack UI collects
 input_variables:
-  - research_focus          
-  - research_questions      
-  - participants           
-  - testing_url           
-  - session_length        
+  - what_are_you_researching          # "What are you researching?"
+  - specific_questions                 # "What specific questions do you need answered?"
+  - who_are_your_participants         # "Who are your participants?"
+  - testing_url                        # "Testing URL (Optional)"
+  - session_length                     # "Session Length"        
 
-# Single AI task for everything
+# AI generation tasks
 ai_generation_tasks:
+  - task_id: "generate_study_name"
+    prompt: |
+      Based on this research focus, generate a concise, professional study name (max 10 words):
+      
+      Research Focus: {{what_are_you_researching}}
+      
+      Return only the study name, nothing else. Make it clear and descriptive.
+    output_variable: "generated_study_name"
+  
   - task_id: "generate_complete_guide"
     prompt: |
-      Create a complete discussion guide from:
+      You are an expert UX researcher creating a discussion guide. Generate a comprehensive, professional discussion guide based on:
       
-      Research Focus: {{research_focus}}
-      Research Questions: {{research_questions}}
-      Participants: {{participants}}
-      Session Length: {{session_length}} minutes
-      Testing URL: {{testing_url}}
+      **What are you researching:** {{what_are_you_researching}}
+      **Specific questions to answer:** {{specific_questions}}
+      **Participants:** {{who_are_your_participants}}
+      **Session Length:** {{session_length}} minutes
+      **Testing URL:** {{testing_url}}
       
-      Generate a clean, structured discussion guide with:
-      1. Study name (derived from research focus)
-      2. Session timing breakdown
-      3. 3-4 warm-up questions specific to participants
-      4. 2-4 tasks based on session length and research focus
-      5. Post-session interview questions
+      Create a complete discussion guide with these sections:
       
-      Format as clean markdown with proper headers and timing.
+      ## ⏱️ Session Timing Breakdown
+      Provide a detailed timing breakdown for a {{session_length}}-minute session:
+      - Introduction & consent (X minutes)
+      - Warm-up questions (X minutes)
+      - Main research tasks (X minutes)
+      - Post-task interview (X minutes)
+      - Closing & compensation (X minutes)
+      
+      ## 🎯 Research Objectives
+      Clearly state 3-5 specific objectives based on these research questions: {{specific_questions}}
+      
+      ## 👋 Introduction Script (X minutes)
+      Write a warm, professional introduction that:
+      - Thanks participant for their time
+      - Explains the purpose of the session (related to: {{what_are_you_researching}})
+      - Reviews consent and recording
+      - Sets expectations (no right/wrong answers, think-aloud encouraged)
+      - Asks if they have questions before beginning
+      
+      ## 🗣️ Warm-up Questions (X minutes)
+      Create 3-5 warm-up questions that:
+      - Build rapport with the participant
+      - Are directly relevant to: {{who_are_your_participants}}
+      - Ease into the research topic naturally
+      - Help understand participant's background/context
+      
+      ## 🎯 Main Research Tasks (X minutes)
+      Design 2-4 usability tasks based on "{{what_are_you_researching}}" and these specific questions: {{specific_questions}}
+      
+      For each task include:
+      
+      **Task [#]: [Clear task name]** (X minutes)
+      - **Scenario:** [Realistic scenario that contextualizes the task]
+      - **Task instruction:** [Clear, specific instruction to the participant]
+      - **Success criteria:** [What successful completion looks like]
+      - **Things to observe:**
+        - [Specific behavior or reaction to watch for]
+        - [Pain points or confusion areas]
+        - [Navigation patterns]
+      - **Follow-up questions:**
+        - [2-3 probing questions about their experience]
+      
+      {% if testing_url %}
+      **Testing URL:** {{testing_url}}
+      {% endif %}
+      
+      ## 💭 Post-Session Interview (X minutes)
+      Create 6-8 follow-up questions that:
+      - Explore overall impressions
+      - Dig into pain points observed
+      - Ask about expectations vs. reality
+      - Understand mental models
+      - Gather suggestions for improvement
+      - Include: "On a scale of 1-10, how likely would you be to recommend [product/service]? Why?"
+      
+      ## 🎁 Closing (X minutes)
+      Include a brief closing script that:
+      - Thanks participant warmly
+      - Explains next steps (compensation, how research will be used)
+      - Asks if they have final questions
+      - Provides contact information for follow-up
+      
+      ## 📝 Observer Notes Template
+      Provide a structured template for note-taking:
+      - Key quotes (verbatim)
+      - Usability issues (severity: high/medium/low)
+      - Behavioral observations
+      - Positive reactions
+      - Feature requests/suggestions
+      - Technical issues
+      
+      ## 🎯 Research Synthesis Prompts
+      Include 3-5 questions researchers should ask themselves after sessions:
+      - What patterns are emerging?
+      - What surprised us?
+      - What needs deeper investigation?
+      
+      ---
+      
+      Format everything as clean, professional markdown with proper headers, bullet points, and timing indicators.
+      Use emojis sparingly and professionally.
+      Be specific and actionable.
+      Return ONLY the markdown content for these sections, no additional commentary or meta-text.
+    output_variable: "generated_complete_guide"
 
-# Clean, minimal output template
+# Output template - generates the .md file
 output_template: |
   # 💬 Discussion Guide — {{generated_study_name}}
 
   **Duration:** {{session_length}} minutes  
-  **Participants:** {{participants}}  
+  **Participants:** {{who_are_your_participants}}  
   **Date:** {{current_date}}
-
   {% if testing_url %}
   **Testing URL:** {{testing_url}}
   {% endif %}
@@ -50,12 +136,21 @@ output_template: |
 
   **Technical Issues:**
   - Have backup meeting link ready
-  - Contact technical support if needed
+  - Screen share troubleshooting: Check browser permissions, try different browser
+  - Contact technical support: [Add contact info]
+  - Have phone number as backup
 
   **Participant Distress:**
-  - Pause session and check comfort level
-  - Remind about voluntary participation
-  - VA Crisis Line: 988, Press 1
+  - Pause session immediately and check comfort level
+  - Remind participant of voluntary participation - they can stop at any time
+  - Remind them there are no wrong answers
+  - For veterans: VA Crisis Line: 988, Press 1 (24/7 support)
+  - Have list of relevant support resources ready
+
+  **Data/Privacy Concerns:**
+  - Reassure about data handling and anonymization
+  - Review consent form if needed
+  - Stop recording if requested
 
   ---
 
@@ -63,9 +158,32 @@ output_template: |
 
   ---
 
-  **Generated:** {{current_date}}
+  ## 📋 Appendix
 
-# Simple delivery
+  **Materials Needed:**
+  - [ ] Recording software ready and tested
+  - [ ] Screen sharing tested
+  - [ ] Prototype/product accessible
+  - [ ] Consent form signed
+  - [ ] Compensation ready ($X gift card/payment)
+  - [ ] Backup facilitator available (if applicable)
+
+  **Post-Session Checklist:**
+  - [ ] Save and backup recording
+  - [ ] Transfer notes to research repository
+  - [ ] Send thank you email
+  - [ ] Process compensation within 24 hours
+  - [ ] Update participant tracker
+  - [ ] Schedule debrief with team (if applicable)
+
+  ---
+
+  **Generated:** {{current_date}}  
+  **Version:** v4.0
+
+# Output options - saves as .md file
 output_options:
   filename: "discussion_guide_{{current_date}}.md"
   path: "01-planning/"
+  process_template: true
+  file_format: "markdown"
