@@ -46,31 +46,18 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 **Session Observer Assignments:**
 
-| Session | Date/Time | Observers | Capacity | Pending Requests |
-|---------|-----------|-----------|----------|------------------|
+| Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
+|---------|-----------|-----------|----------|------------------|-----------------|
+| PT001 | TBD | tamara (🏛️ Stakeholder) | 1/3 | 0 | ✅ Sent |
+| PT002 | TBD | tamara (🏛️ Stakeholder) | 1/3 | 0 | ✅ Sent |
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker |  |  |
-| 👁️ Silent Observer |  |  |
-| 📊 PM Observer |  |  |
-| 🏛️ Stakeholder |  |  |
-
-**Observer Guidelines:** 
-- Review session plan before observing
-- Stay muted unless emergency
-- Take notes without interrupting
-- Share feedback after session
-
-{% if triggered_by_observer_request %}
-**🔄 Observer Updates:**
-- ✅  approved for  as 
-- 📤 Send observer guidelines to 
-- 📅 Add  to  calendar invite
-- 🔄 Update session capacity tracking
-{% endif %}
-
+| 📝 Note-taker | 0 | - |
+| 👁️ Silent Observer | 0 | - |
+| 📊 PM Observer | 0 | - |
+| 🏛️ Stakeholder | 2 | PT001, PT002 |
 ---
 
 ## 📝 Accessibility & Accommodations
