@@ -48,14 +48,14 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 | Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
 |---------|-----------|-----------|----------|------------------|-----------------|
-| PT001 | TBD | tanzeelsaleem10 (👁️ Silent Observer) | 1/3 | 0 | ✅ Sent |
+| PT001 | TBD | tamara (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
 | PT002 | TBD | tanzeelsaleem10 (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker | 1 | PT002 |
-| 👁️ Silent Observer | 1 | PT001 |
+| 📝 Note-taker | 2 | PT001, PT002 |
+| 👁️ Silent Observer | 0 | - |
 | 📊 PM Observer | 0 | - |
 | 🏛️ Stakeholder | 0 | - |
 ---
