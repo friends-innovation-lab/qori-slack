@@ -32,7 +32,7 @@ github:
   commit_message: "Session notes: {{participant_id}} by {{slack_user_display_name}}"
 
 filename:
-  pattern: "{{user_name}}_notes_{{date}}.md"
+  pattern: "{{user_name}}_session-notes_{{date}}.md"
   variables:
     user_name: "{{slack_user_display_name | slugify}}"
     date: "{{submission_timestamp | format_date:'YYYY-MM-DD'}}"
@@ -49,51 +49,294 @@ field_mapping:
     block_id: "quotes_reactions"
     action_id: "quotes"
     variable_name: "quotes"
-    format_type: "preserve_line_breaks"
+    preprocessing:
+      - transform: "detect_categories"
+        categories:
+          - pattern: "(?i)(positive|success|good|works well|helpful|logical)"
+            header: "### ✅ Positive Reactions"
+          - pattern: "(?i)(frustrat|annoyed|difficult|problem|issue|bad|broken)"
+            header: "### ⚠️ Frustration Points"
+          - pattern: "(?i)(confus|unclear|unsure|don't understand)"
+            header: "### 🤔 Confusion Moments"
+          - pattern: "(?i)(screen reader|voiceover|assistive|accessibility|a11y)"
+            header: "### 🎧 Screen Reader Perspective"
+          - pattern: "(?i)(learn|educate|explain|understand|know)"
+            header: "### 💡 User Education Insights"
+      - transform: "extract_quotes"
+        quote_chars: ['"', "'"]
+        output_format: "- > {quote}"
+        wrap_unquoted: true
+      - transform: "convert_to_bullets"
+        detect_sentences: true
+        min_sentence_length: 15
     
   emotional_moments:
     block_id: "emotional_moments"
     action_id: "emotions"
     variable_name: "emotions"
-    format_type: "preserve_line_breaks"
+    preprocessing:
+      - transform: "detect_timestamps"
+        patterns:
+          - "Minute (\\d+):"
+          - "Min (\\d+):"
+          - "(\\d+) min:"
+          - "At (\\d+):"
+        output_format: "**Minute {time}:**"
+      - transform: "detect_emotions"
+        emotion_keywords:
+          "😊": ["confident", "satisfied", "pleased", "happy", "brightened", "positive"]
+          "😤": ["frustrated", "annoyed", "irritated", "angry"]
+          "😟": ["concerned", "worried", "anxious", "uncertain"]
+          "🤔": ["confused", "uncertain", "puzzled", "questioning"]
+          "💪": ["determined", "persistent", "resilient"]
+          "👨‍🏫": ["educational", "instructive", "explaining", "teaching"]
+          "✅": ["professional", "calm", "composed", "constructive"]
+        insert_after_timestamp: true
+      - transform: "split_into_bullets"
+        split_by: "\\. "
+        prefix: "- "
+        group_by_timestamp: true
     
   task_observations:
     block_id: "task_observations"
     action_id: "tasks"
     variable_name: "tasks"
-    format_type: "preserve_line_breaks"
+    preprocessing:
+      - transform: "detect_tasks"
+        patterns:
+          - "Task (\\d+):\\s*(.+?)(?=Task \\d+:|$)"
+        output_format: "### Task {number}: {name}"
+      - transform: "detect_status"
+        status_map:
+          "✅": ["completed", "success", "done", "finished", "✅"]
+          "⚠️": ["partial", "incomplete", "some issues", "⚠️"]
+          "❌": ["failed", "unable", "couldn't", "error", "❌"]
+        append_to_header: true
+        include_duration: true
+        duration_pattern: "(\\d+)\\s*(?:minutes?|mins?)"
+      - transform: "extract_task_details"
+        detail_keywords:
+          "Mental Model": ["expected", "anticipated", "assumed", "thought"]
+          "Navigation Pattern": ["navigated", "explored", "searched", "moved through"]
+          "Success Factors": ["success", "worked well", "effective", "clear"]
+          "Barriers": ["barrier", "issue", "problem", "difficulty", "obstacle"]
+          "User Experience": ["experience", "felt", "perception", "reaction"]
+          "Time Impact": ["took", "time", "duration", "slower", "longer"]
+        output_format: "- **{keyword}:** {content}"
     
   technical_issues:
     block_id: "technical_issues"
     action_id: "tech_issues"
     variable_name: "tech_issues"
-    format_type: "preserve_line_breaks"
+    preprocessing:
+      - transform: "add_callout"
+        callout_type: "WARNING"
+        callout_title: "Technical Barriers Observed"
+      - transform: "detect_categories"
+        categories:
+          - pattern: "(?i)(voiceover.+(?:success|work|correct|proper))"
+            header: "### ✅ VoiceOver Integration Successes"
+          - pattern: "(?i)(voiceover.+(?:fail|issue|problem|broken))"
+            header: "### ❌ Critical VoiceOver Failures"
+          - pattern: "(?i)(navigation|menu|hierarchy)"
+            header: "### 🗺️ Navigation Structure Issues"
+          - pattern: "(?i)(ios|accessibility protocol|compliance)"
+            header: "### 📱 iOS Accessibility Protocol Compliance"
+      - transform: "convert_to_bullets"
+        detect_sentences: true
+        preserve_timestamps: true
+        format: "- {content}"
     
   accessibility_notes:
     block_id: "accessibility_notes"
     action_id: "accessibility"
     variable_name: "accessibility"
-    format_type: "preserve_line_breaks"
     optional: true
+    preprocessing:
+      - transform: "add_callout"
+        callout_type: "IMPORTANT"
+        callout_title: "Accessibility Insights"
+      - transform: "detect_categories"
+        categories:
+          - pattern: "(?i)(success|work|correct|proper|good).+(screen reader|voiceover|accessibility)"
+            header: "### ✅ Successful Screen Reader Accommodations"
+          - pattern: "(?i)(fail|issue|problem|critical|barrier).+(accessibility|screen reader)"
+            header: "### ❌ Critical Accommodation Failures"
+          - pattern: "(?i)(strategy|adapt|workaround|approach)"
+            header: "### 🔄 User Adaptation Strategies"
+          - pattern: "(?i)(pattern|behavior|need|require|prefer)"
+            header: "### 👤 Screen Reader User Experience Patterns"
+      - transform: "convert_to_bullets"
+        detect_sentences: true
+        format: "- {content}"
     
   key_moments:
     block_id: "key_moments"
     action_id: "moments"
     variable_name: "moments"
-    format_type: "preserve_line_breaks"
+    preprocessing:
+      - transform: "detect_numbered_items"
+        patterns:
+          - "^(\\d+)[\\.)\\s]+"
+          - "^Moment (\\d+)"
+        output_format: "### {number}. "
+      - transform: "extract_title_and_timestamp"
+        timestamp_pattern: "\\(Minute (\\d+)\\)"
+        append_timestamp: true
+      - transform: "add_importance_badge"
+        importance_keywords:
+          "🚨 Critical": ["critical", "fundamental", "major", "serious"]
+          "⚠️ Significant": ["significant", "important", "notable"]
+          "✅ Positive": ["positive", "success", "good", "effective"]
+        append_to_title: true
+      - transform: "structure_moment_sections"
+        section_keywords:
+          "Context": ["encountered", "happened", "observed", "found"]
+          "Impact": ["reaction", "showed", "highlighted", "demonstrated", "frustration", "satisfaction"]
+          "Implications": ["demonstrates", "shows", "indicates", "suggests", "means", "requires"]
+        output_format: "**{section}:**\n{content}\n"
     
   additional_notes:
     block_id: "additional_notes"
     action_id: "notes"
     variable_name: "additional"
-    format_type: "preserve_line_breaks"
     optional: true
+    preprocessing:
+      - transform: "detect_categories"
+        categories:
+          - pattern: "(?i)(background|expertise|experience|veteran|years)"
+            header: "### 👤 User Expertise Level"
+          - pattern: "(?i)(navigation|pattern|approach|method|systematic)"
+            header: "### 🎯 Screen Reader Navigation Patterns"
+          - pattern: "(?i)(implication|impact|effect|outcome)"
+            header: "### 💡 User Experience Implications"
+          - pattern: "(?i)(research|value|insight|finding|evidence)"
+            header: "### 📊 Research Value"
+          - pattern: "(?i)(dynamic|session|interaction|demeanor)"
+            header: "### 🎭 Session Dynamics"
+      - transform: "convert_to_bullets"
+        detect_sentences: true
+        format: "- {content}"
+
+# Text transformation definitions
+text_transformations:
+  
+  detect_categories:
+    description: "Automatically detect and organize content by categories"
+    logic: |
+      1. Scan input text for category keywords/patterns
+      2. Split text into sections based on matches
+      3. Add category headers with icons
+      4. Group related content under each header
+    
+  extract_quotes:
+    description: "Extract quoted text and format as blockquotes"
+    logic: |
+      1. Find text enclosed in quote marks (" or ')
+      2. Format each as markdown blockquote with bullet
+      3. If text has no quotes, treat sentences as implicit quotes
+      4. Output: - > "quote text"
+    
+  convert_to_bullets:
+    description: "Convert prose into bulleted lists"
+    logic: |
+      1. Split text into sentences (by period, line break)
+      2. Filter out sentences shorter than min_sentence_length
+      3. Add bullet prefix (- ) to each sentence
+      4. Preserve existing structure (timestamps, categories)
+    
+  detect_timestamps:
+    description: "Find and format timestamp references"
+    logic: |
+      1. Search for patterns like "Minute X:" or "X min:"
+      2. Normalize to standard format: **Minute X:**
+      3. Use as grouping anchor for subsequent content
+    
+  detect_emotions:
+    description: "Identify emotional keywords and add emoji indicators"
+    logic: |
+      1. Scan for emotion keywords (frustrated, satisfied, etc.)
+      2. Map to appropriate emoji
+      3. Insert emoji after timestamp marker
+      4. Format: **Minute X:** 😊 Emotional description
+    
+  split_into_bullets:
+    description: "Split content into bullet points"
+    logic: |
+      1. Split by sentence terminators (. ! ?)
+      2. Group related sentences if under same timestamp
+      3. Add dash-space prefix to each bullet
+      4. Nest under timestamp headers
+    
+  detect_tasks:
+    description: "Identify task entries and structure them"
+    logic: |
+      1. Find patterns like "Task 1:" or "Task: Name"
+      2. Extract task number and name
+      3. Create H3 header: ### Task X: Name
+      4. Group subsequent content under this task
+    
+  detect_status:
+    description: "Identify task completion status"
+    logic: |
+      1. Search for status keywords (completed, partial, failed)
+      2. Search for status icons (✅ ⚠️ ❌)
+      3. Map to standard icon
+      4. Extract duration if present (X minutes)
+      5. Append to task header: — ✅ Completed (X minutes)
+    
+  extract_task_details:
+    description: "Extract structured details from task descriptions"
+    logic: |
+      1. Scan for detail keywords (Mental Model, Navigation, etc.)
+      2. Extract content following each keyword
+      3. Format as bullets with bold labels
+      4. Output: - **Keyword:** content
+    
+  add_callout:
+    description: "Add GitHub-style callout/alert box"
+    logic: |
+      1. Prepend alert syntax: > [!TYPE]
+      2. Add title line: > **Title**
+      3. Insert blank line before content
+      4. Types: NOTE, TIP, IMPORTANT, WARNING, CAUTION
+    
+  detect_numbered_items:
+    description: "Find numbered list items and format consistently"
+    logic: |
+      1. Search for various numbering patterns (1., 1), (1))
+      2. Normalize to: ### 1. Title
+      3. Preserve original content under each number
+    
+  extract_title_and_timestamp:
+    description: "Separate moment title from timestamp"
+    logic: |
+      1. Find timestamp in parentheses (Minute X)
+      2. Extract as separate element
+      3. Append to title if requested
+      4. Format: ### 1. Title (Minute X)
+    
+  add_importance_badge:
+    description: "Add visual importance indicator to key moments"
+    logic: |
+      1. Analyze content for severity keywords
+      2. Assign badge: 🚨 Critical, ⚠️ Significant, ✅ Positive
+      3. Append to moment title
+      4. Format: ### 1. Title — 🚨 Critical
+    
+  structure_moment_sections:
+    description: "Break moment into Context/Impact/Implications sections"
+    logic: |
+      1. Analyze content for section indicators
+      2. Split into 3 parts if possible
+      3. Add bold section headers
+      4. Format each section with proper spacing
 
 output_template: |
   # Session Notes: {{selected_session}}
 
   📝 **Note Taker:** {{user_name}}  
-  📅 **Session Date:** {{session_date}} at {{session_time}}  
+  📅 **Session Date:** {{session_date}}
   👨‍🔬 **Researcher:** {{researcher}}  
   ⏰ **Submitted:** {{current_date}}
 
@@ -101,77 +344,46 @@ output_template: |
 
   ## 🗣️ Key Quotes & Reactions
 
-  {{#if quotes}}
-  {{quotes}}
-  {{else}}
-  > [!NOTE]
-  > *No quotes recorded for this session.*
-  {{/if}}
+  {{quotes | apply_preprocessing}}
 
   ---
 
   ## 😤 Emotional Moments & Body Language
 
-  {{#if emotions}}
-  {{emotions}}
-  {{else}}
-  > [!NOTE]
-  > *No emotional moments recorded for this session.*
-  {{/if}}
+  {{emotions | apply_preprocessing}}
 
   ---
 
   ## ✅ Task Completion & Errors
 
-  {{#if tasks}}
-  {{tasks}}
-  {{else}}
-  > [!NOTE]
-  > *No task observations recorded for this session.*
-  {{/if}}
+  {{tasks | apply_preprocessing}}
 
   ---
 
   ## 🛠 Technical Issues & Platform Problems
 
-  {{#if tech_issues}}
-  > [!WARNING]
-  > **Technical Barriers Observed**
-
-  {{tech_issues}}
-  {{else}}
-  > [!NOTE]
-  > *No technical issues reported for this session.*
-  {{/if}}
+  {{tech_issues | apply_preprocessing}}
 
   ---
 
   {{#if accessibility}}
   ## ♿ Accessibility & Accommodation Observations
 
-  > [!IMPORTANT]
-  > **Accessibility Insights**
-
-  {{accessibility}}
+  {{accessibility | apply_preprocessing}}
 
   ---
 
   {{/if}}
   ## ⭐ Top 3 Key Moments
 
-  {{#if moments}}
-  {{moments}}
-  {{else}}
-  > [!NOTE]
-  > *No key moments identified for this session.*
-  {{/if}}
+  {{moments | apply_preprocessing}}
 
   ---
 
   {{#if additional}}
   ## 📋 Additional Notes & Context
 
-  {{additional}}
+  {{additional | apply_preprocessing}}
 
   ---
 
@@ -215,15 +427,6 @@ post_actions:
         
         Thanks for contributing to our research! 🙏
 
-  email_notification:
-    enabled: false
-    
-  update_index:
-    enabled: true
-    index_file: "03-fieldwork/session-notes/README.md"
-    append_entry: |
-      - [{{selected_session}}]({{participant_id}}/{{filename}}) - {{slack_user_display_name}} - {{submission_date}}
-
 validation:
   required_fields:
     - session_selection.selected_session
@@ -239,176 +442,6 @@ validation:
     accessibility: 2000
     moments: 1500
     additional: 3000
-    
-  error_handling:
-    validation_failure:
-      response_type: "ephemeral"
-      message: "❌ Please fill in all required fields: Session Selection, Key Quotes, and Top 3 Key Moments."
-      
-    github_failure:
-      response_type: "ephemeral" 
-      message: "⚠️ There was an issue saving to GitHub. Your notes have been saved temporarily and the research team has been notified."
-      fallback_action: "save_to_slack_thread"
-
-data_processing:
-  extract_participant_id:
-    regex: "^([A-Za-z0-9_-]+)"
-    fallback: "unknown_participant"
-    
-  slugify:
-    replace_spaces: "_"
-    remove_special_chars: true
-    lowercase: true
-    max_length: 20
-    
-  format_timestamps:
-    timezone: "America/New_York"
-    formats:
-      date: "YYYY-MM-DD"
-      datetime: "MMMM DD, YYYY at HH:mm"
-      iso: "YYYY-MM-DDTHH:mm:ssZ"
-
-  text_cleanup:
-    normalize_whitespace:
-      enabled: true
-      trim_lines: true
-      collapse_multiple_spaces: true
-      remove_trailing_spaces: true
-      
-    punctuation_cleanup:
-      enabled: true
-      add_periods_to_sentences: true
-      fix_quote_spacing: true
-      normalize_dashes: true
-      fix_apostrophes: true
-      
-    paragraph_formatting:
-      enabled: true
-      double_line_breaks_to_paragraphs: true
-      minimum_paragraph_length: 10
-      max_consecutive_breaks: 2
-      
-  quote_formatting:
-    enabled: true
-    quote_indicators: ['"', "'", "said:", "commented:", "mentioned:"]
-    quote_format: '> "{content}"'
-    attribution_format: "> — {speaker}"
-    group_similar_quotes: true
-    add_bullets: true
-    
-  task_formatting:
-    enabled: true
-    task_indicators: ["task", "completed", "failed", "✅", "❌", "⏱️"]
-    standardize_status_icons:
-      completed: "✅"
-      failed: "❌"
-      in_progress: "⏳"
-      partial: "⚠️"
-    time_format: "{duration} minutes"
-    format_as_list: true
-    subitem_bullet: "-"
-    
-  section_formatting:
-    enabled: true
-    auto_generate_subheaders: true
-    format_as_bullets: true
-    subheader_patterns:
-      positive_reactions: ["positive", "liked", "appreciated", "good"]
-      frustration_points: ["frustrated", "annoyed", "difficult", "problem"]
-      technology_struggles: ["slow", "loading", "technical", "error"]
-      suggestions: ["recommend", "suggest", "improve", "should"]
-    
-  time_reference_formatting:
-    enabled: true
-    patterns:
-      minute_markers: "**Minute {number}:**"
-      duration_format: "{number} minutes"
-      time_ranges: "{start}-{end} minutes"
-    standardize_timestamps: true
-    format_as_list: true
-
-field_processing:
-  quotes_reactions:
-    apply_formatting: ["text_cleanup", "quote_formatting", "section_formatting"]
-    auto_categorize: true
-    output_format: "bulleted_by_category"
-    categories:
-      - name: "Positive Reactions"
-        icon: "✅"
-      - name: "Critical Pain Points"
-        icon: "⚠️"
-      - name: "Screen Reader Perspective"
-        icon: "🎧"
-      - name: "User Education Insights"
-        icon: "💡"
-      
-  emotional_moments:
-    apply_formatting: ["text_cleanup", "time_reference_formatting"]
-    output_format: "chronological_list"
-    emotion_indicators: ["frustrated", "pleased", "confused", "surprised", "angry", "satisfied"]
-    standardize_emotions: true
-    add_emotion_badges: true
-    
-  task_observations:
-    apply_formatting: ["text_cleanup", "task_formatting"]
-    auto_structure: true
-    output_format: "task_breakdown"
-    include_subsections: true
-    subsections:
-      - "Mental Model"
-      - "Navigation Pattern"
-      - "Success Factors / Barriers"
-      - "User Experience"
-      
-  technical_issues:
-    apply_formatting: ["text_cleanup", "section_formatting"]
-    output_format: "categorized_bullets"
-    issue_categories:
-      - name: "VoiceOver Integration Successes"
-        icon: "✅"
-      - name: "Critical VoiceOver Failures"
-        icon: "❌"
-      - name: "Navigation Structure Issues"
-        icon: "🗺️"
-      - name: "iOS Accessibility Protocol Compliance"
-        icon: "📱"
-      
-  accessibility_notes:
-    apply_formatting: ["text_cleanup", "section_formatting"]
-    output_format: "categorized_bullets"
-    categories:
-      - name: "Successful Screen Reader Accommodations"
-        icon: "✅"
-      - name: "Critical Accommodation Failures"
-        icon: "❌"
-      - name: "User Adaptation Strategies"
-        icon: "🔄"
-      - name: "Screen Reader User Experience Patterns"
-        icon: "👤"
-    
-  key_moments:
-    apply_formatting: ["text_cleanup", "time_reference_formatting"]
-    output_format: "numbered_moments"
-    include_timestamp: true
-    add_impact_badge: true
-    subsections:
-      - "Context"
-      - "Impact"
-      - "Implications"
-    
-  additional_notes:
-    apply_formatting: ["text_cleanup", "section_formatting"]
-    output_format: "categorized_bullets"
-    auto_organize: true
-    categories:
-      - name: "User Expertise Level"
-        icon: "👤"
-      - name: "Screen Reader Navigation Patterns"
-        icon: "🎯"
-      - name: "User Experience Implications"
-        icon: "💡"
-      - name: "Research Value"
-        icon: "📊"
 
 integration:
   qori:
@@ -426,84 +459,3 @@ integration:
       - "chat:write"
       - "users:read"
       - "channels:read"
-
-output_options:
-  filename: "{{user_name}}_notes_{{current_date}}.md"
-  path: "03-fieldwork/session-notes/{{participant_id}}/"
-  generate_index: true
-  index_filename: "README.md"
-  
-  delivery:
-    github:
-      enabled: true
-      repo: "primary-research"
-      path: "03-fieldwork/session-notes/{{participant_id}}/"
-      commit_message: "Session notes: {{participant_id}} by {{slack_user_display_name}}"
-      
-    slack:
-      enabled: true
-      send_dm: true
-      target_user: "{{slack_user_id}}"
-      include_copy_button: true
-      include_email_format: false
-      
-      message: |
-        📝 **Your session notes have been saved!**
-        
-        **Session:** {{selected_session}}
-        **File:** `{{filename}}`
-        **Location:** `03-fieldwork/session-notes/{{participant_id}}/`
-        
-        📂 View your notes: {{github_file_url}}
-        
-        Thanks for contributing to our research! 🙏
-      
-      actions:
-        - text: "📋 View Notes in GitHub"
-          style: "primary"
-          action_type: "url"
-          url: "{{github_file_url}}"
-          
-        - text: "📊 View All Session Notes"
-          style: "default"
-          action_type: "url"
-          url: "{{github_directory_url}}"
-
-workflow_integration:
-  triggered_by:
-    - "slack_modal_submission"
-    - "manual_note_submission"
-  
-  auto_triggers:
-    slack_modal_submission:
-      enabled: true
-      delay: "immediate"
-      conditions:
-        - "selected_session != null"
-        - "quotes != null"
-        - "moments != null"
-  
-  integration_data:
-    slack_modal:
-      maps_to:
-        selected_session: "session_dropdown_value"
-        slack_user_display_name: "user_display_name"
-        slack_user_id: "user_id"
-    
-    participant_tracker:
-      maps_to:
-        participant_id: "participant_id"
-        participant_name: "participant_name"
-        session_date: "session_date"
-        session_time: "session_time"
-        researcher: "researcher"
-
-notification_routing:
-  primary_submitter: "{{slack_user_id}}"
-  research_team: "#research-team"
-  researcher_copy: "{{researcher_slack_id}}"
-  
-  escalation:
-    processing_timeout: "30 seconds"
-    escalate_to: "#research-team"
-    escalation_message: "Session notes submission from {{slack_user_display_name}} failed to process for {{selected_session}}"
