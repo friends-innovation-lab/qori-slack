@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – VA Health Benefits Mobile
 
 **📊 Recruitment Summary**
-- **Total Participants:** 1
-- **Confirmed Sessions:** 1
+- **Total Participants:** 2
+- **Confirmed Sessions:** 2
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 52 | PT002 | email_outreach | 2025-10-30  | confirmed | Android user; works irregular hours so flexible timing needed |
 | 51 | PT001 | email_outreach | 2025-10-29  | confirmed | Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
 
 ---
@@ -22,15 +23,17 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 1 | 100% |
+| 📧 Email Outreach | 2 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
+Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 
@@ -73,6 +76,7 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 52: Android user; works irregular hours so flexible timing needed
 - 51: Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows
 
 **Preparation Checklist:**
@@ -91,19 +95,23 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| Asian | 1 | 100% |
+| White | 1 | 50% |
+| Asian | 1 | 50% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 45-54 | 1 | 100% |
+| 35-44 | 1 | 50% |
+| 45-54 | 1 | 50% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Bachelor's degree | 1 | 100% |
+| Some college | 1 | 50% |
+| Bachelor's degree | 1 | 50% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Urban | 1 | 100% |
+| Suburban | 1 | 50% |
+| Urban | 1 | 50% |
 
 ---
 
@@ -115,4 +123,4 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (2 more needed)
+Continue recruiting to reach minimum of 3 participants (1 more needed)
