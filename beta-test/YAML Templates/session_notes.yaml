@@ -92,19 +92,12 @@ field_mapping:
 output_template: |
   # Session Notes: {{selected_session}}
 
-  📝 **Note Taker:** {{user_name}}
-
-  📅 **Session Date:** {{session_date}} at {{session_time}}
-
-  👨‍🔬 **Researcher:** {{researcher}}
-
+  📝 **Note Taker:** {{user_name}}  
+  📅 **Session Date:** {{session_date}} at {{session_time}}  
+  👨‍🔬 **Researcher:** {{researcher}}  
   ⏰ **Submitted:** {{current_date}}
 
-  <br>
-
   ---
-
-  <br>
 
   ## 🗣️ Key Quotes & Reactions
 
@@ -115,31 +108,18 @@ output_template: |
   > *No quotes recorded for this session.*
   {{/if}}
 
-  <br>
-
   ---
-
-  <br>
 
   ## 😤 Emotional Moments & Body Language
 
   {{#if emotions}}
-  <details>
-  <summary><strong>📊 Emotional Journey Throughout Session</strong> <kbd>Click to expand</kbd></summary>
-
   {{emotions}}
-
-  </details>
   {{else}}
   > [!NOTE]
   > *No emotional moments recorded for this session.*
   {{/if}}
 
-  <br>
-
   ---
-
-  <br>
 
   ## ✅ Task Completion & Errors
 
@@ -150,11 +130,7 @@ output_template: |
   > *No task observations recorded for this session.*
   {{/if}}
 
-  <br>
-
   ---
-
-  <br>
 
   ## 🛠 Technical Issues & Platform Problems
 
@@ -168,11 +144,7 @@ output_template: |
   > *No technical issues reported for this session.*
   {{/if}}
 
-  <br>
-
   ---
-
-  <br>
 
   {{#if accessibility}}
   ## ♿ Accessibility & Accommodation Observations
@@ -182,11 +154,7 @@ output_template: |
 
   {{accessibility}}
 
-  <br>
-
   ---
-
-  <br>
 
   {{/if}}
   ## ⭐ Top 3 Key Moments
@@ -198,27 +166,14 @@ output_template: |
   > *No key moments identified for this session.*
   {{/if}}
 
-  <br>
-
   ---
-
-  <br>
 
   {{#if additional}}
   ## 📋 Additional Notes & Context
 
-  <details>
-  <summary><strong>Additional Context & Background</strong> <kbd>Click to expand</kbd></summary>
-
   {{additional}}
 
-  </details>
-
-  <br>
-
   ---
-
-  <br>
 
   {{/if}}
   ## 📊 Session Metadata
@@ -336,9 +291,10 @@ data_processing:
   quote_formatting:
     enabled: true
     quote_indicators: ['"', "'", "said:", "commented:", "mentioned:"]
-    quote_format: '"{content}"'
-    attribution_format: "- {speaker}"
+    quote_format: '> "{content}"'
+    attribution_format: "> — {speaker}"
     group_similar_quotes: true
+    add_bullets: true
     
   task_formatting:
     enabled: true
@@ -347,12 +303,15 @@ data_processing:
       completed: "✅"
       failed: "❌"
       in_progress: "⏳"
-      partial: "🔄"
+      partial: "⚠️"
     time_format: "{duration} minutes"
+    format_as_list: true
+    subitem_bullet: "-"
     
   section_formatting:
     enabled: true
     auto_generate_subheaders: true
+    format_as_bullets: true
     subheader_patterns:
       positive_reactions: ["positive", "liked", "appreciated", "good"]
       frustration_points: ["frustrated", "annoyed", "difficult", "problem"]
@@ -362,47 +321,94 @@ data_processing:
   time_reference_formatting:
     enabled: true
     patterns:
-      minute_markers: "Minute {number}:"
+      minute_markers: "**Minute {number}:**"
       duration_format: "{number} minutes"
       time_ranges: "{start}-{end} minutes"
     standardize_timestamps: true
+    format_as_list: true
 
 field_processing:
   quotes_reactions:
     apply_formatting: ["text_cleanup", "quote_formatting", "section_formatting"]
     auto_categorize: true
+    output_format: "bulleted_by_category"
     categories:
-      - "Positive Reactions:"
-      - "Frustration Points:"
-      - "Technology Struggles:"
-      - "Suggestions:"
+      - name: "Positive Reactions"
+        icon: "✅"
+      - name: "Critical Pain Points"
+        icon: "⚠️"
+      - name: "Screen Reader Perspective"
+        icon: "🎧"
+      - name: "User Education Insights"
+        icon: "💡"
       
   emotional_moments:
     apply_formatting: ["text_cleanup", "time_reference_formatting"]
+    output_format: "chronological_list"
     emotion_indicators: ["frustrated", "pleased", "confused", "surprised", "angry", "satisfied"]
     standardize_emotions: true
+    add_emotion_badges: true
     
   task_observations:
     apply_formatting: ["text_cleanup", "task_formatting"]
     auto_structure: true
-    
+    output_format: "task_breakdown"
+    include_subsections: true
+    subsections:
+      - "Mental Model"
+      - "Navigation Pattern"
+      - "Success Factors / Barriers"
+      - "User Experience"
+      
   technical_issues:
     apply_formatting: ["text_cleanup", "section_formatting"]
+    output_format: "categorized_bullets"
     issue_categories:
-      - "Performance Issues:"
-      - "Connectivity Problems:"
-      - "Interface Problems:"
-      - "Error Messages:"
+      - name: "VoiceOver Integration Successes"
+        icon: "✅"
+      - name: "Critical VoiceOver Failures"
+        icon: "❌"
+      - name: "Navigation Structure Issues"
+        icon: "🗺️"
+      - name: "iOS Accessibility Protocol Compliance"
+        icon: "📱"
       
   accessibility_notes:
-    apply_formatting: ["text_cleanup"]
+    apply_formatting: ["text_cleanup", "section_formatting"]
+    output_format: "categorized_bullets"
+    categories:
+      - name: "Successful Screen Reader Accommodations"
+        icon: "✅"
+      - name: "Critical Accommodation Failures"
+        icon: "❌"
+      - name: "User Adaptation Strategies"
+        icon: "🔄"
+      - name: "Screen Reader User Experience Patterns"
+        icon: "👤"
     
   key_moments:
     apply_formatting: ["text_cleanup", "time_reference_formatting"]
+    output_format: "numbered_moments"
+    include_timestamp: true
+    add_impact_badge: true
+    subsections:
+      - "Context"
+      - "Impact"
+      - "Implications"
     
   additional_notes:
     apply_formatting: ["text_cleanup", "section_formatting"]
+    output_format: "categorized_bullets"
     auto_organize: true
+    categories:
+      - name: "User Expertise Level"
+        icon: "👤"
+      - name: "Screen Reader Navigation Patterns"
+        icon: "🎯"
+      - name: "User Experience Implications"
+        icon: "💡"
+      - name: "Research Value"
+        icon: "📊"
 
 integration:
   qori:
