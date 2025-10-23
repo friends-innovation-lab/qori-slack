@@ -330,8 +330,8 @@ output_template: |
 # Output configuration
 output_options:
   # File settings
-  filename: "research_brief_{{project_title}}_{{current_date}}.md"
-  path: "00-brief/"
+  filename: "research_brief_{{current_date}}.md"
+  path: "requested_research/{{project_title}}/"
   
   # Delivery methods (multiple can be enabled)
   delivery:
