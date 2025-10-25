@@ -1,12 +1,12 @@
 id: participant_outreach
 name: run_participant_outreach
 label: 📧 Participant Outreach
-version: v2.0
+version: v3.0
 description: Generate professional participant outreach messages for VA research studies
 
 author: CivicMind R&D
 created: 2025-07-07
-last_updated: 2025-07-16
+last_updated: 2025-10-25
 
 # LLM Configuration
 llm_config:
@@ -72,73 +72,24 @@ error_handling:
         - type: "allowed_signup_domains"
           domains: ["calendly.com", "typeform.com", "forms.gle", "google.com", "va.gov", "microsoft.com"]
           message: "Please use approved platforms for signup links"
-          optional: true
 
-# SINGLE SOURCE OF TRUTH: Define which fields are needed for which message types
-message_type_requirements:
-  initial_recruitment:
-    required_fields:
-      - study_description
-      - signup_instructions
-    optional_fields:
-      - incentive_amount
-      
-  session_confirmation:
-    required_fields:
-      - session_date
-      - session_time
-      - session_duration
-      - meeting_link
-      - meeting_id
-      - dial_in_number
-    optional_fields: []
-    
-  session_reminder:
-    required_fields:
-      - session_date
-      - session_time
-      - session_duration
-      - meeting_link
-      - meeting_id
-      - dial_in_number
-    optional_fields: []
-    
-  rescheduling_request:
-    required_fields:
-      - session_date
-      - session_time
-      - reschedule_reason
-      - reschedule_options
-    optional_fields: []
-    
-  follow_up:
-    required_fields: []
-    optional_fields: []
-    
-  thank_you:
-    required_fields: []
-    optional_fields:
-      - incentive_amount
-
-# Input variables - ALIGNED with message_type_requirements above
+# Input variables - Core field definitions
 input_variables:
-  # ALWAYS REQUIRED (core fields)
-  - message_type:
-      type: "select"
-      required: true
-      options: ["initial_recruitment", "session_confirmation", "session_reminder", "rescheduling_request", "follow_up", "thank_you"]
-      
+  # Core participant info
   - participant_name:
       type: "text"
       required: true
-      placeholder: "e.g., Alex M. or pt004"
+      placeholder: "e.g., Alex M. or PT004"
+      help_text: "Use alias to protect participant privacy"
+      max_length: 50
       
+  # Study selection
   - study_id:
       type: "select"
       required: true
       data_source: "existing_studies"
       placeholder: "Select a study..."
-      help_text: "Choose from your existing studies created in plan-study"
+      help_text: "Choose from your existing studies"
       
   - study_name:
       type: "hidden"
@@ -148,10 +99,12 @@ input_variables:
       type: "hidden"
       derived_from: "study_id.folder_name"
       
+  # Researcher contact info
   - researcher_name:
       type: "text"
       required: true
       placeholder: "e.g., Jordan (UX Researcher)"
+      max_length: 50
       
   - researcher_email:
       type: "email"
@@ -163,6 +116,7 @@ input_variables:
       required: true
       placeholder: "(555) 123-4567"
       
+  # Message settings
   - contact_method:
       type: "select"
       required: true
@@ -175,167 +129,227 @@ input_variables:
       options: ["friendly", "formal", "casual"]
       default: "friendly"
 
-  # CONDITIONAL FIELDS - Required based on message type
-  
   # Initial recruitment fields
   - study_description:
       type: "textarea"
-      required_if: ["initial_recruitment"]
+      required: false
       placeholder: "Brief description of what the study involves"
       help_text: "Describe what the study involves and what participants can expect"
+      max_length: 500
       
   - signup_instructions:
       type: "textarea"
-      required_if: ["initial_recruitment"]
+      required: false
       placeholder: "e.g., Click this link to complete our screener: https://calendly.com/research-team or reply to this email"
       help_text: "How participants should sign up - include screener links, Calendly links, or email instructions"
+      max_length: 500
       
-  # Session-related fields (confirmation & reminder)
+  - incentive_amount:
+      type: "text"
+      required: false
+      placeholder: "e.g., $75"
+      help_text: "Compensation amount for participation"
+      
+  # Session-related fields
   - session_date:
       type: "date"
-      required_if: ["session_confirmation", "session_reminder", "rescheduling_request"]
+      required: false
       
   - session_time:
       type: "time"
-      required_if: ["session_confirmation", "session_reminder", "rescheduling_request"]
+      required: false
       
   - session_duration:
       type: "select"
-      required_if: ["session_confirmation", "session_reminder"]
+      required: false
       options: ["30 minutes", "45 minutes", "60 minutes", "90 minutes"]
       default: "45 minutes"
       
   - meeting_link:
       type: "url"
-      required_if: ["session_confirmation", "session_reminder"]
+      required: false
       placeholder: "https://va-gov.zoom.us/j/123456789"
       
   - meeting_id:
       type: "text"
-      required_if: ["session_confirmation", "session_reminder"]
+      required: false
       placeholder: "123 456 789"
       
   - dial_in_number:
       type: "tel"
-      required_if: ["session_confirmation", "session_reminder"]
+      required: false
       placeholder: "+1 (555) 123-4567"
       
-  # Rescheduling-specific fields
+  # Rescheduling fields
   - reschedule_reason:
       type: "text"
-      required_if: ["rescheduling_request"]
+      required: false
       placeholder: "Brief reason for rescheduling"
+      max_length: 200
       
   - reschedule_options:
       type: "textarea"
-      required_if: ["rescheduling_request"]
+      required: false
       placeholder: "List 2-3 alternative time slots"
-      
-  # Incentive field (recruitment & thank you)
-  - incentive_amount:
-      type: "text"
-      required_if: []
-      optional_if: ["initial_recruitment", "thank_you"]
-      placeholder: "e.g., $75"
-      help_text: "Compensation amount for participation"
+      max_length: 300
 
-# IMPROVED AI Generation Tasks - Using actual variables
+# AI Generation Tasks
 ai_generation_tasks:
   - task_id: "subject_line"
     prompt: >
       Create a clear, professional email subject line for {{message_type}} about {{study_name}}.
       
       Context:
+      - Message Type: {{message_type}}
+      - Study: {{study_name}}
       - Participant: {{participant_name}}
       - Tone: {{tone}}
-      - Contact method: {{contact_method}}
       
       Requirements:
-      - Be specific about the purpose and study name
-      - Use clear, action-oriented language
-      - Keep under 60 characters for mobile readability
-      - Match the {{tone}} tone appropriately
-      - Include urgency indicators for time-sensitive messages
+      - Keep it under 60 characters
+      - Be specific and action-oriented
+      - Use {{tone}} style appropriately
+      - For reminders, include date if provided
+      - For confirmations, emphasize the confirmation
       
-      Subject line examples by type:
-      - initial_recruitment: "Research Opportunity: {{study_name}} - Your Input Needed"
-      - session_confirmation: "Confirmed: {{study_name}} Session {{session_date}} at {{session_time}}"
-      - session_reminder: "Tomorrow: {{study_name}} Session at {{session_time}}"
-      - rescheduling_request: "Schedule Change: {{study_name}} Session - New Times Available"
-      - follow_up: "Following up: {{study_name}} Research Opportunity"
-      - thank_you: "Thank you for participating in {{study_name}}"
+      Examples:
+      - initial_recruitment: "Research Opportunity: Help Improve VA Services"
+      - session_confirmation: "Confirmed: Your Research Session on [Date]"
+      - session_reminder: "Reminder: Research Session Tomorrow at [Time]"
+      - rescheduling_request: "Need to Reschedule: [Study Name] Session"
+      - follow_up: "Following Up: [Study Name] Research Opportunity"
+      - thank_you: "Thank You for Participating in [Study Name]"
       
-      Return ONLY the subject line, no quotes or additional text.
+      Return only the subject line, nothing else.
+    output_variable: "subject_line"
 
   - task_id: "email_body"
     prompt: >
-      Create a trauma-informed {{message_type}} email for the {{study_name}} research study using a {{tone}} tone.
+      Generate a professional, clear email for {{message_type}} message.
       
-      CRITICAL: Use these EXACT values in the email (do not use placeholders):
-      - Participant Name: {{participant_name}}
-      - Study Name: {{study_name}}
-      - Researcher Name: {{researcher_name}}
-      - Researcher Email: {{researcher_email}}
-      - Researcher Phone: {{researcher_phone}}
-      - Tone: {{tone}}
-      - Contact Method: {{contact_method}}
+      CRITICAL INSTRUCTIONS:
+      - Use simple, direct language (8th-grade reading level)
+      - Keep paragraphs short (2-3 sentences max)
+      - Use active voice, present tense
+      - Avoid bureaucratic or overly formal language
+      - Be warm and human, not robotic
       
-      TONE GUIDELINES:
-      
-      FRIENDLY tone - Warm, welcoming, conversational but professional:
-      - Use: Hi {{participant_name}}, We would love to hear, Your thoughts would be valuable, Thanks for considering
-      - Avoid: formal language, overly clinical terms
-      - Example opening: Hi Sarah, I hope you are doing well. We are looking for veterans to share their experiences...
-      
-      FORMAL tone - Professional, respectful, structured:
-      - Use: Dear {{participant_name}}, We are conducting, Your participation would be valuable, Thank you for your consideration
-      - Maintain professional distance while being respectful
-      - Example opening: Dear Mr. Johnson, We are writing to invite you to participate in our research study...
-      
-      CASUAL tone - Relaxed, approachable, like talking to a friend:
-      - Use: Hey {{participant_name}}, We are hoping you might be interested, It would be great to get your input, Let me know what you think
-      - Keep it conversational but still respectful
-      - Example opening: Hey Alex, Hope you are having a good week. We are working on a project that could really use your input...
-      
-      LANGUAGE REQUIREMENTS:
-      - Use simple, clear language (10th grade reading level)
-      - AVOID these words: aim, seek to, endeavor, utilize, facilitate, implement, optimal, objective
-      - USE instead: want to, hope to, work to, use, help, do, best, goal
-      - Be direct and specific rather than academic
-      - Focus on what is in it for them and how easy it is
-      
-      SAMPLE LANGUAGE PATTERNS:
-      - Instead of: We aim to understand... → We want to learn about...
+      Language Guidelines:
       - Instead of: This study seeks to... → This study will help us...
       - Instead of: Your input would facilitate... → Your input will help us...
       - Instead of: We endeavor to... → We are working to...
+      - Instead of: At your earliest convenience → When you have a moment
       
-      For initial_recruitment messages:
-      - Use Study Description: {{study_description}}
-      - Use Signup Instructions: {{signup_instructions}}
-      - Use Incentive Amount: {{incentive_amount}} (if provided)
+      Message Type: {{message_type}}
+      Participant: {{participant_name}}
+      Study: {{study_name}}
+      Tone: {{tone}}
+      Researcher: {{researcher_name}}
+      Researcher Email: {{researcher_email}}
+      Researcher Phone: {{researcher_phone}}
+      Contact Method: {{contact_method}}
       
-      Write a complete email that greets {{participant_name}} using {{tone}} style, explains the study in simple terms, describes what participation involves, mentions compensation if provided, provides signup instructions, emphasizes voluntary participation, and includes researcher contact info.
+      {% if message_type == "initial_recruitment" %}
+      Study Description: {{study_description}}
+      Signup Instructions: {{signup_instructions}}
+      Incentive: {{incentive_amount}}
       
-      For session_confirmation and session_reminder messages:
-      - Use Date: {{session_date}}
-      - Use Time: {{session_time}}
-      - Use Duration: {{session_duration}}
-      - Use Meeting Link: {{meeting_link}}
-      - Use Meeting ID: {{meeting_id}}
-      - Use Dial-in Number: {{dial_in_number}}
+      Structure:
+      1. Warm greeting to {{participant_name}}
+      2. Brief introduction of who you are
+      3. What the study is about (use {{study_description}})
+      4. What participation involves (time commitment, format)
+      5. Compensation: {{incentive_amount}}
+      6. How to sign up: {{signup_instructions}}
+      7. Emphasize voluntary participation and easy withdrawal
+      8. Contact info and invitation to ask questions
+      {% endif %}
       
-      For rescheduling_request messages:
-      - Use Original Date: {{session_date}}
-      - Use Original Time: {{session_time}}
-      - Use Reason: {{reschedule_reason}}
-      - Use New Options: {{reschedule_options}}
+      {% if message_type == "session_confirmation" %}
+      Session Date: {{session_date}}
+      Session Time: {{session_time}}
+      Duration: {{session_duration}}
+      Meeting Link: {{meeting_link}}
+      Meeting ID: {{meeting_id}}
+      Dial-in Number: {{dial_in_number}}
       
-      For follow_up messages:
-      Write a gentle follow-up email checking if {{participant_name}} is still interested in the {{study_name}} study using {{tone}} style.
+      Structure:
+      1. Friendly greeting
+      2. Confirm session is scheduled
+      3. Session details in clear format:
+         - Date: {{session_date}}
+         - Time: {{session_time}}
+         - Duration: {{session_duration}}
+         - Meeting Link: {{meeting_link}}
+         - Meeting ID: {{meeting_id}}
+         - Dial-in: {{dial_in_number}}
+      4. What to expect during the session
+      5. Request they join 5 minutes early
+      6. Offer to answer questions
+      7. Thank them for their time
+      {% endif %}
       
-      For thank_you messages:
-      Write a grateful thank-you email to {{participant_name}} for participating in {{study_name}} using {{tone}} style. Mention {{incentive_amount}} compensation if provided.
+      {% if message_type == "session_reminder" %}
+      Session Date: {{session_date}}
+      Session Time: {{session_time}}
+      Duration: {{session_duration}}
+      Meeting Link: {{meeting_link}}
+      Meeting ID: {{meeting_id}}
+      Dial-in Number: {{dial_in_number}}
+      
+      Structure:
+      1. Friendly reminder opening
+      2. Session is happening soon (tomorrow/in 2 days)
+      3. Quick session details reminder:
+         - Date: {{session_date}}
+         - Time: {{session_time}}
+         - Duration: {{session_duration}}
+         - Meeting Link: {{meeting_link}}
+         - Meeting ID: {{meeting_id}}
+         - Dial-in: {{dial_in_number}}
+      4. Brief prep instructions (no preparation needed)
+      5. Easy way to reschedule if needed
+      6. Looking forward to speaking with them
+      {% endif %}
+      
+      {% if message_type == "rescheduling_request" %}
+      Original Session Date: {{session_date}}
+      Original Session Time: {{session_time}}
+      Reason: {{reschedule_reason}}
+      New Options: {{reschedule_options}}
+      
+      Structure:
+      1. Apologetic opening
+      2. Explain need to reschedule (use {{reschedule_reason}})
+      3. Original time: {{session_date}} at {{session_time}}
+      4. Proposed new times: {{reschedule_options}}
+      5. Ask them to let you know which works best
+      6. Sincere apology and appreciation for flexibility
+      {% endif %}
+      
+      {% if message_type == "follow_up" %}
+      Structure:
+      1. Gentle, friendly opening
+      2. Reference previous invitation to {{study_name}}
+      3. Check if they're still interested in participating
+      4. Remind them briefly what the study involves
+      5. Make it easy to opt out with no pressure
+      6. Provide simple next steps if interested
+      7. Thank them for their consideration
+      {% endif %}
+      
+      {% if message_type == "thank_you" %}
+      Incentive: {{incentive_amount}}
+      
+      Structure:
+      1. Warm, grateful opening
+      2. Thank them for participating in {{study_name}}
+      3. Emphasize how valuable their input was
+      4. Explain how their feedback will be used
+      5. Mention compensation ({{incentive_amount}}) and when they'll receive it
+      6. Invite them to participate in future studies
+      7. Final thank you
+      {% endif %}
       
       VA Research Standards:
       - Use trauma-informed language (avoid pressure, emphasize choice)
@@ -344,14 +358,18 @@ ai_generation_tasks:
       - Be respectful and professional regardless of tone
       - Include accessibility statement if relevant
       
-      Always end with this signature:
+      Always end with this exact signature:
       
       Best regards,
       {{researcher_name}}
       On behalf of the Department of Veterans Affairs
       Email: {{researcher_email}}
+      Phone: {{researcher_phone}}
       
       This research is conducted in accordance with VA research standards and IRB approval.
+      
+      Return only the email body, no subject line.
+    output_variable: "email_body"
 
   - task_id: "followup_suggestions"
     prompt: >
@@ -365,20 +383,23 @@ ai_generation_tasks:
       - Accessibility considerations
       
       Format as specific, actionable bullet points with suggested timelines.
+    output_variable: "followup_suggestions"
 
 # Processing workflow
 processing_workflow:
   1. validate_inputs
-  2. validate_conditional_fields_against_requirements
+  2. validate_message_type_requirements
   3. execute_ai_generation_tasks
   4. format_output
   5. save_to_github
   6. send_to_slack
 
-# IMPROVED Output template - Better formatting, less redundancy
+# Output template
 output_template: >
   
   ## 📧 Email Content
+  
+  **Subject:** {{ai_generated.subject_line}}
   
   {{ai_generated.email_body}}
   
@@ -445,90 +466,249 @@ output_options:
           action_type: "modal"
           modal_id: "participant_outreach"
 
-# SINGLE SOURCE OF TRUTH - Slack UI uses message_type_requirements above
+# EXPLICIT SLACK UI DEFINITIONS - Two-step process
 slack_ui:
-  initial_modal:
+  # STEP 1: Message Type Selection
+  step_1_message_type_selection:
     title: "📧 Participant Outreach"
     submit_label: "Next"
     close_label: "Cancel"
-    blocks:
-      message_type_selection:
-        type: "radio_buttons"
-        options: ["initial_recruitment", "session_confirmation", "session_reminder", "rescheduling_request", "follow_up", "thank_you"]
-        required: true
+    description: "Select the type of outreach message you need based on your recruitment phase."
     
-  details_modal:
-    title: "📝 Message Details"
-    submit_label: "Generate Message"
-    close_label: "Back"
+    message_types:
+      - id: "initial_recruitment"
+        icon: "📧"
+        label: "Initial Recruitment"
+        description: "First contact to invite participants to join your study"
+        
+      - id: "session_confirmation"
+        icon: "📅"
+        label: "Session Confirmation"
+        description: "Confirm scheduled session details with participant"
+        
+      - id: "session_reminder"
+        icon: "⏰"
+        label: "Session Reminder"
+        description: "24-48 hour reminder about upcoming session"
+        
+      - id: "rescheduling_request"
+        icon: "🔄"
+        label: "Rescheduling Request"
+        description: "When you need to reschedule a session"
+        
+      - id: "follow_up"
+        icon: "🔔"
+        label: "Follow-up"
+        description: "Check in when participant hasn't responded"
+        
+      - id: "thank_you"
+        icon: "🙏"
+        label: "Thank You"
+        description: "Post-session thank you with next steps"
+
+  # STEP 2: Message Details Forms (One per message type)
+  step_2_forms:
+    initial_recruitment:
+      title: "Initial Recruitment - Message Details"
+      submit_label: "Generate Message"
+      close_label: "Back"
+      
+      field_groups:
+        - group_title: "Participant & Study"
+          group_icon: "👤"
+          fields:
+            - participant_name
+            - study_id
+            
+        - group_title: "Researcher Contact"
+          group_icon: "📞"
+          fields:
+            - researcher_name
+            - researcher_email
+            - researcher_phone
+            
+        - group_title: "Message Settings"
+          group_icon: "⚙️"
+          fields:
+            - contact_method
+            - tone
+            
+        - group_title: "Study Details"
+          group_icon: "📋"
+          fields:
+            - study_description
+            - signup_instructions
+            - incentive_amount
     
-    common_fields:
-      - participant_name
-      - study_id
-      - researcher_name
-      - researcher_email
-      - researcher_phone
-      - contact_method
-      - tone
-
-  validation:
-    study_id:
-      required: true
-      exists_in_database: true
-      error_message: "Please select a valid study"
-    participant_name:
-      min_length: 2
-      max_length: 50
-      error_message: "Please enter a participant name (2-50 characters)"
-    researcher_name:
-      min_length: 2
-      max_length: 50
-      error_message: "Please enter researcher name (2-50 characters)"
-    researcher_email:
-      email_format: true
-      domain_whitelist: ["va.gov", "vha.gov", "med.va.gov"]
-      error_message: "Please enter a valid VA email address"
-    researcher_phone:
-      phone_format: true
-      error_message: "Please enter a valid phone number"
-    session_date:
-      future_date: true
-      error_message: "Session date must be in the future"
-    meeting_link:
-      url_format: true
-      allowed_domains: ["zoom.us", "teams.microsoft.com", "meet.google.com"]
-      error_message: "Please use approved meeting platforms"
-
-# Analytics and Tracking
-analytics:
-  track_events:
-    - event: "message_generated"
-      properties: [message_type, participant_name, study_name, researcher_name, tone, contact_method]
-    - event: "message_copied"
-      properties: [message_id, copy_type]
-
-# Integration with plan-study system
-study_integration:
-  enabled: true
-  data_source: "plan_study_database"
-  study_fields:
-    - id: "study_id"
-    - name: "study_name" 
-    - folder_name: "study_folder_name"
-    - description: "study_description"
-    - researcher: "researcher_name"
-    - researcher_email: "researcher_email"
-    - created_date: "study_created_date"
-  
-  fallback_mode:
-    enabled: true
-    show_manual_entry: true
-    message: "No studies found. Create a study first using plan-study or enter details manually."
+    session_confirmation:
+      title: "Session Confirmation - Message Details"
+      submit_label: "Generate Message"
+      close_label: "Back"
+      
+      field_groups:
+        - group_title: "Participant & Study"
+          group_icon: "👤"
+          fields:
+            - participant_name
+            - study_id
+            
+        - group_title: "Researcher Contact"
+          group_icon: "📞"
+          fields:
+            - researcher_name
+            - researcher_email
+            - researcher_phone
+            
+        - group_title: "Message Settings"
+          group_icon: "⚙️"
+          fields:
+            - contact_method
+            - tone
+            
+        - group_title: "Session Details"
+          group_icon: "📅"
+          fields:
+            - session_date
+            - session_time
+            - session_duration
+            
+        - group_title: "Meeting Information"
+          group_icon: "💻"
+          fields:
+            - meeting_link
+            - meeting_id
+            - dial_in_number
     
-  validation:
-    require_active_study: true
-    check_permissions: true
-    error_message: "Please select a valid, active study you have access to."
+    session_reminder:
+      title: "Session Reminder - Message Details"
+      submit_label: "Generate Message"
+      close_label: "Back"
+      
+      field_groups:
+        - group_title: "Participant & Study"
+          group_icon: "👤"
+          fields:
+            - participant_name
+            - study_id
+            
+        - group_title: "Researcher Contact"
+          group_icon: "📞"
+          fields:
+            - researcher_name
+            - researcher_email
+            - researcher_phone
+            
+        - group_title: "Message Settings"
+          group_icon: "⚙️"
+          fields:
+            - contact_method
+            - tone
+            
+        - group_title: "Session Details"
+          group_icon: "📅"
+          fields:
+            - session_date
+            - session_time
+            - session_duration
+            
+        - group_title: "Meeting Information"
+          group_icon: "💻"
+          fields:
+            - meeting_link
+            - meeting_id
+            - dial_in_number
+    
+    rescheduling_request:
+      title: "Rescheduling Request - Message Details"
+      submit_label: "Generate Message"
+      close_label: "Back"
+      
+      field_groups:
+        - group_title: "Participant & Study"
+          group_icon: "👤"
+          fields:
+            - participant_name
+            - study_id
+            
+        - group_title: "Researcher Contact"
+          group_icon: "📞"
+          fields:
+            - researcher_name
+            - researcher_email
+            - researcher_phone
+            
+        - group_title: "Message Settings"
+          group_icon: "⚙️"
+          fields:
+            - contact_method
+            - tone
+            
+        - group_title: "Original Session Details"
+          group_icon: "📅"
+          fields:
+            - session_date
+            - session_time
+            
+        - group_title: "Rescheduling Information"
+          group_icon: "🔄"
+          fields:
+            - reschedule_reason
+            - reschedule_options
+    
+    follow_up:
+      title: "Follow-up - Message Details"
+      submit_label: "Generate Message"
+      close_label: "Back"
+      
+      field_groups:
+        - group_title: "Participant & Study"
+          group_icon: "👤"
+          fields:
+            - participant_name
+            - study_id
+            
+        - group_title: "Researcher Contact"
+          group_icon: "📞"
+          fields:
+            - researcher_name
+            - researcher_email
+            - researcher_phone
+            
+        - group_title: "Message Settings"
+          group_icon: "⚙️"
+          fields:
+            - contact_method
+            - tone
+    
+    thank_you:
+      title: "Thank You - Message Details"
+      submit_label: "Generate Message"
+      close_label: "Back"
+      
+      field_groups:
+        - group_title: "Participant & Study"
+          group_icon: "👤"
+          fields:
+            - participant_name
+            - study_id
+            
+        - group_title: "Researcher Contact"
+          group_icon: "📞"
+          fields:
+            - researcher_name
+            - researcher_email
+            - researcher_phone
+            
+        - group_title: "Message Settings"
+          group_icon: "⚙️"
+          fields:
+            - contact_method
+            - tone
+            
+        - group_title: "Compensation"
+          group_icon: "💰"
+          fields:
+            - incentive_amount
 
 # Message type descriptions for UI  
 message_type_descriptions:
@@ -553,3 +733,34 @@ tone_examples:
     sample_phrases: ["Hey", "Hope your week is going well", "Let me know what you think", "It would be great to get your input"]
     greeting_style: "Hey {{participant_name}}"
     closing_style: "Let me know if you're interested - no pressure at all!"
+
+# Integration with plan-study system
+study_integration:
+  enabled: true
+  data_source: "plan_study_database"
+  study_fields:
+    - id: "study_id"
+    - name: "study_name" 
+    - folder_name: "study_folder_name"
+    - description: "study_description"
+    - researcher: "researcher_name"
+    - researcher_email: "researcher_email"
+    - created_date: "study_created_date"
+  
+  fallback_mode:
+    enabled: true
+    show_manual_entry: true
+    message: "No studies found. Create a study first using plan-study or enter details manually."
+    
+  validation:
+    require_active_study: true
+    check_permissions: true
+    error_message: "Please select a valid, active study you have access to."
+
+# Analytics and Tracking
+analytics:
+  track_events:
+    - event: "message_generated"
+      properties: [message_type, participant_name, study_name, researcher_name, tone, contact_method]
+    - event: "message_copied"
+      properties: [message_id, copy_type]
