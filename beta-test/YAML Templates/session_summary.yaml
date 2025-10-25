@@ -1,5 +1,5 @@
-id: session_summary
-name: session_summary
+id: analyze_notes
+name: analyze_session_notes
 label: 🔍 Analyze Notes
 version: v1.0
 description: Analyze session notes and transcript to generate comprehensive session summary with pain points, opportunities, insights, and recommendations
@@ -49,16 +49,16 @@ external_data_sources:
       label: "{{observer_name}} - {{submission_date}}"
       description: "{{note_length}} characters | Submitted {{submission_time}}"
       
-  transcripts:
-    file_path: "03-fieldwork/transcripts/{{session_id}}/"
-    endpoint: "/api/slack/options/transcripts"
+  coded_transcripts:
+    file_path: "03-fieldwork/coded-transcripts/{{session_id}}/"
+    endpoint: "/api/slack/options/coded-transcripts"
     dynamic: true
     depends_on: "session_id"
     
     option_mapping:
-      value: "{{transcript_file_path}}"
-      label: "{{transcript_name}}"
-      description: "{{duration}} | {{transcript_type}}"
+      value: "{{coded_transcript_file_path}}"
+      label: "{{coded_transcript_name}}"
+      description: "{{codes_count}} codes | {{pain_points_count}} pain points"
 
 input_variables:
   # Step 1: Session Selection
@@ -81,13 +81,13 @@ input_variables:
       min_selections: 1
       max_selections: 10
   
-  # Step 2: Transcript Selection
-  - transcript_file:
+  # Step 2: Coded Transcript Selection
+  - coded_transcript_file:
       type: "select"
       required: true
-      label: "Session transcript"
-      placeholder: "Select transcript file..."
-      data_source: "transcripts"
+      label: "Coded transcript"
+      placeholder: "Select coded transcript file..."
+      data_source: "coded_transcripts"
       help_text: "Primary source for analysis"
   
   # Hidden derived fields
@@ -111,9 +111,9 @@ input_variables:
       type: "hidden"
       derived_from: "selected_notes.content_combined"
       
-  - transcript_content:
+  - coded_transcript_content:
       type: "hidden"
-      derived_from: "transcript_file.content"
+      derived_from: "coded_transcript_file.content"
       
   - analyzer:
       type: "hidden"
@@ -125,20 +125,20 @@ ai_generation_tasks:
     prompt: |
       You are analyzing a UX research session to create a comprehensive session summary.
       
-      **PRIMARY SOURCE - Session Transcript:**
-      {{transcript_content}}
+      **PRIMARY SOURCE - Coded Transcript:**
+      {{coded_transcript_content}}
       
       **SUPPORTING SOURCES - Observer Notes:**
       {{notes_content}}
       
       **Your Task:**
-      Create a session summary by extracting and synthesizing findings from the transcript and notes.
+      Create a session summary by extracting and synthesizing findings from the coded transcript and observer notes.
       
       CRITICAL INSTRUCTIONS:
-      - Use the transcript as the PRIMARY source for quotes, timestamps, and participant behavior
-      - Use observer notes to identify patterns, emotional moments, and key insights
+      - Use the coded transcript as the PRIMARY source - it already has identified pain points, opportunities, and insights
+      - Use observer notes to add context, emotional moments, and additional patterns
       - Synthesize both sources into cohesive findings
-      - Prioritize by severity/impact
+      - Prioritize by severity/impact already indicated in coded transcript
       
       **OUTPUT STRUCTURE:**
       
@@ -269,7 +269,7 @@ output_options:
           
           📊 **Sources Analyzed:**
           • {{notes_count}} observer note files
-          • 1 session transcript
+          • 1 coded transcript
           
           Ready to review and share! 👇
         
@@ -300,20 +300,10 @@ slack_ui:
       
       - section_title: "Sources to Analyze"
         section_icon: "📄"
-        section_description: "Select notes and transcript for analysis"
+        section_description: "Select notes and coded transcript for analysis"
         fields:
           - selected_notes
-          - transcript_file
-      
-      - section_title: "Preview"
-        section_icon: "📊"
-        dynamic_content: true
-        preview_template: |
-          **Will analyze:**
-          • {{notes_count}} observer note files
-          • 1 session transcript ({{transcript_duration}})
-          
-          **Output:** Comprehensive session summary with pain points, opportunities, insights, quotes, and action items
+          - coded_transcript_file
 
 processing_rules:
   combine_multiple_notes: true
