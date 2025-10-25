@@ -294,10 +294,21 @@ slack_ui:
         section_icon: "📅"
         fields:
           - session_id
+      
+      - section_title: "💡 Tips for Better Notes"
+        section_description: |
+          Write your observations freely - AI will organize them into structured sections automatically.
+          
+          *What to include:*
+          • 💬 Quote participant reactions: "This is confusing"
+          • ⏱️ Note timestamps: Minute 5: User struggled with navigation
+          • ✅ Describe tasks: Task 1 - Find benefits (completed in 3 min)
+          • 🐛 Flag technical issues: VoiceOver didn't announce button
+          • ⭐ Highlight key moments: Critical moment at minute 12 when user gave up
+          • 😤 Capture emotions: User became frustrated, sighed heavily
           
       - section_title: "Your Observations"
         section_icon: "📝"
-        description: "Write freely - AI will organize your notes into structured sections"
         fields:
           - raw_notes
 
