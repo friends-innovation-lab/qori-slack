@@ -1,6 +1,6 @@
 # Research Plan — AR REsearch
 
-📦 **Product Area:** Research - Provides valuable insights and data to improve services and support for Veterans. Helps identify trends, challenges, and opportunities for enhancing Veteran care and benefits.
+📦 **Product Area:** Research - Provides valuable changes is insights and data to improve services and support for Veterans. Helps identify trends, challenges, and opportunities for enhancing Veteran care and benefits.
 
 👩🏽‍🔬 **Lead Researcher:** Abdul Rehman
 
