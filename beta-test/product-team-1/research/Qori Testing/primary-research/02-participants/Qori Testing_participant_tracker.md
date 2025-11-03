@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – Qori Testing
 
 **📊 Recruitment Summary**
-- **Total Participants:** 1
+- **Total Participants:** 2
 - **Confirmed Sessions:** 1
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 3 | PT002 | internal_panel | 2025-11-17 03:00 | rescheduling | NO |
 | 2 | PT001 | email_outreach | 2025-11-10 02:00 | confirmed | NO |
 
 ---
@@ -22,10 +23,11 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 1 | 100% |
+| 🗂️ Internal VA Panel | 1 | 50% |
+| 📧 Email Outreach | 1 | 50% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
+Recruitment effectiveness: 50% conversion rate (1 confirmed of 2 recruited)
 
 ---
 
@@ -73,6 +75,7 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 3: NO
 - 2: NO
 
 **Preparation Checklist:**
@@ -91,19 +94,20 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| Asian | 1 | 100% |
+| black | 1 | 50% |
+| Asian | 1 | 50% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 35-44 | 1 | 100% |
+| 35-44 | 2 | 100% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Some college | 1 | 100% |
+| Some college | 2 | 100% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Rural | 1 | 100% |
+| Rural | 2 | 100% |
 
 ---
 
@@ -115,4 +119,4 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (2 more needed)
+Continue recruiting to reach minimum of 3 participants (1 more needed)
