@@ -331,7 +331,7 @@ help_documentation:
   
   examples:
     - title: "Good quote capture"
-      example: 'Participant said "This is really confusing, I don't know what to click"'
+      example: 'Participant said "This is really confusing, I do not know what to click"'
     
     - title: "Timestamp usage"
       example: "Minute 12: User became frustrated when form wouldn't submit"
