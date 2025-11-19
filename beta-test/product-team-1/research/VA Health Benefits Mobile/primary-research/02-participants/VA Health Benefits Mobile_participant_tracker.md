@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – VA Health Benefits Mobile
 
 **📊 Recruitment Summary**
-- **Total Participants:** 5
-- **Confirmed Sessions:** 4
+- **Total Participants:** 6
+- **Confirmed Sessions:** 5
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 56 | PT004 | email_outreach | 2025-11-27 15:00 | confirmed | Prefers Spanish interface when available; uses both iOS and Android devices |
 | 55 | PT003 | email_outreach | 2025-11-26 14:00 | confirmed | Limited data plan; prefers Wi-Fi only sessions; uses large text settings |
 | 54 | PT002 | email_outreach | 2025-11-24 11:00 | confirmed | Android user; works irregular hours so flexible timing needed |
 | 53 | PT001 | email_outreach | 2025-11-24 14:00 | pending | Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
@@ -26,15 +27,17 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 5 | 100% |
+| 📧 Email Outreach | 6 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 80% conversion rate (4 confirmed of 5 recruited)
+Recruitment effectiveness: 83% conversion rate (5 confirmed of 6 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 - **** -  at 
@@ -83,6 +86,7 @@ Recruitment effectiveness: 80% conversion rate (4 confirmed of 5 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 56: Prefers Spanish interface when available; uses both iOS and Android devices
 - 55: Limited data plan; prefers Wi-Fi only sessions; uses large text settings
 - 54: Android user; works irregular hours so flexible timing needed
 - 53: Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows
@@ -105,28 +109,31 @@ Recruitment effectiveness: 80% conversion rate (4 confirmed of 5 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| black | 1 | 20% |
-| White | 2 | 40% |
-| Asian | 2 | 40% |
+| Hispanic or Latino | 1 | 17% |
+| black | 1 | 17% |
+| White | 2 | 33% |
+| Asian | 2 | 33% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 55-64 | 1 | 20% |
-| 35-44 | 2 | 40% |
-| 45-54 | 2 | 40% |
+| 25-34 | 1 | 17% |
+| 55-64 | 1 | 17% |
+| 35-44 | 2 | 33% |
+| 45-54 | 2 | 33% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| high_school | 1 | 20% |
-| Some college | 2 | 40% |
-| bachelor | 1 | 20% |
-| Bachelor's degree | 1 | 20% |
+| associate | 1 | 17% |
+| high_school | 1 | 17% |
+| Some college | 2 | 33% |
+| bachelor | 1 | 17% |
+| Bachelor's degree | 1 | 17% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Rural | 1 | 20% |
-| Suburban | 2 | 40% |
-| Urban | 2 | 40% |
+| Urban | 3 | 50% |
+| Rural | 1 | 17% |
+| Suburban | 2 | 33% |
 
 ---
 
