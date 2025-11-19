@@ -1,12 +1,12 @@
 # 👥 Participant Tracker – VA Health Benefits Mobile
 
 **📊 Recruitment Summary**
-- **Total Participants:** 2
+- **Total Participants:** 3
 - **Confirmed Sessions:** 2
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
-- **Last Updated:** October 21, 2025 by U01SC2TNYKU
+- **Last Updated:** November 19, 2025 by U01SC2TNYKU
 
 ---
 
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 53 | PT001 | email_outreach | 2025-11-24 14:00 | pending | Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
 | 52 | PT002 | email_outreach | 2025-10-30  | confirmed | Android user; works irregular hours so flexible timing needed |
 | 51 | PT001 | email_outreach | 2025-10-29  | confirmed | Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
 
@@ -23,10 +24,10 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 2 | 100% |
+| 📧 Email Outreach | 3 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
+Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 
 ---
 
@@ -46,23 +47,37 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 **Session Observer Assignments:**
 
-| Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
-|---------|-----------|-----------|----------|------------------|-----------------|
-| PT001 | TBD | lapedra (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
-| PT002 | TBD | lapedra (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
+| Session | Date/Time | Observers | Capacity | Pending Requests |
+|---------|-----------|-----------|----------|------------------|
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker | 2 | PT001, PT002 |
-| 👁️ Silent Observer | 0 | - |
-| 📊 PM Observer | 0 | - |
-| 🏛️ Stakeholder | 0 | - |
+| 📝 Note-taker |  |  |
+| 👁️ Silent Observer |  |  |
+| 📊 PM Observer |  |  |
+| 🏛️ Stakeholder |  |  |
+
+**Observer Guidelines:** 
+- Review session plan before observing
+- Stay muted unless emergency
+- Take notes without interrupting
+- Share feedback after session
+
+{% if triggered_by_observer_request %}
+**🔄 Observer Updates:**
+- ✅  approved for  as 
+- 📤 Send observer guidelines to 
+- 📅 Add  to  calendar invite
+- 🔄 Update session capacity tracking
+{% endif %}
+
 ---
 
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 53: Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows
 - 52: Android user; works irregular hours so flexible timing needed
 - 51: Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows
 
@@ -82,23 +97,24 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| White | 1 | 50% |
-| Asian | 1 | 50% |
+| Asian | 2 | 67% |
+| White | 1 | 33% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 35-44 | 1 | 50% |
-| 45-54 | 1 | 50% |
+| 45-54 | 2 | 67% |
+| 35-44 | 1 | 33% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Some college | 1 | 50% |
-| Bachelor's degree | 1 | 50% |
+| bachelor | 1 | 33% |
+| Some college | 1 | 33% |
+| Bachelor's degree | 1 | 33% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Suburban | 1 | 50% |
-| Urban | 1 | 50% |
+| Urban | 2 | 67% |
+| Suburban | 1 | 33% |
 
 ---
 
@@ -110,4 +126,4 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (1 more needed)
+All participants are on track
