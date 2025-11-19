@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – VA Health Benefits Mobile
 
 **📊 Recruitment Summary**
-- **Total Participants:** 4
-- **Confirmed Sessions:** 3
+- **Total Participants:** 5
+- **Confirmed Sessions:** 4
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 55 | PT003 | email_outreach | 2025-11-26 14:00 | confirmed | Limited data plan; prefers Wi-Fi only sessions; uses large text settings |
 | 54 | PT002 | email_outreach | 2025-11-24 11:00 | confirmed | Android user; works irregular hours so flexible timing needed |
 | 53 | PT001 | email_outreach | 2025-11-24 14:00 | pending | Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
 | 52 | PT002 | email_outreach | 2025-10-30  | confirmed | Android user; works irregular hours so flexible timing needed |
@@ -25,15 +26,17 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 4 | 100% |
+| 📧 Email Outreach | 5 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 75% conversion rate (3 confirmed of 4 recruited)
+Recruitment effectiveness: 80% conversion rate (4 confirmed of 5 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 - **** -  at 
@@ -80,6 +83,7 @@ Recruitment effectiveness: 75% conversion rate (3 confirmed of 4 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 55: Limited data plan; prefers Wi-Fi only sessions; uses large text settings
 - 54: Android user; works irregular hours so flexible timing needed
 - 53: Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows
 - 52: Android user; works irregular hours so flexible timing needed
@@ -101,24 +105,28 @@ Recruitment effectiveness: 75% conversion rate (3 confirmed of 4 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| White | 2 | 50% |
-| Asian | 2 | 50% |
+| black | 1 | 20% |
+| White | 2 | 40% |
+| Asian | 2 | 40% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 35-44 | 2 | 50% |
-| 45-54 | 2 | 50% |
+| 55-64 | 1 | 20% |
+| 35-44 | 2 | 40% |
+| 45-54 | 2 | 40% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Some college | 2 | 50% |
-| bachelor | 1 | 25% |
-| Bachelor's degree | 1 | 25% |
+| high_school | 1 | 20% |
+| Some college | 2 | 40% |
+| bachelor | 1 | 20% |
+| Bachelor's degree | 1 | 20% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Suburban | 2 | 50% |
-| Urban | 2 | 50% |
+| Rural | 1 | 20% |
+| Suburban | 2 | 40% |
+| Urban | 2 | 40% |
 
 ---
 
