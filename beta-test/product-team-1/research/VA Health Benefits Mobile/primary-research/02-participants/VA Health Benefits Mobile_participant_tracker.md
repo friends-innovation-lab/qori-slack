@@ -1,8 +1,8 @@
 # 👥 Participant Tracker – VA Health Benefits Mobile
 
 **📊 Recruitment Summary**
-- **Total Participants:** 8
-- **Confirmed Sessions:** 8
+- **Total Participants:** 9
+- **Confirmed Sessions:** 9
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 61 | PT007 | email_outreach | 2025-11-28 13:00 | confirmed |  |
 | 60 | PY006 | email_outreach | 2025-11-27 10:00 | confirmed |  |
 | 57 | PT005 | email_outreach | 2025-11-28 14:00 | confirmed | Uses TalkBack on Android; tech-savvy user who may complete tasks quickly |
 | 56 | PT004 | email_outreach | 2025-11-27 15:00 | confirmed | Prefers Spanish interface when available; uses both iOS and Android devices |
@@ -29,15 +30,17 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 8 | 100% |
+| 📧 Email Outreach | 9 | 100% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 100% conversion rate (8 confirmed of 8 recruited)
+Recruitment effectiveness: 100% conversion rate (9 confirmed of 9 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 - **** -  at 
@@ -118,33 +121,33 @@ Recruitment effectiveness: 100% conversion rate (8 confirmed of 8 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| Asian | 3 | 38% |
-| american_indian | 1 | 13% |
-| Hispanic or Latino | 1 | 13% |
-| black | 1 | 13% |
-| White | 2 | 25% |
+| black | 2 | 22% |
+| Asian | 3 | 33% |
+| american_indian | 1 | 11% |
+| Hispanic or Latino | 1 | 11% |
+| White | 2 | 22% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 45-54 | 3 | 38% |
-| 35-44 | 3 | 38% |
-| 25-34 | 1 | 13% |
-| 55-64 | 1 | 13% |
+| 35-44 | 4 | 44% |
+| 45-54 | 3 | 33% |
+| 25-34 | 1 | 11% |
+| 55-64 | 1 | 11% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| bachelor | 2 | 25% |
-| master | 1 | 13% |
-| associate | 1 | 13% |
-| high_school | 1 | 13% |
-| Some college | 2 | 25% |
-| Bachelor's degree | 1 | 13% |
+| master | 2 | 22% |
+| bachelor | 2 | 22% |
+| associate | 1 | 11% |
+| high_school | 1 | 11% |
+| Some college | 2 | 22% |
+| Bachelor's degree | 1 | 11% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Rural | 2 | 25% |
-| Urban | 4 | 50% |
-| Suburban | 2 | 25% |
+| Suburban | 3 | 33% |
+| Rural | 2 | 22% |
+| Urban | 4 | 44% |
 
 ---
 
