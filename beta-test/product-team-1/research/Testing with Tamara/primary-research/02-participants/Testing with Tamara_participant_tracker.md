@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – Testing with Tamara
 
 **📊 Recruitment Summary**
-- **Total Participants:** 1
+- **Total Participants:** 2
 - **Confirmed Sessions:** 0
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 59 | PT002 | internal_panel | 2025-11-24 01:00 | backup | NO |
 | 58 | PT001 | email_outreach | 2025-11-25 01:00 | pending | NO |
 
 ---
@@ -22,10 +23,11 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 1 | 100% |
+| 🗂️ Internal VA Panel | 1 | 50% |
+| 📧 Email Outreach | 1 | 50% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
+Recruitment effectiveness: 0% conversion rate (0 confirmed of 2 recruited)
 
 ---
 
@@ -71,6 +73,7 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 59: NO
 - 58: NO
 
 **Preparation Checklist:**
@@ -89,19 +92,21 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| Asian | 1 | 100% |
+| Asian | 2 | 100% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 25-34 | 1 | 100% |
+| 25-34 | 2 | 100% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| associate | 1 | 100% |
+| high_school | 1 | 50% |
+| associate | 1 | 50% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Prefer not to say | 1 | 100% |
+| Suburban | 1 | 50% |
+| Prefer not to say | 1 | 50% |
 
 ---
 
@@ -113,4 +118,4 @@ Recruitment effectiveness: 0% conversion rate (0 confirmed of 1 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (2 more needed); Schedule first confirmed session
+Continue recruiting to reach minimum of 3 participants (1 more needed); Schedule first confirmed session
