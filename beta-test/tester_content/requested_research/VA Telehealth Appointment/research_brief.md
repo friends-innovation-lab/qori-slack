@@ -13,14 +13,14 @@
 
 ## 🎯 Business Context
 
-Telehealth appointments have become a significant component of VA care, yet many Veterans face challenges with pre-appointment tasks such as device setup, connection tests, and permissions. Support teams have identified recurring issues stemming from unclear instructions, mismatched captions, and confusion regarding the preferred method of joining appointments. As a result, first-time telehealth users exhibit higher appointment no-show rates, leading to delays for clinicians and technical barriers for Veterans.
+The increasing utilization of telehealth appointments within the VA system has highlighted challenges faced by Veterans during pre-appointment tasks, such as device setup, connection tests, and permissions. Support teams have identified recurring issues stemming from unclear instructions, mismatched captions, and confusion regarding the preferred method of access (browser vs. app). First-time telehealth users exhibit higher appointment no-show rates, leading to delays for clinicians due to late arrivals and technical difficulties experienced by Veterans.
 
 > [!WARNING]
 > **Critical Issues Driving This Research**
 > 
-> - Difficulty locating appointment instructions across email, SMS, and portal messages is causing confusion for Veterans and leading to higher appointment no-show rates.
-- Overly long or dense prep instructions that Veterans skim or ignore are preventing Veterans from properly preparing for their telehealth appointments, leading to delays and confusion during the session.
-- Confusing or inconsistent permission prompts for camera and microphone are causing technical barriers for Veterans, resulting in delays for clinicians and impacting the efficiency of VA operations.
+> - Difficulty locating appointment instructions across email, SMS, and portal messages is causing confusion and uncertainty for Veterans, leading to higher appointment no-show rates and delays for clinicians.
+- Overly long or dense prep instructions that Veterans skim or ignore are preventing them from properly preparing for their appointments, resulting in technical barriers and late join times.
+- Confusing or inconsistent permission prompts for camera and microphone are causing frustration and delays for Veterans, impacting their overall telehealth experience and potentially leading to missed appointments.
 
 <br>
 
@@ -31,21 +31,20 @@ Telehealth appointments have become a significant component of VA care, yet many
 ## 🎯 Research Objectives
 
 What we want to learn:
-- Where veterans are experiencing the most difficulty locating appointment instructions across email, SMS, and portal messages.
-- Which prep instructions are overly long or dense, leading veterans to skim or ignore them.
+- Where veterans are experiencing difficulty locating appointment instructions across email, SMS, and portal messages.
+- Which prep instructions are overly long or dense, causing veterans to skim or ignore them.
 - Why veterans are experiencing caption delays that reduce comprehension during video-based guidance.
-- How veterans are interpreting unclear device and browser compatibility expectations and confusing permission prompts for camera and microphone.
+- How veterans are interacting with unclear device and browser compatibility expectations and confusing permission prompts for camera and microphone.
 
 <details>
 <summary><strong>📋 User Journey in Scope</strong> <kbd>Click to expand</kbd></summary>
 
 > **What this covers:** The complete end-to-end user experience we'll be researching
 
-1. Set up email/SMS reminders for appointments
-2. Complete pre-visit setup steps: test camera, microphone, and internet connection
-3. Choose between joining the appointment via browser or in-app
-4. Grant necessary permissions and check device compatibility before joining the appointment
-5. Navigate through loading and waiting room states while waiting for the appointment to start
+1. Set up email/SMS reminders for upcoming appointments
+2. Check camera, microphone, and internet connection before appointment
+3. Choose between joining appointment via browser or in-app
+4. Respond to permission prompts and check device compatibility before joining appointment
 
 </details>
 
@@ -57,11 +56,11 @@ What we want to learn:
 
 ## 🎯 Target Barriers
 
-- Users struggle to locate appointment instructions due to scattered communication across email, SMS, and portal messages.
-- Veterans often ignore or skim through lengthy and dense preparation instructions provided.
-- Delays in captions during video-based guidance hinder user comprehension.
-- Unclear expectations regarding device and browser compatibility create confusion for users.
-- Confusing and inconsistent permission prompts for camera and microphone add to user frustration.
+- Users struggle to locate appointment instructions scattered across multiple communication channels (email, SMS, portal messages).
+- Veterans often ignore lengthy and complex preparation instructions, leading to incomplete or incorrect actions.
+- Delays in captions during video-based guidance hinder user comprehension and engagement.
+- Users are unsure of device and browser compatibility requirements, leading to potential technical issues.
+- Confusing and inconsistent prompts for camera and microphone permissions create barriers to accessing necessary features.
 
 <br>
 
@@ -72,15 +71,15 @@ What we want to learn:
 ## 🤔 Key Questions & Hypotheses
 
 ### 🔍 Primary Research Questions
-1. How do veterans currently navigate through email, SMS, and portal messages to locate appointment instructions for VA Telehealth services?
-2. What barriers prevent veterans from fully comprehending and following overly long or dense prep instructions for their telehealth appointments?
-3. Why do veterans experience delays in captioning during video-based guidance for VA Telehealth appointments, and how does this impact their comprehension?
-4. What causes confusion or frustration for veterans when encountering unclear device and browser compatibility expectations and permission prompts for camera and microphone usage during their telehealth appointments?
+1. How do veterans currently navigate through email, SMS, and portal messages to locate appointment instructions, and what specific challenges do they face in this process?
+2. What barriers prevent veterans from fully engaging with and comprehending overly long or dense prep instructions provided before their telehealth appointments?
+3. Why do veterans experience delays in captioning during video-based guidance, and how does this impact their overall understanding and experience with the telehealth service?
+4. What causes confusion or frustration for veterans when encountering unclear device and browser compatibility expectations, permission prompts, and device compatibility checks during the pre-visit setup steps for their telehealth appointments?
 
 ### 💭 Team Hypotheses
-1. Difficulty locating appointment instructions across email, SMS, and portal messages increases the likelihood of missed or late appointments among Veterans.
-2. Veterans with limited tech literacy face more challenges with unclear device and browser compatibility expectations when using VA Telehealth Appointment.
-3. Confusing or inconsistent permission prompts for camera and microphone lead to increased frustration and lower engagement with video-based guidance among Veterans.
+1. Difficulty locating appointment instructions across email, SMS, and portal messages increases the likelihood of missed or late appointments for Veterans.
+2. Veterans with limited technology literacy face more challenges in understanding and following overly long or dense prep instructions for VA Telehealth Appointments.
+3. Confusing or inconsistent permission prompts for camera and microphone lead to increased frustration and lower engagement levels among Veterans during video-based guidance sessions.
 
 <br>
 
@@ -92,8 +91,8 @@ What we want to learn:
 
 | 🔬 **Aspect** | 📝 **Details** |
 |---------------|-----------------|
-| **Method** | Conducting user interviews and usability testing to enhance clarity, accessibility, and predictability within the "prep and join" workflow is crucial for the Telehealth Services redesign scheduled for early 2026, aligning with VA research standards. |
-| **Rationale** | This refined research approach makes sense for the research objectives because it allows for in-depth exploration of consumer behaviors and preferences, providing valuable insights into their decision-making processes. By combining both qualitative and quantitative methods, it will offer a comprehensive understanding of the target market within the scope and constraints of the study. |
+| **Method** | Enhancing clarity, accessibility, and predictability throughout the preparation and onboarding process is crucial for the upcoming Telehealth Services redesign in early 2026. This will involve conducting user interviews, usability testing, and following VA research standards to inform the redesign process. |
+| **Rationale** | This refined research approach makes sense for the research objectives because it allows for in-depth exploration of consumer behavior and preferences through qualitative interviews and observations. This method will provide valuable behavioral insights that align with the research objectives while fitting within the scope and constraints of the study. |
 
 <br>
 
@@ -104,8 +103,9 @@ What we want to learn:
 ## 🎯 Expected Outcomes
 
 Research will inform:
-- Process optimization for VA Telehealth Appointment scheduling and coordination
-- Improvements in the prioritization and strategy for managing VA Telehealth Appointments
+- Improvements in VA Telehealth Appointment scheduling processes
+- Prioritization of resources for VA Telehealth Appointment services
+- Optimization of VA Telehealth Appointment technology and systems
 
 <br>
 
