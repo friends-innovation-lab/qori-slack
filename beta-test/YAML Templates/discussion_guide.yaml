@@ -1,7 +1,7 @@
 id: discussion_guide_v5
 name: run_discussion_guide
 label: 💬 Discussion Guide
-version: v5.0
+version: v5.1
 
 description: |
   Generate a comprehensive, professional discussion guide for user research sessions.
@@ -231,47 +231,7 @@ ai_generation_tasks:
       
       Keep it warm and genuine. This is the last impression they have of the research team.
 
-  # Task 9: Generate observer notes template
-  - task_id: "observer_template"
-    prompt: |
-      Create a structured observer notes template for research about:
-      
-      Research Focus: {{research_focus}}
-      
-      Include these sections with clear formatting:
-      
-      **Session Info**
-      - Participant ID: ____
-      - Date/Time: ____
-      - Observer: ____
-      
-      **Key Quotes** (verbatim)
-      | Quote | Context | Timestamp |
-      |-------|---------|-----------|
-      |       |         |           |
-      
-      **Usability Issues**
-      | Issue | Severity (H/M/L) | Task # | Notes |
-      |-------|------------------|--------|-------|
-      |       |                  |        |       |
-      
-      **Behavioral Observations**
-      - [ ] Hesitation/confusion points:
-      - [ ] Positive reactions:
-      - [ ] Workarounds attempted:
-      
-      **Feature Requests/Suggestions**
-      - 
-      
-      **Technical Issues**
-      - 
-      
-      **Overall Impression** (1-5 scale)
-      - Task completion: ___
-      - User confidence: ___
-      - Satisfaction: ___
-
-  # Task 10: Generate synthesis prompts
+  # Task 9: Generate synthesis prompts
   - task_id: "synthesis"
     prompt: |
       Create 5 reflection questions for researchers to ask themselves after sessions about:
@@ -296,9 +256,12 @@ ai_generation_tasks:
 output_template: |
   # 💬 Discussion Guide — {{ai_generated.study_name}}
 
-  **Duration:** {{session_length}} minutes
+  **Session Length:** {{session_length}} minutes
+
   **Participants:** {{participants}}
-  **Date:** {{current_date}}
+
+  **Date Created:** {{current_date}}
+
   **Testing URL:** {{testing_url}}
 
   ---
@@ -367,12 +330,6 @@ output_template: |
 
   ---
 
-  ## 📝 Observer Notes Template
-
-  {{ai_generated.observer_template}}
-
-  ---
-
   ## 🔍 Research Synthesis Prompts
 
   {{ai_generated.synthesis}}
@@ -388,7 +345,7 @@ output_template: |
   - [ ] Consent form signed
   - [ ] Compensation ready
   - [ ] Backup facilitator available
-  - [ ] Observer notes template printed/ready
+  - [ ] Discussion guide printed/accessible
 
   **Post-Session Checklist:**
   - [ ] Save and backup recording
