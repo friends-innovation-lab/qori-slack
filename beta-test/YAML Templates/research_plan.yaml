@@ -1,7 +1,7 @@
 id: research_plan
 name: run_research_plan
 label: Research Plan
-version: v4.3
+version: v4.4
 description: |
   **Research Idea → Complete Execution Plan**
   
@@ -292,11 +292,13 @@ ai_generation_tasks:
   # Timeline - FIXED VERSION
   - task_id: "timeline"
     prompt: |
-      Create timeline DATA ROWS ONLY for {{timeline_preference}} research starting on {{current_date}}.
+      Create timeline DATA ROWS ONLY for {{timeline_preference}} research.
       
-      CRITICAL: Output ONLY the table data rows. Do NOT include the header row.
-      
-      The start date is: {{current_date}}
+      ===== CRITICAL DATE INSTRUCTION =====
+      TODAY'S DATE IS: {{current_date}}
+      USE THIS EXACT DATE AS YOUR STARTING POINT.
+      DO NOT USE ANY OTHER DATE.
+      =====================================
       
       Phase durations for Standard (4-6 weeks total):
       - Planning: 3 days
@@ -307,13 +309,14 @@ ai_generation_tasks:
       - Reporting: 2 days
       
       Rules:
-      - Planning starts on {{current_date}}
+      - Planning starts on {{current_date}} (this is the REAL start date)
       - Each phase starts the day after the previous phase ends
       - Format dates as: Month DD, YYYY (example: November 25, 2025)
       - Do NOT output the header row - only output data rows
+      - Do NOT use placeholder dates like January 2023 or October 2023
       
-      Output ONLY these 6 rows in this exact format:
-      | Planning | 3 days | [start date] | [end date] | Project Brief, Research Plan |
+      Output ONLY these 6 rows starting from {{current_date}}:
+      | Planning | 3 days | {{current_date}} | [end date] | Project Brief, Research Plan |
       | Collaboration Cycle | 5 days | [start date] | [end date] | Stakeholder Alignment |
       | Recruiting | 10 days | [start date] | [end date] | Participant Selection |
       | Research | 7 days | [start date] | [end date] | Data Collection |
@@ -374,47 +377,63 @@ ai_generation_tasks:
   # Detailed Research Protocols
   - task_id: "detailed_protocols"
     prompt: |
-      Generate specific research protocols for {{methodology}} methodology studying {{product_area}}.
+      Generate specific research protocols for {{methodology}} studying {{product_area}}.
       
-      IMPORTANT: Only include protocols relevant to {{methodology}}. Make all examples specific to {{product_area}} and telehealth/VA context - do NOT use generic shopping cart or e-commerce examples.
+      CRITICAL INSTRUCTIONS:
+      1. The selected methodology is: {{methodology}}
+      2. ONLY output protocols for {{methodology}} - do not include any other methodology
+      3. Do NOT generate protocols for methodologies that weren't selected (no Eye Tracking, no A/B Testing, etc.)
+      4. Make all task examples specific to {{product_area}} and VA telehealth context
       
-      Based on {{methodology}}, provide detailed protocols:
+      Generate ONLY the section that matches {{methodology}}:
       
+      If {{methodology}} is "Usability Testing", output:
       **For Usability Testing:**
-      - **Task Scenarios:** [3-4 specific tasks participants will complete with {{product_area}} - must be relevant to telehealth/VA services]
+      - **Task Scenarios:** 
+        1. [First specific task with {{product_area}}]
+        2. [Second specific task with {{product_area}}]
+        3. [Third specific task with {{product_area}}]
+        4. [Fourth specific task with {{product_area}}]
       - **Think-Aloud Protocol:** [Instructions for facilitating concurrent verbalization]
       - **Data Collection:** [Screen recording setup, observation notes template, timing protocols]
       - **Post-Session Interviews:** [Key follow-up questions about {{product_area}} experience]
       
+      If {{methodology}} is "User Interviews", output:
       **For User Interviews:**
       - **Interview Guide Structure:** [Opening, main topics, probing questions about {{product_area}}]
       - **Question Types:** [Behavioral, attitudinal, and contextual questions]
       - **Recording Protocols:** [Audio/video setup and consent procedures]
       - **Analysis Approach:** [Thematic analysis, affinity mapping, coding framework]
       
+      If {{methodology}} is "Card Sorting", output:
       **For Card Sorting:**
       - **Card Preparation:** [How to create cards from {{product_area}} content/features]
       - **Sorting Methodology:** [Open vs. closed sort, hybrid approaches]
       - **Analysis Procedures:** [Statistical measures, dendrograms, similarity matrices]
       - **Results Interpretation:** [How to translate findings into {{product_area}} recommendations]
       
+      If {{methodology}} is "Survey Research", output:
       **For Survey Research:**
       - **Question Design:** [Scale types, validation approaches for {{product_area}} metrics]
       - **Sampling Strategy:** [Target demographics, sample size calculations]
       - **Distribution Methods:** [Platform selection, timing, reminder protocols]
       - **Statistical Analysis:** [Descriptive statistics, significance testing, reporting standards]
       
+      If {{methodology}} is "Concept Testing", output:
       **For Concept Testing:**
       - **Concept Presentation:** [Prototype fidelity, scenario setup for {{product_area}}]
       - **Testing Protocol:** [Task completion, feedback collection, preference ranking]
       - **Measurement Criteria:** [Usability metrics, comprehension testing, appeal assessment]
       - **Iteration Framework:** [How to incorporate feedback into {{product_area}} design]
       
+      If {{methodology}} is "Competitive Analysis", output:
       **For Competitive Analysis:**
       - **Evaluation Framework:** [Heuristics, feature comparison matrices for {{product_area}}]
       - **Documentation Standards:** [Screenshots, interaction flows, usability notes]
       - **Analysis Criteria:** [Strengths/weaknesses identification, best practice extraction]
       - **Synthesis Approach:** [How to translate competitive insights into {{product_area}} recommendations]
+      
+      REMEMBER: Only output the ONE section that matches {{methodology}}. Do not make up other methodologies.
 
 # OUTPUT TEMPLATE - Table header is now hardcoded
 output_template: |
