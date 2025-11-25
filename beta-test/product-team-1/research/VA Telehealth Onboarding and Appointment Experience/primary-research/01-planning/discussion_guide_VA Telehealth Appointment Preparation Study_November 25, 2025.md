@@ -1,8 +1,11 @@
 # 💬 Discussion Guide — VA Telehealth Appointment Preparation Study
 
-**Duration:** 60 minutes
+**Session Length:** 60 minutes
+
 **Participants:** Veterans who completed at least one VA telehealth visit in the last year. Include a mix of ages, service histories, and device preferences. Half of participants should rely on accessibility tools such as screen readers, magnification, captions, or adaptive input. Include at least two Veterans who receive help from a caregiver during telehealth visits. Recruit across time zones to capture scheduling differences and morning versus afternoon appointment behaviors.
-**Date:** November 25, 2025
+
+**Date Created:** November 25, 2025
+
 **Testing URL:** https://telehealth.va.gov/appointment-join-test
 
 ---
@@ -44,47 +47,54 @@
 
 ## 🎯 Research Objectives
 
-1. Identify the specific steps in the telehealth appointment preparation process that Veterans find unclear or overwhelming, and determine the frequency at which these issues occur.
-2. Determine the factors that influence Veterans' decision-making process when choosing to join their telehealth appointment from a phone, laptop, or tablet, and analyze the preferences and reasoning behind these choices.
-3. Evaluate the information that Veterans consider most important right before their telehealth appointment begins, and assess how this information impacts their overall experience and satisfaction with the appointment.
+1. Identify the specific steps within the telehealth appointment preparation process that Veterans find unclear or overwhelming, and quantify the frequency with which these steps cause confusion.
+2. Determine the factors that influence Veterans' decision-making process when selecting the device (phone, laptop, tablet) to use for their telehealth appointments, and assess the impact of these decisions on their overall experience.
+3. Evaluate the information that Veterans consider most important immediately prior to the start of their telehealth appointments, and analyze how this information influences their level of preparedness and engagement.
+4. Investigate the timing and sources from which Veterans seek instructions for their telehealth appointments, and assess the effectiveness of these sources in meeting their needs and expectations.
+5. Explore how the use of assistive technologies affects Veterans' ability to join and participate in their telehealth appointments, and identify any barriers or challenges they may encounter as a result.
 
 ---
 
 ## 👋 Introduction Script
 
-**Welcome & Thank You**
+Welcome & Thank You:
+
 Hello and thank you for joining us today. My name is [Researcher's Name] and I'm excited to have you participate in our research session.
 
-**Session Purpose**
-Today, we're focusing on studying how Veterans prepare for and enter their VA telehealth appointments. Your input is incredibly valuable as we aim to understand the challenges Veterans face with device setup, connectivity, and joining their video visits. This research will help us identify where the process breaks down and how guidance can be improved to support the upcoming Telehealth Clinic redesign in 2026.
+Session Purpose:
 
-**Consent & Recording**
-Before we begin, I want to mention that this session will be recorded for research purposes. Your participation is completely voluntary, and your responses will be kept confidential. Can I have your verbal consent to proceed with the recording?
+Today, we're studying how Veterans prepare for and enter their VA telehealth appointments. Your input is incredibly valuable as we aim to understand the challenges Veterans face with device setup, connectivity, and the steps needed to join their video visits. This research will help us identify where the process breaks down and how guidance can be improved to support the upcoming Telehealth Clinic redesign in early 2026.
 
-**Ground Rules**
-During our session, there are no right or wrong answers. Feel free to think aloud, skip questions if needed, and take breaks whenever you feel necessary. Your comfort and input are our top priorities.
+Consent & Recording:
 
-**Questions Before We Begin**
-Before we dive into the research, do you have any questions or concerns you'd like to address? Feel free to let me know before we get started.
+Before we begin, I want to mention that this session will be recorded for research purposes. Your participation is completely voluntary, and your responses will remain confidential. Can I have your verbal consent to proceed with the recording?
+
+Ground Rules:
+
+During our session, there are no right or wrong answers. Feel free to think aloud, skip any questions you're not comfortable answering, and take breaks as needed. Your feedback is what matters most.
+
+Questions Before We Begin:
+
+Before we dive into our discussion, do you have any questions for me or anything you'd like to clarify?
 
 ---
 
 ## 🗣️ Warm-up Questions
 
-1. Can you tell me about your experience with VA telehealth appointments? How did you first learn about them and what made you decide to try it out?
-   - *Why this matters:* Understanding the initial motivation and learning process can provide insights into the overall telehealth experience for Veterans.
+1. Can you tell me about your experience with VA telehealth appointments? 
+   - *Why this matters:* This question helps establish the participant's background and experience with telehealth visits, setting the stage for further discussion on their preparation process.
 
-2. What devices do you typically use for your telehealth appointments? Are there any specific challenges you face with setting up or using these devices for your appointments?
-   - *Why this matters:* Device preferences and setup challenges can impact the ease and effectiveness of telehealth visits for Veterans.
+2. How do you typically prepare for a VA telehealth appointment? 
+   - *Why this matters:* Understanding the participant's preparation routine can provide insights into their current practices and potential pain points in the process.
 
-3. How do you usually prepare for your telehealth appointments? Do you have a specific routine or checklist that you follow before joining the video visit?
-   - *Why this matters:* Exploring preparation habits can shed light on the level of support and guidance needed for Veterans to feel confident and ready for their appointments.
+3. Can you walk me through the steps you take to join a video visit with your healthcare provider? 
+   - *Why this matters:* This question helps uncover the specific actions and challenges Veterans face when trying to connect to their telehealth appointments, highlighting areas where guidance may be needed.
 
-4. Can you walk me through the steps you take to join a telehealth appointment? Are there any points in the process where you feel unsure or encounter difficulties?
-   - *Why this matters:* Mapping out the journey from preparation to joining the appointment can reveal pain points and areas where Veterans may need clearer instructions or support.
+4. Have you ever encountered difficulties with device setup or connectivity during a telehealth visit? 
+   - *Why this matters:* Exploring past challenges can shed light on common issues Veterans face and where improvements can be made in the telehealth process.
 
-5. Do you ever seek help from a caregiver or use accessibility tools during your telehealth appointments? How do these resources assist you, and are there any improvements you would like to see in terms of support?
-   - *Why this matters:* Understanding the role of caregivers and accessibility tools can highlight the importance of tailored guidance and accommodations for Veterans with different needs.
+5. How do you prefer to receive instructions or guidance for your telehealth appointments? 
+   - *Why this matters:* Understanding the preferred communication channels of Veterans can help tailor support resources and materials to better meet their needs during telehealth visits.
 
 ---
 
@@ -94,185 +104,143 @@ Before we dive into the research, do you have any questions or concerns you'd li
 **Time:** 5 minutes
 
 **Scenario:** 
-You have a telehealth appointment scheduled with your VA provider in 30 minutes. You need to decide whether to join the appointment from your phone, laptop, or tablet.
+You have a VA telehealth appointment coming up and need to decide whether to join from your phone, laptop, or tablet.
 
 **Instruction to Participant:**
-"Please take a moment to think about which device you would prefer to use for your upcoming telehealth appointment. Once you have made your decision, please explain your reasoning."
+"Please think about your upcoming telehealth appointment and choose which device you would prefer to use to join the video visit."
 
 **Success Criteria:**
-- Participant selects a device based on personal preference or convenience.
-- Participant provides a clear explanation for their choice.
+- Participant selects a device and explains their reasoning for choosing it.
 
 **What to Observe:**
-- Decision-making process
-- Factors influencing device selection (e.g., comfort, ease of use, accessibility)
-- Potential challenges in deciding between devices
+- Participant's decision-making process
+- Factors influencing their choice (e.g., convenience, familiarity)
+- Any hesitation or confusion in making the decision
 
 **Probing Questions:**
-- Why did you choose that particular device?
-- How important is the device's screen size to you during a telehealth appointment?
+- Why did you choose that specific device?
+- Did you consider any other factors when deciding on the device?
 
 ---
 
-### Task 2: Instruction Seeking Behavior
+### Task 2: Instruction Search
 **Time:** 7 minutes
 
 **Scenario:** 
-You have just received a reminder for your upcoming telehealth appointment. You realize you need instructions on how to join the video visit.
+You have a VA telehealth appointment scheduled for tomorrow morning. You need to find the instructions on how to join the video visit.
 
 **Instruction to Participant:**
-"Please take a moment to find the instructions on how to join your telehealth appointment. Once you have located the information, please describe where you found it and how easy or difficult it was to access."
+"Please search for the instructions on how to join a VA telehealth appointment on your preferred device."
 
 **Success Criteria:**
-- Participant successfully locates instructions on how to join the telehealth appointment.
-- Participant describes the ease of access to the instructions.
+- Participant locates the instructions within the given time frame.
+- Participant explains where they found the instructions and how easy or difficult it was to locate them.
 
 **What to Observe:**
-- Search behavior for instructions
-- Navigation through different channels (e.g., email, website, app)
-- Challenges in finding the necessary information
+- Search behavior (e.g., keywords used, websites visited)
+- Ease of finding the instructions
+- Any frustration or confusion during the search process
 
 **Probing Questions:**
-- Where did you expect to find the instructions initially?
-- How did the location of the instructions impact your confidence in joining the appointment?
+- Where did you find the instructions? Was it easy to locate them?
+- Did you encounter any challenges while searching for the instructions?
 
 ---
 
-### Task 3: Assistive Technology Experience
-**Time:** 8 minutes
-
-**Scenario:** 
-You typically use a screen reader to assist you with accessing digital content. You have a telehealth appointment scheduled and need to set up your device for the video visit using the screen reader.
-
-**Instruction to Participant:**
-"Please use your screen reader to set up your device for the upcoming telehealth appointment. Once you have completed the setup, please share any challenges you encountered and how you overcame them."
-
-**Success Criteria:**
-- Participant successfully sets up their device for the telehealth appointment using a screen reader.
-- Participant identifies and describes any challenges faced during the setup process.
-
-**What to Observe:**
-- Interaction with the screen reader
-- Adaptation to assistive technology during the setup
-- Potential barriers in using the screen reader for telehealth preparation
-
-**Probing Questions:**
-- How did the screen reader impact your ability to follow the setup instructions?
-- What improvements could be made to the setup process for individuals using assistive technologies?
-
---- 
-
-### Task 4: Caregiver Assistance
+### Task 3: Joining the Appointment
 **Time:** 10 minutes
 
 **Scenario:** 
-You are a Veteran who receives help from a caregiver during your telehealth appointments. Your caregiver is not available, and you need to prepare for the upcoming video visit on your own.
+It's time for your VA telehealth appointment. Please go through the steps to join the video visit on your chosen device.
 
 **Instruction to Participant:**
-"Please navigate through the steps to join your telehealth appointment without the assistance of your caregiver. Once you have completed the preparation, please share any difficulties you encountered and how you managed without help."
+"Please follow the steps to join your VA telehealth appointment on the device you selected earlier."
 
 **Success Criteria:**
-- Participant successfully completes the preparation for the telehealth appointment without caregiver assistance.
-- Participant identifies and describes any challenges faced during the solo preparation.
+- Participant successfully joins the video visit.
+- Participant describes any difficulties or confusion encountered during the process.
 
 **What to Observe:**
-- Independence in following the preparation steps
-- Adaptation to the absence of caregiver support
-- Potential areas where caregiver assistance is crucial
+- Participant's ability to navigate the joining process
+- Any errors made during the steps
+- Any moments of hesitation or uncertainty
 
 **Probing Questions:**
-- How did you feel navigating the preparation steps without your caregiver's help?
-- In what ways does caregiver assistance enhance your telehealth experience?
+- Were there any steps that were unclear or difficult to follow?
+- How did you feel about the process of joining the appointment on your device?
+
+--- 
+
+### Task 4: Assistive Technology Use
+**Time:** 8 minutes
+
+**Scenario:** 
+You typically use assistive technology during your VA telehealth appointments. Please demonstrate how you use these tools to join the video visit.
+
+**Instruction to Participant:**
+"Show us how you use your assistive technology to join a VA telehealth appointment on your preferred device."
+
+**Success Criteria:**
+- Participant demonstrates the use of assistive technology to navigate the joining process.
+- Participant explains how the tools enhance their experience.
+
+**What to Observe:**
+- Participant's proficiency in using assistive technology
+- Impact of the tools on the joining process
+- Any challenges faced while using the assistive technology
+
+**Probing Questions:**
+- How does the assistive technology help you during the telehealth appointment?
+- Are there any improvements or adjustments you would suggest for using assistive technology in this context?
 
 ---
 
 ## 💭 Post-Session Interview
 
-1. Can you walk me through the steps you took to prepare for your telehealth appointment today?
-   - *Follow-up if needed:* What parts of the preparation process felt unclear or overwhelming to you?
+1. How did you feel overall about the process of preparing for and joining your VA telehealth appointment?
+   - *Follow-up if needed:* Were there any specific moments that stood out to you as particularly challenging or frustrating?
 
-2. How did you decide whether to join the appointment from a phone, laptop, or tablet?
-   - *Follow-up if needed:* Were there any factors that influenced your decision?
+2. Can you walk me through any specific pain points or difficulties you encountered while setting up your device and joining the video visit?
+   - *Follow-up if needed:* Were there any steps that you found especially confusing or unclear?
 
-3. What information did you find most important right before your appointment began?
-   - *Follow-up if needed:* Did you feel like you had all the necessary information to start the appointment smoothly?
+3. What were your expectations going into the telehealth appointment, and how did they align with the reality of the experience?
+   - *Follow-up if needed:* Were there any aspects of the process that surprised you or were different from what you expected?
 
-4. When did you first look for instructions on how to join the appointment, and where did you expect to find them?
-   - *Follow-up if needed:* Were the instructions easy to follow, or did you encounter any difficulties?
+4. How would you describe your mental model of how to prepare for and join a telehealth appointment? Did this align with the actual steps you needed to take?
+   - *Follow-up if needed:* Were there any gaps in your understanding that caused confusion or uncertainty?
 
-5. How did any assistive technologies you used impact your experience in joining the appointment?
-   - *Follow-up if needed:* Did you feel like the assistive technologies helped or hindered your ability to connect?
+5. Do you have any suggestions for how the process of preparing for and joining a telehealth appointment could be improved for Veterans like yourself?
+   - *Follow-up if needed:* Are there any specific changes or additions you would recommend to make the experience smoother?
 
-6. What typically triggers you to make a last-minute call to support lines for assistance with your telehealth appointment?
-   - *Follow-up if needed:* Have you encountered any common issues that lead to needing additional support?
-
-7. Are there any parts of the appointment workflow that you tend to skip, misunderstand, or repeat because you didn't trust the initial instructions?
-   - *Follow-up if needed:* Can you provide an example of a time when this happened?
-
-8. On a scale of 1-10, how likely would you be to use this telehealth service again? What improvements or changes would make it a 10 for you?
+6. On a scale of 1-10, how likely would you be to use the VA telehealth service again in the future? What would make it a 10 in your eyes?
+   - *Follow-up if needed:* Would you recommend this service to other Veterans based on your experience today?
 
 ---
 
 ## 🎁 Closing Script
 
-Thank you so much for taking the time to participate in our research session today. Your insights are incredibly valuable to us. 
+Thank you so much for taking the time to participate in our research session today. Your insights and feedback have been incredibly valuable to us.
 
-Next steps will involve analyzing all the feedback we've received and using it to make improvements to our product. Your compensation for today's session will be sent to you shortly.
+Next steps, we will be analyzing all the information gathered today to identify key themes and areas for improvement. Your compensation for participating in this session will be processed shortly.
 
-Rest assured that your feedback will be used to make meaningful changes that will benefit our users.
+Please know that your feedback will be used to inform important decisions and improvements in our products/services.
 
-If you have any further questions or thoughts you'd like to share, please feel free to reach out to us at [contact information].
+If you have any further questions or would like to provide additional feedback, please feel free to reach out to us at [contact information].
 
-Once again, thank you for your time and valuable input. Have a great day!
-
----
-
-## 📝 Observer Notes Template
-
-
-**Session Info**
-- Participant ID: ______
-- Date/Time: ______
-- Observer: ______
-
-**Key Quotes** (verbatim)
-| Quote | Context | Timestamp |
-|-------|---------|-----------|
-|       |         |           |
-
-**Usability Issues**
-| Issue | Severity (H/M/L) | Task # | Notes |
-|-------|------------------|--------|-------|
-|       |                  |        |       |
-
-**Behavioral Observations**
-- [ ] Hesitation/confusion points:
-- [ ] Positive reactions:
-- [ ] Workarounds attempted:
-
-**Feature Requests/Suggestions**
-- 
-
-**Technical Issues**
-- 
-
-**Overall Impression** (1-5 scale)
-- Task completion: ___
-- User confidence: ___
-- Satisfaction: ___
+Thank you again for your time and valuable input. If you have any final questions, we are happy to address them now.
 
 ---
 
 ## 🔍 Research Synthesis Prompts
 
 **After Each Session:**
-1. What recurring challenges did Veterans face when preparing for their telehealth appointments?
-2. Were there any unexpected barriers that emerged during the session?
-3. Which aspects of the process require further exploration to fully understand Veterans' experiences?
+1. What common challenges did Veterans face when preparing for their telehealth appointments?
+2. Were there any unexpected barriers that Veterans encountered during the process?
+3. Which aspects of the appointment setup process require further exploration to fully understand?
 
 **After All Sessions:**
-4. What common themes or patterns have emerged across multiple sessions?
-5. How confident are we in our understanding of Veterans' needs and challenges in preparing for telehealth appointments based on the sessions conducted?
+4. What recurring themes or patterns emerged across multiple sessions?
+5. How confident are we in our understanding of the breakdowns in the appointment process and the necessary changes for improvement?
 
 ---
 
@@ -285,7 +253,7 @@ Once again, thank you for your time and valuable input. Have a great day!
 - [ ] Consent form signed
 - [ ] Compensation ready
 - [ ] Backup facilitator available
-- [ ] Observer notes template printed/ready
+- [ ] Discussion guide printed/accessible
 
 **Post-Session Checklist:**
 - [ ] Save and backup recording
