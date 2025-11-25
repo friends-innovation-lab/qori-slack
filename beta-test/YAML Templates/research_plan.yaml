@@ -92,6 +92,24 @@ input_variables:
 
 # ENHANCED AI GENERATION TASKS
 ai_generation_tasks:
+  # Format target participants as bullets
+  - task_id: "formatted_participants"
+    prompt: |
+      Format the following participant criteria as a bulleted list:
+      
+      {{target_participants}}
+      
+      Rules:
+      - Each distinct participant type or criteria should be its own bullet point
+      - Start each bullet with a dash and space (- )
+      - Keep the original wording, just add line breaks and bullets
+      - Do not add any extra text or headers
+      
+      Example output format:
+      - Veterans who have completed at least one telehealth appointment
+      - Veterans who prefer video visits due to mobility issues
+      - Caregivers who help Veterans join video visits
+
   # Clean product area name - SHORT NAME ONLY
   - task_id: "clean_product_area"
     prompt: |
@@ -462,8 +480,9 @@ output_template: |
   ## 🧲 Recruitment
 
   ### Target Participants
-  - **Primary:** {{target_participants}}
-  - **Total Participants:** {{participant_count}}
+  {{ai_generated.formatted_participants}}
+
+  **Total Participants:** {{participant_count}}
 
   ### Demographics
   {{ai_generated.demographics}}
