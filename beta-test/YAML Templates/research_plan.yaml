@@ -1,7 +1,7 @@
 id: research_plan
 name: run_research_plan
 label: Research Plan
-version: v4.2
+version: v4.3
 description: |
   **Research Idea → Complete Execution Plan**
   
@@ -271,39 +271,36 @@ ai_generation_tasks:
       
       Ensure all numbers add up logically to {{participant_count}}.
 
-  # Timeline - REVERTED TO ORIGINAL WORKING VERSION
+  # Timeline - FIXED VERSION
   - task_id: "timeline"
     prompt: |
-      Create a detailed timeline table for {{timeline_preference}} research.
-
-      Use **today's date (in US timezone)** as the starting point (timeline begins after stakeholder approval).  
-      Timezone: US Eastern Time (ET). Format: ISO (YYYY-MM-DD).
-
-      Rules:
-      - Planning starts today.
-      - Each next phase starts the day after the previous phase ends.
-      - End Date = Start Date + (Duration - 1) days.
-      - Count all calendar days (no skipping weekends/holidays).
-      - Show actual computed dates (not relative placeholders).
-
-      Phases and durations (calendar days):
-      - Planning: 2 days
+      Create timeline DATA ROWS ONLY for {{timeline_preference}} research starting on {{current_date}}.
+      
+      CRITICAL: Output ONLY the table data rows. Do NOT include the header row.
+      
+      The start date is: {{current_date}}
+      
+      Phase durations for Standard (4-6 weeks total):
+      - Planning: 3 days
       - Collaboration Cycle: 5 days
-      - Recruiting: 7 days
-      - Research: 5 days
-      - Analysis: 1 day
-      - Reporting: 1 day
-
-      Output as a markdown table:
-
-      | Phase | Duration | Start Date | End Date | Key Deliverables |
-      |-------|----------|------------|----------|------------------|
-      | Planning | 2 days | (today) | (today + 1 day) | Project Brief, Research Plan |
-      | Collaboration Cycle | 5 days | (day after Planning end) | (start + 4 days) | Stakeholder Alignment |
-      | Recruiting | 7 days | (day after Collaboration end) | (start + 6 days) | Participant Selection |
-      | Research | 5 days | (day after Recruiting end) | (start + 4 days) | Data Collection |
-      | Analysis | 1 day | (day after Research end) | (same day) | Insights Synthesis |
-      | Reporting | 1 day | (day after Analysis end) | (same day) | Final Report |
+      - Recruiting: 10 days
+      - Research: 7 days
+      - Analysis: 3 days
+      - Reporting: 2 days
+      
+      Rules:
+      - Planning starts on {{current_date}}
+      - Each phase starts the day after the previous phase ends
+      - Format dates as: Month DD, YYYY (example: November 25, 2025)
+      - Do NOT output the header row - only output data rows
+      
+      Output ONLY these 6 rows in this exact format:
+      | Planning | 3 days | [start date] | [end date] | Project Brief, Research Plan |
+      | Collaboration Cycle | 5 days | [start date] | [end date] | Stakeholder Alignment |
+      | Recruiting | 10 days | [start date] | [end date] | Participant Selection |
+      | Research | 7 days | [start date] | [end date] | Data Collection |
+      | Analysis | 3 days | [start date] | [end date] | Insights Synthesis |
+      | Reporting | 2 days | [start date] | [end date] | Final Report |
 
   # Risk Assessment
   - task_id: "risks"
@@ -401,7 +398,7 @@ ai_generation_tasks:
       - **Analysis Criteria:** [Strengths/weaknesses identification, best practice extraction]
       - **Synthesis Approach:** [How to translate competitive insights into {{product_area}} recommendations]
 
-# REVISED OUTPUT TEMPLATE
+# OUTPUT TEMPLATE - Table header is now hardcoded
 output_template: |
   # Research Plan — {{project_title}}
 
@@ -481,6 +478,8 @@ output_template: |
   - Phase 3: Analysis & Reporting
   ```
 
+  | Phase | Duration | Start Date | End Date | Key Deliverables |
+  |-------|----------|------------|----------|------------------|
   {{ai_generated.timeline}}
 
   > **Note:** Timeline begins after stakeholder approval
