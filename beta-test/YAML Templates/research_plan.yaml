@@ -1,11 +1,11 @@
 id: research_plan
 name: run_research_plan
 label: Research Plan
-version: v4.1
+version: v4.2
 description: |
   **Research Idea → Complete Execution Plan**
   
-  Transform your research concept into a comprehensive, VA-compliant plan in minutes. Streamlined for faster stakeholder approval while maintaining professional quality. Optimized to keep your strong VA-specific sections while adding critical planning elements and modern GitHub formatting.
+  Transform your research concept into a comprehensive, VA-compliant plan in minutes. Streamlined for faster stakeholder approval while maintaining professional quality.
 
 author: Qori R&D
 created: 2025-06-26
@@ -95,38 +95,39 @@ ai_generation_tasks:
   # Clean product area name - SHORT NAME ONLY
   - task_id: "clean_product_area"
     prompt: |
-      Extract ONLY the core product name from "{{product_area}}":
+      Extract ONLY the core product name from this input: {{product_area}}
       
       Rules:
       - Return ONLY the short product name (2-4 words maximum)
       - Do not include descriptions, features, or platform mentions
-      - Do not include "and supporting..." or similar phrases
+      - Do not include phrases like "and supporting..." 
+      - Do not wrap your answer in quotes
       
       Examples:
-      - "VA Mobile App navigation and search" → "VA Mobile App"
-      - "VA Video Connect and supporting telehealth touchpoints across mobile and desktop" → "VA Video Connect"
-      - "Debt Letters redesign project" → "Debt Letters"
-      - "Claims Status Tool improvements" → "Claims Status Tool"
+      - Input: "VA Mobile App navigation and search" → Output: VA Mobile App
+      - Input: "VA Video Connect and supporting telehealth touchpoints across mobile and desktop" → Output: VA Video Connect
+      - Input: "Debt Letters redesign project" → Output: Debt Letters
       
-      Return ONLY the short name, nothing else.
+      Return ONLY the short name, nothing else. No quotes.
 
   # Product description - concise
   - task_id: "product_description"
     prompt: |
-      Create a concise, professional description for "{{product_area}}":
+      Create a concise, professional description for {{product_area}}:
       
       Requirements:
       - 1-2 sentences maximum
       - Explain what it does for Veterans
       - Use clear, direct language
-      - No marketing speak or repetitive phrases
+      - No marketing speak
+      - Do not wrap text in quotes
       
-      Format: "[Short Product Name] — [what it does for Veterans in one sentence]."
+      Format: [Short Product Name] — [what it does for Veterans in one sentence].
 
-  # OCTO Priorities with audience detection
+  # OCTO Priorities
   - task_id: "octo_priorities"
     prompt: |
-      Select appropriate OCTO-DE priorities based on target participants: "{{target_participants}}"
+      Select appropriate OCTO-DE priorities for {{product_area}} based on target participants: {{target_participants}}
       
       Available priorities:
       1. Improve the Veteran login experience
@@ -140,289 +141,267 @@ ai_generation_tasks:
       Format your response WITHOUT numbers - use clean names only:
       **Primary OCTO Priority:** [Select priority name only, no numbers]
       
-      **Explanation:** [1 sentence connecting {{ai_generated.clean_product_area}} to this priority]
+      **Explanation:** [1 sentence connecting {{product_area}} to this priority]
       
       **Additional Priorities:**
-      - **[Priority Name Only]:** [Brief explanation using {{ai_generated.clean_product_area}}]
-      - **[Priority Name Only]:** [Brief explanation using {{ai_generated.clean_product_area}}]
+      - **[Priority Name Only]:** [Brief explanation]
+      - **[Priority Name Only]:** [Brief explanation]
       
-      IMPORTANT: 
-      - Do not include the numbers (1, 2, 3, etc.) in your final output
-      - Use "{{ai_generated.clean_product_area}}" (short name) not the full product description
+      IMPORTANT: Do not include the numbers (1, 2, 3, etc.) in your output. Do not use quotes around text.
 
   # User Journey
   - task_id: "user_journey"
     prompt: |
-      Map {{ai_generated.clean_product_area}} to the VA Journey of Veterans Map:
+      Map {{product_area}} to the VA Journey of Veterans Map.
       
-      **User Journey Connection:** [1 sentence explaining where {{ai_generated.clean_product_area}} fits in veteran journey]
+      Provide your response in this format (do not use quotes around any text):
+      
+      **User Journey Connection:** [1 sentence explaining where {{product_area}} fits in veteran journey]
       
       **Key Moments/Phases:**
-      - **Taking care of myself:** [relevant moment for {{ai_generated.clean_product_area}}]
-      - **Putting down roots:** [relevant moment for {{ai_generated.clean_product_area}}]
-      - **Retiring:** [relevant moment for {{ai_generated.clean_product_area}}]
+      - **Taking care of myself:** [How {{product_area}} helps veterans manage their health and wellbeing]
+      - **Putting down roots:** [How {{product_area}} supports veterans settling into civilian life]
+      - **Retiring:** [How {{product_area}} assists veterans in retirement]
       
-      **Critical Pain Points:** [2-3 specific pain points for {{ai_generated.clean_product_area}}]
+      **Critical Pain Points:** [2-3 specific pain points for {{product_area}}]
       
-      Use the short product name "{{ai_generated.clean_product_area}}" throughout, not the full description.
+      Write naturally without wrapping any content in quotation marks.
 
   # Background/Decision Context
   - task_id: "background"
     prompt: |
-      Transform this decision context into clear background: "{{decision_context}}"
+      Transform this decision context into clear background: {{decision_context}}
       
       Create 2-3 sentences that explain:
-      - What decision this research will inform about {{ai_generated.clean_product_area}}
+      - What decision this research will inform about {{product_area}}
       - How this will benefit Veterans
       - The business impact for VA
       
       Use direct, professional language. No jargon. Focus on specific outcomes.
-      Use "{{ai_generated.clean_product_area}}" (short name) when referring to the product.
+      Do not wrap text in quotes.
 
   # Research Goals
   - task_id: "research_goals"
     prompt: |
-      Create clear research goals based on: "{{research_goal}}"
+      Create clear research goals based on: {{research_goal}}
       
-      **Primary Goal:** [Improved version of the input goal - 1-2 sentences, specific and measurable, referencing {{ai_generated.clean_product_area}}]
+      **Primary Goal:** [Improved version of the input goal - 1-2 sentences, specific and measurable, referencing {{product_area}}]
       
       **Supporting Goals:**
-      - [Specific goal achievable through {{methodology}} that provides actionable insights for {{ai_generated.clean_product_area}}]
-      - [Specific goal related to {{ai_generated.clean_product_area}} that addresses user needs]
-      - [Specific goal that supports decision-making with concrete outcomes for {{ai_generated.clean_product_area}}]
+      - [Specific goal achievable through {{methodology}} that provides actionable insights for {{product_area}}]
+      - [Specific goal related to {{product_area}} that addresses user needs]
+      - [Specific goal that supports decision-making with concrete outcomes for {{product_area}}]
       
-      Avoid generic language. Use the short product name "{{ai_generated.clean_product_area}}" throughout.
+      IMPORTANT: 
+      - Use the product name "{{product_area}}" directly in your response
+      - Do not use empty quotes or placeholder text
+      - Do not wrap any text in quotation marks
+      - Make each goal specific to the product and methodology
 
   # Success Criteria - USER-STUDY-CENTERED
   - task_id: "success_criteria"
     prompt: |
-      IMPORTANT: Generate exactly these 4 USER-STUDY-CENTERED success criteria. These measure research execution quality, NOT implementation outcomes.
+      Generate exactly these 4 user-study-centered success criteria numbered 1-4.
       
-      Create success criteria for {{ai_generated.clean_product_area}} research with {{participant_count}} participants using {{methodology}}:
+      Create success criteria for {{product_area}} research with {{participant_count}} participants using {{methodology}}:
       
       1. **Participant Completion:** Minimum 90% of recruited participants ({{participant_count}}) complete full research sessions, ensuring adequate data for meaningful analysis
       2. **Data Quality:** Achieve thematic saturation or pattern consistency by the final participant session, with clear triangulation across multiple data points to validate findings
       3. **Timeline Adherence:** All research sessions completed and initial analysis documented within the {{timeline_preference}} timeframe, with final report delivered within 5 business days of last session
-      4. **Stakeholder Alignment:** Research findings reviewed by key stakeholders within 3 business days of report delivery, with documented agreement on priority recommendations for {{ai_generated.clean_product_area}}
+      4. **Stakeholder Alignment:** Research findings reviewed by key stakeholders within 3 business days of report delivery, with documented agreement on priority recommendations for {{product_area}}
       
-      Use exactly this format and numbering. These criteria measure research quality, not implementation success.
+      Use exactly this format and numbering.
 
-  # Key Deliverables - CONSISTENT BOLD FORMATTING
+  # Key Deliverables - CONSISTENT FORMATTING
   - task_id: "deliverables"
     prompt: |
-      List essential deliverables for {{methodology}} research on {{ai_generated.clean_product_area}}:
+      List essential deliverables for {{methodology}} research on {{product_area}}.
       
-      Use this EXACT format with bold labels before colons and numbered list:
+      Use this EXACT format with bold labels and numbered list:
       
       **Primary Deliverables:**
-      1. **[Deliverable Name]:** [Description specific to {{methodology}} for {{ai_generated.clean_product_area}}] — delivered within 2 days of research completion
-      2. **[Deliverable Name]:** [Description that addresses {{ai_generated.clean_product_area}} decisions] — delivered within 3 days of research completion
-      3. **[Deliverable Name]:** [Description for stakeholder decision-making] — delivered within 3 days of research completion
+      1. **Usability Report:** Key findings, pain points, and prioritized recommendations for {{product_area}} — delivered within 2 days of research completion
+      2. **Decision Matrix:** Prioritized enhancements based on user feedback and {{methodology}} results — delivered within 3 days of research completion
+      3. **Executive Summary:** Key insights and recommendations for stakeholder decision-making — delivered within 3 days of research completion
       
       **Supporting Materials:**
-      4. **[Deliverable Name]:** [Description for implementation support] — delivered within 1 day of research completion
-      5. **[Deliverable Name]:** [Description for validation] — delivered within 2 days of research completion
+      4. **Design Recommendations:** Wireframes or mockups illustrating proposed changes for {{product_area}} — delivered within 1 day of research completion
+      5. **Validation Plan:** Methodology and criteria for testing proposed design changes — delivered within 2 days of research completion
       
       IMPORTANT FORMATTING RULES:
-      - Use numbered list (1-5) for ALL items including Supporting Materials
-      - Bold the deliverable name before the colon (e.g., **Usability Report:**)
-      - Keep deliverable names concise (2-4 words)
+      - Use numbered list (1-5) for ALL items
+      - Bold the deliverable name before the colon
       - Use em dash (—) before delivery timeline
-      - Use short product name "{{ai_generated.clean_product_area}}" not full description
-      
-      Example format:
-      1. **Usability Report:** Key findings, pain points, and prioritized recommendations for {{ai_generated.clean_product_area}} — delivered within 2 days of research completion
+      - Reference {{product_area}} where appropriate
 
   # Methodology Details
   - task_id: "methodology_details"
     prompt: |
-      Provide methodology details for {{methodology}} research on {{ai_generated.clean_product_area}}:
+      Provide methodology details for {{methodology}} research on {{product_area}}:
       
-      **Methodology Rationale:** [Why {{methodology}} is specifically right for {{ai_generated.clean_product_area}} research - 1-2 sentences]
+      **Methodology Rationale:** [Why {{methodology}} is specifically right for {{product_area}} research - 1-2 sentences]
       
       **Implementation Approach:**
       - **Session Format:** [Format and duration appropriate for {{methodology}}]
-      - **Key Activities:** [Data collection techniques specific to {{ai_generated.clean_product_area}}]
-      - **Evaluation Protocol:** [Specific protocols for evaluating {{ai_generated.clean_product_area}} user experience]
+      - **Key Activities:** [Data collection techniques specific to {{product_area}}]
+      - **Evaluation Protocol:** [Specific protocols for evaluating {{product_area}} user experience]
       
       **VA Compliance Notes:**
       - **Collaboration Cycle:** [Requirements and timeline]
       - **Trauma-Informed Approach:** [Considerations for veteran participants]
       - **Accessibility:** [Accommodations for diverse participant needs]
       
-      Use short product name "{{ai_generated.clean_product_area}}" throughout. Be specific about why this methodology answers the research questions.
+      Be specific about why this methodology answers the research questions. Do not use quotes around text.
 
   # Demographics
   - task_id: "demographics"
     prompt: |
-      Create demographic targets for {{participant_count}} participants researching {{ai_generated.clean_product_area}}:
+      Create demographic targets for {{participant_count}} participants researching {{product_area}}:
       
       **Demographic Targets:**
       Based on {{participant_count}} participants:
-      - **Service Era:** [realistic breakdown that adds up to total]
+      - **Service Era:** [realistic breakdown - Vietnam, Gulf War, Post-9/11 - that adds up to total]
       - **Age:** [realistic breakdown that adds up to total]
       - **Gender:** [realistic breakdown that adds up to total]
       - **Accessibility Needs:** [realistic breakdown for inclusive research]
       
       **Secondary Targets:**
-      - **{{ai_generated.clean_product_area}} Usage Patterns:** [frequency and experience levels]
+      - **{{product_area}} Usage Patterns:** [frequency and experience levels]
       - **Technology Comfort Levels:** [range of digital literacy]
       
       Ensure all numbers add up logically to {{participant_count}}.
 
-  # Enhanced Timeline
+  # Timeline - REVERTED TO ORIGINAL WORKING VERSION
   - task_id: "timeline"
     prompt: |
       Create a detailed timeline table for {{timeline_preference}} research.
 
-      CRITICAL DATE INSTRUCTIONS:
-      - Start date is: {{current_date}}
-      - This is the actual start date — use it exactly as provided
-      - Calculate all subsequent dates by adding days to this start date
-      - Format all dates as: Month DD, YYYY (e.g., November 25, 2025)
-      - Do NOT use placeholder text like "(today)" or "(day after...)"
-
-      Phase durations based on {{timeline_preference}}:
-      
-      For "Rush (2-3 weeks total)":
-      - Planning: 2 days
-      - Collaboration Cycle: 3 days
-      - Recruiting: 5 days
-      - Research: 4 days
-      - Analysis: 1 day
-      - Reporting: 1 day
-      
-      For "Standard (4-6 weeks total)":
-      - Planning: 3 days
-      - Collaboration Cycle: 5 days
-      - Recruiting: 10 days
-      - Research: 7 days
-      - Analysis: 3 days
-      - Reporting: 2 days
-      
-      For "Extended (8+ weeks total)":
-      - Planning: 5 days
-      - Collaboration Cycle: 7 days
-      - Recruiting: 14 days
-      - Research: 14 days
-      - Analysis: 5 days
-      - Reporting: 5 days
+      Use **today's date (in US timezone)** as the starting point (timeline begins after stakeholder approval).  
+      Timezone: US Eastern Time (ET). Format: ISO (YYYY-MM-DD).
 
       Rules:
-      - Each phase starts the day after the previous phase ends
-      - End Date = Start Date + (Duration - 1) days
-      - Count all calendar days
+      - Planning starts today.
+      - Each next phase starts the day after the previous phase ends.
+      - End Date = Start Date + (Duration - 1) days.
+      - Count all calendar days (no skipping weekends/holidays).
+      - Show actual computed dates (not relative placeholders).
 
-      Output as a markdown table with ACTUAL DATES:
+      Phases and durations (calendar days):
+      - Planning: 2 days
+      - Collaboration Cycle: 5 days
+      - Recruiting: 7 days
+      - Research: 5 days
+      - Analysis: 1 day
+      - Reporting: 1 day
+
+      Output as a markdown table:
 
       | Phase | Duration | Start Date | End Date | Key Deliverables |
       |-------|----------|------------|----------|------------------|
-      | Planning | X days | [Month DD, YYYY] | [Month DD, YYYY] | Project Brief, Research Plan |
-      | Collaboration Cycle | X days | [Month DD, YYYY] | [Month DD, YYYY] | Stakeholder Alignment |
-      | Recruiting | X days | [Month DD, YYYY] | [Month DD, YYYY] | Participant Selection |
-      | Research | X days | [Month DD, YYYY] | [Month DD, YYYY] | Data Collection |
-      | Analysis | X days | [Month DD, YYYY] | [Month DD, YYYY] | Insights Synthesis |
-      | Reporting | X days | [Month DD, YYYY] | [Month DD, YYYY] | Final Report |
+      | Planning | 2 days | (today) | (today + 1 day) | Project Brief, Research Plan |
+      | Collaboration Cycle | 5 days | (day after Planning end) | (start + 4 days) | Stakeholder Alignment |
+      | Recruiting | 7 days | (day after Collaboration end) | (start + 6 days) | Participant Selection |
+      | Research | 5 days | (day after Recruiting end) | (start + 4 days) | Data Collection |
+      | Analysis | 1 day | (day after Research end) | (same day) | Insights Synthesis |
+      | Reporting | 1 day | (day after Analysis end) | (same day) | Final Report |
 
-  # Enhanced Risk Assessment
+  # Risk Assessment
   - task_id: "risks"
     prompt: |
-      Identify top 4 risks for {{methodology}} research on {{ai_generated.clean_product_area}}:
+      Identify top 4 risks for {{methodology}} research on {{product_area}}:
       
-      **Recruitment Challenges:** [Risk related to finding {{target_participants}} for {{ai_generated.clean_product_area}} research]
+      **Recruitment Challenges:** [Risk related to finding {{target_participants}} for {{product_area}} research]
       - **Likelihood:** High/Medium/Low
       - **Mitigation:** [Specific action to address recruitment issues]
       
-      **Execution Issues:** [Risk related to {{methodology}} implementation for {{ai_generated.clean_product_area}}]
+      **Execution Issues:** [Risk related to {{methodology}} implementation for {{product_area}}]
       - **Likelihood:** High/Medium/Low  
       - **Mitigation:** [Specific action to ensure quality execution]
       
-      **Timeline Risks:** [Risk related to {{timeline_preference}} affecting {{ai_generated.clean_product_area}} decisions]
+      **Timeline Risks:** [Risk related to {{timeline_preference}} affecting {{product_area}} decisions]
       - **Likelihood:** High/Medium/Low
       - **Mitigation:** [Specific action to stay on schedule]
       
-      **Quality Concerns:** [Risk related to data validity for {{ai_generated.clean_product_area}} recommendations]
+      **Quality Concerns:** [Risk related to data validity for {{product_area}} recommendations]
       - **Likelihood:** High/Medium/Low
       - **Mitigation:** [Specific action to ensure research quality]
       
-      Use short product name "{{ai_generated.clean_product_area}}" throughout. Make each risk and mitigation specific.
+      Make each risk and mitigation specific to this research project.
 
-  # Enhanced Next Steps
+  # Next Steps
   - task_id: "next_steps"
     prompt: |
-      Create actionable next steps for {{ai_generated.clean_product_area}} research implementation:
+      Create actionable next steps for {{product_area}} research implementation:
       
       Format as:
       
       ```diff
       + IMMEDIATE (Week 1 post-research)
       ```
-      - [Specific action with owner and timeline for {{ai_generated.clean_product_area}} decisions]
+      - [Specific action with owner and timeline for {{product_area}} decisions]
       - [Specific action for stakeholder engagement with timeline]
       
       ```diff
       ! SHORT-TERM (Weeks 2-4)
       ```
-      - [Implementation planning step for {{ai_generated.clean_product_area}} improvements]
-      - [Decision milestone for {{ai_generated.clean_product_area}} changes]
+      - [Implementation planning step for {{product_area}} improvements]
+      - [Decision milestone for {{product_area}} changes]
       
       ```diff
       - LONGER-TERM (Month 2+)
       ```
       **Success Metrics:**
-      - [How {{ai_generated.clean_product_area}} improvements will be measured]
-      - [Follow-up assessment plan for {{ai_generated.clean_product_area}} success]
+      - [How {{product_area}} improvements will be measured]
+      - [Follow-up assessment plan for {{product_area}} success]
       
-      IMPORTANT: Use "{{ai_generated.clean_product_area}}" (short name) throughout, not the full description.
       Include the exact color-coded diff blocks in your response.
 
   # Detailed Research Protocols
   - task_id: "detailed_protocols"
     prompt: |
-      Generate specific research protocols for {{methodology}} methodology studying {{ai_generated.clean_product_area}}:
+      Generate specific research protocols for {{methodology}} methodology studying {{product_area}}.
       
-      Based on the methodology {{methodology}}, provide detailed protocols:
+      IMPORTANT: Only include protocols relevant to {{methodology}}. Make all examples specific to {{product_area}} and telehealth/VA context - do NOT use generic shopping cart or e-commerce examples.
+      
+      Based on {{methodology}}, provide detailed protocols:
       
       **For Usability Testing:**
-      - **Task Scenarios:** [3-4 specific tasks participants will complete with {{ai_generated.clean_product_area}}]
+      - **Task Scenarios:** [3-4 specific tasks participants will complete with {{product_area}} - must be relevant to telehealth/VA services]
       - **Think-Aloud Protocol:** [Instructions for facilitating concurrent verbalization]
       - **Data Collection:** [Screen recording setup, observation notes template, timing protocols]
-      - **Post-Session Interviews:** [Key follow-up questions about {{ai_generated.clean_product_area}} experience]
+      - **Post-Session Interviews:** [Key follow-up questions about {{product_area}} experience]
       
       **For User Interviews:**
-      - **Interview Guide Structure:** [Opening, main topics, probing questions about {{ai_generated.clean_product_area}}]
+      - **Interview Guide Structure:** [Opening, main topics, probing questions about {{product_area}}]
       - **Question Types:** [Behavioral, attitudinal, and contextual questions]
       - **Recording Protocols:** [Audio/video setup and consent procedures]
       - **Analysis Approach:** [Thematic analysis, affinity mapping, coding framework]
       
       **For Card Sorting:**
-      - **Card Preparation:** [How to create cards from {{ai_generated.clean_product_area}} content/features]
+      - **Card Preparation:** [How to create cards from {{product_area}} content/features]
       - **Sorting Methodology:** [Open vs. closed sort, hybrid approaches]
       - **Analysis Procedures:** [Statistical measures, dendrograms, similarity matrices]
-      - **Results Interpretation:** [How to translate findings into {{ai_generated.clean_product_area}} recommendations]
+      - **Results Interpretation:** [How to translate findings into {{product_area}} recommendations]
       
       **For Survey Research:**
-      - **Question Design:** [Scale types, validation approaches for {{ai_generated.clean_product_area}} metrics]
+      - **Question Design:** [Scale types, validation approaches for {{product_area}} metrics]
       - **Sampling Strategy:** [Target demographics, sample size calculations]
       - **Distribution Methods:** [Platform selection, timing, reminder protocols]
       - **Statistical Analysis:** [Descriptive statistics, significance testing, reporting standards]
       
       **For Concept Testing:**
-      - **Concept Presentation:** [Prototype fidelity, scenario setup for {{ai_generated.clean_product_area}}]
+      - **Concept Presentation:** [Prototype fidelity, scenario setup for {{product_area}}]
       - **Testing Protocol:** [Task completion, feedback collection, preference ranking]
       - **Measurement Criteria:** [Usability metrics, comprehension testing, appeal assessment]
-      - **Iteration Framework:** [How to incorporate feedback into {{ai_generated.clean_product_area}} design]
+      - **Iteration Framework:** [How to incorporate feedback into {{product_area}} design]
       
       **For Competitive Analysis:**
-      - **Evaluation Framework:** [Heuristics, feature comparison matrices for {{ai_generated.clean_product_area}}]
+      - **Evaluation Framework:** [Heuristics, feature comparison matrices for {{product_area}}]
       - **Documentation Standards:** [Screenshots, interaction flows, usability notes]
       - **Analysis Criteria:** [Strengths/weaknesses identification, best practice extraction]
-      - **Synthesis Approach:** [How to translate competitive insights into {{ai_generated.clean_product_area}} recommendations]
-      
-      Only include protocols relevant to the selected {{methodology}}. Use short product name throughout.
+      - **Synthesis Approach:** [How to translate competitive insights into {{product_area}} recommendations]
 
 # REVISED OUTPUT TEMPLATE
-# Changes: Removed Project Overview, reduced spacing, removed footer, consolidated header
 output_template: |
   # Research Plan — {{project_title}}
 
