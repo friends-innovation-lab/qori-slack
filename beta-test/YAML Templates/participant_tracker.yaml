@@ -156,23 +156,24 @@ session_structure:
         reason: "{{observer_reason}}"
         status: "pending_approval"
 
+# UPDATED OUTPUT TEMPLATE - Cleaner with collapsible sections
 output_template: |
-  # 👥 Participant Tracker – {{study_name}}
+  # 👥 Participant Tracker — {{study_name}}
 
   **📊 Recruitment Summary**
-  - **Total Participants:** {{total_participants_count}}
-  - **Confirmed Sessions:** {{confirmed_sessions_count}}
-  - **Pending Responses:** {{pending_responses_count}}
-  - **Completed Sessions:** {{completed_sessions_count}}
-  - **Observer Assignments:** {{total_observer_assignments}}
-  - **Last Updated:** {{current_date}} by {{added_by}}
+
+  | Total | Confirmed | Pending | Completed |
+  |:-----:|:---------:|:-------:|:---------:|
+  | {{total_participants_count}} | {{confirmed_sessions_count}} | {{pending_responses_count}} | {{completed_sessions_count}} |
+
+  **Last Updated:** {{current_date}} by {{added_by}}
 
   ---
 
   ## 📋 Participant Details
 
   | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
-  |----|-------|---------------|-----------|--------|----------------------|
+  |----|-------|---------------|-----------|--------|------------------------|
   {{#each participants}}
   | {{id}} | {{participant_name}} | {{recruitment_source}} | {{scheduled_date}} {{scheduled_time}} | {{status_select}} | {{notes_field}} |
   {{/each}}
@@ -187,65 +188,79 @@ output_template: |
   | {{method}} | {{count}} | {{percentage}}% |
   {{/each}}
 
-  **🔍 Recruitment Effectiveness:**
   {{recruitment_analysis}}
 
   ---
 
-  ## ✅ Confirmed Sessions
+  <details>
+  <summary><strong>👥 Observer Management</strong></summary>
 
-  {{#each confirmed_sessions}}
-  - **{{participant_id}}** - {{date}} at {{time}}
-    - Observers: {{observers_list}}
-  {{/each}}
+  **Session Assignments:**
 
-  ## ⏳ Pending Sessions
-
-  {{#each pending_sessions}}
-  - **{{participant_id}}** - {{participant_name}} ({{status}})
-  {{/each}}
-
-  ---
-
-  ## 👥 Observer Management
-
-  **Session Observer Assignments:**
-
-  | Session | Date/Time | Observers | Capacity | Pending Requests |
-  |---------|-----------|-----------|----------|------------------|
+  | Session | Date/Time | Observers | Capacity |
+  |---------|-----------|-----------|----------|
   {{#each session_observers}}
-  | {{session_id}} | {{date_time}} | {{observers}} | {{capacity}}/3 | {{pending_count}} |
+  | {{session_id}} | {{date_time}} | {{observers}} | {{capacity}}/3 |
   {{/each}}
 
-  **Observer Role Distribution:**
-  | Role | Count | Sessions |
-  |------|-------|----------|
-  | 📝 Note-taker | {{note_taker_count}} | {{note_taker_sessions}} |
-  | 👁️ Silent Observer | {{silent_observer_count}} | {{silent_observer_sessions}} |
-  | 📊 PM Observer | {{pm_observer_count}} | {{pm_observer_sessions}} |
-  | 🏛️ Stakeholder | {{stakeholder_count}} | {{stakeholder_sessions}} |
+  **Role Distribution:**
 
-  **Observer Guidelines:** 
-  - Review session plan before observing
-  - Stay muted unless emergency
-  - Take notes without interrupting
-  - Share feedback after session
+  | Role | Count |
+  |------|-------|
+  | 📝 Note-taker | {{note_taker_count}} |
+  | 👁️ Silent Observer | {{silent_observer_count}} |
+  | 📊 PM Observer | {{pm_observer_count}} |
+  | 🏛️ Stakeholder | {{stakeholder_count}} |
 
-  {% if triggered_by_observer_request %}
-  **🔄 Observer Updates:**
-  - ✅ {{observer_user_name}} approved for {{session_id}} as {{observer_role}}
-  - 📤 Send observer guidelines to {{observer_user_name}}
-  - 📅 Add {{observer_user_name}} to {{session_id}} calendar invite
-  - 🔄 Update session capacity tracking
-  {% endif %}
+  **Guidelines:** Observers should review session plan beforehand, stay muted, take notes without interrupting, and share feedback after session.
+
+  </details>
 
   ---
 
-  ## 📝 Accessibility & Accommodations
+  <details>
+  <summary><strong>📊 Demographics Overview</strong></summary>
 
-  **Special Needs Summary:**
+  **Race/Ethnicity:**
+
+  | Category | Count | Percentage |
+  |----------|-------|------------|
+  {{#each race_ethnicity_breakdown}}
+  | {{category}} | {{count}} | {{percentage}}% |
+  {{/each}}
+
+  **Age Range:**
+
+  | Range | Count | Percentage |
+  |-------|-------|------------|
+  {{#each age_range_breakdown}}
+  | {{range}} | {{count}} | {{percentage}}% |
+  {{/each}}
+
+  **Education Level:**
+
+  | Level | Count | Percentage |
+  |-------|-------|------------|
+  {{#each education_breakdown}}
+  | {{level}} | {{count}} | {{percentage}}% |
+  {{/each}}
+
+  **Location Type:**
+
+  | Type | Count | Percentage |
+  |------|-------|------------|
+  {{#each location_breakdown}}
+  | {{type}} | {{count}} | {{percentage}}% |
+  {{/each}}
+
+  </details>
+
+  ---
+
+  ## ♿ Accessibility & Accommodations
+
   {{#each accommodations}}
-  - {{participant_id}}: {{accommodation_details}}
+  - **{{participant_id}}:** {{accommodation_details}}
   {{/each}}
 
   **Preparation Checklist:**
@@ -254,49 +269,17 @@ output_template: |
   - [ ] Screen reader compatibility tested
   - [ ] Alternative formats prepared
   - [ ] Session timing accommodations noted
-  - [ ] Observer accessibility needs considered
 
   ---
 
-  ## 📊 Demographics Overview
+  ## 📌 Next Steps
 
-  **Diversity Tracking:**
-
-  | Race/Ethnicity | Count | Percentage |
-  |----------------|-------|------------|
-  {{#each race_ethnicity_breakdown}}
-  | {{category}} | {{count}} | {{percentage}}% |
-  {{/each}}
-
-  | Age Range | Count | Percentage |
-  |-----------|-------|------------|
-  {{#each age_range_breakdown}}
-  | {{range}} | {{count}} | {{percentage}}% |
-  {{/each}}
-
-  | Education Level | Count | Percentage |
-  |----------------|-------|------------|
-  {{#each education_breakdown}}
-  | {{level}} | {{count}} | {{percentage}}% |
-  {{/each}}
-
-  | Location Type | Count | Percentage |
-  |---------------|-------|------------|
-  {{#each location_breakdown}}
-  | {{type}} | {{count}} | {{percentage}}% |
-  {{/each}}
+  > [!NOTE]
+  > {{next_steps_recommendations}}
 
   ---
 
-  **📝 Tracker Management:**
-  - Use participant aliases for privacy protection
-  - Update status after each participant interaction
-  - Include accommodation needs for proper session planning
-  - Track recruitment sources to analyze effectiveness
-  - Coordinate with observers before each session
-
-  **🔄 Next Steps:**
-  {{next_steps_recommendations}}
+  **🔒 Privacy Reminder:** Use participant aliases only. Update status after each interaction.
 
 # Output configuration
 output_options:
