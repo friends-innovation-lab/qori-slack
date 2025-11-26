@@ -192,29 +192,26 @@ output_template: |
 
   ---
 
-  <details>
-  <summary><strong>👥 Observer Management</strong></summary>
+  ## 👥 Observer Management
 
   **Session Assignments:**
 
-  | Session | Date/Time | Observers | Capacity |
-  |---------|-----------|-----------|----------|
+  | Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
+  |---------|-----------|-----------|----------|------------------|-----------------|
   {{#each session_observers}}
-  | {{session_id}} | {{date_time}} | {{observers}} | {{capacity}}/3 |
+  | {{session_id}} | {{date_time}} | {{observers}} ({{observer_role}}) | {{capacity}}/3 | {{pending_count}} | ✅ Sent |
   {{/each}}
 
   **Role Distribution:**
 
-  | Role | Count |
-  |------|-------|
-  | 📝 Note-taker | {{note_taker_count}} |
-  | 👁️ Silent Observer | {{silent_observer_count}} |
-  | 📊 PM Observer | {{pm_observer_count}} |
-  | 🏛️ Stakeholder | {{stakeholder_count}} |
+  | Role | Count | Sessions |
+  |------|-------|----------|
+  | 📝 Note-taker | {{note_taker_count}} | {{note_taker_sessions}} |
+  | 👁️ Silent Observer | {{silent_observer_count}} | {{silent_observer_sessions}} |
+  | 📊 PM Observer | {{pm_observer_count}} | {{pm_observer_sessions}} |
+  | 🏛️ Stakeholder | {{stakeholder_count}} | {{stakeholder_sessions}} |
 
-  **Guidelines:** Observers should review session plan beforehand, stay muted, take notes without interrupting, and share feedback after session.
-
-  </details>
+  **Guidelines:** Review session plan beforehand, stay muted, take notes without interrupting, share feedback after session.
 
   ---
 
