@@ -1,7 +1,7 @@
 # 👥 Participant Tracker – VA Telehealth Onboarding and Appointment Experience
 
 **📊 Recruitment Summary**
-- **Total Participants:** 2
+- **Total Participants:** 3
 - **Confirmed Sessions:** 2
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
+| 66 | PT003 | internal_panel | 2025-12-10 13:00 | pending | Limited data plan; prefers Wi-Fi only sessions; uses large text settings |
 | 65 | PT002 | email_outreach | 2025-12-09 11:00 | confirmed | Android user; works irregular hours so flexible timing needed |
 | 64 | PT001 | internal_panel | 2025-12-08 12:00 | confirmed | ses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
 
@@ -23,11 +24,11 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 1 | 50% |
-| 🗂️ Internal VA Panel | 1 | 50% |
+| 🗂️ Internal VA Panel | 2 | 67% |
+| 📧 Email Outreach | 1 | 33% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
+Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 
 ---
 
@@ -77,6 +78,7 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
+- 66: Limited data plan; prefers Wi-Fi only sessions; uses large text settings
 - 65: Android user; works irregular hours so flexible timing needed
 - 64: ses VoiceOver on iPhone; prefers longer sessions to navigate complex flows
 
@@ -96,23 +98,27 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 | Race/Ethnicity | Count | Percentage |
 |----------------|-------|------------|
-| White | 1 | 50% |
-| Asian | 1 | 50% |
+| black | 1 | 33% |
+| White | 1 | 33% |
+| Asian | 1 | 33% |
 
 | Age Range | Count | Percentage |
 |-----------|-------|------------|
-| 35-44 | 1 | 50% |
-| 45-54 | 1 | 50% |
+| 55-64 | 1 | 33% |
+| 35-44 | 1 | 33% |
+| 45-54 | 1 | 33% |
 
 | Education Level | Count | Percentage |
 |----------------|-------|------------|
-| Some college | 1 | 50% |
-| bachelor | 1 | 50% |
+| high_school | 1 | 33% |
+| Some college | 1 | 33% |
+| bachelor | 1 | 33% |
 
 | Location Type | Count | Percentage |
 |---------------|-------|------------|
-| Suburban | 1 | 50% |
-| Urban | 1 | 50% |
+| Rural | 1 | 33% |
+| Suburban | 1 | 33% |
+| Urban | 1 | 33% |
 
 ---
 
@@ -124,4 +130,4 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 - Coordinate with observers before each session
 
 **🔄 Next Steps:**
-Continue recruiting to reach minimum of 3 participants (1 more needed)
+All participants are on track
