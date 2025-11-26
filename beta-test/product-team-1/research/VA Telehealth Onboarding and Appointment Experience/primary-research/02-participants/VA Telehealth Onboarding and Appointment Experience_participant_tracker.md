@@ -36,22 +36,23 @@ Recruitment effectiveness: 100% conversion rate (5 confirmed of 5 recruited)
 
 ## 👥 Observer Management
 
-**Session Assignments:**
+**Session Observer Assignments:**
 
 | Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
 |---------|-----------|-----------|----------|------------------|-----------------|
+| TH004 | TBD |  (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
+| PT001 | TBD |  (👁️ Silent Observer) | 1/3 | 0 | ✅ Sent |
+| PT003 | TBD |  (📊 PM Observer) | 1/3 | 0 | ✅ Sent |
+| PT005 | TBD |  (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
+| PT002 | TBD |  (📊 PM Observer) | 1/3 | 0 | ✅ Sent |
 
-**Role Distribution:**
-
+**Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker |  |  |
-| 👁️ Silent Observer |  |  |
-| 📊 PM Observer |  |  |
-| 🏛️ Stakeholder |  |  |
-
-**Guidelines:** Review session plan beforehand, stay muted, take notes without interrupting, share feedback after session.
-
+| 📝 Note-taker | 2 | TH004, PT005 |
+| 👁️ Silent Observer | 1 | PT001 |
+| 📊 PM Observer | 2 | PT003, PT002 |
+| 🏛️ Stakeholder | 0 | - |
 ---
 
 <details>
