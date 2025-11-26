@@ -130,13 +130,13 @@ Recruitment effectiveness: 100% conversion rate (4 confirmed of 4 recruited)
 |---------|-----------|-----------|----------|------------------|-----------------|
 | TH004 | TBD |  (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
 | PT001 | TBD |  (👁️ Silent Observer) | 1/3 | 0 | ✅ Sent |
-| PT003 | TBD |  (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
+| PT003 | TBD |  (📊 PM Observer) | 1/3 | 0 | ✅ Sent |
 | PT002 | TBD |  (📊 PM Observer) | 1/3 | 0 | ✅ Sent |
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker | 2 | TH004, PT003 |
+| 📝 Note-taker | 1 | TH004 |
 | 👁️ Silent Observer | 1 | PT001 |
-| 📊 PM Observer | 1 | PT002 |
+| 📊 PM Observer | 2 | PT003, PT002 |
 | 🏛️ Stakeholder | 0 | - |
