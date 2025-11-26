@@ -1,383 +1,228 @@
 id: desk_research_processor
 name: run_desk_research
-label: 📚 Desk Research Processor
-version: v2.0
+label: 📚 Desk Research
+version: v3.0
+
 description: |
-  Process multiple document uploads from Slack to create comprehensive desk research summaries. Automatically analyzes uploaded documents (PDFs, Word docs, research papers, reports, etc.) and generates structured README files with key insights, themes, and actionable recommendations. Supports batch processing and creates organized research repositories following VA research standards.
+  Analyze uploaded research documents and generate a focused synthesis with key themes, 
+  findings, and actionable recommendations. Designed for quick insights, not exhaustive documentation.
 
 author: Qori R&D
 created: 2025-08-27
-last_updated: 2025-08-27
+last_updated: 2025-11-26
 
 # LLM Configuration
 llm_config:
-  model: "gpt-4"
+  model: "gpt-4o"
   temperature: 0.3
-  max_tokens: 6000
+  max_tokens: 4000
 
-input_type: document_batch
-input_processing: read_and_analyze_multiple
-precision_mode: comprehensive
-
-# Input schema for Slack UI
+# Input variables
 input_variables:
-  - uploaded_documents      # Array of document paths/links from Slack upload (REQUIRED)
-  - research_topic          # Main research topic or project name (REQUIRED)
+  - research_topic:
+      type: "text"
+      required: true
+      placeholder: "e.g., VA Telehealth Onboarding Experience"
+      
+  - document_content:
+      type: "textarea"
+      required: true
+      description: "Extracted text from uploaded documents (provided by backend)"
+      # NOTE: Backend must extract text from uploaded files and populate this variable
+      
+  - research_questions:
+      type: "textarea"
+      required: false
+      placeholder: "e.g., What are the main barriers to telehealth adoption?"
 
-# Smart defaults handled by AI
-ai_defaults:
-  output_style: "detailed"           # Always detailed for comprehensive analysis
-  include_citations: true            # Always include citations - why wouldn't you?
-  analysis_focus: "auto_detect"      # AI determines focus based on document content
-
-# AI Generation Tasks - Sequential processing
+# AI Generation Tasks - Focused and sequential
 ai_generation_tasks:
+
+  # Task 1: Document inventory (simple table)
   - task_id: "document_inventory"
     prompt: |
-      Analyze all uploaded documents and create a comprehensive inventory:
+      Review the following document content and create a simple inventory table.
       
-      **Documents Uploaded:** {{uploaded_documents}}
       **Research Topic:** {{research_topic}}
+      **Document Content:** {{document_content}}
       
-      For each document, extract and format:
+      Create a markdown table with these columns:
+      | Document | Type | Source | Date | Key Focus |
+      |----------|------|--------|------|-----------|
       
-      **DOCUMENT INVENTORY:**
-      For each file:
-      - Document title/name
-      - Document type (PDF, Word, research paper, report, presentation, etc.)
-      - Source/author (if identifiable)
-      - Publication date (if available)
-      - Page count/length
-      - Primary subject matter
-      - Document quality/relevance score (1-10)
-      - Key sections or chapters identified
+      For each distinct document you can identify in the content:
+      - Document: Title or descriptive name
+      - Type: Report, Study, Survey, Brief, Article, etc.
+      - Source: Author or organization
+      - Date: Publication date if available, otherwise "N/A"
+      - Key Focus: One-line description of what it covers
       
-      **COLLECTION OVERVIEW:**
-      - Total documents processed: [number]
-      - Document types breakdown
-      - Date range of materials
-      - Primary subject areas covered
-      - Overall collection quality assessment
-      - Any duplicate or related materials identified
-      
-      **PROCESSING NOTES:**
-      - Documents that couldn't be fully processed
-      - Missing or corrupted files
-      - Recommendations for additional materials needed
+      Keep it concise. If you can't identify distinct documents, describe the content as a single source.
 
-  - task_id: "extract_key_themes"
+  # Task 2: Executive summary with findings and recommendations
+  - task_id: "executive_summary"
     prompt: |
-      Extract and synthesize key themes across all documents related to: {{research_topic}}
+      Create a focused executive summary of the desk research on: {{research_topic}}
       
-      AUTOMATICALLY DETERMINE ANALYSIS FOCUS based on document content:
-      - If documents contain competitor mentions, pricing, market share → Include competitive analysis
-      - If documents discuss industry direction, future predictions → Include trends analysis  
-      - If documents highlight successful approaches, case studies → Include best practices
-      - If documents focus on user feedback, pain points, needs → Include user needs analysis
-      - If documents discuss implementation, architecture, tools → Include technical analysis
-      - If documents mention compliance, regulations, standards → Include regulatory analysis
+      **Document Content:** {{document_content}}
+      **Research Questions:** {{research_questions}}
       
-      Identify and organize themes by:
+      Structure your summary as:
       
-      **PRIMARY THEMES** (5-8 major themes across all documents):
-      For each theme:
-      - Theme name and description
-      - Supporting evidence from specific documents
-      - Frequency/prevalence across the document set
-      - Relevance to {{research_topic}}
+      **Overview**
+      2-3 sentences explaining what this research covers and why it matters.
       
-      **SECONDARY PATTERNS** (3-5 emerging patterns):
-      - Cross-document connections
-      - Contradictory viewpoints or approaches
-      - Evolution of ideas over time (if date range available)
-      - Geographic or demographic variations
+      **Key Findings**
+      3-5 bullet points with the most important discoveries. Each finding should:
+      - Be specific and evidence-based (reference the source documents)
+      - Directly relate to {{research_topic}}
+      - Include a specific data point, quote, or fact when available
       
-      **FOCUS AREA ANALYSIS:**
-      Based on selected focus areas {{analysis_focus}}, provide specific insights for:
-      - Competitive landscape (if competitive selected)
-      - Industry trends (if trends selected)
-      - Best practices (if best_practices selected)
-      - User needs/pain points (if user_needs selected)
-      - Technical considerations (if technical selected)
-      - Regulatory/compliance issues (if regulatory selected)
+      **Implications**
+      2-3 sentences on what these findings mean for {{research_topic}} decisions.
       
-      **THEME CONFIDENCE LEVELS:**
-      Rate each theme's strength based on:
-      - Number of supporting documents
-      - Quality of evidence
-      - Consistency across sources
+      Keep the entire summary under 300 words. Be direct and actionable.
 
-  - task_id: "generate_executive_summary"
+  # Task 3: Key themes synthesis
+  - task_id: "themes"
     prompt: |
-      Create an executive summary of the desk research findings for {{research_topic}}.
+      Identify the major themes across the research documents on: {{research_topic}}
       
-      **Output Style:** {{output_style}}
+      **Document Content:** {{document_content}}
       
-      Structure the summary as:
+      Identify 3-5 primary themes. For each theme:
       
-      **🎯 RESEARCH OBJECTIVE**
-      - What this desk research aimed to understand
-      - Key questions addressed
-      - Scope and limitations
+      ### [Theme Name]
       
-      **📊 KEY FINDINGS** (3-5 main findings)
-      Each finding should:
-      - Be actionable and specific
-      - Reference supporting document evidence
-      - Connect to {{research_topic}} objectives
-      - Include confidence level (high/medium/low)
+      **What the research shows:** 
+      2-3 sentences summarizing findings related to this theme.
       
-      **🔍 INSIGHTS & IMPLICATIONS**
-      - What these findings mean for {{research_topic}}
-      - Strategic implications
-      - Risks or opportunities identified
-      - Gaps in current understanding
+      **Evidence:**
+      - [Specific finding or data point from Document X]
+      - [Specific finding or data point from Document Y]
       
-      **💡 RECOMMENDATIONS** (3-5 specific recommendations)
-      - Immediate actions based on findings
-      - Further research needed
-      - Strategic considerations
-      - Resource requirements
+      **Why it matters for {{research_topic}}:**
+      1 sentence on the implication.
       
-      **📈 NEXT STEPS**
-      - Prioritized follow-up activities
-      - Additional research or validation needed
-      - Stakeholder engagement required
+      ---
       
-      Adjust depth and detail based on output_style preference (brief/detailed/comprehensive).
+      Focus on themes that:
+      - Appear across multiple documents (convergent evidence)
+      - Have specific data or quotes to support them
+      - Are actionable for {{research_topic}}
+      
+      Do NOT include generic themes. Every theme must be grounded in the actual document content.
 
-  - task_id: "create_detailed_analysis"
+  # Task 4: Recommendations and next steps
+  - task_id: "recommendations"
     prompt: |
-      Provide detailed analysis of each significant document with actionable insights.
+      Based on the desk research on {{research_topic}}, provide actionable recommendations.
       
-      **DOCUMENT-BY-DOCUMENT ANALYSIS:**
+      **Document Content:** {{document_content}}
+      **Research Questions:** {{research_questions}}
       
-      For each high-relevance document (scored 7+ in inventory):
+      Structure as:
       
-      **Document: [Title]**
-      - **Source & Credibility:** [Author, publication, date, credibility assessment]
-      - **Key Contributions:** [What unique insights this document provides]
-      - **Relevant Findings:** [Specific findings related to {{research_topic}}]
-      - **Methodological Notes:** [Research methods used, sample sizes, limitations]
-      - **Actionable Insights:** [What can be directly applied]
-      - **Quotable Highlights:** [2-3 key quotes with page references]
-      - **Connection to Other Documents:** [How this relates to other materials]
+      **Immediate Actions** (This Week)
+      - [ ] [Specific action based on findings]
+      - [ ] [Specific action based on findings]
       
-      **CROSS-DOCUMENT SYNTHESIS:**
-      - **Convergent Evidence:** [What multiple documents agree on]
-      - **Conflicting Viewpoints:** [Where documents disagree and why]
-      - **Evidence Gaps:** [What's missing or under-represented]
-      - **Methodological Triangulation:** [How different research approaches support findings]
+      **Short-Term Priorities** (This Month)
+      - [ ] [Research or validation activity]
+      - [ ] [Stakeholder engagement or decision]
       
-      **QUALITY ASSESSMENT:**
-      - **Strongest Evidence:** [Most reliable and actionable findings]
-      - **Weakest Evidence:** [Findings that need additional validation]
-      - **Research Limitations:** [What constrains the findings]
+      **Further Research Needed**
+      - [Gap identified in the research that needs primary research]
+      - [Question that desk research couldn't fully answer]
+      
+      Make each recommendation:
+      - Specific (not generic advice)
+      - Tied to a finding from the documents
+      - Actionable by the research team
+      
+      Limit to 3-4 items per section.
 
-  - task_id: "generate_citations_bibliography"
+  # Task 5: Sources (simple reference list)
+  - task_id: "sources"
     prompt: |
-      Create a comprehensive bibliography and citation system for all documents.
+      Create a simple reference list for the desk research documents.
       
-      **Include Citations:** {{include_citations}}
+      **Document Content:** {{document_content}}
       
-      **BIBLIOGRAPHY** (formatted in APA style):
-      For each document, provide:
-      - Full citation in proper academic format
-      - Document type classification
-      - Accessibility notes (public/restricted/internal)
-      - File location/path in research repository
+      List each source in this format:
       
-      **CITATION INDEX:**
-      - Numerical reference system for in-text citations
-      - Cross-reference between document inventory and bibliography
-      - Quick-reference guide for team members
+      1. **[Document Title]** — [Author/Organization], [Date if available]
+         - Key contribution: [One sentence on what this source provided]
       
-      **SOURCE EVALUATION:**
-      For each source, note:
-      - **Authority:** [Author credentials, institutional affiliation]
-      - **Currency:** [Publication recency, data freshness]
-      - **Accuracy:** [Fact-checking, peer review status]
-      - **Purpose:** [Research objective, potential bias]
-      - **Coverage:** [Scope, geographical/temporal limitations]
+      2. **[Document Title]** — [Author/Organization], [Date if available]
+         - Key contribution: [One sentence on what this source provided]
       
-      **RESEARCH PROVENANCE:**
-      - Document upload date and source
-      - Processing date and analyst
-      - Version control information
-      - Related document clusters
+      Continue for all identifiable sources. Keep descriptions brief.
 
-  - task_id: "create_action_items"
-    prompt: |
-      Generate specific, actionable next steps based on the desk research findings.
-      
-      **IMMEDIATE ACTIONS** (Week 1-2):
-      - [ ] [Specific task based on findings]
-      - [ ] [Specific task based on findings]
-      - [ ] [Specific task based on findings]
-      
-      **SHORT-TERM PRIORITIES** (Month 1-2):
-      - [ ] [Research validation activities]
-      - [ ] [Stakeholder engagement]
-      - [ ] [Additional data collection]
-      
-      **LONG-TERM STRATEGY** (Quarter 1-2):
-      - [ ] [Strategic initiatives]
-      - [ ] [Resource allocation]
-      - [ ] [Process improvements]
-      
-      **RESEARCH VALIDATION NEEDS:**
-      - **Primary Research Required:** [Where desk research needs field validation]
-      - **Stakeholder Interviews:** [Key people to speak with]
-      - **User Research:** [What to test with real users]
-      - **Additional Documentation:** [Missing pieces to investigate]
-      
-      **SUCCESS METRICS:**
-      - How to measure progress on recommendations
-      - Key performance indicators related to {{research_topic}}
-      - Timeline for expected outcomes
-      
-      **RESOURCE REQUIREMENTS:**
-      - Personnel needs
-      - Budget considerations  
-      - Tool or technology requirements
-      - Timeline estimates
-
-# Processing workflow
-processing_workflow:
-  1. validate_inputs
-  2. process_document_uploads
-  3. extract_content_from_files
-  4. execute_ai_generation_tasks
-  5. validate_generated_content
-  6. populate_readme_template
-  7. create_document_index
-  8. save_to_outputs
-
-# Output template - Comprehensive README
+# OUTPUT TEMPLATE - Streamlined
 output_template: |
   # 📚 Desk Research: {{research_topic}}
 
-  **Research Date:** {{current_date}}  
-  **Documents Processed:** {{ai_generated.document_inventory.total_count}}  
-  **Analysis Focus:** {{analysis_focus}}  
-  **Analyst:** {{slack_user_name}}
+  **Date:** {{current_date}}
+  
+  **Research Questions:** {{research_questions}}
 
   ---
 
   ## 📋 Executive Summary
 
-  {{ai_generated.generate_executive_summary}}
+  {{ai_generated.executive_summary}}
 
   ---
 
-  ## 📁 Document Inventory
+  ## 📄 Documents Reviewed
 
   {{ai_generated.document_inventory}}
 
   ---
 
-  ## 🎯 Key Themes & Patterns
+  ## 🎯 Key Themes
 
-  {{ai_generated.extract_key_themes}}
-
-  ---
-
-  ## 🔍 Detailed Document Analysis
-
-  {{ai_generated.create_detailed_analysis}}
+  {{ai_generated.themes}}
 
   ---
 
-  ## ✅ Action Items & Recommendations
+  ## ✅ Recommendations & Next Steps
 
-  {{ai_generated.create_action_items}}
-
-  ---
-
-  ## 📖 Bibliography & Citations
-
-  {{ai_generated.generate_citations_bibliography}}
+  {{ai_generated.recommendations}}
 
   ---
 
-  ## 📊 Research Metadata
+  ## 📖 Sources
 
-  **Processing Details:**
-  - Upload Date: {{upload_timestamp}}
-  - Processing Time: {{processing_duration}}
-  - Document Types: {{document_types_summary}}
-  - Analysis Confidence: {{overall_confidence_score}}
-
-  **Quality Assurance:**
-  - Documents fully processed: {{fully_processed_count}}
-  - Documents with extraction issues: {{issues_count}}
-  - Overall collection quality: {{collection_quality_score}}/10
-
-  **Next Review Date:** {{next_review_date}}
-
-  ---
-  *Generated by Qori Desk Research Processor v2.0*  
-  *For questions about this analysis, contact: {{slack_user_contact}}*
+  {{ai_generated.sources}}
 
 # Output configuration
 output_options:
-  # File settings
-  filename: "README_{{research_topic}}_{{current_date}}.md"
-  path: "{{research_topic}}/"
+  filename: "desk_research_{{research_topic}}_{{current_date}}.md"
+  path: "00-desk-research/"
   
-  # Additional files to create
-  additional_outputs:
-    - filename: "document_index.json"
-      content: "{{ai_generated.document_inventory.structured_data}}"
-      path: "research/desk-research/{{research_topic_slug}}/"
-    
-    - filename: "citations.bib"  
-      content: "{{ai_generated.generate_citations_bibliography.bibtex_format}}"
-      path: "research/desk-research/{{research_topic_slug}}/"
-    
-    - filename: "action_items.md"
-      content: "{{ai_generated.create_action_items}}"
-      path: "research/desk-research/{{research_topic_slug}}/"
-  
-  # Document organization
-  organize_uploads:
-    enabled: true
-    create_folders: true
-    folder_structure: "research/desk-research/{{research_topic_slug}}/source-documents/"
-    rename_files: true
-    naming_convention: "{{document_type}}_{{upload_order}}_{{original_name}}"
-
-  # Delivery methods
   delivery:
     github:
       enabled: true
-      repo: "research-project-repo"
-      commit_message: "Add desk research analysis for {{research_topic}}"
-      create_branch: "desk-research/{{research_topic_slug}}"
+      commit_message: "Add desk research: {{research_topic}}"
       
     slack:
       enabled: true
       channel: "{{source_channel}}"
-      notify_user: "{{slack_user_id}}"
-      message: "📚 Desk research analysis complete for **{{research_topic}}**. Processed {{ai_generated.document_inventory.total_count}} documents with {{ai_generated.generate_executive_summary.key_findings_count}} key findings."
-      include_preview: true
-      attach_files: ["README_{{research_topic_slug}}_{{current_date}}.md"]
+      message: |
+        📚 **Desk Research Complete**
+        **Topic:** {{research_topic}}
+        **Documents Analyzed:** See summary
+      
       actions:
-        - text: "📖 View Full Analysis"
-          url: "{{github_file_link}}"
-        - text: "📋 Action Items"
-          url: "{{action_items_link}}"
-        - text: "📊 Process More Documents"
-          action: "trigger_new_analysis"
+        - text: "📖 View Analysis"
+          style: "primary"
+          url: "{{github_file_url}}"
 
-# Usage instructions
-output_use: |
-  Qori Desk Research Processor handles bulk document uploads from Slack and creates comprehensive research summaries. Upload documents via Slack file upload, specify research topic and analysis focus, and receive organized README files with key insights, themes, and actionable recommendations. Automatically organizes documents, creates citations, and generates follow-up action items.
-
-output_notes: |
-  Document processing: Handles PDFs, Word docs, text files, presentations, and research papers
-  Batch analysis: Processes multiple documents simultaneously for cross-document insights  
-  Smart organization: Creates folder structures and renames files systematically
-  Citation management: Generates proper academic citations and bibliography
-  Quality assurance: Provides confidence scores and processing quality metrics
-  Action-oriented: Focuses on actionable insights and next steps rather than just summaries
+# Slack UI configuration  
+slack_ui:
+  modal:
+    title: "📚 Desk Research"
+    submit_label: "Analyze Documents"
+    close_label: "Cancel"
