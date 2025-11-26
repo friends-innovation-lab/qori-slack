@@ -2,11 +2,11 @@
 
 **📊 Recruitment Summary**
 - **Total Participants:** 3
-- **Confirmed Sessions:** 2
+- **Confirmed Sessions:** 3
 - **Pending Responses:** 0
 - **Completed Sessions:** 0
 - **Observer Assignments:** 0
-- **Last Updated:** November 26, 2025 by U01SC2TNYKU
+- **Last Updated:** November 26, 2025 by lapedra
 
 ---
 
@@ -14,7 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|----------------------|
-| 66 | PT003 | internal_panel | 2025-12-10 13:00 | pending | Limited data plan; prefers Wi-Fi only sessions; uses large text settings |
+| 66 | PT003 | internal_panel | 2025-12-10 13:00 | confirmed | Participant confirmed participation |
 | 65 | PT002 | email_outreach | 2025-12-09 11:00 | confirmed | Android user; works irregular hours so flexible timing needed |
 | 64 | PT001 | internal_panel | 2025-12-08 12:00 | confirmed | ses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
 
@@ -28,12 +28,14 @@
 | 📧 Email Outreach | 1 | 33% |
 
 **🔍 Recruitment Effectiveness:**
-Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
+Recruitment effectiveness: 100% conversion rate (3 confirmed of 3 recruited)
 
 ---
 
 ## ✅ Confirmed Sessions
 
+- **** -  at 
+  - Observers: 
 - **** -  at 
   - Observers: 
 - **** -  at 
@@ -78,7 +80,7 @@ Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 ## 📝 Accessibility & Accommodations
 
 **Special Needs Summary:**
-- 66: Limited data plan; prefers Wi-Fi only sessions; uses large text settings
+- 66: Participant confirmed participation
 - 65: Android user; works irregular hours so flexible timing needed
 - 64: ses VoiceOver on iPhone; prefers longer sessions to navigate complex flows
 
