@@ -208,13 +208,13 @@ ai_processing_tasks:
       **REMEMBER:** Only include information from the provided notes. Never fabricate content.
     output_variable: "structured_notes"
 
-# Output template with fallbacks
+# Output template
 output_template: |
-  # Session Notes: {{session_id | default: "[Session ID Missing]"}}
+  # Session Notes: {{session_id}}
   
-  📝 **Observer:** {{observer_name | default: "Observer"}}  
-  📅 **Session Date:** {{session_date | default: "[Date from participant tracker]"}}  
-  👨‍🔬 **Researcher:** {{researcher | default: "[Researcher from participant tracker]"}}  
+  📝 **Observer:** {{observer_name}}  
+  📅 **Session Date:** {{session_date}}  
+  👨‍🔬 **Researcher:** {{researcher}}  
   ⏰ **Submitted:** {{current_date}}
   
   ---
@@ -227,8 +227,8 @@ output_template: |
   
   | Attribute | Value |
   |-----------|-------|
-  | **Session ID** | {{session_id | default: "Not specified"}} |
-  | **Observer** | {{observer_name | default: "Unknown"}} ({{slack_user_id}}) |
+  | **Session ID** | {{session_id}} |
+  | **Observer** | {{observer_name}} ({{slack_user_id}}) |
   | **Submission Date** | {{current_date}} |
   | **GitHub Path** | `03-fieldwork/session-notes/{{session_id}}/{{filename}}` |
   | **Submission Method** | Slack Modal |
@@ -244,17 +244,17 @@ github:
   base_path: "03-fieldwork/session-notes"
   commit_message: "Session notes: {{session_id}} by {{observer_name}}"
 
-# Filename pattern with fallbacks
+# Filename pattern
 filename:
   pattern: "{{observer_name}}_{{session_id}}_{{date}}.md"
   variables:
-    observer_name: "{{slack_user_display_name | slugify | default: 'observer'}}"
-    session_id: "{{session_id | default: 'unknown'}}"
-    date: "{{submission_timestamp | format_date:'YYYY-MM-DD'}}"
+    observer_name: "{{slack_user_display_name}}"
+    session_id: "{{session_id}}"
+    date: "{{submission_timestamp}}"
 
 # Output configuration
 output_options:
-  filename: "{{observer_name | default: 'observer'}}_{{session_id | default: 'session'}}_{{current_date}}.md"
+  filename: "{{observer_name}}_{{session_id}}_{{current_date}}.md"
   path: "03-fieldwork/session-notes/{{session_id}}/"
   
   delivery:
