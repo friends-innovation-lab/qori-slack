@@ -1,33 +1,56 @@
 id: desk_research_processor
 name: run_desk_research
 label: 📚 Desk Research
-version: v3.0
+version: v3.1
 
 description: |
   Analyze uploaded research documents and generate a focused synthesis with key themes, 
   findings, and actionable recommendations. Designed for quick insights, not exhaustive documentation.
+  
+  v3.1 Changes:
+  - Added anti-hallucination guardrails to all prompts
+  - Added empty input validation with graceful fallbacks
+  - Added explicit "ground truth" requirements for all findings
+  - Added input validation rules
 
 author: Qori R&D
 created: 2025-08-27
-last_updated: 2025-11-26
+last_updated: 2025-12-05
 
 # LLM Configuration
 llm_config:
   model: "gpt-4o"
-  temperature: 0.3
+  temperature: 0.2  # Lowered from 0.3 for more deterministic output
   max_tokens: 4000
+  
+  # System-level instruction applied to all tasks
+  system_instruction: |
+    You are a research analyst synthesizing documents. Your core rules:
+    
+    1. ONLY use information explicitly present in the provided document content
+    2. NEVER invent, fabricate, or hallucinate citations, statistics, quotes, or findings
+    3. If document content is empty, missing, or insufficient, say so clearly
+    4. Every claim must be traceable to specific text in the provided documents
+    5. When uncertain, say "The documents do not address this" rather than guessing
+    6. Do not draw on your training knowledge to fill gaps - only use the provided content
 
-# Input variables
+# Input variables with validation
 input_variables:
   - research_topic:
       type: "text"
       required: true
       placeholder: "e.g., VA Telehealth Onboarding Experience"
+      validation:
+        min_length: 3
+        error_message: "Please enter a research topic"
       
   - document_content:
       type: "textarea"
       required: true
       description: "Extracted text from uploaded documents (provided by backend)"
+      validation:
+        min_length: 100
+        error_message: "Document content is required. Please upload documents or paste content."
       # NOTE: Backend must extract text from uploaded files and populate this variable
       
   - research_questions:
@@ -35,7 +58,17 @@ input_variables:
       required: false
       placeholder: "e.g., What are the main barriers to telehealth adoption?"
 
-# AI Generation Tasks - Focused and sequential
+# Pre-execution validation
+validation_rules:
+  - rule: "document_content_not_empty"
+    check: "{{document_content | length}} > 50"
+    error_message: "No document content provided. Please upload research documents before running analysis."
+    
+  - rule: "research_topic_not_empty"  
+    check: "{{research_topic | length}} > 2"
+    error_message: "Research topic is required."
+
+# AI Generation Tasks with anti-hallucination guardrails
 ai_generation_tasks:
 
   # Task 1: Document inventory (simple table)
@@ -44,128 +77,204 @@ ai_generation_tasks:
       Review the following document content and create a simple inventory table.
       
       **Research Topic:** {{research_topic}}
-      **Document Content:** {{document_content}}
       
-      Create a markdown table with these columns:
+      **Document Content:**
+      ---BEGIN CONTENT---
+      {{document_content}}
+      ---END CONTENT---
+      
+      ⚠️ CRITICAL RULES:
+      - If the content between BEGIN/END markers is empty, blank, or contains only whitespace, respond ONLY with:
+        "⚠️ No documents were provided for analysis. Please upload research documents and try again."
+      - ONLY list documents that are explicitly identifiable in the provided content
+      - Do NOT invent document titles, authors, dates, or sources
+      - If a field (like date or author) is not stated in the content, write "Not specified"
+      - Do NOT reference any documents from your training data
+      
+      If documents ARE present, create a markdown table:
       | Document | Type | Source | Date | Key Focus |
       |----------|------|--------|------|-----------|
       
       For each distinct document you can identify in the content:
-      - Document: Title or descriptive name
-      - Type: Report, Study, Survey, Brief, Article, etc.
-      - Source: Author or organization
-      - Date: Publication date if available, otherwise "N/A"
-      - Key Focus: One-line description of what it covers
+      - Document: Title or descriptive name AS STATED in the content
+      - Type: Report, Study, Survey, Brief, Article, etc. (based on content clues)
+      - Source: Author or organization AS STATED, or "Not specified"
+      - Date: Publication date AS STATED, or "Not specified"
+      - Key Focus: One-line description based on actual content
       
-      Keep it concise. If you can't identify distinct documents, describe the content as a single source.
+      If you cannot identify distinct documents, describe the content as a single source with what you can determine.
 
   # Task 2: Executive summary with findings and recommendations
   - task_id: "executive_summary"
     prompt: |
-      Create a focused executive summary of the desk research on: {{research_topic}}
+      Create a focused executive summary of the desk research.
       
-      **Document Content:** {{document_content}}
+      **Research Topic:** {{research_topic}}
+      
       **Research Questions:** {{research_questions}}
       
-      Structure your summary as:
+      **Document Content:**
+      ---BEGIN CONTENT---
+      {{document_content}}
+      ---END CONTENT---
+      
+      ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
+      1. If the content between BEGIN/END markers is empty or blank, respond ONLY with:
+         "⚠️ No documents were provided. Unable to generate executive summary."
+      2. EVERY finding must be directly quoted or paraphrased from the provided content
+      3. Do NOT invent statistics, percentages, or data points
+      4. Do NOT cite authors, studies, or publications not mentioned in the content
+      5. Do NOT use phrases like "Research shows..." unless that research is in the provided content
+      6. If the content doesn't address the research questions, say: "The provided documents do not address [specific question]"
+      
+      If documents ARE present, structure your summary as:
       
       **Overview**
       2-3 sentences explaining what this research covers and why it matters.
+      (Base this ONLY on what the documents actually contain)
       
       **Key Findings**
-      3-5 bullet points with the most important discoveries. Each finding should:
-      - Be specific and evidence-based (reference the source documents)
-      - Directly relate to {{research_topic}}
-      - Include a specific data point, quote, or fact when available
+      3-5 bullet points with the most important discoveries. Each finding MUST:
+      - Start with "The documents indicate..." or "According to [specific document name]..."
+      - Include ONLY information explicitly stated in the provided content
+      - Reference which document the finding comes from
+      - If you cannot find 3 solid findings, include fewer rather than inventing
       
       **Implications**
       2-3 sentences on what these findings mean for {{research_topic}} decisions.
+      (Only draw implications from actual findings, not assumed context)
       
       Keep the entire summary under 300 words. Be direct and actionable.
 
   # Task 3: Key themes synthesis
   - task_id: "themes"
     prompt: |
-      Identify the major themes across the research documents on: {{research_topic}}
+      Identify the major themes across the research documents.
       
-      **Document Content:** {{document_content}}
+      **Research Topic:** {{research_topic}}
       
-      Identify 3-5 primary themes. For each theme:
+      **Document Content:**
+      ---BEGIN CONTENT---
+      {{document_content}}
+      ---END CONTENT---
       
-      ### [Theme Name]
+      ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
+      1. If content is empty or blank, respond ONLY with:
+         "⚠️ No documents were provided. Unable to identify themes."
+      2. EVERY theme must be grounded in specific text from the provided documents
+      3. Do NOT create themes based on what you think should be covered
+      4. Do NOT reference external research, studies, or statistics
+      5. QUOTE directly from the documents when providing evidence
+      6. If you can only identify 1-2 themes, that's fine - do not pad with invented themes
       
-      **What the research shows:** 
+      If documents ARE present, identify themes using this format:
+      
+      ### [Theme Name - derived from document content]
+      
+      **What the documents show:** 
       2-3 sentences summarizing findings related to this theme.
+      (Paraphrase actual document content only)
       
-      **Evidence:**
-      - [Specific finding or data point from Document X]
-      - [Specific finding or data point from Document Y]
+      **Evidence from documents:**
+      - "[Direct quote from the content]" - from [document name if identifiable]
+      - "[Another direct quote]" - from [document name if identifiable]
       
       **Why it matters for {{research_topic}}:**
-      1 sentence on the implication.
+      1 sentence on the implication (based on document evidence, not assumptions).
       
       ---
       
-      Focus on themes that:
-      - Appear across multiple documents (convergent evidence)
-      - Have specific data or quotes to support them
-      - Are actionable for {{research_topic}}
-      
-      Do NOT include generic themes. Every theme must be grounded in the actual document content.
+      Requirements:
+      - Only include themes with at least 2 pieces of direct evidence from the documents
+      - Maximum 5 themes, fewer if the content doesn't support more
+      - Every evidence point must be verifiable in the provided content
 
   # Task 4: Recommendations and next steps
   - task_id: "recommendations"
     prompt: |
-      Based on the desk research on {{research_topic}}, provide actionable recommendations.
+      Based on the desk research, provide actionable recommendations.
       
-      **Document Content:** {{document_content}}
+      **Research Topic:** {{research_topic}}
+      
       **Research Questions:** {{research_questions}}
       
-      Structure as:
+      **Document Content:**
+      ---BEGIN CONTENT---
+      {{document_content}}
+      ---END CONTENT---
+      
+      ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
+      1. If content is empty or blank, respond ONLY with:
+         "⚠️ No documents were provided. Unable to generate recommendations."
+      2. EVERY recommendation must be tied to a specific finding from the documents
+      3. Format: "Based on [specific finding from docs], we recommend..."
+      4. Do NOT suggest generic best practices not supported by the documents
+      5. Do NOT recommend actions based on assumed context or your training knowledge
+      6. If the documents don't support many recommendations, include fewer
+      
+      If documents ARE present, structure as:
       
       **Immediate Actions** (This Week)
-      - [ ] [Specific action based on findings]
-      - [ ] [Specific action based on findings]
+      - [ ] [Action] — Based on document finding: "[brief quote or paraphrase]"
+      - [ ] [Action] — Based on document finding: "[brief quote or paraphrase]"
       
       **Short-Term Priorities** (This Month)
-      - [ ] [Research or validation activity]
-      - [ ] [Stakeholder engagement or decision]
+      - [ ] [Action] — Based on document finding: "[brief quote or paraphrase]"
+      - [ ] [Action] — Based on document finding: "[brief quote or paraphrase]"
       
       **Further Research Needed**
-      - [Gap identified in the research that needs primary research]
-      - [Question that desk research couldn't fully answer]
+      - [Gap explicitly identified in the documents OR question the documents raise but don't answer]
+      - [Another gap - must be evident from the documents, not assumed]
       
-      Make each recommendation:
-      - Specific (not generic advice)
-      - Tied to a finding from the documents
-      - Actionable by the research team
+      If the documents don't provide enough substance for a section, write:
+      "The documents do not provide sufficient evidence to recommend [immediate actions/short-term priorities/further research]."
       
-      Limit to 3-4 items per section.
+      Maximum 3 items per section. Quality over quantity.
 
   # Task 5: Sources (simple reference list)
   - task_id: "sources"
     prompt: |
-      Create a simple reference list for the desk research documents.
+      Create a reference list for the desk research documents.
       
-      **Document Content:** {{document_content}}
+      **Document Content:**
+      ---BEGIN CONTENT---
+      {{document_content}}
+      ---END CONTENT---
       
-      List each source in this format:
+      ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
+      1. If content is empty or blank, respond ONLY with:
+         "⚠️ No documents were provided. No sources to list."
+      2. ONLY list sources that are explicitly named or identifiable in the content
+      3. Do NOT invent titles, authors, organizations, or publication dates
+      4. Do NOT cite sources from your training knowledge
+      5. If author/date is not stated, write "Author not specified" or "Date not specified"
+      6. If you cannot identify distinct sources, describe what content was provided
       
-      1. **[Document Title]** — [Author/Organization], [Date if available]
-         - Key contribution: [One sentence on what this source provided]
+      If sources ARE identifiable, list each in this format:
       
-      2. **[Document Title]** — [Author/Organization], [Date if available]
-         - Key contribution: [One sentence on what this source provided]
+      1. **[Document Title as stated in content]** — [Author/Organization as stated], [Date as stated or "Date not specified"]
+         - Key contribution: [One sentence on what this source provided - based on actual content]
       
-      Continue for all identifiable sources. Keep descriptions brief.
+      2. **[Document Title]** — [Author/Organization], [Date]
+         - Key contribution: [One sentence summary]
+      
+      If no distinct sources are identifiable but content exists:
+      
+      **Source Material Provided:**
+      - Description: [Brief description of the content that was analyzed]
+      - Attribution: Not specified in the provided content
+      
+      Do NOT pad the list with invented sources. Only include what's actually identifiable.
 
-# OUTPUT TEMPLATE - Streamlined
+# OUTPUT TEMPLATE - Streamlined with validation note
 output_template: |
   # 📚 Desk Research: {{research_topic}}
 
   **Date:** {{current_date}}
   
   **Research Questions:** {{research_questions}}
+  
+  > ℹ️ *This analysis is based solely on the documents provided. All findings, themes, and recommendations are derived from the uploaded content.*
 
   ---
 
@@ -226,3 +335,9 @@ slack_ui:
     title: "📚 Desk Research"
     submit_label: "Analyze Documents"
     close_label: "Cancel"
+    
+  # Error states
+  error_messages:
+    no_documents: "⚠️ Please upload at least one document before running desk research."
+    no_topic: "⚠️ Please enter a research topic."
+    processing_failed: "⚠️ Analysis failed. Please check that your documents are readable text files (PDF, DOCX, TXT, MD)."
