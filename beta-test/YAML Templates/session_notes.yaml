@@ -1,17 +1,33 @@
 id: session_notes
 label: "📝 Session Notes"
-version: v2.0
+version: v2.1
 description: Quick session note-taking with AI-powered organization into structured sections
 
-author: CivicMind R&D
+author: Qori R&D
 created: 2025-07-07
-last_updated: 2025-10-25
+last_updated: 2025-12-05
+
+# v2.1 Changes:
+# - Added anti-hallucination guardrails to AI prompt
+# - Added explicit section headers the AI MUST output
+# - Added validation rules for empty inputs
+# - Added fallback values for missing metadata
+# - Lowered temperature for more consistent output
 
 # LLM Configuration
 llm_config:
   model: "gpt-4"
-  temperature: 0.2
+  temperature: 0.1  # Lowered from 0.2 for more consistent structure
   max_tokens: 3000
+  
+  # System instruction for all tasks
+  system_instruction: |
+    You are a UX research assistant organizing session notes. Your rules:
+    1. ONLY use information explicitly written in the raw notes provided
+    2. NEVER invent quotes, timestamps, tasks, or observations
+    3. If a section has no relevant content in the notes, write "No observations recorded for this section."
+    4. Preserve exact wording of any quotes
+    5. Do not add context or details not present in the original notes
 
 input_type: structured
 input_processing: ai_structured
@@ -37,9 +53,9 @@ external_data_sources:
     fallback:
       enabled: true
       fallback_to: "text_input"
-      placeholder: "Enter session ID manually (e.g., P001)"
+      placeholder: "Enter session ID manually (e.g., TH001)"
 
-# Simple input fields
+# Input variables with validation
 input_variables:
   - session_id:
       type: "select"
@@ -48,10 +64,14 @@ input_variables:
       placeholder: "Select the session you observed..."
       data_source: "participant_tracker"
       help_text: "Choose from recent sessions"
+      validation:
+        min_length: 1
+        error_message: "Please select or enter a session ID"
       
   - observer_name:
       type: "hidden"
       derived_from: "slack_user_display_name"
+      fallback: "Observer"
       
   - raw_notes:
       type: "textarea"
@@ -70,127 +90,131 @@ input_variables:
         
         Write naturally - the system will structure everything for you!
       rows: 20
-      max_length: 10000
-      help_text: "Freeform observations. AI will extract quotes, timestamps, tasks, and organize into sections."
+      max_length: 3000
+      validation:
+        min_length: 100
+        error_message: "Please enter at least 100 characters of observations"
+      help_text: "Freeform observations (100-3000 characters). AI will extract quotes, timestamps, tasks, and organize into sections."
+
+# Pre-execution validation
+validation_rules:
+  - rule: "session_id_not_empty"
+    check: "{{session_id | length}} > 0"
+    error_message: "Session ID is required. Please select a session or enter an ID."
+    
+  - rule: "raw_notes_not_empty"
+    check: "{{raw_notes | length}} >= 100"
+    error_message: "Please enter at least 100 characters of observations."
 
 # AI Processing - Extract structure from freeform notes
 ai_processing_tasks:
   - task_id: "structure_notes"
     prompt: |
-      You are processing raw session notes from a UX research observation. Extract and organize the content into structured sections.
+      You are organizing raw session notes from a UX research observation into structured sections.
       
-      **Raw Notes:**
+      **RAW NOTES TO PROCESS:**
+      ---BEGIN NOTES---
       {{raw_notes}}
+      ---END NOTES---
       
-      **Your Task:**
-      Analyze these notes and organize them into the following sections. Extract relevant content for each section. If a section has no relevant content, output "No observations recorded for this section."
+      ⚠️ CRITICAL RULES:
+      1. If the notes between BEGIN/END markers are empty, respond with: "⚠️ No notes were provided."
+      2. ONLY extract information explicitly written in the notes above
+      3. NEVER invent quotes, timestamps, emotions, tasks, or issues not in the notes
+      4. If you cannot find content for a section, write: "No observations recorded for this section."
+      5. Preserve exact wording of any participant quotes
+      6. Do NOT add analysis or insights beyond what's written
       
-      **CRITICAL INSTRUCTIONS:**
-      - Extract actual quotes from participants (look for quotation marks or phrases like "they said", "participant mentioned")
-      - Identify emotional moments (frustrated, confused, satisfied, etc.) with timestamps if present
-      - Find task descriptions and their outcomes (completed, failed, partial success)
-      - Flag any technical issues, bugs, or platform problems mentioned
-      - Extract accessibility observations (screen reader, VoiceOver, assistive tech mentions)
-      - Identify the top 3 most important moments from the session
-      - Preserve timestamps when mentioned (Minute X, Min X, X minutes in, etc.)
-      
-      **OUTPUT FORMAT:**
+      **OUTPUT THESE EXACT SECTIONS IN THIS ORDER:**
       
       ## 🗣️ Key Quotes & Reactions
-      [Extract direct participant quotes. Format as bullets with > blockquote style]
-      [Organize by theme if possible: positive reactions, frustrations, confusion]
-      [Examples:
-      ### ✅ Positive Reactions
-      - > "This makes sense, I like how clear this is"
       
-      ### ⚠️ Frustration Points
-      - > "Why is this so complicated? I can't find what I need"
-      ]
+      Extract direct participant quotes from the notes. Look for text in quotation marks or phrases like "they said", "participant mentioned", "user stated".
+      
+      ### ✅ Positive Reactions
+      [List positive quotes as bullets with > blockquote, or "None recorded"]
+      
+      ### ⚠️ Frustration Points  
+      [List frustration quotes as bullets with > blockquote, or "None recorded"]
+      
+      ### 🤔 Confusion
+      [List confusion quotes as bullets with > blockquote, or "None recorded"]
       
       ## 😤 Emotional Moments & Body Language
-      [Extract emotional observations with timestamps when available]
-      [Format as bullets with emojis for emotion type]
-      [Examples:
-      - **Minute 5:** 😤 Participant became visibly frustrated when unable to locate submit button
-      - **Minute 12:** 🤔 Showed confusion, paused for 30 seconds before asking for help
-      ]
+      
+      Extract emotional observations with timestamps when available. Format:
+      - **Minute X:** [emoji] [observation]
+      
+      Use these emojis: 😤 frustrated, 😟 worried, 😌 relieved, 😩 fatigued, 🤔 confused, 😊 satisfied
+      
+      [List emotional moments, or "No observations recorded for this section."]
       
       ## ✅ Task Completion & Observations
-      [Extract task descriptions with outcomes]
-      [Format each task as a subsection]
-      [Examples:
-      ### Task 1: Find Health Benefits — ✅ Completed (3 minutes)
-      - Successfully navigated to benefits page
-      - Used search function effectively
       
-      ### Task 2: Update Address — ❌ Failed
-      - Could not locate edit button
-      - Gave up after 5 minutes
-      ]
+      Extract task descriptions with outcomes. Format each as:
+      
+      ### Task N: [Task Name] — [✅ Completed | ⚠️ Partial | ❌ Failed]
+      - [Observation bullets]
+      
+      [List tasks found in notes, or "No observations recorded for this section."]
       
       ## 🛠 Technical Issues & Platform Problems
-      [Extract any bugs, technical failures, or platform issues]
-      [Categorize by severity if possible]
-      [Examples:
+      
+      Extract bugs, technical failures, or platform issues mentioned.
+      
       ### ❌ Critical Issues
-      - VoiceOver not announcing button labels in navigation menu
+      [List critical issues, or "None recorded"]
       
       ### ⚠️ Minor Issues
-      - Page load time slow (5+ seconds)
-      ]
+      [List minor issues, or "None recorded"]
+      
+      [If no technical issues mentioned: "No observations recorded for this section."]
       
       ## ♿ Accessibility & Screen Reader Observations
-      [Extract any accessibility-related observations]
-      [Note: Only include this section if accessibility topics are mentioned]
-      [Examples:
-      ### 🎧 Screen Reader Experience
-      - VoiceOver successfully announced form fields
-      - Skip navigation link worked as expected
+      
+      Extract accessibility-related observations (screen reader, captions, magnification, etc.)
+      
+      ### ✅ Positive Features
+      [List what worked, or "None recorded"]
       
       ### ❌ Accessibility Barriers
-      - Focus order did not match visual layout
-      ]
+      [List barriers found, or "None recorded"]
+      
+      ### 👤 User Needs
+      [List stated needs, or "None recorded"]
+      
+      [If no accessibility content: "No observations recorded for this section."]
       
       ## ⭐ Top 3 Key Moments
-      [Identify the 3 most significant moments from the session]
-      [Format with importance badges and timestamps]
-      [Examples:
-      ### 1. Navigation Breakdown (Minute 8) — 🚨 Critical
-      **Context:** Participant attempted to return to home page
-      **Impact:** Became frustrated, couldn't find back button
-      **Implications:** Primary navigation needs redesign for clarity
-      ]
+      
+      Identify the 3 most significant moments from the session. Format:
+      
+      ### 1. [Moment Title] (Minute X) — [🚨 Critical | ⚠️ High | 💡 Notable]
+      **What happened:** [Brief description from notes]
+      **Impact:** [Stated or observable impact]
+      
+      [Repeat for moments 2 and 3. If fewer than 3 significant moments, include only what's supported by the notes.]
       
       ## 📋 Additional Context & Observations
-      [Any other relevant notes that don't fit above categories]
-      [Examples:
+      
       ### 👤 Participant Background
-      - Experienced screen reader user (10+ years)
-      - Military veteran, familiar with VA services
+      [Any background info mentioned, or "Not recorded"]
       
       ### 🎭 Session Dynamics
-      - Participant was engaged and communicative
-      - Asked clarifying questions throughout
-      ]
+      [Any session dynamic observations, or "Not recorded"]
       
-      **IMPORTANT:**
-      - Preserve the exact wording of participant quotes
-      - Keep timestamps when they exist
-      - Use emojis for visual scanning (✅ ❌ ⚠️ 😤 🤔 💡)
-      - Be concise but preserve important details
-      - If a section has no content, write "No observations recorded for this section."
-      - Maintain professional, objective tone
+      ---
       
-      Return ONLY the structured markdown output. Do not include any preamble or explanation.
+      **REMEMBER:** Only include information from the provided notes. Never fabricate content.
     output_variable: "structured_notes"
 
-# Output template
+# Output template with fallbacks
 output_template: |
-  # Session Notes: {{session_id}}
+  # Session Notes: {{session_id | default: "[Session ID Missing]"}}
   
-  📝 **Observer:** {{observer_name}}  
-  📅 **Session Date:** {{session_date}}  
-  👨‍🔬 **Researcher:** {{researcher}}  
+  📝 **Observer:** {{observer_name | default: "Observer"}}  
+  📅 **Session Date:** {{session_date | default: "[Date from participant tracker]"}}  
+  👨‍🔬 **Researcher:** {{researcher | default: "[Researcher from participant tracker]"}}  
   ⏰ **Submitted:** {{current_date}}
   
   ---
@@ -203,8 +227,8 @@ output_template: |
   
   | Attribute | Value |
   |-----------|-------|
-  | **Session ID** | {{session_id}} |
-  | **Observer** | {{observer_name}} ({{slack_user_id}}) |
+  | **Session ID** | {{session_id | default: "Not specified"}} |
+  | **Observer** | {{observer_name | default: "Unknown"}} ({{slack_user_id}}) |
   | **Submission Date** | {{current_date}} |
   | **GitHub Path** | `03-fieldwork/session-notes/{{session_id}}/{{filename}}` |
   | **Submission Method** | Slack Modal |
@@ -220,16 +244,17 @@ github:
   base_path: "03-fieldwork/session-notes"
   commit_message: "Session notes: {{session_id}} by {{observer_name}}"
 
-# Filename pattern
+# Filename pattern with fallbacks
 filename:
-  pattern: "{{observer_name}}_session-notes_{{date}}.md"
+  pattern: "{{observer_name}}_{{session_id}}_{{date}}.md"
   variables:
-    observer_name: "{{slack_user_display_name | slugify}}"
+    observer_name: "{{slack_user_display_name | slugify | default: 'observer'}}"
+    session_id: "{{session_id | default: 'unknown'}}"
     date: "{{submission_timestamp | format_date:'YYYY-MM-DD'}}"
 
 # Output configuration
 output_options:
-  filename: "{{observer_name}}_{{session_id}}_{{current_date}}.md"
+  filename: "{{observer_name | default: 'observer'}}_{{session_id | default: 'session'}}_{{current_date}}.md"
   path: "03-fieldwork/session-notes/{{session_id}}/"
   
   delivery:
@@ -277,10 +302,17 @@ validation:
     
   field_limits:
     session_id: 200
-    raw_notes: 10000
+    raw_notes: 3000
   
   min_lengths:
-    raw_notes: 50
+    raw_notes: 100
+
+# Error messages
+error_messages:
+  no_session_id: "⚠️ Please select or enter a session ID."
+  no_notes: "⚠️ Please enter your session observations (minimum 100 characters)."
+  notes_too_short: "⚠️ Your notes are too short. Please add more detail (minimum 100 characters)."
+  processing_failed: "⚠️ Failed to process notes. Please try again or contact support."
 
 # Slack UI Definition
 slack_ui:
@@ -303,12 +335,12 @@ slack_ui:
           • 💬 Quote participant reactions: "This is confusing"
           • ⏱️ Note timestamps: Minute 5: User struggled with navigation
           • ✅ Describe tasks: Task 1 - Find benefits (completed in 3 min)
-          • 🐛 Flag technical issues: VoiceOver didn't announce button
+          • 🛠 Flag technical issues: VoiceOver didn't announce button
           • ⭐ Highlight key moments: Critical moment at minute 12 when user gave up
           • 😤 Capture emotions: User became frustrated, sighed heavily
           
       - section_title: "Your Observations"
-        section_icon: "📝"
+        section_icon: "📓"
         fields:
           - raw_notes
 
