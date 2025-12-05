@@ -4,7 +4,7 @@
 
 | Total | Confirmed | Pending | Completed |
 |:-----:|:---------:|:-------:|:---------:|
-| 3 | 2 | 0 | 0 |
+| 4 | 3 | 0 | 0 |
 
 **Last Updated:** December 5, 2025 by U01SC2TNYKU
 
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|------------------------|
+| 72 | PT004 | recruitment_agency | 2025-12-18 12:00 | confirmed |  |
 | 71 | PT003 | recruitment_agency | 2025-12-17 12:00 | pending | Uses screen magnification and prefers to join from a laptop over mobile |
 | 70 | PT002 | internal_panel | 2025-12-16 10:00 | confirmed |  |
 | 69 | PT001 | internal_panel | 2025-12-15 10:00 | confirmed | Uses captioning in all video calls; prefers slower-paced walkthroughs |
@@ -24,10 +25,10 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| recruitment_agency | 1 | 33% |
-| 🗂️ Internal VA Panel | 2 | 67% |
+| recruitment_agency | 2 | 50% |
+| 🗂️ Internal VA Panel | 2 | 50% |
 
-Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
+Recruitment effectiveness: 75% conversion rate (3 confirmed of 4 recruited)
 
 ---
 
@@ -58,32 +59,35 @@ Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 
 | Category | Count | Percentage |
 |----------|-------|------------|
-| Asian | 1 | 33% |
-| black | 1 | 33% |
-| Hispanic or Latino | 1 | 33% |
+| White | 1 | 25% |
+| Asian | 1 | 25% |
+| black | 1 | 25% |
+| Hispanic or Latino | 1 | 25% |
 
 **Age Range:**
 
 | Range | Count | Percentage |
 |-------|-------|------------|
-| 55-64 | 1 | 33% |
-| 45-54 | 1 | 33% |
-| 25-34 | 1 | 33% |
+| 35-44 | 1 | 25% |
+| 55-64 | 1 | 25% |
+| 45-54 | 1 | 25% |
+| 25-34 | 1 | 25% |
 
 **Education Level:**
 
 | Level | Count | Percentage |
 |-------|-------|------------|
-| bachelor | 1 | 33% |
-| associate | 1 | 33% |
-| Some college | 1 | 33% |
+| master | 1 | 25% |
+| bachelor | 1 | 25% |
+| associate | 1 | 25% |
+| Some college | 1 | 25% |
 
 **Location Type:**
 
 | Type | Count | Percentage |
 |------|-------|------------|
-| Suburban | 1 | 33% |
-| Urban | 2 | 67% |
+| Suburban | 2 | 50% |
+| Urban | 2 | 50% |
 
 </details>
 
