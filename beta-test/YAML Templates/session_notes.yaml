@@ -222,15 +222,15 @@ github:
 
 # Filename pattern
 filename:
-  pattern: "session-notes_{{session_id}}_{{timestamp}}.md"
+  pattern: "session-notes_{{slack_user_id}}_{{current_date}}.md"
   variables:
-    session_id: "{{session_id}}"
-    timestamp: "{{submission_timestamp}}"
+    slack_user_id: "{{slack_user_id}}"
+    current_date: "{{current_date}}"
 
 # Output configuration
 output_options:
-  filename: "session-notes_{{session_id}}_{{submission_timestamp}}.md"
-  path: "03-fieldwork/session-notes/{{session_id}}/"
+  filename: "session-notes_{{slack_user_id}}_{{current_date}}_{{slack_ts}}.md"
+  path: "03-fieldwork/session-notes/"
   
   delivery:
     github:
