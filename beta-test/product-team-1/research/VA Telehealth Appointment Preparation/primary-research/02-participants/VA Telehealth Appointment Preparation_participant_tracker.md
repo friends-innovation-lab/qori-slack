@@ -4,7 +4,7 @@
 
 | Total | Confirmed | Pending | Completed |
 |:-----:|:---------:|:-------:|:---------:|
-| 2 | 2 | 0 | 0 |
+| 3 | 2 | 0 | 0 |
 
 **Last Updated:** December 5, 2025 by U01SC2TNYKU
 
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|------------------------|
+| 71 | PT003 | recruitment_agency | 2025-12-17 12:00 | pending | Uses screen magnification and prefers to join from a laptop over mobile |
 | 70 | PT002 | internal_panel | 2025-12-16 10:00 | confirmed |  |
 | 69 | PT001 | internal_panel | 2025-12-15 10:00 | confirmed | Uses captioning in all video calls; prefers slower-paced walkthroughs |
 
@@ -23,9 +24,10 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 🗂️ Internal VA Panel | 2 | 100% |
+| recruitment_agency | 1 | 33% |
+| 🗂️ Internal VA Panel | 2 | 67% |
 
-Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
+Recruitment effectiveness: 67% conversion rate (2 confirmed of 3 recruited)
 
 ---
 
@@ -56,28 +58,32 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 | Category | Count | Percentage |
 |----------|-------|------------|
-| black | 1 | 50% |
-| Hispanic or Latino | 1 | 50% |
+| Asian | 1 | 33% |
+| black | 1 | 33% |
+| Hispanic or Latino | 1 | 33% |
 
 **Age Range:**
 
 | Range | Count | Percentage |
 |-------|-------|------------|
-| 45-54 | 1 | 50% |
-| 25-34 | 1 | 50% |
+| 55-64 | 1 | 33% |
+| 45-54 | 1 | 33% |
+| 25-34 | 1 | 33% |
 
 **Education Level:**
 
 | Level | Count | Percentage |
 |-------|-------|------------|
-| associate | 1 | 50% |
-| Some college | 1 | 50% |
+| bachelor | 1 | 33% |
+| associate | 1 | 33% |
+| Some college | 1 | 33% |
 
 **Location Type:**
 
 | Type | Count | Percentage |
 |------|-------|------------|
-| Urban | 2 | 100% |
+| Suburban | 1 | 33% |
+| Urban | 2 | 67% |
 
 </details>
 
@@ -85,6 +91,7 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 ## ♿ Accessibility & Accommodations
 
+- **71:** Uses screen magnification and prefers to join from a laptop over mobile
 - **69:** Uses captioning in all video calls; prefers slower-paced walkthroughs
 
 **Preparation Checklist:**
@@ -99,7 +106,7 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 ## 📌 Next Steps
 
 > [!NOTE]
-> Continue recruiting to reach minimum of 3 participants (1 more needed)
+> All participants are on track
 
 ---
 
