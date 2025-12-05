@@ -4,9 +4,9 @@
 
 | Total | Confirmed | Pending | Completed |
 |:-----:|:---------:|:-------:|:---------:|
-| 4 | 3 | 0 | 0 |
+| 4 | 4 | 0 | 0 |
 
-**Last Updated:** December 5, 2025 by U01SC2TNYKU
+**Last Updated:** December 5, 2025 by lapedra
 
 ---
 
@@ -15,7 +15,7 @@
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|------------------------|
 | 72 | PT004 | recruitment_agency | 2025-12-18 12:00 | confirmed |  |
-| 71 | PT003 | recruitment_agency | 2025-12-17 12:00 | pending | Uses screen magnification and prefers to join from a laptop over mobile |
+| 71 | PT003 | recruitment_agency | 2025-12-17 12:00 | confirmed | Uses screen magnification and prefers to join from a laptop over mobile |
 | 70 | PT002 | internal_panel | 2025-12-16 10:00 | confirmed |  |
 | 69 | PT001 | internal_panel | 2025-12-15 10:00 | confirmed | Uses captioning in all video calls; prefers slower-paced walkthroughs |
 
@@ -28,7 +28,7 @@
 | recruitment_agency | 2 | 50% |
 | 🗂️ Internal VA Panel | 2 | 50% |
 
-Recruitment effectiveness: 75% conversion rate (3 confirmed of 4 recruited)
+Recruitment effectiveness: 100% conversion rate (4 confirmed of 4 recruited)
 
 ---
 
