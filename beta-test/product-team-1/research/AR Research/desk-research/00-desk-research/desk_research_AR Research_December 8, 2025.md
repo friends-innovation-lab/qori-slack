@@ -18,69 +18,90 @@
 
 | Document | Type | Source | Date | Key Focus |
 |----------|------|--------|------|-----------|
-| JMIR_Older_Veterans_Telehealth_Usability_2024.md.pdf | Report | Journal of Medical Internet Research (JMIR) | March 2024 | Usability Evaluation of Video Telehealth Platforms for Older Veterans |
+| VA Telehealth Modernization Strategy 2025 | Strategic Brief | VA Office of Connected Care, Digital Experience Team | October 2024 | Outlines the strategic direction for modernizing the Veteran telehealth experience |
+| VA OIG Telehealth Access Report 2024 | Report | Office of Healthcare Inspections | September 15, 2024 | Examines the VA's telehealth program implementation, access, quality of care, and Veteran satisfaction with video-based healthcare services |
 
 ---
 
 ## 🎯 Key Themes
 
-### [Usability Challenges for Older Veterans]
+### [Telehealth Access and Utilization]
 
 **What the documents show:** 
-The study reveals that older Veterans face significant usability challenges when using the VA Video Connect platform for telehealth, with task completion rates varying across different actions and overall System Usability Scale scores falling below acceptable thresholds.
+The VA is focusing on improving access to telehealth services for Veterans, with a specific emphasis on reducing technical barriers and increasing utilization rates.
 
 **Evidence from documents:**
-- "Current VVC interface presents significant usability barriers for older Veterans." - from "JMIR_Older_Veterans_Telehealth_Usability_2024.md.pdf"
-- "SUS scores below acceptable thresholds across all age subgroups." - from "JMIR_Older_Veterans_Telehealth_Usability_2024.md.pdf"
+- "Access Improvements: Telehealth appointments increased 47% year-over-year, with VA Video Connect (VVC) sessions growing from 2.1 million to 3.1 million annually." - from VA_OIG_Telehealth_Access_Report_2024.md.pdf
+- "Veterans in rural areas showed 62% higher telehealth utilization than urban counterparts, but also reported 23% more technical difficulties." - from VA_OIG_Telehealth_Access_Report_2024.md.pdf
 
 **Why it matters for AR Research:**
-Understanding the specific usability challenges faced by older Veterans is crucial for improving the design and functionality of augmented reality (AR) applications in healthcare to ensure accessibility and effectiveness for this demographic.
+Understanding the factors influencing access and utilization rates is crucial for designing effective AR solutions that cater to the needs of Veterans, especially those in rural areas.
 
-### [Desire for Human Support Options]
+### [User Experience Enhancement]
 
 **What the documents show:** 
-Older Veterans expressed a strong preference for human technical support over automated troubleshooting options, highlighting the need for accessible and reliable assistance during telehealth sessions.
+There is a strong focus on enhancing the user experience for both Veterans and providers by simplifying the joining process, addressing technical issues proactively, and improving accessibility features.
 
 **Evidence from documents:**
-- "Participants expressed strong preference for accessible human technical support over automated troubleshooting." - from "JMIR_Older_Veterans_Telehealth_Usability_2024.md.pdf"
-- "Provide prominent, one-click access to human technical support throughout the joining flow." - from "JMIR_Older_Veterans_Telehealth_Usability_2024.md.pdf"
+- "Goal: Reduce time-to-join from 4.5 minutes to under 1.5 minutes" - from VA_Telehealth_Modernization_Strategy_2025.md.pdf
+- "Automated device/connection test 24 hours before appointment" - from VA_Telehealth_Modernization_Strategy_2025.md.pdf
 
 **Why it matters for AR Research:**
-Incorporating human support options into AR applications can enhance user experience and confidence, especially for older individuals who may face technological challenges, ultimately improving the usability and adoption of AR technologies in healthcare settings.
+Improving the user experience through streamlined processes and enhanced accessibility can lead to higher engagement and satisfaction with AR technologies in telehealth settings.
 
-### [Cognitive Load and Context-Switching Challenges]
+### [Technical Support Optimization]
 
 **What the documents show:** 
-Participants reported experiencing cognitive burden due to the multi-step joining process across different interfaces, indicating the need for streamlined and simplified workflows in telehealth platforms for older Veterans.
+Efforts are being made to optimize technical support processes by providing the right level of support at the right time, including self-service options and quick escalation to human support when needed.
 
 **Evidence from documents:**
-- "The multi-step joining process across different interfaces created significant cognitive burden." - from "JMIR_Older_Veterans_Telehealth_Usability_2024.md.pdf"
-- "Reduce initial cognitive load by revealing troubleshooting options only when needed, rather than presenting all options upfront." - from "JMIR_Older_Veterans_Telehealth_Usability_2024.md.pdf"
+- "Contextual troubleshooting based on detected issues" - from VA_Telehealth_Modernization_Strategy_2025.md.pdf
+- "Time to human support when needed: <30 seconds" - from VA_Telehealth_Modernization_Strategy_2025.md.pdf
 
 **Why it matters for AR Research:**
-Addressing cognitive load and context-switching challenges in AR applications is essential to optimize user engagement and task performance, particularly for older adults who may struggle with complex interfaces, enhancing the overall usability and effectiveness of AR technology in healthcare settings.
+Efficient technical support mechanisms are essential for the successful implementation and adoption of AR technologies in telehealth, ensuring smooth user experiences and minimal disruptions during virtual appointments.
+
+### [Caregiver Involvement]
+
+**What the documents show:** 
+Caregiver involvement in telehealth sessions is significant, with a notable percentage of sessions requiring caregiver assistance, particularly for older Veterans.
+
+**Evidence from documents:**
+- "18% of telehealth sessions involved caregiver assistance, rising to 41% for Veterans over age 75." - from VA_OIG_Telehealth_Access_Report_2024.md.pdf
+
+**Why it matters for AR Research:**
+Considering the role of caregivers in telehealth interactions is crucial for designing AR solutions that support not only the Veterans themselves but also those who assist them during virtual healthcare sessions.
+
+### [Strategic Priorities for Modernization]
+
+**What the documents show:** 
+The VA has outlined strategic priorities for modernizing the telehealth experience, including initiatives to simplify the joining process, enhance technical readiness, prioritize accessibility, and optimize support escalation.
+
+**Evidence from documents:**
+- "Goal: Full WCAG 2.1 AA compliance with enhanced support for common Veteran accessibility needs" - from VA_Telehealth_Modernization_Strategy_2025.md.pdf
+- "One-click escalation to human support with full context transfer" - from VA_Telehealth_Modernization_Strategy_2025.md.pdf
+
+**Why it matters for AR Research:**
+Understanding the strategic priorities set by the VA provides insights into the specific areas of focus for AR research and development in the telehealth domain, guiding efforts towards aligning with the organization's modernization goals.
 
 ---
 
 ## ✅ Recommendations & Next Steps
 
 **Immediate Actions** (This Week)
-- [ ] Simplify joining flows to reduce confusion for older Veterans - Based on document finding: "Participants described receiving appointment information through multiple channels with inconsistent formatting and instructions."
-- [ ] Implement clear progress indicators and confirmation messages to reduce anxiety about making mistakes - Based on document finding: "Many participants exhibited 'click hesitancy,' pausing extensively before interactions due to fear of negative consequences."
+- [ ] Implement standardized pre-appointment communication protocols, including device testing links and step-by-step joining instructions, as recommended in the VA_OIG_Telehealth_Access_Report_2024.
+- [ ] Deploy automated pre-appointment device testing and expand technical support hours to include evenings/weekends, based on the finding of accessibility gaps in the VA_OIG_Telehealth_Access_Report_2024.
 
 **Short-Term Priorities** (This Month)
-- [ ] Provide prominent, one-click access to human technical support throughout the joining flow - Based on document finding: "Participants expressed strong preference for accessible human technical support over automated troubleshooting."
-- [ ] Automated device testing 24-48 hours before appointments with proactive outreach for identified issues - Based on document finding: "The 31% success rate for troubleshooting tasks is particularly concerning, as technical issues are common in real-world telehealth use."
-
-**Further Research Needed**
-- Explore the impact of repeated use on usability outcomes for older Veterans.
-- Investigate the effectiveness of integrating telehealth platforms with familiar VA digital touchpoints for improved usability.
+- [ ] Improve VVC accessibility for screen reader users and implement caregiver-specific access features, as recommended in the VA_OIG_Telehealth_Access_Report_2024.
+- [ ] Develop a mobile-first onboarding experience and create simplified joining instructions in multiple formats to enhance the telehealth experience, aligning with the findings of device preference patterns in the VA_OIG_Telehealth_Access_Report_2024.
 
 ---
 
 ## 📖 Sources
 
-**Reference List:**
+1. **VA_Telehealth_Modernization_Strategy_2025.md.pdf** — VA Office of Connected Care, Digital Experience Team, October 2024
+   - Key contribution: Detailed strategic direction for modernizing the Veteran telehealth experience, focusing on appointment joining and onboarding flows.
 
-1. **Usability Evaluation of Video Telehealth Platforms for Older Veterans: A Mixed-Methods Study** — Sarah Chen, PhD, MPH, Michael Rodriguez, MD, Patricia Williams, RN, DNP, Date not specified
-   - Key contribution: Study evaluating the usability of VA Video Connect among older Veterans and providing design recommendations for improvement in telehealth participation.
+2. **VA_OIG_Telehealth_Access_Report_2024.md.pdf** — Office of Healthcare Inspections, September 15, 2024
+   - Key contribution: Examination of VA's telehealth program implementation, focusing on access, quality of care, and Veteran satisfaction with video-based healthcare services.
