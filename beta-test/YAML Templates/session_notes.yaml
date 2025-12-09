@@ -229,8 +229,8 @@ filename:
 
 # Output configuration
 output_options:
-  filename: "session-notes_{{slack_user_id}}_{{current_date}}_{{slack_ts}}.md"
-  path: "03-fieldwork/session-notes/"
+  filename: "session-notes_{{observer_name}}_{{current_date}}_{{slack_ts}}.md"
+  path: "03-fieldwork/session-notes/{{session_id}}/"
   
   delivery:
     github:
