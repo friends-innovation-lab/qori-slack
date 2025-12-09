@@ -1,8 +1,8 @@
-# Session Notes: 
+# Session Notes: PT001
 
-📝 **Observer:**   
-📅 **Session Date:** 2025-11-17  
-👨‍🔬 **Researcher:** Unknown Researcher  
+📝 **Observer:** naeemabdulrehman08  
+📅 **Session Date:** 2025-11-10  
+👨‍🔬 **Researcher:** Abdul Rehman  
 ⏰ **Submitted:** December 9, 2025
 
 ---
@@ -15,10 +15,10 @@ hello
 
 | Attribute | Value |
 |-----------|-------|
-| **Session ID** |  |
-| **Observer** |  (U09PAF33A8H) |
+| **Session ID** | PT001 |
+| **Observer** | naeemabdulrehman08 (U09PAF33A8H) |
 | **Submission Date** | December 9, 2025 |
-| **GitHub Path** | `03-fieldwork/session-notes//` |
+| **GitHub Path** | `03-fieldwork/session-notes/PT001/` |
 | **Submission Method** | Slack Modal |
 
 ---
