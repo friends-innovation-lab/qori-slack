@@ -1,12 +1,12 @@
 id: analyze_notes
 name: analyze_session_notes
 label: 🔍 Analyze Notes
-version: v1.0
+version: v1.1
 description: Analyze session notes and transcript to generate comprehensive session summary with pain points, opportunities, insights, and recommendations
 
 author: Research Ops Team
 created: 2025-10-25
-last_updated: 2025-10-25
+last_updated: 2025-12-09
 
 llm_config:
   model: "claude-sonnet-4"
@@ -125,6 +125,11 @@ ai_generation_tasks:
     prompt: |
       You are analyzing a UX research session to create a comprehensive session summary.
       
+      **SESSION METADATA:**
+      - Participant ID: {{participant_id}}
+      - Study Name: {{study_name}}
+      - Session Date: {{session_date}}
+      
       **PRIMARY SOURCE - Coded Transcript:**
       {{coded_transcript_content}}
       
@@ -132,7 +137,7 @@ ai_generation_tasks:
       {{notes_content}}
       
       **Your Task:**
-      Create a session summary by extracting and synthesizing findings from the coded transcript and observer notes.
+      Create a complete session summary document by extracting and synthesizing findings from the coded transcript and observer notes.
       
       CRITICAL INSTRUCTIONS:
       - Use the coded transcript as the PRIMARY source - it already has identified pain points, opportunities, and insights
@@ -140,7 +145,14 @@ ai_generation_tasks:
       - Synthesize both sources into cohesive findings
       - Prioritize by severity/impact already indicated in coded transcript
       
-      **OUTPUT STRUCTURE:**
+      **OUTPUT THE COMPLETE DOCUMENT WITH THIS EXACT STRUCTURE:**
+      
+      # 📋 Session Summary - {{participant_id}}
+      
+      **Study:** {{study_name}}  
+      **Date:** {{session_date}}
+      
+      ---
       
       ## 🔴 Top Pain Points
       Extract the TOP 3-5 most critical issues the participant experienced.
@@ -231,19 +243,14 @@ ai_generation_tasks:
       - Keep descriptions concise (1-2 sentences)
       - Reference specific moments from session
       - Maintain professional, objective tone
+      - Include the document header with participant_id, study_name, and session_date
       
-      Return ONLY the structured sections above. No preamble or additional commentary.
-    output_variable: "session_analysis"
+      Return the COMPLETE document starting with the header. No preamble or additional commentary.
+    output_variable: "session_summary_output"
 
+# Output template now directly uses the AI-generated complete document
 output_template: |
-  # 📋 Session Summary - {{participant_id}}
-  
-  **Study:** {{study_name}}  
-  **Date:** {{session_date}}
-  
-  ---
-  
-  {{session_analysis}}
+  {{session_summary_output}}
 
 output_options:
   filename: "{{participant_id}}-session-summary-{{session_date}}.md"
@@ -339,3 +346,9 @@ notes: |
   - Two-step modal: Session → Notes/Transcript
   - Dynamic preview shows what will be analyzed
   - Output matches session summary format for consistency
+  
+  v1.1 Changes:
+  - AI now generates complete document including header
+  - output_template is now a direct pass-through of AI output
+  - Renamed output_variable to session_summary_output for clarity
+  - Added session metadata to AI prompt context
