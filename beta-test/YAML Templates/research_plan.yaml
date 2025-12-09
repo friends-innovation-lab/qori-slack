@@ -295,7 +295,7 @@ ai_generation_tasks:
       Create timeline DATA ROWS ONLY for {{timeline_preference}} research.
       
       ===== CRITICAL DATE INSTRUCTION =====
-      TODAY'S DATE IS: {{current_date}}
+      TODAY'S DATE IS: {{timeline_date}}
       USE THIS EXACT DATE AS YOUR STARTING POINT.
       DO NOT USE ANY OTHER DATE.
       =====================================
