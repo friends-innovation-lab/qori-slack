@@ -250,7 +250,7 @@ ai_generation_tasks:
 
 # Output template now directly uses the AI-generated complete document
 output_template: |
-  {{session_summary_output}}
+  {{ai_generated.analyze_and_extract}}
 
 output_options:
   filename: "{{participant_id}}-session-summary-{{session_date}}.md"
