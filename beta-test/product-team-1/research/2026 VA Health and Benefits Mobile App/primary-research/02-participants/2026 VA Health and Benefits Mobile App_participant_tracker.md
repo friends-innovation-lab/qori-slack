@@ -4,7 +4,7 @@
 
 | Total | Confirmed | Pending | Completed |
 |:-----:|:---------:|:-------:|:---------:|
-| 1 | 1 | 0 | 0 |
+| 2 | 2 | 0 | 0 |
 
 **Last Updated:** January 5, 2026 by U01SC2TNYKU
 
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|------------------------|
+| 2 | PT002 | email_outreach | 2026-01-13 12:00 | confirmed | Android user; works irregular hours so flexible timing needed |
 | 1 | PT001 | email_outreach | 2026-01-12 10:00 | confirmed | Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows |
 
 ---
@@ -22,9 +23,9 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 1 | 100% |
+| 📧 Email Outreach | 2 | 100% |
 
-Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
+Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 ---
 
@@ -55,25 +56,28 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 
 | Category | Count | Percentage |
 |----------|-------|------------|
-| black | 1 | 100% |
+| Asian | 1 | 50% |
+| black | 1 | 50% |
 
 **Age Range:**
 
 | Range | Count | Percentage |
 |-------|-------|------------|
-| 35-44 | 1 | 100% |
+| 55-64 | 1 | 50% |
+| 35-44 | 1 | 50% |
 
 **Education Level:**
 
 | Level | Count | Percentage |
 |-------|-------|------------|
-| bachelor | 1 | 100% |
+| master | 1 | 50% |
+| bachelor | 1 | 50% |
 
 **Location Type:**
 
 | Type | Count | Percentage |
 |------|-------|------------|
-| Suburban | 1 | 100% |
+| Suburban | 2 | 100% |
 
 </details>
 
@@ -81,6 +85,7 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 
 ## ♿ Accessibility & Accommodations
 
+- **2:** Android user; works irregular hours so flexible timing needed
 - **1:** Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows
 
 **Preparation Checklist:**
@@ -95,7 +100,7 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 ## 📌 Next Steps
 
 > [!NOTE]
-> Continue recruiting to reach minimum of 3 participants (2 more needed)
+> Continue recruiting to reach minimum of 3 participants (1 more needed)
 
 ---
 
