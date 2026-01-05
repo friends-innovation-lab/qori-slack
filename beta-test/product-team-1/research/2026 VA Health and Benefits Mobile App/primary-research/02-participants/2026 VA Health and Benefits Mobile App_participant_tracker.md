@@ -36,12 +36,13 @@ Recruitment effectiveness: 100% conversion rate (3 confirmed of 3 recruited)
 
 | Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
 |---------|-----------|-----------|----------|------------------|-----------------|
+| PT002 | 2026-01-13 12:00 | lapedra (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
 | PT003 | 2026-01-14 13:00 | lapedra (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
 
 **Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker | 1 | PT003 |
+| 📝 Note-taker | 2 | PT002, PT003 |
 | 👁️ Silent Observer | 0 | - |
 | 📊 PM Observer | 0 | - |
 | 🏛️ Stakeholder | 0 | - |
