@@ -10,6 +10,54 @@ author: Qori R&D
 created: 2025-06-26
 last_updated: 2026-01-07
 
+# ============================================================
+# BACKEND DATA REQUIREMENTS (for Tanzeel/Abdul)
+# ============================================================
+# 
+# This workflow requires actual file contents to be loaded into variables.
+# Without this data, the AI will output "Insufficient data" (correct behavior).
+#
+# REQUIRED DATA FLOW:
+#
+# 1. Session Summaries → {{input_text}} or {{research_readout_data}}
+#    - Location: 03-fieldwork/session-summaries/
+#    - Files: *session_summary*.md (all of them, concatenated)
+#    - Example: PT001_session_summary.md + PT002_session_summary.md + PT003_session_summary.md
+#
+# 2. Research Plan → included in {{input_text}} or {{research_readout_data}}
+#    - Location: 00-planning/research_plan.md
+#    - Contains: methodology, goals, research questions
+#
+# OPTIONAL (enhances quality):
+# 3. Affinity Map → append to {{input_text}}
+#    - Location: 04-analysis/affinity-mapping/*.md
+#
+# BACKEND PSEUDOCODE:
+#
+#   combined_content = ""
+#   
+#   # Load research plan
+#   research_plan = await github_api.get_file_contents("00-planning/research_plan.md")
+#   combined_content += research_plan
+#   
+#   # Load all session summaries
+#   session_files = await github_api.list_files("03-fieldwork/session-summaries/")
+#   for file in session_files:
+#       if "session_summary" in file.name:
+#           content = await github_api.get_file_contents(file.path)
+#           combined_content += "\n\n---\n\n" + content
+#   
+#   # Optional: Load affinity map if exists
+#   affinity_files = await github_api.list_files("04-analysis/affinity-mapping/")
+#   for file in affinity_files:
+#       content = await github_api.get_file_contents(file.path)
+#       combined_content += "\n\n---\n\n" + content
+#   
+#   # Pass to AI
+#   variables["input_text"] = combined_content
+#
+# ============================================================
+
 input_type: text
 input_processing: summarize_if_long
 
