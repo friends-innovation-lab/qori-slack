@@ -3,6 +3,7 @@ label: "📝 Upload & Code Session Transcript"
 description: Upload transcripts with automatic PII redaction and AI-powered research coding
 input_type: tabbed_upload
 input_processing: ai_enhanced_coding
+version: v2.1
 
 input_tabs:
   file_upload:
@@ -139,13 +140,15 @@ ai_coding:
       impact_levels: ["High Impact", "Medium Impact", "Quick Win"]
       extract_quotes: true
       priority: "high"
+      minimum_required: 2
       
     insights:
       icon: "💡"
       description: "Key behaviors, patterns, revelations, mental models"
-      insight_types: ["User Behavior", "Mental Model", "Workflow", "Preference", "Accessibility Pattern", "Benchmarking"]
+      insight_types: ["User Behavior", "Mental Model", "Workflow", "Preference", "Accessibility Pattern", "Benchmarking", "Abandonment Pattern", "Workaround"]
       extract_quotes: true
       priority: "high"
+      minimum_required: 2
       
     positive_feedback:
       icon: "🟢"
@@ -163,12 +166,14 @@ ai_coding:
       description: "Interface problems, confusion, interaction failures"
       severity_levels: ["Blocker", "Major", "Minor"]
       extract_quotes: true
+      cross_code_from_pain_points: true
       
     emotions:
       icon: "😊"
       description: "Emotional reactions and sentiment"
-      emotion_types: ["Frustrated", "Confused", "Delighted", "Relieved", "Anxious", "Confident", "Satisfied"]
+      emotion_types: ["Frustrated", "Confused", "Delighted", "Relieved", "Anxious", "Confident", "Satisfied", "Resigned"]
       extract_quotes: true
+      minimum_required: 2
 
   coding_confidence:
     min_confidence: 0.75
@@ -203,7 +208,7 @@ ai_generation_tasks:
       - Follow all redaction, normalization, and formatting rules below
       - Return ONLY the final Markdown (no code fences, no backticks, no JSON, no prose outside the Markdown)
 
-      You are a meticulous research-ops assistant. Read the transcript and (optional) notes, redact PII, normalize speakers, extract findings, and render a complete Markdown report in the exact section order specified.
+      You are a meticulous research-ops assistant. Read the transcript and (optional) notes, redact PII, normalize speakers, extract findings, and render a complete Markdown report.
 
       Context Hints
       - Filename: {{filename}}
@@ -217,11 +222,95 @@ ai_generation_tasks:
       Transcript
       {{input_text}}
 
-      ---
-      PII REDACTION RULES (apply before coding and in the final transcript)
+      ============================================================
+      ⚠️ MANDATORY ENFORCEMENT RULES - READ FIRST
+      ============================================================
+
+      These rules are NON-NEGOTIABLE. Outputs that violate these rules are INVALID.
+
+      RULE 1 - PARTICIPANT CONTEXT IS MANDATORY
+      You MUST extract participant context. Look for:
+      - How often they use the app (frequency mentioned)
+      - What tasks they typically do
+      - Any disabilities, accessibility needs, or assistive tech
+      - Age, military service, or other background mentioned
+      - Experience level with technology
+      - Comparison points they reference
+      
+      If the transcript mentions ANY of these, include them. Only output "Limited participant context" if the transcript truly contains ZERO context clues.
+
+      RULE 2 - USABILITY ISSUES MUST CROSS-CODE FROM PAIN POINTS
+      Every pain point that involves a UI element MUST ALSO appear in Usability Issues.
+      
+      Cross-code when pain point involves:
+      - Buttons, links, or controls
+      - Navigation or menus
+      - Forms or input fields
+      - Labels or text
+      - Layout or positioning
+      - Loading or performance
+      - Error messages
+      - Search functionality
+      
+      The usability_issues_count should typically be 50-80% of pain_points_count.
+      If usability_issues_count is 0 but pain_points_count is greater than 0, your output is INVALID.
+
+      RULE 3 - EMOTIONAL JOURNEY IS MANDATORY
+      Every research session has emotional moments. You MUST capture at least 2.
+      
+      Look for these signals:
+      - Frustration: "frustrating" / "annoying" / "I give up" / "I'd probably just call"
+      - Confusion: "confusing" / "I don't understand" / "what does this mean" / questions
+      - Satisfaction: "that works" / "makes sense" / "I like" / "good"
+      - Relief: "found it" / "there it is" / "finally"
+      - Resignation: "I'd just call instead" / "give up" / "not worth it"
+      
+      If emotions_count is 0 for a session with any struggle or success, your output is INVALID.
+
+      RULE 4 - OPPORTUNITIES MINIMUM = 2
+      Every session with pain points has opportunities. Infer them:
+      - Pain point about confusing labels → Opportunity: Clarify labels
+      - Pain point about hidden button → Opportunity: Improve button visibility
+      - Pain point about slow loading → Opportunity: Improve performance
+      - Positive feedback about one area → Opportunity: Apply pattern elsewhere
+      - User says "I'd call instead" → Opportunity: Reduce need to call
+      
+      If opportunities_count is 0 but pain_points_count is greater than 2, your output is INVALID.
+
+      RULE 5 - INSIGHTS MINIMUM = 2
+      Every session reveals user behavior. Extract insights about:
+      - HOW user navigates (trial-and-error, systematic, etc.)
+      - WHAT user expects (mental models)
+      - WHY user does things a certain way
+      - Workarounds user employs
+      - What causes user to abandon tasks
+      - What user compares the app to
+      
+      If insights_count is 0 but total session length is over 3 minutes, your output is INVALID.
+
+      RULE 6 - NO DUPLICATE PAIN POINTS
+      Each pain point must be UNIQUE. Do not code the same issue twice.
+      - If two quotes illustrate the same issue, combine into ONE pain point with the best quote
+      - Use different titles for different issues
+      - If you find yourself writing similar descriptions, MERGE them
+
+      RULE 7 - SEVERITY MUST BE JUSTIFIED
+      - Critical: ONLY for task blockers or accessibility violations that prevent completion
+      - High: Significant frustration OR multiple failed attempts
+      - Medium: Moderate confusion or inefficiency
+      - Low: Minor annoyance that user overcomes easily
+      
+      Do NOT assign Critical to issues the user eventually overcomes.
+      Do NOT assign Low to issues that cause explicit frustration statements.
+
+      ============================================================
+      PII REDACTION RULES
+      ============================================================
+      
+      Apply before coding and in final transcript:
       - Redact personal names, email addresses, phone numbers, street addresses, company names, veteran IDs, case numbers, SSNs
       - Replace:
-        - Names with auto_detected_participant_id (an ID you derive per rules below)
+        - Names with auto_detected_participant_id
         - Emails with [EMAIL]
         - Phones with [PHONE]
         - Addresses with [ADDRESS]
@@ -229,267 +318,328 @@ ai_generation_tasks:
         - Anything else sensitive with [REDACTED]
       - Redact inside quotes and speaker labels; preserve timestamps if present
 
+      ============================================================
       SPEAKER NORMALIZATION
+      ============================================================
+      
       - Map Interviewer/Moderator/Researcher/Speaker 1/S1 to Speaker 1:
       - Map Participant/User/Respondent/Interviewee/Speaker 2/S2 to Speaker 2:
-      - If a real name appears as a speaker label (e.g., John:), convert to the appropriate Speaker number and ensure the name is redacted
-      - Preserve existing timestamps (e.g., 00:12:31.450). Do not invent timestamps
+      - If a real name appears as speaker label, convert to Speaker number and redact name
+      - Preserve existing timestamps. Do not invent timestamps
       - Keep fillers; structure as paragraphs per speaker
 
-      METADATA DETECTION (use hints, then fallbacks)
-      - auto_detected_participant_id: detect from filename/folder/content (examples: pt001, participant_1, p1, user_01). Fallback: participant_YYYYMMDDHHmmss (UTC)
-      - auto_detected_session_id: detect session_1/s1/interview_1; fallback: session_YYYYMMDD
-      - auto_detected_study_name: detect from folder/content (examples: housing_study, va_research); fallback: research_study
-      - auto_detected_date: prefer date in transcript/notes, else filename date, else upload date; format YYYY-MM-DD
-      - transcript_source: use provided value if present; else infer one of: Zoom Auto-Generated, Otter.ai, Teams Auto-Generated, Rev.com, Manual Notes, Other
+      ============================================================
+      METADATA DETECTION
+      ============================================================
+      
+      Use hints, then fallbacks:
+      - auto_detected_participant_id: detect from filename/folder/content. Fallback: participant_YYYYMMDDHHmmss
+      - auto_detected_session_id: detect session_1/s1/interview_1. Fallback: session_YYYYMMDD
+      - auto_detected_study_name: detect from folder/content. Fallback: research_study
+      - auto_detected_date: prefer date in transcript, else filename date, else upload date. Format: YYYY-MM-DD
+      - transcript_source: use provided value or infer from format
 
-      ---
+      ============================================================
       AI CODING RULES
+      ============================================================
+      
       - Confidence range: 0 to 1
       - Include items with confidence >= 0.75
-      - If 0.60-0.74, include them but they count toward Flagged for Review
+      - If 0.60-0.74, include but flag for review
       - If less than 0.60, exclude
-      - Each item must include a verbatim supporting_quote and a timestamp if available; if the transcript has no timestamps anywhere, set timestamp to an empty string
+      - Each item must include verbatim supporting_quote and timestamp if available
 
       ============================================================
-      SEVERITY AND IMPACT ASSIGNMENT RULES
+      🔴 PAIN POINTS
       ============================================================
 
-      CRITICAL RULE FOR ACCESSIBILITY ISSUES:
-      If the participant uses assistive technology (screen reader, VoiceOver, TalkBack, JAWS, etc.), apply these severity overrides:
+      Things that are BROKEN, FRUSTRATING, or INEFFICIENT.
 
-      CRITICAL severity for:
-      - Unlabeled buttons, images, or controls (screen reader cannot identify function)
-      - Missing ARIA labels or roles
-      - Content not announced by screen reader
-      - Focus management failures
-      - Any issue that BLOCKS a screen reader user from completing a task
+      SIGNAL PHRASES:
+      - "frustrating" / "confusing" / "annoying" / "not helpful"
+      - "I can't find" / "I don't know" / "I don't understand"
+      - "That's confusing" / "Those are two separate things?"
+      - "I'd probably give up" / "I'd just call instead"
+      - Trial-and-error behavior / Multiple attempts at same task
 
-      HIGH severity for:
-      - Hidden or hard-to-find controls for screen reader users
-      - Non-standard patterns requiring exhaustive search
-      - Poor reading order or confusing navigation
-      - Any issue causing significant extra effort for assistive tech users
+      SEVERITY ASSIGNMENT:
+      - Critical: Task cannot be completed / Accessibility blocker
+      - High: Explicit frustration statement OR multiple failed attempts OR "I'd give up"
+      - Medium: Confusion requiring clarification OR inefficient workflow
+      - Low: Minor annoyance user overcomes without frustration
 
-      GENERAL SEVERITY GUIDE:
-      - Critical: Blocks task completion or represents accessibility violation for AT users
-      - High: Significant frustration, multiple attempts needed, or major confusion
-      - Medium: Notable inefficiency or moderate confusion
-      - Low: Minor annoyance, easily overcome
+      DEDUPLICATION:
+      Before finalizing pain points, check: Are any two pain points about the SAME underlying issue?
+      If yes, MERGE them. Keep the best quote. Use ONE entry.
 
       ============================================================
-      🔴 PAIN POINTS - What They Are
+      🟡 OPPORTUNITIES
       ============================================================
 
-      Things that are BROKEN, FRUSTRATING, or INEFFICIENT:
-      - Broken functionality or bugs
-      - Accessibility violations (especially critical for AT users)
-      - Confusing interfaces
-      - Inefficient workflows caused by poor design
-      - Missing information that should be present
-      - Guessing or trial-and-error required
+      Improvements that would make experience better. MINIMUM: 2 per session.
 
-      LOOK FOR THESE SIGNALS:
-      - Explicit frustration: "That's not helpful" / "I shouldn't have to..."
-      - Confusion: "I don't know what this does" / "There's no way to tell..."
-      - Failure: "I can't find..." / "It doesn't work..."
-      - Workarounds: "I have to guess..." / "Let me try..."
+      MANDATORY INFERENCE: For each pain point, ask: "What would fix this?"
+      That fix is an opportunity.
 
-      ============================================================
-      🟡 OPPORTUNITIES - What They Are
-      ============================================================
+      TYPES OF OPPORTUNITIES:
+      1. Direct fixes: User explicitly says what should change
+      2. Inferred fixes: Pain point implies needed improvement
+      3. Pattern replication: Something works well, apply elsewhere
+      4. Abandonment prevention: User says they'd give up or call instead
 
-      Opportunities are improvements that would make the experience better. They can be:
-      1. NEW capabilities the user wishes existed
-      2. FIXES that the user explicitly requests or suggests
-      3. PATTERNS from successful areas that could be applied elsewhere
-      4. STANDARDS the user references from other experiences
+      SIGNAL PHRASES:
+      - "I wish" / "There should be" / "It would help if"
+      - "I'd expect" / "I thought it would"
+      - "That's confusing" → Opportunity: Clarify
+      - "I can't find" → Opportunity: Improve discoverability
+      - "I'd probably call" → Opportunity: Reduce need for phone support
+      - "This part works well" → Opportunity: Apply this pattern elsewhere
 
-      THE OPPORTUNITY TEST (must pass at least 1):
-      - Does the user express desire for something (wish, want, should, need)?
-      - Does the user suggest a solution or improvement?
-      - Does the user reference a better experience elsewhere?
-      - Does a successful part of the experience suggest a pattern to replicate?
-
-      SIGNAL PHRASES for opportunities:
-      - "I wish..." / "There should be..." / "It would be great if..."
-      - "Every [thing] needs..." / "[Thing] should have..."
-      - "A well-designed app would..." / "Other apps let me..."
-      - "I have to go to [other tool] to..." (implies missing capability)
-      - "This part works well because..." (pattern to replicate)
-
-      VALID OPPORTUNITY EXAMPLES from transcripts like this:
-      - User says "Every button needs a proper label" = Opportunity for accessibility label remediation
-      - User struggles to find Schedule button = Opportunity to add visible scheduling action
-      - User praises one section structure = Opportunity to apply that pattern elsewhere
-      - User compares unfavorably to commercial apps = Opportunity to meet industry standards
-
-      IMPORTANT: Do NOT skip opportunities just because they involve "fixing" something. If the user articulates what they WANT or NEED, that's an opportunity.
+      IMPACT LEVELS:
+      - High Impact: Affects core task completion or large user segment
+      - Medium Impact: Affects efficiency or secondary tasks
+      - Quick Win: Easy fix, clear benefit, low effort
 
       ============================================================
-      💡 INSIGHTS - What They Are
+      💡 KEY INSIGHTS
       ============================================================
 
-      Insights reveal HOW users think, work, and approach tasks. They help teams understand user behavior beyond just problems.
+      Reveal HOW users think and work. MINIMUM: 2 per session.
 
-      THE INSIGHT TEST (must pass at least 1):
-      - Does this describe HOW or WHY the user does something?
-      - Does this reveal a pattern that would apply to similar users?
-      - Does this show user expectations, mental models, or strategies?
-      - Does this explain user context that frames their feedback?
-
-      INSIGHT TYPES TO LOOK FOR:
-
+      INSIGHT TYPES:
+      
       Mental Model: How user expects things to work
-      - User correctly/incorrectly predicts where to find something
-      - User applies patterns from other experiences
-      - User has assumptions about how system should behave
+      - "I thought it would be under..." / "I expected..."
+      - Correct or incorrect predictions about navigation
+      
+      Behavior Pattern: How user actually navigates
+      - Trial-and-error exploration
+      - Systematic/methodical approach
+      - Giving up and trying alternative channels
+      
+      Abandonment Pattern: When and why users give up
+      - "I'd probably give up and call"
+      - "By the time this loads, I could have talked to a person"
+      - Switching to phone, in-person, or other channels
+      
+      Workaround: How user compensates for issues
+      - Using external tools
+      - Calling instead of using app
+      - Memorizing complex navigation paths
+      
+      Benchmarking: What user compares to
+      - Other apps or websites
+      - Previous versions
+      - Phone or in-person experience
 
-      Behavior Pattern: How user actually navigates or works
-      - Sequential/systematic navigation approach
-      - Trial-and-error vs. methodical exploration
-      - Shortcuts or efficiency strategies
-
-      User Context: Background that frames their perspective
-      - Assistive technology expertise level
-      - Frequency of use
-      - Comparison points (other apps, previous versions)
-
-      Accessibility Pattern: How AT users specifically interact
-      - Screen reader navigation strategies
-      - How they explore unfamiliar interfaces
-      - What they rely on (labels, headings, landmarks)
-
-      Benchmarking: What users compare against
-      - Commercial app expectations
-      - Industry standards
-      - Previous experiences
-
-      SIGNAL PHRASES for insights:
-      - "I always..." / "I typically..." / "My process is..."
-      - "I'm guessing that would be under..." (mental model)
-      - "Let me try..." / "Let me check..." (exploration strategy)
-      - "That's how I normally..." / "I use [tool] because..."
-      - "It's better/worse than..." (benchmarking)
-
-      VALID INSIGHT EXAMPLES from transcripts like this:
-      - User predicts menu structure correctly = Mental Model insight about IA expectations
-      - User navigates systematically through all elements = Behavior Pattern for screen reader users
-      - User compares to commercial apps = Benchmarking insight about user standards
-      - User demonstrates VoiceOver expertise = User Context about AT proficiency
-
-      IMPORTANT: Insights should NOT just restate pain points. "User faces difficulty" is a pain point. "User explores interfaces exhaustively due to screen reader navigation" is an insight.
+      DO NOT just restate pain points. Insights are about USER BEHAVIOR, not interface problems.
+      
+      WRONG: "User faces difficulty with navigation" (this is a pain point)
+      RIGHT: "User employs trial-and-error navigation, testing multiple paths when labels are unclear" (behavior pattern)
 
       ============================================================
-      😊 EMOTIONAL JOURNEY - What to Capture
+      🟢 POSITIVE FEEDBACK
       ============================================================
 
-      Capture emotional shifts throughout the session. Look for:
-
-      FRUSTRATION signals:
-      - Tone words: "frustrating" / "annoying" / "not helpful"
-      - Exasperation: "I shouldn't have to..." / "That's ridiculous..."
-      - Repeated attempts: Multiple tries at same task
-
-      CONFUSION signals:
-      - Questions: "What does this do?" / "Where is...?"
-      - Hedging: "I'm not sure..." / "Maybe..."
-      - Pauses: [Long pause] / "Let me think..."
-
-      SATISFACTION/RELIEF signals:
-      - Positive statements: "That works well" / "Makes sense"
-      - Completion: "Found it!" / "There it is"
-      - Praise: "I like..." / "This is good"
-
-      CONFIDENCE signals:
-      - Certainty: "I know..." / "Obviously..."
-      - Quick navigation: Moving through sections easily
-      - Teaching tone: Explaining how things should work
-
-      Include timestamp and context for each emotional moment.
+      What works well. Include ALL positive comments, even brief ones:
+      - "That's simple" / "straightforward" / "makes sense"
+      - "I like" / "that works" / "good"
+      - "Easy to find" / "clear"
+      - Quick task completion without confusion
 
       ============================================================
-      ✨ FEATURE REQUESTS - What to Capture
+      ✨ FEATURE REQUESTS
       ============================================================
 
       Explicit requests for new or changed functionality:
-      - "There should be..." / "I need..." / "You should add..."
-      - "Every [thing] needs to..." (prescriptive statement)
-      - Direct suggestions for improvement
+      - "There should be" / "I need" / "You should add"
+      - "It would help if" / "I wish there was"
+      - Direct suggestions
 
-      Priority levels:
-      - Must Have: Blocks core functionality or accessibility
+      PRIORITY:
+      - Must Have: Blocks core functionality
       - Should Have: Would significantly improve experience
-      - Nice to Have: Would be appreciated but not essential
+      - Nice to Have: Appreciated but not essential
 
       ============================================================
-      CODING PROCESS
+      ⚠️ USABILITY ISSUES
       ============================================================
 
-      1. Read the ENTIRE transcript carefully
-      2. Note participant context (assistive tech use, experience level, etc.)
-      3. Identify ALL pain points - apply accessibility severity rules if AT user
-      4. For each pain point involving UI elements, ALSO code as usability issue
-      5. Look for opportunities using signal phrases AND user suggestions
-      6. Extract insights about HOW and WHY user behaves (not just problems)
-      7. Track emotional journey throughout session
-      8. Note explicit feature requests
-      9. Capture ALL positive feedback, even brief mentions
-      10. Ensure each finding has a direct supporting quote
+      MANDATORY: Cross-code from pain points involving UI elements.
 
-      DIVERSITY CHECK before finalizing:
-      - Do opportunities cover DIFFERENT aspects than pain points (not just restating)?
-      - Do insights reveal user BEHAVIOR/THINKING (not just problems)?
-      - Is emotional journey captured across the session (not just one moment)?
+      Every pain point about these MUST also be a usability issue:
+      - Buttons, links, controls
+      - Navigation, menus
+      - Forms, inputs
+      - Labels, text
+      - Layout, positioning
+      - Loading, performance
+      - Error messages
+      - Search
+
+      SEVERITY:
+      - Blocker: Cannot complete task
+      - Major: Significant difficulty or confusion
+      - Minor: Slight friction, user overcomes
+
+      ============================================================
+      😊 EMOTIONAL JOURNEY
+      ============================================================
+
+      MANDATORY: Capture at least 2 emotional moments per session.
+
+      EMOTION TYPES AND SIGNALS:
+
+      Frustrated:
+      - "frustrating" / "annoying" / "ridiculous"
+      - "I shouldn't have to" / "Why do I have to"
+      - Audible sighs, exasperation
+      - Multiple failed attempts
+
+      Confused:
+      - "I don't understand" / "What does this mean"
+      - "Are these different things?" / "That's confusing"
+      - Questions about functionality
+      - Hesitation, uncertainty
+
+      Resigned:
+      - "I'd probably give up" / "I'd just call instead"
+      - "Not worth the effort" / "Forget it"
+      - Abandonment statements
+
+      Satisfied:
+      - "That works" / "Makes sense" / "Good"
+      - Quick completion
+      - Positive tone
+
+      Relieved:
+      - "Found it" / "There it is" / "Finally"
+      - Completion after struggle
+
+      Confident:
+      - Certainty in navigation
+      - Quick decisions
+      - "I know where this is"
+
+      ============================================================
+      CODING PROCESS - FOLLOW THIS ORDER
+      ============================================================
+
+      STEP 1: Read entire transcript
+      
+      STEP 2: Extract Participant Context
+      - Note ANY background mentioned (frequency, tasks, accessibility needs, experience)
+      - Only say "Limited" if truly NOTHING is mentioned
+      
+      STEP 3: Identify Pain Points
+      - Find all frustrations, confusions, failures
+      - Assign severity based on rules
+      - DEDUPLICATE: Merge similar issues into one entry
+      
+      STEP 4: Cross-code Usability Issues
+      - For EACH pain point involving UI, create matching usability issue
+      - Use same quote, adjust severity if needed
+      
+      STEP 5: Extract Emotional Journey
+      - Find at least 2 emotional moments
+      - Include timestamp and context
+      
+      STEP 6: Infer Opportunities (minimum 2)
+      - For each pain point, what would fix it?
+      - What patterns from positive areas could apply elsewhere?
+      
+      STEP 7: Extract Insights (minimum 2)
+      - How does user navigate? (behavior pattern)
+      - What does user expect? (mental model)
+      - When does user give up? (abandonment pattern)
+      - What does user compare to? (benchmarking)
+      
+      STEP 8: Capture Positive Feedback
+      - Include ALL positive comments
+      
+      STEP 9: Note Feature Requests
+      - Explicit suggestions for new functionality
+      
+      STEP 10: Final Validation
+      - Verify no duplicate pain points
+      - Verify usability_issues_count > 0 if pain_points_count > 0
+      - Verify emotions_count >= 2
+      - Verify opportunities_count >= 2
+      - Verify insights_count >= 2
 
       ============================================================
       BUCKETS AND REQUIRED FIELDS
       ============================================================
 
       pain_points:
-        - severity: one of Critical, High, Medium, Low (use accessibility rules for AT users)
-        - title, description, supporting_quote, timestamp, confidence
+        - severity: Critical, High, Medium, or Low
+        - title: unique descriptive title (no duplicates)
+        - description
+        - supporting_quote: verbatim from transcript
+        - timestamp
+        - confidence
 
       opportunities:
-        - impact_level: one of High Impact, Medium Impact, Quick Win
-        - title, description, supporting_quote, timestamp, confidence
+        - impact_level: High Impact, Medium Impact, or Quick Win
+        - title
+        - description: include what pain point or positive this addresses
+        - supporting_quote
+        - timestamp
+        - confidence
 
       insights:
-        - insight_type: one of User Behavior, Mental Model, Workflow, Preference, Accessibility Pattern, Benchmarking
-        - title, description, supporting_quote, timestamp, confidence
+        - insight_type: User Behavior, Mental Model, Workflow, Preference, Abandonment Pattern, Workaround, or Benchmarking
+        - title
+        - description: focus on USER behavior, not interface
+        - supporting_quote
+        - timestamp
+        - confidence
 
       positive_feedback:
-        - title, description, supporting_quote, timestamp, confidence
+        - title
+        - description
+        - supporting_quote
+        - timestamp
+        - confidence
 
       feature_requests:
-        - priority_level: one of Must Have, Should Have, Nice to Have
-        - title, description, supporting_quote, timestamp, confidence
+        - priority_level: Must Have, Should Have, or Nice to Have
+        - title
+        - description
+        - supporting_quote
+        - timestamp
+        - confidence
 
       usability_issues:
-        - severity: one of Blocker, Major, Minor
-        - title, description, supporting_quote, timestamp, confidence
+        - severity: Blocker, Major, or Minor
+        - title
+        - description
+        - supporting_quote
+        - timestamp
+        - confidence
 
       emotions:
-        - emotion_type: one of Frustrated, Confused, Delighted, Relieved, Anxious, Confident, Satisfied
-        - description, supporting_quote, timestamp, confidence
+        - emotion_type: Frustrated, Confused, Resigned, Satisfied, Relieved, or Confident
+        - description: context of what triggered emotion
+        - supporting_quote
+        - timestamp
+        - confidence
 
       ============================================================
       COUNTS AND SUMMARY
       ============================================================
 
-      Compute after gating by confidence:
-      - pain_points_count, opportunities_count, insights_count, positive_feedback_count, feature_requests_count, usability_issues_count, emotions_count: sizes of corresponding arrays
-      - total_codes_found: total number of included items across all buckets
-      - high_confidence_codes: count of items with confidence >= 0.75
-      - flagged_codes: count of items with confidence between 0.60 and 0.74
-      - avg_confidence_score: integer percentage; mean confidence of all included items x 100, rounded; if no items, return 0
-      - processing_duration: output "unknown"
+      Compute after coding:
+      - pain_points_count, opportunities_count, insights_count, positive_feedback_count, feature_requests_count, usability_issues_count, emotions_count
+      - total_codes_found: sum across all buckets
+      - high_confidence_codes: count with confidence >= 0.75
+      - flagged_codes: count with confidence 0.60-0.74
+      - avg_confidence_score: mean confidence x 100, rounded to integer
+      - processing_duration: "unknown"
 
-      Empty Section Handling:
-      - If a section array is empty, output the designated fallback text
-
-      ---
-      RENDER THIS EXACT MARKDOWN STRUCTURE
+      ============================================================
+      OUTPUT FORMAT
+      ============================================================
 
       # auto_detected_participant_id Coded Transcript
 
@@ -502,89 +652,83 @@ ai_generation_tasks:
       ---
 
       ## 👤 Participant Context
-      In 2-3 sentences, summarize key context about this participant:
-      - Assistive technology use (if any)
-      - Experience level with the app/system
-      - Relevant background mentioned
-      - Primary tasks or goals for this session
-
-      If no context available, output: *Limited participant context available in transcript.*
+      [2-3 sentences about participant background, app usage frequency, accessibility needs, experience level. Extract from transcript - only say "Limited" if truly nothing mentioned.]
 
       ---
 
       ## 🔴 Pain Points (pain_points_count)
-      For each item in pain_points:
+      For each item:
       **severity - title**
       - *Issue:* description
       - *Quote:* "supporting_quote"
       - *Timestamp:* timestamp
 
-      If pain_points is empty, output: *No pain points were identified in this session.*
+      If empty: *No pain points were identified in this session.*
 
       ---
 
       ## 🟡 Opportunities (opportunities_count)
-      For each item in opportunities:
+      For each item:
       **impact_level - title**
       - *Opportunity:* description
       - *Quote:* "supporting_quote"
       - *Timestamp:* timestamp
 
-      If opportunities is empty, output: *No opportunities were identified in this session.*
+      If empty: *No opportunities were identified in this session.*
 
       ---
 
       ## 💡 Key Insights (insights_count)
-      For each item in insights:
+      For each item:
       **insight_type - title**
       - *Insight:* description
       - *Quote:* "supporting_quote"
       - *Timestamp:* timestamp
 
-      If insights is empty, output: *No key insights were identified in this session.*
+      If empty: *No key insights were identified in this session.*
 
       ---
 
       ## 🟢 Positive Feedback (positive_feedback_count)
-      For each item in positive_feedback:
+      For each item:
       **title**
       - *What worked:* description
       - *Quote:* "supporting_quote"
       - *Timestamp:* timestamp
 
-      If positive_feedback is empty, output: *No positive feedback was identified in this session.*
+      If empty: *No positive feedback was identified in this session.*
 
       ---
 
       ## ✨ Feature Requests (feature_requests_count)
-      For each item in feature_requests:
+      For each item:
       **priority_level - title**
       - *Request:* description
       - *Quote:* "supporting_quote"
       - *Timestamp:* timestamp
 
-      If feature_requests is empty, output: *No feature requests were identified in this session.*
+      If empty: *No feature requests were identified in this session.*
 
       ---
 
       ## ⚠️ Usability Issues (usability_issues_count)
-      For each item in usability_issues:
+      For each item:
       **severity - title**
       - *Issue:* description
       - *Quote:* "supporting_quote"
       - *Timestamp:* timestamp
 
-      If usability_issues is empty, output: *No usability issues were identified in this session.*
+      If empty: *No usability issues were identified in this session.*
 
       ---
 
       ## 😊 Emotional Journey (emotions_count)
-      For each item in emotions:
+      For each item:
       **emotion_type** (timestamp)
       - *Context:* description
       - *Quote:* "supporting_quote"
 
-      If emotions is empty, output: *No notable emotional reactions were identified in this session.*
+      If empty: *No notable emotional reactions were identified in this session.*
 
       ---
 
@@ -596,9 +740,18 @@ ai_generation_tasks:
 
       *AI Coding Confidence: avg_confidence_score%*
 
+      ---
+
+      ## ✅ Validation Checklist
+      - Pain points deduplicated: [Yes/No]
+      - Usability issues cross-coded: [Yes/No] (usability_issues_count / pain_points_count)
+      - Emotional journey captured: [Yes/No] (emotions_count)
+      - Opportunities inferred: [Yes/No] (opportunities_count)
+      - Insights extracted: [Yes/No] (insights_count)
+
   - task_id: "transcript_coding_filename"
     prompt: |
-      You will receive only the Manual Notes and Transcript text. Extract a participant id and output a filename.
+      Extract participant ID and output filename.
 
       Manual Notes (optional)
       {{manual_notes_text_or_blank}}
@@ -607,20 +760,14 @@ ai_generation_tasks:
       {{input_text}}
 
       Detection Rules:
-      - Look for explicit IDs such as: PT7, PT12, participant-15, participant_9, p23, user_7, user-42
-      - Normalize examples:
-        - "Participant PT003" becomes pt003
-        - "User 07" becomes pt007
-      - If only a human name appears (e.g., "Participant: John"), treat as no ID found.
-      - Fallback when no ID is found:
-        - Build participant_YYYYMMDDHHmmss (UTC) from the first date/time found in the text.
-        - If only a date (no time) is found, append 000000.
-        - If no date/time is found at all, use participant_00000000000000.
+      - Look for explicit IDs: PT7, PT12, participant-15, participant_9, p23, user_7
+      - Normalize: "Participant PT003" becomes pt003, "User 07" becomes pt007
+      - If only human name appears, treat as no ID found
+      - Fallback: participant_YYYYMMDDHHmmss from first date/time in text
+      - If no date/time: participant_00000000000000
 
-      Output Rules:
-      - Produce: PARTICIPANT_ID-coded-transcript-analysis.md (replace PARTICIPANT_ID with the detected/normalized id, in lowercase)
-      - Return ONLY the filename as one line
-      - Example: pt003-coded-transcript-analysis.md
+      Output: PARTICIPANT_ID-coded-transcript-analysis.md (lowercase)
+      Return ONLY the filename, one line.
 
 output_template: |
   {{ai_generated.transcript_coding_markdown}}
@@ -632,7 +779,7 @@ output_options:
   delivery:
     github:
       enabled: true
-      commit_message: "📝 {{auto_detected_participant_id}} coded transcript analysis - {{total_codes_found}} insights identified"
+      commit_message: "📝 {{auto_detected_participant_id}} coded transcript - {{total_codes_found}} codes"
       
     slack:
       enabled: true
@@ -640,14 +787,13 @@ output_options:
         🤖 **AI Coding Complete** for {{auto_detected_participant_id}}
         
         **Study:** {{auto_detected_study_name}} 
-        **Participant:** {{auto_detected_participant_id}}
         **Session Date:** {{auto_detected_date}}
-        **Insights Found:** {{total_codes_found}} codes identified
         
         🔴 {{pain_points_count}} Pain Points
         🟡 {{opportunities_count}} Opportunities  
         💡 {{insights_count}} Key Insights
         ⚠️ {{usability_issues_count}} Usability Issues
+        😊 {{emotions_count}} Emotional Moments
         
       actions:
         - text: "📖 View Coded Analysis"
@@ -670,13 +816,18 @@ quality_assurance:
     verify_quote_accuracy: true
     check_timestamp_alignment: true
     flag_low_confidence_codes: true
-    require_opportunities: true
-    require_insights: true
+    
+    # Enforcement rules
+    require_opportunities_minimum: 2
+    require_insights_minimum: 2
+    require_emotions_minimum: 2
+    require_usability_crosscode: true
+    require_pain_point_deduplication: true
+    require_participant_context: true
+    
     validate_opportunities_are_not_pain_points: true
     validate_insights_reveal_behavior: true
     ensure_usability_overlap_with_pain_points: true
-    require_emotional_journey: true
-    validate_accessibility_severity: true
     
   research_readiness:
     verify_participant_id_consistency: true
@@ -696,28 +847,20 @@ cross_session_analysis:
     pattern_alerts: true
 
 notifications:
-  upload_complete:
-    message: |
-      ✅ **{{auto_detected_participant_id}} transcript is ready for coding**
-      
-      Privacy protected • Ready for analysis
-      
-    actions:
-      - text: "📖 Open Transcript"
-        url: "{{github_transcript_url}}"
-
   coding_complete:
     message: |
-      🤖 **AI Coding Complete: {{auto_detected_study_name}}/{{auto_detected_participant_id}}**
+      🤖 **AI Coding Complete: {{auto_detected_participant_id}}**
       
-      **{{total_codes_found}} insights automatically coded**
+      **{{total_codes_found}} codes identified**
       
-      🔴 **{{pain_points_count}} Pain Points** ({{critical_pain_points}} critical)
-      🟡 **{{opportunities_count}} Opportunities** ({{high_impact_opportunities}} high-impact)
-      💡 **{{insights_count}} Key Insights**
+      🔴 {{pain_points_count}} Pain Points
+      🟡 {{opportunities_count}} Opportunities
+      💡 {{insights_count}} Insights
+      ⚠️ {{usability_issues_count}} Usability Issues
+      😊 {{emotions_count}} Emotional Moments
       
       {% if flagged_codes > 0 %}
-      ⚠️ **{{flagged_codes}} codes** flagged for human review
+      ⚠️ {{flagged_codes}} codes flagged for review
       {% endif %}
       
     actions:
@@ -725,52 +868,41 @@ notifications:
         url: "{{github_coded_analysis_url}}"
 
 error_handling:
+  validation_failure:
+    message: "Coding validation failed. Check enforcement rules."
+    action: "flag_for_review"
+    
   file_too_large:
-    message: "File size exceeds 15MB limit. Please compress or split the file."
-    suggestion: "Try uploading as plain text or splitting into multiple files."
+    message: "File exceeds 15MB limit."
+    suggestion: "Split or compress file."
     
   unsupported_format:
-    message: "File format not supported. Please convert to .txt, .docx, .pdf, or .md"
-    suggestion: "Most transcription services can export to these formats."
+    message: "Format not supported. Convert to .txt, .docx, .pdf, or .md"
     
   pii_detection_failed:
-    message: "Unable to complete PII redaction. Manual review required."
+    message: "PII redaction incomplete. Manual review required."
     action: "flag_for_manual_review"
-    
-  metadata_extraction_failed:
-    message: "Could not auto-detect participant information. Using fallback values."
-    action: "proceed_with_fallbacks"
-    notification: "Please verify participant ID and session details in the generated file."
-    
-  transcription_unclear:
-    message: "Transcript quality may be low. Consider re-uploading with better source."
-    action: "proceed_with_warning"
 
 analytics:
-  track_upload_method_preferences: true
-  measure_processing_time: true
-  monitor_pii_redaction_accuracy: true
-  track_file_format_usage: true
-  measure_transcript_quality: true
-  track_coding_accuracy: true
-  measure_cross_session_patterns: true
-  track_opportunities_identification_rate: true
-  track_insights_identification_rate: true
-  track_opportunities_vs_pain_points_confusion: true
-  track_insights_quality_score: true
-  track_usability_pain_point_overlap: true
+  track_enforcement_compliance: true
+  track_opportunities_rate: true
+  track_insights_rate: true
+  track_usability_crosscode_rate: true
   track_emotional_journey_coverage: true
-  track_accessibility_severity_accuracy: true
+  track_deduplication_rate: true
+  measure_coding_consistency: true
 
 notes: |
-  v2.0 Changes:
-  - Added Participant Context section to output
-  - Added accessibility-aware severity rules (Critical for AT blocking issues)
-  - Expanded Opportunities definition to include user suggestions and fixes, not just new features
-  - Expanded Insights to include Accessibility Pattern and Benchmarking types
-  - Added comprehensive Emotional Journey detection with specific signals
-  - Added Feature Requests capture for prescriptive user statements
-  - Added DIVERSITY CHECK step to ensure Opportunities and Insights are distinct from Pain Points
-  - Added signal phrases throughout for better detection
-  - Fixed YAML formatting to avoid parsing errors
-  - Added require_opportunities, require_insights, require_emotional_journey to quality_assurance
+  v2.1 Changes:
+  - Added MANDATORY ENFORCEMENT RULES section at top of prompt
+  - Added Rule 1: Participant Context is mandatory (not just "Limited")
+  - Added Rule 2: Usability Issues must cross-code from pain points
+  - Added Rule 3: Emotional Journey minimum = 2
+  - Added Rule 4: Opportunities minimum = 2
+  - Added Rule 5: Insights minimum = 2
+  - Added Rule 6: No duplicate pain points
+  - Added Rule 7: Severity must be justified
+  - Added Validation Checklist to output
+  - Added "Resigned" and "Abandonment Pattern" types
+  - Added explicit CODING PROCESS steps
+  - Added quality_assurance enforcement rules
