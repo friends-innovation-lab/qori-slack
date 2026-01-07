@@ -347,6 +347,9 @@ processing_rules:
   synthesize_all_sources: true
   extract_verbatim_quotes: true
   prioritize_by_severity: true
+  fail_gracefully_on_empty_sources: true
+  require_source_attribution: true
+  never_fabricate_quotes: true
   
 validation_rules:
   require_at_least_one_note: true
@@ -360,6 +363,9 @@ quality_assurance:
   validate_impact_levels: true
   ensure_actionable_recommendations: true
   cross_reference_sources: true
+  reject_if_no_source_match: true
+  flag_low_confidence_extractions: true
+  validate_all_quotes_are_verbatim: true
 
 output_use: |
   Analyzes session notes and transcript together to generate comprehensive session 
