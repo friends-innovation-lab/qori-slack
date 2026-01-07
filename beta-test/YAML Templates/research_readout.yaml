@@ -1,41 +1,33 @@
 id: research_readout
 name: run_research_readout
-label: 📊 Research Readout
-version: v3.1
+label: "📊 Research Readout"
+version: v4.0
 description: |
-  Generate comprehensive VA-aligned research readouts with AI-synthesized findings, participant analysis, 
-  and actionable recommendations. Creates formal documentation with intelligent insights extraction and 
-  stakeholder-ready formatting for research teams and project archives.
+  Generate comprehensive research readouts from session summaries and synthesis artifacts.
+  Creates stakeholder-ready documentation with grounded findings and actionable recommendations.
 
 author: Qori R&D
 created: 2025-06-26
-last_updated: 2025-08-19
+last_updated: 2026-01-07
 
 input_type: text
 input_processing: summarize_if_long
-temperature: 0.4
-precision_mode: detailed
 
-# LLM Configuration
 llm_config:
-  model: "gpt-4o"
-  temperature: 0.4
+  model: "claude-sonnet-4"
+  temperature: 0.3
   max_tokens: 6000
 
 input_variables:
-  # Core readout configuration
-  - research_folder_path  # Path to research folder in GitHub (REQUIRED)
-  - study_name           # Title of study (REQUIRED)
-  - researcher_contact   # Lead researcher (REQUIRED)
-  - study_channel        # Where to post results (REQUIRED)
-  
-  # Context and data sources  
-  - research_readout_data # Full readout data for context (OPTIONAL)
-  - input_text           # Research findings if not using folder (OPTIONAL)
-  - study_link          # Link to study documentation (OPTIONAL)
-  - team_members        # Specific people to notify (OPTIONAL)
+  - research_folder_path
+  - study_name
+  - researcher_contact
+  - study_channel
+  - research_readout_data
+  - input_text
+  - study_link
+  - team_members
 
-# Required core research files (must be present)
 core_files:
   research_plan:
     file: "research_plan.md"
@@ -43,66 +35,36 @@ core_files:
     extract: ["objectives", "methods", "success_criteria", "timeline"]
     description: "Study objectives, research methods, and success criteria"
     
-  session_notes:
-    folder: "session-notes/"
+  session_summaries:
+    folder: "03-fieldwork/session-summaries/"
     required: true
-    extract: ["key_findings", "patterns", "insights", "recommendations", "user_behaviors", "quotes"]
-    description: "Individual session observations, findings, and user feedback from each research session"
-    file_pattern: "*.md"
-    processing: "aggregate_insights_from_multiple_sessions"
+    extract: ["pain_points", "opportunities", "insights", "quotes", "participant_context"]
+    description: "Session summaries with coded findings per participant"
+    file_pattern: "*session_summary*.md"
+    processing: "aggregate_all_sessions"
     
   participant_tracker:
     file: "participant_tracker.md"
-    required: true
-    extract: ["demographics", "sample_size", "recruitment_method", "completion_status"]
-    description: "Participant demographics, sample size, and study completion data"
+    required: false
+    extract: ["demographics", "sample_size", "completion_status"]
+    description: "Participant demographics and completion data"
 
-# Optional research files (enhance readout quality when present)
 optional_files:
   affinity_mapping:
-    file: "affinity_mapping.md"
-    extract: ["themes", "grouped_insights", "patterns", "user_needs"]
-    description: "Thematic analysis and grouped insights from research data"
+    file: "04-analysis/affinity-mapping/*.md"
+    extract: ["themes", "evidence_counts", "recommendations"]
+    description: "Synthesized themes from affinity analysis"
     
-  user_journey:
-    file: "user_journey_maps.md"
-    extract: ["touchpoints", "pain_points", "emotions", "opportunities"]
-    description: "User experience flows, pain points, and journey mapping"
+  journey_mapping:
+    file: "04-analysis/journey-mapping/*.md"
+    extract: ["stages", "pain_points", "opportunities"]
+    description: "User journey analysis"
     
   personas:
-    file: "personas.md"
-    extract: ["user_types", "behaviors", "goals", "frustrations", "contexts"]
-    description: "User archetypes, behaviors, goals, and contextual needs"
-    
-  jobs_to_be_done:
-    file: "jobs_to_be_done.md"
-    extract: ["user_jobs", "job_context", "success_criteria", "barriers"]
-    description: "Jobs users are trying to accomplish and barriers to success"
-    
-  usability_issues:
-    file: "usability_issues.md"
-    extract: ["issues", "severity", "frequency", "user_impact", "solutions"]
-    description: "Specific usability problems, severity ratings, and potential solutions"
-    
-  design_opportunities:
-    file: "design_opportunities.md"
-    extract: ["opportunities", "user_value", "business_impact", "implementation_effort"]
-    description: "Design improvement opportunities with impact and effort estimates"
+    file: "04-analysis/personas/*.md"
+    extract: ["user_types", "behaviors", "goals"]
+    description: "User archetypes"
 
-# File processing and validation rules
-file_processing:
-  validation_rules:
-    core_files_check: "All core files must be present for readout generation"
-    optional_files_bonus: "Optional files enhance readout quality and completeness"
-    session_notes_processing: "Aggregate insights from multiple session files in session-notes/ folder"
-    
-  data_extraction:
-    quotes_priority: "Extract compelling quotes from session files for evidence"
-    metrics_focus: "Task completion rates, error patterns, success metrics" 
-    evidence_selection: "Strong evidence from multiple participants and sessions"
-    session_aggregation: "Combine individual session insights into comprehensive patterns"
-
-# Auto-generated/computed variables from file analysis
 auto_variables:
   - current_date: |
       new Date().toISOString().split('T')[0]
@@ -121,217 +83,212 @@ auto_variables:
   - product_area: |
       extract_product_area(research_plan) || "Digital Services"
 
-# AI GENERATION TASKS
 ai_generation_tasks:
-  # Extract study context and methodology
-  - task_id: "study_context_analysis"
+  - task_id: "research_readout_complete"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
+      ============================================================
+      🚨 CRITICAL GROUNDING RULES - READ FIRST 🚨
+      ============================================================
       
-      Analyze the research context using all available sources:
+      You are creating a research readout from REAL research data.
       
-      **Research Folder:** {{research_folder_path}}
-      **Available Files:** {{detected_files}}
-      **Manual Input Data:** {{input_text}}
+      ABSOLUTE REQUIREMENTS:
+      1. ONLY use findings, quotes, and insights from the source data below
+      2. NEVER invent quotes, participants, or findings
+      3. NEVER mention products, features, or issues not in the source data
+      4. If the source data is empty or insufficient, say so - do not fabricate
+      5. Use participant IDs exactly as they appear (PT001, PT002, etc.) - NEVER change to P1, P01, etc.
+      6. Counts must be accurate (if 3 participants, say 3 - not 10 or 20)
+      
+      FORBIDDEN (hallucination indicators):
+      - "checkout process" / "conversion rates" / "e-commerce"
+      - "website navigation" (unless source mentions website)
+      - Participant counts that don't match source
+      - Quotes not found verbatim in source
+      - Generic findings not tied to specific evidence
+      
+      If source data is insufficient, output:
+      "⚠️ Insufficient data for research readout. Required files may be empty or not loaded."
+      
+      ============================================================
+      SOURCE DATA
+      ============================================================
+      
       **Study Name:** {{study_name}}
+      **Research Folder:** {{research_folder_path}}
+      **Lead Researcher:** {{researcher_contact}}
+      **Detected Files:** {{detected_files}}
       
-      Extract and synthesize:
-      1. **Research methodology type** (usability testing, interviews, surveys, etc.)
-      2. **Participant count** and demographics 
-      3. **Session duration** estimates
-      4. **Product area** being researched
-      5. **Research goals** (3-4 clear objectives)
-      6. **Research questions** (3-4 specific questions addressed)
+      **Research Data:**
       
-      **Prioritize file-extracted data** over manual input when available.
+      {{input_text}}
       
-      **Format:**
-      **Methodology:** [Specific type from research plan or inferred]
-      **Participants:** [Count and demographics from tracker or estimated]
-      **Session Duration:** [From plan or estimated from session files]
-      **Product Area:** [Specific VA service or digital area]
-      **Research Goals:**
-      • [Goal 1 from research plan or inferred from data]
-      • [Goal 2 from research plan or inferred from data]
-      • [Goal 3 from research plan or inferred from data]
-      **Research Questions:**
-      • [Question 1 from research plan or inferred]
-      • [Question 2 from research plan or inferred]
-      • [Question 3 from research plan or inferred]
+      {{research_readout_data}}
+      
+      ============================================================
+      METADATA INFERENCE
+      ============================================================
+      
+      Extract from source data:
+      - Participant count: Count unique PT### IDs in source
+      - Session count: Same as participant count (1 session per participant)
+      - Methodology: Look for "usability testing," "interviews," etc. in source
+      - Product area: What product/app is being researched
+      
+      If {{study_name}} or date is blank, infer from content.
+      
+      ============================================================
+      OUTPUT FORMAT
+      ============================================================
+      
+      # 📊 Research Readout: [Study name from source or variable]
+      
+      **Date:** [Actual date] | **Lead:** [Researcher] | **Participants:** [Actual count from source]
+      
+      ---
+      
+      ## 📌 TL;DR
+      
+      [3-4 bullet executive summary - the absolute essentials]
+      
+      - **Top Finding:** [Most critical finding in one sentence]
+      - **Key Pattern:** [What users consistently experienced]
+      - **Primary Recommendation:** [Single most important action]
+      - **Business Impact:** [Why this matters]
+      
+      ---
+      
+      ## 📊 At a Glance
+      
+      | Finding | Severity | Participants Affected | Recommended Action |
+      |---------|----------|----------------------|-------------------|
+      | [Finding 1] | 🔴 Critical | [PT001, PT002...] | [Action] |
+      | [Finding 2] | 🟡 High | [PT001, PT003...] | [Action] |
+      | [Finding 3] | 🟡 Medium | [PT002...] | [Action] |
+      
+      ---
+      
+      ## 🔍 Key Findings
+      
+      ### Finding 1: [Specific title from data]
+      
+      **What we observed:**
+      [Description grounded in source data]
+      
+      **Evidence:**
+      > "[Exact quote from source]"
+      > *— PT001*
+      
+      > "[Another exact quote from source]"
+      > *— PT002*
+      
+      **Frequency:** [X] of [Y] participants
+      **Severity:** [Critical/High/Medium/Low]
+      
+      **Recommendation:**
+      [Specific action to address this finding]
+      
+      ---
+      
+      ### Finding 2: [Specific title from data]
+      
+      [Same format]
+      
+      ---
+      
+      ### Finding 3: [Specific title from data]
+      
+      [Same format]
+      
+      ---
+      
+      ## ✅ What's Working Well
+      
+      [Positive findings from source - don't skip this]
+      
+      - **[Positive 1]:** "[Supporting quote]" — PT00X
+      - **[Positive 2]:** "[Supporting quote]" — PT00X
+      
+      ---
+      
+      ## 👥 Participants
+      
+      | ID | Context | Key Contribution |
+      |----|---------|------------------|
+      | PT001 | [From participant context in source] | [What they highlighted] |
+      | PT002 | [From participant context in source] | [What they highlighted] |
+      | PT003 | [From participant context in source] | [What they highlighted] |
+      
+      **Total:** [Actual count] participants
+      
+      ---
+      
+      ## 🔬 Methodology
+      
+      - **Type:** [From research plan or inferred]
+      - **Duration:** [Per session if known]
+      - **Focus:** [What was being tested]
+      - **Recruitment:** [How participants were recruited if known]
+      
+      ---
+      
+      ## 🚀 Recommended Actions
+      
+      ### Immediate (Next 2 Weeks)
+      
+      1. **[Action]** — Addresses: [Finding]
+         - Owner: [Team/role]
+         - Why urgent: [Evidence]
+      
+      2. **[Action]** — Addresses: [Finding]
+         - Owner: [Team/role]
+         - Why urgent: [Evidence]
+      
+      ### Short-term (1-2 Months)
+      
+      1. **[Action]** — Addresses: [Finding]
+         - Owner: [Team/role]
+      
+      ### Follow-up Research
+      
+      - [Any gaps or areas needing more investigation]
+      
+      ---
+      
+      ## 🔗 Related Artifacts
+      
+      - [Session Summaries]({{research_folder_path}}/03-fieldwork/session-summaries/)
+      - [Affinity Map]({{research_folder_path}}/04-analysis/affinity-mapping/) (if generated)
+      - [Full Study Documentation]({{study_link}})
+      
+      ---
+      
+      ## ✅ Validation
+      
+      - All quotes verbatim from source: [Yes/No]
+      - All participant IDs match source: [Yes/No]
+      - Participant count accurate: [Yes/No]
+      - No fabricated findings: [Yes/No]
+      
+      ---
+      
+      *Generated by Qori Research Synthesis • [Date]*
+      
+      **Questions?** Contact {{researcher_contact}}
+      
+      ============================================================
+      QUALITY CHECKS (do not include in output)
+      ============================================================
+      
+      Before outputting, verify:
+      - Every quote appears EXACTLY in source
+      - Participant IDs are PT001 format, not P1 or P01
+      - Participant count matches unique IDs in source
+      - No mentions of products/features not in source
+      - Findings are specific to THIS study, not generic
+      
+      Output ends at "Contact {{researcher_contact}}" line.
 
-  # Generate participant overview table
-  - task_id: "participant_analysis"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Use participant aliases (P01, P02) for privacy
-      
-      Create a participant overview using available data sources:
-      
-      **Available Files:** {{detected_files}}
-      **Manual Input Data:** {{input_text}}
-      **Study Context:** {{study_name}}
-      
-      Extract participant information and create a structured overview showing:
-      - Participant ID (P01, P02, etc.)
-      - Demographics (age range, role, experience level)
-      - Session status (completed, rescheduled, etc.)
-      - Key characteristics relevant to study
-      - Recruitment channel (if available)
-      
-      **Format as markdown table:**
-      | Participant | Demographics | Session Status | Key Notes |
-      |-------------|--------------|----------------|-----------|
-      | P01 | [Age/role info] | Completed | [Relevant context] |
-      | P02 | [Age/role info] | Completed | [Relevant context] |
-      
-      **Summary statistics:**
-      **Total Participants:** [Count from files or estimated]
-      **Completion Rate:** [Percentage calculated or estimated]
-      **Participant Types:** [Brief breakdown of user types]
-
-  # Extract and prioritize key insights
-  - task_id: "key_insights_extraction"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Make insights specific and actionable
-      
-      Extract 3-5 key insights using all available data sources:
-      
-      **Available Files:** {{detected_files}}
-      **Research Goals:** From study context analysis
-      **Manual Input Data:** {{input_text}}
-      **File Quality:** {{file_quality_score}}
-      
-      Identify the most important insights that directly address research goals:
-      
-      1. **Prioritize insights** that are well-supported by evidence
-      2. **Focus on user behaviors** and specific problems observed
-      3. **Include impact level** (high/medium/low) for each insight
-      4. **Make insights actionable** for design and product decisions
-      
-      **Format:**
-      **Key Insight 1:** [Specific, actionable insight]
-      **Key Insight 2:** [Specific, actionable insight]  
-      **Key Insight 3:** [Specific, actionable insight]
-      **Key Insight 4:** [Specific, actionable insight] (if supported by data)
-      **Key Insight 5:** [Specific, actionable insight] (if supported by data)
-
-  # Generate detailed findings with evidence
-  - task_id: "detailed_findings_analysis"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Include specific quotes and behavioral evidence
-      
-      Create detailed findings with supporting evidence:
-      
-      **Key Insights:** {{ai_generated.key_insights_extraction}}
-      **Available Files:** {{detected_files}}
-      **Participant Data:** From participant analysis
-      **Manual Input Data:** {{input_text}}
-      
-      For each key insight, develop a detailed finding that includes:
-      1. **Clear title** that summarizes the finding
-      2. **Detailed description** of what was observed
-      3. **Supporting quotes** from participants (2-3 per finding)
-      4. **Behavioral evidence** (what users did, not just what they said)
-      5. **Frequency data** (X out of Y participants when available)
-      6. **Specific recommendations** (2-3 actionable next steps)
-      7. **Impact assessment** (how this affects user success)
-      
-      **Format for each finding:**
-      ## Finding [X]: [Clear, specific title]
-      
-      **What we observed:** [Detailed description of the pattern or issue]
-      
-      **Supporting evidence:**
-      > "[Complete quote from participant]" - P[X]
-      > "[Complete quote from participant]" - P[X]
-      > "[Complete quote from participant]" - P[X]
-      
-      **Behavioral indicators:** [What users actually did during sessions]
-      **Frequency:** [X out of Y participants experienced this]
-      
-      **Recommendations:**
-      • [Specific action 1]
-      • [Specific action 2]  
-      • [Specific action 3]
-      
-      **Impact:** [How this affects user success and business goals]
-
-  # Create findings summary table
-  - task_id: "findings_summary_table"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      
-      Create a summary table of all findings:
-      
-      **Detailed Findings:** {{ai_generated.detailed_findings_analysis}}
-      
-      Summarize each finding in a scannable table format showing:
-      - Finding title
-      - Severity/Impact level
-      - Frequency (how often observed)
-      - Priority for action
-      
-      **Format as markdown table:**
-      | Finding | Severity | Frequency | Priority | Quick Summary |
-      |---------|----------|-----------|----------|---------------|
-      | [Title 1] | High/Med/Low | [X/Y participants] | High/Med/Low | [One-line summary] |
-      | [Title 2] | High/Med/Low | [X/Y participants] | High/Med/Low | [One-line summary] |
-
-  # Generate actionable next steps
-  - task_id: "next_steps_generation"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
-      - Make next steps specific and assignable
-      
-      Generate actionable next steps based on findings:
-      
-      **Findings:** {{ai_generated.detailed_findings_analysis}}
-      
-      Create 4-6 specific next steps that address the findings:
-      
-      1. **Immediate actions** (next 2 weeks)
-      2. **Short-term initiatives** (next 1-2 months)
-      3. **Research follow-ups** (additional studies needed)
-      4. **Cross-team coordination** (who needs to be involved)
-      
-      **Format:**
-      **Immediate Actions (Next 2 Weeks):**
-      • [Specific action with owner/team]
-      • [Specific action with owner/team]
-      
-      **Short-term Initiatives (1-2 Months):**
-      • [Initiative with timeline and owner]
-      • [Initiative with timeline and owner]
-      
-      **Research Follow-ups:**
-      • [Additional research needed with rationale]
-      • [Validation studies or deeper dives]
-      
-      **Cross-team Coordination:**
-      • [Who needs to be involved and why]
-      • [Stakeholder communication plan]
-
-# Output configuration
 output_options:
   default_delivery: "slack_notification_and_github"
   slack_format: "minimal_notification_with_link"
@@ -339,122 +296,30 @@ output_options:
   path: "05-shareouts/"
   filename: "research_readout_{{study_name}}_{{current_date}}.md"
 
-# =============================================================================
-# SLACK OUTPUT (Minimal notification with link)
-# =============================================================================
-
 slack_output:
   post_in_channel: true
   create_thread: false
   title_format: "📊 Research Readout Ready"
   ping_team: ["{{researcher_contact}}", "{{team_members}}"]
   interactive_elements:
-    - text: "📋 View Full Research Readout in GitHub"
+    - text: "📋 View Full Research Readout"
       url: "{{github_file_link}}"
-    - text: "🎯 Create Targeted Readouts"
-      action: "run_targeted_readouts"
-    - text: "🛠 Generate GitHub Issues"
-      action: "run_github_issues_generator"
 
 slack_message_format: |
   📊 **Research Readout Complete**
   
-  Hi {{team_members}}! I've completed the comprehensive research analysis for {{study_name}} with detailed findings and actionable recommendations.
+  **Study:** {{study_name}}
+  **Participants:** {{participant_count}} | **Sessions:** {{session_count}}
   
-  📋 **Study Overview:** {{methodology_type}} with {{participant_count}} participants, {{session_count}} sessions
-  📊 **Data Quality:** {{file_quality_score}} - {{detected_files}}
+  👆 **View Full Readout:** [Link]({{github_file_link}})
   
-  👆 **View Full Readout:** [research_readout_{{study_name_slug}}_{{current_date}}.md]({{github_file_link}})
-  
-  *Questions?* Contact {{researcher_contact}} | *Create audience-specific versions?* Use `/readouts [audience]`
-
-# =============================================================================
-# GITHUB OUTPUT (Comprehensive research document)
-# =============================================================================
-
-github_output:
-  location: "05-shareouts/"
-  file_name: "research_readout_{{study_name_slug}}_{{current_date}}.md"
-  format: "comprehensive_research_document"
+  *Questions?* Contact {{researcher_contact}}
 
 output_template: |
-  # 📊 Research Readout — {{study_name}}
-
-  **🤖 AI-Enhanced Analysis Complete | Generated {{current_date}}**
-
-  ## Study Overview
-
-  - **Study Name:** {{study_name}}
-  - **Research Folder:** {{research_folder_path}}
-  - **Methodology:** {{methodology_type}}
-  - **Lead Researcher:** {{researcher_contact}}
-  - **Analysis Date:** {{current_date}}
-
-  ## Research Context
-
-  - **Participants:** {{participant_count}}
-  - **Sessions:** {{session_count}}
-  - **Available Files:** {{detected_files}}
-  - **File Quality Score:** {{file_quality_score}}
-
-  ---
-
-  {{ai_generated.study_context_analysis}}
-
-  ---
-
-  ## 🔍 Key Insights Summary
-
-  {{ai_generated.key_insights_extraction}}
-
-  ---
-
-  ## 👥 Participant Overview
-
-  {{ai_generated.participant_analysis}}
-
-  ---
-
-  ## 🧠 Detailed Findings & Recommendations
-
-  {{ai_generated.detailed_findings_analysis}}
-
-  ---
-
-  ## 📊 Findings Summary Table
-
-  {{ai_generated.findings_summary_table}}
-
-  ---
-
-  ## ✅ Next Steps
-
-  {{ai_generated.next_steps_generation}}
-
-  ---
-
-  ## 🔗 Linked Artifacts
-
-  - [Study Documentation]({{study_link}})
-  - [Research Files]({{research_folder_path}})
-  - [GitHub Issues](https://github.com/department-of-veterans-affairs/va.gov-team/issues)
-
-  ---
-
-  ## 🏷️ Tags
-  
-  ---
-
-  **📞 Questions?** Contact {{researcher_contact}} for detailed discussion about findings.
-
-  **🤖 Generated by:** Qori Research Readout v3.1 | AI-Enhanced Analysis
+  {{ai_generated.research_readout_complete}}
 
 notify:
   - role: research_team
-    action: "AI-enhanced research readout completed"
+    action: "Research readout completed"
     channel: "{{study_channel}}"
-    message: "📊 Research readout for {{study_name}} complete. Detailed findings with AI-synthesized insights ready for review."
-  - role: researcher
-    action: "Readout delivered"
-    slack_tag: "{{researcher_contact}}"
-    message: "Your AI-enhanced research readout has been posted to {{study_channel}} and saved to GitHub for stakeholder review."
+    message: "📊 Research readout for {{study_name}} is ready for review."
