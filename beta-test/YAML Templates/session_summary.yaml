@@ -190,52 +190,63 @@ ai_generation_tasks:
       
       If no pain points are identifiable in the sources, output: "*No clear pain points were documented in the available sources.*"
       
-      ## 🟡 Key Opportunities
-      Extract the TOP 2-3 opportunities for improvement.
-      
-      Requirements:
-      - ONLY include opportunities explicitly mentioned or clearly implied in sources
-      - Look for what participant wished existed or explicitly requested
-      - Identify gaps between expectations and reality AS DOCUMENTED
-      - Note features participant tried to use but didn't exist
-      - Assign impact: High Impact > Medium Impact > Quick Win
-      
-      Format each as:
-      **[Impact Level] - [Brief Title]**
-      [1-2 sentence description of the opportunity with source reference]
-      
-      If no opportunities identified, output: "*No key opportunities were identified in the available sources.*"
-      
-      ## 💡 Key Insights
-      Extract the TOP 2-3 insights about user behavior, mental models, or patterns.
-      
-      Requirements:
-      - ONLY include insights supported by specific observations in the sources
-      - Reveal how the participant thinks or works AS OBSERVED
-      - Identify mental models or assumptions DEMONSTRATED in the session
-      - Note workflow patterns or strategies DOCUMENTED by observers
-      
-      Format each as:
-      **[Insight Type] - [Brief Title]**
-      [1-2 sentence description of the insight and its implications, with source reference]
-      
-      Insight types: Mental Model, Workflow Pattern, User Expectations, Behavior Pattern, Accessibility Need, etc.
-      
-      If no insights identified, output: "*No key insights were identified in the available sources.*"
-      
-      ## 💬 Top Quotes
-      Extract 3-5 of the most impactful participant quotes.
-      
-      **CRITICAL:** 
-      - ONLY include quotes that appear VERBATIM in the source documents
-      - Look for text in quotation marks attributed to the participant
-      - Include timestamps if present in source, otherwise note [timestamp unavailable]
-      - If sources contain no verbatim quotes, use the fallback below
-      
-      Format each as:
-      [number]. *"[EXACT quote from sources - copy precisely]"* [timestamp or location reference]
-      
-      If no verbatim quotes exist in sources, output: "*No verbatim participant quotes were captured in the available sources. Key participant sentiments from observer notes: [summarize observed reactions if available]*"
+    ## 🟡 Key Opportunities
+    Identify the TOP 2-3 opportunities for improvement based on participant struggles and requests.
+
+    **How to identify opportunities:**
+    - When participant says "I wish..." or "I expected..." → Direct opportunity
+    - When participant struggles with a task → Opportunity to improve that flow
+    - When participant expresses confusion → Opportunity for clearer design
+    - When participant suggests a solution → Direct opportunity
+    - When participant compares unfavorably to other apps → Opportunity to match expectations
+
+    **From the sources, look for:**
+    - Explicit requests: "Every button needs a proper label" → Opportunity: Add accessibility labels
+    - Implicit gaps: Participant couldn't find "Schedule appointment" → Opportunity: Add clear scheduling action
+    - Workarounds: Participant had to guess button functions → Opportunity: Improve discoverability
+
+    Requirements:
+    - Each opportunity must trace to a specific participant struggle or statement
+    - Assign impact: High Impact (affects core tasks) > Medium Impact (affects efficiency) > Quick Win (easy fix)
+    - Frame as actionable improvements, not just restated problems
+
+    Format each as:
+  **[Impact Level] - [Solution-Oriented Title]**
+  [1-2 sentence description linking the opportunity to the specific participant evidence]
+
+If genuinely no opportunities can be inferred, output: "*No key opportunities were identified in the available sources.*"
+
+---
+
+## 💡 Key Insights
+Identify the TOP 2-3 insights about user behavior, mental models, or patterns revealed in this session.
+
+**How to identify insights:**
+- How participant EXPECTED things to work (mental model)
+- Navigation strategies participant used (behavior pattern)
+- Assumptions participant made about where to find things (user expectations)
+- Workarounds or coping strategies (adaptation patterns)
+- What surprised the participant vs. what felt natural (expectation gaps)
+- Expertise or context that shaped their experience (user context)
+
+**From the sources, look for:**
+- "I'm guessing that would be under Payments" → Insight: User has logical mental model of IA
+- Participant navigated systematically through all elements → Insight: Screen reader users explore exhaustively
+- "Better than it used to be, but still behind commercial apps" → Insight: User benchmarks against commercial app standards
+- Participant used VoiceOver expertly → Insight: Assistive technology proficiency affects expectations
+
+Requirements:
+- Each insight must be supported by specific observed behavior or statement
+- Insights reveal something ABOUT THE USER, not just about the interface
+- Focus on patterns that would apply to similar users
+
+Format each as:
+**[Insight Type] - [Descriptive Title]**
+[1-2 sentence description of the insight and what it implies for design]
+
+Insight types: Mental Model, Behavior Pattern, User Expectations, Navigation Strategy, Accessibility Need, User Context, Expertise Level
+
+If genuinely no insights can be inferred, output: "*No key insights were identified in the available sources.*"
       
       ## ✅ Recommended Actions
       Generate 3-5 prioritized action items based ONLY on documented findings.
