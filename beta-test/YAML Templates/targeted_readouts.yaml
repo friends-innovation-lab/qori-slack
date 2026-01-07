@@ -11,11 +11,57 @@ created: 2025-08-19
 last_updated: 2026-01-07
 
 # ============================================================
-# BACKEND DATA REQUIREMENTS
+# BACKEND DATA REQUIREMENTS (for Tanzeel)
 # ============================================================
 #
-# Load session summaries into {{input_text}} or {{research_readout_data}}
-# Same as research_readout.yaml - see that file for details.
+# This workflow requires actual file contents to be loaded into variables.
+# Without this data, the AI will output "Insufficient data" (correct behavior).
+#
+# REQUIRED DATA FLOW:
+#
+# 1. Session Summaries → {{input_text}} or {{research_readout_data}}
+#    - Location: 03-fieldwork/session-summaries/
+#    - Files: *session_summary*.md (all of them, concatenated)
+#    - Example: PT001_session_summary.md + PT002_session_summary.md + PT003_session_summary.md
+#
+# 2. Research Plan (optional but helpful) → append to {{input_text}}
+#    - Location: 00-planning/research_plan.md
+#    - Contains: methodology, goals, research questions
+#
+# 3. Affinity Map (optional) → append to {{input_text}}
+#    - Location: 04-analysis/affinity-mapping/*.md
+#    - Enhances theme identification
+#
+# BACKEND PSEUDOCODE:
+#
+#   combined_content = ""
+#   
+#   # Load all session summaries (REQUIRED)
+#   session_files = await github_api.list_files("03-fieldwork/session-summaries/")
+#   for file in session_files:
+#       if "session_summary" in file.name:
+#           content = await github_api.get_file_contents(file.path)
+#           combined_content += "\n\n---\n\n" + content
+#   
+#   # Load research plan (optional)
+#   try:
+#       research_plan = await github_api.get_file_contents("00-planning/research_plan.md")
+#       combined_content = research_plan + "\n\n---\n\n" + combined_content
+#   except: pass
+#   
+#   # Load affinity map if exists (optional)
+#   try:
+#       affinity_files = await github_api.list_files("04-analysis/affinity-mapping/")
+#       for file in affinity_files:
+#           content = await github_api.get_file_contents(file.path)
+#           combined_content += "\n\n---\n\n" + content
+#   except: pass
+#   
+#   # Pass to AI
+#   variables["input_text"] = combined_content
+#
+# IF DATA IS EMPTY → AI outputs "Insufficient data" (this is correct behavior)
+# IF DATA IS LOADED → AI generates grounded readout
 #
 # ============================================================
 
