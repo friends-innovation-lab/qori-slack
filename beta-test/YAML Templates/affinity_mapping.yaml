@@ -1,7 +1,7 @@
 id: affinity_mapping
 name: run_affinity_mapping
 label: "🧠 Affinity Mapping"
-version: "v3.0"
+version: "v3.1"
 
 description: >
   Group qualitative quotes and observations into clearly labeled themes using AI.
@@ -10,7 +10,7 @@ description: >
 
 author: Qori R&D  
 created: 2025-06-27  
-last_updated: 2025-01-07
+last_updated: 2026-01-07
 
 input_type: slack_modal_form
 input_processing: auto_file_discovery
@@ -70,19 +70,24 @@ study_metadata:
     focus_area: "veteran onboarding experience"
 
 # File discovery system
+# NOTE: Session summaries are the IDEAL input for affinity mapping.
+# They contain pre-extracted quotes, pain points, insights, and opportunities
+# in a consistent format across participants.
 auto_file_discovery:
   core_files:
     session_summaries:
       file_patterns: ["*session_summary*", "*summary*", "*session*"]
-      search_paths: ["01-sessions/", "sessions/", "summaries/"]
+      search_paths: ["01-sessions/", "sessions/", "summaries/", "03-fieldwork/session-summaries/"]
       priority: "required"
       confidence_weight: 50
+      description: "Primary input - contains extracted quotes, pain points, insights per participant"
       
     transcripts:
-      file_patterns: ["*transcript*", "*interview*", "*recording*"]
-      search_paths: ["01-sessions/", "transcripts/", "interviews/"]
-      priority: "high"
-      confidence_weight: 30
+      file_patterns: ["*coded_transcript*", "*coded-transcript*", "*transcript*"]
+      search_paths: ["01-sessions/", "transcripts/", "03-fieldwork/coded-transcript-analysis/"]
+      priority: "optional"
+      confidence_weight: 20
+      description: "Use only if session summaries unavailable - more granular but longer"
   
   enhancement_files:
     research_plan:
@@ -138,6 +143,43 @@ ai_generation_tasks:
       {{combined_file_content}}
       
       ============================================================
+      METADATA INFERENCE (if variables are blank)
+      ============================================================
+      
+      If {{selected_study}} or {{focus_area}} are blank/empty, INFER them from the content:
+      - Look for study name in headers, titles, or "Study:" fields in the source data
+      - Look for focus area in research context or study descriptions
+      - For date, use today's date or extract from source file dates
+      
+      NEVER leave these blank in your output. Always fill them in.
+      
+      ============================================================
+      CLUSTERING REQUIREMENTS - USE ALL DATA
+      ============================================================
+      
+      CRITICAL: You must use MOST of the available evidence, not just a few items.
+      
+      MINIMUM REQUIREMENTS:
+      - If source has 10+ pain points → use at least 8 in your themes
+      - If source has 10+ quotes → use at least 8 in your themes  
+      - If source has 5+ insights → use at least 4 in your themes
+      - Each theme should have 4-8 evidence items, not just 2
+      
+      CLUSTERING QUALITY RULES:
+      - Group items by the SAME underlying problem, not loosely related topics
+      - "Button not labeled" and "Edit button hard to find" are DIFFERENT issues:
+        - Unlabeled = accessibility/screen reader problem
+        - Hard to find = visual hierarchy/placement problem
+      - Don't force unrelated items into the same theme
+      - It's OK to have 4-6 themes if the data supports it
+      
+      EVIDENCE ALLOCATION CHECK:
+      Before finalizing, count:
+      - Total pain points in source: [X]
+      - Pain points used in themes: [Y]
+      - If Y < 70% of X, add more themes or expand existing ones
+      
+      ============================================================
       AFFINITY MAPPING INSTRUCTIONS
       ============================================================
       
@@ -150,12 +192,17 @@ ai_generation_tasks:
       - Positive feedback
       - Emotional moments
       
+      List them all before clustering.
+      
       STEP 2: CLUSTER BY SIMILARITY
       Group related items based on:
-      - Similar problems or frustrations
-      - Related user needs
-      - Connected behaviors or mental models
-      - Shared emotional experiences
+      - The SAME specific problem (not loosely related)
+      - Similar root causes
+      - Connected user goals or tasks
+      
+      Ask: "Would a product team address these with ONE fix or SEPARATE fixes?"
+      - Same fix → same cluster
+      - Different fixes → different clusters
       
       STEP 3: NAME EACH CLUSTER
       Create theme names that:
@@ -167,10 +214,11 @@ ai_generation_tasks:
       OUTPUT FORMAT - OPTION D: INDENTED CARDS
       ============================================================
       
-      # 🧠 Affinity Map: {{selected_study}}
+      # 🧠 Affinity Map: [Study name - infer from content if variable is blank]
       
-      **Analysis Date:** {{current_date}}
-      **Focus Area:** {{focus_area}}
+      **Analysis Date:** [Today's date or infer from content]
+      **Focus Area:** [Infer from content if variable is blank]
+      **Participants:** [List participant IDs found in source]
       
       ---
       
@@ -182,6 +230,8 @@ ai_generation_tasks:
       | Opportunities | [count from source] |
       | Insights | [count from source] |
       | Quotes | [count from source] |
+      | **Total Evidence** | [sum] |
+      | **Evidence Used in Themes** | [count - should be 70%+ of total] |
       
       ---
       
@@ -212,9 +262,22 @@ ai_generation_tasks:
       
       ---
       
+      **🔴 Pain Point: [Another related pain point]**
+      - Severity: [from source]
+      - Participants: [who experienced this]
+      - Context: [brief description]
+      
+      ---
+      
       **💡 Insight: [Title from source]**
       - [Description of the insight]
       - Type: [insight type]
+      - Source: [participant]
+      
+      ---
+      
+      **🟡 Opportunity: [Related opportunity from source]**
+      - [Description]
       - Source: [participant]
       
       ---
@@ -231,13 +294,13 @@ ai_generation_tasks:
       
       ---
       
-      [Same card format - 3-6 items with quotes, pain points, insights]
+      [Same card format - 4-8 items with quotes, pain points, insights, opportunities]
       
       ---
       
       ## 🎯 Theme 3: [Specific Theme Name from Data]
       
-      [Same format]
+      [Same format - continue until you've used 70%+ of available evidence]
       
       ---
       
@@ -313,10 +376,11 @@ ai_generation_tasks:
       - All participant IDs exist in source: [Yes/No]
       - All pain points traced to source: [Yes/No]
       - No fabricated themes or findings: [Yes/No]
+      - Evidence utilization rate: [X]% (should be 70%+)
       
       ---
       
-      *Generated by Qori Research Synthesis • {{current_date}}*
+      *Generated by Qori Research Synthesis • [Date]*
       
       ============================================================
       QUALITY REQUIREMENTS
@@ -328,6 +392,9 @@ ai_generation_tasks:
       - Theme names are specific to THIS study, not generic
       - No mention of unrelated apps/products/studies
       - Evidence counts are accurate
+      - Study name and focus area are filled in (inferred if needed)
+      - At least 70% of source evidence is used in themes
+      - Each theme has 4+ evidence items
       - If source data is empty, output the insufficient data message instead
       
       WRONG theme names (too generic):
@@ -339,6 +406,12 @@ ai_generation_tasks:
       - "Unlabeled Buttons Block Screen Reader Users"
       - "Hidden Actions Require Exhaustive Search"
       - "Appointment Scheduling Path Unclear"
+      
+      WRONG clustering (mixing different problems):
+      - Theme: "Navigation Issues" containing both "unlabeled buttons" AND "slow loading"
+      
+      RIGHT clustering (same root problem):
+      - Theme: "Unlabeled Controls" containing "unlabeled buttons" AND "buttons without descriptive text" AND "edit button has no label"
       
       Return the complete affinity map. No preamble.
 
@@ -398,6 +471,17 @@ notify:
     message: "{{researcher_contact}} completed affinity mapping for {{selected_study}}. {{max_themes}} themes identified."
 
 notes: |
+  v3.1 Changes:
+  - Added metadata inference fallback (AI infers study name, focus area, date if variables blank)
+  - Added 70% evidence utilization requirement
+  - Added minimum 4 items per theme requirement
+  - Added clustering quality rules (same root problem = same cluster)
+  - Added "Evidence Used in Themes" to Data Summary table
+  - Added evidence utilization rate to validation checklist
+  - Added Opportunities to theme card format
+  - Added wrong/right clustering examples
+  - Added "same fix test" for clustering decisions
+  
   v3.0 Changes:
   - Added critical grounding rules at top of prompt
   - Added "insufficient data" fallback if source is empty
