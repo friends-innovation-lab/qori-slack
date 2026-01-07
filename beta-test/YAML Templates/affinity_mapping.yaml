@@ -1,36 +1,32 @@
 id: affinity_mapping
 name: run_affinity_mapping
-
-label: 🧠 Affinity Mapping
-version: "v2.1"
+label: "🧠 Affinity Mapping"
+version: "v3.0"
 
 description: >
-  Group qualitative quotes, notes, or observations into clearly labeled themes using AI.
-  Automatically discovers and analyzes research files from selected study folder with 
-  optional quality improvements. Uses inductive clustering methodology with Senior UX Strategy perspective.
+  Group qualitative quotes and observations into clearly labeled themes using AI.
+  Creates visual text-based affinity clusters from coded session summaries.
+  Strict grounding to source data - no hallucination.
 
 author: Qori R&D  
 created: 2025-06-27  
-last_updated: 2025-09-10
+last_updated: 2025-01-07
 
 input_type: slack_modal_form
 input_processing: auto_file_discovery
 
-# LLM Configuration
 llm_config:
-  model: "gpt-4o"
-  temperature: 0.4
-  max_tokens: 4000
+  model: "claude-sonnet-4"
+  temperature: 0.3
+  max_tokens: 6000
 
-# System limits
 system_limits:
   max_total_tokens: 50000
-  min_content_threshold: 1000
+  min_content_threshold: 500
   max_file_size: 100000
-  supported_formats: [".md", ".txt", ".csv", ".json"]
+  supported_formats: [".md", ".txt"]
   max_files_per_analysis: 20
 
-# Privacy controls
 privacy_controls:
   enable_pii_detection: true
   pii_detection_patterns:
@@ -38,11 +34,10 @@ privacy_controls:
     phone: '\b\d{3}[-.]?\d{3}[-.]?\d{4}\b'
     ssn: '\b\d{3}-\d{2}-\d{4}\b'
   masking_strategy:
-    email: "[EMAIL_REDACTED]"
-    phone: "[PHONE_REDACTED]" 
-    ssn: "[SSN_REDACTED]"
+    email: "[EMAIL]"
+    phone: "[PHONE]" 
+    ssn: "[SSN]"
 
-# Slack modal input variables
 input_variables:
   - selected_study              # Study name from dropdown (REQUIRED)
   - include_research_plan       # Boolean from checkbox (OPTIONAL)
@@ -108,335 +103,311 @@ auto_file_discovery:
       search_paths: ["01-sessions/raw/", "raw/", "recordings/"]
       confidence_boost: 3
 
-# AI generation tasks
 ai_generation_tasks:
-  # File discovery and quality assessment
-  - task_id: "file_discovery_summary"
+  - task_id: "affinity_mapping_complete"
     prompt: |
-      As a research operations specialist, analyze the discovered files and quality:
+      ============================================================
+      🚨 CRITICAL GROUNDING RULES - READ FIRST 🚨
+      ============================================================
       
-      **Selected Study:** {{selected_study}}
-      **Enhancement Options Selected:**
-      - Research plan: {{include_research_plan}}
-      - Participant notes: {{include_participant_notes}}
-      - Raw transcripts: {{include_raw_transcripts}}
+      You are creating an affinity map from REAL research data.
       
-      **Discovered Files:** {{discovered_files}}
-      **Total Content:** [Analyze character/word count of combined_file_content]
+      ABSOLUTE REQUIREMENTS:
+      1. ONLY use quotes, pain points, insights, and observations from the source data below
+      2. NEVER invent quotes, participants, or findings
+      3. NEVER mention other apps, products, or studies not in the source data
+      4. If the source data is empty or insufficient, say so - do not fabricate content
+      5. Every theme must have REAL quotes from the source data
+      6. Every participant ID (PT001, PT002, etc.) must exist in the source data
       
-      Report on file coverage, content quality, enhancement impact, and analysis confidence.
-
-  # Core affinity mapping process
-  - task_id: "affinity_clustering"
-    prompt: |
-      As a Senior UX Strategist conducting affinity mapping, extract and cluster insights from this research data:
+      If you cannot find sufficient data to create meaningful themes, output:
+      "⚠️ Insufficient data for affinity mapping. Source files may be empty or not loaded."
       
-      **Research Data:** {{combined_file_content}}
-      **Study Context:** {{selected_study}}
+      DO NOT proceed with generic themes if source data is missing.
+      
+      ============================================================
+      SOURCE DATA
+      ============================================================
+      
+      **Study:** {{selected_study}}
       **Focus Area:** {{focus_area}}
-      **Business Context:** This analysis will inform product decisions and strategic priorities
+      **Files Discovered:** {{discovered_files}}
       
-      **Affinity Mapping Process:**
+      **Research Data:**
       
-      **Step 1: Extract Individual Insights**
-      Read through all data and extract discrete observations, quotes, behaviors, and pain points. Focus on:
-      - Direct user quotes that reveal needs, frustrations, or motivations
-      - Observed behaviors and interaction patterns
-      - Emotional reactions and sentiment
-      - Functional needs and task breakdowns
-      - System/process gaps and opportunities
+      {{combined_file_content}}
       
-      **Step 2: Look for Natural Groupings**
-      Group related insights based on:
-      - Similar user needs or goals
-      - Common emotional experiences
-      - Related functional problems
-      - Shared behavioral patterns
-      - Connected system touchpoints
+      ============================================================
+      AFFINITY MAPPING INSTRUCTIONS
+      ============================================================
       
-      **Step 3: Identify Strategic Patterns**
-      Focus on patterns that reveal:
-      - Unmet user needs with business impact
-      - Emotional barriers to adoption or success
-      - Process inefficiencies affecting multiple users
-      - Opportunities for competitive advantage
-      - Systemic issues requiring strategic response
+      STEP 1: EXTRACT ALL QUOTES AND FINDINGS
+      Read through ALL source data and extract:
+      - Direct participant quotes (with participant ID)
+      - Pain points (with severity)
+      - Opportunities identified
+      - Insights about user behavior
+      - Positive feedback
+      - Emotional moments
       
-      **Output Format:**
+      STEP 2: CLUSTER BY SIMILARITY
+      Group related items based on:
+      - Similar problems or frustrations
+      - Related user needs
+      - Connected behaviors or mental models
+      - Shared emotional experiences
       
-      **EXTRACTED INSIGHTS** (30-50 individual items)
+      STEP 3: NAME EACH CLUSTER
+      Create theme names that:
+      - Are specific to THIS study (not generic)
+      - Describe the actual user tension or need
+      - Use participant language where possible
       
-      **User Quotes & Direct Feedback:**
-      • "Quote about specific need or frustration" - P1 (context)
-      • "Quote about emotional reaction or concern" - P3 (context)
-      • "Quote about desired outcome or expectation" - P2 (context)
+      ============================================================
+      OUTPUT FORMAT - OPTION D: INDENTED CARDS
+      ============================================================
       
-      **Observed Behaviors:**
-      • Specific behavior pattern observed - Context/frequency
-      • User interaction or workaround - Context/impact
+      # 🧠 Affinity Map: {{selected_study}}
       
-      **Pain Points & Friction:**
-      • Specific friction point - Where it occurs/impact
-      • System limitation or gap - User effect
-      
-      **Needs & Motivations:**
-      • Underlying need expressed - How it manifests
-      • Goal or desired outcome - Current barriers
+      **Analysis Date:** {{current_date}}
+      **Focus Area:** {{focus_area}}
       
       ---
       
-      **NATURAL CLUSTERS**
+      ## 📊 Data Summary
       
-      **Cluster A: [Descriptive Label]**
-      ▸ "Direct quote supporting this cluster" - P1
-      ▸ "Related quote showing same pattern" - P3
-      ▸ Observed behavior: [Specific behavior] - Multiple participants
-      ▸ "Another supporting quote" - P2
-      ▸ System gap: [Specific gap] - Affects workflow
-      
-      **Cluster Connection:** [What unites these insights - the underlying user need, emotional experience, or systemic issue]
-      **Strategic Implication:** [Why this matters for product/business decisions]
-      
-      **Cluster B: [Descriptive Label]**
-      [Continue same format...]
+      | Source | Count |
+      |--------|-------|
+      | Pain Points | [count from source] |
+      | Opportunities | [count from source] |
+      | Insights | [count from source] |
+      | Quotes | [count from source] |
       
       ---
       
-      **AFFINITY MAPPING SUMMARY**
+      ## 🎯 Theme 1: [Specific Theme Name from Data]
       
-      **Clustering Approach:** [How clusters naturally emerged - inductive process description]
-      **Pattern Strength:** [How consistently patterns appeared across participants]
-      **Strategic Focus Areas:** [Which clusters represent highest-impact opportunities]
-      **Cross-Cluster Connections:** [How different clusters relate or reinforce each other]
+      **The Pattern:** [1-2 sentence summary of what unites these findings]
+      
+      ---
+      
+      **💬 Quote**
+      > "[Exact quote from participant]"
+      > 
+      > *— PT001*
+      
+      ---
+      
+      **💬 Quote**
+      > "[Another related quote]"
+      > 
+      > *— PT002*
+      
+      ---
+      
+      **🔴 Pain Point: [Title from source]**
+      - Severity: [from source]
+      - Participants: [who experienced this]
+      - Context: [brief description]
+      
+      ---
+      
+      **💡 Insight: [Title from source]**
+      - [Description of the insight]
+      - Type: [insight type]
+      - Source: [participant]
+      
+      ---
+      
+      **Evidence Strength:** [X] items from [Y] participants
+      
+      **Strategic Implication:** [What this means for product decisions]
+      
+      ---
+      
+      ## 🎯 Theme 2: [Specific Theme Name from Data]
+      
+      **The Pattern:** [1-2 sentence summary]
+      
+      ---
+      
+      [Same card format - 3-6 items with quotes, pain points, insights]
+      
+      ---
+      
+      ## 🎯 Theme 3: [Specific Theme Name from Data]
+      
+      [Same format]
+      
+      ---
+      
+      ## 🟢 What's Working Well
+      
+      **The Pattern:** [What users found successful or satisfying]
+      
+      ---
+      
+      **✅ [Positive Finding Title]**
+      > "[Supporting quote]"
+      > 
+      > *— PT00X*
+      
+      ---
+      
+      **✅ [Another Positive Finding]**
+      > "[Supporting quote]"
+      > 
+      > *— PT00X*
+      
+      ---
+      
+      ## 📈 Theme Strength Analysis
+      
+      | Theme | Evidence Count | Participants | Priority |
+      |-------|---------------|--------------|----------|
+      | [Theme 1 name] | [X items] | [PT001, PT002...] | 🔴 Critical |
+      | [Theme 2 name] | [X items] | [PT001, PT003...] | 🟡 High |
+      | [Theme 3 name] | [X items] | [PT002...] | 🟡 Medium |
+      
+      ---
+      
+      ## 🚀 Recommended Actions
+      
+      Based on the affinity clusters above:
+      
+      ---
+      
+      **1. [Action Title]** — Addresses: [theme name]
+      
+      - **What:** [specific action]
+      - **Why:** [evidence from clustering]
+      - **Priority:** [High/Medium/Low]
+      
+      ---
+      
+      **2. [Action Title]** — Addresses: [theme name]
+      
+      - **What:** [specific action]
+      - **Why:** [evidence from clustering]
+      - **Priority:** [High/Medium/Low]
+      
+      ---
+      
+      **3. [Action Title]** — Addresses: [theme name]
+      
+      - **What:** [specific action]
+      - **Why:** [evidence from clustering]
+      - **Priority:** [High/Medium/Low]
+      
+      ---
+      
+      ## 🔗 Cross-Theme Connections
+      
+      [Describe how themes relate to each other - are some pain points connected? Do insights explain pain points?]
+      
+      ---
+      
+      ## ✅ Validation Checklist
+      
+      - All quotes are verbatim from source data: [Yes/No]
+      - All participant IDs exist in source: [Yes/No]
+      - All pain points traced to source: [Yes/No]
+      - No fabricated themes or findings: [Yes/No]
+      
+      ---
+      
+      *Generated by Qori Research Synthesis • {{current_date}}*
+      
+      ============================================================
+      QUALITY REQUIREMENTS
+      ============================================================
+      
+      Before outputting, verify:
+      - Every quote appears EXACTLY in the source data
+      - Every participant ID (PT001, etc.) exists in source
+      - Theme names are specific to THIS study, not generic
+      - No mention of unrelated apps/products/studies
+      - Evidence counts are accurate
+      - If source data is empty, output the insufficient data message instead
+      
+      WRONG theme names (too generic):
+      - "Simplify Complex Processes"
+      - "Personalize User Experiences"
+      - "Enhance Accessibility"
+      
+      RIGHT theme names (specific to data):
+      - "Unlabeled Buttons Block Screen Reader Users"
+      - "Hidden Actions Require Exhaustive Search"
+      - "Appointment Scheduling Path Unclear"
+      
+      Return the complete affinity map. No preamble.
 
-  # Convert clusters to strategic themes
-  - task_id: "theme_identification"
-    prompt: |
-      As a Senior UX Strategist, convert affinity clusters into strategic theme labels:
-      
-      **Affinity Clusters:** {{ai_generated.affinity_clustering}}
-      **Study Context:** {{selected_study}}
-      **Focus Area:** {{focus_area}}
-      **Strategic Objective:** Transform clusters into actionable themes that inform product decisions
-      
-      For each cluster, create a theme that:
-      1. Captures the core user tension or need (not just problems)
-      2. Suggests strategic direction or opportunity
-      3. Connects to business outcomes and user value
-      4. Uses language that stakeholders can act upon
-      
-      **Format each theme as:**
-      **Theme [X]: "[Specific user tension or strategic need]"**
-      - **Strategic Insight:** [What this reveals about user strategy or business opportunity]
-      - **User Impact:** [How this affects users' success and satisfaction]
-      - **Business Implication:** [Why this matters for product/business decisions]
-      - **Evidence Strength:** [How strongly this pattern appears in the data]
+output_template: |
+  {{ai_generated.affinity_mapping_complete}}
 
-  # Map themes back to evidence
-  - task_id: "quote_clustering"
-    prompt: |
-      As a Senior UX Strategist, map themes back to their strongest supporting evidence:
-      
-      **Identified Themes:** {{ai_generated.theme_identification}}
-      **Original Affinity Clusters:** {{ai_generated.affinity_clustering}}
-      
-      For each theme, select the strongest supporting evidence from the original clusters:
-      
-      1. **Choose 4-6 most compelling pieces of evidence** per theme
-      2. **Prioritize direct user quotes** over researcher observations
-      3. **Include participant context** when available (P1, P3, etc.)
-      4. **Show evidence diversity** - different participants, different contexts
-      5. **Maintain quote integrity** - use complete thoughts, not fragments
-      6. **Demonstrate theme coherence** - show how evidence naturally supports the theme
-
-  # Generate strategic insights
-  - task_id: "insight_generation"
-    prompt: |
-      As a Senior UX Strategist, develop strategic insights and emotional dimensions for each theme:
-      
-      **Themes with Evidence:** {{ai_generated.quote_clustering}}
-      **Study Context:** {{selected_study}}
-      **Focus Area:** {{focus_area}}
-      
-      For each theme, generate:
-      1. **Key Strategic Insight:** One concise statement revealing user behavior and business opportunity
-      2. **Emotional Dimension:** Specific emotions users experience and why
-      3. **Business Impact:** How this theme affects business outcomes
-      4. **User Success Factor:** How this theme affects users' ability to accomplish their goals
-
-  # Generate actionable opportunities
-  - task_id: "opportunity_generation"
-    prompt: |
-      As a Senior UX Strategist, generate actionable opportunities for each theme:
-      
-      **Themes with Insights:** {{ai_generated.insight_generation}}
-      **Study Context:** {{selected_study}}
-      **Focus Area:** {{focus_area}}
-      
-      For each theme, generate:
-      1. **Primary Opportunity:** One concrete, actionable response that addresses the user tension
-      2. **Implementation Approach:** Specific steps teams could take
-      3. **Success Metrics:** How to measure if the opportunity addresses the theme
-      4. **Strategic Priority:** High/Medium/Low based on user impact and business value
-
-# Processing workflow
-processing_workflow:
-  1. validate_slack_modal_inputs
-  2. discover_files_from_study_selection
-  3. calculate_initial_quality_assessment
-  4. validate_discovered_files
-  5. combine_selected_files_with_truncation
-  6. execute_file_discovery_summary
-  7. execute_affinity_clustering
-  8. execute_theme_identification
-  9. execute_quote_clustering
-  10. execute_insight_generation
-  11. execute_opportunity_generation
-  12. format_slack_output
-  13. format_github_output
-  14. save_to_analysis_folder
-  15. send_team_notifications
-
-# Output configuration
 output_options:
   default_delivery: "slack_and_file"
   slack_format: "affinity_focused"
   file_format: "github_markdown"
   path: "04-analysis/affinity-mapping/"
   filename: "{{study_folder}}_affinity_mapping_{{current_date}}.md"
-
-# Slack output template
-output_template: |
-  🧠 **Affinity Mapping Complete**
-
-  **Study:** {{selected_study}}
-  **Analysis:** {{max_themes}} themes identified from {{ai_generated.file_discovery_summary.participant_count}} participants
-
-  ---
-
-  ## **Key Themes**
-
-  {{ai_generated.theme_identification}}
-
-  ---
-
-  ## **Strategic Insights**
-
-  {{ai_generated.insight_generation}}
-
-  ---
-
-  ## **Opportunities**
-
-  {{ai_generated.opportunity_generation}}
-
-  ---
-
-  **What do you think?** Reply in thread:
-  • Which themes feel most actionable?
-  • Any themes that need more investigation?  
-  • Ready to move forward with the recommended opportunities?
-
-  📋 [View detailed report with evidence]({{github_file_link}})
-
-# GitHub markdown file template
-github_file_template: |
-  # 🧠 Affinity Mapping Analysis Report
   
-  ---
-  
-  ## 📋 **Study Overview**
-  
-  **Study:** {{selected_study}}  
-  **Analysis Date:** {{current_date}}  
-  **Researcher:** {{researcher_contact}}  
-  **Focus Area:** {{focus_area}}  
-  **Analysis Version:** {{analysis_version}}
-  
-  ---
-  
-  ## 📊 **Data Quality Assessment**
-  
-  {{ai_generated.file_discovery_summary}}
-  
-  ---
-  
-  ## 🔍 **Affinity Mapping Process**
-  
-  {{ai_generated.affinity_clustering}}
-  
-  **Methodology:** Inductive clustering approach - patterns emerged naturally from data rather than predetermined categories.
-  
-  ---
-  
-  ## 🎯 **Key Themes Identified**
-  
-  {{ai_generated.theme_identification}}
-  
-  ---
-  
-  ## 💬 **Supporting Evidence**
-  
-  {{ai_generated.quote_clustering}}
-  
-  ---
-  
-  ## 💡 **Strategic Insights & Emotional Dimensions**
-  
-  {{ai_generated.insight_generation}}
-  
-  ---
-  
-  ## 🚀 **Actionable Opportunities**
-  
-  {{ai_generated.opportunity_generation}}
-  
-  ---
-  
-  ## 📚 **Methodology Notes**
-  
-  **Analysis Approach:** This affinity mapping analysis used an inductive clustering methodology where individual observations and quotes were first extracted from research data, then naturally grouped based on similarity before theme identification. This bottom-up approach ensures themes emerge from data patterns rather than researcher assumptions.
-  
-  **Quality Controls:**
-  - ✅ Bias detection analysis performed
-  - ✅ Source attribution maintained for all quotes
-  - ✅ Privacy compliance verified
-  
-  ---
-  
-  ## 📞 **Contact & Follow-up**
-  
-  **Lead Researcher:** {{researcher_contact}}  
-  **Study Channel:** {{study_channel}}  
-  **Questions?** Reply in the study channel or contact the research team directly.
-  
-  **Related Analyses:** Consider running complementary synthesis methods:
-  - 🗺️ Journey Mapping - to understand process flow
-  - 👥 Persona Generation - to create user archetypes  
-  - 🎯 Jobs to be Done - to identify functional needs
-  - 🐛 Usability Issues - to prioritize interface problems
-  - 💡 Design Opportunities - to identify specific improvements
-  
-  ---
-  
-  *Generated by Qori Research Synthesis • {{current_date}} • Version {{analysis_version}}*
+  delivery:
+    github:
+      enabled: true
+      commit_message: "🧠 Affinity mapping - {{selected_study}} - {{current_date}}"
+      
+    slack:
+      enabled: true
+      message_preview: |
+        🧠 **Affinity Mapping Complete**
+        
+        **Study:** {{selected_study}}
+        **Focus Area:** {{focus_area}}
+        
+        Themes identified - see full map below.
 
 # Auto-generated variables
 auto_variables:
-  - max_themes: extract_theme_count(ai_generated.affinity_clustering) || 3
+  - max_themes: extract_theme_count(ai_generated.affinity_mapping_complete) || 3
   - current_date: new Date().toISOString().split('T')[0]
   - analysis_version: generate_version_number() || "v1.0"
-  - github_file_link: generate_github_link(study_name, current_date)
+  - github_file_link: generate_github_link(selected_study, current_date)
+
+quality_assurance:
+  require_source_grounding: true
+  require_verbatim_quotes: true
+  require_participant_ids: true
+  reject_generic_themes: true
+  validate_evidence_counts: true
+  check_for_hallucination: true
+  
+  hallucination_indicators:
+    flag_if_mentions:
+      - "mobile banking"
+      - "fitness app"
+      - "recipe"
+      - "e-commerce"
+      - "social media platform"
+    unless_in_source: true
 
 notify:
   - role: team
     action: "Affinity mapping completed"
     channel: "{{study_channel}}"
-    message: "{{researcher_contact}} just completed affinity mapping for {{selected_study}}. {{max_themes}} themes identified - check it out!"
+    message: "{{researcher_contact}} completed affinity mapping for {{selected_study}}. {{max_themes}} themes identified."
 
-output_use: |
-  Slack-Native Affinity Mapping with Senior UX Strategy approach automatically discovers research files 
-  from selected study folders, performs inductive clustering analysis to identify natural patterns, 
-  then converts clusters into strategic themes with business implications. Outputs concise 
-  Slack summaries focused on themes and opportunities, plus detailed GitHub markdown reports 
-  for stakeholder sharing and documentation.
+notes: |
+  v3.0 Changes:
+  - Added critical grounding rules at top of prompt
+  - Added "insufficient data" fallback if source is empty
+  - Changed to Option D format (Indented Cards with dividers) for GitHub rendering
+  - Required specific theme names (not generic consultant-speak)
+  - Added evidence strength tracking per theme
+  - Added cross-theme connections section
+  - Added validation checklist
+  - Added hallucination detection in quality_assurance
+  - Single task instead of chained tasks (prevents cascade hallucination)
+  - Added "What's Working Well" section for positive findings
+  - Added Theme Strength Analysis table
+  - Preserved original variables from v2.1
