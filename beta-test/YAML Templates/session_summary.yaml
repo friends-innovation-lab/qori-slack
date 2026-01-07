@@ -1,7 +1,7 @@
 id: analyze_notes
 name: analyze_session_notes
 label: "📝 Analyze Notes"
-version: v1.2
+version: v1.3
 description: Analyze session notes and transcript to generate comprehensive session summary with pain points, opportunities, insights, and recommendations
 
 author: Research Ops Team
@@ -157,6 +157,18 @@ ai_generation_tasks:
 
       ---
 
+      ## 👤 Participant Context
+
+      In 2-3 sentences, summarize key context about this participant that frames their feedback:
+      - Relevant background (military service, disability, experience level)
+      - How they use the app (frequency, primary tasks)
+      - Assistive technology or accessibility needs
+      - Any other context that helps interpret their feedback
+
+      If insufficient context available, output: *Limited participant context available in sources.*
+
+      ---
+
       ## 🔴 Top Pain Points
 
       Extract the TOP 3-5 most critical issues the participant experienced.
@@ -180,9 +192,30 @@ ai_generation_tasks:
 
       If no pain points found, output: *No clear pain points were documented in the available sources.*
 
+      ## 🟢 What Worked Well
+
+      Identify 1-3 aspects of the experience that worked smoothly for the participant.
+
+      Look for:
+      - Tasks completed without struggle
+      - Positive comments or relief expressed
+      - Features participant praised
+      - Patterns that supported their workflow
+      - Moments where expectations were met
+
+      Why this matters: Understanding what works helps teams replicate successful patterns and protects good features from being changed.
+
+      Format each as:
+      **[Brief Title]**
+      [1-2 sentence description of what worked and why]
+
+      If no positive moments identified, output: *No explicit positive feedback was captured in the available sources.*
+
       ## 🟡 Key Opportunities
 
-      Identify the TOP 2-3 opportunities for improvement based on participant struggles and requests.
+      Identify 2-4 DIVERSE opportunities for improvement based on participant struggles and requests.
+
+      IMPORTANT: Each opportunity should address a DIFFERENT aspect of the experience. Do not list multiple opportunities about the same issue.
 
       How to identify opportunities (these are INFERENCES you should make):
       - Participant says they wish something existed = Direct opportunity
@@ -191,11 +224,15 @@ ai_generation_tasks:
       - Participant suggests a solution = Direct opportunity
       - Participant compares unfavorably to other apps = Opportunity to match expectations
       - Participant uses workaround = Opportunity to support that need directly
+      - Something worked well = Opportunity to apply that pattern elsewhere
 
-      Examples of inference:
-      - Participant could not find Schedule button = Opportunity to add visible scheduling action
-      - Participant said buttons need labels = Opportunity for accessibility remediation
-      - Participant had to scroll to find Edit = Opportunity to reposition primary actions
+      Categories to consider (aim for variety):
+      - Accessibility improvements
+      - Navigation and information architecture
+      - UI placement and visibility
+      - Content and labeling
+      - Feature gaps
+      - Standards and consistency
 
       Assign impact:
       - High Impact = Affects core tasks or large user segments
@@ -210,7 +247,13 @@ ai_generation_tasks:
 
       ## 💡 Key Insights
 
-      Identify the TOP 2-3 insights about user behavior, mental models, or patterns.
+      Identify 2-4 DIVERSE insights about user behavior, mental models, or patterns.
+
+      IMPORTANT: 
+      - Insights are about the USER, not the interface
+      - Each insight should reveal something DIFFERENT
+      - Do NOT repeat the same theme as your Opportunities (e.g., if you have an opportunity about labeling, find insights about OTHER aspects)
+      - Include at least one insight about what WORKED WELL if present in sources
 
       How to identify insights (these are INFERENCES about the user):
       - How participant EXPECTED things to work = Mental model insight
@@ -219,15 +262,11 @@ ai_generation_tasks:
       - Workarounds or coping strategies = Adaptation pattern insight
       - What surprised participant vs what felt natural = Expectation gap insight
       - Expertise or context that shaped experience = User context insight
-
-      Examples of inference:
-      - Participant guessed Prescriptions would be under Health = Mental model matches IA
-      - Participant navigated systematically through all elements = Screen reader exhaustive search pattern
-      - Participant compared to commercial apps = Benchmarking against consumer standards
-      - Participant demonstrated VoiceOver expertise = High assistive tech proficiency
+      - What worked smoothly and WHY = Success pattern insight
+      - How participant compared to other experiences = Benchmarking insight
 
       Insight types to use:
-      Mental Model, Behavior Pattern, User Expectations, Navigation Strategy, Accessibility Need, User Context, Expertise Level, Workflow Pattern
+      Mental Model, Behavior Pattern, User Expectations, Navigation Strategy, Accessibility Need, User Context, Expertise Level, Workflow Pattern, Success Pattern, Benchmarking
 
       Format each as:
       **[Insight Type] - [Descriptive Title]**
@@ -237,13 +276,24 @@ ai_generation_tasks:
 
       ## 💬 Top Quotes
 
-      Extract 3-5 of the most impactful VERBATIM participant quotes.
+      Extract 4-6 of the most impactful VERBATIM participant quotes.
 
       Requirements:
       - Must appear exactly as written in sources
       - Include timestamps in format [MM:SS] or [HH:MM:SS] if available
-      - Choose quotes that illustrate pain points, needs, or reactions
-      - Prioritize specific, revealing statements
+      - Choose quotes that illustrate pain points, needs, OR reactions
+
+      Prioritize quotes that are:
+      - Emotionally resonant (frustration, satisfaction, surprise)
+      - Specific and concrete (not generic)
+      - Quotable in stakeholder presentations
+      - Representative of key themes
+
+      Aim for VARIETY across:
+      - At least one quote showing frustration or struggle
+      - At least one quote showing what the participant wants or needs
+      - At least one quote that would resonate with stakeholders
+      - If available, one quote showing something positive or what worked
 
       Format each as:
       [number]. *"[Exact quote from sources]"* [timestamp]
@@ -382,6 +432,15 @@ output_use: |
   extract pain points, opportunities, insights, quotes, and create action items.
 
 notes: |
+  v1.3 Changes:
+  - Added Participant Context section for stakeholder framing
+  - Added What Worked Well section for balanced analysis
+  - Required DIVERSITY in Opportunities (different aspects, not all same theme)
+  - Required DIVERSITY in Insights (avoid redundancy with Opportunities)
+  - Added Success Pattern insight type
+  - Increased quote target to 4-6 with variety requirements
+  - Added guidance to find positive patterns and what worked
+  
   v1.2 Changes:
   - Fixed YAML parsing errors with colons and quotes in prompt
   - Improved Opportunities section with inference guidance
