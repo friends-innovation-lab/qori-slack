@@ -136,14 +136,35 @@ ai_generation_tasks:
       **SUPPORTING SOURCES - Observer Notes:**
       {{notes_content}}
       
-      **Your Task:**
-      Create a complete session summary document by extracting and synthesizing findings from the coded transcript and observer notes.
+      ---
       
-      CRITICAL INSTRUCTIONS:
-      - Use the coded transcript as the PRIMARY source - it already has identified pain points, opportunities, and insights
-      - Use observer notes to add context, emotional moments, and additional patterns
-      - Synthesize both sources into cohesive findings
-      - Prioritize by severity/impact already indicated in coded transcript
+      ## ⚠️ CRITICAL GROUNDING RULES - READ FIRST
+      
+      You are an EXTRACTOR, not a GENERATOR. Your job is to find and organize what EXISTS in the sources above.
+      
+      **ABSOLUTE REQUIREMENTS:**
+      1. ONLY include information that is EXPLICITLY stated in the provided sources
+      2. If a source section above is empty or contains only whitespace, treat it as unavailable
+      3. NEVER invent, assume, or generate content not present in the sources
+      4. Every pain point, opportunity, insight, and quote MUST be traceable to specific text in the sources
+      5. If you cannot find content for a section, use the designated fallback text
+      6. When in doubt, OMIT rather than fabricate
+      
+      **SOURCE PRIORITY:**
+      - If coded transcript is available: Use as PRIMARY source for pain points, quotes, and structured findings
+      - If coded transcript is empty/missing: Rely ONLY on observer notes; clearly note limited source availability
+      - Observer notes provide: Context, emotional observations, behavioral patterns, timestamps
+      
+      **QUOTE EXTRACTION RULES:**
+      - ONLY use quotes that appear VERBATIM in the sources with quotation marks
+      - If no direct quotes exist in sources, output: "*No verbatim participant quotes were captured in the available sources.*"
+      - NEVER paraphrase and present as a quote
+      - NEVER generate plausible-sounding quotes
+      
+      ---
+      
+      **Your Task:**
+      Extract and synthesize findings from the sources above. If sources are limited, produce a shorter summary rather than inventing content.
       
       **OUTPUT THE COMPLETE DOCUMENT WITH THIS EXACT STRUCTURE:**
       
@@ -158,92 +179,100 @@ ai_generation_tasks:
       Extract the TOP 3-5 most critical issues the participant experienced.
       
       Requirements:
-      - Identify from transcript what frustrated, blocked, or confused the participant
+      - ONLY include issues explicitly described in the sources
+      - Identify from transcript/notes what frustrated, blocked, or confused the participant
       - Assign severity: Critical > High > Medium > Low
       - Include specific context from session
       
       Format each as:
       **[Severity] - [Brief Title]**
-      [1-2 sentence description of the pain point with specific context]
+      [1-2 sentence description of the pain point with specific context FROM THE SOURCES]
+      
+      If no pain points are identifiable in the sources, output: "*No clear pain points were documented in the available sources.*"
       
       ## 🟡 Key Opportunities
       Extract the TOP 2-3 opportunities for improvement.
       
       Requirements:
-      - Look for what participant wished existed
-      - Identify gaps between expectations and reality
+      - ONLY include opportunities explicitly mentioned or clearly implied in sources
+      - Look for what participant wished existed or explicitly requested
+      - Identify gaps between expectations and reality AS DOCUMENTED
       - Note features participant tried to use but didn't exist
       - Assign impact: High Impact > Medium Impact > Quick Win
       
       Format each as:
       **[Impact Level] - [Brief Title]**
-      [1-2 sentence description of the opportunity]
+      [1-2 sentence description of the opportunity with source reference]
       
-      If no opportunities identified, output: "*No key opportunities were identified in this session.*"
+      If no opportunities identified, output: "*No key opportunities were identified in the available sources.*"
       
       ## 💡 Key Insights
       Extract the TOP 2-3 insights about user behavior, mental models, or patterns.
       
       Requirements:
-      - Reveal how the participant thinks or works
-      - Identify mental models or assumptions
-      - Note workflow patterns or strategies
-      - Highlight surprising or revealing behaviors
+      - ONLY include insights supported by specific observations in the sources
+      - Reveal how the participant thinks or works AS OBSERVED
+      - Identify mental models or assumptions DEMONSTRATED in the session
+      - Note workflow patterns or strategies DOCUMENTED by observers
       
       Format each as:
       **[Insight Type] - [Brief Title]**
-      [1-2 sentence description of the insight and its implications]
+      [1-2 sentence description of the insight and its implications, with source reference]
       
-      Insight types: Mental Model, Workflow Pattern, User Expectations, Behavior Pattern, etc.
+      Insight types: Mental Model, Workflow Pattern, User Expectations, Behavior Pattern, Accessibility Need, etc.
       
-      If no insights identified, output: "*No key insights were identified in this session.*"
+      If no insights identified, output: "*No key insights were identified in the available sources.*"
       
       ## 💬 Top Quotes
-      Extract 3-5 of the most impactful participant quotes from the transcript.
+      Extract 3-5 of the most impactful participant quotes.
       
-      Requirements:
-      - Use EXACT quotes (verbatim) from transcript
-      - Include timestamps in format [HH:MM:SS] or [MM:SS]
-      - Choose quotes that illustrate pain points, needs, or reactions
-      - Prioritize specific, revealing statements over generic ones
+      **CRITICAL:** 
+      - ONLY include quotes that appear VERBATIM in the source documents
+      - Look for text in quotation marks attributed to the participant
+      - Include timestamps if present in source, otherwise note [timestamp unavailable]
+      - If sources contain no verbatim quotes, use the fallback below
       
       Format each as:
-      [number]. *"[Exact quote from participant]"* [timestamp]
+      [number]. *"[EXACT quote from sources - copy precisely]"* [timestamp or location reference]
+      
+      If no verbatim quotes exist in sources, output: "*No verbatim participant quotes were captured in the available sources. Key participant sentiments from observer notes: [summarize observed reactions if available]*"
       
       ## ✅ Recommended Actions
-      Generate 3-5 prioritized action items for the team.
+      Generate 3-5 prioritized action items based ONLY on documented findings.
       
       Requirements:
+      - Each action must trace back to a specific finding extracted above
+      - Do not recommend actions for issues not documented in sources
       - Prioritize by severity and impact (Critical > Quick Win > High Impact)
       - Make actions specific and achievable
-      - Reference the specific findings
-      - Use action-oriented language
       
       Format each as:
-      - **[Priority Level]:** [Specific, actionable recommendation]
+      - **[Priority Level]:** [Specific recommendation] *(addresses: [which finding])*
+      
+      If insufficient findings to generate actions, output: "*Additional session data needed to generate specific recommendations.*"
       
       ## 📊 Analysis Overview
-      Create a summary statistics line.
       
-      Count approximate numbers from your analysis:
-      - Total issues/codes identified
-      - Pain points count
-      - Opportunities count
-      - Insights count
-      - Positive feedback mentions
-      - Usability issues count
+      **Sources Analyzed:**
+      - Coded Transcript: [Available/Not Available]
+      - Observer Notes: [X files analyzed]
       
-      Format as:
-      **Total Codes:** [number] ([x] pain points, [y] opportunities, [z] insights, [n] positive feedback, [m] usability issues)
+      **Extraction Summary:**
+      - Pain points extracted: [count or "None documented"]
+      - Opportunities identified: [count or "None documented"]  
+      - Insights captured: [count or "None documented"]
+      - Verbatim quotes found: [count or "None in sources"]
       
-      QUALITY REQUIREMENTS:
-      - Be specific and concrete
-      - Use participant's own words in quotes
-      - Prioritize by severity/impact
-      - Keep descriptions concise (1-2 sentences)
-      - Reference specific moments from session
-      - Maintain professional, objective tone
-      - Include the document header with participant_id, study_name, and session_date
+      **Data Quality Note:** [If sources were limited, note: "Summary based on observer notes only - coded transcript was not available" or similar]
+      
+      ---
+      
+      FINAL VERIFICATION - Before outputting, confirm:
+      ☐ Every pain point references specific source content
+      ☐ Every quote appears verbatim in sources (or fallback used)
+      ☐ Every insight traces to documented observation
+      ☐ No content was generated that cannot be found in sources above
+      ☐ Fallback text used for any empty sections
       
       Return the COMPLETE document starting with the header. No preamble or additional commentary.
     output_variable: "session_summary_output"
