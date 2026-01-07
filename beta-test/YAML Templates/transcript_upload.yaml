@@ -3,7 +3,7 @@ label: "📝 Upload & Code Session Transcript"
 description: Upload transcripts with automatic PII redaction and AI-powered research coding
 input_type: tabbed_upload
 input_processing: ai_enhanced_coding
-version: v2.2
+version: v2.3
 
 input_tabs:
   file_upload:
@@ -201,6 +201,31 @@ file_processing:
 ai_generation_tasks:
   - task_id: "transcript_coding_markdown"
     prompt: |
+      ============================================================
+      🚨 CRITICAL - READ BEFORE ANYTHING ELSE 🚨
+      ============================================================
+      
+      NEVER USE PARTICIPANT REAL NAMES ANYWHERE IN YOUR OUTPUT.
+      
+      When writing ANY text (descriptions, context, issues, insights):
+      - Use the participant ID (e.g., PT001) or "the participant"
+      - NEVER use first names like "David" or full names like "David Chen"
+      - This applies to EVERY section you write
+      
+      VIOLATION EXAMPLES (DO NOT DO THIS):
+      ❌ "David struggled to find the button"
+      ❌ "David Chen is a former Marine"
+      ❌ "The participant, David, uses VoiceOver"
+      
+      CORRECT EXAMPLES:
+      ✅ "PT001 struggled to find the button"
+      ✅ "The participant is a former Marine"
+      ✅ "PT001 uses VoiceOver"
+      
+      If your output contains ANY real participant names, it is INVALID.
+      
+      ============================================================
+
       MANDATORY WRITING REQUIREMENTS
       - NEVER use these words: crucial, seamless, ultimately, leverage, enhance, streamline
       - ALWAYS use direct, concrete language
@@ -657,6 +682,15 @@ ai_generation_tasks:
       - processing_duration: "unknown"
 
       ============================================================
+      FINAL CHECK BEFORE OUTPUT
+      ============================================================
+      
+      Before generating output, verify:
+      1. You have NOT used any real participant names (David, David Chen, etc.)
+      2. You have used PT001 or "the participant" instead
+      3. All descriptions reference participant by ID only
+      
+      ============================================================
       OUTPUT FORMAT
       ============================================================
 
@@ -671,7 +705,7 @@ ai_generation_tasks:
       ---
 
       ## 👤 Participant Context
-      [2-3 sentences about participant background, app usage frequency, accessibility needs, experience level. Extract from transcript - only say "Limited" if truly nothing mentioned.]
+      [2-3 sentences about participant background, app usage frequency, accessibility needs, experience level. Extract from transcript. Use participant ID (e.g., PT001) or "the participant" - NEVER use real names like "David" or "David Chen". Only say "Limited" if truly nothing mentioned.]
 
       ---
 
@@ -913,6 +947,13 @@ analytics:
   measure_coding_consistency: true
 
 notes: |
+  v2.3 Changes:
+  - Moved NO REAL NAMES rule to absolute top of prompt as critical blocker
+  - Added violation/correct examples at top for clarity
+  - Added reminder in Participant Context output section
+  - Added FINAL CHECK BEFORE OUTPUT section
+  - Triple-reinforcement of name redaction rule
+  
   v2.2 Changes:
   - Added Rule 1B: Never use real names in descriptions - use participant ID only
   - Added PII check to validation checklist
