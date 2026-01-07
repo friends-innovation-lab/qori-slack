@@ -6,13 +6,13 @@
 ---
 
 ## 🔴 Top Pain Points
-No clear pain points were documented in the available sources.
+*No clear pain points were documented in the available sources.*
 
 ## 🟡 Key Opportunities
-No key opportunities were identified in the available sources.
+*No key opportunities were identified in the available sources.*
 
 ## 💡 Key Insights
-No key insights were identified in the available sources.
+*No key insights were identified in the available sources.*
 
 ## 💬 Top Quotes
 *No verbatim participant quotes were captured in the available sources. Key participant sentiments from observer notes: [summarize observed reactions if available]*
@@ -24,7 +24,7 @@ No key insights were identified in the available sources.
 
 **Sources Analyzed:**
 - Coded Transcript: Not Available
-- Observer Notes: 0 files analyzed
+- Observer Notes: [Number of files analyzed]
 
 **Extraction Summary:**
 - Pain points extracted: None documented
