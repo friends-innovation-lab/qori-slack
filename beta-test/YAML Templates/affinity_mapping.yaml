@@ -249,9 +249,7 @@ ai_generation_tasks:
       
       # 🧠 Affinity Map: [Study name - infer from content if variable is blank]
       
-      **Analysis Date:** [Fill in actual date, e.g., January 7, 2026]
-      **Focus Area:** [Infer from content if variable is blank]
-      **Participants:** [List participant IDs found in source]
+      **Analysis Date:** [Fill in actual date] | **Focus Area:** [Infer from content if blank] | **Participants:** [List IDs]
       
       ---
       
@@ -486,34 +484,5 @@ notify:
     message: "{{researcher_contact}} completed affinity mapping for {{selected_study}}. {{max_themes}} themes identified."
 
 notes: |
-  v3.2 Changes:
-  - Fixed prompt leakage: moved QUALITY REQUIREMENTS before OUTPUT FORMAT section
-  - Added explicit "do not include this section in output" markers
-  - Added FINAL INSTRUCTIONS section with clear "output ends here" boundary
-  - Made placeholder text clearer: "[actual count]" instead of "[count]"
-  - Added explicit instruction to calculate actual percentages
-  
-  v3.1 Changes:
-  - Added metadata inference fallback (AI infers study name, focus area, date if variables blank)
-  - Added 70% evidence utilization requirement
-  - Added minimum 4 items per theme requirement
-  - Added clustering quality rules (same root problem = same cluster)
-  - Added "Evidence Used in Themes" to Data Summary table
-  - Added evidence utilization rate to validation checklist
-  - Added Opportunities to theme card format
-  - Added wrong/right clustering examples
-  - Added "same fix test" for clustering decisions
-  
-  v3.0 Changes:
-  - Added critical grounding rules at top of prompt
-  - Added "insufficient data" fallback if source is empty
-  - Changed to Option D format (Indented Cards with dividers) for GitHub rendering
-  - Required specific theme names (not generic consultant-speak)
-  - Added evidence strength tracking per theme
-  - Added cross-theme connections section
-  - Added validation checklist
-  - Added hallucination detection in quality_assurance
-  - Single task instead of chained tasks (prevents cascade hallucination)
-  - Added "What's Working Well" section for positive findings
-  - Added Theme Strength Analysis table
-  - Preserved original variables from v2.1
+  Session summaries are the ideal input for affinity mapping.
+  Minimum 3 participants recommended for meaningful clustering.
