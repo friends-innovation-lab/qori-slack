@@ -3,7 +3,7 @@ label: "📝 Upload & Code Session Transcript"
 description: Upload transcripts with automatic PII redaction and AI-powered research coding
 input_type: tabbed_upload
 input_processing: ai_enhanced_coding
-version: v2.1
+version: v2.2
 
 input_tabs:
   file_upload:
@@ -239,6 +239,18 @@ ai_generation_tasks:
       
       If the transcript mentions ANY of these, include them. Only output "Limited participant context" if the transcript truly contains ZERO context clues.
 
+      RULE 1B - PII IN DESCRIPTIONS: NEVER USE REAL NAMES
+      Throughout the ENTIRE document, replace participant names with their ID:
+      - Use "PT001" or "the participant" - NEVER "David" or "David Chen"
+      - This applies to: Participant Context, Pain Point descriptions, Insight descriptions, ALL text
+      - Quotes can remain verbatim (names in quotes are already redacted)
+      
+      WRONG: "David struggled to find the button"
+      RIGHT: "PT001 struggled to find the button" or "The participant struggled to find the button"
+      
+      WRONG: "David Chen is a former Marine with vision loss"
+      RIGHT: "PT001 is a former Marine with vision loss"
+
       RULE 2 - USABILITY ISSUES MUST CROSS-CODE FROM PAIN POINTS
       Every pain point that involves a UI element MUST ALSO appear in Usability Issues.
       
@@ -317,6 +329,13 @@ ai_generation_tasks:
         - Company names with [COMPANY]
         - Anything else sensitive with [REDACTED]
       - Redact inside quotes and speaker labels; preserve timestamps if present
+
+      CRITICAL - NAME REDACTION IN YOUR WRITING:
+      When YOU write descriptions, NEVER use the participant's real name.
+      - In Participant Context: "PT001 is a veteran..." NOT "David is a veteran..."
+      - In Pain Points: "The participant struggled..." NOT "David struggled..."
+      - In Insights: "PT001 employs trial-and-error..." NOT "David employs..."
+      - EVERYWHERE: Use participant ID or "the participant" - NEVER real names
 
       ============================================================
       SPEAKER NORMALIZATION
@@ -743,6 +762,7 @@ ai_generation_tasks:
       ---
 
       ## ✅ Validation Checklist
+      - No real names in descriptions: [Yes/No]
       - Pain points deduplicated: [Yes/No]
       - Usability issues cross-coded: [Yes/No] (usability_issues_count / pain_points_count)
       - Emotional journey captured: [Yes/No] (emotions_count)
@@ -893,6 +913,11 @@ analytics:
   measure_coding_consistency: true
 
 notes: |
+  v2.2 Changes:
+  - Added Rule 1B: Never use real names in descriptions - use participant ID only
+  - Added PII check to validation checklist
+  - Reinforced name redaction in PII section with explicit examples
+  
   v2.1 Changes:
   - Added MANDATORY ENFORCEMENT RULES section at top of prompt
   - Added Rule 1: Participant Context is mandatory (not just "Limited")
