@@ -2,7 +2,7 @@ id: journey_mapping
 name: run_journey_mapping
 
 label: 🧭 Journey Mapping
-version: "v3.7"
+version: "v3.8"
 
 description: >
   Turn raw user research into a clear, step-by-step journey map. Automatically discovers and analyzes 
@@ -225,45 +225,15 @@ ai_generation_tasks:
       
       ---
       
-      ## 📊 Executive Summary
+      ## At a Glance
       
-      | | |
-      |-----------|-------|
-      | 👤 **Primary User** | [Brief description - no names, use "Veterans who..." or participant IDs] |
-      | 🗺️ **Journey Scope** | [Start point] → [End point] |
-      | 📍 **Total Stages** | [3-6 stages based on data complexity] |
-      | 📈 **Data Confidence** | [High/Medium/Low] - [brief reason] |
+      > **[Primary user in one phrase]** | **[X] stages** | **Data:** PT00X, PT00X, PT00X
       
-      ### 🔥 Top Pain Points
-      | # | Pain Point | Source |
-      |---|------------|--------|
-      | 1 | [Pain point] | PT00X, 00:00:00 |
-      | 2 | [Pain point] | PT00X, 00:00:00 |
-      | 3 | [Pain point] | PT00X, 00:00:00 |
-      
-      ### 💡 Top Opportunities  
-      | # | Opportunity | Impact |
-      |---|-------------|--------|
-      | 1 | [Specific, actionable fix] | [High/Med/Low] |
-      | 2 | [Specific, actionable fix] | [High/Med/Low] |
-      | 3 | [Specific, actionable fix] | [High/Med/Low] |
-      
-      ---
-      
-      ## 👤 Primary User Profile
-      
-      > [2-3 sentences describing the primary user type based on data. Use "Veterans who..." or participant IDs, never real names]
-      
-      | 🎯 Goal | 🌍 Context |
-      |---------|-----------|
-      | [What they're trying to accomplish] | [What situation brings them to this journey] |
-      
-      **Key Characteristics:**
-      - ✓ [Characteristic from data with citation]
-      - ✓ [Characteristic from data with citation]
-      - ✓ [Characteristic from data with citation]
-      
-      <br>
+      | Priority | Pain Point | Opportunity |
+      |:--------:|------------|-------------|
+      | 🔴 | [Top pain point] — PT00X | [Specific fix] |
+      | 🔴 | [Second pain point] — PT00X | [Specific fix] |
+      | 🟡 | [Third pain point] — PT00X | [Specific fix] |
       
       ---
       
