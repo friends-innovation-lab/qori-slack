@@ -2,7 +2,7 @@ id: jobs_to_be_done
 name: extract_jobs_to_be_done
 
 label: 🎯 Jobs to be Done
-version: "v3.0"
+version: "v3.1"
 
 description: >
   Extract research-grounded Jobs-to-be-Done using the industry-standard
@@ -233,11 +233,22 @@ ai_generation_tasks:
       
       ## Methodology
       
-      **Framework:** Jobs-to-be-Done (Christensen/Moesta)
+      **Framework:** Jobs-to-be-Done (JTBD)
       
       **Key Principle:** Jobs are about the PROGRESS users are trying to make, not the tasks they perform. Jobs are stable over time even as technology changes.
       
       **Data Sources:** [List ALL participant IDs]
+      
+      ---
+      
+      ### References
+      
+      This analysis follows established JTBD methods:
+      
+      - **Clayton Christensen** — "Competing Against Luck" (2016), originator of JTBD theory
+      - **Bob Moesta** — "Demand-Side Sales 101", Switch interviews and Forces of Progress
+      - **Tony Ulwick** — Outcome-Driven Innovation (ODI), jobs-based innovation framework
+      - **Alan Klement** — "When Coffee and Kale Compete", JTBD for product design
       
       ---
       
