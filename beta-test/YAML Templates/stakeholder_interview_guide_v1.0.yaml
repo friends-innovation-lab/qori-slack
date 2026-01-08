@@ -1,0 +1,289 @@
+id: stakeholder_interview_guide
+name: create_stakeholder_interview_guide
+
+label: 🏛️ Stakeholder Interview Guide
+version: "v1.0"
+
+description: >
+  Generate a structured interview guide for internal stakeholder conversations.
+  Covers constraints, priorities, technical context, and cross-team dependencies.
+
+author: Qori R&D
+created: 2026-01-08
+last_updated: 2026-01-08
+
+input_type: slack_modal_form
+input_processing: form_based
+
+# LLM Configuration
+llm_config:
+  model: "gpt-4o"
+  temperature: 0.3
+  max_tokens: 3000
+
+# Slack modal input variables
+input_variables:
+  - selected_study
+  - stakeholder_role
+  - stakeholder_team
+  - interview_focus
+  - known_constraints
+  - research_questions
+  - session_duration
+
+# Stakeholder role options
+stakeholder_roles:
+  - value: "product_owner"
+    label: "Product Owner / PM"
+    focus: "Roadmap priorities, success metrics, business constraints"
+  - value: "engineering_lead"
+    label: "Engineering Lead"
+    focus: "Technical constraints, system architecture, feasibility"
+  - value: "design_lead"
+    label: "Design Lead"
+    focus: "Design system, patterns, accessibility requirements"
+  - value: "policy_sme"
+    label: "Policy / Compliance SME"
+    focus: "Regulatory requirements, legal constraints"
+  - value: "operations"
+    label: "Operations / Support"
+    focus: "Backstage processes, common issues, workarounds"
+  - value: "content"
+    label: "Content Strategist"
+    focus: "Content requirements, tone, terminology"
+  - value: "other"
+    label: "Other"
+    focus: "Custom focus area"
+
+# Interview focus areas
+interview_focus_areas:
+  - value: "constraints"
+    label: "🚧 Constraints & Blockers"
+    description: "Technical, policy, or resource limitations"
+  - value: "priorities"
+    label: "🎯 Strategic Priorities"
+    description: "What matters most to leadership/stakeholders"
+  - value: "processes"
+    label: "⚙️ Backstage Processes"
+    description: "What happens behind the scenes (for service blueprints)"
+  - value: "requirements"
+    label: "📋 Requirements & Dependencies"
+    description: "Must-haves, dependencies on other teams"
+  - value: "history"
+    label: "📜 Context & History"
+    description: "Why things are the way they are"
+
+# AI generation task
+ai_generation_tasks:
+  - task_id: "stakeholder_guide_complete"
+    prompt: |
+      You are creating a stakeholder interview guide for internal research.
+      
+      IMPORTANT: Generate the COMPLETE output following the format below. Do not stop early.
+      
+      ============================================================
+      RULES
+      ============================================================
+      
+      RULE 1: STAKEHOLDER ≠ USER
+      This is for interviewing INTERNAL team members (PMs, engineers, policy folks),
+      NOT end users. The goal is to understand constraints, priorities, and processes.
+      
+      RULE 2: OPEN-ENDED QUESTIONS
+      Questions should invite explanation, not yes/no answers.
+      - ❌ "Is the API slow?"
+      - ✅ "What are the biggest technical constraints affecting load time?"
+      
+      RULE 3: CONNECT TO USER RESEARCH
+      Questions should help contextualize or explain user research findings.
+      - "Users reported X — what's happening on the backend that might cause this?"
+      
+      RULE 4: NO LEADING QUESTIONS
+      Don't assume the answer in the question.
+      - ❌ "Why is the claims system so broken?"
+      - ✅ "Walk me through how a claim moves through the system."
+      
+      RULE 5: VERIFY BEFORE SUBMITTING
+      - Questions are open-ended
+      - Questions match the stakeholder's expertise
+      - Questions connect to research goals
+      - Time estimates are realistic
+      
+      ============================================================
+      INPUT
+      ============================================================
+      
+      **Study:** {{selected_study}}
+      **Stakeholder Role:** {{stakeholder_role}}
+      **Team:** {{stakeholder_team}}
+      **Interview Focus:** {{interview_focus}}
+      **Known Constraints:** {{known_constraints}}
+      **Research Questions to Inform:** {{research_questions}}
+      **Session Duration:** {{session_duration}} minutes
+      
+      ============================================================
+      NOW GENERATE THE COMPLETE OUTPUT BELOW
+      ============================================================
+      
+      # 🏛️ Stakeholder Interview Guide
+      
+      > **Study:** {{selected_study}} | **Role:** {{stakeholder_role}} | **Duration:** {{session_duration}} min
+      
+      ---
+      
+      ## Overview
+      
+      | | |
+      |---|---|
+      | **Stakeholder** | [Role/Title] from [Team] |
+      | **Focus Area** | [Primary focus of this interview] |
+      | **Goal** | [What we want to learn and why it matters for the research] |
+      
+      ---
+      
+      ## Before the Interview
+      
+      **Review these materials:**
+      - [ ] [Relevant document or finding to reference]
+      - [ ] [User research finding that needs stakeholder context]
+      
+      **Key user findings to explore:**
+      - [Finding 1 that stakeholder might explain]
+      - [Finding 2 that might relate to their domain]
+      
+      ---
+      
+      ## Interview Guide
+      
+      ### Opening (3-5 min)
+      
+      > *Build rapport and set context*
+      
+      - Thanks for taking the time. I'm researching [topic] and wanted to understand [their domain] better.
+      - Everything you share helps us design better solutions. No wrong answers.
+      - Okay to record? [If applicable]
+      
+      **Opener:** "To start, can you tell me about your role and how you interact with [relevant system/process]?"
+      
+      ---
+      
+      ### Section 1: [Focus Area Name] (X min)
+      
+      > *[Purpose of this section]*
+      
+      | # | Question | Follow-ups |
+      |---|----------|------------|
+      | 1 | [Primary question] | • [Probe] • [Probe] |
+      | 2 | [Primary question] | • [Probe] • [Probe] |
+      | 3 | [Primary question] | • [Probe] • [Probe] |
+      
+      **Listen for:** [What to pay attention to in their answers]
+      
+      ---
+      
+      ### Section 2: [Focus Area Name] (X min)
+      
+      > *[Purpose of this section]*
+      
+      | # | Question | Follow-ups |
+      |---|----------|------------|
+      | 1 | [Primary question] | • [Probe] • [Probe] |
+      | 2 | [Primary question] | • [Probe] • [Probe] |
+      
+      **Listen for:** [What to pay attention to]
+      
+      ---
+      
+      ### Section 3: Connecting to User Research (X min)
+      
+      > *Share relevant user findings and get stakeholder perspective*
+      
+      "In our user research, we heard [finding]. From your perspective..."
+      
+      | Finding | Question |
+      |---------|----------|
+      | [User pain point or behavior] | "What's happening on your end that might contribute to this?" |
+      | [User confusion or friction] | "Is this expected? What constraints led to this design?" |
+      
+      ---
+      
+      ### Closing (3-5 min)
+      
+      - "What haven't I asked about that you think I should know?"
+      - "Who else should I talk to about [topic]?"
+      - "Can I follow up if I have more questions?"
+      
+      **Thank them for their time.**
+      
+      ---
+      
+      ## After the Interview
+      
+      **Capture immediately:**
+      - [ ] Key constraints mentioned
+      - [ ] Surprising insights
+      - [ ] Connections to user research
+      - [ ] Follow-up questions
+      - [ ] Other stakeholders to interview
+      
+      ---
+      
+      ## Quick Reference
+      
+      | If they say... | Probe deeper with... |
+      |----------------|----------------------|
+      | "It's complicated" | "Walk me through it step by step" |
+      | "We can't do that" | "What would need to change to make it possible?" |
+      | "That's not my area" | "Who would know more about that?" |
+      | "Users don't understand" | "What do you think causes that confusion?" |
+      
+      ---
+      
+      ### References
+      
+      This guide follows stakeholder research best practices:
+      
+      - **Steve Portigal** — "Interviewing Users" (stakeholder interview techniques)
+      - **Erika Hall** — "Just Enough Research" (internal research methods)
+      - **Kim Goodwin** — "Designing for the Digital Age" (stakeholder alignment)
+      
+      ---
+      
+      *Generated by Qori • {{current_date}}*
+
+# Processing workflow
+processing_workflow:
+  1. validate_slack_modal_inputs
+  2. execute_stakeholder_guide_complete
+  3. format_slack_output
+  4. format_github_output
+  5. save_to_planning_folder
+
+# Output configuration
+output_options:
+  default_delivery: "slack_and_file"
+  slack_format: "interview_guide"
+  file_format: "github_markdown"
+  path: "00-planning/stakeholder-interviews/"
+  filename: "{{study_folder}}_stakeholder_guide_{{stakeholder_role}}_{{current_date}}.md"
+
+# Slack output template
+output_template: |
+  {{ai_generated.stakeholder_guide_complete}}
+
+# GitHub markdown file template  
+github_file_template: |
+  {{ai_generated.stakeholder_guide_complete}}
+
+notes: |
+  v1.0 Initial release:
+  - Structured guide for internal stakeholder interviews
+  - Role-specific question generation
+  - Connection to user research findings
+  - Follows Portigal, Hall, Goodwin methodologies
+  - Outputs to 00-planning folder (not analysis)
+
+output_use: |
+  Generate structured interview guides for internal stakeholders
+  (PMs, engineers, policy SMEs, etc.) to understand constraints,
+  priorities, and backstage processes that inform design decisions.
