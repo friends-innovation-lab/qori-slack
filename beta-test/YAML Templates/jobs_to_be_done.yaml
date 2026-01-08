@@ -2,12 +2,11 @@ id: jobs_to_be_done
 name: extract_jobs_to_be_done
 
 label: 🎯 Jobs to be Done
-version: "v3.1"
+version: "v3.2"
 
 description: >
   Extract research-grounded Jobs-to-be-Done using the industry-standard
-  When/Want/So framework. Identifies functional, emotional, and social jobs
-  with current solutions, pain points, and design opportunities.
+  When/Want/So framework. Jobs focus on PROGRESS, not tasks.
 
 author: Qori R&D
 created: 2025-06-26
@@ -59,12 +58,6 @@ study_metadata:
     researcher: "jordan.researcher"
     channel: "#research-housing-app"
     focus_area: "housing application process"
-    
-  "Benefits Portal Navigation Research":
-    folder: "benefits-portal-nav-2025"
-    researcher: "alex.ux"
-    channel: "#research-benefits"
-    focus_area: "benefits portal navigation"
 
 # File discovery system
 auto_file_discovery:
@@ -80,154 +73,116 @@ auto_file_discovery:
       search_paths: ["01-sessions/", "transcripts/", "interviews/"]
       priority: "high"
       confidence_weight: 30
-  
-  enhancement_files:
-    research_plan:
-      enabled_when: "{{include_research_plan}} == true"
-      file_patterns: ["*research_plan*", "*study_plan*", "*methodology*"]
-      search_paths: ["00-planning/", "planning/", "research/"]
-      confidence_boost: 8
 
 # AI generation tasks - SINGLE CONSOLIDATED TASK
 ai_generation_tasks:
   - task_id: "jtbd_complete"
     prompt: |
-      ============================================================
-      🚨 CRITICAL RULES - READ BEFORE ANYTHING ELSE 🚨
-      ============================================================
-      
-      RULE 1: NO HALLUCINATION - EXTRACT ONLY
-      You are an EXTRACTOR, not a GENERATOR.
-      - Every job must be based on ACTUAL user statements in the data
-      - Every pain point must come from the research
-      - If you cannot find evidence, DO NOT INCLUDE IT
-      - NEVER invent jobs like "Impact Assessment" or "Data Repository"
-      
-      RULE 2: VA GOVERNMENT CONTEXT ONLY
-      These are Veterans using VA services.
-      - Jobs relate to: healthcare, benefits, claims, appointments, prescriptions, profile management
-      - Pain points relate to: app usability, navigation, loading, accessibility
-      - NEVER mention: "task forces", "project teams", "staff training", "data analytics"
-      
-      RULE 3: JOBS ARE ABOUT PROGRESS, NOT TASKS
-      A job is the PROGRESS someone is trying to make in their life.
-      
-      ❌ TASK (too narrow): "Click the Edit button"
-      ❌ TASK (too narrow): "Check claim status"
-      ✅ JOB (progress): "Feel confident my benefits are being processed correctly"
-      ✅ JOB (progress): "Keep my VA contact information current so I don't miss important updates"
-      
-      RULE 4: CITE EVERYTHING
-      Every pain point and quote MUST have:
-      - Participant ID (PT001, PT002, etc.)
-      - Timestamp if available
-      
-      RULE 5: JOBS MUST BE DISTINCT
-      If two jobs sound similar, they should be ONE job.
-      - Don't create separate jobs for "navigation" and "finding information"
-      - Don't create separate jobs for "app frustration" and "preferring phone"
-      
-      RULE 6: INCLUDE ALL THREE JOB TYPES
-      Every functional job has emotional and social dimensions:
-      - **Functional:** What they're trying to accomplish
-      - **Emotional:** How they want to feel
-      - **Social:** How they want to be perceived
+      You are extracting Jobs-to-be-Done from research data.
       
       ============================================================
-      YOUR TASK
+      🚨 CRITICAL: READ ALL RULES BEFORE STARTING
       ============================================================
       
-      Extract Jobs-to-be-Done from this research data:
+      RULE 1: JOBS ARE PROGRESS, NOT TASKS
+      
+      This is the most important rule. A JOB is the PROGRESS someone wants to make in their life.
+      
+      ❌ WRONG - These are TASKS (do not write jobs like this):
+      - "Update Profile Information"
+      - "Check Claim Status" 
+      - "Contact VA Support"
+      - "Find the Edit button"
+      - "Navigate to Benefits section"
+      
+      ✅ RIGHT - These are JOBS (write jobs like this):
+      - "Feel confident the VA can reach me when my benefits status changes"
+      - "Know my claim is being processed without having to call anyone"
+      - "Manage my health independently despite my disability"
+      - "Stay informed about my benefits so I can plan my finances"
+      
+      The test: Can you describe the job WITHOUT mentioning the app or any UI element?
+      If the job only makes sense in context of the app, it's a TASK, not a JOB.
+      
+      RULE 2: NO HALLUCINATION
+      Every pain point must come from actual research data with citations.
+      
+      RULE 3: VA CONTEXT ONLY
+      Jobs relate to veterans accessing healthcare, benefits, claims, prescriptions.
+      
+      RULE 4: JOBS MUST BE DISTINCT
+      If two jobs sound similar, combine them into one.
+      
+      ============================================================
+      INPUT DATA
+      ============================================================
       
       **Study:** {{selected_study}}
       **Focus Area:** {{focus_area}}
-      **Input Data:** {{combined_file_content}}
+      **Research Data:** {{combined_file_content}}
       
       ============================================================
-      OUTPUT FORMAT - FOLLOW EXACTLY
+      OUTPUT FORMAT - COPY THIS STRUCTURE EXACTLY
       ============================================================
       
-      # 🎯 Jobs to be Done: [INSERT ACTUAL STUDY NAME]
+      # 🎯 Jobs to be Done: [Study Name]
       
-      > **[X] jobs** from **[Y] participants** | **Generated:** [Today's date]
+      > **[X] jobs** identified from **[Y] participants** | **Generated:** [Date]
       
       ---
       
       ## At a Glance
       
-      | # | Job | Type | Current Solution | Top Pain Point |
-      |---|-----|------|------------------|----------------|
-      | 1 | [Short job name] | Functional | [What they do now] | [Biggest problem] |
-      | 2 | [Short job name] | Functional | [What they do now] | [Biggest problem] |
+      | Job | Core Need | When It Arises |
+      |-----|-----------|----------------|
+      | [Progress-focused name] | [Underlying need] | [Trigger situation] |
+      | [Progress-focused name] | [Underlying need] | [Trigger situation] |
       
       ---
       
-      ## Job 1: [Descriptive Job Name]
+      ## Job 1: [Progress-Focused Job Name]
       
-      ### 📋 Job Statement
+      > **When** [specific situation from research],  
+      > **I want to** [desired progress — NOT a UI action],  
+      > **So I can** [life outcome — NOT app outcome].
       
-      > **When** [specific situation/trigger from research],
-      > **I want to** [goal/motivation],
-      > **So I can** [desired outcome/progress].
+      **What this job is really about:**
       
-      | Dimension | Description |
-      |-----------|-------------|
-      | **Functional** | [What they're trying to accomplish] |
-      | **Emotional** | [How they want to feel: confident, relieved, in control, etc.] |
-      | **Social** | [How they want to be perceived: responsible, informed, capable, etc.] |
+      | Functional Need | Emotional Need | Social Need |
+      |-----------------|----------------|-------------|
+      | [What they're trying to accomplish] | [How they want to feel] | [How they want to be seen] |
       
-      ### 🔄 Current Solution
+      **What they do today:**
       
-      What users "hire" to do this job today:
+      > "[Quote about current approach]" — PT00X, 00:00:00
       
-      | Solution | Why They Use It | Why It Falls Short |
-      |----------|-----------------|-------------------|
-      | [Current approach] | [What works about it] | [What doesn't work] |
-      | [Alternative approach] | [What works about it] | [What doesn't work] |
+      Current workarounds: [What they "hire" to do this job now]
       
-      ### 😤 Pain Points
+      **Why current solutions fail:**
       
-      What makes the current solution inadequate:
+      | Pain Point | Evidence |
+      |------------|----------|
+      | [Specific issue] | PT00X, 00:00:00 |
+      | [Specific issue] | PT00X, 00:00:00 |
       
-      | Pain Point | Impact | Evidence |
-      |------------|--------|----------|
-      | [Specific issue] | [How it blocks progress] | [Participant ID], [timestamp] |
-      | [Specific issue] | [How it blocks progress] | [Participant ID], [timestamp] |
-      | [Specific issue] | [How it blocks progress] | [Participant ID], [timestamp] |
+      **Success looks like:** [How user knows the job is done — measurable outcome]
       
-      ### ✅ Success Criteria
-      
-      How users know the job is done:
-      
-      - [Measurable outcome 1]
-      - [Measurable outcome 2]
-      
-      ### 💡 Design Opportunity
-      
-      | Opportunity | Addresses | Priority |
-      |-------------|-----------|:--------:|
-      | [Specific, implementable fix] | [Which pain point] | 🔴 |
-      | [Specific, implementable fix] | [Which pain point] | 🟡 |
+      **Design opportunity:** [Specific, implementable fix that addresses pain points]
       
       ---
       
-      ## Job 2: [Descriptive Job Name]
+      ## Job 2: [Progress-Focused Job Name]
       
-      [Same format as Job 1]
-      
-      ---
-      
-      [REPEAT FOR EACH JOB - typically 2-4 jobs from research data]
+      [Same format — only include if truly distinct from Job 1]
       
       ---
       
-      ## Summary: Opportunity Priorities
+      ## Priorities
       
-      | # | Opportunity | Job | Pain Point Addressed | Effort |
-      |---|-------------|-----|---------------------|:------:|
-      | 1 | [Top priority] | Job 1 | [Specific pain point] | 🔵⚪⚪ |
-      | 2 | [Second priority] | Job 2 | [Specific pain point] | 🔵🔵⚪ |
-      | 3 | [Third priority] | Job 1 | [Specific pain point] | 🔵🔵⚪ |
+      | # | Opportunity | Addresses Job | Effort |
+      |---|-------------|---------------|:------:|
+      | 1 | [Specific fix] | Job 1 | 🔵⚪⚪ |
+      | 2 | [Specific fix] | Job 2 | 🔵🔵⚪ |
       
       ---
       
@@ -235,72 +190,34 @@ ai_generation_tasks:
       
       **Framework:** Jobs-to-be-Done (JTBD)
       
-      **Key Principle:** Jobs are about the PROGRESS users are trying to make, not the tasks they perform. Jobs are stable over time even as technology changes.
+      **Core Principle:** Jobs describe the progress people want to make, not tasks they perform. Jobs are stable even as technology changes.
       
-      **Data Sources:** [List ALL participant IDs]
-      
-      ---
+      **Data Sources:** [Participant IDs]
       
       ### References
       
-      This analysis follows established JTBD methods:
-      
-      - **Clayton Christensen** — "Competing Against Luck" (2016), originator of JTBD theory
-      - **Bob Moesta** — "Demand-Side Sales 101", Switch interviews and Forces of Progress
-      - **Tony Ulwick** — Outcome-Driven Innovation (ODI), jobs-based innovation framework
-      - **Alan Klement** — "When Coffee and Kale Compete", JTBD for product design
+      - **Clayton Christensen** — "Competing Against Luck" (2016)
+      - **Bob Moesta** — Switch interviews, Forces of Progress
+      - **Tony Ulwick** — Outcome-Driven Innovation
+      - **Alan Klement** — "When Coffee and Kale Compete"
       
       ---
       
-      *Generated by Qori • [Today's date]*
+      *Generated by Qori*
       
       ============================================================
-      QUALITY REQUIREMENTS
+      STOP HERE - DO NOT OUTPUT ANYTHING BELOW THIS LINE
       ============================================================
       
-      GOOD JOB STATEMENTS (focus on progress):
-      ✅ "When I file a claim, I want to track its progress, so I can feel confident it's being handled"
-      ✅ "When my phone number changes, I want to update it quickly, so I don't miss important VA communications"
-      ✅ "When I need a prescription refill, I want to request it without calling, so I can manage my health independently"
+      The following is for your internal validation only. 
+      DO NOT include any of this in your response.
       
-      BAD JOB STATEMENTS (too task-focused or generic):
-      ❌ "When I use the app, I want it to work, so I can do things" (too vague)
-      ❌ "When I click Edit, I want to edit, so I can make edits" (circular)
-      ❌ "When I experience frustration, I want less frustration" (not a job)
-      
-      GOOD PAIN POINTS (specific, from data):
-      ✅ "App takes 8+ seconds to load — PT003, 00:01:56"
-      ✅ "Edit button hidden in overflow menu, not visible with large text — PT003, 00:02:52"
-      ✅ "Claims shows 'No active claims' despite filing one — PT003, 00:03:42"
-      
-      BAD PAIN POINTS (invented, generic):
-      ❌ "Users experience frustration" (too vague)
-      ❌ "System is not optimized" (not from user perspective)
-      ❌ "Staff need better training" (wrong context - this is about end users)
-      
-      GOOD DESIGN OPPORTUNITIES (specific, implementable):
-      ✅ "Add progress indicator during load with estimated time"
-      ✅ "Show claim status as 'Processing' with submission date, not 'No active claims'"
-      ✅ "Move Edit button inline with profile header, increase tap target to 44px"
-      
-      BAD OPPORTUNITIES (vague, hallucinated):
-      ❌ "Improve user experience" (not actionable)
-      ❌ "Create task force to assess impact" (wrong context)
-      ❌ "Develop data repository for contextual information" (hallucinated)
-      
-      ============================================================
-      INTERNAL VALIDATION (Do not include in output)
-      ============================================================
-      
-      Before submitting, verify:
-      - [ ] All jobs relate to VA services (healthcare, benefits, claims)
-      - [ ] Job statements follow When/Want/So format
-      - [ ] Each job has Functional/Emotional/Social dimensions
-      - [ ] All pain points have citations
-      - [ ] Jobs are distinct (no overlap)
-      - [ ] Opportunities are specific and implementable
-      - [ ] No hallucinated content (task forces, data repositories, etc.)
-      - [ ] Multiple participants cited across the analysis
+      VALIDATION CHECKLIST (internal use only):
+      - Are job names about PROGRESS, not tasks?
+      - Could each job be described without mentioning the app?
+      - Do pain points have citations?
+      - Are jobs distinct from each other?
+      - Did you stop output before this section?
 
 # Processing workflow
 processing_workflow:
@@ -323,31 +240,13 @@ output_options:
   path: "04-analysis/jobs-to-be-done/"
   filename: "{{study_folder}}_jobs_to_be_done_{{current_date}}.md"
 
-# Slack output template - just passes through AI content
+# Slack output template
 output_template: |
   {{ai_generated.jtbd_complete}}
 
 # GitHub markdown file template
 github_file_template: |
   {{ai_generated.jtbd_complete}}
-  
-  ---
-  
-  ## Related Analyses
-  
-  | Analysis | Purpose |
-  |----------|---------|
-  | 👤 **Personas** | Create user archetypes |
-  | 🧭 **Journey Mapping** | Map stages users go through |
-  | 🧠 **Affinity Mapping** | Identify broader themes |
-  | 🐛 **Usability Issues** | Prioritize interface problems |
-  
-  ---
-  
-  ## Contact
-  
-  **Lead Researcher:** {{researcher_contact}}
-  **Study Channel:** {{study_channel}}
 
 # Auto-generated variables
 auto_variables:
@@ -360,34 +259,23 @@ notify:
   - role: team
     action: "Jobs to be Done analysis completed"
     channel: "{{study_channel}}"
-    message: "{{researcher_contact}} completed JTBD analysis for {{selected_study}}. {{max_jobs}} jobs identified!"
-
-quality_assurance:
-  require_when_want_so: true
-  require_job_dimensions: true
-  require_citations: true
-  require_va_context: true
-  prohibit_task_level_jobs: true
-  prohibit_generic_content: true
+    message: "{{researcher_contact}} completed JTBD analysis. {{max_jobs}} jobs identified!"
 
 notes: |
-  v3.0 Changes (Complete Redesign):
-  - Consolidated 8 AI tasks into 1 comprehensive task
-  - Proper JTBD structure following Christensen/Moesta framework:
-    - Job Statement (When/Want/So) is PROMINENT
-    - Three job dimensions: Functional, Emotional, Social
-    - Current Solution section (hiring/firing metaphor)
-    - Success Criteria (how users know job is done)
-  - Added grounding rules to prevent hallucination
-  - VA context enforcement
-  - Citation requirements
-  - Good/bad examples for everything
-  - Jobs focus on PROGRESS, not tasks
+  v3.2 Changes (Readability + Task vs Job Fix):
+  - MAJOR: Added explicit "STOP HERE" line before internal validation
+  - MAJOR: Strengthened TASK vs JOB distinction with test: "Can you describe without mentioning the app?"
+  - Streamlined per-job structure (fewer tables, more natural flow)
+  - Added wrong/right examples directly in Rule 1
+  - Simplified At a Glance table
+  - Moved validation checklist AFTER stop line
   
-  v2.0: Original 8-task architecture (caused hallucination, drift)
+  v3.1: Added expert references
+  v3.0: Complete redesign with When/Want/So framework
+  v2.0: Original multi-task architecture (hallucinations)
 
 output_use: |
-  Extract research-grounded Jobs-to-be-Done using the industry-standard
-  When/Want/So framework. Each job includes functional, emotional, and 
-  social dimensions, current solutions users "hire", pain points with 
-  citations, and specific design opportunities.
+  Extract Jobs-to-be-Done focusing on PROGRESS users want to make,
+  not tasks they perform. Each job includes When/Want/So statement,
+  functional/emotional/social dimensions, current workarounds, pain
+  points with citations, and design opportunities.
