@@ -2,7 +2,7 @@ id: journey_mapping
 name: run_journey_mapping
 
 label: 🧭 Journey Mapping
-version: "v3.8"
+version: "v3.10"
 
 description: >
   Turn raw user research into a clear, step-by-step journey map. Automatically discovers and analyzes 
@@ -221,13 +221,11 @@ ai_generation_tasks:
       
       # 🧭 Journey Map: [INSERT ACTUAL STUDY NAME FROM INPUT]
       
-      > **[X] stages mapped** | **Confidence:** [High/Medium/Low] | **Generated:** [Use today's date]
+      > **Generated:** [Today's date] | **Data:** PT00X, PT00X, PT00X
       
       ---
       
-      ## At a Glance
-      
-      > **[Primary user in one phrase]** | **[X] stages** | **Data:** PT00X, PT00X, PT00X
+      ## Overview
       
       | Priority | Pain Point | Opportunity |
       |:--------:|------------|-------------|
@@ -277,7 +275,9 @@ ai_generation_tasks:
       | 🟡 | [Specific fix] | [Stage name] | `[Team]` | 🔵🔵⚪ |
       | 🟢 | [Specific fix] | [Stage name] | `[Team]` | 🔵⚪⚪ |
       
-      > **Legend:** 🔴 High Priority | 🟡 Medium | 🟢 Low | Effort: 🔵🔵🔵 High | 🔵🔵⚪ Med | 🔵⚪⚪ Low
+      > **Legend:** 🔴 High | 🟡 Medium | 🟢 Low — Effort: 🔵🔵🔵 High | 🔵🔵⚪ Med | 🔵⚪⚪ Low
+      
+      <br>
       
       ---
       
@@ -289,6 +289,8 @@ ai_generation_tasks:
       | 2 | [Question about prioritization or implementation] | [Team] |
       | 3 | [Question about cross-team collaboration needed] | All |
       
+      <br>
+      
       ---
       
       ## 📚 Methodology
@@ -298,6 +300,8 @@ ai_generation_tasks:
       **Approach:** Stage-by-stage analysis of user actions, emotions, pain points, and opportunities from qualitative research data.
       
       **Data Sources:** [List participant IDs used, e.g., PT001, PT002, PT003]
+      
+      <br>
       
       ---
       
