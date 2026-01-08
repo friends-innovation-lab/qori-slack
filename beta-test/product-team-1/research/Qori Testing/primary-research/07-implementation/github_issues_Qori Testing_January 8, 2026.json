@@ -1,0 +1,42 @@
+🛠 **GitHub Issues Created**
+
+**Study:** Qori Testing
+**Repository:** 
+
+[
+    {
+        "study": "Qori Testing",
+        "generated_date": "October 19, 2021",
+        "total_issues": 3,
+        "issues": [
+            {
+                "number": 1,
+                "title": "[Critical] Complex login process causing frustration",
+                "labels": ["research-finding", "critical", "accessibility"],
+                "priority": "Critical",
+                "effort": "Medium (3-5 days)",
+                "body": "## Problem\n\nComplex login process causing frustration for users due to confusion in selecting the correct password.\n\n## Evidence\n\n**Study:** Qori Testing\n**Severity:** Critical | **Affected:** 1 of 3 participants (33%)\n\n> \"I couldn't figure out which password to use, it was really confusing.\"\n> — PT002\n\n**Observed behavior:** PT002 struggled to navigate the login process, leading to frustration.\n\n## Acceptance Criteria\n\n- [ ] Provide clear instructions for selecting the correct password\n- [ ] Ensure guidance is easily accessible during the login process\n- [ ] Validate improvements with user testing\n\n## Implementation Notes\n\nReview the current login interface and provide visual cues to assist users in selecting the correct password.\n\n## Research Source\n\n[Link to research readout]\n\n---\n*Issue generated from research findings by Qori*"
+            },
+            {
+                "number": 2,
+                "title": "[High] Missing search functionality impacting efficiency",
+                "labels": ["research-finding", "high-priority", "navigation"],
+                "priority": "High",
+                "effort": "Medium (3-5 days)",
+                "body": "## Problem\n\nAbsence of search functionality hindering user efficiency and causing time wastage.\n\n## Evidence\n\n**Study:** Qori Testing\n**Severity:** High | **Affected:** 1 of 3 participants (33%)\n\n> \"I wish there was a search bar, it would have saved me a lot of time.\"\n> — PT002\n\n**Observed behavior:** PT002 expressed the need for a search bar to improve efficiency.\n\n## Acceptance Criteria\n\n- [ ] Implement a search bar feature for users to easily find information\n- [ ] Ensure the search functionality is intuitive and responsive\n- [ ] Test with participants to validate the impact on efficiency\n\n## Implementation Notes\n\nIntegrate a search bar at a prominent location in the interface for easy access.\n\n## Research Source\n\n[Link to research readout]\n\n---\n*Issue generated from research findings by Qori*"
+            },
+            {
+                "number": 3,
+                "title": "[Medium] Unclear navigation labels causing confusion",
+                "labels": ["research-finding", "medium-priority", "navigation"],
+                "priority": "Medium",
+                "effort": "Medium (3-5 days)",
+                "body": "## Problem\n\nConfusion among users due to unclear navigation labels, leading to difficulty in finding settings.\n\n## Evidence\n\n**Study:** Qori Testing\n**Severity:** Medium | **Affected:** 1 of 3 participants (33%)\n\n> \"I wasn't sure where to find the settings, the labels were not very clear.\"\n> — PT002\n\n**Observed behavior:** PT002 faced challenges in locating settings due to unclear navigation labels.\n\n## Acceptance Criteria\n\n- [ ] Improve navigation labels to clearly indicate different sections\n- [ ] Ensure settings are easily accessible and identifiable\n- [ ] Validate changes with user feedback\n\n## Implementation Notes\n\nRevise navigation labels to provide descriptive and intuitive guidance to users.\n\n## Research Source\n\n[Link to research readout]\n\n---\n*Issue generated from research findings by Qori*"
+            }
+        ]
+    }
+]
+
+🔗 **View Issues:** /issues?q=is:issue+label:research-finding
+
+*Questions?* Contact naeemabdulrehman08@gmail.com
