@@ -2,7 +2,7 @@ id: journey_mapping
 name: run_journey_mapping
 
 label: 🧭 Journey Mapping
-version: "v3.0"
+version: "v3.1"
 
 description: >
   Turn raw user research into a clear, step-by-step journey map. Automatically discovers and analyzes 
@@ -176,95 +176,118 @@ ai_generation_tasks:
       OUTPUT FORMAT - FOLLOW EXACTLY
       ============================================================
       
-      ## Executive Summary
+      ## 📊 Executive Summary
       
-      | Attribute | Value |
+      | | |
       |-----------|-------|
-      | **Primary User** | [Brief description - no names, use "Veterans who..." or participant IDs] |
-      | **Journey Scope** | [Start point] → [End point] |
-      | **Total Stages** | [3-6 stages based on data complexity] |
-      | **Data Confidence** | [High/Medium/Low] - [brief reason] |
+      | 👤 **Primary User** | [Brief description - no names, use "Veterans who..." or participant IDs] |
+      | 🗺️ **Journey Scope** | [Start point] → [End point] |
+      | 📍 **Total Stages** | [3-6 stages based on data complexity] |
+      | 📈 **Data Confidence** | [High/Medium/Low] - [brief reason] |
       
-      **Top 3 Pain Points:**
-      1. [Pain point with citation]
-      2. [Pain point with citation]
-      3. [Pain point with citation]
+      ### 🔥 Top Pain Points
+      | # | Pain Point | Source |
+      |---|------------|--------|
+      | 1 | [Pain point] | PT00X, 00:00:00 |
+      | 2 | [Pain point] | PT00X, 00:00:00 |
+      | 3 | [Pain point] | PT00X, 00:00:00 |
       
-      **Top 3 Opportunities:**
-      1. [Specific, actionable fix]
-      2. [Specific, actionable fix]
-      3. [Specific, actionable fix]
+      ### 💡 Top Opportunities  
+      | # | Opportunity | Impact |
+      |---|-------------|--------|
+      | 1 | [Specific, actionable fix] | [High/Med/Low] |
+      | 2 | [Specific, actionable fix] | [High/Med/Low] |
+      | 3 | [Specific, actionable fix] | [High/Med/Low] |
       
       ---
       
-      ## Primary User Profile
+      ## 👤 Primary User Profile
       
-      **Who:** [2-3 sentences describing the primary user type based on data. Use "Veterans who..." or participant IDs, never real names]
+      > **Who they are:** [2-3 sentences describing the primary user type based on data. Use "Veterans who..." or participant IDs, never real names]
       
-      **Context:** [What situation brings them to this journey - cite evidence]
-      
-      **Goal:** [What they're trying to accomplish]
+      | | |
+      |---|---|
+      | 🎯 **Goal** | [What they're trying to accomplish] |
+      | 🌍 **Context** | [What situation brings them to this journey] |
       
       **Key Characteristics:**
-      - [Characteristic from data with citation]
-      - [Characteristic from data with citation]
-      - [Characteristic from data with citation]
+      - ✓ [Characteristic from data with citation]
+      - ✓ [Characteristic from data with citation]
+      - ✓ [Characteristic from data with citation]
       
       ---
       
-      ## Journey Stages
+      ## 🗺️ Journey Stages
       
       [FOR EACH STAGE - Create 3-6 stages based on data. Use this exact format:]
       
-      ### Stage 1: [Clear 2-4 word label]
+      ### 1️⃣ [Clear 2-4 word label]
       
-      **What happens:** [1-2 sentences describing user action at this stage]
+      | | |
+      |---|---|
+      | **What happens** | [1-2 sentences describing user action at this stage] |
       
-      **How they feel:** [Emotion] 
-      > "[Direct quote from participant]" — [PT00X, timestamp]
+      **Emotion:** [Use appropriate emoji: 😤 Frustrated / 😕 Confused / 😊 Satisfied / 😔 Resigned / 😰 Anxious / 😌 Relieved]
+      > "[Direct quote from participant]" — PT00X, 00:00:00
       
-      **Pain points at this stage:**
-      - [Specific issue] — [PT00X, timestamp]
-      - [Specific issue] — [PT00X, timestamp]
+      **🔴 Pain Points:**
+      - [Specific issue] — PT00X, 00:00:00
+      - [Specific issue] — PT00X, 00:00:00
       
-      **What success looks like:** [What helps users get through this stage]
+      **✅ Success looks like:** [What helps users get through this stage]
       
-      **Opportunity:** [Specific, actionable improvement - not vague like "improve UX"]
+      **💡 Opportunity:** [Specific, actionable improvement - not vague like "improve UX"]
       
-      **Owner:** [VA team: Product / Engineering / Design / Content / Accessibility / Policy] — [why this team]
-      
-      ---
-      
-      [Repeat for each stage...]
+      **👥 Owner:** `[Team]` — [why this team]
       
       ---
       
-      ## Recommendations Summary
+      ### 2️⃣ [Stage label]
+      [Same format as above]
+      
+      ---
+      
+      ### 3️⃣ [Stage label]
+      [Same format as above]
+      
+      ---
+      
+      [Continue for remaining stages using 4️⃣ 5️⃣ 6️⃣ as needed]
+      
+      ---
+      
+      ## 🎯 Recommendations
       
       | Priority | Opportunity | Stage | Owner | Effort |
-      |----------|-------------|-------|-------|--------|
-      | 🔴 High | [Specific fix] | [Stage name] | [Team] | [Low/Med/High] |
-      | 🟡 Medium | [Specific fix] | [Stage name] | [Team] | [Low/Med/High] |
-      | 🟢 Low | [Specific fix] | [Stage name] | [Team] | [Low/Med/High] |
+      |:--------:|-------------|-------|-------|:------:|
+      | 🔴 | [Specific fix] | [Stage name] | `[Team]` | 🔵🔵🔵 |
+      | 🟡 | [Specific fix] | [Stage name] | `[Team]` | 🔵🔵⚪ |
+      | 🟢 | [Specific fix] | [Stage name] | `[Team]` | 🔵⚪⚪ |
+      
+      > **Legend:** 🔴 High Priority | 🟡 Medium | 🟢 Low | Effort: 🔵🔵🔵 High | 🔵🔵⚪ Med | 🔵⚪⚪ Low
       
       ---
       
-      ## Discussion Questions
+      ## 💬 Discussion Questions
       
-      1. [Specific question about a finding that needs team input]
-      2. [Question about prioritization or implementation]
-      3. [Question about cross-team collaboration needed]
+      | # | Question | For |
+      |---|----------|-----|
+      | 1 | [Specific question about a finding that needs team input] | [Team] |
+      | 2 | [Question about prioritization or implementation] | [Team] |
+      | 3 | [Question about cross-team collaboration needed] | All |
       
       ---
       
-      ## Validation Checklist
+      ## ✅ Validation Checklist
       
-      - No real participant names used: [Yes/No]
-      - All pain points have citations: [Yes/No]
-      - All emotions have supporting quotes: [Yes/No]
-      - Stage labels consistent throughout: [Yes/No]
-      - Opportunities are specific (not generic): [Yes/No]
-      - Owners are VA teams (not Marketing/Sales): [Yes/No]
+      | Check | Status |
+      |-------|:------:|
+      | No real participant names used | ✅ / ❌ |
+      | All pain points have citations | ✅ / ❌ |
+      | All emotions have supporting quotes | ✅ / ❌ |
+      | Stage labels consistent throughout | ✅ / ❌ |
+      | Opportunities are specific (not generic) | ✅ / ❌ |
+      | Owners are VA teams (not Marketing/Sales) | ✅ / ❌ |
       
       ============================================================
       QUALITY REQUIREMENTS
@@ -400,20 +423,28 @@ quality_assurance:
   require_stage_consistency: true
 
 notes: |
+  v3.1 Changes (Visual Polish):
+  - Added emojis to all section headers (📊 📍 🔥 💡 👤 🗺️ 🎯 💬 ✅)
+  - Added numbered stage indicators (1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣)
+  - Added emotion emojis (😤 😕 😊 😔 😰 😌)
+  - Converted pain points/opportunities to tables for better scanning
+  - Added effort indicator dots (🔵🔵🔵 / 🔵🔵⚪ / 🔵⚪⚪)
+  - Added legend for priority and effort
+  - Made Owner field use code formatting for visual distinction
+  - Added checkmarks (✓) to characteristics list
+  - Tables now use compact format without redundant headers
+  - Discussion questions now in table with "For" column
+  - Related analyses now in table format
+  
   v3.0 Changes (Major Restructure):
   - Consolidated 6 separate AI tasks into 1 comprehensive task
   - Added critical grounding rules at top of prompt
-  - Restructured output for better scanability:
-    - Executive Summary table at top
-    - Each stage now contains ALL info (emotions, pain points, opportunities, owner)
-    - Recommendations Summary table for quick prioritization
+  - Restructured output for better scanability
+  - Each stage now contains ALL info (emotions, pain points, opportunities, owner)
   - Added VA-specific context (removed Marketing/Sales/etc.)
   - Added citation requirements for all claims
-  - Added stage label consistency enforcement
   - Added validation checklist to output
   - Removed persona naming (use participant IDs only)
-  - Added good/bad examples for opportunities and citations
-  - Reduced temperature from 0.4 to 0.3 for more consistent output
   
   v2.0 Changes:
   - Original multi-task architecture with separate prompts for each section
