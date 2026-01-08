@@ -339,7 +339,7 @@ output_options:
   default_delivery: "slack_notification_and_github"
   slack_format: "minimal_notification_with_link"
   github_format: "comprehensive_research_document"
-  path: "05-shareouts/"
+  path: "05-findings/"
   filename: "research_readout_{{study_name}}_{{current_date}}.md"
 
 slack_output:
