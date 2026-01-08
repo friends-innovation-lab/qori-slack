@@ -2,7 +2,7 @@ id: journey_mapping
 name: run_journey_mapping
 
 label: 🧭 Journey Mapping
-version: "v3.4"
+version: "v3.5"
 
 description: >
   Turn raw user research into a clear, step-by-step journey map. Automatically discovers and analyzes 
@@ -311,9 +311,22 @@ ai_generation_tasks:
       
       ## 📚 Methodology
       
-      **Approach:** Journey mapping from qualitative research data — analyzing user actions, emotions, and pain points stage by stage.
+      **Framework:** Experience Journey Mapping
+      
+      **Approach:** Stage-by-stage analysis of user actions, emotions, pain points, and opportunities from qualitative research data.
       
       **Data Sources:** [List participant IDs used, e.g., PT001, PT002, PT003]
+      
+      ---
+      
+      ### References
+      
+      This analysis follows established journey mapping methods:
+      
+      - **Adaptive Path** — Pioneers of journey mapping methodology
+      - **Nielsen Norman Group** — Stage-based emotion mapping framework
+      - **Service Design Thinking** — Stickdorn & Schneider, touchpoint analysis
+      - **Mapping Experiences** — Jim Kalbach, O'Reilly Media
       
       ---
       
