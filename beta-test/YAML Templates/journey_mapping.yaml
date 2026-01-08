@@ -2,7 +2,7 @@ id: journey_mapping
 name: run_journey_mapping
 
 label: 🧭 Journey Mapping
-version: "v2.0"
+version: "v3.0"
 
 description: >
   Turn raw user research into a clear, step-by-step journey map. Automatically discovers and analyzes 
@@ -12,7 +12,7 @@ description: >
 
 author: Qori R&D
 created: 2025-06-30
-last_updated: 2025-09-10
+last_updated: 2026-01-08
 
 input_type: slack_modal_form
 input_processing: auto_file_discovery
@@ -20,7 +20,7 @@ input_processing: auto_file_discovery
 # LLM Configuration
 llm_config:
   model: "gpt-4o"
-  temperature: 0.4
+  temperature: 0.3
   max_tokens: 4000
 
 # System limits
@@ -127,191 +127,169 @@ ai_generation_tasks:
       
       Report on file coverage, content quality, enhancement impact, and analysis confidence for journey mapping.
 
-  # Analyze journey scope and complexity
-  - task_id: "journey_scope_analysis"
+  # Main journey mapping task - CONSOLIDATED
+  - task_id: "journey_map_complete"
     prompt: |
-      As an experienced service designer and user journey specialist, analyze the scope and complexity of this user journey:
+      ============================================================
+      🚨 CRITICAL RULES - READ BEFORE ANYTHING ELSE 🚨
+      ============================================================
+      
+      RULE 1: NO HALLUCINATION - EXTRACT ONLY
+      You are an EXTRACTOR, not a GENERATOR. Every claim must come from the input data.
+      - If you cannot find evidence for something, DO NOT INCLUDE IT
+      - Never invent quotes, thoughts, or user statements
+      - Never add generic filler content
+      
+      RULE 2: NO REAL PARTICIPANT NAMES
+      - Use participant IDs (PT001, PT002, etc.) or "the participant"
+      - NEVER use names like "John", "Sarah", "David Chen"
+      - This applies everywhere: persona, descriptions, all text
+      
+      RULE 3: VA GOVERNMENT CONTEXT ONLY
+      This is a VA (Department of Veterans Affairs) research study. 
+      - Users are Veterans or VA staff
+      - Teams are: Product, Engineering, Design, Content, Accessibility, Policy
+      - NEVER mention: Marketing Team, Sales Team, Customer Success, Influencers, Social Media Marketing
+      
+      RULE 4: CITE YOUR SOURCES
+      Every pain point, emotion, and insight MUST include:
+      - Participant ID (e.g., PT001)
+      - Timestamp if available (e.g., 00:02:28)
+      - Direct quote or paraphrase from data
+      
+      RULE 5: STAGE LABELS MUST BE CONSISTENT
+      Define your stage labels ONCE at the beginning, then use EXACTLY those same labels throughout.
+      Do not create different stages in different sections.
+      
+      ============================================================
+      YOUR TASK
+      ============================================================
+      
+      Create a journey map from this research data:
       
       **Study:** {{selected_study}}
       **Focus Area:** {{focus_area}}
       **Input Data:** {{combined_file_content}}
       **Quality Assessment:** {{ai_generated.file_discovery_summary}}
       
-      Analyze:
-      1. **Journey Complexity:** How complex is the user process described in the data?
-      2. **Optimal Step Count:** Based on data complexity, how many journey stages will best represent the experience?
-      3. **Journey Scope:** What is the start and end point of this user journey?
-      4. **Data Richness:** How well does the data support journey mapping?
-      5. **Confidence Level:** What confidence level is appropriate for journey mapping?
+      ============================================================
+      OUTPUT FORMAT - FOLLOW EXACTLY
+      ============================================================
       
-      **Format:**
-      **Journey Complexity:** [High/Medium/Low] - [specific details about process complexity]
-      **Recommended Step Count:** [3-7 steps] - [reasoning based on process complexity]
-      **Journey Scope:** [Start point] → [End point]
-      **Data Suitability:** [Excellent/Good/Adequate/Poor] for journey mapping - [reasoning]
-      **Analysis Confidence:** [High/Medium/Low] - [reasoning based on file assessment]
-
-  # Identify and characterize the primary persona
-  - task_id: "persona_identification"
-    prompt: |
-      As an experienced user researcher, identify the primary persona for this journey mapping:
+      ## Executive Summary
       
-      **Input Data:** {{combined_file_content}}
-      **Study Context:** {{selected_study}}
-      **Focus Area:** {{focus_area}}
-      **Journey Scope:** {{ai_generated.journey_scope_analysis}}
+      | Attribute | Value |
+      |-----------|-------|
+      | **Primary User** | [Brief description - no names, use "Veterans who..." or participant IDs] |
+      | **Journey Scope** | [Start point] → [End point] |
+      | **Total Stages** | [3-6 stages based on data complexity] |
+      | **Data Confidence** | [High/Medium/Low] - [brief reason] |
       
-      Analyze the data to identify:
-      1. **Primary User Type:** What type of user is most represented in the data?
-      2. **User Characteristics:** Key demographics, experience level, context
-      3. **Persona Name:** A realistic name that represents this user type
-      4. **User Goals:** What is this persona trying to accomplish?
-      5. **User Context:** What situation brings them to this journey?
+      **Top 3 Pain Points:**
+      1. [Pain point with citation]
+      2. [Pain point with citation]
+      3. [Pain point with citation]
       
-      **Format:**
-      **Primary User Type:** [Specific user category based on data evidence]
+      **Top 3 Opportunities:**
+      1. [Specific, actionable fix]
+      2. [Specific, actionable fix]
+      3. [Specific, actionable fix]
+      
+      ---
+      
+      ## Primary User Profile
+      
+      **Who:** [2-3 sentences describing the primary user type based on data. Use "Veterans who..." or participant IDs, never real names]
+      
+      **Context:** [What situation brings them to this journey - cite evidence]
+      
+      **Goal:** [What they're trying to accomplish]
       
       **Key Characteristics:**
-      - Experience Level: [First-time/Experienced/Mixed] based on data
-      - Context: [Specific situation/need driving their journey]
-      - Background: [Relevant demographics or characteristics from data]
+      - [Characteristic from data with citation]
+      - [Characteristic from data with citation]
+      - [Characteristic from data with citation]
       
-      **Persona Name:** [Realistic name that fits the user type]
-      **Primary Goal:** [What they're trying to accomplish in this journey]
-      **Journey Motivation:** [Why they started this process/what triggered it]
-      **Supporting Evidence:** [Specific quotes or data points that support this persona identification]
-
-  # Map the journey stages and sequence
-  - task_id: "journey_stage_mapping"
-    prompt: |
-      As an experienced service designer, map the key stages of the user journey:
+      ---
       
-      **Input Data:** {{combined_file_content}}
-      **Journey Context:**
-      - Persona: {{ai_generated.persona_identification}}
-      - Recommended Steps: {{ai_generated.journey_scope_analysis.step_count}}
-      - Journey Scope: {{ai_generated.journey_scope_analysis.scope}}
+      ## Journey Stages
       
-      Map the journey stages:
-      1. **Identify Sequential Stages:** What are the key stages the user goes through?
-      2. **Stage Labels:** Clear, descriptive labels for each stage (2-5 words max)
-      3. **Stage Sequence:** Logical flow from start to finish
-      4. **Evidence Support:** What data supports each stage?
+      [FOR EACH STAGE - Create 3-6 stages based on data. Use this exact format:]
       
-      **Format each stage as:**
-      **Stage [X]: "[Clear stage label]"**
-      - **User Action:** [Specific action the user takes in this stage]
-      - **Stage Purpose:** [What the user is trying to accomplish]
-      - **Data Evidence:** [Quotes or observations supporting this stage]
-      - **Transition:** [What moves the user to the next stage]
+      ### Stage 1: [Clear 2-4 word label]
       
-      Requirements:
-      - Only include stages clearly supported by data
-      - Use specific, actionable stage labels
-      - Ensure logical sequence and flow
-      - Ground each stage in research evidence
-
-  # Develop detailed stage characteristics
-  - task_id: "stage_detail_development"
-    prompt: |
-      As an experienced user researcher, develop detailed characteristics for each journey stage:
+      **What happens:** [1-2 sentences describing user action at this stage]
       
-      **Journey Stages:** {{ai_generated.journey_stage_mapping}}
-      **Persona Context:** {{ai_generated.persona_identification}}
-      **Input Data:** {{combined_file_content}}
+      **How they feel:** [Emotion] 
+      > "[Direct quote from participant]" — [PT00X, timestamp]
       
-      For each stage, develop:
-      1. **User Thoughts:** What is the user thinking during this stage?
-      2. **User Emotions:** What emotions are they experiencing?
-      3. **Pain Points:** What challenges or frustrations occur?
-      4. **Success Factors:** What helps users succeed in this stage?
-      5. **Signal Strength:** How often this pattern appears in the data
+      **Pain points at this stage:**
+      - [Specific issue] — [PT00X, timestamp]
+      - [Specific issue] — [PT00X, timestamp]
       
-      **Format for each stage:**
-      **Stage: "[Stage label]"**
+      **What success looks like:** [What helps users get through this stage]
       
-      💭 **User Thought:** "[Realistic thought the user might have - first person]"
-      ❤️ **Primary Emotion:** [Specific emotion] - [brief context for why]
-      😤 **Pain Points:** [Specific challenges or frustrations in this stage]
-      ✅ **Success Factors:** [What helps users succeed in this stage]
-      📊 **Signal Strength:** [How often this pattern appears: "Consistent across participants" / "Majority reported" / "Recurring theme" / "Strong but localized"]
-      💬 **Data Source:** [Reference to supporting evidence from input data]
+      **Opportunity:** [Specific, actionable improvement - not vague like "improve UX"]
       
-      Requirements:
-      - Make thoughts realistic and specific (use "I" statements)
-      - Choose specific emotions, not generic ones
-      - Base all details on actual data evidence
-      - Keep stage details focused and actionable
-
-  # Generate actionable opportunities for each stage
-  - task_id: "opportunity_identification"
-    prompt: |
-      As an experienced service designer, identify actionable opportunities for each journey stage:
+      **Owner:** [VA team: Product / Engineering / Design / Content / Accessibility / Policy] — [why this team]
       
-      **Journey Stages with Details:** {{ai_generated.stage_detail_development}}
-      **Study Context:** {{selected_study}}
-      **Focus Area:** {{focus_area}}
+      ---
       
-      For each stage, generate:
-      1. **Primary Opportunity:** Most impactful improvement for this stage
-      2. **Secondary Opportunity:** Additional improvement opportunity
-      3. **Implementation Approach:** How teams could pursue these opportunities
-      4. **Success Metrics:** How to measure improvement
+      [Repeat for each stage...]
       
-      **Format for each stage:**
-      **Stage: "[Stage label]"**
+      ---
       
-      💡 **Primary Opportunity:** [Specific, actionable improvement that directly addresses the main pain point]
-      💡 **Secondary Opportunity:** [Additional improvement that could enhance user experience]
-      🛠️ **Implementation Approach:** [Specific steps teams could take - who does what]
-      📈 **Success Metrics:** [How to measure if opportunities successfully improve this stage]
-      ⭐ **Priority Level:** [High/Medium/Low] - [reasoning based on user impact and implementation effort]
+      ## Recommendations Summary
       
-      **Examples of good opportunities:**
-      - "Add a progress indicator showing which step users are on and how many remain"
-      - "Create a pre-flight checklist that shows exactly what information users need to gather"
-      - "Implement smart defaults based on user's previous selections to reduce form complexity"
+      | Priority | Opportunity | Stage | Owner | Effort |
+      |----------|-------------|-------|-------|--------|
+      | 🔴 High | [Specific fix] | [Stage name] | [Team] | [Low/Med/High] |
+      | 🟡 Medium | [Specific fix] | [Stage name] | [Team] | [Low/Med/High] |
+      | 🟢 Low | [Specific fix] | [Stage name] | [Team] | [Low/Med/High] |
       
-      **NOT vague opportunities like:**
-      - "Improve user experience"
-      - "Better communication"
-      - "More intuitive interface"
-
-  # Assign ownership and generate discussion questions
-  - task_id: "ownership_and_discussion"
-    prompt: |
-      As an experienced product strategist, assign ownership and generate discussion questions for each journey stage:
+      ---
       
-      **Journey Stages with Opportunities:** {{ai_generated.opportunity_identification}}
-      **Study Context:** {{selected_study}}
-      **Team Context:** {{team_members}}
+      ## Discussion Questions
       
-      For each stage, determine:
-      1. **Stage Owner:** Which team/role should own improvements for this stage
-      2. **Discussion Questions:** Specific questions to drive team conversation
-      3. **Cross-functional Needs:** What collaboration is needed
-      4. **Decision Points:** What decisions need to be made
+      1. [Specific question about a finding that needs team input]
+      2. [Question about prioritization or implementation]
+      3. [Question about cross-team collaboration needed]
       
-      **Format for each stage:**
-      **Stage: "[Stage label]"**
+      ---
       
-      👤 **Suggested Owner:** [Specific team/role] - [reasoning based on stage characteristics]
-      🤔 **Discussion Questions:**
-      • [Specific question about this stage that drives action]
-      • [Question about implementation or prioritization]
+      ## Validation Checklist
       
-      🤝 **Cross-functional Needs:** [What other teams need to be involved and why]
-      🎯 **Key Decision:** [Main decision that needs to be made about this stage]
+      - No real participant names used: [Yes/No]
+      - All pain points have citations: [Yes/No]
+      - All emotions have supporting quotes: [Yes/No]
+      - Stage labels consistent throughout: [Yes/No]
+      - Opportunities are specific (not generic): [Yes/No]
+      - Owners are VA teams (not Marketing/Sales): [Yes/No]
       
-      **Examples of good ownership assignments:**
-      - "Content Team - this stage is primarily about information clarity and messaging"
-      - "Product Team - involves feature functionality and user interface changes"
-      - "Policy Team - requires process or requirement changes"
+      ============================================================
+      QUALITY REQUIREMENTS
+      ============================================================
       
-      **Examples of good discussion questions:**
-      - "Should we prioritize reducing steps or improving clarity within existing steps?"
-      - "What's the minimum viable improvement we could ship in the next sprint?"
-      - "How do we measure success for this stage specifically?"
+      GOOD OPPORTUNITIES (specific, actionable):
+      ✅ "Add a progress indicator showing step X of Y"
+      ✅ "Pre-populate form fields from user profile data"
+      ✅ "Add confirmation message after submission with expected timeline"
+      ✅ "Increase button touch target size for accessibility"
+      
+      BAD OPPORTUNITIES (vague, generic - DO NOT USE):
+      ❌ "Improve user experience"
+      ❌ "Better communication"
+      ❌ "More intuitive interface"
+      ❌ "Implement targeted advertising on social media" (WRONG CONTEXT)
+      
+      GOOD EMOTION CITATIONS:
+      ✅ **Frustrated** > "Everything takes forever to load." — PT003, 00:01:56
+      ✅ **Confused** > "I don't know if that actually saved." — PT002, 00:03:42
+      
+      BAD EMOTION CITATIONS (invented - DO NOT USE):
+      ❌ **Hopeful** > "I hope this app is easy to navigate" (INVENTED - not from data)
+      
+      If you cannot find evidence for a stage or emotion, reduce the number of stages rather than inventing content.
 
 # Processing workflow
 processing_workflow:
@@ -321,16 +299,11 @@ processing_workflow:
   4. validate_discovered_files
   5. combine_selected_files_with_truncation
   6. execute_file_discovery_summary
-  7. execute_journey_scope_analysis
-  8. execute_persona_identification
-  9. execute_journey_stage_mapping
-  10. execute_stage_detail_development
-  11. execute_opportunity_identification
-  12. execute_ownership_and_discussion
-  13. format_slack_output
-  14. format_github_output
-  15. save_to_analysis_folder
-  16. send_team_notifications
+  7. execute_journey_map_complete
+  8. format_slack_output
+  9. format_github_output
+  10. save_to_analysis_folder
+  11. send_team_notifications
 
 # Output configuration
 output_options:
@@ -340,150 +313,74 @@ output_options:
   path: "04-analysis/journey-mapping/"
   filename: "{{study_folder}}_journey_mapping_{{current_date}}.md"
 
-# Slack output template
+# Slack output template (condensed for Slack readability)
 output_template: |
   🧭 **Journey Mapping Complete**
-
+  
   **Study:** {{selected_study}}
-  **Analysis:** {{max_steps}} journey stages mapped for {{persona_name}}
-
+  **Stages:** {{stage_count}} mapped | **Confidence:** {{data_confidence}}
+  
   ---
-
-  ## **Primary Persona**
-
-  {{ai_generated.persona_identification}}
-
+  
+  {{ai_generated.journey_map_complete}}
+  
   ---
-
-  ## **Journey Stages**
-
-  {{ai_generated.journey_stage_mapping}}
-
-  ---
-
-  ## **Stage Details & Emotions**
-
-  {{ai_generated.stage_detail_development}}
-
-  ---
-
-  ## **Opportunities**
-
-  {{ai_generated.opportunity_identification}}
-
-  ---
-
-  ## **Ownership & Next Steps**
-
-  {{ai_generated.ownership_and_discussion}}
-
-  ---
-
+  
   **What do you think?** Reply in thread:
-  • Which stages feel like the biggest pain points?
-  • Any opportunities that could be quick wins?
-  • Who should own the next steps for improvements?
-
-  📋 [View detailed journey map with full analysis]({{github_file_link}})
+  • Which stage has the biggest pain point?
+  • Any quick wins we should prioritize?
+  • Who should own the first improvement?
+  
+  📋 [View full journey map]({{github_file_link}})
 
 # GitHub markdown file template
 github_file_template: |
-  # 🧭 Journey Mapping Report
+  # 🧭 Journey Map: {{selected_study}}
+  
+  **Generated:** {{current_date}} | **Version:** {{analysis_version}} | **Researcher:** {{researcher_contact}}
   
   ---
   
-  ## 📋 **Study Overview**
-  
-  **Study:** {{selected_study}}  
-  **Analysis Date:** {{current_date}}  
-  **Researcher:** {{researcher_contact}}  
-  **Focus Area:** {{focus_area}}  
-  **Analysis Version:** {{analysis_version}}
+  {{ai_generated.journey_map_complete}}
   
   ---
   
-  ## 📊 **Data Quality Assessment**
+  ## Methodology
   
-  {{ai_generated.file_discovery_summary}}
+  **Approach:** Journey mapping using stage-by-stage analysis of user actions, emotions, and pain points from qualitative research data.
   
-  ---
-  
-  ## 🔍 **Journey Scope Analysis**
-  
-  {{ai_generated.journey_scope_analysis}}
-  
-  **Methodology:** User journey mapping using stage-by-stage analysis of user actions, thoughts, emotions, and pain points to identify improvement opportunities.
-  
-  ---
-  
-  ## 👤 **Primary Persona**
-  
-  {{ai_generated.persona_identification}}
-  
-  ---
-  
-  ## 🧭 **User Journey Map: {{persona_name}}**
-  
-  {{ai_generated.journey_stage_mapping}}
-  
-  ---
-  
-  ## 📝 **Stage Details & Emotions**
-  
-  {{ai_generated.stage_detail_development}}
-  
-  ---
-  
-  ## 💡 **Opportunities & Improvements**
-  
-  {{ai_generated.opportunity_identification}}
-  
-  ---
-  
-  ## 👥 **Ownership & Discussion**
-  
-  {{ai_generated.ownership_and_discussion}}
-  
-  ---
-  
-  ## 📚 **Methodology Notes**
-  
-  **Analysis Approach:** This journey map was created by analyzing user research data to identify sequential stages, mapping user thoughts and emotions at each stage, and identifying specific pain points and opportunities for improvement. Each stage is grounded in actual research evidence.
+  **Data Sources:** {{discovered_files}}
   
   **Quality Controls:**
-  - ✅ Evidence validation performed for each stage
-  - ✅ Persona identification based on data patterns
-  - ✅ Opportunity prioritization based on user impact
-  
-  **Usage Guidelines:**
-  - Use this journey map to prioritize improvements across stages
-  - Reference specific pain points and emotions when designing solutions
-  - Assign ownership based on recommended team responsibilities
-  - Validate improvements by measuring stage-specific success metrics
+  - ✅ All findings grounded in participant data
+  - ✅ Citations included for pain points and emotions
+  - ✅ PII redacted from all outputs
   
   ---
   
-  ## 📞 **Contact & Follow-up**
+  ## Related Analyses
   
-  **Lead Researcher:** {{researcher_contact}}  
-  **Study Channel:** {{study_channel}}  
-  **Questions?** Reply in the study channel or contact the research team directly.
-  
-  **Related Analyses:** Consider running complementary synthesis methods:
-  - 🧠 Affinity Mapping - to identify broader themes
-  - 👤 Persona Generation - to create detailed user archetypes
-  - 🎯 Jobs to be Done - to identify functional needs
-  - 🐛 Usability Issues - to prioritize interface problems
-  - 💡 Design Opportunities - to identify specific improvements
+  Consider running complementary synthesis methods:
+  - 🧠 **Affinity Mapping** — to identify broader themes
+  - 👤 **Persona Generation** — to create detailed user archetypes  
+  - 🎯 **Jobs to be Done** — to identify functional needs
+  - 🐛 **Usability Issues** — to prioritize interface problems
   
   ---
   
-  *Generated by Qori Research Synthesis • {{current_date}} • Version {{analysis_version}}*
+  ## Contact
+  
+  **Lead Researcher:** {{researcher_contact}}
+  **Study Channel:** {{study_channel}}
+  
+  ---
+  
+  *Generated by Qori Research Synthesis • {{current_date}}*
 
 # Auto-generated variables
 auto_variables:
-  - persona_name: extract_persona_name(ai_generated.persona_identification) || "Primary User"
-  - max_steps: extract_step_count(ai_generated.journey_scope_analysis) || 5
+  - stage_count: extract_stage_count(ai_generated.journey_map_complete) || 5
+  - data_confidence: extract_confidence(ai_generated.journey_map_complete) || "Medium"
   - current_date: new Date().toISOString().split('T')[0]
   - analysis_version: generate_version_number() || "v1.0"
   - github_file_link: generate_github_link(study_name, current_date)
@@ -492,17 +389,44 @@ notify:
   - role: team
     action: "Journey mapping completed"
     channel: "{{study_channel}}"
-    message: "{{researcher_contact}} just mapped the user journey for {{persona_name}} with {{max_steps}} key stages. Check out the opportunities!"
+    message: "{{researcher_contact}} mapped the user journey with {{stage_count}} stages. Check out the pain points and opportunities!"
+
+quality_assurance:
+  require_citations: true
+  require_participant_ids_only: true
+  require_va_context: true
+  prohibit_generic_opportunities: true
+  prohibit_invented_quotes: true
+  require_stage_consistency: true
+
+notes: |
+  v3.0 Changes (Major Restructure):
+  - Consolidated 6 separate AI tasks into 1 comprehensive task
+  - Added critical grounding rules at top of prompt
+  - Restructured output for better scanability:
+    - Executive Summary table at top
+    - Each stage now contains ALL info (emotions, pain points, opportunities, owner)
+    - Recommendations Summary table for quick prioritization
+  - Added VA-specific context (removed Marketing/Sales/etc.)
+  - Added citation requirements for all claims
+  - Added stage label consistency enforcement
+  - Added validation checklist to output
+  - Removed persona naming (use participant IDs only)
+  - Added good/bad examples for opportunities and citations
+  - Reduced temperature from 0.4 to 0.3 for more consistent output
+  
+  v2.0 Changes:
+  - Original multi-task architecture with separate prompts for each section
 
 output_use: |
   Slack-Native Journey Mapping automatically discovers research files from selected study folders,
-  identifies the primary user persona, and maps their journey through sequential stages with specific
-  thoughts, emotions, pain points, and improvement opportunities. Outputs concise Slack summaries 
-  focused on stages and opportunities, plus detailed GitHub markdown reports for stakeholder sharing.
-
-  Use this method to:
-    - Map sequential user experiences with evidence-based stages
-    - Identify specific pain points and emotions at each journey stage
-    - Generate actionable opportunities for stage-specific improvements
-    - Assign ownership and create team discussion around journey optimization
-    - Understand user thoughts and feelings throughout their process
+  identifies the primary user type, and maps their journey through sequential stages with specific
+  emotions, pain points, and improvement opportunities. All findings are grounded in research data
+  with required citations. Outputs concise Slack summaries plus detailed GitHub markdown reports.
+  
+  Key improvements in v3.0:
+  - Consolidated stage view (no more jumping between sections)
+  - Executive summary for quick stakeholder scanning
+  - Recommendations table for prioritization
+  - Required citations prevent hallucination
+  - VA government context enforced
