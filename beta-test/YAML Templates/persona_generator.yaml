@@ -2,16 +2,16 @@ id: persona_generator
 name: run_persona_generator
 
 label: 👤 Persona Generation
-version: "v2.0"
+version: "v3.0"
 
 description: >
-  Generate realistic and actionable user personas clearly grounded in qualitative research findings.
-  Automatically discovers and analyzes research files from selected study folder with optional quality improvements.
-  Personas help teams deeply empathize with users, prioritize product or policy decisions, and confidently communicate insights.
+  Generate realistic, research-grounded user personas from qualitative data.
+  Each persona is consolidated into a single scannable profile with demographics,
+  goals, frustrations, behaviors, and design implications — all with citations.
 
 author: Qori R&D
 created: 2025-06-27
-last_updated: 2025-09-10
+last_updated: 2026-01-08
 
 input_type: slack_modal_form
 input_processing: auto_file_discovery
@@ -19,7 +19,7 @@ input_processing: auto_file_discovery
 # LLM Configuration
 llm_config:
   model: "gpt-4o"
-  temperature: 0.4
+  temperature: 0.3
   max_tokens: 4000
 
 # System limits
@@ -44,15 +44,13 @@ privacy_controls:
 
 # Slack modal input variables
 input_variables:
-  - selected_study              # Study name from dropdown (REQUIRED)
-  - include_research_plan       # Boolean from checkbox (OPTIONAL)
-  - include_participant_notes   # Boolean from checkbox (OPTIONAL)  
-  - include_raw_transcripts     # Boolean from checkbox (OPTIONAL)
-  
-  # Auto-generated during processing
-  - discovered_files            # Files found by auto-discovery (GENERATED)
-  - combined_file_content       # Auto-combined content (GENERATED)
-  - quality_assessment          # Initial quality score (GENERATED)
+  - selected_study
+  - include_research_plan
+  - include_participant_notes
+  - include_raw_transcripts
+  - discovered_files
+  - combined_file_content
+  - quality_assessment
 
 # Study metadata mapping
 study_metadata:
@@ -67,12 +65,6 @@ study_metadata:
     researcher: "alex.ux"
     channel: "#research-benefits"
     focus_area: "benefits portal users"
-    
-  "Veteran Onboarding Experience Study":
-    folder: "veteran-onboarding-2025"
-    researcher: "casey.research"
-    channel: "#research-onboarding"
-    focus_area: "veteran onboarding users"
 
 # File discovery system
 auto_file_discovery:
@@ -95,242 +87,206 @@ auto_file_discovery:
       file_patterns: ["*research_plan*", "*study_plan*", "*methodology*"]
       search_paths: ["00-planning/", "planning/", "research/"]
       confidence_boost: 8
-      
-    participant_notes:
-      enabled_when: "{{include_participant_notes}} == true"
-      file_patterns: ["*participant*", "*notes*", "*observations*"]
-      search_paths: ["02-participants/", "participants/", "notes/"]
-      confidence_boost: 5
-      
-    raw_transcripts:
-      enabled_when: "{{include_raw_transcripts}} == true"
-      file_patterns: ["*raw*", "*unprocessed*", "*recording*"]
-      search_paths: ["01-sessions/raw/", "raw/", "recordings/"]
-      confidence_boost: 3
 
-# AI generation tasks
+# AI generation tasks - SINGLE CONSOLIDATED TASK
 ai_generation_tasks:
-  # File discovery and quality assessment
-  - task_id: "file_discovery_summary"
+  - task_id: "personas_complete"
     prompt: |
-      As a research operations specialist, analyze the discovered files and quality:
+      ============================================================
+      🚨 CRITICAL RULES - READ BEFORE ANYTHING ELSE 🚨
+      ============================================================
       
-      **Selected Study:** {{selected_study}}
-      **Enhancement Options Selected:**
-      - Research plan: {{include_research_plan}}
-      - Participant notes: {{include_participant_notes}}
-      - Raw transcripts: {{include_raw_transcripts}}
+      RULE 1: NO HALLUCINATION - EXTRACT ONLY
+      You are an EXTRACTOR, not a GENERATOR. 
+      - Every persona must be based on ACTUAL participants in the data
+      - Every goal, frustration, and behavior must come from the research
+      - If you cannot find evidence, DO NOT INCLUDE IT
+      - NEVER invent personas like "Sarah the Student" or "David the Professional"
       
-      **Discovered Files:** {{discovered_files}}
-      **Total Content:** [Analyze character/word count of combined_file_content]
+      RULE 2: NO REAL NAMES - USE ARCHETYPE LABELS
+      - NEVER use names like "John Reynolds" or "Sarah Nguyen"
+      - Use descriptive archetype names: "The Assisted Navigator", "The Efficiency Seeker"
+      - Include participant ID in parentheses: "The Assisted Navigator (PT001)"
+      - This protects participant privacy
       
-      Report on file coverage, content quality, enhancement impact, and analysis confidence for persona development.
-
-  # Analyze user diversity and determine optimal persona approach
-  - task_id: "user_diversity_analysis"
-    prompt: |
-      As an experienced user researcher specializing in persona development, analyze the user diversity in this research data:
+      RULE 3: VA GOVERNMENT CONTEXT ONLY
+      These are Veterans using VA services. 
+      - Goals relate to: healthcare, benefits, claims, appointments, prescriptions
+      - Frustrations relate to: app usability, navigation, accessibility, loading times
+      - NEVER mention: "data analysis tools", "team collaboration", "workload management"
+      
+      RULE 4: CITE EVERYTHING
+      Every frustration, behavior, and quote MUST have:
+      - Participant ID (PT001, PT002, etc.)
+      - Timestamp if available
+      
+      RULE 5: ONE SECTION PER PERSONA
+      All information about a persona goes in ONE consolidated section.
+      Do NOT scatter persona info across multiple sections.
+      
+      RULE 6: USE ALL PARTICIPANTS
+      If input has PT001, PT002, PT003 — create personas that draw from ALL of them.
+      Do not ignore participants.
+      
+      ============================================================
+      YOUR TASK
+      ============================================================
+      
+      Create research-grounded personas from this data:
       
       **Study:** {{selected_study}}
       **Focus Area:** {{focus_area}}
       **Input Data:** {{combined_file_content}}
-      **Quality Assessment:** {{ai_generated.file_discovery_summary}}
       
-      Analyze:
-      1. **User Diversity Level:** How many distinct user types are represented in the data?
-      2. **Optimal Persona Count:** Based on diversity and data quality, how many personas should be created?
-      3. **Primary User Segments:** What are the main user categories or behavioral patterns?
-      4. **Data Richness:** How well does the data support persona creation?
-      5. **Confidence Level:** What confidence level is appropriate for persona development?
+      ============================================================
+      OUTPUT FORMAT - FOLLOW EXACTLY
+      ============================================================
       
-      **Format:**
-      **User Diversity Level:** [High/Medium/Low] - [specific details about variety in user types]
-      **Recommended Persona Count:** [1-3 personas] - [reasoning based on distinct user patterns]
-      **Primary Segments:** [List main user categories/behavioral patterns identified]
-      **Data Suitability:** [Excellent/Good/Adequate/Poor] for persona development - [reasoning]
-      **Analysis Confidence:** [High/Medium/Low] - [reasoning based on file assessment]
-      **Target Audience:** [Primary user segment most represented in data]
-
-  # Identify distinct personas from the data
-  - task_id: "persona_identification"
-    prompt: |
-      As an experienced user researcher, identify distinct personas from the research data:
+      # 👤 Personas: [INSERT ACTUAL STUDY NAME]
       
-      **Input Data:** {{combined_file_content}}
-      **User Diversity Context:** {{ai_generated.user_diversity_analysis}}
-      **Study Context:** {{selected_study}}
-      **Focus Area:** {{focus_area}}
+      > **[X] personas** from **[Y] participants** | **Generated:** [Today's date]
       
-      Based on the recommended persona count, identify each distinct persona:
+      ---
       
-      1. **Persona Names:** Realistic names that fit the user types
-      2. **Persona Types:** Clear behavioral segment labels (e.g., "Skeptical First-Timer")
-      3. **Key Differentiators:** What makes each persona distinct
-      4. **Demographics:** Relevant background information from data
-      5. **Primary Context:** Situation that brings them to this process/service
+      ## At a Glance
       
-      **Format for each persona:**
-      **Persona [X]: [Realistic Name]**
-      - **Persona Type:** "[Behavioral segment label - descriptive and specific]"
-      - **Key Differentiator:** [What makes this persona unique from others]
-      - **Demographics:** [Age range, experience level, context from data]
-      - **Primary Context:** [Situation/need that brings them to this process]
-      - **Data Evidence:** [Specific quotes or patterns that support this persona]
+      | Persona | Type | Primary Need | Key Frustration |
+      |---------|------|--------------|-----------------|
+      | [Archetype Name] | [2-3 word type] | [One sentence] | [One sentence] |
+      | [Archetype Name] | [2-3 word type] | [One sentence] | [One sentence] |
       
-      Requirements:
-      - Only create personas clearly supported by distinct data patterns
-      - Use realistic names that fit the demographic context
-      - Make persona types descriptive and behavioral, not generic
-      - Ensure each persona is genuinely different from others
-      - Ground each persona in actual research evidence
-
-  # Develop detailed persona characteristics and backgrounds
-  - task_id: "persona_characterization"
-    prompt: |
-      As an experienced UX researcher, develop detailed characteristics for each identified persona:
+      ---
       
-      **Identified Personas:** {{ai_generated.persona_identification}}
-      **Input Data:** {{combined_file_content}}
-      **Study Context:** {{selected_study}}
+      ## Persona 1: [Archetype Name] ([PT00X])
       
-      For each persona, develop:
-      1. **Detailed Context & Scenario:** Realistic situation showing how they interact with the service/product
-      2. **Experience Level:** How familiar they are with similar processes
-      3. **Approach Style:** How they typically handle new or complex tasks
-      4. **Communication Preferences:** How they prefer to receive information
-      5. **Trust Factors:** What builds or undermines their confidence
+      > "[Key quote that captures their essence]" — PT00X, 00:00:00
       
-      **Format for each persona:**
-      **Persona: [Name] - [Persona Type]**
+      ### Demographics
       
-      📝 **Context & Scenario:** [Detailed, realistic scenario showing this persona's typical interaction - make it specific and believable]
-      🎓 **Experience Level:** [First-time/Experienced/Mixed] - [specific details about their background]
-      🔧 **Approach Style:** [How they handle tasks: methodical, quick, cautious, etc. - with specific examples]
-      💬 **Communication Preferences:** [How they prefer information: step-by-step, overview first, visual cues, etc.]
-      🤝 **Trust Factors:** [What makes them confident vs. skeptical - specific to this domain]
-      🏷️ **Demographic Details:** [Relevant demographics from research data]
-      💬 **Supporting Evidence:** [Specific quotes or behaviors from data that support these characteristics]
+      | | |
+      |---|---|
+      | **Background** | [Military service, years, role] |
+      | **Tech Setup** | [Device, accessibility needs, connectivity] |
+      | **VA Usage** | [Frequency, primary tasks] |
+      | **Experience** | [How long using VA services/app] |
       
-      Requirements:
-      - Make scenarios specific and realistic, not generic
-      - Base all characteristics on actual data evidence
-      - Show personality through specific behaviors and preferences
-      - Avoid stereotypes - use data-driven insights
-
-  # Analyze behavioral patterns and strategies
-  - task_id: "behavioral_pattern_analysis"
-    prompt: |
-      As an experienced behavioral researcher, analyze patterns and strategies for each persona:
+      ### 🎯 Goals
       
-      **Personas with Characteristics:** {{ai_generated.persona_characterization}}
-      **Input Data:** {{combined_file_content}}
+      What they're trying to accomplish:
       
-      For each persona, analyze:
-      1. **Typical Behaviors:** How they actually behave when using services/products
-      2. **Coping Strategies:** How they handle difficulties or confusion
-      3. **Decision-Making Patterns:** How they make choices and evaluate options
-      4. **Information Seeking:** How they find help or additional information
-      5. **Representative Quote:** Direct quote that captures their voice/perspective
+      - **[Goal 1]** — [Why it matters to them]
+      - **[Goal 2]** — [Why it matters to them]
       
-      **Format for each persona:**
-      **Persona: [Name]**
+      ### 😤 Frustrations
       
-      🎯 **Typical Behaviors:**
-      - [Specific behavior 1]: [Example from data]
-      - [Specific behavior 2]: [Example from data]
-      - [Specific behavior 3]: [Example from data]
+      What blocks their success:
       
-      🛡️ **Coping Strategies:** [How they handle problems - specific strategies observed in data]
-      🤔 **Decision-Making:** [How they evaluate options and make choices - patterns from research]
-      📚 **Information Seeking:** [How they look for help, answers, or additional info]
-      💬 **Representative Quote:** "[Direct quote from data that captures their voice and perspective]"
-      📊 **Signal Strength:** [How often these patterns appear: "Consistent across multiple participants" / "Strong recurring theme" / "Well-supported pattern"]
-      ❤️ **Emotional Dimension:** [Primary emotions this persona experiences - specific and realistic]
+      | Frustration | Impact | Source |
+      |-------------|--------|--------|
+      | [Specific issue] | [How it affects them] | PT00X, 00:00:00 |
+      | [Specific issue] | [How it affects them] | PT00X, 00:00:00 |
+      | [Specific issue] | [How it affects them] | PT00X, 00:00:00 |
       
-      Requirements:
-      - Base all behaviors on actual observed patterns in data
-      - Include direct quotes that genuinely represent the persona
-      - Make strategies specific and actionable for teams to understand
-      - Show realistic human complexity, not oversimplified archetypes
-
-  # Map goals, motivations, and frustrations
-  - task_id: "goal_frustration_mapping"
-    prompt: |
-      As an experienced user researcher, map goals, motivations, and frustrations for each persona:
+      ### 🔄 Behaviors & Patterns
       
-      **Personas with Behaviors:** {{ai_generated.behavioral_pattern_analysis}}
-      **Study Context:** {{selected_study}}
-      **Focus Area:** {{focus_area}}
+      How they approach tasks:
       
-      For each persona, identify:
-      1. **Primary Goals:** What they're trying to accomplish (3 key goals)
-      2. **Underlying Motivations:** Why these goals matter to them
-      3. **Key Frustrations:** Specific barriers that prevent success (3 main frustrations)
-      4. **Impact Assessment:** How frustrations affect their experience
-      5. **Success Factors:** What helps them achieve their goals
+      - **[Behavior pattern]** — [Evidence from research]
+      - **[Coping strategy]** — [How they work around problems]
+      - **[Decision style]** — [How they make choices]
       
-      **Format for each persona:**
-      **Persona: [Name]**
+      ### 💡 Design Implications
       
-      🎯 **Goals & Motivations:**
-      • [Specific goal 1]: [Why this matters to them - underlying motivation]
-      • [Specific goal 2]: [Why this matters to them - underlying motivation]
-      • [Specific goal 3]: [Why this matters to them - underlying motivation]
+      What this means for the product:
       
-      😤 **Frustrations & Barriers:**
-      • [Specific frustration 1]: [How this blocks their progress]
-      • [Specific frustration 2]: [How this blocks their progress]
-      • [Specific frustration 3]: [How this blocks their progress]
+      | Opportunity | Why It Matters | Priority |
+      |-------------|----------------|:--------:|
+      | [Specific, implementable fix] | [Addresses which frustration] | 🔴 |
+      | [Specific, implementable fix] | [Addresses which frustration] | 🟡 |
       
-      ⚡ **Top Frustration Impact:** [How their biggest frustration affects their success, confidence, or well-being - be specific]
-      ✅ **Success Factors:** [What helps them succeed - specific conditions, features, or support]
-      🎯 **Use Case Context:** [Realistic scenario showing how goals/frustrations play out in practice]
+      ---
       
-      Requirements:
-      - Make goals specific and measurable, not generic aspirations
-      - Connect frustrations to actual barriers observed in research
-      - Show impact in terms of real consequences for the persona
-      - Base success factors on positive patterns from data
-
-  # Generate actionable opportunities for each persona
-  - task_id: "persona_opportunity_generation"
-    prompt: |
-      As an experienced UX strategist, generate actionable opportunities for each persona:
+      ## Persona 2: [Archetype Name] ([PT00X])
       
-      **Personas with Goals/Frustrations:** {{ai_generated.goal_frustration_mapping}}
-      **Study Context:** {{selected_study}}
-      **Focus Area:** {{focus_area}}
+      [Same format as Persona 1]
       
-      For each persona, generate:
-      1. **Primary Opportunity:** Most impactful way to support this persona
-      2. **Implementation Approach:** Specific steps teams could take
-      3. **Success Metrics:** How to measure improvement for this persona
-      4. **Quick Wins:** Immediate actions that could help this persona
+      ---
       
-      **Format for each persona:**
-      **Persona: [Name]**
+      ## Persona 3: [Archetype Name] ([PT00X])
       
-      💡 **Primary Opportunity:** [Specific, actionable opportunity that directly addresses their top frustration or supports their main goal]
+      [Same format as Persona 1 - only if data supports 3 distinct personas]
       
-      🛠️ **Implementation Approach:**
-      - [Specific step 1]: [What team should do this and how]
-      - [Specific step 2]: [What team should do this and how]
-      - [Specific step 3]: [What team should do this and how]
+      ---
       
-      📈 **Success Metrics:** [How to measure if opportunities successfully support this persona - specific indicators]
-      ⚡ **Quick Wins:** [2-3 immediate actions teams could take to improve this persona's experience]
-      🎯 **Relevant Use Case:** [How this persona's needs inform product, service, or policy decisions - specific applications]
-      ⭐ **Priority Level:** [High/Medium/Low] - [reasoning based on persona's impact and implementation complexity]
+      ## Summary: Design Priorities
       
-      **Examples of good opportunities:**
-      - "Create a confidence-building preview that shows exactly what will happen before they commit"
-      - "Develop progressive disclosure that reveals complexity gradually as they demonstrate readiness"
-      - "Add contextual help that appears at decision points where this persona typically gets stuck"
+      Based on these personas, prioritize:
       
-      **NOT vague opportunities like:**
-      - "Improve user experience"
-      - "Better communication"
-      - "More personalization"
+      | # | Opportunity | Personas Affected | Effort |
+      |---|-------------|-------------------|:------:|
+      | 1 | [Top priority fix] | All / [Specific persona] | 🔵⚪⚪ |
+      | 2 | [Second priority] | All / [Specific persona] | 🔵🔵⚪ |
+      | 3 | [Third priority] | All / [Specific persona] | 🔵🔵⚪ |
+      
+      ---
+      
+      ## Methodology
+      
+      **Approach:** Evidence-based persona development from qualitative research data.
+      
+      **Data Sources:** [List participant IDs: PT001, PT002, PT003]
+      
+      **Persona Count Rationale:** [Why X personas — based on distinct patterns in data]
+      
+      ---
+      
+      *Generated by Qori • [Today's date]*
+      
+      ============================================================
+      QUALITY REQUIREMENTS
+      ============================================================
+      
+      GOOD ARCHETYPE NAMES:
+      ✅ "The Assisted Navigator" (uses screen reader)
+      ✅ "The Efficiency Seeker" (wants fast task completion)
+      ✅ "The Reluctant Digital User" (prefers phone calls)
+      ✅ "The Accessibility-First Veteran" (relies on assistive tech)
+      
+      BAD NAMES (DO NOT USE):
+      ❌ "John Reynolds" (real name - PII)
+      ❌ "Sarah the Student" (invented, wrong context)
+      ❌ "Tech-Savvy Veteran" (too generic)
+      
+      GOOD FRUSTRATIONS (specific, from data):
+      ✅ "Buttons read as 'Button' to screen reader — PT001, 00:02:28"
+      ✅ "App takes 8+ seconds to load — PT003, 00:01:56"
+      ✅ "Edit button hidden in overflow menu — PT003, 00:02:52"
+      
+      BAD FRUSTRATIONS (invented, generic):
+      ❌ "Inadequate tools for data analysis" (wrong context)
+      ❌ "Overwhelming workload" (not from VA research)
+      ❌ "Limited user feedback" (hallucinated)
+      
+      GOOD DESIGN IMPLICATIONS:
+      ✅ "Add descriptive ARIA labels to all buttons"
+      ✅ "Move Edit button inline with profile header"
+      ✅ "Add skeleton loading during API calls"
+      
+      BAD DESIGN IMPLICATIONS:
+      ❌ "Improve user experience" (too vague)
+      ❌ "Better communication" (not actionable)
+      
+      ============================================================
+      INTERNAL VALIDATION (Do not include in output)
+      ============================================================
+      
+      Before submitting, verify:
+      - No real participant names used (only archetypes + IDs)
+      - All frustrations have citations
+      - All quotes are from actual data
+      - Personas relate to VA app/services (not generic work tasks)
+      - Multiple participants represented
+      - Design implications are specific and implementable
 
 # Processing workflow
 processing_workflow:
@@ -339,17 +295,11 @@ processing_workflow:
   3. calculate_initial_quality_assessment
   4. validate_discovered_files
   5. combine_selected_files_with_truncation
-  6. execute_file_discovery_summary
-  7. execute_user_diversity_analysis
-  8. execute_persona_identification
-  9. execute_persona_characterization
-  10. execute_behavioral_pattern_analysis
-  11. execute_goal_frustration_mapping
-  12. execute_persona_opportunity_generation
-  13. format_slack_output
-  14. format_github_output
-  15. save_to_analysis_folder
-  16. send_team_notifications
+  6. execute_personas_complete
+  7. format_slack_output
+  8. format_github_output
+  9. save_to_analysis_folder
+  10. send_team_notifications
 
 # Output configuration
 output_options:
@@ -359,143 +309,35 @@ output_options:
   path: "04-analysis/personas/"
   filename: "{{study_folder}}_personas_{{current_date}}.md"
 
-# Slack output template
+# Slack output template - just passes through AI content
 output_template: |
-  👤 **Persona Generation Complete**
-
-  **Study:** {{selected_study}}
-  **Analysis:** {{num_personas}} persona(s) created from {{ai_generated.file_discovery_summary.participant_count}} participants
-
-  ---
-
-  ## **Personas Identified**
-
-  {{ai_generated.persona_identification}}
-
-  ---
-
-  ## **Persona Characteristics**
-
-  {{ai_generated.persona_characterization}}
-
-  ---
-
-  ## **Goals & Frustrations**
-
-  {{ai_generated.goal_frustration_mapping}}
-
-  ---
-
-  ## **Opportunities**
-
-  {{ai_generated.persona_opportunity_generation}}
-
-  ---
-
-  **What do you think?** Reply in thread:
-  • How well do these personas match your experience with users?
-  • Which frustrations feel most urgent to address?
-  • Ready to move forward with the recommended opportunities?
-
-  📋 [View detailed report with behavioral patterns]({{github_file_link}})
+  {{ai_generated.personas_complete}}
 
 # GitHub markdown file template
 github_file_template: |
-  # 👤 Persona Generation Report
+  {{ai_generated.personas_complete}}
   
   ---
   
-  ## 📋 **Study Overview**
+  ## Related Analyses
   
-  **Study:** {{selected_study}}  
-  **Analysis Date:** {{current_date}}  
-  **Researcher:** {{researcher_contact}}  
-  **Focus Area:** {{focus_area}}  
-  **Analysis Version:** {{analysis_version}}
-  
-  ---
-  
-  ## 📊 **Data Quality Assessment**
-  
-  {{ai_generated.file_discovery_summary}}
+  | Analysis | Purpose |
+  |----------|---------|
+  | 🧭 **Journey Mapping** | Map the stages users go through |
+  | 🧠 **Affinity Mapping** | Identify broader themes |
+  | 🎯 **Jobs to be Done** | Understand functional needs |
+  | 🐛 **Usability Issues** | Prioritize interface problems |
   
   ---
   
-  ## 🔍 **User Diversity Analysis**
+  ## Contact
   
-  {{ai_generated.user_diversity_analysis}}
-  
-  **Methodology:** Evidence-based persona development using behavioral patterns, goals, and frustrations identified from qualitative research data.
-  
-  ---
-  
-  ## 👤 **Personas Identified**
-  
-  {{ai_generated.persona_identification}}
-  
-  ---
-  
-  ## 🎭 **Persona Characteristics**
-  
-  {{ai_generated.persona_characterization}}
-  
-  ---
-  
-  ## 🎯 **Behavioral Patterns**
-  
-  {{ai_generated.behavioral_pattern_analysis}}
-  
-  ---
-  
-  ## 💭 **Goals & Frustrations**
-  
-  {{ai_generated.goal_frustration_mapping}}
-  
-  ---
-  
-  ## 💡 **Actionable Opportunities**
-  
-  {{ai_generated.persona_opportunity_generation}}
-  
-  ---
-  
-  ## 📚 **Methodology Notes**
-  
-  **Analysis Approach:** These personas were developed using evidence-based methods, grounding each persona in actual behavioral patterns, quotes, and observations from research data. Each persona represents a distinct user type with specific goals, frustrations, and preferences that emerged from the research.
-  
-  **Quality Controls:**
-  - ✅ Evidence validation performed for each persona
-  - ✅ Behavioral patterns grounded in data
-  - ✅ Opportunity prioritization based on user impact
-  
-  **Usage Guidelines:**
-  - Use personas for decision-making and prioritization
-  - Reference specific goals and frustrations when designing solutions
-  - Validate design decisions against persona needs and behaviors
-  - Update personas as new research becomes available
-  
-  ---
-  
-  ## 📞 **Contact & Follow-up**
-  
-  **Lead Researcher:** {{researcher_contact}}  
-  **Study Channel:** {{study_channel}}  
-  **Questions?** Reply in the study channel or contact the research team directly.
-  
-  **Related Analyses:** Consider running complementary synthesis methods:
-  - 🧠 Affinity Mapping - to identify broader themes
-  - 🗺️ Journey Mapping - to understand process flow
-  - 🎯 Jobs to be Done - to identify functional needs
-  - 🐛 Usability Issues - to prioritize interface problems
-  - 💡 Design Opportunities - to identify specific improvements
-  
-  ---
-  
-  *Generated by Qori Research Synthesis • {{current_date}} • Version {{analysis_version}}*
+  **Lead Researcher:** {{researcher_contact}}
+  **Study Channel:** {{study_channel}}
 
 # Auto-generated variables
 auto_variables:
-  - num_personas: extract_persona_count(ai_generated.user_diversity_analysis) || 1
+  - num_personas: extract_persona_count(ai_generated.personas_complete) || 2
   - current_date: new Date().toISOString().split('T')[0]
   - analysis_version: generate_version_number() || "v1.0"
   - github_file_link: generate_github_link(study_name, current_date)
@@ -504,17 +346,36 @@ notify:
   - role: team
     action: "Persona generation completed"
     channel: "{{study_channel}}"
-    message: "{{researcher_contact}} just created {{num_personas}} research-based persona(s) for {{selected_study}}. Check out the insights!"
+    message: "{{researcher_contact}} created {{num_personas}} research-based personas. Check out the insights!"
+
+quality_assurance:
+  require_archetype_names: true
+  prohibit_real_names: true
+  require_citations: true
+  require_va_context: true
+  require_participant_diversity: true
+  prohibit_generic_content: true
+
+notes: |
+  v3.0 Changes (Complete Redesign):
+  - Consolidated 6 AI tasks into 1 comprehensive task
+  - Completely new output structure:
+    - "At a Glance" summary table at top
+    - Each persona in ONE consolidated section (not scattered)
+    - Demographics table format
+    - Frustrations table with citations
+    - Design Implications with priority
+  - Added archetype naming (no real names)
+  - Added VA context enforcement
+  - Added citation requirements
+  - Added good/bad examples for everything
+  - Removed "Sarah the Student" type hallucinations
+  - Personas now draw from ALL participants
+  
+  v2.0: Original 6-task architecture (caused scattered output and hallucinations)
 
 output_use: |
-  Slack-Native Persona Generation automatically discovers research files from selected study folders,
-  analyzes user diversity and behavioral patterns to create evidence-based personas with specific
-  goals, frustrations, and opportunities. Outputs concise Slack summaries focused on personas and 
-  opportunities, plus detailed GitHub markdown reports for stakeholder sharing and team reference.
-
-  Use this method to:
-    - Create evidence-based personas grounded in actual research data
-    - Understand user diversity and optimal persona count for your study
-    - Identify specific behavioral patterns, goals, and frustrations
-    - Generate actionable opportunities for supporting each persona type
-    - Build team empathy and inform design decisions with realistic user archetypes
+  Generate evidence-based personas from qualitative research. Each persona is 
+  consolidated into a single scannable profile with demographics, goals, 
+  frustrations, behaviors, and design implications — all grounded in actual 
+  research data with citations.
