@@ -2,7 +2,7 @@ id: journey_mapping
 name: run_journey_mapping
 
 label: 🧭 Journey Mapping
-version: "v3.2"
+version: "v3.3"
 
 description: >
   Turn raw user research into a clear, step-by-step journey map. Automatically discovers and analyzes 
@@ -161,6 +161,25 @@ ai_generation_tasks:
       Define your stage labels ONCE at the beginning, then use EXACTLY those same labels throughout.
       Do not create different stages in different sections.
       
+      RULE 6: NO GENERIC FILLER - BE SPECIFIC
+      Every statement must be specific and actionable. If you find yourself writing generic filler, STOP and rewrite.
+      
+      GENERIC (DO NOT WRITE):
+      ❌ "Success looks like: Clear navigation to view claim status accurately"
+      ❌ "Success looks like: Better user experience"
+      ❌ "Success looks like: Improved visibility of key elements"
+      ❌ "Opportunity: Enhance the visibility of the Edit button"
+      ❌ "Opportunity: Streamline the process"
+      
+      SPECIFIC (WRITE LIKE THIS):
+      ✅ "Success looks like: User finds claim status within 2 taps from home screen"
+      ✅ "Success looks like: Loading completes in under 3 seconds with progress indicator"
+      ✅ "Success looks like: Edit button is visible without scrolling, uses standard pencil icon"
+      ✅ "Opportunity: Move Edit button from overflow menu to inline with profile header"
+      ✅ "Opportunity: Add skeleton loading animation during API calls"
+      
+      Ask yourself: "Could a developer implement this tomorrow?" If no, it's too vague.
+      
       ============================================================
       YOUR TASK
       ============================================================
@@ -176,9 +195,9 @@ ai_generation_tasks:
       OUTPUT FORMAT - FOLLOW EXACTLY
       ============================================================
       
-      # 🧭 Journey Map: {{selected_study}}
+      # 🧭 Journey Map: [INSERT ACTUAL STUDY NAME FROM INPUT]
       
-      > **{{stage_count}} stages mapped** | **Confidence:** {{data_confidence}} | **Generated:** {{current_date}}
+      > **[X] stages mapped** | **Confidence:** [High/Medium/Low] | **Generated:** [Use today's date]
       
       ---
       
@@ -240,31 +259,17 @@ ai_generation_tasks:
       - [Specific issue] — PT00X, 00:00:00
       - [Specific issue] — PT00X, 00:00:00
       
-      **✅ Success looks like:** [What helps users get through this stage]
+      **✅ Success looks like:** [SPECIFIC measurable outcome - e.g., "completes in under 30 seconds" or "finds it within 2 taps" - NOT vague like "clear navigation"]
       
-      **💡 Opportunity:** [Specific, actionable improvement - not vague like "improve UX"]
+      **💡 Opportunity:** [SPECIFIC implementable fix - e.g., "Add loading spinner with percentage" - NOT vague like "improve performance"]
       
-      **👥 Owner:** `[Team]` — [why this team]
-      
-      <br>
-      
-      ---
-      
-      ### 2️⃣ [Stage label]
-      [Same format as above]
+      **👥 Owner:** `[Team]` — [1 sentence why]
       
       <br>
       
       ---
       
-      ### 3️⃣ [Stage label]
-      [Same format as above]
-      
-      <br>
-      
-      ---
-      
-      [Continue for remaining stages using 4️⃣ 5️⃣ 6️⃣ as needed]
+      [Repeat for each stage using 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣]
       
       ---
       
@@ -359,14 +364,8 @@ output_options:
   path: "04-analysis/journey-mapping/"
   filename: "{{study_folder}}_journey_mapping_{{current_date}}.md"
 
-# Slack output template (condensed for Slack readability)
+# Slack output template (just passes through the AI content - title is in the AI output)
 output_template: |
-  🧭 **Journey Map: {{selected_study}}**
-  
-  **{{stage_count}} stages** | **Confidence:** {{data_confidence}}
-  
-  ---
-  
   {{ai_generated.journey_map_complete}}
 
 # GitHub markdown file template
@@ -436,31 +435,33 @@ quality_assurance:
   require_stage_consistency: true
 
 notes: |
+  v3.3 Changes (Anti-Generic + Header Fix):
+  - FIXED: Removed duplicate header from Slack template (was showing empty title twice)
+  - FIXED: Title now uses "[INSERT ACTUAL STUDY NAME]" instruction instead of broken variable
+  - Added RULE 6: No Generic Filler with explicit good/bad examples
+  - Added specificity test: "Could a developer implement this tomorrow?"
+  - Updated stage format with inline reminders for specific success/opportunity
+  - Examples added for generic vs specific:
+    - ❌ "Clear navigation to view claim status accurately"
+    - ✅ "User finds claim status within 2 taps from home screen"
+  
   v3.2 Changes (Output Cleanup):
-  - Fixed title: Now "Journey Map: [Study Name]" instead of "Journey Mapping Complete"
-  - Added subtitle with stage count, confidence, and date
-  - Fixed emotion formatting: Now in clean table with emoji + quote
-  - Removed Validation Checklist from output (moved to internal-only check)
-  - Removed "What do you think?" prompt (Slack-specific, not needed in GitHub)
-  - Removed empty "[View full journey map]()" link
-  - Added <br> tags for better spacing between sections
-  - Simplified Primary User Profile layout
-  - Added Methodology section at bottom
-  - Added legend for priority/effort inline with recommendations table
+  - Fixed title format
+  - Fixed emotion formatting into table
+  - Removed Validation Checklist from output (internal only)
+  - Removed "What do you think?" prompt
+  - Added spacing between sections
   
   v3.1 Changes (Visual Polish):
-  - Added emojis to all section headers
+  - Added emojis to section headers
   - Added numbered stage indicators (1️⃣ 2️⃣ 3️⃣)
-  - Added emotion emojis (😤 😕 😊 😔 😰 😌)
-  - Converted pain points/opportunities to tables
-  - Added effort indicator dots (🔵🔵🔵 / 🔵🔵⚪ / 🔵⚪⚪)
+  - Added emotion emojis and effort dots
   
   v3.0 Changes (Major Restructure):
-  - Consolidated 6 separate AI tasks into 1 comprehensive task
-  - Added critical grounding rules at top of prompt
-  - Each stage now contains ALL info (emotions, pain points, opportunities, owner)
-  - Added VA-specific context (removed Marketing/Sales/etc.)
-  - Added citation requirements for all claims
+  - Consolidated 6 AI tasks into 1
+  - Added grounding rules
+  - Each stage contains all info
+  - VA-specific context
   
   v2.0: Original multi-task architecture
 
