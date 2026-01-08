@@ -1,16 +1,15 @@
 id: persona_generator
-name: run_persona_generator
+name: generate_personas
 
-label: 👤 Persona Generation
-version: "v3.3"
+label: 👤 Persona Generator
+version: "v4.0"
 
 description: >
-  Generate realistic, research-grounded user personas from qualitative data.
-  Each persona is consolidated into a single scannable profile with demographics,
-  goals, frustrations, behaviors, and design implications — all with citations.
+  Create evidence-based personas from research data. Personas aggregate 
+  behavioral patterns across participants — they are NOT 1:1 relabeling.
 
 author: Qori R&D
-created: 2025-06-27
+created: 2025-06-26
 last_updated: 2026-01-08
 
 input_type: slack_modal_form
@@ -37,10 +36,6 @@ privacy_controls:
     email: '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
     phone: '\b\d{3}[-.]?\d{3}[-.]?\d{4}\b'
     ssn: '\b\d{3}-\d{2}-\d{4}\b'
-  masking_strategy:
-    email: "[EMAIL_REDACTED]"
-    phone: "[PHONE_REDACTED]" 
-    ssn: "[SSN_REDACTED]"
 
 # Slack modal input variables
 input_variables:
@@ -50,207 +45,147 @@ input_variables:
   - include_raw_transcripts
   - discovered_files
   - combined_file_content
-  - quality_assessment
-
-# Study metadata mapping
-study_metadata:
-  "VA Housing Application Usability Study":
-    folder: "va-housing-usability-2025"
-    researcher: "jordan.researcher"
-    channel: "#research-housing-app"
-    focus_area: "housing application users"
-    
-  "Benefits Portal Navigation Research":
-    folder: "benefits-portal-nav-2025"
-    researcher: "alex.ux"
-    channel: "#research-benefits"
-    focus_area: "benefits portal users"
-
-# File discovery system
-auto_file_discovery:
-  core_files:
-    session_summaries:
-      file_patterns: ["*session_summary*", "*summary*", "*session*"]
-      search_paths: ["01-sessions/", "sessions/", "summaries/"]
-      priority: "required"
-      confidence_weight: 50
-      
-    transcripts:
-      file_patterns: ["*transcript*", "*interview*", "*recording*"]
-      search_paths: ["01-sessions/", "transcripts/", "interviews/"]
-      priority: "high"
-      confidence_weight: 30
-  
-  enhancement_files:
-    research_plan:
-      enabled_when: "{{include_research_plan}} == true"
-      file_patterns: ["*research_plan*", "*study_plan*", "*methodology*"]
-      search_paths: ["00-planning/", "planning/", "research/"]
-      confidence_boost: 8
 
 # AI generation tasks - SINGLE CONSOLIDATED TASK
 ai_generation_tasks:
   - task_id: "personas_complete"
     prompt: |
-      ============================================================
-      🚨 CRITICAL RULES - READ BEFORE ANYTHING ELSE 🚨
-      ============================================================
-      
-      RULE 1: NO HALLUCINATION - EXTRACT ONLY
-      You are an EXTRACTOR, not a GENERATOR. 
-      - Every persona must be based on ACTUAL participants in the data
-      - Every goal, frustration, and behavior must come from the research
-      - If you cannot find evidence, DO NOT INCLUDE IT
-      - NEVER invent personas like "Sarah the Student" or "David the Professional"
-      
-      RULE 2: NO REAL NAMES - USE ARCHETYPE LABELS
-      - NEVER use names like "John Reynolds" or "Sarah Nguyen"
-      - Use descriptive archetype names: "The Assisted Navigator", "The Efficiency Seeker"
-      - Include participant ID in parentheses: "The Assisted Navigator (PT001)"
-      - This protects participant privacy
-      
-      RULE 3: VA GOVERNMENT CONTEXT ONLY
-      These are Veterans using VA services. 
-      - Goals relate to: healthcare, benefits, claims, appointments, prescriptions
-      - Frustrations relate to: app usability, navigation, accessibility, loading times
-      - NEVER mention: "data analysis tools", "team collaboration", "workload management"
-      
-      RULE 4: CITE EVERYTHING
-      Every frustration, behavior, and quote MUST have:
-      - Participant ID (PT001, PT002, etc.)
-      - Timestamp if available
-      
-      RULE 5: AGGREGATE ACROSS PARTICIPANTS - DO NOT 1:1 MAP
-      Personas are COMPOSITE ARCHETYPES synthesized from patterns across multiple participants.
-      
-      IMPORTANT: The number of personas depends on the ACTUAL PATTERNS in the data.
-      - If you have 3 participants with 2 distinct patterns → create 2 personas
-      - If you have 5 participants with 3 distinct patterns → create 3 personas
-      - If you have 10 participants with 2 distinct patterns → create 2 personas
-      - Persona count is based on PATTERN DIVERSITY, not participant count
-      
-      ❌ WRONG (1:1 mapping):
-      - Persona 1 = Participant A
-      - Persona 2 = Participant B
-      - Persona 3 = Participant C
-      This is just relabeling participants, not persona development.
-      
-      ✅ RIGHT (aggregation):
-      - Persona 1 = participants who share Pattern X (could be 2, 3, or 5 participants)
-      - Persona 2 = participants who share Pattern Y (could be 2, 3, or 5 participants)
-      
-      HOW TO AGGREGATE:
-      1. Read ALL participant data first
-      2. Identify behavioral PATTERNS that appear across multiple participants
-      3. Group participants who share similar goals, frustrations, or approaches
-      4. Create composite personas that synthesize these shared patterns
-      5. Cite ALL relevant participant IDs for each persona
-      6. Persona count should usually be LESS than participant count
-      
-      RULE 6: CITE MULTIPLE PARTICIPANTS PER PERSONA
-      Each persona should draw evidence from 2+ participants where patterns overlap.
-      If a persona only cites one participant, you're probably not aggregating properly.
-      
-      Exception: If one participant has a truly unique pattern not shared by others, 
-      they may form their own persona — but this should be rare.
+      You are creating research-based personas from VA research data.
       
       ============================================================
-      YOUR TASK
+      🚨 CRITICAL RULES - VIOLATIONS WILL RUIN THE OUTPUT
       ============================================================
       
-      Create research-grounded personas from this data:
+      RULE 1: NO HALLUCINATION
+      
+      You are an EXTRACTOR, not a GENERATOR.
+      - Every goal must come from the research data
+      - Every frustration must have a citation
+      - Every quote must be verbatim from the data
+      - If you can't find evidence, DON'T INCLUDE IT
+      
+      RULE 2: NO REAL NAMES — EVER
+      
+      ❌ NEVER USE:
+      - "John Reynolds"
+      - "Sarah Nguyen" 
+      - "Mark Thompson"
+      - Any first+last name combination
+      
+      ✅ ALWAYS USE archetype names:
+      - "The Assisted Navigator"
+      - "The Efficiency Seeker"
+      - "The Phone-First Veteran"
+      
+      RULE 3: VA CONTEXT ONLY
+      
+      These are VETERANS using VA SERVICES. Goals relate to:
+      ✅ Healthcare appointments
+      ✅ Prescription refills
+      ✅ Disability claims
+      ✅ Benefits information
+      ✅ Profile/contact updates
+      
+      ❌ NEVER mention (these are hallucinations):
+      - "data analysis tools"
+      - "team collaboration"
+      - "academic success"
+      - "professional development"
+      - "study recommendations"
+      - "workload management"
+      - Marketing, Sales, or corporate teams
+      
+      RULE 4: AGGREGATE — DO NOT DO 1:1 MAPPING
+      
+      ❌ WRONG (1:1 mapping — just relabeling participants):
+      - Persona 1 = PT001
+      - Persona 2 = PT002
+      - Persona 3 = PT003
+      
+      ✅ RIGHT (aggregation by shared patterns):
+      - Persona 1 = PT001 + PT003 (both need accessibility features)
+      - Persona 2 = PT002 + PT003 (both prefer phone support when frustrated)
+      
+      Look for PATTERNS that appear across multiple participants.
+      Group participants who share the same behaviors, goals, or frustrations.
+      
+      RULE 5: FEWER PERSONAS THAN PARTICIPANTS
+      
+      If you have 3 participants, you should have 2 personas (MAX).
+      If you have 5 participants, you should have 2-3 personas.
+      
+      Personas represent PATTERNS, not individuals.
+      
+      ============================================================
+      INPUT DATA
+      ============================================================
       
       **Study:** {{selected_study}}
-      **Focus Area:** {{focus_area}}
-      **Input Data:** {{combined_file_content}}
+      **Research Data:** {{combined_file_content}}
       
       ============================================================
-      OUTPUT FORMAT - FOLLOW EXACTLY
+      OUTPUT FORMAT — FOLLOW EXACTLY
       ============================================================
       
-      # 👤 Personas: [INSERT ACTUAL STUDY NAME]
+      # 👤 Personas: [Study Name]
       
-      > **[X] personas** from **[Y] participants** | **Generated:** [Today's date]
+      > **[X] personas** from **[Y] participants** | **Generated:** [Date]
       
       ---
       
       ## At a Glance
       
-      [Create a row for EACH persona you identified - could be 1, 2, 3, or more based on patterns]
-      
-      | Persona | Type | Participants | Primary Need | Key Frustration |
-      |---------|------|--------------|--------------|-----------------|
-      | [Archetype Name] | [2-3 word type] | [IDs who share this pattern] | [One sentence] | [One sentence] |
-      
-      ---
-      
-      [FOR EACH PERSONA - Create as many as the data supports, NOT one per participant]
-      
-      ## Persona [N]: [Archetype Name]
-      
-      **Based on:** [List ALL participant IDs who share this pattern]
-      
-      > "[Key quote that captures their essence]" — [ID], [timestamp]
-      
-      ### Demographics
-      
-      | | |
-      |---|---|
-      | **Background** | [Military service, years, role] |
-      | **Tech Setup** | [Device, accessibility needs, connectivity] |
-      | **VA Usage** | [Frequency, primary tasks] |
-      | **Experience** | [How long using VA services/app] |
-      
-      ### 🎯 Goals
-      
-      What they're trying to accomplish:
-      
-      - **[Goal 1]** — [Why it matters to them]
-      - **[Goal 2]** — [Why it matters to them]
-      
-      ### 😤 Frustrations
-      
-      What blocks their success:
-      
-      | Frustration | Impact | Source |
-      |-------------|--------|--------|
-      | [Specific issue] | [How it affects them] | PT00X, 00:00:00 |
-      | [Specific issue] | [How it affects them] | PT00X, 00:00:00 |
-      | [Specific issue] | [How it affects them] | PT00X, 00:00:00 |
-      
-      ### 🔄 Behaviors & Patterns
-      
-      How they approach tasks:
-      
-      - **[Behavior pattern]** — [Evidence from research]
-      - **[Coping strategy]** — [How they work around problems]
-      - **[Decision style]** — [How they make choices]
-      
-      ### 💡 Design Implications
-      
-      What this means for the product:
-      
-      | Opportunity | Why It Matters | Priority |
-      |-------------|----------------|:--------:|
-      | [Specific, implementable fix] | [Addresses which frustration] | 🔴 |
-      | [Specific, implementable fix] | [Addresses which frustration] | 🟡 |
+      | Persona | Archetype | Based On | Key Need |
+      |---------|-----------|----------|----------|
+      | 1 | [Name like "The Assisted Navigator"] | PT00X, PT00X | [One-line need] |
+      | 2 | [Name like "The Efficiency Seeker"] | PT00X, PT00X | [One-line need] |
       
       ---
       
-      [REPEAT THE ABOVE STRUCTURE for each persona identified]
-      [Number of personas = number of distinct patterns, NOT number of participants]
+      ## Persona 1: [Archetype Name]
+      
+      **Based on:** PT00X, PT00X [list ALL participant IDs who share this pattern]
+      
+      > "[Key quote that captures this persona's experience]" — PT00X, 00:00:00
+      
+      **Who they are:**
+      
+      | Attribute | Details |
+      |-----------|---------|
+      | **Background** | [Military branch, service details from data] |
+      | **Tech Setup** | [Device, accessibility settings, connectivity] |
+      | **VA Usage** | [How often, primary tasks] |
+      
+      **What they're trying to do:**
+      
+      - [Goal from research] — *Evidence: PT00X*
+      - [Goal from research] — *Evidence: PT00X*
+      
+      **What blocks them:**
+      
+      | Frustration | Evidence |
+      |-------------|----------|
+      | [Specific issue from data] | PT00X, 00:00:00 |
+      | [Specific issue from data] | PT00X, 00:00:00 |
+      
+      **How they cope:** [Workarounds or behaviors observed in research]
+      
+      **Design implication:** [One specific, implementable fix]
       
       ---
       
-      ## Summary: Design Priorities
+      ## Persona 2: [Archetype Name]
       
-      Based on these personas, prioritize:
+      [Same format as Persona 1]
       
-      | # | Opportunity | Personas Affected | Effort |
-      |---|-------------|-------------------|:------:|
-      | 1 | [Top priority fix] | All / [Specific persona] | 🔵⚪⚪ |
-      | 2 | [Second priority] | All / [Specific persona] | 🔵🔵⚪ |
-      | 3 | [Third priority] | All / [Specific persona] | 🔵🔵⚪ |
+      ---
+      
+      ## Design Priorities
+      
+      | # | Opportunity | Helps Persona | Effort |
+      |---|-------------|---------------|:------:|
+      | 1 | [Specific fix] | Both / Persona 1 | 🔵⚪⚪ |
+      | 2 | [Specific fix] | Both / Persona 2 | 🔵🔵⚪ |
       
       ---
       
@@ -258,86 +193,42 @@ ai_generation_tasks:
       
       **Framework:** Evidence-Based Persona Development
       
-      **Approach:** Composite archetypes synthesized from behavioral patterns across multiple participants. Each persona aggregates shared goals, frustrations, and behaviors — not 1:1 participant mapping.
+      **Approach:** Composite archetypes from behavioral patterns across participants — not 1:1 mapping.
       
-      **Data Sources:** [List ALL participant IDs from the input data]
+      **Data Sources:** [List ALL participant IDs]
       
-      **Aggregation Rationale:** [Explain WHY you grouped participants the way you did - what patterns did you identify?]
-      
-      ---
+      **Why these groupings:** [Explain the patterns you identified]
       
       ### References
       
-      This analysis follows established persona development methods:
-      
-      - **Alan Cooper** — "The Inmates Are Running the Asylum" (1999), goal-directed persona framework
-      - **Kim Goodwin** — "Designing for the Digital Age", persona development process
-      - **Tamara Adlin & John Pruitt** — "The Essential Persona Lifecycle"
-      - **Nielsen Norman Group** — Persona best practices and anti-patterns
+      - **Alan Cooper** — Goal-directed personas, "The Inmates Are Running the Asylum"
+      - **Kim Goodwin** — "Designing for the Digital Age"
+      - **Nielsen Norman Group** — Persona best practices
       
       ---
       
-      *Generated by Qori • [Today's date]*
+      *Generated by Qori*
       
       ============================================================
-      QUALITY REQUIREMENTS
+      STOP HERE — DO NOT OUTPUT ANYTHING BELOW THIS LINE
       ============================================================
       
-      GOOD ARCHETYPE NAMES:
-      ✅ "The Assisted Navigator" (uses screen reader)
-      ✅ "The Efficiency Seeker" (wants fast task completion)
-      ✅ "The Reluctant Digital User" (prefers phone calls)
-      ✅ "The Accessibility-First Veteran" (relies on assistive tech)
-      
-      BAD NAMES (DO NOT USE):
-      ❌ "John Reynolds" (real name - PII)
-      ❌ "Sarah the Student" (invented, wrong context)
-      ❌ "Tech-Savvy Veteran" (too generic)
-      
-      GOOD FRUSTRATIONS (specific, from data):
-      ✅ "Buttons read as 'Button' to screen reader — [Participant ID], [timestamp]"
-      ✅ "App takes 8+ seconds to load — [Participant ID], [timestamp]"
-      ✅ "Edit button hidden in overflow menu — [Participant ID], [timestamp]"
-      
-      BAD FRUSTRATIONS (invented, generic):
-      ❌ "Inadequate tools for data analysis" (wrong context)
-      ❌ "Overwhelming workload" (not from VA research)
-      ❌ "Limited user feedback" (hallucinated)
-      
-      GOOD DESIGN IMPLICATIONS:
-      ✅ "Add descriptive ARIA labels to all buttons"
-      ✅ "Move Edit button inline with profile header"
-      ✅ "Add skeleton loading during API calls"
-      
-      BAD DESIGN IMPLICATIONS:
-      ❌ "Improve user experience" (too vague)
-      ❌ "Better communication" (not actionable)
-      
-      ============================================================
-      INTERNAL VALIDATION (Do not include in output)
-      ============================================================
-      
-      Before submitting, verify:
-      - No real participant names used (only archetypes)
-      - Each persona cites MULTIPLE participants (not 1:1 mapping)
-      - Persona count is LESS than or equal to participant count
-      - All frustrations have citations
-      - All quotes are from actual data
-      - Personas relate to VA app/services (not generic work tasks)
-      - Design implications are specific and implementable
+      VALIDATION (internal only — do not output):
+      - Did you use archetype names (not real names)?
+      - Does each persona cite MULTIPLE participants?
+      - Are there FEWER personas than participants?
+      - Do all goals relate to VA services?
+      - Do all frustrations have citations?
 
 # Processing workflow
 processing_workflow:
   1. validate_slack_modal_inputs
   2. discover_files_from_study_selection
-  3. calculate_initial_quality_assessment
-  4. validate_discovered_files
-  5. combine_selected_files_with_truncation
-  6. execute_personas_complete
-  7. format_slack_output
-  8. format_github_output
-  9. save_to_analysis_folder
-  10. send_team_notifications
+  3. combine_selected_files_with_truncation
+  4. execute_personas_complete
+  5. format_slack_output
+  6. format_github_output
+  7. save_to_analysis_folder
 
 # Output configuration
 output_options:
@@ -347,79 +238,35 @@ output_options:
   path: "04-analysis/personas/"
   filename: "{{study_folder}}_personas_{{current_date}}.md"
 
-# Slack output template - just passes through AI content
+# Slack output template
 output_template: |
   {{ai_generated.personas_complete}}
 
 # GitHub markdown file template
 github_file_template: |
   {{ai_generated.personas_complete}}
-  
-  ---
-  
-  ## Related Analyses
-  
-  | Analysis | Purpose |
-  |----------|---------|
-  | 🧭 **Journey Mapping** | Map the stages users go through |
-  | 🧠 **Affinity Mapping** | Identify broader themes |
-  | 🎯 **Jobs to be Done** | Understand functional needs |
-  | 🐛 **Usability Issues** | Prioritize interface problems |
-  
-  ---
-  
-  ## Contact
-  
-  **Lead Researcher:** {{researcher_contact}}
-  **Study Channel:** {{study_channel}}
-
-# Auto-generated variables
-auto_variables:
-  - num_personas: extract_persona_count(ai_generated.personas_complete) || 2
-  - current_date: new Date().toISOString().split('T')[0]
-  - analysis_version: generate_version_number() || "v1.0"
-  - github_file_link: generate_github_link(study_name, current_date)
 
 notify:
   - role: team
     action: "Persona generation completed"
     channel: "{{study_channel}}"
-    message: "{{researcher_contact}} created {{num_personas}} research-based personas. Check out the insights!"
-
-quality_assurance:
-  require_archetype_names: true
-  prohibit_real_names: true
-  require_citations: true
-  require_va_context: true
-  require_participant_diversity: true
-  prohibit_generic_content: true
+    message: "Personas generated for {{selected_study}}!"
 
 notes: |
-  v3.3 Changes (Expert Attribution):
-  - Added References section citing Alan Cooper, Kim Goodwin, Adlin & Pruitt, NN/g
-  - Establishes credibility with industry-standard methodology
+  v4.0 Changes (Complete Rewrite):
+  - MAJOR: Dramatically simplified output structure
+  - MAJOR: Added explicit "Sarah the Student" / "David the Professional" as WRONG examples
+  - MAJOR: Listed specific hallucination terms to NEVER use
+  - MAJOR: Added "FEWER personas than participants" rule
+  - MAJOR: Moved all validation AFTER "STOP HERE" line
+  - Removed scattered multi-section format (was causing duplicate personas)
+  - Single clean format per persona
+  - Stronger aggregation instructions with wrong/right examples
   
-  v3.2 Changes (Flexibility Fix):
-  - Made clear that persona count is DATA-DRIVEN, not hardcoded
-  - Added explicit examples: "5 participants with 3 patterns → 3 personas"
-  - Removed hardcoded PT001/PT002/PT003 from examples
-  - Output format now says "repeat for each persona identified"
-  
-  v3.1 Changes (Aggregation Fix):
-  - Personas now aggregate across participants (not 1:1 mapping)
-  - Each persona must cite multiple participants
-  - Persona count should be LESS than participant count
-  
-  v3.0 Changes (Complete Redesign):
-  - Consolidated 6 AI tasks into 1 comprehensive task
-  - New output structure with "At a Glance" summary
-  - Archetype naming (no real names)
-  - VA context enforcement
-  
-  v2.0: Original 6-task architecture (hallucinations, scattered output)
+  v3.x: Various incremental fixes (still hallucinating)
+  v2.0: Original multi-task architecture (severe hallucinations)
 
 output_use: |
-  Generate evidence-based personas from qualitative research. Each persona is 
-  consolidated into a single scannable profile with demographics, goals, 
-  frustrations, behaviors, and design implications — all grounded in actual 
-  research data with citations.
+  Generate evidence-based personas using archetype names (never real names).
+  Each persona aggregates behavioral patterns across multiple participants.
+  Output includes goals, frustrations with citations, and design implications.
