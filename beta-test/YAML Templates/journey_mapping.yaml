@@ -2,7 +2,7 @@ id: journey_mapping
 name: run_journey_mapping
 
 label: 🧭 Journey Mapping
-version: "v3.3"
+version: "v3.4"
 
 description: >
   Turn raw user research into a clear, step-by-step journey map. Automatically discovers and analyzes 
@@ -180,6 +180,20 @@ ai_generation_tasks:
       
       Ask yourself: "Could a developer implement this tomorrow?" If no, it's too vague.
       
+      RULE 7: CITATION DIVERSITY - USE ALL PARTICIPANTS
+      Your citations must represent ALL participants in the input data, not just one.
+      
+      If input contains PT001, PT002, PT003:
+      ❌ WRONG: Every citation is from PT003
+      ✅ RIGHT: Mix of PT001, PT002, PT003 citations throughout
+      
+      Before finalizing, check:
+      - Are multiple participants cited in Pain Points?
+      - Are multiple participants cited in Emotions?
+      - Did you pull insights from ALL available transcripts?
+      
+      If all your citations are from one participant, GO BACK and find supporting evidence from the others.
+      
       ============================================================
       YOUR TASK
       ============================================================
@@ -316,6 +330,7 @@ ai_generation_tasks:
       - Stage labels consistent throughout
       - Opportunities are specific (not generic)
       - Owners are VA teams (not Marketing/Sales)
+      - Citations include MULTIPLE participants (not just one)
       
       ============================================================
       QUALITY REQUIREMENTS
@@ -435,32 +450,30 @@ quality_assurance:
   require_stage_consistency: true
 
 notes: |
+  v3.4 Changes (Citation Diversity):
+  - Added RULE 7: Citation Diversity - must use ALL participants, not just one
+  - Added check: "Are multiple participants cited?" to internal validation
+  - Issue: Output was citing only PT003 despite PT001/PT002/PT003 in data sources
+  - Note: If still only one participant cited, check backend file discovery
+  
   v3.3 Changes (Anti-Generic + Header Fix):
-  - FIXED: Removed duplicate header from Slack template (was showing empty title twice)
-  - FIXED: Title now uses "[INSERT ACTUAL STUDY NAME]" instruction instead of broken variable
-  - Added RULE 6: No Generic Filler with explicit good/bad examples
-  - Added specificity test: "Could a developer implement this tomorrow?"
-  - Updated stage format with inline reminders for specific success/opportunity
-  - Examples added for generic vs specific:
-    - ❌ "Clear navigation to view claim status accurately"
-    - ✅ "User finds claim status within 2 taps from home screen"
+  - Removed duplicate header from Slack template
+  - Title uses instruction instead of broken variable
+  - Added RULE 6: No Generic Filler with good/bad examples
+  - Specificity test: "Could a developer implement this tomorrow?"
   
   v3.2 Changes (Output Cleanup):
-  - Fixed title format
   - Fixed emotion formatting into table
-  - Removed Validation Checklist from output (internal only)
-  - Removed "What do you think?" prompt
+  - Removed Validation Checklist from output
   - Added spacing between sections
   
   v3.1 Changes (Visual Polish):
   - Added emojis to section headers
-  - Added numbered stage indicators (1️⃣ 2️⃣ 3️⃣)
-  - Added emotion emojis and effort dots
+  - Added numbered stage indicators
   
   v3.0 Changes (Major Restructure):
   - Consolidated 6 AI tasks into 1
   - Added grounding rules
-  - Each stage contains all info
   - VA-specific context
   
   v2.0: Original multi-task architecture
