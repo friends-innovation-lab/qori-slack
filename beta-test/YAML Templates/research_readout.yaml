@@ -155,8 +155,6 @@ ai_generation_tasks:
       - Quotes not found verbatim in source
       - Generic findings not tied to specific evidence
       
-      If source data is insufficient, output:
-      "⚠️ Insufficient data for research readout. Required files may be empty or not loaded."
       
       ============================================================
       SOURCE DATA
