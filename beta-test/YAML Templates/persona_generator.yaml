@@ -2,7 +2,7 @@ id: persona_generator
 name: run_persona_generator
 
 label: 👤 Persona Generation
-version: "v3.2"
+version: "v3.3"
 
 description: >
   Generate realistic, research-grounded user personas from qualitative data.
@@ -256,11 +256,24 @@ ai_generation_tasks:
       
       ## Methodology
       
-      **Approach:** Evidence-based persona development from qualitative research data.
+      **Framework:** Evidence-Based Persona Development
+      
+      **Approach:** Composite archetypes synthesized from behavioral patterns across multiple participants. Each persona aggregates shared goals, frustrations, and behaviors — not 1:1 participant mapping.
       
       **Data Sources:** [List ALL participant IDs from the input data]
       
       **Aggregation Rationale:** [Explain WHY you grouped participants the way you did - what patterns did you identify?]
+      
+      ---
+      
+      ### References
+      
+      This analysis follows established persona development methods:
+      
+      - **Alan Cooper** — "The Inmates Are Running the Asylum" (1999), goal-directed persona framework
+      - **Kim Goodwin** — "Designing for the Digital Age", persona development process
+      - **Tamara Adlin & John Pruitt** — "The Essential Persona Lifecycle"
+      - **Nielsen Norman Group** — Persona best practices and anti-patterns
       
       ---
       
@@ -382,13 +395,15 @@ quality_assurance:
   prohibit_generic_content: true
 
 notes: |
+  v3.3 Changes (Expert Attribution):
+  - Added References section citing Alan Cooper, Kim Goodwin, Adlin & Pruitt, NN/g
+  - Establishes credibility with industry-standard methodology
+  
   v3.2 Changes (Flexibility Fix):
   - Made clear that persona count is DATA-DRIVEN, not hardcoded
   - Added explicit examples: "5 participants with 3 patterns → 3 personas"
   - Removed hardcoded PT001/PT002/PT003 from examples
   - Output format now says "repeat for each persona identified"
-  - Removed fixed Persona 2 / Persona 3 sections
-  - Methodology section uses "[List ALL participant IDs]" not specific IDs
   
   v3.1 Changes (Aggregation Fix):
   - Personas now aggregate across participants (not 1:1 mapping)
