@@ -1,126 +1,80 @@
 # 🧭 Journey Map: 2026 VA Health and Benefits Mobile App
 
-> **User-Centered Journey** | **Confidence:** High | **Generated:** January 5, 2026
+> **Retired Army Sergeant First Class with 20 years of military service** | **6 stages** | **Data:** PT001, PT002, PT003
 
----
-
-## 📊 Executive Summary
-
-| | |
-|-----------|-------|
-| 👤 **Primary User** | Veterans who have served in the military |
-| 🗺️ **Journey Scope** | App Loading → Claim Status Check |
-| 📍 **Total Stages** | 4 |
-| 📈 **Data Confidence** | High - Clear pain points and opportunities |
-
-### 🔥 Top Pain Points
-| # | Pain Point | Source |
-|---|------------|--------|
-| 1 | Slow Loading Times | PT003, 00:01:56 |
-| 2 | Profile Information Confusion | PT003, 00:02:52 |
-| 3 | Benefits Navigation Issues | PT003, 00:03:42 |
-
-### 💡 Top Opportunities  
-| # | Opportunity | Impact |
-|---|-------------|--------|
-| 1 | Improve Loading Speed | High |
-| 2 | Enhance Edit Button Visibility | High |
-| 3 | Clarify Claim Status Location | Quick Win |
-
----
-
-## 👤 Primary User Profile
-
-> Veterans who rely on VA services, prefer large text settings, and have limited data plans.
-
-| 🎯 Goal | 🌍 Context |
-|---------|-----------|
-| Access VA benefits efficiently | Navigating the app for health and benefits information |
-
-**Key Characteristics:**
-- ✓ Prefers large text settings for accessibility
-- ✓ Limited data plan, relies on Wi-Fi
-- ✓ Frustrated with slow loading times
-
-<br>
+| Priority | Pain Point | Opportunity |
+|:--------:|------------|-------------|
+| 🔴 | Slow Loading and Frustration — PT003 | Improve app performance to reduce loading times |
+| 🔴 | Profile Information Confusion — PT003 | Enhance the visibility of the Edit button for profile updates |
+| 🔴 | Benefits Navigation - Getting Lost — PT003 | Provide clearer navigation for finding claim status |
+| 🔴 | Message Confusion — PT002 | Clarify the process of starting a new message thread |
+| 🔴 | Benefits Navigation Disaster — PT002 | Enhance the Benefits section for detailed information |
+| 🟡 | Search Functionality Test — PT002 | Improve the search function's visibility and relevance |
 
 ---
 
 ## 🗺️ Journey Stages
 
-### 1️⃣ App Loading
+### 1️⃣ Initial App Access
 
-**What happens:** User opens the app and encounters slow loading times.
+**What happens:** User opens the app for the first time, navigating through the main menu options.
+
+**📱 Touchpoints:** Home screen → Main menu options
 
 | Emotion | Quote |
 |:-------:|-------|
-| 😤 Frustrated | "Everything takes forever to load." — PT003, 00:01:56 |
+| 😊 Positive | "The main menu structure makes sense - Health, Benefits, Payments, Profile. That's logical." — PT001, 00:00:00 |
 
 **🔴 Pain Points:**
 - Slow loading times causing frustration — PT003, 00:01:56
 
-**✅ Success looks like:** Loading completes in under 3 seconds with progress indicator
+**✅ Success looks like:** User finds main menu options easily within 5 seconds.
 
-**💡 Opportunity:** Improve app performance to reduce loading times
+**💡 Opportunity:** Improve app performance for faster loading times.
 
-**👥 Owner:** Engineering Team — Faster loading enhances user experience
+**👥 Owner:** `Engineering` — Enhancing app performance.
 
 <br>
 
 ### 2️⃣ Profile Information Update
 
-**What happens:** User struggles to locate the Edit button for updating profile information.
+**What happens:** User attempts to update contact information in the Profile section.
+
+**📱 Touchpoints:** Profile section → Edit button
 
 | Emotion | Quote |
 |:-------:|-------|
-| 😕 Confused | "That Edit button was hard to spot." — PT003, 00:02:52 |
+| 😠 Frustrated | "There's an 'Edit' button but it's way at the bottom of the page." — PT001, 00:04:49 |
 
 **🔴 Pain Points:**
-- Difficulty finding the Edit button for profile updates — PT003, 00:02:52
+- Hidden Edit button causing difficulty in updating information — PT001, 00:04:49
 
-**✅ Success looks like:** Edit button is visible without scrolling, uses standard pencil icon
+**✅ Success looks like:** User updates contact information within 2 minutes.
 
-**💡 Opportunity:** Enhance the visibility of the Edit button for profile updates
+**💡 Opportunity:** Enhance the visibility of the Edit button in the Profile section.
 
-**👥 Owner:** Design Team — Improve user interaction design
+**👥 Owner:** `Design` — Improving Edit button visibility.
 
 <br>
 
-### 3️⃣ Claim Status Check
+### 3️⃣ Benefits Navigation
 
-**What happens:** User faces challenges in finding claim status information after filing a claim.
+**What happens:** User explores the Benefits section to find information about disability ratings.
 
-| Emotion | Quote |
-|:-------:|-------|
-| 😞 Frustrated | "No active claims showing even though a claim was filed." — PT003, 00:03:42 |
-
-**🔴 Pain Points:**
-- Difficulty in finding claim status after filing a claim — PT003, 00:03:42
-
-**✅ Success looks like:** User finds claim status within 2 taps from home screen
-
-**💡 Opportunity:** Provide clearer navigation for finding claim status
-
-**👥 Owner:** Product Team — Enhance user journey for claim status visibility
-
-<br>
-
-### 4️⃣ Contact Information Update
-
-**What happens:** User struggles to update contact information due to unclear navigation.
+**📱 Touchpoints:** Benefits section → Disability ratings
 
 | Emotion | Quote |
 |:-------:|-------|
-| 😤 Frustrated | "Everything takes so long to load, it makes simple tasks feel like a big production." — PT003, 00:02:58 |
+| 😕 Confused | "This just shows '40%' but doesn't tell me what conditions that includes..." — PT002, 00:02:54 |
 
 **🔴 Pain Points:**
-- Updating contact information proves challenging due to unclear navigation — PT003, 00:02:58
+- Challenges in navigating the Benefits section — PT002, 00:02:54
 
-**✅ Success looks like:** Loading completes in under 3 seconds with progress indicator
+**✅ Success looks like:** User easily finds detailed information about disability ratings.
 
-**💡 Opportunity:** Simplify the process for updating contact information
+**💡 Opportunity:** Enhance the Benefits section for detailed information.
 
-**👥 Owner:** Engineering Team — Streamline contact information update process
+**👥 Owner:** `Content` — Improving Benefits section navigation.
 
 <br>
 
@@ -130,10 +84,12 @@
 
 | Priority | Opportunity | Stage | Owner | Effort |
 |:--------:|-------------|-------|-------|:------:|
-| 🔴 | Improve app performance to reduce loading times | App Loading | Engineering Team | 🔵🔵🔵 |
-| 🔴 | Enhance the visibility of the Edit button for profile updates | Profile Information Update | Design Team | 🔵🔵🔵 |
-| 🟢 | Provide clearer navigation for finding claim status | Claim Status Check | Product Team | 🔵⚪⚪ |
-| 🟡 | Simplify the process for updating contact information | Contact Information Update | Engineering Team | 🔵🔵⚪ |
+| 🔴 | Improve app performance to reduce loading times | Initial App Access | `Engineering` | 🔵🔵🔵 |
+| 🔴 | Enhance the visibility of the Edit button for profile updates | Profile Information Update | `Design` | 🔵🔵🔵 |
+| 🔴 | Provide clearer navigation for finding claim status | Benefits Navigation | `Content` | 🔵🔵⚪ |
+| 🔴 | Clarify the process of starting a new message thread | [Stage Name] | `Design` | 🔵🔵⚪ |
+| 🔴 | Enhance the Benefits section for detailed information | [Stage Name] | `Content` | 🔵🔵⚪ |
+| 🟡 | Improve the search function's visibility and relevance | [Stage Name] | `Engineering` | 🔵⚪⚪ |
 
 > **Legend:** 🔴 High Priority | 🟡 Medium | 🟢 Low | Effort: 🔵🔵🔵 High | 🔵🔵⚪ Med | 🔵⚪⚪ Low
 
@@ -143,9 +99,9 @@
 
 | # | Question | For |
 |---|----------|-----|
-| 1 | How can we improve loading times without compromising other functionalities? | Engineering Team |
-| 2 | What design changes can enhance the visibility of the Edit button for users with accessibility needs? | Design Team |
-| 3 | Are there any additional features we can add to streamline the claim status check process? | Product Team |
+| 1 | How can we ensure the Edit button is prominently displayed in the Profile section? | Design Team |
+| 2 | What strategies can be implemented to improve the loading times for the app? | Engineering Team |
+| 3 | How can we enhance the Benefits section to provide clearer information about disability ratings? | Content Team |
 
 ---
 
@@ -169,5 +125,3 @@ This analysis follows established journey mapping methods:
 - **Mapping Experiences** — Jim Kalbach, O'Reilly Media
 
 ---
-
-*Generated by Qori • January 5, 2026*
