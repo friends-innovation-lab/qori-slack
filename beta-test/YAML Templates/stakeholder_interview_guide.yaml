@@ -2,7 +2,7 @@ id: stakeholder_interview_guide
 name: create_stakeholder_interview_guide
 
 label: 🏛️ Stakeholder Interview Guide
-version: "v1.0"
+version: "v1.1"
 
 description: >
   Generate a structured interview guide for internal stakeholder conversations.
@@ -264,7 +264,7 @@ output_options:
   default_delivery: "slack_and_file"
   slack_format: "interview_guide"
   file_format: "github_markdown"
-  path: "00-planning/stakeholder-interviews/"
+  path: "primary-research/01-planning/stakeholder-interviews/"
   filename: "{{study_folder}}_stakeholder_guide_{{stakeholder_role}}_{{current_date}}.md"
 
 # Slack output template
@@ -281,7 +281,7 @@ notes: |
   - Role-specific question generation
   - Connection to user research findings
   - Follows Portigal, Hall, Goodwin methodologies
-  - Outputs to 00-planning folder (not analysis)
+  - Outputs to 01-planning folder (not analysis)
 
 output_use: |
   Generate structured interview guides for internal stakeholders
