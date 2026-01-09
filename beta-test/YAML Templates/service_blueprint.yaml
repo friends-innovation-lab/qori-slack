@@ -2,7 +2,7 @@ id: service_blueprint
 name: create_service_blueprint
 
 label: 🔧 Service Blueprint
-version: "v1.0"
+version: "v1.1"
 
 description: >
   Generate a service blueprint that maps user actions alongside frontstage
@@ -53,25 +53,62 @@ blueprint_scope_options:
     description: "Focus on where service breaks down"
 
 # File discovery system
+# 
+# Service Blueprints need TWO data sources:
+# - User research → fills Customer Actions + Frontstage (above line of visibility)
+# - Stakeholder research → fills Backstage + Support Systems (below line of visibility)
+#
+# Without stakeholder data, output will show "Backstage Gaps" section
+#
 auto_file_discovery:
   core_files:
-    journey_maps:
-      file_patterns: ["*journey*", "*journey_map*"]
-      search_paths: ["04-analysis/", "analysis/"]
-      priority: "high"
-      confidence_weight: 40
-      
+    # REQUIRED — User research (fills top 2 layers)
     session_summaries:
       file_patterns: ["*session_summary*", "*summary*"]
-      search_paths: ["01-sessions/", "sessions/"]
+      search_paths: ["03-fieldwork/", "01-sessions/", "sessions/"]
       priority: "required"
-      confidence_weight: 30
+      confidence_weight: 40
+      fills_layers: ["customer_actions", "frontstage"]
       
-    stakeholder_notes:
-      file_patterns: ["*stakeholder*", "*internal*", "*sme*"]
-      search_paths: ["01-planning/stakeholder-interviews/", "stakeholder/"]
+    # HIGH — Journey map provides stage structure + user data
+    journey_maps:
+      file_patterns: ["*journey*", "*journey_map*"]
+      search_paths: ["04-analysis/"]
       priority: "high"
       confidence_weight: 30
+      fills_layers: ["customer_actions", "frontstage", "stage_structure"]
+      
+    # HIGH — Stakeholder data (fills bottom 2 layers)
+    stakeholder_notes:
+      file_patterns: ["*stakeholder*", "*internal*", "*sme*", "*engineering*", "*product_owner*", "*policy*"]
+      search_paths: ["01-planning/stakeholder-interviews/"]
+      priority: "high"
+      confidence_weight: 30
+      fills_layers: ["backstage", "support_systems"]
+      
+    # OPTIONAL — Usability issues help identify failure points
+    usability_issues:
+      file_patterns: ["*usability*", "*issues*"]
+      search_paths: ["04-analysis/"]
+      priority: "optional"
+      confidence_weight: 15
+      fills_layers: ["failure_points"]
+      
+    # OPTIONAL — Coded transcripts for raw evidence
+    coded_transcripts:
+      file_patterns: ["*coded*", "*transcript*"]
+      search_paths: ["03-fieldwork/"]
+      priority: "optional"
+      confidence_weight: 10
+      fills_layers: ["customer_actions", "frontstage"]
+      
+    # OPTIONAL — Technical docs from desk research
+    technical_docs:
+      file_patterns: ["*technical*", "*architecture*", "*api*", "*system*"]
+      search_paths: ["01-planning/desk-research/"]
+      priority: "optional"
+      confidence_weight: 10
+      fills_layers: ["support_systems"]
 
 # AI generation task
 ai_generation_tasks:
@@ -145,17 +182,18 @@ ai_generation_tasks:
       | **Scope** | [Start point] → [End point] |
       | **User** | [Who — from research] |
       | **Key Failure Points** | [X] identified |
+      | **Data Completeness** | [Complete / Partial — missing backstage] |
       
       ---
       
       ## Blueprint Layers
       
-      | Layer | What It Shows | Data Source |
-      |-------|---------------|-------------|
-      | 👤 **Customer Actions** | What the user does | User research |
-      | 💻 **Frontstage** | What the user sees/touches | User research |
-      | ⚙️ **Backstage** | Internal processes users don't see | Stakeholder input |
-      | 🗄️ **Support Systems** | Databases, APIs, tools | Stakeholder input |
+      | Layer | What It Shows | Data Source | Status |
+      |-------|---------------|-------------|--------|
+      | 👤 **Customer Actions** | What the user does | User research | ✅ |
+      | 💻 **Frontstage** | What the user sees/touches | User research | ✅ |
+      | ⚙️ **Backstage** | Internal processes users don't see | Stakeholder input | [✅ or ⚠️ Gaps] |
+      | 🗄️ **Support Systems** | Databases, APIs, tools | Stakeholder input | [✅ or ⚠️ Gaps] |
       
       ---
       
@@ -168,8 +206,8 @@ ai_generation_tasks:
       | 👤 **Customer Action** | [What user does] — PT00X |
       | 💻 **Frontstage** | [What user sees/interacts with] |
       | ——— | *Line of Visibility* ——————————————— |
-      | ⚙️ **Backstage** | [Internal process] |
-      | 🗄️ **Support Systems** | [Database, API, tool] |
+      | ⚙️ **Backstage** | [Internal process OR "[NEEDS STAKEHOLDER INPUT]"] |
+      | 🗄️ **Support Systems** | [Database, API, tool OR "[NEEDS STAKEHOLDER INPUT]"] |
       
       **⚠️ Failure Point:** [If applicable — what breaks here and why]
       
@@ -206,12 +244,15 @@ ai_generation_tasks:
       
       ## Backstage Gaps
       
-      > The following need stakeholder input to complete:
+      > ⚠️ The following need stakeholder input to complete. Consider interviewing these roles:
       
       | Stage | What We Don't Know | Who to Ask |
       |-------|-------------------|------------|
-      | [Stage] | [Gap in backstage understanding] | [Role/Team] |
-      | [Stage] | [Gap in system understanding] | [Role/Team] |
+      | [Stage] | [Gap in backstage understanding] | Engineering Lead |
+      | [Stage] | [Gap in system understanding] | Product Owner |
+      | [Stage] | [Gap in policy/process] | Policy SME |
+      
+      **Suggested next step:** Use `/plan-study` → "Create Stakeholder Interview Guide" to prepare for these conversations.
       
       ---
       
@@ -234,7 +275,9 @@ ai_generation_tasks:
       
       **Approach:** Maps customer actions alongside frontstage interactions, backstage processes, and support systems to reveal service delivery gaps.
       
-      **Data Sources:** [List sources — user research, stakeholder interviews, etc.]
+      **Data Sources:**
+      - User research: [List participant IDs]
+      - Stakeholder input: [List roles interviewed OR "None — gaps noted above"]
       
       <br>
       
@@ -257,11 +300,12 @@ ai_generation_tasks:
 processing_workflow:
   1. validate_slack_modal_inputs
   2. discover_files_from_study_selection
-  3. combine_selected_files_with_truncation
-  4. execute_service_blueprint_complete
-  5. format_slack_output
-  6. format_github_output
-  7. save_to_analysis_folder
+  3. check_data_completeness  # New — flags if stakeholder data missing
+  4. combine_selected_files_with_truncation
+  5. execute_service_blueprint_complete
+  6. format_slack_output
+  7. format_github_output
+  8. save_to_analysis_folder
 
 # Output configuration
 output_options:
@@ -280,6 +324,15 @@ github_file_template: |
   {{ai_generated.service_blueprint_complete}}
 
 notes: |
+  v1.1 Updates:
+  - Improved file discovery with fills_layers metadata
+  - Added 03-fieldwork/ as primary search path for session data
+  - Added usability issues, coded transcripts, technical docs discovery
+  - Added "Data Completeness" indicator in Overview
+  - Added "Status" column in Blueprint Layers table
+  - Added actionable next step in Backstage Gaps section
+  - Added check_data_completeness to workflow
+  
   v1.0 Initial release:
   - Four-layer blueprint (Customer, Frontstage, Backstage, Support Systems)
   - Line of visibility concept
