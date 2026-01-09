@@ -2,7 +2,7 @@ id: design_opportunities
 name: generate_design_opportunities
 
 label: 💡 Design Opportunities
-version: "v2.0"
+version: "v2.1"
 
 description: >
   Transform research-grounded problems into How Might We (HMW) opportunity
@@ -55,19 +55,19 @@ auto_file_discovery:
   core_files:
     session_summaries:
       file_patterns: ["*session_summary*", "*summary*"]
-      search_paths: ["01-sessions/", "sessions/"]
+      search_paths: ["primary-research/03-fieldwork/"]
       priority: "required"
       confidence_weight: 50
       
     transcripts:
       file_patterns: ["*transcript*", "*interview*"]
-      search_paths: ["01-sessions/", "transcripts/"]
+      search_paths: ["primary-research/03-fieldwork/"]
       priority: "high"
       confidence_weight: 30
       
     existing_analysis:
       file_patterns: ["*affinity*", "*journey*", "*usability*"]
-      search_paths: ["04-analysis/"]
+      search_paths: ["primary-research/04-analysis/"]
       priority: "optional"
       confidence_weight: 20
 
@@ -288,7 +288,7 @@ output_options:
   default_delivery: "slack_and_file"
   slack_format: "opportunities_focused"
   file_format: "github_markdown"
-  path: "04-analysis/design-opportunities/"
+  path: "primary-research/04-analysis/design-opportunities/"
   filename: "{{study_folder}}_design_opportunities_{{current_date}}.md"
 
 # Slack output template
