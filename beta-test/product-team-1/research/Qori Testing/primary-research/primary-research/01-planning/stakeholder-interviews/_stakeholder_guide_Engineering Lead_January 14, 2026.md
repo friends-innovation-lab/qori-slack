@@ -8,21 +8,21 @@
 
 | | |
 |---|---|
-| **Stakeholder** | Engineering Lead from Mobile Platform Team |
-| **Focus Area** | Constraints: Technical, policy, resource; Processes: Backstage operations |
-| **Goal** | Understand technical, policy, and resource constraints impacting the Mobile Platform Team's operations and processes. 
+| **Stakeholder** | Engineering Lead from Engineering Team |
+| **Focus Area** | Constraints: Technical, policy, resource; Processes: Backstage operations; Requirements: Must-haves, dependencies |
+| **Goal** | Understand technical, policy, and resource constraints affecting the project, gain insights into backstage operations, and identify essential requirements and dependencies for the research |
 
 ---
 
 ## Before the Interview
 
 **Review these materials:**
-- [ ] Relevant documents related to technical, policy, and resource constraints
-- [ ] User research findings that may require stakeholder context
+- [ ] Relevant document or finding to reference
+- [ ] User research finding that needs stakeholder context
 
 **Key user findings to explore:**
-- User-reported constraints that may align with stakeholder insights
-- User behaviors or pain points that could be influenced by internal processes
+- Finding 1 that stakeholder might explain
+- Finding 2 that might relate to their domain
 
 ---
 
@@ -32,38 +32,38 @@
 
 > *Build rapport and set context*
 
-- Thanks for taking the time. I'm researching constraints and processes related to our Mobile Platform Team and would like to understand your perspective.
+- Thanks for taking the time. I'm researching Qori Testing and wanted to understand the constraints, processes, and requirements better.
 - Everything you share helps us design better solutions. No wrong answers.
-- Okay to record? 
+- Okay to record? [If applicable]
 
-**Opener:** "To start, can you tell me about your role and how you interact with the Mobile Platform Team's operations and processes?"
+**Opener:** "To start, can you tell me about your role and how you interact with the relevant system/process?"
 
 ---
 
 ### Section 1: Constraints (X min)
 
-> *Explore technical, policy, and resource constraints*
+> *Understanding technical, policy, and resource constraints*
 
 | # | Question | Follow-ups |
 |---|----------|------------|
-| 1 | What are the biggest technical constraints affecting our load time? | • Can you provide examples of how these technical constraints impact our system? |
-| 2 | How do policy constraints influence our decision-making process? | • Can you share a recent example where policy constraints affected a project outcome? |
-| 3 | In what ways do resource constraints impact our ability to meet project deadlines? | • How do you prioritize resources when faced with multiple project demands? |
+| 1 | What are the biggest technical constraints affecting the project? | • Can you provide examples? • How do these constraints impact the project timeline? |
+| 2 | Are there any policy constraints that influence decision-making? | • How do these policies affect the project outcomes? |
+| 3 | How do resource constraints impact the project's development and implementation? | • How do you prioritize resources based on constraints? |
 
-**Listen for:** Insights on how technical, policy, and resource constraints shape team operations.
+**Listen for:** Insights into how constraints shape project development and implementation.
 
 ---
 
 ### Section 2: Processes (X min)
 
-> *Understand backstage operations and workflows*
+> *Exploring backstage operations*
 
 | # | Question | Follow-ups |
 |---|----------|------------|
-| 1 | Walk me through how a feature goes from ideation to deployment on the mobile platform. | • Are there any pain points or bottlenecks in this process? |
-| 2 | How do you collaborate with other teams to ensure smooth integration of features? | • Can you describe a recent successful collaboration and what made it effective? |
+| 1 | Walk me through how backstage operations are managed for this project. | • Can you explain the key stages in the process? • How are decisions made during these operations? |
+| 2 | How do backstage processes interact with front-end user experiences? | • Are there any challenges in aligning backstage operations with user needs? |
 
-**Listen for:** Insights on internal processes, collaboration, and workflow efficiency.
+**Listen for:** Understanding of the operational flow and its impact on user experiences.
 
 ---
 
@@ -71,19 +71,19 @@
 
 > *Share relevant user findings and get stakeholder perspective*
 
-"In our user research, we heard users reporting X. From your perspective..."
+"In our user research, we heard [finding]. From your perspective..."
 
 | Finding | Question |
 |---------|----------|
-| Users reported slow loading times | "What technical constraints might be contributing to this issue on our end?" |
-| Users expressed confusion with a specific feature | "How do our internal processes influence the design and implementation of this feature?" |
+| User pain point or behavior | "What's happening on your end that might contribute to this?" |
+| User confusion or friction | "Is this expected? What constraints led to this design?" |
 
 ---
 
 ### Closing (3-5 min)
 
 - "What haven't I asked about that you think I should know?"
-- "Who else should I talk to about technical constraints or processes within our team?"
+- "Who else should I talk to about this project?"
 - "Can I follow up if I have more questions?"
 
 **Thank them for their time.**
@@ -93,11 +93,11 @@
 ## After the Interview
 
 **Capture immediately:**
-- [ ] Key technical, policy, and resource constraints mentioned
-- [ ] Surprising insights related to internal processes
-- [ ] Connections between stakeholder insights and user research
-- [ ] Follow-up questions for further clarification
-- [ ] Other stakeholders to interview for additional perspectives
+- [ ] Key constraints mentioned
+- [ ] Surprising insights
+- [ ] Connections to user research
+- [ ] Follow-up questions
+- [ ] Other stakeholders to interview
 
 ---
 
@@ -105,10 +105,10 @@
 
 | If they say... | Probe deeper with... |
 |----------------|----------------------|
-| "It's complicated" | "Can you provide an example to help illustrate the complexity?" |
-| "We can't do that" | "What specific barriers prevent us from achieving that?" |
-| "That's not my area" | "Who would be the best person to provide insights on that topic?" |
-| "Users don't understand" | "How can we address this misunderstanding from an internal perspective?" |
+| "It's complicated" | "Walk me through it step by step" |
+| "We can't do that" | "What would need to change to make it possible?" |
+| "That's not my area" | "Who would know more about that?" |
+| "Users don't understand" | "What do you think causes that confusion?" |
 
 ---
 
