@@ -334,7 +334,7 @@ output_options:
   slack_format: "blueprint_focused"
   file_format: "github_markdown"
   path: "primary-research/04-analysis/service-blueprints/"
-  filename: "{{study_folder}}_service_blueprint_{{current_date}}.md"
+  filename: "{{selected_study}}_service_blueprint_{{current_date}}.md"
 
 # Slack output template
 output_template: |
