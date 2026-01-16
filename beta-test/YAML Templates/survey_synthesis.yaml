@@ -1,360 +1,310 @@
 id: survey_synthesis
 name: survey_response_synthesizer
+
 label: 📊 Survey Synthesis
-version: v1.3
-description: Analyze open-ended survey responses for key themes, supporting quotes, and actionable insights
+version: "v2.0"
+
+description: >
+  Analyze open-ended survey responses using thematic analysis.
+  Identifies patterns across responses, counts frequency, extracts
+  representative quotes, and generates actionable recommendations.
+
 author: Qori R&D
 created: 2025-08-11
-last_updated: 2025-08-11
+last_updated: 2026-01-08
 
-input_type: text
-input_processing: summarize_if_long
-batch_mode: true
-batch_delimiter: "---"
+input_type: slack_modal_form
+input_processing: auto_file_discovery
 
 # LLM Configuration
 llm_config:
   model: "gpt-4o"
-  temperature: 0.1
+  temperature: 0.2
   max_tokens: 4000
 
-# Router inputs (when called from synthesize_router)
+# System limits
+system_limits:
+  max_total_tokens: 50000
+  min_content_threshold: 500
+  max_file_size: 200000
+  supported_formats: [".csv", ".xlsx", ".xls", ".json", ".txt", ".md", ".tsv"]
+  max_files_per_analysis: 10
+
+# Slack modal input variables
 input_variables:
-  study_name: "{{study_name}}"
-  researcher_contact: "{{researcher_contact}}"
-  study_channel: "{{study_channel}}"
-  team_members: "{{team_members}}"
-  input_text: "{{input_text}}"
-  focus_area: "{{focus_area}}"
+  - selected_study
+  - survey_name
+  - survey_files
+  - question_focus
+  - combined_file_content
 
-# AI GENERATION TASKS
+# File discovery system
+auto_file_discovery:
+  core_files:
+    survey_data:
+      file_patterns: ["*survey*", "*responses*", "*feedback*"]
+      search_paths: ["primary-research/01-planning/surveys/"]
+      priority: "required"
+      confidence_weight: 60
+      
+    previous_analysis:
+      file_patterns: ["*survey_synthesis*", "*survey_analysis*"]
+      search_paths: ["primary-research/04-analysis/"]
+      priority: "optional"
+      confidence_weight: 20
+
+# AI generation task
 ai_generation_tasks:
-  # Sentiment and emotional analysis
-  - task_id: "sentiment_analysis"
+  - task_id: "survey_synthesis_complete"
     prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
+      You are synthesizing open-ended survey responses using thematic analysis.
       
-      Analyze the emotional sentiment patterns across all survey responses:
+      IMPORTANT: Generate the COMPLETE output following the format below. Do not stop early.
       
-      **Survey Data:** {{input}}
+      ============================================================
+      RULES — READ THEN GENERATE FULL OUTPUT
+      ============================================================
       
-      Identify:
-      1. **Overall sentiment distribution** - positive, negative, neutral, mixed percentages
-      2. **Emotional intensity** - mild, moderate, strong feelings
-      3. **Sentiment triggers** - what topics cause positive vs negative reactions
-      4. **Emotional journey patterns** - how feelings change throughout responses
+      RULE 1: THEME-BY-THEME, NOT RESPONSE-BY-RESPONSE
       
-      **Format:**
-      **Sentiment Breakdown:**
-      - Positive: X% (Y responses) - mainly about [topic]
-      - Negative: X% (Y responses) - mainly about [topic]
-      - Mixed: X% (Y responses) - mainly about [topic]
-      - Neutral: X% (Y responses)
+      ❌ WRONG:
+      "Response 1: User said X. Response 2: User said Y."
       
-      **Emotional Triggers:**
-      - Positive reactions to: [specific features/aspects]
-      - Negative reactions to: [specific features/aspects]
-      - Frustration points: [specific pain points]
-
-  # Priority issue identification
-  - task_id: "priority_issues"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
+      ✅ RIGHT:
+      "Theme: Loading Speed — 47 of 76 responses (62%) mentioned this."
       
-      Identify and prioritize critical issues from survey responses:
+      Aggregate patterns across ALL responses. No one reads response-by-response.
       
-      **Survey Data:** {{input}}
+      RULE 2: EVERY THEME NEEDS FREQUENCY + QUOTES
       
-      Analyze:
-      1. **Frequency of mentions** - how often each issue appears
-      2. **Severity indicators** - language showing urgency or impact
-      3. **User impact scope** - how many users affected
-      4. **Business risk level** - potential consequences if unaddressed
+      For each theme:
+      - Count: How many responses mentioned it
+      - Percentage: What portion of total responses
+      - Quotes: 2-3 representative quotes with respondent IDs (R001, R012, etc.)
       
-      **Format:**
-      **Critical Issues (Immediate Action):**
-      1. **[Issue]** - mentioned X times, affects [user group], risk: High/Medium/Low
-      2. **[Issue]** - mentioned X times, affects [user group], risk: High/Medium/Low
-      3. **[Issue]** - mentioned X times, affects [user group], risk: High/Medium/Low
+      RULE 3: RESPONDENT CITATIONS
       
-      **Emerging Concerns (Monitor):**
-      - [Issue] - early signals, mentioned by X users
-      - [Issue] - pattern developing, watch for increase
-
-  # Actionable recommendations
-  - task_id: "actionable_recommendations"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
+      Assign IDs sequentially: R001, R002, R003...
+      Every quote must cite: "[Quote]" — R00X
       
-      Generate specific, actionable recommendations based on survey feedback:
+      RULE 4: SENTIMENT WITH MEANING
       
-      **Survey Data:** {{input}}
+      ❌ WRONG: "50% negative, 32% positive"
+      ✅ RIGHT: "50% negative — primarily about loading times and navigation"
       
-      Create:
-      1. **Immediate fixes** - quick wins within 1-2 weeks
-      2. **Short-term improvements** - 1-3 month initiatives
-      3. **Long-term enhancements** - 3+ month projects
-      4. **Investigation needed** - areas requiring more research
+      Always explain WHAT is driving the sentiment.
       
-      **Format:**
-      **Immediate Actions (1-2 weeks):**
-      - [Specific action] - addresses [user pain point], estimated effort: [time/resources]
-      - [Specific action] - addresses [user pain point], estimated effort: [time/resources]
+      RULE 5: NO HALLUCINATION
       
-      **Short-term Projects (1-3 months):**
-      - [Specific project] - solves [user problem], success metric: [measurable outcome]
-      - [Specific project] - solves [user problem], success metric: [measurable outcome]
+      - Only report themes that actually appear in the data
+      - Counts must be accurate — if you're unsure, say "approximately"
+      - Quotes must be verbatim from responses
+      - Never invent responses or fabricate statistics
       
-      **Research Needed:**
-      - [Investigation area] - X users mentioned this, need deeper dive
-      - [Investigation area] - conflicting feedback, requires user interviews
-
-  # User suggestion synthesis
-  - task_id: "user_suggestions_synthesis"
-    prompt: |
-      **MANDATORY WRITING REQUIREMENTS:**
-      - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-      - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-      - ALWAYS use active voice and specific verbs
+      RULE 6: VA CONTEXT (if applicable)
       
-      Synthesize and prioritize user suggestions from survey responses:
+      If this is VA research:
+      - Users are Veterans
+      - Focus on benefits, healthcare, claims, prescriptions
+      - NEVER mention: Marketing, Sales, engagement metrics
       
-      **Survey Data:** {{input}}
+      RULE 7: VERIFY BEFORE SUBMITTING
+      - Theme counts add up correctly
+      - Every quote has a respondent ID
+      - Sentiment percentages total ~100%
+      - Recommendations tie to specific themes
       
-      Extract:
-      1. **Direct suggestions** - explicit feature requests or improvements
-      2. **Implied needs** - problems mentioned without solutions
-      3. **Popular requests** - suggestions mentioned by multiple users
-      4. **Implementation feasibility** - easy, moderate, complex to build
+      ============================================================
+      INPUT DATA
+      ============================================================
       
-      **Format:**
-      **High-Priority Suggestions (Multiple Users):**
-      - "[User quote]" - mentioned by X users, feasibility: Easy/Moderate/Complex
-      - "[User quote]" - mentioned by X users, feasibility: Easy/Moderate/Complex
+      **Study:** {{selected_study}}
+      **Survey:** {{survey_name}}
+      **Survey Data:** {{combined_file_content}}
       
-      **Individual Suggestions (Worth Considering):**
-      - "[User quote]" - novel idea, potential impact: High/Medium/Low
-      - "[User quote]" - addresses edge case, user segment: [description]
+      ============================================================
+      NOW GENERATE THE COMPLETE OUTPUT BELOW
+      ============================================================
       
-      **Implementation Roadmap:**
-      - Quick wins: [suggestions that are easy to implement]
-      - Strategic investments: [suggestions requiring significant effort but high impact]
+      # 📊 Survey Synthesis: {{selected_study}}
+      
+      > **Generated:** [Today's date] | **[X] responses** | **[Y] themes identified**
+      
+      ---
+      
+      ## Overview
+      
+      | | |
+      |---|---|
+      | **Survey** | [Survey name/purpose] |
+      | **Responses Analyzed** | [X] |
+      | **Collection Period** | [Date range if known, otherwise "Not specified"] |
+      | **Top Finding** | [1 sentence — the most important takeaway] |
+      
+      ---
+      
+      ## Theme Summary
+      
+      | # | Theme | Frequency | Sentiment | Priority |
+      |---|-------|:---------:|:---------:|:--------:|
+      | 1 | [Theme name] | [X] ([Y]%) | 😤 Negative | 🔴 |
+      | 2 | [Theme name] | [X] ([Y]%) | 😊 Positive | 🟢 |
+      | 3 | [Theme name] | [X] ([Y]%) | 🤔 Mixed | 🟡 |
+      | 4 | [Theme name] | [X] ([Y]%) | [Emoji] [Sentiment] | [Priority] |
+      
+      > **Note:** Percentages may exceed 100% as responses can mention multiple themes.
+      
+      ---
+      
+      ## Theme 1: [Theme Name]
+      
+      **Frequency:** [X] of [Total] responses ([Y]%)
+      
+      **Sentiment:** [😤 Negative / 😊 Positive / 🤔 Mixed / 😐 Neutral]
+      
+      **What respondents said:**
+      
+      > "[Direct quote from response]" — R00X
+      
+      > "[Direct quote from response]" — R00X
+      
+      > "[Direct quote from response]" — R00X
+      
+      **Pattern:** [1-2 sentences explaining what this theme means and why it matters]
+      
+      ---
+      
+      ## Theme 2: [Theme Name]
+      
+      **Frequency:** [X] of [Total] responses ([Y]%)
+      
+      **Sentiment:** [Emoji] [Sentiment]
+      
+      **What respondents said:**
+      
+      > "[Direct quote]" — R00X
+      
+      > "[Direct quote]" — R00X
+      
+      **Pattern:** [1-2 sentences]
+      
+      ---
+      
+      ## Theme 3: [Theme Name]
+      
+      **Frequency:** [X] of [Total] responses ([Y]%)
+      
+      **Sentiment:** [Emoji] [Sentiment]
+      
+      **What respondents said:**
+      
+      > "[Direct quote]" — R00X
+      
+      > "[Direct quote]" — R00X
+      
+      **Pattern:** [1-2 sentences]
+      
+      ---
+      
+      [Continue for additional themes as needed]
+      
+      ---
+      
+      ## Sentiment Overview
+      
+      | Sentiment | Count | % | Key Driver |
+      |-----------|:-----:|:-:|------------|
+      | 😤 Negative | [X] | [Y]% | [What topics caused frustration] |
+      | 😊 Positive | [X] | [Y]% | [What topics caused satisfaction] |
+      | 🤔 Mixed | [X] | [Y]% | [What topics had split opinions] |
+      | 😐 Neutral | [X] | [Y]% | [Factual/descriptive responses] |
+      
+      **Key Insight:** [1-2 sentences — what the overall sentiment pattern tells us]
+      
+      ---
+      
+      ## Recommendations
+      
+      | Priority | Action | Based On | Owner |
+      |:--------:|--------|----------|-------|
+      | 🔴 | [Specific action to address issue] | Theme 1 | `[Team]` |
+      | 🔴 | [Specific action] | Theme 2 | `[Team]` |
+      | 🟡 | [Specific action] | Theme 3 | `[Team]` |
+      
+      > **Legend:** 🔴 High | 🟡 Medium | 🟢 Low
+      
+      <br>
+      
+      ---
+      
+      ## Methodology
+      
+      **Framework:** Thematic Analysis
+      
+      **Approach:** Open-ended responses were coded for recurring themes, counted for frequency, and analyzed for sentiment patterns. Representative quotes were extracted to illustrate each theme.
+      
+      **Data Source:** [X] survey responses
+      
+      <br>
+      
+      ---
+      
+      ### References
+      
+      This analysis follows established survey analysis methods:
+      
+      - **Virginia Braun & Victoria Clarke** — Thematic analysis methodology
+      - **Nielsen Norman Group** — Survey data analysis best practices
+      - **Qualtrics** — Open-ended response coding guidelines
+      
+      ---
+      
+      *Generated by Qori • [Today's date]*
 
-prompt: |
-  **MANDATORY WRITING REQUIREMENTS:**
-  - NEVER use these words: "crucial," "seamless," "ultimately," "leverage," "enhance," "streamline"
-  - ALWAYS use direct, concrete language - avoid vague aspirational phrases
-  - ALWAYS use active voice and specific verbs
-  - Use plain language at a 10th-grade reading level
-  - Avoid jargon, em-dashes, or vague business speak
-  - Be concise, clear, and structured
+# Processing workflow
+processing_workflow:
+  1. validate_slack_modal_inputs
+  2. discover_files_from_study_selection
+  3. parse_survey_data  # Handle CSV, Excel, JSON formats
+  4. combine_selected_files_with_truncation
+  5. execute_survey_synthesis_complete
+  6. format_slack_output
+  7. format_github_output
+  8. save_to_analysis_folder
 
-  You are an experienced UX research analyst synthesizing insights from open-ended survey responses.
-
-  **Analysis Instructions:**
-
-  For each individual response:
-  1. **Identify 2-3 specific themes** mentioned by the respondent
-  2. **Extract one powerful quote** that best illustrates their main point
-  3. **Note emotional tone** (positive, negative, neutral, mixed)
-  4. **Identify pain points** if mentioned
-  5. **Spot suggestions** if any are provided
-
-  After processing all responses:
-  1. **Summarize most frequent patterns** across the full set
-  2. **Count theme frequency** with specific numbers
-  3. **Group related themes** together
-  4. **Identify actionable insights** for the team
-  5. **Highlight urgent issues** that need immediate attention
-  6. **Extract specific suggestions** users provided
-
-  **Survey Responses:**
-  {{input}}
-
-output_format: |
-  # 📊 Survey Response Synthesis
-
-  ## Individual Response Analysis
-
-  ### Response 1
-  **Themes:**
-  - Theme 1: [Specific theme name]
-  - Theme 2: [Specific theme name]
-  - Theme 3: [Specific theme name]
-
-  **💬 Key Quote:** "[Most illustrative quote from this response]"
-  
-  **Tone:** [Positive/Negative/Neutral/Mixed]
-  
-  **Pain Points:** [Specific issues mentioned]
-  
-  **Suggestions:** [Any improvements they suggested]
-
-  ### Response 2
-  **Themes:**
-  - Theme 1: [Specific theme name]
-  - Theme 2: [Specific theme name]
-  - Theme 3: [Specific theme name]
-
-  **💬 Key Quote:** "[Most illustrative quote from this response]"
-  
-  **Tone:** [Positive/Negative/Neutral/Mixed]
-  
-  **Pain Points:** [Specific issues mentioned]
-  
-  **Suggestions:** [Any improvements they suggested]
-
-  ### Response 3
-  **Themes:**
-  - Theme 1: [Specific theme name]
-  - Theme 2: [Specific theme name]
-  - Theme 3: [Specific theme name]
-
-  **💬 Key Quote:** "[Most illustrative quote from this response]"
-  
-  **Tone:** [Positive/Negative/Neutral/Mixed]
-  
-  **Pain Points:** [Specific issues mentioned]
-  
-  **Suggestions:** [Any improvements they suggested]
-
-  ---
-
-  ## 🤖 AI-Enhanced Analysis
-
-  ### 📊 Sentiment Analysis
-  {{ai_generated.sentiment_analysis}}
-
-  ### 🚨 Priority Issues Assessment
-  {{ai_generated.priority_issues}}
-
-  ### 🎯 Actionable Recommendations
-  {{ai_generated.actionable_recommendations}}
-
-  ### 💡 User Suggestions Synthesis
-  {{ai_generated.user_suggestions_synthesis}}
-
-  ---
-
-  ## 🔍 Cross-Response Pattern Analysis
-
-  ### 🔥 Most Frequent Themes
-  1. **[Theme Name]** - mentioned in X of Y responses (XX%)
-     - *Supporting quotes: "[quote 1]", "[quote 2]"*
-  2. **[Theme Name]** - mentioned in X of Y responses (XX%)
-     - *Supporting quotes: "[quote 1]", "[quote 2]"*
-  3. **[Theme Name]** - mentioned in X of Y responses (XX%)
-     - *Supporting quotes: "[quote 1]", "[quote 2]"*
-
-  ### 🚨 Critical Issues (Immediate Attention)
-  - **[Issue 1]** - mentioned by X respondents
-  - **[Issue 2]** - mentioned by X respondents
-  - **[Issue 3]** - mentioned by X respondents
-
-  ### 💡 User Suggestions
-  - **[Suggestion 1]** - "Direct quote from user"
-  - **[Suggestion 2]** - "Direct quote from user"
-  - **[Suggestion 3]** - "Direct quote from user"
-
-  ### 📈 Sentiment Breakdown
-  - **Positive responses:** X of Y (XX%)
-  - **Negative responses:** X of Y (XX%)
-  - **Mixed responses:** X of Y (XX%)
-  - **Neutral responses:** X of Y (XX%)
-
-  ### 🎯 Actionable Insights for Team
-  1. **Fix immediately:** [Top priority issue]
-  2. **Investigate further:** [Areas needing more research]
-  3. **Consider implementing:** [Top user suggestions]
-  4. **Monitor:** [Emerging concerns]
-
-  ---
-
-  ## 📋 Summary for Stakeholders
-
-  **Key Findings:**
-  - [Most important finding 1]
-  - [Most important finding 2]
-  - [Most important finding 3]
-
-  **Recommended Actions:**
-  - [Specific action 1 with priority level]
-  - [Specific action 2 with priority level]
-  - [Specific action 3 with priority level]
-
-  **Next Steps:**
-  - [Follow-up research needed]
-  - [Additional data to collect]
-  - [Teams to involve]
-
+# Output configuration
 output_options:
-  filename: "survey_synthesis_{{current_date}}.md"
-  path: "04-analysis/survey-synthesis/"
-  template: "survey_analysis_report"
+  default_delivery: "slack_and_file"
+  slack_format: "survey_focused"
+  file_format: "github_markdown"
+  path: "primary-research/04-analysis/survey-synthesis/"
+  filename: "{{study_folder}}_survey_synthesis_{{current_date}}.md"
+
+# Slack output template
+output_template: |
+  {{ai_generated.survey_synthesis_complete}}
+
+# GitHub markdown file template
+github_file_template: |
+  {{ai_generated.survey_synthesis_complete}}
+
+notes: |
+  v2.0 Complete Rewrite:
+  - Changed from response-by-response to theme-by-theme analysis
+  - Consolidated 4 fragmented AI tasks into 1 unified task
+  - Added respondent citation format (R001, R002, etc.)
+  - Added frequency counts with percentages
+  - Added sentiment drivers (not just percentages)
+  - Added proper methodology with Braun & Clarke, NN/g references
+  - Removed ~700 lines of bloat (workshop guidance, roadmaps, etc.)
+  - Updated file paths to match folder structure
+  - Added anti-hallucination rules
+  - Added verification checklist
   
-  delivery:
-    slack:
-      enabled: true
-      channel: "{{study_channel}}"
-      message: |
-        📊 **Survey Analysis Complete**
-        
-        {{researcher_contact}} analyzed {{response_count}} survey responses for {{study_name}}.
-        
-        **AI-Enhanced Insights:**
-        
-        🎯 **Top Priority Issues:**
-        {{ai_generated.priority_issues_summary}}
-        
-        💡 **Key User Suggestions:**
-        {{ai_generated.top_user_suggestions}}
-        
-        📈 **Sentiment Overview:**
-        {{ai_generated.sentiment_breakdown}}
-        
-        📋 Full analysis with actionable recommendations: {{output_file_link}}
-      
-      actions:
-        - text: "📊 View Full Analysis"
-          style: "primary"
-          url: "{{output_file_url}}"
-        - text: "🔄 Run Follow-up Analysis"
-          style: "default"
-          action_id: "synthesize_modal"
+  v1.3: Original (fragmented, response-by-response)
 
-    github:
-      enabled: true
-      commit_message: "Add survey synthesis analysis - {{current_date}}"
-      pr_title: "Survey Analysis: Key Themes and User Feedback"
-      pr_description: |
-        ## Survey Response Analysis Results
-        
-        **Study:** {{study_name}}
-        **Responses Analyzed:** {{response_count}}
-        **Researcher:** {{researcher_contact}}
-        
-        ### 🎯 AI-Enhanced Insights:
-        **Top Theme:** {{most_frequent_theme}}
-        **Critical Issues:** {{critical_issue_count}}
-        **Sentiment Breakdown:** {{ai_generated.sentiment_overview}}
-        
-        ### Key Findings:
-        {{key_findings_summary}}
-        
-        ### Priority Actions:
-        {{ai_generated.immediate_actions_summary}}
-        
-        ### User Suggestions:
-        {{ai_generated.top_suggestions_summary}}
-
-use_cases: |
-  Survey Synthesis with AI Enhancement analyzes open-ended survey responses to identify themes, extract supporting quotes, and provide actionable insights with intelligent prioritization. Perfect for post-study feedback, user satisfaction surveys, feature request analysis, and customer feedback synthesis. Uses AI to automatically perform sentiment analysis, identify critical issues, extract user suggestions, prioritize recommendations by feasibility and impact, and generate immediate action items. Automatically counts theme frequency, assesses emotional triggers, provides implementation roadmaps, and delivers structured reports with priority levels for quick decision-making. Integrates seamlessly with research workflows and provides both detailed analysis and executive summaries.
+output_use: |
+  Analyze open-ended survey responses using thematic analysis.
+  Identifies patterns across all responses, counts theme frequency,
+  extracts representative quotes with respondent citations, and
+  generates prioritized recommendations based on findings.
