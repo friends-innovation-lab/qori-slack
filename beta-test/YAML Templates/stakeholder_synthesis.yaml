@@ -2,12 +2,12 @@ id: stakeholder_synthesis
 name: synthesize_stakeholder_interviews
 
 label: 🏛️ Stakeholder Synthesis
-version: "v1.0"
+version: "v1.1"
 
 description: >
   Synthesize findings from internal stakeholder interviews. Aggregates
-  constraints, priorities, backstage processes, and connects stakeholder
-  insights to user research findings.
+  constraints, priorities, backstage processes, and generates questions
+  to explore in upcoming user research.
 
 author: Qori R&D
 created: 2026-01-08
@@ -32,9 +32,49 @@ system_limits:
 
 # Slack modal input variables
 input_variables:
-  - selected_study
-  - stakeholder_files
-  - combined_file_content
+  # Study context (from router/modal)
+  - name: selected_study
+    type: string
+    required: true
+    description: "Study folder name"
+  - name: study_name
+    type: string
+    required: true
+    description: "Human-readable study name"
+  - name: study_channel
+    type: string
+    required: true
+    description: "Slack channel for this study"
+  - name: researcher_contact
+    type: string
+    required: true
+    description: "Lead researcher Slack handle"
+  - name: team_members
+    type: array
+    required: false
+    description: "Team members to notify"
+  
+  # File selection (from modal form)
+  - name: stakeholder_files
+    type: array
+    required: true
+    description: "Selected stakeholder interview transcripts/notes"
+  - name: discovered_files
+    type: array
+    required: false
+    description: "Auto-discovered files from study folder"
+  
+  # Content (processed by backend)
+  - name: combined_file_content
+    type: string
+    required: true
+    description: "Combined content of all selected stakeholder files"
+  
+  # System
+  - name: current_date
+    type: string
+    required: true
+    description: "Current date for filename and output"
 
 # File discovery system
 auto_file_discovery:
@@ -308,6 +348,13 @@ github_file_template: |
   {{ai_generated.stakeholder_synthesis_complete}}
 
 notes: |
+  v1.1 Updates:
+  - Added complete input_variables with types, required flags, descriptions
+  - Added study context variables (study_name, study_channel, researcher_contact)
+  - Added discovered_files for auto-discovery
+  - Added current_date for output
+  - Updated description to reflect planning context
+  
   v1.0 Initial release:
   - Aggregates across multiple stakeholder interviews
   - Organized by theme (constraints, priorities, processes) not by interview
