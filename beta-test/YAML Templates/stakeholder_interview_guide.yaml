@@ -2,7 +2,7 @@ id: stakeholder_interview_guide
 name: create_stakeholder_interview_guide
 
 label: 🏛️ Stakeholder Interview Guide
-version: "v1.1"
+version: "v1.2"
 
 description: >
   Generate a structured interview guide for internal stakeholder conversations.
@@ -23,13 +23,66 @@ llm_config:
 
 # Slack modal input variables
 input_variables:
-  - selected_study
-  - stakeholder_role
-  - stakeholder_team
-  - interview_focus
-  - known_constraints
-  - research_questions
-  - session_duration
+  # Study context (from router/modal)
+  - name: selected_study
+    type: string
+    required: true
+    description: "Study folder name"
+  - name: study_name
+    type: string
+    required: true
+    description: "Human-readable study name"
+  - name: study_channel
+    type: string
+    required: true
+    description: "Slack channel for this study"
+  - name: researcher_contact
+    type: string
+    required: true
+    description: "Lead researcher Slack handle"
+  - name: team_members
+    type: array
+    required: false
+    description: "Team members to notify"
+  
+  # Stakeholder details (from modal form)
+  - name: stakeholder_role
+    type: string
+    required: true
+    description: "Role of stakeholder being interviewed"
+  - name: stakeholder_team
+    type: string
+    required: true
+    description: "Team/department of stakeholder"
+  - name: stakeholder_name
+    type: string
+    required: false
+    description: "Name of stakeholder (optional, for scheduling)"
+  
+  # Interview configuration
+  - name: interview_focus
+    type: array
+    required: true
+    description: "Focus areas to cover (constraints, priorities, processes, etc.)"
+  - name: session_duration
+    type: string
+    required: true
+    default: "45"
+    description: "Interview duration in minutes (30, 45, 60)"
+  - name: known_constraints
+    type: string
+    required: false
+    description: "Any known constraints to explore further"
+  - name: research_questions
+    type: string
+    required: false
+    description: "Specific questions to answer with this interview"
+  
+  # System
+  - name: current_date
+    type: string
+    required: true
+    description: "Current date for filename and output"
 
 # Stakeholder role options
 stakeholder_roles:
@@ -265,7 +318,7 @@ output_options:
   slack_format: "interview_guide"
   file_format: "github_markdown"
   path: "primary-research/01-planning/stakeholder-interviews/"
-  filename: "{{selected_study}}_stakeholder_guide_{{stakeholder_role}}_{{current_date}}.md"
+  filename: "{{study_folder}}_stakeholder_guide_{{stakeholder_role}}_{{current_date}}.md"
 
 # Slack output template
 output_template: |
@@ -276,6 +329,15 @@ github_file_template: |
   {{ai_generated.stakeholder_guide_complete}}
 
 notes: |
+  v1.2 Updates:
+  - Added complete input_variables with types, required flags, descriptions
+  - Added study context variables (study_name, study_channel, researcher_contact)
+  - Added stakeholder_name field for scheduling
+  - Added current_date for output
+  
+  v1.1 Updates:
+  - Updated file paths to primary-research/01-planning/
+  
   v1.0 Initial release:
   - Structured guide for internal stakeholder interviews
   - Role-specific question generation
