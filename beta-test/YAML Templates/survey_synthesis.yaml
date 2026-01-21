@@ -263,14 +263,14 @@ ai_generation_tasks:
 
 # Processing workflow
 processing_workflow:
-  1. validate_slack_modal_inputs
-  2. discover_files_from_study_selection
-  3. parse_survey_data  # Handle CSV, Excel, JSON formats
-  4. combine_selected_files_with_truncation
-  5. execute_survey_synthesis_complete
-  6. format_slack_output
-  7. format_github_output
-  8. save_to_analysis_folder
+  - validate_slack_modal_inputs
+  - discover_files_from_study_selection
+  - parse_survey_data  # Handle CSV, Excel, JSON formats
+  - combine_selected_files_with_truncation
+  - execute_survey_synthesis_complete
+  - format_slack_output
+  - format_github_output
+  - save_to_analysis_folder
 
 # Output configuration
 output_options:
@@ -278,7 +278,7 @@ output_options:
   slack_format: "survey_focused"
   file_format: "github_markdown"
   path: "primary-research/04-analysis/survey-synthesis/"
-  filename: "{{study_folder}}_survey_synthesis_{{current_date}}.md"
+  filename: "{{selected_study}}_survey_synthesis_{{current_date}}.md"
 
 # Slack output template
 output_template: |
