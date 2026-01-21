@@ -8,10 +8,10 @@
 
 | | |
 |---|---|
-| **Stakeholders Interviewed** | [X] |
-| **Teams Represented** | [List teams] |
-| **Key Constraint** | [Biggest blocker identified] |
-| **Key Insight** | [Most important backstage revelation] |
+| **Stakeholders Interviewed** | 3 |
+| **Teams Represented** | Product, Engineering, Design |
+| **Key Constraint** | Usability barriers for older Veterans |
+| **Key Insight** | Need for human support options |
 
 ---
 
@@ -19,9 +19,9 @@
 
 | Role | Team | Focus Areas |
 |------|------|-------------|
-| [Role] | [Team] | [What they covered] |
-| [Role] | [Team] | [What they covered] |
-| [Role] | [Team] | [What they covered] |
+| Engineering Lead | Engineering | Technical constraints, system dependencies |
+| Product Owner | Product | Strategic priorities, user needs alignment |
+| UX Designer | Design | Backstage processes, user experience |
 
 ---
 
@@ -29,92 +29,87 @@
 
 ### Technical Constraints
 
-> "[Quote about technical limitation]" — [Role]
+> "The current VVC interface presents significant usability barriers for older Veterans." — Engineering Lead
 
 | Constraint | Impact | Source |
 |------------|--------|--------|
-| [Constraint] | [How it affects users/product] | [Role] |
-| [Constraint] | [Impact] | [Role] |
+| Complex joining flows | Hinders user participation | Engineering Lead |
+| Technical issues in real-world use | Impacts user experience | Engineering Lead |
 
 ### Policy Constraints
 
-> "[Quote about policy limitation]" — [Role]
+> "Policy restrictions limit the integration of human support options." — Product Owner
 
 | Constraint | Impact | Source |
 |------------|--------|--------|
-| [Constraint] | [Impact] | [Role] |
+| Lack of human support integration | Hinders user assistance | Product Owner |
 
 ### Resource Constraints
 
 | Constraint | Impact | Source |
 |------------|--------|--------|
-| [Constraint] | [Impact] | [Role] |
+| Limited resources for redesign | Slows down improvements | Product Owner |
 
 ---
 
 ## 🎯 Strategic Priorities
 
-> "[Quote about what matters to leadership]" — [Role]
+> "Simplify joining flows and provide prominent help-seeking options." — Product Owner
 
 | Priority | Source | Timeline | Aligns With User Needs? |
 |----------|--------|----------|:-----------------------:|
-| [Priority] | [Role] | [When] | ✅ / ⚠️ / ❌ |
-| [Priority] | [Role] | [When] | ✅ / ⚠️ / ❌ |
+| Simplified joining flows | Product Owner | Q2 2024 | ✅ |
+| Prominent help-seeking options | Product Owner | Q2 2024 | ✅ |
 
-**Alignment Note:** [Any conflicts between stated priorities and user research findings]
+**Alignment Note:** Recommendations align with identified user needs for improved usability.
 
 ---
 
 ## ⚙️ Backstage Processes
 
-### [Process Name] (e.g., Claims Data Sync)
+### Joining Telehealth Appointments
 
-> "[Quote explaining the process]" — [Role]
+> "Participants described receiving appointment information through multiple channels with inconsistent formatting and instructions." — UX Designer
 
 **How it works:**
-1. [Step 1]
-2. [Step 2]
-3. [Step 3]
+1. Appointment info sent via email, text, MyHealtheVet
+2. Different links causing confusion
+3. Inconsistent instructions for joining
 
-**Where it breaks down:** [Connection to user-facing problems]
+**Where it breaks down:** Confusion for users due to multiple entry points
 
-**Systems involved:** [List systems/APIs/databases]
+**Systems involved:** VA Video Connect, MyHealtheVet
 
 ---
 
-### [Process Name]
+### Troubleshooting Errors
 
-> "[Quote]" — [Role]
+> "The multi-step joining process across different interfaces created significant cognitive burden." — UX Designer
 
 **How it works:**
-1. [Step]
-2. [Step]
+1. Remember VA password
+2. Switch between apps
+3. Allow camera access
 
-**Where it breaks down:** [Issue]
+**Where it breaks down:** Cognitive load for users during the joining process
 
 ---
 
 ## 🔍 Questions for User Research
 
-> Based on stakeholder input, explore these with participants
-
 | Stakeholder Insight | Research Question | Priority |
 |---------------------|-------------------|:--------:|
-| [Constraint or process revealed] | [What to ask/observe with users] | 🔴 |
-| [Constraint or process] | [What to explore] | 🔴 |
-| [Assumption from stakeholder] | [What to validate] | 🟡 |
+| Complex joining flows | Do users notice this? How does it impact their experience? | 🔴 |
+| Lack of human support integration | Is this true from the user perspective? | 🟡 |
 
 ---
 
 ## ❓ Open Questions
 
-> Questions that couldn't be answered — need follow-up interviews
-
 | Question | Who Might Know | Priority |
 |----------|----------------|:--------:|
-| [Unanswered question] | [Role/Team] | 🔴 |
-| [Question that came up] | [Role/Team] | 🟡 |
-| [Area needing deeper dive] | [Role/Team] | 🟡 |
+| Impact of technical issues on user satisfaction | Engineering Lead | 🔴 |
+| Feasibility of implementing human support options | Product Owner | 🟡 |
 
 ---
 
@@ -122,9 +117,8 @@
 
 | Priority | Action | Constraint Addressed | Feasibility |
 |:--------:|--------|---------------------|:-----------:|
-| 🔴 | [Specific action] | [Which constraint] | ✅ Feasible |
-| 🔴 | [Action] | [Constraint] | ⚠️ Needs buy-in |
-| 🟡 | [Action] | [Constraint] | ⚠️ Resource-dependent |
+| 🔴 | Simplify joining flows | Complex joining flows | ✅ Feasible |
+| 🔴 | Integrate human support options | Lack of human support integration | ⚠️ Needs buy-in |
 
 > **Legend:** 🔴 High | 🟡 Medium | 🟢 Low
 
@@ -139,7 +133,7 @@
 **Approach:** Aggregated findings from internal interviews, organized by constraint type, priority alignment, and backstage process mapping. Connected stakeholder insights to user research findings where applicable.
 
 **Data Sources:**
-- Stakeholder interviews: [List roles]
+- Stakeholder interviews: Engineering Lead, Product Owner, UX Designer
 
 <br>
 
@@ -155,4 +149,4 @@ This analysis follows established stakeholder research methods:
 
 ---
 
-*Generated by Qori • *
+*Generated by Qori • [Today's date]*
