@@ -4,7 +4,7 @@
 
 | Total | Confirmed | Pending | Completed |
 |:-----:|:---------:|:-------:|:---------:|
-| 1 | 1 | 0 | 0 |
+| 2 | 2 | 0 | 0 |
 
 **Last Updated:** January 26, 2026 by U01SC2TNYKU
 
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|------------------------|
+| 5 | PT002 | recruitment_agency | 2026-02-17 10:00 | confirmed |  |
 | 4 | PT001 | recruitment_agency | 2026-02-16 12:00 | confirmed |  |
 
 ---
@@ -22,9 +23,9 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| recruitment_agency | 1 | 100% |
+| recruitment_agency | 2 | 100% |
 
-Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
+Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 ---
 
@@ -55,25 +56,28 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 
 | Category | Count | Percentage |
 |----------|-------|------------|
-| american_indian | 1 | 100% |
+| White | 1 | 50% |
+| american_indian | 1 | 50% |
 
 **Age Range:**
 
 | Range | Count | Percentage |
 |-------|-------|------------|
-| 35-44 | 1 | 100% |
+| 45-54 | 1 | 50% |
+| 35-44 | 1 | 50% |
 
 **Education Level:**
 
 | Level | Count | Percentage |
 |-------|-------|------------|
-| bachelor | 1 | 100% |
+| bachelor | 2 | 100% |
 
 **Location Type:**
 
 | Type | Count | Percentage |
 |------|-------|------------|
-| Urban | 1 | 100% |
+| Suburban | 1 | 50% |
+| Urban | 1 | 50% |
 
 </details>
 
@@ -94,7 +98,7 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 ## 📌 Next Steps
 
 > [!NOTE]
-> Continue recruiting to reach minimum of 3 participants (2 more needed)
+> Continue recruiting to reach minimum of 3 participants (1 more needed)
 
 ---
 
