@@ -33,22 +33,19 @@ Recruitment effectiveness: 100% conversion rate (3 confirmed of 3 recruited)
 
 ## 👥 Observer Management
 
-**Session Assignments:**
+**Session Observer Assignments:**
 
 | Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
 |---------|-----------|-----------|----------|------------------|-----------------|
+| PT001 | TBD | lapedra,tamara (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
 
-**Role Distribution:**
-
+**Observer Role Distribution:**
 | Role | Count | Sessions |
 |------|-------|----------|
-| 📝 Note-taker |  |  |
-| 👁️ Silent Observer |  |  |
-| 📊 PM Observer |  |  |
-| 🏛️ Stakeholder |  |  |
-
-**Guidelines:** Review session plan beforehand, stay muted, take notes without interrupting, share feedback after session.
-
+| 📝 Note-taker | 1 | PT001 |
+| 👁️ Silent Observer | 0 | - |
+| 📊 PM Observer | 0 | - |
+| 🏛️ Stakeholder | 0 | - |
 ---
 
 <details>
