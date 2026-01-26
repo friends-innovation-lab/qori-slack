@@ -4,7 +4,7 @@
 
 | Total | Confirmed | Pending | Completed |
 |:-----:|:---------:|:-------:|:---------:|
-| 2 | 2 | 0 | 0 |
+| 3 | 3 | 0 | 0 |
 
 **Last Updated:** January 26, 2026 by U01SC2TNYKU
 
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|------------------------|
+| 6 | PT003 | referral | 2026-02-18 13:00 | confirmed |  |
 | 5 | PT002 | recruitment_agency | 2026-02-17 10:00 | confirmed |  |
 | 4 | PT001 | recruitment_agency | 2026-02-16 12:00 | confirmed |  |
 
@@ -23,9 +24,10 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| recruitment_agency | 2 | 100% |
+| 🤝 Referral | 1 | 33% |
+| recruitment_agency | 2 | 67% |
 
-Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
+Recruitment effectiveness: 100% conversion rate (3 confirmed of 3 recruited)
 
 ---
 
@@ -56,28 +58,32 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 | Category | Count | Percentage |
 |----------|-------|------------|
-| White | 1 | 50% |
-| american_indian | 1 | 50% |
+| black | 1 | 33% |
+| White | 1 | 33% |
+| american_indian | 1 | 33% |
 
 **Age Range:**
 
 | Range | Count | Percentage |
 |-------|-------|------------|
-| 45-54 | 1 | 50% |
-| 35-44 | 1 | 50% |
+| 55-64 | 1 | 33% |
+| 45-54 | 1 | 33% |
+| 35-44 | 1 | 33% |
 
 **Education Level:**
 
 | Level | Count | Percentage |
 |-------|-------|------------|
-| bachelor | 2 | 100% |
+| master | 1 | 33% |
+| bachelor | 2 | 67% |
 
 **Location Type:**
 
 | Type | Count | Percentage |
 |------|-------|------------|
-| Suburban | 1 | 50% |
-| Urban | 1 | 50% |
+| Rural | 1 | 33% |
+| Suburban | 1 | 33% |
+| Urban | 1 | 33% |
 
 </details>
 
@@ -98,7 +104,7 @@ Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 ## 📌 Next Steps
 
 > [!NOTE]
-> Continue recruiting to reach minimum of 3 participants (1 more needed)
+> All participants are on track
 
 ---
 
