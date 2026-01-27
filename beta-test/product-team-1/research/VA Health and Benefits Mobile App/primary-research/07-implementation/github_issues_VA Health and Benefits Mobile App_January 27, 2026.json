@@ -1,0 +1,50 @@
+🛠 **GitHub Issues Created**
+
+**Study:** VA Health and Benefits Mobile App
+**Repository:** 
+
+```json
+{
+  "study": "VA Health and Benefits Mobile App Navigation Research",
+  "generated_date": "January 7, 2026",
+  "total_issues": 4,
+  "issues": [
+    {
+      "number": 1,
+      "title": "[Critical] Add accessible labels to unlabeled buttons for screen readers",
+      "labels": ["research-finding", "critical", "accessibility"],
+      "priority": "Critical",
+      "effort": "Medium (3-5 days)",
+      "body": "## Problem\n\nScreen reader users cannot identify button functions because interactive elements lack proper descriptive text, with some buttons literally announcing only as \"Button\" without any context.\n\n## Evidence\n\n**Study:** VA Health and Benefits Mobile App Navigation Research\n**Severity:** Critical | **Affected:** 1 of 3 participants (affects all assistive technology users)\n\n> \"There's a button that just says 'Button' without any descriptive text. That's not helpful at all.\"\n> — PT001\n\n> \"I shouldn't have to guess what buttons do. That's basic accessibility.\"\n> — PT001\n\n**Observed behavior:** PT001 encountered unlabeled buttons that prevented task completion and forced guessing of functionality.\n\n## Acceptance Criteria\n\n- [ ] All interactive elements have descriptive ARIA labels or visible text\n- [ ] Screen readers announce button purpose clearly (e.g., \"Schedule appointment\" not \"Button\")\n- [ ] Comprehensive audit completed for all buttons and interactive elements\n- [ ] Testing completed with screen reader technology\n\n## Implementation Notes\n\nImplement comprehensive accessibility audit and labeling standards for all interactive elements. Focus on critical user flows first.\n\n## Research Source\n\n[Link to research readout]\n\n---\n*Issue generated from research findings by Qori*"
+    },
+    {
+      "number": 2,
+      "title": "[High] Improve search visibility and result relevance",
+      "labels": ["research-finding", "high-priority", "navigation"],
+      "priority": "High",
+      "effort": "Large (1-2 weeks)",
+      "body": "## Problem\n\nUsers cannot effectively use search as backup navigation because the search feature is difficult to locate and returns inadequate results, leading to task abandonment.\n\n## Evidence\n\n**Study:** VA Health and Benefits Mobile App Navigation Research\n**Severity:** High | **Affected:** 1 of 3 participants\n\n> \"The search is hard to find and the results aren't great. I'd probably give up and call someone instead.\"\n> — PT002\n\n**Observed behavior:** PT002 struggled to locate search functionality and expressed intention to abandon digital channel for phone support due to poor search experience.\n\n## Acceptance Criteria\n\n- [ ] Search feature is prominently visible and easily discoverable\n- [ ] Search results return relevant, helpful content\n- [ ] Search serves as effective backup when primary navigation fails\n- [ ] Users can successfully complete tasks using search functionality\n\n## Implementation Notes\n\nImprove search discoverability in UI and enhance search algorithm relevance. Consider search as primary navigation aid.\n\n## Research Source\n\n[Link to research readout]\n\n---\n*Issue generated from research findings by Qori*"
+    },
+    {
+      "number": 3,
+      "title": "[High] Streamline messaging workflow for healthcare provider communication",
+      "labels": ["research-finding", "high-priority", "navigation"],
+      "priority": "High",
+      "effort": "Large (1-2 weeks)",
+      "body": "## Problem\n\nUsers experience significant friction when trying to contact healthcare providers, having to navigate through multiple categories before reaching their goal of sending a simple message.\n\n## Evidence\n\n**Study:** VA Health and Benefits Mobile App Navigation Research\n**Severity:** High | **Affected:** 1 of 3 participants\n\n> \"I just want to ask my doctor a simple question, but I have to navigate through all these categories first.\"\n> — PT002\n\n> \"Sometimes I feel like I'm going through a maze just to do simple things.\"\n> — PT002\n\n**Observed behavior:** PT002 described the messaging workflow as maze-like and overly complex for simple healthcare communication tasks.\n\n## Acceptance Criteria\n\n- [ ] Direct path created for users to contact healthcare providers\n- [ ] Reduced number of navigation steps required for messaging\n- [ ] Users can send messages without navigating through multiple category layers\n- [ ] Messaging workflow is streamlined and intuitive\n\n## Implementation Notes\n\nRedesign messaging workflow to provide more direct access to healthcare provider communication. Consider prominent messaging entry points.\n\n## Research Source\n\n[Link to research readout]\n\n---\n*Issue generated from research findings by Qori*"
+    },
+    {
+      "number": 4,
+      "title": "[High] Optimize app performance to reduce loading times",
+      "labels": ["research-finding", "high-priority", "performance"],
+      "priority": "High",
+      "effort": "Large (1-2 weeks)",
+      "body": "## Problem\n\nExcessive loading times throughout the app are causing users to abandon digital services and switch to phone support instead of completing tasks.\n\n## Evidence\n\n**Study:** VA Health and Benefits Mobile App Navigation Research\n**Severity:** High | **Affected:** 1 of 3 participants\n\n> \"By the time this app loads what I need, I could have talked to a person and gotten my answer.\"\n> — PT003\n\n> \"This is pretty typical for this app. Everything takes forever to load.\"\n> — PT003\n\n**Observed behavior:** PT003 described loading delays as typical and expressed preference for phone support due to performance issues.\n\n## Acceptance Criteria\n\n- [ ] Performance audit completed focusing on API response times and loading optimization\n- [ ] Loading times reduced across all app features\n- [ ] Users can complete tasks without abandoning due to performance issues\n- [ ] Caching strategies implemented to improve perceived performance\n\n## Implementation Notes\n\nConduct performance audit focusing on API response times, caching strategies, and loading optimization. Consider loading states and progressive disclosure.\n\n## Research Source\n\n[Link to research readout]\n\n---\n*Issue generated from research findings by Qori*"
+    }
+  ]
+}
+```
+
+🔗 **View Issues:** /issues?q=is:issue+label:research-finding
+
+*Questions?* Contact lapedra@cityfriends.tech
