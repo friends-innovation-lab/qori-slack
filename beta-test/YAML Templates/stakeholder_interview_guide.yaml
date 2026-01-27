@@ -317,7 +317,7 @@ output_options:
   default_delivery: "slack_and_file"
   slack_format: "interview_guide"
   file_format: "github_markdown"
-  path: "primary-research/01-planning/stakeholder-interviews/"
+  path: "01-planning/stakeholder-interviews/"
   filename: "{{study_folder}}_stakeholder_guide_{{stakeholder_role}}_{{current_date}}.md"
 
 # Slack output template
