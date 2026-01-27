@@ -277,7 +277,7 @@ output_options:
   default_delivery: "slack_and_file"
   slack_format: "survey_focused"
   file_format: "github_markdown"
-  path: "primary-research/04-analysis/survey-synthesis/"
+  path: "04-analysis/survey-synthesis/"
   filename: "{{selected_study}}_survey_synthesis_{{current_date}}.md"
 
 # Slack output template
