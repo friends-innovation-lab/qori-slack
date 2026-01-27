@@ -480,7 +480,7 @@ output_options:
   default_delivery: "slack_and_file"
   slack_format: "stakeholder_focused"
   file_format: "github_markdown"
-  path: "primary-research/01-planning/stakeholder-interviews/"
+  path: "01-planning/stakeholder-interviews/"
   filename: "{{selected_study}}_stakeholder_synthesis_{{current_date}}.md"
 
 # Slack output template
