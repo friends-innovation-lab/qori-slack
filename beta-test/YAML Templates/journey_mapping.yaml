@@ -272,7 +272,7 @@ ai_generation_tasks:
       > **Priority:** 🔴 High | 🟡 Medium | 🟢 Low — **Effort:** 🔵🔵🔵 High | 🔵🔵⚪ Med | 🔵⚪⚪ Low
       
       | Priority | Opportunity | Stage | Owner | Effort |
-      |:---------|-------------|-------|-------|:------:|
+      |:--------:|-------------|-------|-------|:------:|
       | 🔴 | [Specific fix] | [Stage name] | `[Team]` | 🔵🔵🔵 |
       | 🟡 | [Specific fix] | [Stage name] | `[Team]` | 🔵🔵⚪ |
       | 🟢 | [Specific fix] | [Stage name] | `[Team]` | 🔵⚪⚪ |
