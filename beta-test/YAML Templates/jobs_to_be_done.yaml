@@ -2,7 +2,7 @@ id: jobs_to_be_done
 name: extract_jobs_to_be_done
 
 label: 🎯 Jobs to be Done
-version: "v3.3"
+version: "v3.4"
 
 description: >
   Extract research-grounded Jobs-to-be-Done using the industry-standard
@@ -57,7 +57,19 @@ study_metadata:
     folder: "va-housing-usability-2025"
     researcher: "jordan.researcher"
     channel: "#research-housing-app"
-    focus_area: "housing application process"
+    focus_area: "housing application usability"
+    
+  "Benefits Portal Navigation Research":
+    folder: "benefits-portal-nav-2025"
+    researcher: "alex.ux"
+    channel: "#research-benefits"
+    focus_area: "benefits portal navigation"
+    
+  "Veteran Onboarding Experience Study":
+    folder: "veteran-onboarding-2025"
+    researcher: "casey.research"
+    channel: "#research-onboarding"
+    focus_area: "veteran onboarding process"
 
 # File discovery system
 auto_file_discovery:
@@ -243,23 +255,12 @@ auto_variables:
   - analysis_version: generate_version_number() || "v1.0"
   - github_file_link: generate_github_link(study_name, current_date)
 
+# Slack notifications
 notify:
   - role: team
     action: "Jobs to be Done analysis completed"
     channel: "{{study_channel}}"
-    message: "{{researcher_contact}} completed JTBD analysis. {{max_jobs}} jobs identified!"
-
-notes: |
-  v3.3 Changes (Fix Empty Output):
-  - REMOVED "STOP HERE" line — was causing LLM to stop before generating
-  - Moved validation to RULES section at top
-  - Added "IMPORTANT: Generate the COMPLETE output" instruction
-  - Added "NOW GENERATE THE COMPLETE OUTPUT BELOW" before format
-  - Validation checklist now in rules, not after output
-  
-  v3.2: Added STOP HERE (broke generation)
-  v3.1: Added expert references
-  v3.0: Complete redesign with When/Want/So framework
+    message: "🎯 {{researcher_contact}} completed JTBD analysis for {{selected_study}}. {{max_jobs}} jobs identified!"
 
 output_use: |
   Extract Jobs-to-be-Done focusing on PROGRESS users want to make,
