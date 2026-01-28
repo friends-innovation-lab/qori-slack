@@ -1,11 +1,11 @@
 id: research_brief
 name: run_research_brief
 label: Research Brief
-version: v3.0
+version: v3.1
 description: |
   Generate VA-aligned research briefs for scoping studies with design and product partners. Creates structured research briefs that capture and refine stakeholder thinking to inform detailed research plans. Automatically improves informal or unclear stakeholder inputs while preserving original intent.
 
-author: CivicMind R&D
+author: Qori R&D
 created: 2025-06-26
 last_updated: 2025-09-26
 
@@ -206,22 +206,15 @@ processing_workflow:
   4. populate_template
   5. save_to_outputs
 
-# Modern GitHub-optimized output template with advanced formatting
+# Modern GitHub-optimized output template with industry-standard structure
 output_template: |
-  # Research Brief — {{project_title}}
-  
-  📦 **Project Area:** {{ai_generated.project_scope}}
+  # Research Brief: {{project_title}}
 
-
-  👩🏽‍🔬 **Prepared by:** {{prepared_by}}
-
-
-  🗓️ **Date:** {{current_date}}
-
+  **Prepared by:** {{prepared_by}} | **Date:** {{current_date}} | **Project Area:** {{ai_generated.project_scope}}
 
   ---
 
-  ## 🎯 Business Context
+  ## Business Context
 
   {{ai_generated.refined_context}}
 
@@ -230,102 +223,66 @@ output_template: |
   > 
   > {{ai_generated.stakeholder_concerns}}
 
-  <br>
-
   ---
 
-  <br>
-
-  ## 🎯 Research Objectives
+  ## Research Objectives
 
   {{ai_generated.learning_objectives}}
 
-  <details>
-  <summary><strong>📋 User Journey in Scope</strong> <kbd>Click to expand</kbd></summary>
-  
-  > **What this covers:** The complete end-to-end user experience we'll be researching
-  
-  {{ai_generated.refined_user_flows}}
-  
-  </details>
+  ---
 
-  <br>
+  ## User Journeys in Scope
+
+  {{ai_generated.refined_user_flows}}
 
   ---
 
-  <br>
-
-  ## 🎯 Target Barriers
+  ## Target Barriers
 
   {{ai_generated.refined_barriers}}
 
-  <br>
-
   ---
 
-  <br>
+  ## Research Questions & Hypotheses
 
-  ## 🤔 Key Questions & Hypotheses
+  **Primary Research Questions**
 
-  ### 🔍 Primary Research Questions
   {{ai_generated.key_questions}}
 
-  ### 💭 Team Hypotheses
-  {{ai_generated.team_hypotheses}}
+  **Team Hypotheses**
 
-  <br>
+  {{ai_generated.team_hypotheses}}
 
   ---
 
-  <br>
+  ## Proposed Approach
 
-  ## 🧭 Proposed Research Approach
-
-  | 🔬 **Aspect** | 📝 **Details** |
-  |---------------|-----------------|
+  | Aspect | Details |
+  |:-------|:--------|
   | **Method** | {{ai_generated.refined_research_approach}} |
   | **Rationale** | {{ai_generated.research_rationale}} |
 
-  <br>
-
   ---
 
-  <br>
-
-  ## 🎯 Expected Outcomes
+  ## Expected Outcomes
 
   {{ai_generated.expected_outcomes}}
 
-  <br>
+  ---
+
+  ## Next Steps
+
+  | Timeline | Action | Owner |
+  |:---------|:-------|:------|
+  | This week | Stakeholder review and brief approval | {{prepared_by}} |
+  | Next 2 weeks | Detailed research plan, recruitment strategy | Research team |
+  | Month 2 | Resource allocation, team coordination | PM + Research |
 
   ---
 
-  <br>
+  > **Ready to proceed:** Stakeholder approval → Research plan development → Execution
 
-  ## 🚀 Next Steps
-
-  ```diff
-  + IMMEDIATE (This Week)
-  ```
-  - [ ] **Stakeholder review** of this brief and alignment on objectives
-
-  ```diff
-  ! SHORT-TERM (Next 2 Weeks)
-  ```
-  - [ ] **Detailed research plan** development with specific methodology  
-  - [ ] **Participant recruitment** strategy and timeline
-
-  ```diff
-  - LONGER-TERM (Month 2)
-  ```
-  - [ ] **Resource allocation** and team coordination
-
-  ---
-
-  > [!NOTE]
-  > **Ready to proceed:** Once stakeholders approve this brief → Develop detailed research plan → Begin execution
-
-  <sub>*Generated with ❤️ for better Veteran experiences*</sub>
+  *Generated with ❤️ for better Veteran experiences*
 
 # Output configuration
 output_options:
@@ -359,6 +316,39 @@ output_options:
     teams:
       enabled: false
       # Future: Teams delivery options
+
+# Study metadata mapping
+study_metadata:
+  "VA Housing Application Usability Study":
+    folder: "va-housing-usability-2025"
+    researcher: "jordan.researcher"
+    channel: "#research-housing-app"
+    focus_area: "housing application usability"
+    
+  "Benefits Portal Navigation Research":
+    folder: "benefits-portal-nav-2025"
+    researcher: "alex.ux"
+    channel: "#research-benefits"
+    focus_area: "benefits portal navigation"
+    
+  "Veteran Onboarding Experience Study":
+    folder: "veteran-onboarding-2025"
+    researcher: "casey.research"
+    channel: "#research-onboarding"
+    focus_area: "veteran onboarding process"
+
+# Auto-generated variables
+auto_variables:
+  - current_date: new Date().toISOString().split('T')[0]
+  - brief_version: generate_version_number() || "v1.0"
+  - github_file_link: generate_github_link(project_title, current_date)
+
+# Slack notifications
+notify:
+  - role: team
+    action: "Research brief created"
+    channel: "{{study_channel}}"
+    message: "📋 {{prepared_by}} created a research brief for {{project_title}}. Ready for stakeholder review!"
 
 output_use: |
   CivicMind Research Brief generator creates VA-compliant research scoping documents that capture and refine stakeholder thinking. Automatically improves informal or unclear stakeholder inputs to create professional, coherent research briefs. Focuses on problem definition and learning goals to inform detailed research plan development.
