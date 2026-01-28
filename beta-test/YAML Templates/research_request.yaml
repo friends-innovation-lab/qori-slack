@@ -1,7 +1,7 @@
 id: research_request
 name: submit_research_request
 label: 📝 Research Request
-version: v1.0
+version: v1.1
 
 description: |
   Submit a research request to the UX research team. Stakeholders use this form 
@@ -21,111 +21,76 @@ llm_config:
   temperature: 0.2
   max_tokens: 2000
 
-# Slack modal input variables - What stakeholders actually know
+# Slack modal input variables - Simple fields stakeholders can answer
 input_variables:
-  # Requestor info
-  - name: requestor_name
+  # Project info
+  - name: project_title
     type: string
     required: true
-    label: "Your name"
-    placeholder: "e.g., Sarah Chen"
-    
-  - name: requestor_role
-    type: string
-    required: true
-    label: "Your role"
-    placeholder: "e.g., Product Manager, Health Tools"
-    
-  - name: requestor_email
-    type: string
-    required: false
-    label: "Email (for follow-up)"
-    placeholder: "e.g., sarah.chen@va.gov"
-
-  # Project context
-  - name: project_name
-    type: string
-    required: true
-    label: "Project or product name"
-    placeholder: "e.g., VA Health and Benefits Mobile App"
-    
-  - name: team_name
-    type: string
-    required: false
-    label: "Team name"
-    placeholder: "e.g., Mobile App Team, Benefits Portfolio"
+    label: "Project Title/Focus"
+    placeholder: "e.g., Claims Status Navigation Study"
+    hint: "Choose a clear, descriptive title. Max 100 characters."
 
   # The problem
   - name: problem_description
     type: textarea
     required: true
-    label: "What problem are you trying to solve?"
-    placeholder: "Describe the issue you're seeing. Be as specific as you can - include metrics, user feedback, or observations that led to this request."
-    hint: "Example: Veterans are abandoning the prescription refill flow at a 40% rate. Support calls mention confusion about which pharmacy to select."
+    label: "What problem or opportunity does this address?"
+    placeholder: "e.g., Users report difficulty navigating the mobile app to find their claim status..."
+    hint: "Include: data observed, user complaints, business metrics, or opportunities. Max 800 characters."
 
-  - name: what_you_know
+  # Users
+  - name: affected_users
     type: textarea
-    required: false
-    label: "What do you already know?"
-    placeholder: "Any existing data, previous research, user feedback, or analytics you have"
-    hint: "This helps us avoid duplicating work and build on existing knowledge."
+    required: true
+    label: "Who are the affected users?"
+    placeholder: "e.g., Veterans using the mobile app to check claim status, particularly those with multiple active claims"
+    hint: "Describe the users experiencing this problem. Max 300 characters."
 
   # Decision context
   - name: decisions_to_inform
     type: textarea
     required: true
     label: "What decisions will this research inform?"
-    placeholder: "What will you do differently based on what we learn?"
-    hint: "Example: Decide whether to redesign the pharmacy selection flow or add inline help content."
-
-  - name: stakeholders_involved
-    type: textarea
-    required: false
-    label: "Who else should be involved?"
-    placeholder: "Other team members, stakeholders, or SMEs who should be consulted or informed"
-
-  # Users
-  - name: target_users
-    type: textarea
-    required: true
-    label: "Who are the users affected?"
-    placeholder: "Describe the veterans or users experiencing this problem"
-    hint: "Example: Veterans using the mobile app to manage prescriptions, especially those with multiple medications."
+    placeholder: "e.g., Q4 navigation redesign priorities, invest in unified search, IA strategy"
+    hint: "How will findings impact planning or product decisions? Max 500 characters."
 
   # Timing
   - name: urgency
     type: select
     required: true
-    label: "How urgent is this?"
+    label: "Urgency"
     options:
       - value: "critical"
-        label: "🔴 Critical - Blocking a launch or major decision (need results in 1-2 weeks)"
+        label: "🔴 Critical - Blocking a launch or major decision (1-2 weeks)"
       - value: "high"
-        label: "🟠 High - Important for upcoming work (need results in 2-4 weeks)"
+        label: "🟠 High - Important for upcoming work (2-4 weeks)"
       - value: "medium"
-        label: "🟡 Medium - Would help prioritization (need results in 1-2 months)"
+        label: "🟡 Medium - Would help prioritization (1-2 months)"
       - value: "low"
         label: "🟢 Low - Exploratory, no hard deadline"
 
   - name: deadline
     type: date
     required: false
-    label: "Do you have a specific deadline?"
-    placeholder: "Leave blank if flexible"
-    hint: "When do you need findings to inform your decision?"
+    label: "Deadline (optional)"
+    hint: "Specific date if you have one"
 
-  # Constraints
-  - name: constraints
+  # What they know
+  - name: existing_knowledge
     type: textarea
     required: false
-    label: "Any constraints we should know about?"
-    placeholder: "Budget limits, access restrictions, technical limitations, compliance requirements, etc."
+    label: "What do you already know? (optional)"
+    placeholder: "e.g., Previous research from Q2 showed..., Analytics indicate 40% drop-off at..."
+    hint: "Any existing data, previous research, or analytics. Helps avoid duplicate work. Max 500 characters."
 
-  - name: additional_context
-    type: textarea
+  # Requestor (auto-populated)
+  - name: requestor_name
+    type: string
     required: false
-    label: "Anything else we should know?"
-    placeholder: "Links to related documents, previous research, Slack threads, etc."
+    label: "Name (optional)"
+    placeholder: "Auto-populated from Slack profile"
+    auto_populate: "slack_profile.name"
 
 # AI generation tasks - Light touch, just formatting and clarification
 ai_generation_tasks:
@@ -154,8 +119,8 @@ ai_generation_tasks:
 
   - task_id: "formatted_users"
     prompt: |
-      Clean up this description of target users:
-      "{{target_users}}"
+      Clean up this description of affected users:
+      "{{affected_users}}"
       
       - Make it clear and specific
       - Keep to 1-2 sentences
@@ -193,9 +158,9 @@ processing_workflow:
 
 # Output template - Clean, scannable format for research team to review
 output_template: |
-  # Research Request: {{project_name}}
+  # Research Request: {{project_title}}
 
-  **Submitted by:** {{requestor_name}} ({{requestor_role}}) | **Date:** {{current_date}} | **Urgency:** {{urgency}}
+  **Submitted by:** {{requestor_name}} | **Date:** {{current_date}} | **Urgency:** {{urgency}}
 
   ---
 
@@ -203,7 +168,11 @@ output_template: |
 
   {{ai_generated.formatted_problem}}
 
-  **What we already know:** {{what_you_know}}
+  ---
+
+  ## Affected Users
+
+  {{ai_generated.formatted_users}}
 
   ---
 
@@ -213,35 +182,17 @@ output_template: |
 
   ---
 
-  ## Target Users
+  ## Timeline
 
-  {{ai_generated.formatted_users}}
-
-  ---
-
-  ## Timing & Constraints
-
-  | Aspect | Details |
-  |:-------|:--------|
-  | **Urgency** | {{urgency}} |
-  | **Deadline** | {{deadline}} |
-  | **Constraints** | {{constraints}} |
+  | Urgency | Deadline |
+  |:--------|:---------|
+  | {{urgency}} | {{deadline}} |
 
   ---
 
-  ## Stakeholders
+  ## Existing Knowledge
 
-  **Requestor:** {{requestor_name}} ({{requestor_role}}) — {{requestor_email}}
-
-  **Team:** {{team_name}}
-
-  **Others to involve:** {{stakeholders_involved}}
-
-  ---
-
-  ## Additional Context
-
-  {{additional_context}}
+  {{existing_knowledge}}
 
   ---
 
@@ -259,50 +210,41 @@ output_template: |
 
   ---
 
-  *Submitted via Qori Research Request • {{current_date}}*
+  *Submitted via Qori • {{current_date}}*
 
 # Output configuration
 output_options:
-  filename: "{{project_name}}_research_request_{{current_date}}.md"
+  filename: "{{project_title}}_research_request_{{current_date}}.md"
   path: "00-requests/"
   
   delivery:
     github:
       enabled: true
-      commit_message: "New research request: {{project_name}}"
+      commit_message: "New research request: {{project_title}}"
       
     slack:
       enabled: true
       channel: "#research-requests"
-      message: "📝 New research request from {{requestor_name}}: *{{project_name}}*"
+      message: "📝 New research request from {{requestor_name}}: *{{project_title}}*"
       include_preview: true
 
 # Auto-generated variables
 auto_variables:
   - current_date: new Date().toISOString().split('T')[0]
   - request_id: generate_request_id() || "REQ-001"
-  - github_file_link: generate_github_link(project_name, current_date)
+  - github_file_link: generate_github_link(project_title, current_date)
 
 # Slack notifications
 notify:
   - role: research_team
     action: "New research request submitted"
     channel: "#research-requests"
-    message: "📝 {{requestor_name}} ({{requestor_role}}) submitted a research request for *{{project_name}}*. Urgency: {{urgency}}"
+    message: "📝 {{requestor_name}} submitted a research request for *{{project_title}}*. Urgency: {{urgency}}"
     
   - role: requestor
     action: "Request confirmation"
     channel: "DM"
-    message: "✅ Your research request for *{{project_name}}* has been submitted. The research team will review it within 2 business days."
-
-notes: |
-  v1.0 Initial release:
-  - Stakeholder-facing form with simple, non-technical language
-  - Focuses on problem and decisions, not methodology
-  - Light AI cleanup without adding researcher assumptions
-  - Auto-suggests research type for team reference
-  - Outputs to 00-requests/ for research team triage
-  - Notifies both research team and requestor
+    message: "✅ Your research request for *{{project_title}}* has been submitted. The research team will review it within 2 business days."
 
 output_use: |
   Stakeholders (PMs, Product Owners, etc.) use this form to request research
