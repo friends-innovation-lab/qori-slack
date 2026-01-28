@@ -9,8 +9,8 @@
 | Priority | Pain Point | Opportunity |
 |:--------:|------------|-------------|
 | 🔴 | Extreme loading times blocking basic tasks — PT003 | Implement low-bandwidth optimization with progress indicators |
-| 🔴 | Unlabeled interactive elements preventing screen reader usage — PT001 | Conduct accessibility audit and fix all button labels |
-| 🟡 | Search function nearly unusable due to poor discoverability — PT002 | Redesign search with prominent placement and relevant results |
+| 🔴 | Unlabeled interactive elements — PT001 | Conduct accessibility audit and fix all button labels |
+| 🟡 | Search function nearly unusable — PT002 | Redesign search with prominent placement and relevant results |
 
 ---
 
@@ -18,9 +18,9 @@
 
 ### 1️⃣ App Launch
 
-**What happens:** User opens VA mobile app and waits for initial loading and authentication to complete.
+**What happens:** User opens VA app and encounters initial loading screen before accessing main navigation.
 
-**📱 Touchpoints:** Home screen loading, authentication screens, main navigation menu
+**📱 Touchpoints:** Home screen → VA app icon → Loading screen → Main dashboard
 
 | Emotion | Quote |
 |:-------:|-------|
@@ -28,11 +28,11 @@
 
 **🔴 Pain Points:**
 - Loading screens take 45+ seconds consistently — PT003
-- Multiple timeout warnings due to slow connections — PT003
+- Rural connectivity causes timeout warnings — PT003
 
-**✅ Success looks like:** App loads within 10 seconds with progress indicator showing loading status
+**✅ Success looks like:** App loads main dashboard within 10 seconds on slow connections
 
-**💡 Opportunity:** Add skeleton loading screens and optimize for low-bandwidth connections
+**💡 Opportunity:** Add skeleton loading screens with progress indicators for low-bandwidth users
 
 **👥 Owner:** `Engineering` — Performance optimization requires backend and mobile development expertise
 
@@ -40,115 +40,116 @@
 
 ### 2️⃣ Navigation Discovery
 
-**What happens:** User explores main navigation structure to locate desired functionality or information.
+**What happens:** User explores main navigation to locate desired functionality like claims, appointments, or messaging.
 
-**📱 Touchpoints:** Main menu tabs (Health, Benefits, Payments, Profile), search functionality
+**📱 Touchpoints:** Main menu → Health/Benefits/Payments/Profile tabs → Secondary navigation
 
 | Emotion | Quote |
 |:-------:|-------|
 | 😕 Confused | "Nothing clearly says 'File new claim.' Oh wait, there's 'Claims' and also 'File a Claim' - those are two separate things? That's confusing." — PT002 |
 
 **🔴 Pain Points:**
-- Search icon hidden and difficult to discover — PT002
 - Duplicate navigation options create decision paralysis — PT002
-- Unlabeled buttons announced only as "Button" by screen readers — PT001
+- Search icon hidden and difficult to discover — PT002
+- Important functions buried in deep menu hierarchies — PT001
 
-**✅ Success looks like:** Users locate desired section within 3 taps without confusion about navigation labels
+**✅ Success looks like:** Users locate primary functions within 3 taps from main screen
 
-**💡 Opportunity:** Audit navigation labels for clarity and eliminate duplicate options
+**💡 Opportunity:** Audit navigation labels to eliminate duplicates and improve discoverability
 
-**👥 Owner:** `Design` — Information architecture and navigation patterns need design system updates
+**👥 Owner:** `Design` — Information architecture and navigation patterns need UX redesign
 
 <br>
 
 ### 3️⃣ Task Execution
 
-**What happens:** User attempts to complete specific tasks like checking claims, updating information, or managing prescriptions.
+**What happens:** User attempts to complete specific tasks like updating contact info, checking claim status, or scheduling appointments.
 
-**📱 Touchpoints:** Form fields, action buttons, status displays, edit controls
+**📱 Touchpoints:** Task-specific screens → Form fields → Action buttons → VoiceOver screen reader
 
 | Emotion | Quote |
 |:-------:|-------|
-| 😠 Frustrated | "I shouldn't have to guess what buttons do. That's basic accessibility." — PT001 |
+| 😠 Frustrated | "There's a button that just says 'Button' without any descriptive text. That's not helpful at all." — PT001 |
 
 **🔴 Pain Points:**
-- Edit buttons too small and positioned at bottom of screens — PT001, PT003
-- Benefits information too basic, lacking actionable details — PT002
+- Multiple unlabeled buttons announced as "Button" by VoiceOver — PT001
+- Edit buttons positioned at bottom of screens, nearly missed — PT001
 - Unable to locate completed claim status information — PT003
 
-**✅ Success looks like:** Primary action buttons visible without scrolling, properly labeled for screen readers
+**✅ Success looks like:** All interactive elements have descriptive labels and standard placement
 
-**💡 Opportunity:** Standardize button placement and implement comprehensive accessibility labels
+**💡 Opportunity:** Implement comprehensive button labeling and standardize action button placement
 
-**👥 Owner:** `Accessibility` — Critical accessibility violations require specialized remediation expertise
+**👥 Owner:** `Accessibility` — Screen reader compatibility requires specialized accessibility expertise
 
 <br>
 
 ### 4️⃣ Information Seeking
 
-**What happens:** User searches for specific information or tries to understand system status and available options.
+**What happens:** User searches for specific information or tries to understand benefit details and claim statuses.
 
-**📱 Touchpoints:** Search results, help content, status displays, informational sections
+**📱 Touchpoints:** Search function → Benefits section → Claims status → Information displays
 
 | Emotion | Quote |
 |:-------:|-------|
-| 😞 Resigned | "The search is hard to find and the results aren't great. I'd probably give up and call someone instead." — PT002 |
+| 😞 Disappointed | "Just generic articles about travel pay, not the actual form I need to submit." — PT002 |
 
 **🔴 Pain Points:**
-- Search results provide generic articles instead of actionable forms — PT002
-- System shows "No active claims" when user expects historical data — PT003
-- Messaging categories don't match user mental models — PT002
+- Search results provide irrelevant generic articles instead of actionable forms — PT002
+- Benefits information too high-level, lacking actionable details — PT002
+- System shows "No active claims" instead of historical information — PT003
 
-**✅ Success looks like:** Search returns relevant, actionable results within top 3 options
+**✅ Success looks like:** Search returns relevant forms and tools within top 3 results
 
-**💡 Opportunity:** Redesign search algorithm to prioritize forms and tools over articles
+**💡 Opportunity:** Enhance search algorithm to prioritize actionable content over generic articles
 
-**👥 Owner:** `Content` — Search relevance and information architecture require content strategy expertise
+**👥 Owner:** `Content` — Search relevance and information architecture requires content strategy expertise
 
 <br>
 
 ### 5️⃣ Communication
 
-**What happens:** User attempts to send messages to healthcare providers or support teams through the app.
+**What happens:** User attempts to send messages to care team or communicate with VA staff about questions or issues.
 
-**📱 Touchpoints:** Messaging interface, category selection, message composition
+**📱 Touchpoints:** Messaging interface → Category selection → Message composition → Send confirmation
 
 | Emotion | Quote |
 |:-------:|-------|
 | 😤 Frustrated | "I just want to ask my doctor a simple question, but I have to navigate through all these categories first." — PT002 |
 
 **🔴 Pain Points:**
-- Categorical barriers prevent simple doctor communication — PT002
-- Messaging system creates unnecessary complexity — PT002
+- Messaging system creates unnecessary categorical barriers — PT002
+- Categories don't match user mental models for simple questions — PT002
+- Slow loading at each step of messaging process — PT003
 
-**✅ Success looks like:** Direct message composition available within 2 taps from main menu
+**✅ Success looks like:** Direct doctor communication option bypasses category selection for simple questions
 
-**💡 Opportunity:** Add streamlined "Quick Message" option bypassing category selection
+**💡 Opportunity:** Add "Quick Question" option that bypasses complex category system
 
-**👥 Owner:** `Product` — Messaging workflow simplification requires product strategy decisions
+**👥 Owner:** `Product` — Messaging workflow changes require product strategy and user flow redesign
 
 <br>
 
 ### 6️⃣ Task Completion
 
-**What happens:** User completes or abandons tasks, often switching to phone support for complex issues.
+**What happens:** User completes or abandons tasks, often falling back to phone support when digital systems fail.
 
-**📱 Touchpoints:** Confirmation screens, error messages, phone support contact information
+**📱 Touchpoints:** Confirmation screens → Phone support fallback → Task abandonment
 
 | Emotion | Quote |
 |:-------:|-------|
 | 😔 Resigned | "By the time this app loads what I need, I could have talked to a person and gotten my answer." — PT003 |
 
 **🔴 Pain Points:**
-- Performance issues drive users to alternative support channels — PT003
-- Task abandonment due to poor search and navigation — PT002
-- Accessibility barriers prevent task completion — PT001
+- Users abandon search and resort to phone support — PT002
+- Task completion times extended by performance issues — PT003
+- Connection drops cause concerns about losing form data — PT003
 
-**✅ Success looks like:** 80% of common tasks completed within the app without phone support
+**✅ Success looks like:** 80% of common tasks completed without phone support fallback
 
-**💡 Opportunity:** Add offline functionality for frequently accessed information
+**💡 Opportunity:** Add offline functionality for basic information and form data persistence
 
-**👥 Owner:** `Engineering` — Offline capabilities require technical architecture changes
+**👥 Owner:** `Engineering` — Offline capabilities and data persistence require mobile development expertise
 
 <br>
 
@@ -159,13 +160,13 @@
 > **Priority:** 🔴 High | 🟡 Medium | 🟢 Low — **Effort:** 🔵🔵🔵 High | 🔵🔵⚪ Med | 🔵⚪⚪ Low
 
 | Priority | Opportunity | Stage | Owner | Effort |
-|:---------|-------------|-------|-------|:------:|
+|:--------:|-------------|-------|-------|:------:|
 | 🔴 | Implement low-bandwidth optimization with progress indicators | App Launch | `Engineering` | 🔵🔵🔵 |
 | 🔴 | Conduct accessibility audit and fix all button labels | Task Execution | `Accessibility` | 🔵🔵⚪ |
 | 🟡 | Redesign search with prominent placement and relevant results | Information Seeking | `Content` | 🔵🔵⚪ |
-| 🟡 | Add streamlined messaging bypassing category selection | Communication | `Product` | 🔵🔵⚪ |
-| 🟢 | Audit navigation labels and eliminate duplicate options | Navigation Discovery | `Design` | 🔵⚪⚪ |
-| 🟢 | Add offline functionality for frequently accessed information | Task Completion | `Engineering` | 🔵🔵🔵 |
+| 🟡 | Add "Quick Question" messaging option bypassing categories | Communication | `Product` | 🔵🔵⚪ |
+| 🟢 | Audit navigation labels to eliminate duplicates | Navigation Discovery | `Design` | 🔵⚪⚪ |
+| 🟢 | Add offline functionality for basic information | Task Completion | `Engineering` | 🔵🔵🔵 |
 
 <br>
 
@@ -175,9 +176,9 @@
 
 | # | Question | For |
 |---|----------|-----|
-| 1 | How can we prioritize performance optimization for rural users with limited connectivity while maintaining feature richness? | `Engineering + Product` |
-| 2 | What's the fastest path to fix critical accessibility violations without disrupting current development cycles? | `Accessibility + Engineering` |
-| 3 | Should we implement a simplified "express" interface for common tasks to reduce cognitive load? | `Design + Product` |
+| 1 | How can we prioritize performance optimization for rural users without impacting urban user experience? | Engineering + Product |
+| 2 | What's the fastest path to fix critical accessibility violations while planning comprehensive audit? | Accessibility + Design |
+| 3 | Should we implement quick messaging bypass as temporary fix or redesign entire category system? | Product + Content |
 
 <br>
 
