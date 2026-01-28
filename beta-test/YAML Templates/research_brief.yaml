@@ -338,7 +338,7 @@ output_template: |
 # Output configuration
 output_options:
   filename: "{{project_title}}_research_brief_{{current_date}}.md"
-  path: "00-planning/"
+  path: "01-planning/"
   
   delivery:
     github:
