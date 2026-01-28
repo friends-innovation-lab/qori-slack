@@ -1,0 +1,311 @@
+id: research_request
+name: submit_research_request
+label: 📝 Research Request
+version: v1.0
+
+description: |
+  Submit a research request to the UX research team. Stakeholders use this form 
+  to describe what they need to understand - the research team will translate 
+  this into a formal research brief with methodology and scope.
+
+author: Qori R&D
+created: 2026-01-28
+last_updated: 2026-01-28
+
+input_type: slack_modal_form
+input_processing: form_based
+
+# LLM Configuration
+llm_config:
+  model: "gpt-4o"
+  temperature: 0.2
+  max_tokens: 2000
+
+# Slack modal input variables - What stakeholders actually know
+input_variables:
+  # Requestor info
+  - name: requestor_name
+    type: string
+    required: true
+    label: "Your name"
+    placeholder: "e.g., Sarah Chen"
+    
+  - name: requestor_role
+    type: string
+    required: true
+    label: "Your role"
+    placeholder: "e.g., Product Manager, Health Tools"
+    
+  - name: requestor_email
+    type: string
+    required: false
+    label: "Email (for follow-up)"
+    placeholder: "e.g., sarah.chen@va.gov"
+
+  # Project context
+  - name: project_name
+    type: string
+    required: true
+    label: "Project or product name"
+    placeholder: "e.g., VA Health and Benefits Mobile App"
+    
+  - name: team_name
+    type: string
+    required: false
+    label: "Team name"
+    placeholder: "e.g., Mobile App Team, Benefits Portfolio"
+
+  # The problem
+  - name: problem_description
+    type: textarea
+    required: true
+    label: "What problem are you trying to solve?"
+    placeholder: "Describe the issue you're seeing. Be as specific as you can - include metrics, user feedback, or observations that led to this request."
+    hint: "Example: Veterans are abandoning the prescription refill flow at a 40% rate. Support calls mention confusion about which pharmacy to select."
+
+  - name: what_you_know
+    type: textarea
+    required: false
+    label: "What do you already know?"
+    placeholder: "Any existing data, previous research, user feedback, or analytics you have"
+    hint: "This helps us avoid duplicating work and build on existing knowledge."
+
+  # Decision context
+  - name: decisions_to_inform
+    type: textarea
+    required: true
+    label: "What decisions will this research inform?"
+    placeholder: "What will you do differently based on what we learn?"
+    hint: "Example: Decide whether to redesign the pharmacy selection flow or add inline help content."
+
+  - name: stakeholders_involved
+    type: textarea
+    required: false
+    label: "Who else should be involved?"
+    placeholder: "Other team members, stakeholders, or SMEs who should be consulted or informed"
+
+  # Users
+  - name: target_users
+    type: textarea
+    required: true
+    label: "Who are the users affected?"
+    placeholder: "Describe the veterans or users experiencing this problem"
+    hint: "Example: Veterans using the mobile app to manage prescriptions, especially those with multiple medications."
+
+  # Timing
+  - name: urgency
+    type: select
+    required: true
+    label: "How urgent is this?"
+    options:
+      - value: "critical"
+        label: "🔴 Critical - Blocking a launch or major decision (need results in 1-2 weeks)"
+      - value: "high"
+        label: "🟠 High - Important for upcoming work (need results in 2-4 weeks)"
+      - value: "medium"
+        label: "🟡 Medium - Would help prioritization (need results in 1-2 months)"
+      - value: "low"
+        label: "🟢 Low - Exploratory, no hard deadline"
+
+  - name: deadline
+    type: date
+    required: false
+    label: "Do you have a specific deadline?"
+    placeholder: "Leave blank if flexible"
+    hint: "When do you need findings to inform your decision?"
+
+  # Constraints
+  - name: constraints
+    type: textarea
+    required: false
+    label: "Any constraints we should know about?"
+    placeholder: "Budget limits, access restrictions, technical limitations, compliance requirements, etc."
+
+  - name: additional_context
+    type: textarea
+    required: false
+    label: "Anything else we should know?"
+    placeholder: "Links to related documents, previous research, Slack threads, etc."
+
+# AI generation tasks - Light touch, just formatting and clarification
+ai_generation_tasks:
+  - task_id: "formatted_problem"
+    prompt: |
+      Clean up and clarify this problem description while preserving the original meaning:
+      "{{problem_description}}"
+      
+      - Fix grammar and clarity issues
+      - Keep it concise (2-4 sentences max)
+      - Preserve any specific metrics or data mentioned
+      - Don't add information that wasn't there
+      
+      Output only the improved text, no preamble.
+
+  - task_id: "formatted_decisions"
+    prompt: |
+      Clean up this description of decisions the research will inform:
+      "{{decisions_to_inform}}"
+      
+      - Format as 1-3 clear bullet points
+      - Make vague decisions more specific if possible
+      - Keep the original intent
+      
+      Output only the bullet points, no preamble.
+
+  - task_id: "formatted_users"
+    prompt: |
+      Clean up this description of target users:
+      "{{target_users}}"
+      
+      - Make it clear and specific
+      - Keep to 1-2 sentences
+      - Preserve any specific criteria mentioned
+      
+      Output only the improved text, no preamble.
+
+  - task_id: "suggested_research_type"
+    prompt: |
+      Based on this research request, suggest the most appropriate research type:
+      
+      Problem: {{problem_description}}
+      Decisions to inform: {{decisions_to_inform}}
+      Urgency: {{urgency}}
+      
+      Choose ONE from:
+      - **Usability Testing** - if they need to evaluate an existing or proposed design
+      - **User Interviews** - if they need to understand behaviors, needs, or pain points
+      - **Survey** - if they need to quantify attitudes or preferences at scale
+      - **Analytics Review** - if they need to understand usage patterns from existing data
+      - **Concept Testing** - if they need to validate ideas before building
+      - **Diary Study** - if they need to understand behavior over time
+      - **To be determined** - if unclear, needs researcher consultation
+      
+      Output format:
+      **Suggested approach:** [Type] — [One sentence explaining why this fits]
+
+# Processing workflow
+processing_workflow:
+  1. validate_inputs
+  2. execute_ai_generation_tasks
+  3. populate_template
+  4. save_to_requests_folder
+  5. notify_research_team
+
+# Output template - Clean, scannable format for research team to review
+output_template: |
+  # Research Request: {{project_name}}
+
+  **Submitted by:** {{requestor_name}} ({{requestor_role}}) | **Date:** {{current_date}} | **Urgency:** {{urgency}}
+
+  ---
+
+  ## The Problem
+
+  {{ai_generated.formatted_problem}}
+
+  **What we already know:** {{what_you_know}}
+
+  ---
+
+  ## Decisions This Will Inform
+
+  {{ai_generated.formatted_decisions}}
+
+  ---
+
+  ## Target Users
+
+  {{ai_generated.formatted_users}}
+
+  ---
+
+  ## Timing & Constraints
+
+  | Aspect | Details |
+  |:-------|:--------|
+  | **Urgency** | {{urgency}} |
+  | **Deadline** | {{deadline}} |
+  | **Constraints** | {{constraints}} |
+
+  ---
+
+  ## Stakeholders
+
+  **Requestor:** {{requestor_name}} ({{requestor_role}}) — {{requestor_email}}
+
+  **Team:** {{team_name}}
+
+  **Others to involve:** {{stakeholders_involved}}
+
+  ---
+
+  ## Additional Context
+
+  {{additional_context}}
+
+  ---
+
+  ## Research Team Notes
+
+  {{ai_generated.suggested_research_type}}
+
+  **Status:** 🟡 Pending Review
+
+  | Next Step | Owner | By When |
+  |:----------|:------|:--------|
+  | Review request and assess feasibility | Research Team | +2 business days |
+  | Schedule intake conversation if needed | Research Team | +3 business days |
+  | Create research brief | Assigned Researcher | TBD |
+
+  ---
+
+  *Submitted via Qori Research Request • {{current_date}}*
+
+# Output configuration
+output_options:
+  filename: "{{project_name}}_research_request_{{current_date}}.md"
+  path: "00-requests/"
+  
+  delivery:
+    github:
+      enabled: true
+      commit_message: "New research request: {{project_name}}"
+      
+    slack:
+      enabled: true
+      channel: "#research-requests"
+      message: "📝 New research request from {{requestor_name}}: *{{project_name}}*"
+      include_preview: true
+
+# Auto-generated variables
+auto_variables:
+  - current_date: new Date().toISOString().split('T')[0]
+  - request_id: generate_request_id() || "REQ-001"
+  - github_file_link: generate_github_link(project_name, current_date)
+
+# Slack notifications
+notify:
+  - role: research_team
+    action: "New research request submitted"
+    channel: "#research-requests"
+    message: "📝 {{requestor_name}} ({{requestor_role}}) submitted a research request for *{{project_name}}*. Urgency: {{urgency}}"
+    
+  - role: requestor
+    action: "Request confirmation"
+    channel: "DM"
+    message: "✅ Your research request for *{{project_name}}* has been submitted. The research team will review it within 2 business days."
+
+notes: |
+  v1.0 Initial release:
+  - Stakeholder-facing form with simple, non-technical language
+  - Focuses on problem and decisions, not methodology
+  - Light AI cleanup without adding researcher assumptions
+  - Auto-suggests research type for team reference
+  - Outputs to 00-requests/ for research team triage
+  - Notifies both research team and requestor
+
+output_use: |
+  Stakeholders (PMs, Product Owners, etc.) use this form to request research
+  from the UX team. Captures the business problem and decision context without
+  requiring stakeholders to specify methodology. Research team reviews requests
+  and creates formal research briefs.
