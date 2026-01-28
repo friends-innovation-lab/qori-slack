@@ -142,7 +142,7 @@ ai_generation_tasks:
       ## At a Glance
       
       | Theme | Evidence | Participants | Severity |
-      |-------|:--------:|:------------:|:--------:|
+      |:------|:---------|:-------------|:---------|
       | [Specific theme name] | X items | PT00X, PT00X | 🔴 Critical |
       | [Specific theme name] | X items | PT00X, PT00X | 🟡 High |
       | [Specific theme name] | X items | PT00X, PT00X | 🟢 Medium |
