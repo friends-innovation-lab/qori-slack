@@ -2,7 +2,7 @@ id: persona_generator
 name: generate_personas
 
 label: 👤 Persona Generator
-version: "v4.0"
+version: "v4.1"
 
 description: >
   Create evidence-based personas from research data. Personas aggregate 
@@ -246,25 +246,39 @@ output_template: |
 github_file_template: |
   {{ai_generated.personas_complete}}
 
+# Study metadata mapping
+study_metadata:
+  "VA Housing Application Usability Study":
+    folder: "va-housing-usability-2025"
+    researcher: "jordan.researcher"
+    channel: "#research-housing-app"
+    focus_area: "housing application usability"
+    
+  "Benefits Portal Navigation Research":
+    folder: "benefits-portal-nav-2025"
+    researcher: "alex.ux"
+    channel: "#research-benefits"
+    focus_area: "benefits portal navigation"
+    
+  "Veteran Onboarding Experience Study":
+    folder: "veteran-onboarding-2025"
+    researcher: "casey.research"
+    channel: "#research-onboarding"
+    focus_area: "veteran onboarding process"
+
+# Auto-generated variables
+auto_variables:
+  - persona_count: extract_persona_count(ai_generated.personas_complete) || 2
+  - current_date: new Date().toISOString().split('T')[0]
+  - analysis_version: generate_version_number() || "v1.0"
+  - github_file_link: generate_github_link(study_name, current_date)
+
+# Slack notifications
 notify:
   - role: team
     action: "Persona generation completed"
     channel: "{{study_channel}}"
-    message: "Personas generated for {{selected_study}}!"
-
-notes: |
-  v4.0 Changes (Complete Rewrite):
-  - MAJOR: Dramatically simplified output structure
-  - MAJOR: Added explicit "Sarah the Student" / "David the Professional" as WRONG examples
-  - MAJOR: Listed specific hallucination terms to NEVER use
-  - MAJOR: Added "FEWER personas than participants" rule
-  - MAJOR: Moved all validation AFTER "STOP HERE" line
-  - Removed scattered multi-section format (was causing duplicate personas)
-  - Single clean format per persona
-  - Stronger aggregation instructions with wrong/right examples
-  
-  v3.x: Various incremental fixes (still hallucinating)
-  v2.0: Original multi-task architecture (severe hallucinations)
+    message: "👤 {{researcher_contact}} generated {{persona_count}} personas for {{selected_study}}. Ready for design review!"
 
 output_use: |
   Generate evidence-based personas using archetype names (never real names).
