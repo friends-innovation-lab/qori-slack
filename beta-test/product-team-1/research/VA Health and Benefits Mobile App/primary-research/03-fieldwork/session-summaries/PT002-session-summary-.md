@@ -1,102 +1,261 @@
-# 📋 Session Summary - PT002
+# Session Summary — PT002
 
-**Study:** VA Health and Benefits Mobile App
-**Date:** August 13, 2025
-
----
-
-## 👤 Participant Context
-
-Amanda Foster is a Navy veteran (hospital corpsman, 6 years service, discharged 2021) who works night shifts and has been a regular VA app user for 2+ years on Android. She primarily uses the app for prescriptions and appointments but avoids complex features due to poor user experience, supplementing with phone calls when the app is insufficient. She values efficiency and simplicity in interface design and takes a pragmatic approach to technology limitations.
+> **Study:** VA Health and Benefits Mobile App  
+> **Date:** August 13, 2025
 
 ---
 
-## 🔴 Top Pain Points
+## Participant Context
 
-**High - Messaging Category System Creates Barriers**
-Participant struggled with the rigid messaging interface that forces users through multiple categorical barriers before reaching a doctor, expressing confusion about overlapping categories and questioning what happens when questions don't fit neatly into predefined options.
+| Attribute | Detail |
+|:----------|:-------|
+| **Background** | Navy veteran, hospital corpsman (6 years service, discharged 2021) |
+| **App Usage** | Regular user with 2+ years experience; primarily uses for prescriptions and appointments |
+| **Assistive Tech** | None noted |
+| **Key Context** | Works night shifts, prefers afternoon availability; Android user (Samsung Galaxy) |
 
-**High - Search Function Nearly Unusable**
-The search functionality is poorly integrated with a tiny, hidden magnifying glass icon that's difficult to discover, and when found, returns generic articles instead of actionable forms the user needs.
+Amanda is an experienced VA app user who has developed clear preferences and workarounds based on which features work reliably versus those that create friction.
 
-**Medium - Benefits Navigation Confusion**
-Multiple sections with similar names (like 'Claims' and 'File a Claim') created decision paralysis and confusion about which option to select for specific tasks.
+---
 
-**Medium - Information Architecture Mismatch**
-The benefits section provided information that was too high-level and lacked the actionable details the participant needed, not matching her mental model of how information should be organized.
+## Findings at a Glance
 
-## 🟢 What Worked Well
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  🔴 Pain Points: 4    🟢 Successes: 2    🟡 Opportunities: 4      │
+│  💬 Quotes: 8         💡 Insights: 4     ✅ Actions: 4            │
+└──────────────────────────────────────────────────────────────────┘
+```
 
-**Prescription Management Excellence**
-The prescription refill process worked smoothly and efficiently, providing clear information about last refill dates, remaining refills, and obvious action buttons that met all user expectations.
+---
 
-**Appointment Checking Simplicity**
-The appointment checking feature was straightforward and familiar, allowing the participant to complete the task confidently in just 2 minutes without any confusion.
+## Pain Points
 
-## 🟡 Key Opportunities
+### 🔴 Critical
 
-**High Impact - Implement Flexible Communication Options**
-Replace rigid messaging categories with a more open communication system, as the participant struggled with categorical barriers and questioned what happens when questions don't fit predefined options.
+<details>
+<summary><strong>Search Function Nearly Unusable</strong></summary>
 
-**High Impact - Redesign Search Integration and Results**
-Improve search discoverability by making the search function more prominent and ensure results return actionable forms rather than generic articles, since the participant would abandon search entirely in favor of phone support.
+**Impact:** Participant would abandon search and use phone support instead
 
-**Medium Impact - Streamline Benefits Information Architecture**
-Consolidate similar-sounding sections and provide more detailed, actionable information in the benefits area to reduce confusion between options like 'Claims' and 'File a Claim'.
+Search icon was hidden and difficult to discover, and when found, provided irrelevant generic articles instead of actionable forms needed for tasks.
 
-**Quick Win - Apply Prescription Success Patterns**
-Replicate the clear information display and obvious action button patterns from the successful prescription interface across other app sections.
+**Evidence:** "There's a tiny magnifying glass icon in the top right corner" and "I'd probably give up and call someone instead."
 
-## 💡 Key Insights
+</details>
 
-**Success Pattern - Familiar Tasks Enable Confidence**
-When features work consistently and match user expectations (like prescriptions and appointments), participants develop confidence and efficiency, completing tasks in under 2 minutes with positive emotional responses.
+### 🟠 High
 
-**Behavior Pattern - Complex Features Drive Alternative Support**
-Users actively avoid poorly designed complex features and develop workarounds, including relying on phone support, which increases call center load and reduces app engagement.
+<details>
+<summary><strong>Messaging System Creates Unnecessary Barriers</strong></summary>
 
-**User Expectations - Professional Communication Should Be Simple**
-Veterans expect straightforward, direct communication channels with healthcare providers, similar to efficient military communication patterns, rather than navigating through categorical barriers.
+**Impact:** Simple doctor communication becomes complex multi-step process
 
-**Mental Model - Information Architecture Should Match User Intent**
-Participants expect app organization to align with their task-oriented thinking (finding specific forms, getting actionable information) rather than organizational or technical categorizations.
+Participant wanted to ask a simple question but had to navigate through confusing category systems that didn't match their mental model.
 
-## 💬 Top Quotes
+**Evidence:** "I just want to ask my doctor a simple question, but I have to navigate through all these categories first."
 
-1. *"That's probably the smoothest part of the app. I do this all the time and it just works."*
+</details>
 
-2. *"I just want to ask my doctor a simple question, but I have to navigate through all these categories first."*
+<details>
+<summary><strong>Benefits Section Lacks Actionable Information</strong></summary>
 
-3. *"Sometimes I feel like I'm going through a maze just to do simple things."*
+**Impact:** Partial task completion due to insufficient detail
 
-4. *"The search is hard to find and the results aren't great. I'd probably give up and call someone instead."*
+Benefits information was too high-level and didn't provide the comprehensive details needed for user tasks.
 
-5. *"What if my question doesn't fit neatly into these categories?"*
+**Evidence:** Task noted as "⚠️ Partial completion: 6 minutes" with "Information display too basic, lacked important details."
 
-6. *"Nothing clearly says 'File new claim.' Oh wait, there's 'Claims' and also 'File a Claim' - those are two separate things? That's confusing."*
+</details>
 
-## ✅ Recommended Actions
+### 🟡 Medium
 
-- **High Impact:** Redesign messaging interface to allow direct doctor communication without mandatory categorization *(addresses: messaging category barriers)*
+<details>
+<summary><strong>Confusing Duplicate Navigation Options</strong></summary>
 
-- **High Impact:** Make search function prominent and improve results to return actionable forms and tools *(addresses: search function usability)*
+**Impact:** Decision paralysis and confusion about correct path
 
-- **High Impact:** Consolidate and clarify benefits section navigation with distinct labeling *(addresses: benefits navigation confusion)*
+Multiple similar options with unclear distinctions created uncertainty about which path to take for filing claims.
 
-- **Quick Win:** Apply prescription interface design patterns (clear info display, obvious buttons) to other app sections *(addresses: inconsistent success patterns)*
+**Evidence:** "Nothing clearly says 'File new claim.' Oh wait, there's 'Claims' and also 'File a Claim' - those are two separate things? That's confusing."
 
-- **Critical:** Conduct card sorting study to align information architecture with veteran mental models *(addresses: information architecture mismatch)*
+</details>
 
-## 📊 Analysis Overview
+---
 
-**Sources Analyzed:**
-- Coded Transcript: Not Available
-- Observer Notes: 1 file analyzed
+## What Worked Well
+
+| Success | Why It Matters |
+|:--------|:---------------|
+| ✅ **Prescription Management** | Smooth, efficient process with clear information display and obvious action buttons that participant uses regularly |
+| ✅ **Appointment Checking** | Straightforward navigation completed in 2 minutes with no issues, demonstrating effective mobile UX design |
+
+---
+
+## Opportunities
+
+| Priority | Opportunity | Evidence Link |
+|:---------|:------------|:--------------|
+| 🔴 High Impact | **Redesign search functionality for discoverability and relevance** | Hidden search icon and poor results led to task abandonment |
+| 🟠 Medium Impact | **Streamline messaging interface to reduce categorical barriers** | Participant struggled with category system for simple doctor communication |
+| 🟠 Medium Impact | **Enhance benefits information with actionable details** | Current display too basic for comprehensive user needs |
+| 🟢 Quick Win | **Clarify navigation labels to eliminate duplicate confusion** | Multiple similar options created decision paralysis |
+
+---
+
+## Key Insights
+
+<table>
+<tr>
+<td width="50%">
+
+### 🔍 User Expectations
+**Simple Tasks Should Stay Simple**
+
+Users expect straightforward communication with doctors without categorical barriers, revealing a mismatch between system organization and user mental models.
+
+</td>
+<td width="50%">
+
+### 🔍 Success Pattern
+**Efficiency Drives Adoption**
+
+Features that work smoothly (prescriptions, appointments) become heavily used, while complex features are avoided, showing the importance of streamlined design.
+
+</td>
+</tr>
+<tr>
+<td>
+
+### 🔍 Behavior Pattern
+**Adaptive Workaround Strategy**
+
+Experienced users develop coping mechanisms, relying on phone support for difficult tasks and avoiding problematic features entirely.
+
+</td>
+<td>
+
+### 🔍 Navigation Strategy
+**Discoverability Determines Usage**
+
+Hidden or poorly integrated features (like search) effectively don't exist for users, driving them to alternative support channels.
+
+</td>
+</tr>
+</table>
+
+---
+
+## Verbatim Quotes
+
+> [!WARNING]
+> **On Challenges & Frustrations**
+> 
+> *"I just want to ask my doctor a simple question, but I have to navigate through all these categories first."*
+>
+> *"Sometimes I feel like I'm going through a maze just to do simple things."*
+>
+> *"The search is hard to find and the results aren't great. I'd probably give up and call someone instead."*
+
+> [!TIP]
+> **On What Works & Preferences**
+>
+> *"That's probably the smoothest part of the app. I do this all the time and it just works."*
+>
+> *"This part actually works really well. It shows when I last refilled it, how many refills I have left, and the request button is obvious."*
+
+> [!IMPORTANT]
+> **Stakeholder-Ready Quotes**
+>
+> *"Maybe keep the phone number handy for when you get stuck."*
+>
+> *"What if my question doesn't fit neatly into these categories?"*
+
+---
+
+## Recommended Actions
+
+| Priority | Action | Addresses |
+|:---------|:-------|:----------|
+| 🔴 **Critical** | Redesign search with prominent placement and improved result relevance | Search function abandonment and reliance on phone support |
+| 🟠 **High Impact** | Simplify messaging interface with direct doctor communication option | Categorical barriers preventing simple communication |
+| 🟠 **High Impact** | Enhance benefits section with detailed, actionable information | Incomplete task completion due to insufficient detail |
+| 🟢 **Quick Win** | Audit and clarify navigation labels to eliminate duplicates | Confusion between similar options like "Claims" vs "File a Claim" |
+
+---
+
+## Methodology
+
+<details>
+<summary><strong>Data Collection & Analysis Approach</strong></summary>
+
+### Sources Analyzed
+
+| Source Type | Status | Details |
+|:------------|:------:|:--------|
+| **Coded Transcript** | ❌ Not Available | Primary source for verbatim quotes and behavioral data |
+| **Observer Notes** | ✅ Available | 1 comprehensive file analyzed with detailed task observations |
+
+### Analysis Framework
+
+This summary follows a structured extraction and inference approach:
+
+```
+Sources → Extraction → Categorization → Synthesis → Recommendations
+```
+
+| Finding Type | Method | Confidence |
+|:-------------|:-------|:-----------|
+| Pain Points | Direct extraction | High - requires explicit evidence |
+| Quotes | Verbatim extraction | High - exact match required |
+| Opportunities | Inference from struggles | Medium - reasoned from behavior |
+| Insights | Inference from patterns | Medium - synthesized from observations |
+
+### Data Quality Considerations
+
+- **Source Completeness:** Missing coded transcript; relying on comprehensive observer notes
+- **Quote Verification:** All quotes extracted verbatim from observer notes
+- **Inference Transparency:** Opportunities and insights clearly linked to task performance and participant statements
+- **Limitations:** Observer notes provide rich behavioral context but may miss some nuanced verbal feedback
+
+### Recommended Follow-up
+
+- [ ] Cross-reference with session recording (if available)
+- [ ] Validate findings with research lead
+- [ ] Add to synthesis database for cross-session analysis
+- [ ] Share key quotes with stakeholders
+
+</details>
+
+---
+
+## Session Metadata
+
+<details>
+<summary><strong>View Full Metadata</strong></summary>
+
+| Attribute | Value |
+|:----------|:------|
+| **Participant ID** | `PT002` |
+| **Study** | VA Health and Benefits Mobile App |
+| **Session Date** | August 13, 2025 |
+| **Analysis Date** | January 28, 2026 |
+| **Analyzed By** | lapedra |
+| **Template Version** | v1.4 |
 
 **Extraction Summary:**
-- Pain points extracted: 4
-- Opportunities identified: 4
-- Insights captured: 4
-- Verbatim quotes found: 6
 
-**Data Quality Note:** Analysis based solely on comprehensive observer notes with detailed task completion data, emotional observations, and verbatim quotes. Missing coded transcript may limit depth of interaction analysis.
+| Metric | Count |
+|:-------|------:|
+| Pain points | 4 |
+| Successes | 2 |
+| Opportunities | 4 |
+| Insights | 4 |
+| Verbatim quotes | 8 |
+| Actions | 4 |
+
+</details>
+
+---
+
+<sub>Generated by Qori • AI-assisted session analysis • [View source files →]()</sub>
