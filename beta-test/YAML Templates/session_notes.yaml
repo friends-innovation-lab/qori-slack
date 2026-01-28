@@ -1,9 +1,9 @@
 id: session_notes
 label: "📝 Session Notes"
-version: v2.1
+version: v2.0
 description: Quick session note-taking with AI-powered organization into structured sections
 
-author: Qori R&D
+author: CivicMind R&D
 created: 2025-07-07
 last_updated: 2025-10-25
 
@@ -77,7 +77,7 @@ input_variables:
 ai_processing_tasks:
   - task_id: "structure_notes"
     prompt: |
-      You are processing raw session notes from a UX research observation. Extract and organize the content into structured sections using GitHub-flavored markdown for optimal readability.
+      You are processing raw session notes from a UX research observation. Extract and organize the content into structured sections.
       
       **Raw Notes:**
       {{raw_notes}}
@@ -93,169 +93,92 @@ ai_processing_tasks:
       - Extract accessibility observations (screen reader, VoiceOver, assistive tech mentions)
       - Identify the top 3 most important moments from the session
       - Preserve timestamps when mentioned (Minute X, Min X, X minutes in, etc.)
-      - Use GitHub alert syntax for callouts: > [!NOTE], > [!TIP], > [!IMPORTANT], > [!WARNING], > [!CAUTION]
-      - Use collapsible <details> sections for dense content
-      - Use tables for structured comparisons
       
       **OUTPUT FORMAT:**
       
-      ## Findings at a Glance
-      
-      ```
-      ┌────────────────────────────────────────────────────────────────┐
-      │  💬 Quotes: [X]   ✅ Tasks: [X]   ⚠️ Issues: [X]   ⭐ Key: [X]  │
-      └────────────────────────────────────────────────────────────────┘
-      ```
-      [Replace [X] with actual counts from the notes]
-      
-      ---
-      
       ## 🗣️ Key Quotes & Reactions
+      [Extract direct participant quotes. Format as bullets with > blockquote style]
+      [Organize by theme if possible: positive reactions, frustrations, confusion]
+      [Examples:
+      ### ✅ Positive Reactions
+      - > "This makes sense, I like how clear this is"
       
-      [Organize quotes using GitHub alert blocks by sentiment]
-      
-      > [!TIP]
-      > **Positive Reactions**
-      > 
-      > *"[Quote here]"*
-      
-      > [!WARNING]
-      > **Frustration Points**
-      > 
-      > *"[Quote here]"*
-      
-      [If no quotes found, write: "No direct quotes captured during this session."]
-      
-      ---
+      ### ⚠️ Frustration Points
+      - > "Why is this so complicated? I can't find what I need"
+      ]
       
       ## 😤 Emotional Moments & Body Language
-      
-      | Timestamp | Emotion | Observation |
-      |:----------|:-------:|:------------|
-      | Minute X | 😤 | Description of emotional moment |
-      | Minute X | 🤔 | Description of confusion |
-      | Minute X | 😊 | Description of satisfaction |
-      
-      [If no emotional moments, write: "No significant emotional moments recorded."]
-      
-      ---
+      [Extract emotional observations with timestamps when available]
+      [Format as bullets with emojis for emotion type]
+      [Examples:
+      - **Minute 5:** 😤 Participant became visibly frustrated when unable to locate submit button
+      - **Minute 12:** 🤔 Showed confusion, paused for 30 seconds before asking for help
+      ]
       
       ## ✅ Task Completion & Observations
+      [Extract task descriptions with outcomes]
+      [Format each task as a subsection]
+      [Examples:
+      ### Task 1: Find Health Benefits — ✅ Completed (3 minutes)
+      - Successfully navigated to benefits page
+      - Used search function effectively
       
-      <details>
-      <summary><strong>Task 1: [Task Name]</strong> — ✅ Completed / ❌ Failed / ⚠️ Partial</summary>
-      
-      **Duration:** X minutes  
-      **Outcome:** [Brief description]
-      
-      **Observations:**
-      - [Observation 1]
-      - [Observation 2]
-      
-      </details>
-      
-      <details>
-      <summary><strong>Task 2: [Task Name]</strong> — ✅ Completed / ❌ Failed / ⚠️ Partial</summary>
-      
-      **Duration:** X minutes  
-      **Outcome:** [Brief description]
-      
-      **Observations:**
-      - [Observation 1]
-      - [Observation 2]
-      
-      </details>
-      
-      [If no tasks documented, write: "No specific tasks documented in session notes."]
-      
-      ---
+      ### Task 2: Update Address — ❌ Failed
+      - Could not locate edit button
+      - Gave up after 5 minutes
+      ]
       
       ## 🛠 Technical Issues & Platform Problems
+      [Extract any bugs, technical failures, or platform issues]
+      [Categorize by severity if possible]
+      [Examples:
+      ### ❌ Critical Issues
+      - VoiceOver not announcing button labels in navigation menu
       
-      | Severity | Issue | Impact |
-      |:--------:|:------|:-------|
-      | 🔴 Critical | [Issue description] | [Impact on user] |
-      | 🟠 High | [Issue description] | [Impact on user] |
-      | 🟡 Medium | [Issue description] | [Impact on user] |
-      | 🟢 Low | [Issue description] | [Impact on user] |
-      
-      [If no technical issues, write: "No technical issues observed during this session."]
-      
-      ---
+      ### ⚠️ Minor Issues
+      - Page load time slow (5+ seconds)
+      ]
       
       ## ♿ Accessibility & Screen Reader Observations
+      [Extract any accessibility-related observations]
+      [Note: Only include this section if accessibility topics are mentioned]
+      [Examples:
+      ### 🎧 Screen Reader Experience
+      - VoiceOver successfully announced form fields
+      - Skip navigation link worked as expected
       
-      [Note: Only include this section if accessibility topics are mentioned in the notes]
-      
-      <details>
-      <summary><strong>🎧 Screen Reader Experience</strong></summary>
-      
-      **What Worked:**
-      - [Observation]
-      
-      **Barriers Encountered:**
-      - [Observation]
-      
-      </details>
-      
-      [If no accessibility content, write: "No accessibility-specific observations recorded."]
-      
-      ---
+      ### ❌ Accessibility Barriers
+      - Focus order did not match visual layout
+      ]
       
       ## ⭐ Top 3 Key Moments
-      
-      > [!IMPORTANT]
-      > ### 1. [Moment Title] — Minute X
-      > 
-      > **What happened:** [Description]  
-      > **Why it matters:** [Implication for design/research]
-      
-      > [!IMPORTANT]
-      > ### 2. [Moment Title] — Minute X
-      > 
-      > **What happened:** [Description]  
-      > **Why it matters:** [Implication for design/research]
-      
-      > [!IMPORTANT]
-      > ### 3. [Moment Title] — Minute X
-      > 
-      > **What happened:** [Description]  
-      > **Why it matters:** [Implication for design/research]
-      
-      ---
+      [Identify the 3 most significant moments from the session]
+      [Format with importance badges and timestamps]
+      [Examples:
+      ### 1. Navigation Breakdown (Minute 8) — 🚨 Critical
+      **Context:** Participant attempted to return to home page
+      **Impact:** Became frustrated, couldn't find back button
+      **Implications:** Primary navigation needs redesign for clarity
+      ]
       
       ## 📋 Additional Context & Observations
+      [Any other relevant notes that don't fit above categories]
+      [Examples:
+      ### 👤 Participant Background
+      - Experienced screen reader user (10+ years)
+      - Military veteran, familiar with VA services
       
-      <details>
-      <summary><strong>👤 Participant Background</strong></summary>
-      
-      [Any relevant participant context mentioned in notes]
-      
-      </details>
-      
-      <details>
-      <summary><strong>🎭 Session Dynamics</strong></summary>
-      
-      [Notes about rapport, engagement level, communication style]
-      
-      </details>
-      
-      <details>
-      <summary><strong>💡 Observer Reflections</strong></summary>
-      
-      [Any meta-observations or reflections from the observer]
-      
-      </details>
+      ### 🎭 Session Dynamics
+      - Participant was engaged and communicative
+      - Asked clarifying questions throughout
+      ]
       
       **IMPORTANT:**
       - Preserve the exact wording of participant quotes
       - Keep timestamps when they exist
-      - Use consistent emoji indicators: ✅ success, ❌ failure, ⚠️ partial/warning, 😤 frustration, 🤔 confusion, 😊 satisfaction
-      - Use GitHub alert syntax for important callouts
-      - Use collapsible sections for detailed content to improve scannability
-      - Use tables for structured data comparisons
+      - Use emojis for visual scanning (✅ ❌ ⚠️ 😤 🤔 💡)
       - Be concise but preserve important details
-      - If a section has no content, include the "No observations" message
+      - If a section has no content, write "No observations recorded for this section."
       - Maintain professional, objective tone
       
       Return ONLY the structured markdown output. Do not include any preamble or explanation.
@@ -263,12 +186,12 @@ ai_processing_tasks:
 
 # Output template
 output_template: |
-  # Session Notes — {{session_id}}
+  # Session Notes: {{session_id}}
   
-  > **Observer:** {{observer_name}}  
-  > **Session Date:** {{session_date}}  
-  > **Researcher:** {{researcher}}  
-  > **Submitted:** {{current_date}}
+  📝 **Observer:** {{observer_name}}  
+  📅 **Session Date:** {{session_date}}  
+  👨‍🔬 **Researcher:** {{researcher}}  
+  ⏰ **Submitted:** {{current_date}}
   
   ---
   
@@ -276,63 +199,19 @@ output_template: |
   
   ---
   
-  ## 📊 Methodology
-  
-  <details>
-  <summary><strong>Data Collection & Processing</strong></summary>
-  
-  ### Collection Method
+  ## 📊 Session Metadata
   
   | Attribute | Value |
-  |:----------|:------|
-  | **Data Source** | Live session observation |
-  | **Note-Taking Method** | Freeform observer notes |
-  | **Processing** | AI-assisted structuring (GPT-4) |
-  | **Observer** | {{observer_name}} |
-  
-  ### Processing Pipeline
-  
-  ```
-  Raw Notes → AI Extraction → Structured Sections → Quality Review
-  ```
-  
-  ### Data Quality Considerations
-  
-  - **Completeness:** Notes reflect observer's real-time capture; some moments may not be recorded
-  - **Accuracy:** Quotes are extracted as written; paraphrasing may occur in descriptions
-  - **Bias:** Single observer perspective; cross-reference with session recordings when available
-  - **Timestamps:** Approximate unless explicitly noted by observer
-  
-  ### Recommended Follow-up
-  
-  - [ ] Review session recording for missed observations
-  - [ ] Cross-reference with participant's task completion data
-  - [ ] Validate quotes against transcript (if available)
-  - [ ] Add to synthesis database for cross-session analysis
-  
-  </details>
-  
-  ---
-  
-  ## 🗂️ Session Metadata
-  
-  <details>
-  <summary><strong>View Full Metadata</strong></summary>
-  
-  | Attribute | Value |
-  |:----------|:------|
-  | **Session ID** | `{{session_id}}` |
-  | **Observer** | {{observer_name}} (`{{slack_user_id}}`) |
+  |-----------|-------|
+  | **Session ID** | {{session_id}} |
+  | **Observer** | {{observer_name}} ({{slack_user_id}}) |
   | **Submission Date** | {{current_date}} |
   | **GitHub Path** | `03-fieldwork/session-notes/{{session_id}}/{{filename}}` |
   | **Submission Method** | Slack Modal |
-  | **Template Version** | v2.1 |
-  
-  </details>
   
   ---
   
-  <sub>AI-structured session notes • Generated from observer input via Qori • [View in repository →]({{github_file_url}})</sub>
+  <sub>*AI-structured session notes • Generated from observer input • Saved to primary-research repository*</sub>
 
 # GitHub configuration
 github:
