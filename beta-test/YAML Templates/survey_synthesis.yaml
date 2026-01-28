@@ -2,7 +2,7 @@ id: survey_synthesis
 name: survey_response_synthesizer
 
 label: 📊 Survey Synthesis
-version: "v2.0"
+version: "v2.1"
 
 description: >
   Analyze open-ended survey responses using thematic analysis.
@@ -43,13 +43,13 @@ auto_file_discovery:
   core_files:
     survey_data:
       file_patterns: ["*survey*", "*responses*", "*feedback*"]
-      search_paths: ["primary-research/01-planning/surveys/"]
+      search_paths: ["01-planning/surveys/"]
       priority: "required"
       confidence_weight: 60
       
     previous_analysis:
       file_patterns: ["*survey_synthesis*", "*survey_analysis*"]
-      search_paths: ["primary-research/04-analysis/"]
+      search_paths: ["04-analysis/"]
       priority: "optional"
       confidence_weight: 20
 
@@ -288,20 +288,40 @@ output_template: |
 github_file_template: |
   {{ai_generated.survey_synthesis_complete}}
 
-notes: |
-  v2.0 Complete Rewrite:
-  - Changed from response-by-response to theme-by-theme analysis
-  - Consolidated 4 fragmented AI tasks into 1 unified task
-  - Added respondent citation format (R001, R002, etc.)
-  - Added frequency counts with percentages
-  - Added sentiment drivers (not just percentages)
-  - Added proper methodology with Braun & Clarke, NN/g references
-  - Removed ~700 lines of bloat (workshop guidance, roadmaps, etc.)
-  - Updated file paths to match folder structure
-  - Added anti-hallucination rules
-  - Added verification checklist
-  
-  v1.3: Original (fragmented, response-by-response)
+# Study metadata mapping
+study_metadata:
+  "VA Housing Application Usability Study":
+    folder: "va-housing-usability-2025"
+    researcher: "jordan.researcher"
+    channel: "#research-housing-app"
+    focus_area: "housing application usability"
+    
+  "Benefits Portal Navigation Research":
+    folder: "benefits-portal-nav-2025"
+    researcher: "alex.ux"
+    channel: "#research-benefits"
+    focus_area: "benefits portal navigation"
+    
+  "Veteran Onboarding Experience Study":
+    folder: "veteran-onboarding-2025"
+    researcher: "casey.research"
+    channel: "#research-onboarding"
+    focus_area: "veteran onboarding process"
+
+# Auto-generated variables
+auto_variables:
+  - theme_count: extract_theme_count(ai_generated.survey_synthesis_complete) || 4
+  - response_count: extract_response_count(ai_generated.survey_synthesis_complete) || 0
+  - current_date: new Date().toISOString().split('T')[0]
+  - analysis_version: generate_version_number() || "v1.0"
+  - github_file_link: generate_github_link(study_name, current_date)
+
+# Slack notifications
+notify:
+  - role: team
+    action: "Survey synthesis completed"
+    channel: "{{study_channel}}"
+    message: "📊 {{researcher_contact}} completed survey synthesis for {{selected_study}}. {{theme_count}} themes identified from {{response_count}} responses!"
 
 output_use: |
   Analyze open-ended survey responses using thematic analysis.
