@@ -1,7 +1,7 @@
 id: analyze_notes
 name: analyze_session_notes
 label: "📝 Analyze Notes"
-version: v1.3
+version: v1.4
 description: Analyze session notes and transcript to generate comprehensive session summary with pain points, opportunities, insights, and recommendations
 
 author: Research Ops Team
@@ -112,7 +112,7 @@ input_variables:
 ai_generation_tasks:
   - task_id: "analyze_and_extract"
     prompt: |
-      You are analyzing a UX research session to create a comprehensive session summary.
+      You are analyzing a UX research session to create a comprehensive session summary using GitHub-flavored markdown for optimal readability.
 
       SESSION METADATA
       - Participant ID: {{participant_id}}
@@ -144,32 +144,53 @@ ai_generation_tasks:
       - Include timestamps if present
       - NEVER fabricate or paraphrase quotes
 
+      FORMATTING RULES:
+      - Use GitHub alert syntax for callouts where appropriate
+      - Use collapsible details sections for dense content
+      - Use tables for structured comparisons
+      - Use consistent emoji indicators for severity and status
+
       ============================================================
       OUTPUT DOCUMENT
       ============================================================
 
       Create the following document structure:
 
-      # 📋 Session Summary - {{participant_id}}
+      # Session Summary — {{participant_id}}
 
-      **Study:** {{study_name}}
-      **Date:** {{session_date}}
-
-      ---
-
-      ## 👤 Participant Context
-
-      In 2-3 sentences, summarize key context about this participant that frames their feedback:
-      - Relevant background (military service, disability, experience level)
-      - How they use the app (frequency, primary tasks)
-      - Assistive technology or accessibility needs
-      - Any other context that helps interpret their feedback
-
-      If insufficient context available, output: *Limited participant context available in sources.*
+      > **Study:** {{study_name}}  
+      > **Date:** {{session_date}}
 
       ---
 
-      ## 🔴 Top Pain Points
+      ## Participant Context
+
+      | Attribute | Detail |
+      |:----------|:-------|
+      | **Background** | [Military service, disability status, relevant experience] |
+      | **App Usage** | [Frequency and primary tasks] |
+      | **Assistive Tech** | [Any AT or accessibility needs, or "None noted"] |
+      | **Key Context** | [Other relevant framing information] |
+
+      [Follow with 1-2 sentence narrative summary that frames their feedback]
+
+      If insufficient context available, output the table with "Not documented" in cells and note: *Limited participant context available in sources.*
+
+      ---
+
+      ## Findings at a Glance
+
+      ```
+      ┌──────────────────────────────────────────────────────────────────┐
+      │  🔴 Pain Points: [X]    🟢 Successes: [X]    🟡 Opportunities: [X]  │
+      │  💬 Quotes: [X]         💡 Insights: [X]     ✅ Actions: [X]        │
+      └──────────────────────────────────────────────────────────────────┘
+      ```
+      [Replace [X] with actual counts]
+
+      ---
+
+      ## Pain Points
 
       Extract the TOP 3-5 most critical issues the participant experienced.
 
@@ -180,53 +201,73 @@ ai_generation_tasks:
       - Accessibility barriers encountered
       - Workarounds participant had to use
 
-      Assign severity:
-      - Critical = Blocked participant entirely or major accessibility violation
-      - High = Significant struggle or repeated frustration
-      - Medium = Notable confusion or inefficiency
-      - Low = Minor annoyance
+      Format using collapsible sections by severity:
 
-      Format each as:
-      **[Severity] - [Brief Title]**
+      ### 🔴 Critical
+
+      <details>
+      <summary><strong>[Brief Title]</strong></summary>
+
+      **Impact:** [What this blocked or prevented]
+
       [1-2 sentence description with specific evidence from sources]
+
+      **Evidence:** [Quote or observation from source]
+
+      </details>
+
+      ### 🟠 High
+
+      <details>
+      <summary><strong>[Brief Title]</strong></summary>
+
+      **Impact:** [Significant struggle or repeated frustration]
+
+      [1-2 sentence description with specific evidence from sources]
+
+      </details>
+
+      ### 🟡 Medium
+
+      <details>
+      <summary><strong>[Brief Title]</strong></summary>
+
+      **Impact:** [Notable confusion or inefficiency]
+
+      [1-2 sentence description with specific evidence from sources]
+
+      </details>
 
       If no pain points found, output: *No clear pain points were documented in the available sources.*
 
-      ## 🟢 What Worked Well
+      ---
+
+      ## What Worked Well
 
       Identify 1-3 aspects of the experience that worked smoothly for the participant.
 
-      Look for:
-      - Tasks completed without struggle
-      - Positive comments or relief expressed
-      - Features participant praised
-      - Patterns that supported their workflow
-      - Moments where expectations were met
-
-      Why this matters: Understanding what works helps teams replicate successful patterns and protects good features from being changed.
-
-      Format each as:
-      **[Brief Title]**
-      [1-2 sentence description of what worked and why]
+      | Success | Why It Matters |
+      |:--------|:---------------|
+      | ✅ **[Brief Title]** | [1-2 sentence description of what worked and why] |
+      | ✅ **[Brief Title]** | [1-2 sentence description of what worked and why] |
 
       If no positive moments identified, output: *No explicit positive feedback was captured in the available sources.*
 
-      ## 🟡 Key Opportunities
+      ---
+
+      ## Opportunities
 
       Identify 2-4 DIVERSE opportunities for improvement based on participant struggles and requests.
 
-      IMPORTANT: Each opportunity should address a DIFFERENT aspect of the experience. Do not list multiple opportunities about the same issue.
+      IMPORTANT: Each opportunity should address a DIFFERENT aspect of the experience.
 
-      How to identify opportunities (these are INFERENCES you should make):
-      - Participant says they wish something existed = Direct opportunity
-      - Participant struggles with a task = Opportunity to improve that flow
-      - Participant expresses confusion = Opportunity for clearer design
-      - Participant suggests a solution = Direct opportunity
-      - Participant compares unfavorably to other apps = Opportunity to match expectations
-      - Participant uses workaround = Opportunity to support that need directly
-      - Something worked well = Opportunity to apply that pattern elsewhere
+      | Priority | Opportunity | Evidence Link |
+      |:--------:|:------------|:--------------|
+      | 🔴 High Impact | **[Solution-Oriented Title]** | [Link to specific participant evidence] |
+      | 🟠 Medium Impact | **[Solution-Oriented Title]** | [Link to specific participant evidence] |
+      | 🟢 Quick Win | **[Solution-Oriented Title]** | [Link to specific participant evidence] |
 
-      Categories to consider (aim for variety):
+      Categories to ensure variety:
       - Accessibility improvements
       - Navigation and information architecture
       - UI placement and visibility
@@ -234,105 +275,191 @@ ai_generation_tasks:
       - Feature gaps
       - Standards and consistency
 
-      Assign impact:
-      - High Impact = Affects core tasks or large user segments
-      - Medium Impact = Affects efficiency or secondary tasks
-      - Quick Win = Easy fix with clear benefit
-
-      Format each as:
-      **[Impact Level] - [Solution-Oriented Title]**
-      [1-2 sentence description linking opportunity to specific participant evidence]
-
       If genuinely no opportunities can be inferred, output: *No key opportunities were identified in the available sources.*
 
-      ## 💡 Key Insights
+      ---
+
+      ## Key Insights
 
       Identify 2-4 DIVERSE insights about user behavior, mental models, or patterns.
 
       IMPORTANT: 
       - Insights are about the USER, not the interface
       - Each insight should reveal something DIFFERENT
-      - Do NOT repeat the same theme as your Opportunities (e.g., if you have an opportunity about labeling, find insights about OTHER aspects)
       - Include at least one insight about what WORKED WELL if present in sources
 
-      How to identify insights (these are INFERENCES about the user):
-      - How participant EXPECTED things to work = Mental model insight
-      - Navigation strategies participant used = Behavior pattern insight
-      - Assumptions participant made about where to find things = User expectations insight
-      - Workarounds or coping strategies = Adaptation pattern insight
-      - What surprised participant vs what felt natural = Expectation gap insight
-      - Expertise or context that shaped experience = User context insight
-      - What worked smoothly and WHY = Success pattern insight
-      - How participant compared to other experiences = Benchmarking insight
+      <table>
+      <tr>
+      <td width="50%">
+
+      ### 🔍 [Insight Type]
+      **[Descriptive Title]**
+
+      [1-2 sentence description of insight and design implications]
+
+      </td>
+      <td width="50%">
+
+      ### 🔍 [Insight Type]
+      **[Descriptive Title]**
+
+      [1-2 sentence description of insight and design implications]
+
+      </td>
+      </tr>
+      <tr>
+      <td>
+
+      ### 🔍 [Insight Type]
+      **[Descriptive Title]**
+
+      [1-2 sentence description of insight and design implications]
+
+      </td>
+      <td>
+
+      ### 🔍 [Insight Type]
+      **[Descriptive Title]**
+
+      [1-2 sentence description of insight and design implications]
+
+      </td>
+      </tr>
+      </table>
 
       Insight types to use:
       Mental Model, Behavior Pattern, User Expectations, Navigation Strategy, Accessibility Need, User Context, Expertise Level, Workflow Pattern, Success Pattern, Benchmarking
 
-      Format each as:
-      **[Insight Type] - [Descriptive Title]**
-      [1-2 sentence description of insight and design implications]
-
       If genuinely no insights can be inferred, output: *No key insights were identified in the available sources.*
 
-      ## 💬 Top Quotes
+      ---
+
+      ## Verbatim Quotes
 
       Extract 4-6 of the most impactful VERBATIM participant quotes.
+
+      Use GitHub alert blocks to organize by sentiment:
+
+      > [!WARNING]
+      > **On Challenges & Frustrations**
+      > 
+      > *"[Exact quote from sources]"* [timestamp if available]
+      >
+      > *"[Exact quote from sources]"* [timestamp if available]
+
+      > [!TIP]
+      > **On What Works & Preferences**
+      >
+      > *"[Exact quote from sources]"* [timestamp if available]
+
+      > [!IMPORTANT]
+      > **Stakeholder-Ready Quotes**
+      >
+      > *"[Exact quote that would resonate in presentations]"* [timestamp if available]
 
       Requirements:
       - Must appear exactly as written in sources
       - Include timestamps in format [MM:SS] or [HH:MM:SS] if available
-      - Choose quotes that illustrate pain points, needs, OR reactions
-
-      Prioritize quotes that are:
-      - Emotionally resonant (frustration, satisfaction, surprise)
-      - Specific and concrete (not generic)
-      - Quotable in stakeholder presentations
-      - Representative of key themes
-
-      Aim for VARIETY across:
-      - At least one quote showing frustration or struggle
-      - At least one quote showing what the participant wants or needs
-      - At least one quote that would resonate with stakeholders
-      - If available, one quote showing something positive or what worked
-
-      Format each as:
-      [number]. *"[Exact quote from sources]"* [timestamp]
+      - NEVER fabricate or paraphrase
 
       If no verbatim quotes exist, output: *No verbatim participant quotes were captured in the available sources.*
 
-      ## ✅ Recommended Actions
+      ---
+
+      ## Recommended Actions
 
       Generate 3-5 prioritized action items based on the findings above.
 
+      | Priority | Action | Addresses |
+      |:--------:|:-------|:----------|
+      | 🔴 **Critical** | [Specific action] | [Finding it addresses] |
+      | 🟠 **High Impact** | [Specific action] | [Finding it addresses] |
+      | 🟢 **Quick Win** | [Specific action] | [Finding it addresses] |
+
       Requirements:
       - Each action must address a specific finding from this summary
-      - Note which finding it addresses in parentheses
       - Make actions specific and achievable
       - Use action-oriented language
 
-      Priority levels:
-      - Critical = Address immediately, blocks users
-      - High Impact = Significant improvement to experience
-      - Quick Win = Easy to implement, clear benefit
-
-      Format each as:
-      - **[Priority]:** [Specific action] *(addresses: [finding])*
-
       If insufficient findings, output: *Additional session data needed to generate specific recommendations.*
 
-      ## 📊 Analysis Overview
+      ---
 
-      **Sources Analyzed:**
-      - Coded Transcript: [Available/Not Available]
-      - Observer Notes: [X files analyzed]
+      ## Methodology
+
+      <details>
+      <summary><strong>Data Collection & Analysis Approach</strong></summary>
+
+      ### Sources Analyzed
+
+      | Source Type | Status | Details |
+      |:------------|:------:|:--------|
+      | **Coded Transcript** | [✅ Available / ❌ Not Available] | Primary source for verbatim quotes and behavioral data |
+      | **Observer Notes** | ✅ Available | [X] file(s) analyzed |
+
+      ### Analysis Framework
+
+      This summary follows a structured extraction and inference approach:
+
+      ```
+      Sources → Extraction → Categorization → Synthesis → Recommendations
+      ```
+
+      | Finding Type | Method | Confidence |
+      |:-------------|:-------|:-----------|
+      | Pain Points | Direct extraction | High - requires explicit evidence |
+      | Quotes | Verbatim extraction | High - exact match required |
+      | Opportunities | Inference from struggles | Medium - reasoned from behavior |
+      | Insights | Inference from patterns | Medium - synthesized from observations |
+
+      ### Data Quality Considerations
+
+      - **Source Completeness:** [Note if transcript missing, single observer, etc.]
+      - **Quote Verification:** All quotes extracted verbatim from sources
+      - **Inference Transparency:** Opportunities and insights clearly linked to evidence
+      - **Limitations:** [Note any gaps or caveats]
+
+      ### Recommended Follow-up
+
+      - [ ] Cross-reference with session recording (if available)
+      - [ ] Validate findings with research lead
+      - [ ] Add to synthesis database for cross-session analysis
+      - [ ] Share key quotes with stakeholders
+
+      </details>
+
+      ---
+
+      ## Session Metadata
+
+      <details>
+      <summary><strong>View Full Metadata</strong></summary>
+
+      | Attribute | Value |
+      |:----------|:------|
+      | **Participant ID** | `{{participant_id}}` |
+      | **Study** | {{study_name}} |
+      | **Session Date** | {{session_date}} |
+      | **Analysis Date** | {{current_date}} |
+      | **Analyzed By** | {{analyzer}} |
+      | **Template Version** | v1.4 |
 
       **Extraction Summary:**
-      - Pain points extracted: [count]
-      - Opportunities identified: [count]
-      - Insights captured: [count]
-      - Verbatim quotes found: [count]
 
-      **Data Quality Note:** [Note any limitations, e.g., missing transcript, single observer, etc.]
+      | Metric | Count |
+      |:-------|------:|
+      | Pain points | [X] |
+      | Successes | [X] |
+      | Opportunities | [X] |
+      | Insights | [X] |
+      | Verbatim quotes | [X] |
+      | Actions | [X] |
+
+      </details>
+
+      ---
+
+      <sub>Generated by Qori • AI-assisted session analysis • [View source files →]()</sub>
 
       ============================================================
       FINAL CHECKLIST
@@ -344,6 +471,8 @@ ai_generation_tasks:
       - Opportunities are reasonable inferences from struggles/requests
       - Insights reveal something about the USER, not just the interface
       - Actions link to specific findings
+      - Counts in "Findings at a Glance" match actual content
+      - Counts in metadata match actual content
 
       Return the complete document starting with the header. No preamble.
     output_variable: "session_summary_output"
@@ -430,21 +559,3 @@ output_use: |
   Analyzes session notes and transcript together to generate comprehensive session
   summaries. Synthesizes multiple observer perspectives with transcript content to
   extract pain points, opportunities, insights, quotes, and create action items.
-
-notes: |
-  v1.3 Changes:
-  - Added Participant Context section for stakeholder framing
-  - Added What Worked Well section for balanced analysis
-  - Required DIVERSITY in Opportunities (different aspects, not all same theme)
-  - Required DIVERSITY in Insights (avoid redundancy with Opportunities)
-  - Added Success Pattern insight type
-  - Increased quote target to 4-6 with variety requirements
-  - Added guidance to find positive patterns and what worked
-  
-  v1.2 Changes:
-  - Fixed YAML parsing errors with colons and quotes in prompt
-  - Improved Opportunities section with inference guidance
-  - Improved Insights section with inference guidance
-  - Added clear distinction between extraction (Pain Points, Quotes) and inference (Opportunities, Insights)
-  - Added examples of valid inferences to guide the model
-  - Simplified prompt formatting to avoid YAML conflicts
