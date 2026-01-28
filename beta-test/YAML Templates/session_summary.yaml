@@ -4,7 +4,7 @@ label: "📝 Analyze Notes"
 version: v1.4
 description: Analyze session notes and transcript to generate comprehensive session summary with pain points, opportunities, insights, and recommendations
 
-author: Research Ops Team
+author: Qori R&D
 created: 2025-10-25
 last_updated: 2025-12-09
 
@@ -262,7 +262,7 @@ ai_generation_tasks:
       IMPORTANT: Each opportunity should address a DIFFERENT aspect of the experience.
 
       | Priority | Opportunity | Evidence Link |
-      |:--------:|:------------|:--------------|
+      |:---------|:------------|:--------------|
       | 🔴 High Impact | **[Solution-Oriented Title]** | [Link to specific participant evidence] |
       | 🟠 Medium Impact | **[Solution-Oriented Title]** | [Link to specific participant evidence] |
       | 🟢 Quick Win | **[Solution-Oriented Title]** | [Link to specific participant evidence] |
@@ -371,7 +371,7 @@ ai_generation_tasks:
       Generate 3-5 prioritized action items based on the findings above.
 
       | Priority | Action | Addresses |
-      |:--------:|:-------|:----------|
+      |:---------|:-------|:----------|
       | 🔴 **Critical** | [Specific action] | [Finding it addresses] |
       | 🟠 **High Impact** | [Specific action] | [Finding it addresses] |
       | 🟢 **Quick Win** | [Specific action] | [Finding it addresses] |
