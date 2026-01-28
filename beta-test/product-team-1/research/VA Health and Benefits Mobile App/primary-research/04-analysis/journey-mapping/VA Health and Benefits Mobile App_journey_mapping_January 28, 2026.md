@@ -7,126 +7,148 @@
 ## Overview
 
 | Priority | Pain Point | Opportunity |
-|:---------|------------|-------------|
+|:--------:|------------|-------------|
 | 🔴 | Extreme loading times blocking basic tasks — PT003 | Implement low-bandwidth optimization with progress indicators |
-| 🔴 | Unlabeled interactive elements creating accessibility barriers — PT001 | Conduct accessibility audit and fix all button labels |
-| 🟡 | Search function nearly unusable — PT002 | Redesign search with prominent placement and relevant results |
+| 🔴 | Unlabeled interactive elements preventing screen reader usage — PT001 | Conduct accessibility audit and fix all button labels |
+| 🟡 | Search function nearly unusable due to poor discoverability — PT002 | Redesign search with prominent placement and relevant results |
 
 ---
 
 ## 🗺️ Journey Stages
 
-### 1️⃣ Initial Access
+### 1️⃣ App Launch
 
-**What happens:** Veterans open the VA app to complete routine tasks like checking benefits, prescriptions, or appointments.
+**What happens:** User opens VA mobile app and waits for initial loading and authentication to complete.
 
-**📱 Touchpoints:** Home screen → Main navigation (Health, Benefits, Payments, Profile)
+**📱 Touchpoints:** Home screen loading, authentication screens, main navigation menu
 
 | Emotion | Quote |
 |:-------:|-------|
-| 😊 Optimistic | "The main menu structure makes sense - Health, Benefits, Payments, Profile. That's logical." — PT001 |
+| 😤 Frustrated | "This is pretty typical for this app. Everything takes forever to load." — PT003 |
 
 **🔴 Pain Points:**
 - Loading screens take 45+ seconds consistently — PT003
 - Multiple timeout warnings due to slow connections — PT003
 
-**✅ Success looks like:** App loads within 10 seconds on rural connections with clear progress indicators
+**✅ Success looks like:** App loads within 10 seconds with progress indicator showing loading status
 
 **💡 Opportunity:** Add skeleton loading screens and optimize for low-bandwidth connections
 
-**👥 Owner:** `Engineering` — Performance optimization requires backend and frontend improvements
+**👥 Owner:** `Engineering` — Performance optimization requires backend and mobile development expertise
 
 <br>
 
-### 2️⃣ Task Navigation
+### 2️⃣ Navigation Discovery
 
-**What happens:** Users navigate through app sections to find specific functions like scheduling appointments or filing claims.
+**What happens:** User explores main navigation structure to locate desired functionality or information.
 
-**📱 Touchpoints:** Section menus, navigation buttons, search functionality
+**📱 Touchpoints:** Main menu tabs (Health, Benefits, Payments, Profile), search functionality
 
 | Emotion | Quote |
 |:-------:|-------|
-| 😤 Confused | "Nothing clearly says 'File new claim.' Oh wait, there's 'Claims' and also 'File a Claim' - those are two separate things? That's confusing." — PT002 |
+| 😕 Confused | "Nothing clearly says 'File new claim.' Oh wait, there's 'Claims' and also 'File a Claim' - those are two separate things? That's confusing." — PT002 |
 
 **🔴 Pain Points:**
 - Search icon hidden and difficult to discover — PT002
 - Duplicate navigation options create decision paralysis — PT002
 - Unlabeled buttons announced only as "Button" by screen readers — PT001
 
-**✅ Success looks like:** Users find target functions within 3 taps without confusion about navigation labels
+**✅ Success looks like:** Users locate desired section within 3 taps without confusion about navigation labels
 
-**💡 Opportunity:** Audit navigation labels for clarity and eliminate duplicates, make search prominently visible
+**💡 Opportunity:** Audit navigation labels for clarity and eliminate duplicate options
 
-**👥 Owner:** `Design` — Information architecture and navigation patterns need redesign
+**👥 Owner:** `Design` — Information architecture and navigation patterns need design system updates
 
 <br>
 
 ### 3️⃣ Task Execution
 
-**What happens:** Veterans attempt to complete specific tasks like updating contact information, checking claim status, or messaging healthcare providers.
+**What happens:** User attempts to complete specific tasks like checking claims, updating information, or managing prescriptions.
 
-**📱 Touchpoints:** Forms, edit buttons, messaging interface, status displays
+**📱 Touchpoints:** Form fields, action buttons, status displays, edit controls
 
 | Emotion | Quote |
 |:-------:|-------|
-| 😠 Frustrated | "I just want to ask my doctor a simple question, but I have to navigate through all these categories first." — PT002 |
+| 😠 Frustrated | "I shouldn't have to guess what buttons do. That's basic accessibility." — PT001 |
 
 **🔴 Pain Points:**
-- Edit buttons positioned at bottom of screens, nearly missed — PT001
-- Messaging system creates unnecessary categorical barriers — PT002
+- Edit buttons too small and positioned at bottom of screens — PT001, PT003
+- Benefits information too basic, lacking actionable details — PT002
 - Unable to locate completed claim status information — PT003
 
-**✅ Success looks like:** Primary action buttons visible without scrolling, messaging completes in under 2 minutes
+**✅ Success looks like:** Primary action buttons visible without scrolling, properly labeled for screen readers
 
-**💡 Opportunity:** Standardize action button placement and add direct messaging option bypassing categories
+**💡 Opportunity:** Standardize button placement and implement comprehensive accessibility labels
 
-**👥 Owner:** `Design` — Interface patterns and user flow optimization needed
-
-<br>
-
-### 4️⃣ Information Retrieval
-
-**What happens:** Users seek specific information about their benefits, prescriptions, or healthcare status.
-
-**📱 Touchpoints:** Benefits sections, prescription lists, appointment details, search results
-
-| Emotion | Quote |
-|:-------:|-------|
-| 😊 Satisfied | "This part actually works really well. It shows when I last refilled it, how many refills I have left, and the request button is obvious." — PT002 |
-
-**🔴 Pain Points:**
-- Benefits information too high-level, lacks actionable details — PT002
-- Search returns generic articles instead of relevant forms — PT002
-- System shows "No active claims" instead of historical data — PT003
-
-**✅ Success looks like:** Benefits display includes specific dollar amounts and dates, search returns actionable forms within top 3 results
-
-**💡 Opportunity:** Enhance benefits detail level and improve search result relevance algorithm
-
-**👥 Owner:** `Content` — Information architecture and search optimization required
+**👥 Owner:** `Accessibility` — Critical accessibility violations require specialized remediation expertise
 
 <br>
 
-### 5️⃣ Task Completion
+### 4️⃣ Information Seeking
 
-**What happens:** Veterans finalize their intended actions and receive confirmation of successful completion.
+**What happens:** User searches for specific information or tries to understand system status and available options.
 
-**📱 Touchpoints:** Confirmation screens, success messages, updated status displays
+**📱 Touchpoints:** Search results, help content, status displays, informational sections
 
 | Emotion | Quote |
 |:-------:|-------|
-| 😤 Resigned | "By the time this app loads what I need, I could have talked to a person and gotten my answer." — PT003 |
+| 😞 Resigned | "The search is hard to find and the results aren't great. I'd probably give up and call someone instead." — PT002 |
 
 **🔴 Pain Points:**
-- Extended task completion times due to performance issues — PT003
-- Connection drops causing concerns about form data loss — PT003
-- Some tasks require fallback to phone support — PT002, PT003
+- Search results provide generic articles instead of actionable forms — PT002
+- System shows "No active claims" when user expects historical data — PT003
+- Messaging categories don't match user mental models — PT002
 
-**✅ Success looks like:** Tasks complete within expected timeframes with clear success confirmation and data persistence
+**✅ Success looks like:** Search returns relevant, actionable results within top 3 options
 
-**💡 Opportunity:** Add auto-save functionality and offline capability for basic information
+**💡 Opportunity:** Redesign search algorithm to prioritize forms and tools over articles
 
-**👥 Owner:** `Engineering` — Data persistence and offline functionality implementation
+**👥 Owner:** `Content` — Search relevance and information architecture require content strategy expertise
+
+<br>
+
+### 5️⃣ Communication
+
+**What happens:** User attempts to send messages to healthcare providers or support teams through the app.
+
+**📱 Touchpoints:** Messaging interface, category selection, message composition
+
+| Emotion | Quote |
+|:-------:|-------|
+| 😤 Frustrated | "I just want to ask my doctor a simple question, but I have to navigate through all these categories first." — PT002 |
+
+**🔴 Pain Points:**
+- Categorical barriers prevent simple doctor communication — PT002
+- Messaging system creates unnecessary complexity — PT002
+
+**✅ Success looks like:** Direct message composition available within 2 taps from main menu
+
+**💡 Opportunity:** Add streamlined "Quick Message" option bypassing category selection
+
+**👥 Owner:** `Product` — Messaging workflow simplification requires product strategy decisions
+
+<br>
+
+### 6️⃣ Task Completion
+
+**What happens:** User completes or abandons tasks, often switching to phone support for complex issues.
+
+**📱 Touchpoints:** Confirmation screens, error messages, phone support contact information
+
+| Emotion | Quote |
+|:-------:|-------|
+| 😔 Resigned | "By the time this app loads what I need, I could have talked to a person and gotten my answer." — PT003 |
+
+**🔴 Pain Points:**
+- Performance issues drive users to alternative support channels — PT003
+- Task abandonment due to poor search and navigation — PT002
+- Accessibility barriers prevent task completion — PT001
+
+**✅ Success looks like:** 80% of common tasks completed within the app without phone support
+
+**💡 Opportunity:** Add offline functionality for frequently accessed information
+
+**👥 Owner:** `Engineering` — Offline capabilities require technical architecture changes
 
 <br>
 
@@ -138,11 +160,12 @@
 
 | Priority | Opportunity | Stage | Owner | Effort |
 |:---------|-------------|-------|-------|:------:|
-| 🔴 | Implement low-bandwidth optimization with progress indicators | Initial Access | `Engineering` | 🔵🔵🔵 |
-| 🔴 | Conduct accessibility audit and fix all unlabeled buttons | Task Navigation | `Accessibility` | 🔵🔵⚪ |
-| 🟡 | Redesign search with prominent placement and relevant results | Task Navigation | `Design` | 🔵🔵⚪ |
-| 🟡 | Standardize action button placement across all screens | Task Execution | `Design` | 🔵🔵⚪ |
-| 🟢 | Add auto-save functionality for form data persistence | Task Completion | `Engineering` | 🔵⚪⚪ |
+| 🔴 | Implement low-bandwidth optimization with progress indicators | App Launch | `Engineering` | 🔵🔵🔵 |
+| 🔴 | Conduct accessibility audit and fix all button labels | Task Execution | `Accessibility` | 🔵🔵⚪ |
+| 🟡 | Redesign search with prominent placement and relevant results | Information Seeking | `Content` | 🔵🔵⚪ |
+| 🟡 | Add streamlined messaging bypassing category selection | Communication | `Product` | 🔵🔵⚪ |
+| 🟢 | Audit navigation labels and eliminate duplicate options | Navigation Discovery | `Design` | 🔵⚪⚪ |
+| 🟢 | Add offline functionality for frequently accessed information | Task Completion | `Engineering` | 🔵🔵🔵 |
 
 <br>
 
@@ -152,9 +175,9 @@
 
 | # | Question | For |
 |---|----------|-----|
-| 1 | What are the technical constraints for optimizing performance on rural connections with limited bandwidth? | Engineering |
-| 2 | Should we prioritize fixing accessibility violations or performance issues first, given both are critical? | Product |
-| 3 | How can we better integrate the mobile app experience with phone support to create seamless omnichannel service? | All |
+| 1 | How can we prioritize performance optimization for rural users with limited connectivity while maintaining feature richness? | `Engineering + Product` |
+| 2 | What's the fastest path to fix critical accessibility violations without disrupting current development cycles? | `Accessibility + Engineering` |
+| 3 | Should we implement a simplified "express" interface for common tasks to reduce cognitive load? | `Design + Product` |
 
 <br>
 
