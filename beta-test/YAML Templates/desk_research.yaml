@@ -1,31 +1,29 @@
 id: desk_research_processor
 name: run_desk_research
 label: 📚 Desk Research
-version: v4.0
+version: v5.0
 
 description: |
   Analyze uploaded research documents and generate a polished, professional synthesis 
   with key themes, findings, and actionable recommendations. Optimized for GitHub 
   rendering with industry-standard research documentation practices.
   
-  v4.0 Changes:
-  - Redesigned output template for professional GitHub rendering
-  - Added research metadata section for context
-  - Improved visual hierarchy with GitHub-native styling
-  - Enhanced evidence presentation with blockquotes and callouts
-  - Added confidence indicators for findings
-  - Restructured recommendations with clearer action orientation
-  - Improved source attribution formatting
+  v5.0 Changes:
+  - Added selected_study for study context
+  - Made research_topic optional (defaults to study name)
+  - Added description field for file context
+  - Switched to Claude Sonnet
+  - Updated input variables to match modal
 
 author: Qori R&D
 created: 2025-08-27
-last_updated: 2026-01-27
+last_updated: 2026-01-29
 
-# LLM Configuration
+# LLM Configuration - Claude Sonnet
 llm_config:
-  model: "gpt-4o"
+  model: "claude-sonnet-4-20250514"
   temperature: 0.2
-  max_tokens: 6000  # Increased for richer output
+  max_tokens: 6000
   
   system_instruction: |
     You are a senior research analyst producing publication-quality research syntheses.
@@ -44,40 +42,53 @@ llm_config:
     - Be specific and concrete
     - Prioritize actionability over comprehensiveness
 
-# Input variables with validation (UNCHANGED)
+# Input variables
 input_variables:
-  - research_topic:
-      type: "text"
+  # Study context (from modal)
+  - selected_study:
+      type: "select"
       required: true
-      placeholder: "e.g., VA Telehealth Onboarding Experience"
-      validation:
-        min_length: 3
-        error_message: "Please enter a research topic"
+      description: "Study folder name - provides context for analysis"
       
+  - study_name:
+      type: "string"
+      required: true
+      description: "Human-readable study name"
+      
+  # Document upload
   - document_content:
       type: "textarea"
       required: true
       description: "Extracted text from uploaded documents (provided by backend)"
       validation:
         min_length: 100
-        error_message: "Document content is required. Please upload documents or paste content."
-      
-  - research_questions:
+        error_message: "Document content is required. Please upload documents."
+        
+  - description:
       type: "textarea"
       required: false
-      placeholder: "e.g., What are the main barriers to telehealth adoption?"
+      placeholder: "e.g., Competitive analysis from Q3, industry reports on telehealth"
+      description: "Optional context about the uploaded documents"
+      
+  # Optional refinement
+  - research_topic:
+      type: "text"
+      required: false
+      placeholder: "e.g., Veteran telehealth adoption barriers"
+      description: "Optional focus area. Defaults to study name if not provided."
+      default: "{{study_name}}"
 
-# Pre-execution validation (UNCHANGED)
+# Derived variables
+derived_variables:
+  - effective_topic: "{{research_topic | default: study_name}}"
+
+# Pre-execution validation
 validation_rules:
   - rule: "document_content_not_empty"
     check: "{{document_content | length}} > 50"
     error_message: "No document content provided. Please upload research documents before running analysis."
-    
-  - rule: "research_topic_not_empty"  
-    check: "{{research_topic | length}} > 2"
-    error_message: "Research topic is required."
 
-# AI Generation Tasks - Enhanced prompts for better output
+# AI Generation Tasks
 ai_generation_tasks:
 
   # Task 1: Document inventory with richer metadata
@@ -85,7 +96,9 @@ ai_generation_tasks:
     prompt: |
       Review the following document content and create a detailed source inventory.
       
-      **Research Topic:** {{research_topic}}
+      **Study:** {{selected_study}}
+      **Research Topic:** {{effective_topic}}
+      **Document Description:** {{description}}
       
       **Document Content:**
       ---BEGIN CONTENT---
@@ -108,7 +121,7 @@ ai_generation_tasks:
       | **Source** | [Author/Organization or "Not specified"] |
       | **Date** | [Publication date or "Not specified"] |
       | **Type** | [Report / Study / Survey / Brief / Article / Guide] |
-      | **Relevance** | [High / Medium / Low] to {{research_topic}} |
+      | **Relevance** | [High / Medium / Low] to {{effective_topic}} |
       
       **Summary:** [2-3 sentence description of what this document covers and its key contribution to the research topic]
       
@@ -116,13 +129,13 @@ ai_generation_tasks:
       
       Repeat for each distinct document. If you cannot identify distinct documents, describe the content as a single source.
 
-  # Task 2: Executive summary - more structured and scannable
+  # Task 2: Executive summary
   - task_id: "executive_summary"
     prompt: |
       Create a publication-quality executive summary of the desk research.
       
-      **Research Topic:** {{research_topic}}
-      **Research Questions:** {{research_questions}}
+      **Study:** {{selected_study}}
+      **Research Topic:** {{effective_topic}}
       
       **Document Content:**
       ---BEGIN CONTENT---
@@ -140,7 +153,7 @@ ai_generation_tasks:
       
       ### Overview
       
-      [2-3 sentences on what this research covers and its significance for {{research_topic}}. Ground in actual document content.]
+      [2-3 sentences on what this research covers and its significance for {{effective_topic}}. Ground in actual document content.]
       
       ### Key Findings
       
@@ -156,7 +169,7 @@ ai_generation_tasks:
       
       ### Strategic Implications
       
-      [2-3 sentences on what these findings mean for decision-making related to {{research_topic}}. Only draw from actual findings.]
+      [2-3 sentences on what these findings mean for decision-making related to {{effective_topic}}. Only draw from actual findings.]
       
       ### Confidence Assessment
       
@@ -166,12 +179,12 @@ ai_generation_tasks:
       | Coverage of topic | [High/Medium/Low] | [How well documents address the research questions] |
       | Actionability | [High/Medium/Low] | [Whether findings translate to clear actions] |
 
-  # Task 3: Key themes - enhanced with better evidence structure
+  # Task 3: Key themes
   - task_id: "themes"
     prompt: |
       Identify and analyze major themes across the research documents.
       
-      **Research Topic:** {{research_topic}}
+      **Research Topic:** {{effective_topic}}
       
       **Document Content:**
       ---BEGIN CONTENT---
@@ -205,7 +218,7 @@ ai_generation_tasks:
       > 
       > — *[Document name/source]*
       
-      #### Implications for {{research_topic}}
+      #### Implications for {{effective_topic}}
       
       [1-2 sentences on why this theme matters and what it suggests for decisions/actions]
       
@@ -220,13 +233,12 @@ ai_generation_tasks:
       - Maximum 5 themes
       - Each theme must have clear implications stated
 
-  # Task 4: Recommendations - more actionable format
+  # Task 4: Recommendations
   - task_id: "recommendations"
     prompt: |
       Generate actionable recommendations based on the desk research findings.
       
-      **Research Topic:** {{research_topic}}
-      **Research Questions:** {{research_questions}}
+      **Research Topic:** {{effective_topic}}
       
       **Document Content:**
       ---BEGIN CONTENT---
@@ -235,13 +247,11 @@ ai_generation_tasks:
       
       ⚠️ CRITICAL ANTI-HALLUCINATION RULES:
       1. If content is empty, respond: "> ⚠️ **No documents provided.** Unable to generate recommendations."
-      2. EVERY recommendation must tie to a specific finding from documents
-      3. Do NOT suggest generic best practices not supported by documents
-      4. If documents don't support many recommendations, include fewer
+      2. EVERY recommendation must trace directly to a finding in the documents
+      3. Do NOT recommend things not supported by the content
+      4. Quote or paraphrase the evidence base for each recommendation
       
       If documents ARE present, structure as:
-      
-      ## Actionable Recommendations for {{research_topic}}
       
       ### 🔴 Immediate Actions (This Week)
       
@@ -269,7 +279,7 @@ ai_generation_tasks:
       If the documents don't provide enough substance for a section, write:
       > ℹ️ The documents do not provide sufficient evidence for [section name] recommendations.
 
-  # Task 5: Sources - enhanced citation format
+  # Task 5: Sources
   - task_id: "sources"
     prompt: |
       Create a professional reference list for the desk research.
@@ -312,13 +322,14 @@ ai_generation_tasks:
       
       > ℹ️ **Source Attribution:** The analyzed content did not include clear source attribution. Findings are derived from the provided document text.
 
-# OUTPUT TEMPLATE - Professionally styled for GitHub
+# OUTPUT TEMPLATE
 output_template: |
   <div align="center">
   
   # 📚 Desk Research Report
-  ## {{research_topic}}
+  ## {{effective_topic}}
   
+  **Study:** {{selected_study}}  
   **Prepared by:** Qori Research Assistant  
   **Date:** {{current_date}}
   
@@ -330,10 +341,14 @@ output_template: |
   
   | | |
   |:--|:--|
-  | **Topic** | {{research_topic}} |
+  | **Study** | {{selected_study}} |
+  | **Topic** | {{effective_topic}} |
   | **Date Conducted** | {{current_date}} |
-  | **Research Questions** | {{research_questions}} |
   | **Analysis Type** | Secondary Research / Literature Review |
+  
+  {{#if description}}
+  > **Document Context:** {{description}}
+  {{/if}}
   
   > [!NOTE]
   > This analysis is based solely on the documents provided. All findings, themes, and recommendations are derived from the uploaded content. No external sources or training knowledge were used to generate findings.
@@ -398,25 +413,25 @@ output_template: |
   
   </div>
 
-# Output configuration (UNCHANGED structure)
+# Output configuration
 output_options:
-  filename: "desk_research_{{research_topic}}_{{current_date}}.md"
+  filename: "desk_research_{{selected_study}}_{{current_date}}.md"
   path: "00-desk-research/"
   
   delivery:
     github:
       enabled: true
-      commit_message: "Add desk research: {{research_topic}}"
+      commit_message: "Add desk research: {{effective_topic}}"
       
     slack:
       enabled: true
-      channel: "{{source_channel}}"
+      channel: "{{study_channel}}"
       message: |
         📚 **Desk Research Complete**
         
-        **Topic:** {{research_topic}}
+        **Study:** {{selected_study}}
+        **Topic:** {{effective_topic}}
         **Documents Analyzed:** See full report
-        **Key Themes Identified:** See synthesis
         
         View the full analysis for findings, evidence, and actionable recommendations.
       
@@ -428,53 +443,13 @@ output_options:
           style: "secondary"
           url: "{{github_file_url}}#-recommendations"
 
-# Slack UI configuration (UNCHANGED)
+# Slack UI configuration
 slack_ui:
   modal:
-    title: "📚 Desk Research"
-    submit_label: "Analyze Documents"
+    title: "Desk research"
+    submit_label: "Analyze"
     close_label: "Cancel"
     
   error_messages:
     no_documents: "⚠️ Please upload at least one document before running desk research."
-    no_topic: "⚠️ Please enter a research topic."
     processing_failed: "⚠️ Analysis failed. Please check that your documents are readable text files (PDF, DOCX, TXT, MD)."
-
-notes: |
-  v4.0 - Professional GitHub Styling Update
-  
-  VISUAL IMPROVEMENTS:
-  - Centered header with report metadata
-  - GitHub alert syntax (> [!NOTE]) for callouts
-  - Consistent table styling with left-aligned headers
-  - Collapsible details sections for source information
-  - Confidence indicators using inline code styling
-  - Clear visual hierarchy with horizontal rules
-  - Blockquote formatting for evidence citations
-  
-  STRUCTURAL IMPROVEMENTS:
-  - Research Overview table at top for quick context
-  - Confidence Assessment table in executive summary
-  - Priority-ordered recommendation tables
-  - Detailed source attribution with expandable details
-  - Methodology note explaining analysis approach
-  
-  CONTENT IMPROVEMENTS:
-  - Stronger evidence-to-recommendation linkage
-  - Explicit confidence ratings for themes
-  - Gap analysis in recommendations
-  - Source contribution summaries
-  
-  VARIABLES UNCHANGED:
-  - research_topic
-  - document_content  
-  - research_questions
-  - current_date
-  - All validation rules preserved
-  
-  GITHUB COMPATIBILITY:
-  - Uses GitHub-flavored markdown throughout
-  - Alert syntax works on GitHub (may not render elsewhere)
-  - Details/summary elements for collapsible content
-  - Emoji in headers for visual scanning
-  - Alignment divs for centered content
