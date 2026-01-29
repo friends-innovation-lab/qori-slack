@@ -24,9 +24,9 @@
 
 | Priority | Finding | Impact | Action Required |
 |:--------:|:--------|:-------|:----------------|
-| 🔴 | Unlabeled buttons and hidden search functionality create complete task failures | Veterans cannot complete basic tasks independently | Immediate accessibility audit and search redesign |
-| 🟡 | Extreme loading times and messaging barriers frustrate regular users | Task abandonment and phone support dependency | Performance optimization and interface streamlining |
-| 🟢 | Prescription management and appointment checking work smoothly | High user satisfaction and regular usage for these features | Maintain current functionality and apply patterns elsewhere |
+| 🔴 | Unlabeled buttons and hidden search functionality create complete task failures | Veterans cannot complete basic tasks, forcing phone support dependency | Immediate accessibility audit and search redesign |
+| 🟡 | Performance issues and complex navigation create user frustration | Extended task times and user abandonment in rural areas | Optimize for low-bandwidth and streamline workflows |
+| 🟢 | Prescription management and logical menu structure work effectively | High user satisfaction and regular usage for core health tasks | Maintain and expand successful patterns |
 
 ---
 
@@ -34,21 +34,21 @@
 
 ### Why We Conducted This Research
 
-This research was conducted to inform the VA Mobile App product team's decisions on restructuring the main navigation menu, enhancing search functionality, and reorganizing information hierarchy for the Q1 2026 redesign. The study aimed to address the 45% task abandonment rate and 4.2/10 satisfaction score among veterans by identifying specific usability barriers.
+This research informed the VA Mobile App product team's decisions on restructuring the main navigation menu, enhancing search functionality, and reorganizing information hierarchy for the Q1 2026 redesign. The findings help create a more intuitive app experience that allows Veterans to quickly find and access the services they need, reducing frustration and time spent navigating the app.
 
 ### Research Objectives
 
-- **Identify** specific navigation pathways, information architecture flaws, and search functionality issues that contribute to task abandonment
+- **Identify** specific navigation pathways, information architecture flaws, and search functionality issues that contribute to the 45% task abandonment rate
 - **Understand** veteran mental models and expectations for organizing health, benefits, and administrative information within the mobile app
 - **Evaluate** the effectiveness and discoverability of search functionality, menu structures, and information categorization
-- **Document** the top 5 usability barriers with clear severity rankings and user impact metrics
+- **Prioritize** the top 5 usability barriers with clear severity rankings to guide immediate redesign priorities
 
 ### Research Questions
 
-1. What specific navigation elements or search results cause confusion or frustration during critical tasks like benefits checking or appointment scheduling?
-2. How do veteran mental models for organizing VA services differ from the current app categorization and labeling?
-3. Which navigation pathways and search functionality issues directly contribute to the high task abandonment rate?
-4. What are the most effective ways to reorganize content hierarchy to improve findability and task completion rates?
+1. Which navigation elements or search results cause confusion or frustration during critical tasks like benefits checking or appointment scheduling?
+2. What gaps exist between user expectations and current categorization, labeling, and content hierarchy?
+3. How do veterans expect VA services to be organized and grouped in navigation?
+4. What specific recommendations will measurably reduce task abandonment and increase user satisfaction scores?
 
 ---
 
@@ -61,9 +61,9 @@ This research was conducted to inform the VA Mobile App product team's decisions
 ### 🔴 Critical Issues
 **3 findings**
 
-- Unlabeled interactive elements blocking accessibility
-- Search function nearly unusable
-- Extreme loading times preventing task completion
+- Unlabeled interactive elements blocking screen reader users
+- Search function nearly unusable with hidden placement
+- Extreme loading times making app nearly unusable
 
 </td>
 <td width="33%" valign="top">
@@ -72,9 +72,9 @@ This research was conducted to inform the VA Mobile App product team's decisions
 **4 findings**
 
 - Messaging system creates unnecessary barriers
-- Benefits information lacks actionable details
+- Benefits section lacks actionable information
 - Edit buttons too small despite accessibility settings
-- Navigation labels create confusion
+- Confusing duplicate navigation options
 
 </td>
 <td width="33%" valign="top">
@@ -82,8 +82,8 @@ This research was conducted to inform the VA Mobile App product team's decisions
 ### 🟢 Working Well
 **3 findings**
 
-- Prescription management is smooth and efficient
-- Appointment checking works well
+- Prescription management smooth and efficient
+- Logical main menu structure
 - Large text accessibility properly implemented
 
 </td>
@@ -102,17 +102,17 @@ This research was conducted to inform the VA Mobile App product team's decisions
 
 #### What We Observed
 
-Multiple interactive elements throughout the VA mobile app are announced only as "Button" by VoiceOver, providing no indication of their purpose or function. This creates fundamental accessibility barriers that prevent screen reader users from understanding or using critical app features.
+Multiple interactive elements throughout the VA mobile app are announced only as "Button" by screen readers, providing no indication of their purpose or function. This creates fundamental accessibility barriers where users with vision impairments cannot understand what actions buttons will perform, making the interface completely unusable for critical tasks.
 
 #### Supporting Evidence
 
 > "There's a button that just says 'Button' without any descriptive text. That's not helpful at all."
 > 
-> — **PT001** *Expert VoiceOver user attempting to navigate the app*
+> — **PT001** *Expert VoiceOver user during navigation*
 
 > "I shouldn't have to guess what buttons do. That's basic accessibility."
 > 
-> — **PT001** *Expressing frustration with unlabeled interface elements*
+> — **PT001** *Expressing frustration with unlabeled elements*
 
 </td>
 <td width="30%" valign="top">
@@ -139,7 +139,7 @@ PT001
 
 **Suggested Action:** Conduct comprehensive accessibility audit and implement proper ARIA labels for all interactive elements
 
-**Rationale:** Screen reader users require every interactive element to have meaningful labels to understand app functionality
+**Rationale:** Screen reader users require meaningful labels for every interactive element - without them, the interface becomes completely unusable regardless of visual design quality
 
 **Owner:** Development Team
 
@@ -149,7 +149,7 @@ PT001
 
 ---
 
-### Finding 2: Search Functionality Nearly Unusable Due to Poor Discoverability and Relevance
+### Finding 2: Search Functionality Creates Task Abandonment
 
 <table>
 <tr>
@@ -157,17 +157,17 @@ PT001
 
 #### What We Observed
 
-The search feature is hidden with a tiny magnifying glass icon that's difficult to discover, and when found, provides irrelevant generic articles instead of actionable forms needed for tasks. This leads participants to abandon search entirely and resort to phone support.
+The search function is hidden with a tiny magnifying glass icon that's difficult to discover, and when found, provides irrelevant generic articles instead of actionable forms needed for tasks. This leads participants to abandon search entirely and rely on phone support instead.
 
 #### Supporting Evidence
 
 > "There's a tiny magnifying glass icon in the top right corner"
 > 
-> — **PT002** *Describing difficulty finding the search function*
+> — **PT002** *Describing difficulty finding search*
 
-> "The search is hard to find and the results aren't great. I'd probably give up and call someone instead."
+> "I'd probably give up and call someone instead."
 > 
-> — **PT002** *Explaining why search failures lead to phone support dependency*
+> — **PT002** *Response to poor search results*
 
 </td>
 <td width="30%" valign="top">
@@ -192,9 +192,9 @@ PT002
 <details>
 <summary><strong>💡 Recommendation</strong></summary>
 
-**Suggested Action:** Redesign search with prominent placement and improved result relevance algorithms
+**Suggested Action:** Redesign search with prominent placement and improved result relevance focusing on actionable content
 
-**Rationale:** Hidden search functionality effectively doesn't exist for users, driving them to alternative support channels
+**Rationale:** Hidden or poorly integrated features effectively don't exist for users, driving them to alternative support channels
 
 **Owner:** UX Design Team
 
@@ -204,7 +204,7 @@ PT002
 
 ---
 
-### Finding 3: Extreme Loading Times Make App Nearly Unusable
+### Finding 3: Performance Issues Exceed Rural User Tolerance
 
 <table>
 <tr>
@@ -212,17 +212,17 @@ PT002
 
 #### What We Observed
 
-Loading screens consistently took 45+ seconds with multiple timeout warnings, extending simple tasks to 6-10 minutes and making the app nearly unusable even for users adapted to slower rural internet connections.
+Loading screens consistently took 45+ seconds with multiple timeout warnings, extending simple tasks to 6-10 minutes and making the app nearly unusable. Even users adapted to slower rural internet connections found the performance unacceptable.
 
 #### Supporting Evidence
 
 > "By the time this app loads what I need, I could have talked to a person and gotten my answer."
 > 
-> — **PT003** *Rural Alabama resident expressing frustration with loading times*
+> — **PT003** *Army veteran with rural internet access*
 
 > "Well, I'm used to things being a bit slow out here in rural Alabama, but this is taking a while even for me."
 > 
-> — **PT003** *Indicating performance issues exceed even rural internet expectations*
+> — **PT003** *Expressing that performance exceeded even rural expectations*
 
 </td>
 <td width="30%" valign="top">
@@ -247,9 +247,9 @@ PT003
 <details>
 <summary><strong>💡 Recommendation</strong></summary>
 
-**Suggested Action:** Implement low-bandwidth optimization and better loading states
+**Suggested Action:** Implement low-bandwidth optimization and better loading states for rural connectivity
 
-**Rationale:** When app performance exceeds rural internet expectations, it signals critical optimization needs
+**Rationale:** When app performance exceeds rural internet expectations, it signals critical optimization needs that affect a significant veteran population
 
 **Owner:** Engineering Team
 
@@ -259,7 +259,7 @@ PT003
 
 ---
 
-### Finding 4: Messaging System Creates Barriers for Simple Communication
+### Finding 4: Messaging System Creates Unnecessary Complexity
 
 <table>
 <tr>
@@ -267,17 +267,17 @@ PT003
 
 #### What We Observed
 
-Participants wanting to ask simple questions to their doctors had to navigate through confusing category systems that didn't match their mental model, turning straightforward communication into a complex multi-step process.
+Users wanting to ask simple questions to their doctors must navigate through confusing category systems that don't match their mental models, turning straightforward communication into complex multi-step processes.
 
 #### Supporting Evidence
 
 > "I just want to ask my doctor a simple question, but I have to navigate through all these categories first."
 > 
-> — **PT002** *Describing frustration with categorical barriers in messaging*
+> — **PT002** *Describing messaging barriers*
 
 > "What if my question doesn't fit neatly into these categories?"
 > 
-> — **PT002** *Questioning the rigid categorization system*
+> — **PT002** *Questioning the categorical approach*
 
 </td>
 <td width="30%" valign="top">
@@ -304,9 +304,9 @@ PT002
 
 **Suggested Action:** Simplify messaging interface with direct doctor communication option
 
-**Rationale:** Simple tasks should stay simple - categorical barriers prevent natural communication flow
+**Rationale:** Simple tasks should stay simple - users expect straightforward communication without categorical barriers
 
-**Owner:** UX Design Team
+**Owner:** Product Team
 
 **Effort Estimate:** Medium
 
@@ -322,7 +322,7 @@ PT002
 | Positive Finding | Evidence | Participant(s) |
 |:-----------------|:---------|:---------------|
 | **Prescription Management** | "That's probably the smoothest part of the app. I do this all the time and it just works." | PT002 |
-| **Appointment Checking** | "This part actually works really well. It shows when I last refilled it, how many refills I have left, and the request button is obvious." | PT002 |
+| **Logical Menu Structure** | "The main menu structure makes sense - Health, Benefits, Payments, Profile. That's logical." | PT001 |
 | **Large Text Accessibility** | "Actually, this looks pretty good. The text is nice and large, and everything fits on the screen properly." | PT003 |
 
 ---
@@ -331,9 +331,9 @@ PT002
 
 | ID | Context | Key Contribution | Notable Quotes |
 |:---|:--------|:-----------------|:---------------|
-| **PT001** | Marine veteran with vision loss, expert VoiceOver user | Identified critical accessibility violations | "Just remember that some of us can't see the screen. We rely entirely on these labels and descriptions." |
-| **PT002** | Navy veteran, regular app user for 2+ years | Highlighted search and messaging barriers | "Maybe keep the phone number handy for when you get stuck." |
-| **PT003** | Army veteran from rural Alabama, uses accessibility features | Revealed performance issues exceeding rural expectations | "I have patience, but this app tests it." |
+| **PT001** | Marine veteran, expert VoiceOver user, regular app user (3-4x weekly) | Identified critical accessibility violations | "Just remember that some of us can't see the screen." |
+| **PT002** | Navy veteran, 2+ years app experience, night shift worker | Revealed search and messaging system failures | "Maybe keep the phone number handy for when you get stuck." |
+| **PT003** | Army veteran, 20 years service, rural Alabama with accessibility needs | Exposed performance issues exceeding rural tolerance | "I have patience, but this app tests it." |
 
 <details>
 <summary><strong>📋 Sample Characteristics</strong></summary>
@@ -341,12 +341,12 @@ PT002
 | Characteristic | Distribution |
 |:---------------|:-------------|
 | Total Participants | 3 |
-| Service Branch | Army (1), Navy (1), Marine (1) |
-| Geographic Location | Rural (1), Suburban (1), Urban (1) |
-| Accessibility Needs | Vision impairment (1), Large text user (1) |
+| Service Branch | Marine (1), Navy (1), Army (1) |
+| Location Type | Rural (1), Suburban (1), Urban (1) |
+| Accessibility Needs | Vision impairment (2), None noted (1) |
 
 > [!NOTE]
-> Small sample size limits generalizability, but findings represent diverse veteran experiences across accessibility needs and geographic contexts.
+> All participants were confirmed veterans with direct VA mobile app experience, representing diverse geographic and accessibility contexts.
 
 </details>
 
@@ -371,19 +371,19 @@ PT002
 
 | # | Action | Addresses Finding | Owner | Effort |
 |:-:|:-------|:------------------|:------|:------:|
-| 1 | **Conduct accessibility audit and fix unlabeled buttons** | Critical accessibility violations | Development Team | M |
-| 2 | **Redesign search with prominent placement** | Search function abandonment | UX Design Team | H |
+| 1 | **Conduct accessibility audit and fix unlabeled buttons** | Critical accessibility violations | Development | M |
+| 2 | **Redesign search with prominent placement** | Search function abandonment | UX Design | H |
 
 ### 🟡 Short-Term (1-2 Months)
 
 | # | Action | Addresses Finding | Owner | Effort |
 |:-:|:-------|:------------------|:------|:------:|
-| 1 | **Implement low-bandwidth optimization** | Extreme loading times | Engineering Team | H |
-| 2 | **Simplify messaging interface** | Communication barriers | UX Design Team | M |
-| 3 | **Ensure consistent accessibility button sizing** | Edit buttons too small | Development Team | L |
+| 1 | **Implement low-bandwidth optimization** | Performance issues | Engineering | H |
+| 2 | **Simplify messaging interface** | Messaging system barriers | Product | M |
+| 3 | **Enhance benefits section detail** | Insufficient actionable information | Content | M |
 
 ### 🟢 Future Considerations
 
 | # | Action | Addresses Finding | Notes |
 |:-:|:-------|:------------------|:------|
-| 1 | **Add historical claims information architecture** | Unable
+| 1 | **Standardize action button placement** | Hidden interface elements | Establish design system patterns
