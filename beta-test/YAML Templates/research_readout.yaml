@@ -1,11 +1,17 @@
 id: research_readout
 name: run_research_readout
 label: "📊 Research Report"
-version: v5.1
+version: v5.2
 description: |
   Generate comprehensive, stakeholder-ready research reports from session summaries 
   and synthesis artifacts. Features professional GitHub styling, industry-standard 
   research documentation structure, and actionable recommendations framework.
+  
+  v5.2 Changes:
+  - Increased max_tokens to 12000 for complete report output
+  - Tightened Research Objectives formatting (learning-focused, not output-focused)
+  - Tightened Research Questions formatting (one line each)
+  - Added guidance note about avoiding "Document..." style objectives
   
   v5.1 Changes:
   - Added Research Overview section (why we conducted this research)
@@ -31,7 +37,7 @@ input_processing: summarize_if_long
 llm_config:
   model: "claude-sonnet-4"
   temperature: 0.3
-  max_tokens: 8000  # Increased for richer formatted output
+  max_tokens: 12000  # Increased for complete report output
 
 input_variables:
   - research_folder_path
@@ -194,25 +200,28 @@ ai_generation_tasks:
       
       ### Why We Conducted This Research
       
-      [Extract from research plan: 2-3 sentences explaining the business context and what prompted this research. What problem or opportunity drove the need for this study?]
+      [Extract from research plan: 2-3 sentences explaining the business context. Focus on the problem/opportunity and decision this research informs. Include key metrics if available.]
       
       ### Research Objectives
       
-      [Extract from research plan objectives. Format as bullet points starting with action verbs:]
+      [Extract from research plan. Keep each objective to ONE concise line. Use learning-focused verbs, not output-focused verbs:]
       
-      - **Understand** [objective 1 from research plan]
-      - **Identify** [objective 2 from research plan]
-      - **Evaluate** [objective 3 from research plan]
-      - **Discover** [objective 4 from research plan, if applicable]
+      - **Identify** [what barriers/issues we aimed to find]
+      - **Understand** [what mental models/behaviors we aimed to learn]
+      - **Evaluate** [what we aimed to assess]
+      - **Prioritize** [what we aimed to rank/compare]
+      
+      > [!NOTE]
+      > Avoid output-focused objectives like "Document..." — focus on what we aimed to *learn*, not what we aimed to *produce*.
       
       ### Research Questions
       
-      [Extract from research plan. These are the specific questions we set out to answer:]
+      [Extract from research plan. Keep questions concise — one line each if possible:]
       
-      1. [Research question 1 from plan]
-      2. [Research question 2 from plan]
-      3. [Research question 3 from plan]
-      4. [Research question 4 from plan, if applicable]
+      1. [Question about user behavior or pain points]
+      2. [Question about mental models or expectations]
+      3. [Question about specific feature/flow effectiveness]
+      4. [Question about priorities or improvements]
       
       ---
       
