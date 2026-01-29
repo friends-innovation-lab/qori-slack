@@ -177,7 +177,7 @@
       "optional": true,
       "label": {
         "type": "plain_text",
-        "text": "Deadline (optional)"
+        "text": "Deadline"
       },
       "element": {
         "type": "datepicker",
@@ -204,7 +204,7 @@
       "optional": true,
       "label": {
         "type": "plain_text",
-        "text": "What do you already know? (optional)"
+        "text": "What do you already know?"
       },
       "element": {
         "type": "plain_text_input",
