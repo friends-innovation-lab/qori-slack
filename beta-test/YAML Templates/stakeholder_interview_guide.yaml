@@ -2,24 +2,27 @@ id: stakeholder_interview_guide
 name: create_stakeholder_interview_guide
 
 label: 🏛️ Stakeholder Interview Guide
-version: "v1.3"
+version: "v2.0"
 
 description: >
   Generate a structured interview guide for internal stakeholder conversations.
   Covers constraints, priorities, technical context, and cross-team dependencies.
+  
+  v2.0: Updated to Claude Sonnet, added user_findings field, added user_research
+  focus area, removed known_constraints (merged into research_questions).
 
 author: Qori R&D
 created: 2026-01-08
-last_updated: 2026-01-08
+last_updated: 2026-01-29
 
 input_type: slack_modal_form
 input_processing: form_based
 
-# LLM Configuration
+# LLM Configuration - Claude Sonnet
 llm_config:
-  model: "gpt-4o"
+  model: "claude-sonnet-4-20250514"
   temperature: 0.3
-  max_tokens: 3000
+  max_tokens: 4000
 
 # Slack modal input variables
 input_variables:
@@ -46,6 +49,10 @@ input_variables:
     description: "Team members to notify"
   
   # Stakeholder details (from modal form)
+  - name: stakeholder_name
+    type: string
+    required: false
+    description: "Name of stakeholder (optional)"
   - name: stakeholder_role
     type: string
     required: true
@@ -54,29 +61,25 @@ input_variables:
     type: string
     required: true
     description: "Team/department of stakeholder"
-  - name: stakeholder_name
-    type: string
-    required: false
-    description: "Name of stakeholder (optional, for scheduling)"
   
   # Interview configuration
-  - name: interview_focus
-    type: array
-    required: true
-    description: "Focus areas to cover (constraints, priorities, processes, etc.)"
   - name: session_duration
     type: string
     required: true
     default: "45"
     description: "Interview duration in minutes (30, 45, 60)"
-  - name: known_constraints
-    type: string
-    required: false
-    description: "Any known constraints to explore further"
+  - name: interview_focus
+    type: array
+    required: true
+    description: "Focus areas to cover (constraints, priorities, processes, etc.)"
   - name: research_questions
     type: string
     required: false
-    description: "Specific questions to answer with this interview"
+    description: "Key questions you want answered in this interview"
+  - name: user_findings
+    type: string
+    required: false
+    description: "User research findings to discuss with stakeholder"
   
   # System
   - name: current_date
@@ -111,20 +114,23 @@ stakeholder_roles:
 # Interview focus areas
 interview_focus_areas:
   - value: "constraints"
-    label: "🚧 Constraints & Blockers"
+    label: "🔧 Constraints"
     description: "Technical, policy, or resource limitations"
   - value: "priorities"
-    label: "🎯 Strategic Priorities"
-    description: "What matters most to leadership/stakeholders"
+    label: "🎯 Priorities"
+    description: "Strategic goals, roadmap"
   - value: "processes"
-    label: "⚙️ Backstage Processes"
-    description: "What happens behind the scenes (for service blueprints)"
+    label: "⚙️ Processes"
+    description: "Backstage operations (for service blueprints)"
   - value: "requirements"
-    label: "📋 Requirements & Dependencies"
+    label: "📋 Requirements"
     description: "Must-haves, dependencies on other teams"
   - value: "history"
-    label: "📜 Context & History"
+    label: "📜 History"
     description: "Why things are the way they are"
+  - value: "user_research"
+    label: "🔍 User research"
+    description: "Discuss user findings, get stakeholder perspective"
 
 # AI generation task
 ai_generation_tasks:
@@ -148,7 +154,7 @@ ai_generation_tasks:
       - ✅ "What are the biggest technical constraints affecting load time?"
       
       RULE 3: CONNECT TO USER RESEARCH
-      Questions should help contextualize or explain user research findings.
+      If user findings are provided, include questions that help explain those findings.
       - "Users reported X — what's happening on the backend that might cause this?"
       
       RULE 4: NO LEADING QUESTIONS
@@ -156,23 +162,28 @@ ai_generation_tasks:
       - ❌ "Why is the claims system so broken?"
       - ✅ "Walk me through how a claim moves through the system."
       
-      RULE 5: VERIFY BEFORE SUBMITTING
-      - Questions are open-ended
-      - Questions match the stakeholder's expertise
-      - Questions connect to research goals
-      - Time estimates are realistic
+      RULE 5: MATCH QUESTIONS TO ROLE
+      Tailor questions to the stakeholder's expertise:
+      - Product Owner → priorities, roadmap, success metrics
+      - Engineering Lead → technical constraints, architecture
+      - Policy SME → regulations, compliance requirements
+      - Operations → backstage processes, common issues
+      
+      RULE 6: FOCUS AREA COVERAGE
+      Generate sections ONLY for the focus areas selected. Skip unselected areas.
       
       ============================================================
       INPUT
       ============================================================
       
       **Study:** {{selected_study}}
+      **Stakeholder Name:** {{stakeholder_name}}
       **Stakeholder Role:** {{stakeholder_role}}
       **Team:** {{stakeholder_team}}
-      **Interview Focus:** {{interview_focus}}
-      **Known Constraints:** {{known_constraints}}
-      **Research Questions to Inform:** {{research_questions}}
-      **Session Duration:** {{session_duration}} minutes
+      **Interview Duration:** {{session_duration}} minutes
+      **Focus Areas:** {{interview_focus}}
+      **Key Questions to Answer:** {{research_questions}}
+      **User Findings to Discuss:** {{user_findings}}
       
       ============================================================
       NOW GENERATE THE COMPLETE OUTPUT BELOW
@@ -188,8 +199,8 @@ ai_generation_tasks:
       
       | | |
       |---|---|
-      | **Stakeholder** | [Role/Title] from [Team] |
-      | **Focus Area** | [Primary focus of this interview] |
+      | **Stakeholder** | {{stakeholder_name}} — {{stakeholder_role}} from {{stakeholder_team}} |
+      | **Focus Areas** | {{interview_focus}} |
       | **Goal** | [What we want to learn and why it matters for the research] |
       
       ---
@@ -200,9 +211,15 @@ ai_generation_tasks:
       - [ ] [Relevant document or finding to reference]
       - [ ] [User research finding that needs stakeholder context]
       
-      **Key user findings to explore:**
-      - [Finding 1 that stakeholder might explain]
-      - [Finding 2 that might relate to their domain]
+      {{#if user_findings}}
+      **User findings to explore:**
+      {{user_findings}}
+      {{/if}}
+      
+      {{#if research_questions}}
+      **Key questions to answer:**
+      {{research_questions}}
+      {{/if}}
       
       ---
       
@@ -220,13 +237,15 @@ ai_generation_tasks:
       
       ---
       
-      ### Section 1: [Focus Area Name] (X min)
+      [GENERATE SECTIONS ONLY FOR SELECTED FOCUS AREAS]
+      
+      ### Section: [Focus Area Name] (X min)
       
       > *[Purpose of this section]*
       
       | # | Question | Follow-ups |
       |---|----------|------------|
-      | 1 | [Primary question] | • [Probe] • [Probe] |
+      | 1 | [Primary question tailored to {{stakeholder_role}}] | • [Probe] • [Probe] |
       | 2 | [Primary question] | • [Probe] • [Probe] |
       | 3 | [Primary question] | • [Probe] • [Probe] |
       
@@ -234,29 +253,21 @@ ai_generation_tasks:
       
       ---
       
-      ### Section 2: [Focus Area Name] (X min)
+      [REPEAT FOR EACH SELECTED FOCUS AREA]
       
-      > *[Purpose of this section]*
+      {{#if user_findings}}
+      ### Section: Connecting to User Research (X min)
       
-      | # | Question | Follow-ups |
-      |---|----------|------------|
-      | 1 | [Primary question] | • [Probe] • [Probe] |
-      | 2 | [Primary question] | • [Probe] • [Probe] |
-      
-      **Listen for:** [What to pay attention to]
-      
-      ---
-      
-      ### Section 3: Connecting to User Research (X min)
-      
-      > *Share relevant user findings and get stakeholder perspective*
+      > *Share user findings and get stakeholder perspective*
       
       "In our user research, we heard [finding]. From your perspective..."
       
       | Finding | Question |
       |---------|----------|
-      | [User pain point or behavior] | "What's happening on your end that might contribute to this?" |
-      | [User confusion or friction] | "Is this expected? What constraints led to this design?" |
+      | [User pain point from {{user_findings}}] | "What's happening on your end that might contribute to this?" |
+      | [User confusion from {{user_findings}}] | "Is this expected? What constraints led to this design?" |
+      
+      {{/if}}
       
       ---
       
@@ -306,11 +317,11 @@ ai_generation_tasks:
 
 # Processing workflow
 processing_workflow:
-  1. validate_slack_modal_inputs
-  2. execute_stakeholder_guide_complete
-  3. format_slack_output
-  4. format_github_output
-  5. save_to_planning_folder
+  - validate_slack_modal_inputs
+  - execute_stakeholder_guide_complete
+  - format_slack_output
+  - format_github_output
+  - save_to_planning_folder
 
 # Output configuration
 output_options:
@@ -328,38 +339,18 @@ output_template: |
 github_file_template: |
   {{ai_generated.stakeholder_guide_complete}}
 
-# Study metadata mapping
-study_metadata:
-  "VA Housing Application Usability Study":
-    folder: "va-housing-usability-2025"
-    researcher: "jordan.researcher"
-    channel: "#research-housing-app"
-    focus_area: "housing application usability"
-    
-  "Benefits Portal Navigation Research":
-    folder: "benefits-portal-nav-2025"
-    researcher: "alex.ux"
-    channel: "#research-benefits"
-    focus_area: "benefits portal navigation"
-    
-  "Veteran Onboarding Experience Study":
-    folder: "veteran-onboarding-2025"
-    researcher: "casey.research"
-    channel: "#research-onboarding"
-    focus_area: "veteran onboarding process"
-
-# Auto-generated variables
-auto_variables:
-  - current_date: new Date().toISOString().split('T')[0]
-  - guide_version: generate_version_number() || "v1.0"
-  - github_file_link: generate_github_link(study_name, current_date)
-
 # Slack notifications
 notify:
   - role: team
     action: "Stakeholder interview guide created"
     channel: "{{study_channel}}"
     message: "🏛️ {{researcher_contact}} created a stakeholder interview guide for {{stakeholder_role}} ({{stakeholder_team}}) for {{study_name}}. Ready for scheduling!"
+
+# Auto-generated variables
+auto_variables:
+  current_date: "new Date().toISOString().split('T')[0]"
+  guide_version: "v2.0"
+  github_file_link: "generate_github_link(study_name, current_date)"
 
 output_use: |
   Generate structured interview guides for internal stakeholders
