@@ -1,137 +1,148 @@
 <div align="center">
 
-# Design Team READOUT
+# 🎨 DESIGN READOUT
 ## VA Health and Benefits Mobile App
 
-**Date:** January 28, 2026 | **Participants:** 3 veterans | **Lead:** lapedra@cityfriends.tech
+**January 28, 2026**
+
+---
+
+| Participants | Sessions | Lead Researcher |
+|:------------:|:--------:|:---------------:|
+| 3 | 3 | lapedra@cityfriends.tech |
 
 </div>
 
 ---
 
-## TL;DR
+## TL;DR FOR DESIGN
 
-[3-4 bullets of what THIS team specifically needs to know/do]
-
-- 🔴 **Critical accessibility violations** - Multiple unlabeled buttons blocking screen reader users from core functions
-- 🔴 **Search function is broken** - Hidden placement and irrelevant results causing task abandonment
-- 🟡 **Navigation confusion** - Duplicate menu options and unclear messaging categories creating decision paralysis
-- 🟢 **Prescription/appointment flows work well** - Keep these patterns for other features
+- 🔴 Search functionality nearly unusable - hidden placement and poor results
+- 🔴 Critical accessibility violations blocking screen reader users
+- 🟡 Navigation confusion with duplicate options creating decision paralysis
+- 🟢 Prescription management flow works smoothly - extend this pattern
 
 ---
 
-## FINDINGS FOR Design Team
+## DESIGN PATTERN ISSUES
 
-### 🔴 Finding 1: Unlabeled Interactive Elements
+### 🔴 Issue 1: Search Discoverability and Functionality
 
-**User Quote:**
+**User Behavior Observed:**
+> "There's a tiny magnifying glass icon in the top right corner... I'd probably give up and call someone instead."
+> — **PT002**
+
+| Design Details | |
+|:---------------|:--|
+| **Pattern Type** | Discoverability / Interaction |
+| **Severity** | 🔴 Critical |
+| **Affected Users** | 1 of 3 participants (33%) |
+| **Screen/Flow** | Main navigation and search results |
+| **User Expectation** | Prominent search with relevant, actionable results |
+| **Actual Experience** | Hidden search icon, irrelevant generic articles returned |
+
+**Design Recommendation:**
+
+| Current State | Recommended Change |
+|:--------------|:-------------------|
+| Tiny magnifying glass in top right corner | Prominent search bar or clearly labeled search button in primary navigation |
+| Generic articles in results | Task-oriented results with forms, status pages, and actionable items |
+
+**Reference Pattern:** Standard mobile search patterns with prominent placement and contextual results
+
+---
+
+### 🔴 Issue 2: Unlabeled Interactive Elements
+
+**User Behavior Observed:**
 > "There's a button that just says 'Button' without any descriptive text. That's not helpful at all."
-> — **PT001** [Expert VoiceOver user, Marine veteran with vision loss]
+> — **PT001**
 
-| Aspect | Details |
-|:-------|:--------|
-| **The Problem** | Multiple buttons throughout interface announced only as "Button" by screen readers, providing no indication of purpose or function |
+| Design Details | |
+|:---------------|:--|
+| **Pattern Type** | Accessibility / Interaction |
 | **Severity** | 🔴 Critical |
-| **Affected** | 1 of 1 screen reader users (100%) - complete accessibility barrier |
-| **Where it happens** | Throughout app interface, particularly edit buttons and action controls |
+| **Affected Users** | 1 of 3 participants (33%) - but impacts all screen reader users |
+| **Screen/Flow** | Multiple screens with interactive elements |
+| **User Expectation** | All buttons clearly labeled with their function |
+| **Actual Experience** | Buttons announced only as "Button" with no descriptive text |
 
-**Suggested Fix:**
-Add descriptive aria-labels to all interactive elements. Audit entire app for unlabeled buttons and implement proper accessibility labeling standards.
+**Design Recommendation:**
+
+| Current State | Recommended Change |
+|:--------------|:-------------------|
+| Unlabeled buttons throughout interface | All interactive elements must have descriptive labels visible to assistive technology |
+| Hidden action buttons at bottom of screens | Standardize primary action placement in consistent, discoverable locations |
+
+**Reference Pattern:** WCAG 2.1 AA compliance for button labeling and placement
 
 ---
 
-### 🔴 Finding 2: Search Function Nearly Unusable
+### 🟡 Issue 3: Navigation Label Confusion
 
-**User Quote:**
-> "There's a tiny magnifying glass icon in the top right corner" and "I'd probably give up and call someone instead."
-> — **PT002** [Navy veteran, regular app user]
-
-| Aspect | Details |
-|:-------|:--------|
-| **The Problem** | Search icon hidden in top corner, difficult to discover; when found, returns irrelevant generic articles instead of actionable forms |
-| **Severity** | 🔴 Critical |
-| **Affected** | 1 of 3 participants attempted search, abandoned task |
-| **Where it happens** | Global search functionality |
-
-**Suggested Fix:**
-Redesign search with prominent placement in main navigation and improve result relevance to prioritize actionable content over articles.
-
----
-
-### 🟡 Finding 3: Confusing Navigation Labels
-
-**User Quote:**
+**User Behavior Observed:**
 > "Nothing clearly says 'File new claim.' Oh wait, there's 'Claims' and also 'File a Claim' - those are two separate things? That's confusing."
-> — **PT002** [Navy veteran, regular app user]
+> — **PT002**
 
-| Aspect | Details |
-|:-------|:--------|
-| **The Problem** | Multiple similar navigation options with unclear distinctions create decision paralysis and uncertainty about correct path |
+| Design Details | |
+|:---------------|:--|
+| **Pattern Type** | Navigation / Consistency |
 | **Severity** | 🟡 High |
-| **Affected** | 1 of 3 participants experienced confusion with duplicate options |
-| **Where it happens** | Main navigation menu, claims section |
+| **Affected Users** | 1 of 3 participants (33%) |
+| **Screen/Flow** | Main navigation menu |
+| **User Expectation** | Clear, distinct navigation options |
+| **Actual Experience** | Multiple similar options with unclear distinctions |
 
-**Suggested Fix:**
-Audit navigation labels to eliminate duplicates and ensure clear distinction between similar options. Consolidate or clarify naming conventions.
+**Design Recommendation:**
 
----
-
-### 🟡 Finding 4: Performance Issues Blocking Rural Users
-
-**User Quote:**
-> "By the time this app loads what I need, I could have talked to a person and gotten my answer."
-> — **PT003** [Army veteran, rural Alabama, uses large text accessibility]
-
-| Aspect | Details |
-|:-------|:--------|
-| **The Problem** | Loading times of 45+ seconds with timeout warnings exceed even rural internet user tolerance |
-| **Severity** | 🟡 High |
-| **Affected** | 1 of 3 participants (rural user) experienced extreme delays |
-| **Where it happens** | Throughout app, all loading states |
-
-**Suggested Fix:**
-Optimize performance for low-bandwidth connections and implement better loading states with progress indicators.
+| Current State | Recommended Change |
+|:--------------|:-------------------|
+| Duplicate/similar navigation labels | Audit and consolidate navigation labels for clarity and distinction |
+| Unclear categorization | Use user mental models to organize navigation hierarchy |
 
 ---
 
-## IMPLEMENTATION CHECKLIST
+## FLOW ANALYSIS
 
-- [ ] **Conduct accessibility audit** - Identify and fix all unlabeled buttons and interactive elements
-- [ ] **Redesign search placement** - Move search to prominent location in main navigation
-- [ ] **Audit navigation labels** - Eliminate duplicate options like "Claims" vs "File a Claim"
-- [ ] **Implement consistent button sizing** - Ensure edit buttons scale properly with large text settings
-- [ ] **Add offline functionality** - Cache frequently accessed information for poor connectivity scenarios
+**Problem Flow:**
+```
+User needs info → Looks for search → Can't find search → Tries navigation → Gets confused by duplicates → Abandonment
+```
 
----
-
-## WHAT'S WORKING (Don't Break These)
-
-| Feature | Why It Works | Evidence |
-|:--------|:-------------|:---------|
-| Prescription Management | Smooth, efficient process with clear information display and obvious action buttons | "That's probably the smoothest part of the app. I do this all the time and it just works." — PT002 |
-| Appointment Checking | Straightforward navigation completed quickly with no issues | "This part actually works really well. It shows when I last refilled it, how many refills I have left, and the request button is obvious." — PT002 |
-| Large Text Implementation | Text scaling maintains layout integrity and improves readability | "Actually, this looks pretty good. The text is nice and large, and everything fits on the screen properly." — PT003 |
+**Recommended Flow:**
+```
+User needs info → Sees prominent search → Gets relevant results → Completes task successfully
+```
 
 ---
 
-## OPEN QUESTIONS FOR Design Team
+## INFORMATION ARCHITECTURE ISSUES
 
-- How can we apply the successful prescription management patterns to other complex flows like benefits and claims?
-- Should we implement a simplified messaging interface that bypasses categorical barriers for direct doctor communication?
-- What's the best approach for surfacing historical claims information that users expect to find?
+| Content | User Expectation | Current Location | Recommended |
+|:--------|:-----------------|:-----------------|:------------|
+| Completed claim status | In claims section with active claims | Shows "No active claims" | Add historical claims section with clear status tracking |
+| Doctor messaging | Simple, direct communication | Complex category system | Streamlined messaging with direct doctor contact option |
 
 ---
 
-## RELATED FILES
+## DESIGN CHECKLIST
 
-| Document | Link |
-|:---------|:-----|
-| Full Research Report | [Link] |
-| Session Summaries | beta-test/product-team-1%2Fresearch/VA%20Health%20and%20Benefits%20Mobile%20App/03-fieldwork/session-summaries/ |
-| Affinity Map | beta-test/product-team-1%2Fresearch/VA%20Health%20and%20Benefits%20Mobile%20App/04-analysis/affinity-mapping/ |
+- [ ] Redesign search with prominent placement and improved result relevance
+- [ ] Conduct comprehensive accessibility audit and fix all unlabeled interactive elements
+- [ ] Audit navigation labels to eliminate duplicates and confusion
+- [ ] Standardize primary action button placement across all screens
+- [ ] Simplify messaging flow to reduce categorical barriers
+- [ ] Add historical claims section to information architecture
+
+---
+
+## PATTERNS WORKING WELL (Extend These)
+
+| Pattern | Why It Works | Where Used | Extend To |
+|:--------|:-------------|:-----------|:----------|
+| Prescription Management | "That's probably the smoothest part of the app. I do this all the time and it just works." — PT002 | Health section | Apply clear information display and obvious action buttons to other task flows |
+| Large Text Accessibility | "Actually, this looks pretty good. The text is nice and large, and everything fits on the screen properly." — PT003 | System-wide text scaling | Ensure all interactive elements scale consistently with text size |
 
 ---
 
 **Questions?** lapedra@cityfriends.tech | **Channel:** C08SPQRKHV4
-
----
