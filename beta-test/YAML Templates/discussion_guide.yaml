@@ -1,28 +1,37 @@
-id: discussion_guide_v5
+id: discussion_guide
 name: run_discussion_guide
 label: 💬 Discussion Guide
-version: v5.1
+version: v6.0
 
 description: |
   Generate a comprehensive, professional discussion guide for user research sessions.
-  Includes timing breakdown, scripts, tasks, interview questions, and observer templates.
+  Includes timing breakdown, scripts, tasks/questions, and observer templates.
+  Adapts content based on research method (usability testing vs interviews vs concept testing).
+  
+  v6.0: Refactored to use Claude Sonnet with multi-task generation to prevent truncation.
+  Added research_method field to generate method-appropriate content.
 
 author: Qori R&D
 created: 2025-06-26
-last_updated: 2025-11-25
+last_updated: 2026-01-29
 
 # Character encoding
 encoding: utf-8
 output_encoding: utf-8
 
-# LLM Configuration
+# LLM Configuration - Claude Sonnet
 llm_config:
-  model: "gpt-4o"
+  model: "claude-sonnet-4-20250514"
   temperature: 0.3
-  max_tokens: 4000
+  max_tokens: 8000
 
-# Input variables - SINGLE canonical names only
+# Input variables
 input_variables:
+  - selected_study:
+      type: "select"
+      required: true
+      description: "Study folder name"
+      
   - research_focus:
       type: "textarea"
       required: true
@@ -38,6 +47,12 @@ input_variables:
       required: true
       placeholder: "e.g., Veterans who completed at least one telehealth visit"
       
+  - research_method:
+      type: "select"
+      required: true
+      options: ["usability_testing", "user_interviews", "contextual_inquiry", "concept_testing"]
+      default: "usability_testing"
+      
   - session_length:
       type: "select"
       required: true
@@ -49,336 +64,459 @@ input_variables:
       required: false
       placeholder: "e.g., https://staging.va.gov/telehealth"
 
-# AI GENERATION TASKS - Split into focused tasks
+# =============================================================================
+# AI GENERATION TASKS - Split into 4 sequential tasks
+# =============================================================================
+
 ai_generation_tasks:
 
-  # Task 1: Generate study name
-  - task_id: "study_name"
+  # -------------------------------------------------------------------------
+  # TASK 1: Study name, timing, objectives, introduction
+  # -------------------------------------------------------------------------
+  - task_id: "section_1_setup"
     prompt: |
-      Generate a concise, professional study name (max 8 words) based on:
+      You are creating a discussion guide for a user research session. This is TASK 1 of 4.
       
-      Research Focus: {{research_focus}}
+      Generate ONLY these sections:
+      1. Study name (concise, max 8 words)
+      2. Timing breakdown table
+      3. Research objectives (3-5)
+      4. Introduction script
       
-      Return ONLY the study name. No quotes, no extra text.
+      ============================================================
+      INPUT
+      ============================================================
       
-      Examples:
-      - VA Telehealth Onboarding Experience Study
-      - Debt Letters Usability Evaluation
-      - Claims Status Tool Navigation Study
-
-  # Task 2: Generate timing breakdown
-  - task_id: "timing_breakdown"
-    prompt: |
-      Create a timing breakdown for a {{session_length}}-minute research session.
+      **Research Focus:** {{research_focus}}
+      **Research Questions:** {{research_questions}}
+      **Participants:** {{participants}}
+      **Research Method:** {{research_method}}
+      **Session Length:** {{session_length}} minutes
       
-      Distribute time appropriately across these phases:
-      - Introduction & consent
-      - Warm-up questions  
-      - Main research tasks
-      - Post-task interview
-      - Closing & wrap-up
+      ============================================================
+      GENERATE OUTPUT
+      ============================================================
       
-      Format as a simple table:
+      ## Study Name
+      
+      [Generate concise study name, max 8 words]
+      
+      ---
+      
+      ## ⏱️ Session Timing
+      
       | Phase | Duration | Running Total |
       |-------|----------|---------------|
       | Introduction & Consent | X min | X min |
       | Warm-up Questions | X min | X min |
-      | Main Research Tasks | X min | X min |
-      | Post-Task Interview | X min | X min |
+      | Main Research Activities | X min | X min |
+      | Post-Activity Discussion | X min | X min |
       | Closing & Wrap-up | X min | {{session_length}} min |
       
-      Ensure times add up to exactly {{session_length}} minutes.
-
-  # Task 3: Generate research objectives
-  - task_id: "objectives"
-    prompt: |
-      Create 3-5 clear research objectives based on:
-      
-      Research Focus: {{research_focus}}
-      Research Questions: {{research_questions}}
-      
-      Format as numbered list:
-      1. [Specific, measurable objective]
-      2. [Specific, measurable objective]
-      3. [Specific, measurable objective]
-      
-      Make each objective actionable and directly tied to the research questions.
-
-  # Task 4: Generate introduction script
-  - task_id: "introduction"
-    prompt: |
-      Write a warm, professional introduction script for a research session about:
-      
-      Research Focus: {{research_focus}}
-      Participants: {{participants}}
-      Session Length: {{session_length}} minutes
-      
-      Include these elements (write as a natural script the researcher can read):
-      
-      **Welcome & Thank You**
-      [Thank participant, introduce yourself]
-      
-      **Session Purpose**
-      [Explain what you're researching and why their input matters]
-      
-      **Consent & Recording**
-      [Explain recording, get verbal consent, emphasize confidentiality]
-      
-      **Ground Rules**
-      [No right/wrong answers, think aloud, can skip questions, take breaks]
-      
-      **Questions Before We Begin**
-      [Ask if they have any questions]
-      
-      Write naturally — this should sound like a real person talking, not a script being read.
-
-  # Task 5: Generate warm-up questions
-  - task_id: "warmup"
-    prompt: |
-      Create 4-5 warm-up questions for a research session with:
-      
-      Participants: {{participants}}
-      Research Focus: {{research_focus}}
-      
-      These questions should:
-      - Build rapport and put participant at ease
-      - Be relevant to their background/experience
-      - Naturally lead into the research topic
-      - Be open-ended (not yes/no)
-      
-      Format:
-      1. [Question] 
-         - *Why this matters:* [Brief note for researcher]
-      
-      2. [Question]
-         - *Why this matters:* [Brief note for researcher]
-      
-      Continue for all questions.
-
-  # Task 6: Generate main research tasks
-  - task_id: "tasks"
-    prompt: |
-      Design 3-4 usability tasks for a research session about:
-      
-      Research Focus: {{research_focus}}
-      Research Questions: {{research_questions}}
-      Participants: {{participants}}
-      
-      For each task, use this exact format:
-      
-      ### Task 1: [Clear Task Name]
-      **Time:** X minutes
-      
-      **Scenario:** 
-      [Set up a realistic situation for the participant]
-      
-      **Instruction to Participant:**
-      "[Exact words to say to the participant]"
-      
-      **Success Criteria:**
-      - [What successful completion looks like]
-      
-      **What to Observe:**
-      - [Specific behavior to watch for]
-      - [Potential pain points]
-      - [Navigation patterns]
-      
-      **Probing Questions:**
-      - [Question to ask during or after the task]
-      - [Question about their thought process]
+      *Ensure times add up to exactly {{session_length}} minutes.*
       
       ---
       
-      Repeat this format for each task. Make tasks realistic and specific to {{research_focus}}.
+      ## 🎯 Research Objectives
+      
+      1. [Specific, measurable objective tied to research questions]
+      2. [Specific, measurable objective]
+      3. [Specific, measurable objective]
+      
+      ---
+      
+      ## 👋 Introduction Script
+      
+      **Welcome & Thank You**
+      
+      [Write natural script thanking participant, introducing yourself]
+      
+      **Session Purpose**
+      
+      [Explain what you're researching and why their input matters - tailor to {{research_method}}]
+      
+      **Consent & Recording**
+      
+      [Explain recording, get verbal consent, emphasize confidentiality]
+      
+      **Ground Rules**
+      
+      [No right/wrong answers, think aloud, can skip questions, take breaks]
+      
+      **Questions Before We Begin**
+      
+      "Do you have any questions before we get started?"
+      
+      [END OF TASK 1 — Do not generate beyond this point]
 
-  # Task 7: Generate post-session interview
-  - task_id: "interview"
+  # -------------------------------------------------------------------------
+  # TASK 2: Warm-up questions and main activities (method-specific)
+  # -------------------------------------------------------------------------
+  - task_id: "section_2_activities"
     prompt: |
-      Create 6-8 post-session interview questions for research about:
+      You are creating a discussion guide for a user research session. This is TASK 2 of 4.
       
-      Research Focus: {{research_focus}}
-      Research Questions: {{research_questions}}
+      Generate ONLY these sections:
+      1. Warm-up questions (4-5)
+      2. Main research activities (method-specific)
       
-      Include questions that explore:
-      - Overall impressions and feelings
-      - Specific pain points observed during tasks
-      - Expectations vs. reality
-      - Mental models and understanding
-      - Suggestions for improvement
-      - Likelihood to use/recommend (include rating scale)
+      ============================================================
+      INPUT
+      ============================================================
       
-      Format:
-      1. [Question]
+      **Research Focus:** {{research_focus}}
+      **Research Questions:** {{research_questions}}
+      **Participants:** {{participants}}
+      **Research Method:** {{research_method}}
+      **Session Length:** {{session_length}} minutes
+      **Testing URL:** {{testing_url}}
+      
+      ============================================================
+      GENERATE OUTPUT
+      ============================================================
+      
+      ## 🗣️ Warm-up Questions
+      
+      *Build rapport and ease participant into the session.*
+      
+      1. [Open-ended question about their background/experience]
+         - *Why this matters:* [Brief note for researcher]
+      
+      2. [Question connecting to research topic]
+         - *Why this matters:* [Brief note]
+      
+      3. [Question about current behaviors/habits]
+         - *Why this matters:* [Brief note]
+      
+      4. [Question that naturally transitions to main activities]
+         - *Why this matters:* [Brief note]
+      
+      ---
+      
+      ## 🎯 Main Research Activities
+      
+      {{#if research_method == "usability_testing"}}
+      *For each task, read the scenario and instruction verbatim. Observe without helping unless participant is completely stuck.*
+      
+      ### Task 1: [Clear Task Name]
+      
+      **Time:** X minutes
+      
+      **Scenario:** 
+      [Set up a realistic situation]
+      
+      **Instruction to Participant:**
+      "[Exact words to say]"
+      
+      **Success Criteria:**
+      - [What completion looks like]
+      
+      **What to Observe:**
+      - [Specific behaviors]
+      - [Pain points]
+      - [Navigation patterns]
+      
+      **Probing Questions:**
+      - [Question during/after task]
+      - [Question about thought process]
+      
+      ---
+      
+      ### Task 2: [Task Name]
+      [Same format]
+      
+      ---
+      
+      ### Task 3: [Task Name]
+      [Same format]
+      
+      {{else if research_method == "user_interviews"}}
+      *These are open-ended questions to explore experiences and mental models. Follow the participant's lead and probe deeper on interesting responses.*
+      
+      ### Topic Area 1: [Topic Name]
+      
+      **Primary Question:**
+      "[Main question to ask]"
+      
+      **Follow-up Probes:**
+      - [Probe for details]
+      - [Probe for feelings/reactions]
+      - [Probe for specific examples]
+      
+      **Listen For:**
+      - [Themes to note]
+      - [Mental models]
+      
+      ---
+      
+      ### Topic Area 2: [Topic Name]
+      [Same format]
+      
+      ---
+      
+      ### Topic Area 3: [Topic Name]
+      [Same format]
+      
+      {{else if research_method == "concept_testing"}}
+      *Show each concept and gather reactions. Don't explain or defend the concept — let participants react naturally.*
+      
+      ### Concept 1: [Concept Name]
+      
+      **Show:** [What to display]
+      
+      **Initial Reaction:**
+      "What's your first impression of this?"
+      
+      **Comprehension:**
+      "What do you think this is for? How would you use it?"
+      
+      **Value:**
+      "How useful would this be for you? Why or why not?"
+      
+      **Comparison:**
+      "How does this compare to how you do this today?"
+      
+      ---
+      
+      ### Concept 2: [Concept Name]
+      [Same format]
+      
+      {{else}}
+      *Adapt these activities to your specific research method.*
+      
+      ### Activity 1: [Activity Name]
+      
+      **Setup:**
+      [How to introduce this activity]
+      
+      **Instructions:**
+      "[What to say to participant]"
+      
+      **What to Capture:**
+      - [Key observations]
+      - [Quotes to note]
+      
+      ---
+      
+      ### Activity 2: [Activity Name]
+      [Same format]
+      
+      {{/if}}
+      
+      [END OF TASK 2 — Do not generate beyond this point]
+
+  # -------------------------------------------------------------------------
+  # TASK 3: Post-session interview and closing
+  # -------------------------------------------------------------------------
+  - task_id: "section_3_closing"
+    prompt: |
+      You are creating a discussion guide for a user research session. This is TASK 3 of 4.
+      
+      Generate ONLY these sections:
+      1. Post-session interview questions (6-8)
+      2. Closing script
+      
+      ============================================================
+      INPUT
+      ============================================================
+      
+      **Research Focus:** {{research_focus}}
+      **Research Questions:** {{research_questions}}
+      **Research Method:** {{research_method}}
+      
+      ============================================================
+      GENERATE OUTPUT
+      ============================================================
+      
+      ## 💭 Post-Session Interview
+      
+      *Ask these after completing all main activities.*
+      
+      1. **Overall Impressions**
+         "[Question about overall experience]"
          - *Follow-up if needed:* [Probing question]
       
-      2. [Question]
+      2. **Pain Points**
+         "[Question about difficulties or frustrations]"
          - *Follow-up if needed:* [Probing question]
       
-      End with: "On a scale of 1-10, how likely would you be to use this [product/service]? What would make it a 10?"
+      3. **Expectations**
+         "[Question about expectations vs reality]"
+         - *Follow-up if needed:* [Probing question]
+      
+      4. **Mental Model**
+         "[Question about understanding/mental model]"
+         - *Follow-up if needed:* [Probing question]
+      
+      5. **Improvements**
+         "[Question about what would make it better]"
+         - *Follow-up if needed:* [Probing question]
+      
+      6. **Comparison**
+         "[Question comparing to alternatives/current process]"
+         - *Follow-up if needed:* [Probing question]
+      
+      7. **Likelihood to Use**
+         "On a scale of 1-10, how likely would you be to use this? What would make it a 10?"
+      
+      8. **Anything Else**
+         "Is there anything else you'd like to share that I didn't ask about?"
+      
+      ---
+      
+      ## 🎁 Closing Script
+      
+      **Thank You**
+      
+      [Warm, genuine thank you for their time and insights]
+      
+      **Next Steps**
+      
+      [Brief explanation of what happens with their feedback]
+      
+      **Compensation**
+      
+      [PLACEHOLDER: Compensation details — update before session]
+      
+      **Follow-up**
+      
+      [Contact info if they have questions later]
+      
+      **Final Question**
+      
+      "Any final questions for me before we wrap up?"
+      
+      [END OF TASK 3 — Do not generate beyond this point]
 
-  # Task 8: Generate closing script
-  - task_id: "closing"
+  # -------------------------------------------------------------------------
+  # TASK 4: Synthesis prompts and appendix
+  # -------------------------------------------------------------------------
+  - task_id: "section_4_appendix"
     prompt: |
-      Write a brief closing script for a research session.
+      You are creating a discussion guide for a user research session. This is TASK 4 of 4.
       
-      Include:
-      - Warm thank you
-      - Brief explanation of next steps
-      - Compensation information (leave as placeholder)
-      - How their feedback will be used
-      - Contact information for follow-up questions
-      - Final opportunity for questions
+      Generate ONLY these sections:
+      1. Synthesis prompts for researchers
+      2. Emergency procedures
       
-      Keep it warm and genuine. This is the last impression they have of the research team.
-
-  # Task 9: Generate synthesis prompts
-  - task_id: "synthesis"
-    prompt: |
-      Create 5 reflection questions for researchers to ask themselves after sessions about:
+      ============================================================
+      INPUT
+      ============================================================
       
-      Research Focus: {{research_focus}}
-      Research Questions: {{research_questions}}
+      **Research Focus:** {{research_focus}}
+      **Research Questions:** {{research_questions}}
       
-      These should help with synthesis and pattern identification:
+      ============================================================
+      GENERATE OUTPUT
+      ============================================================
+      
+      ## 📝 Synthesis Prompts
+      
+      *Questions to ask yourself after sessions.*
       
       **After Each Session:**
-      1. [Question about patterns emerging]
-      2. [Question about surprises or unexpected findings]
-      3. [Question about what needs deeper investigation]
+      
+      1. What patterns am I seeing related to {{research_focus}}?
+      2. What surprised me about this participant's experience?
+      3. What needs deeper investigation in remaining sessions?
+      4. What quotes or moments were most revealing?
       
       **After All Sessions:**
-      4. [Question about overall themes]
-      5. [Question about confidence in findings]
       
-      Make these specific to {{research_focus}}, not generic.
-
-# OUTPUT TEMPLATE
-output_template: |
-  # 💬 Discussion Guide — {{ai_generated.study_name}}
-
-  **Session Length:** {{session_length}} minutes
-
-  **Participants:** {{participants}}
-
-  **Date Created:** {{current_date}}
-
-  **Testing URL:** {{testing_url}}
-
-  ---
-
-  ## 🚨 Emergency Procedures
-
-  **Technical Issues:**
-  - Have backup meeting link ready
-  - Screen share troubleshooting: Check browser permissions, try different browser
-  - Contact technical support: [Add contact info]
-  - Have phone number as backup
-
-  **Participant Distress:**
-  - Pause session immediately and check comfort level
-  - Remind participant of voluntary participation — they can stop at any time
-  - Remind them there are no wrong answers
-  - For veterans: VA Crisis Line: 988, Press 1 (24/7 support)
-  - Have list of relevant support resources ready
-
-  **Data/Privacy Concerns:**
-  - Reassure about data handling and anonymization
-  - Review consent form if needed
-  - Stop recording if requested
-
-  ---
-
-  ## ⏱️ Session Timing
-
-  {{ai_generated.timing_breakdown}}
-
-  ---
-
-  ## 🎯 Research Objectives
-
-  {{ai_generated.objectives}}
-
-  ---
-
-  ## 👋 Introduction Script
-
-  {{ai_generated.introduction}}
-
-  ---
-
-  ## 🗣️ Warm-up Questions
-
-  {{ai_generated.warmup}}
-
-  ---
-
-  ## 🎯 Main Research Tasks
-
-  {{ai_generated.tasks}}
-
-  ---
-
-  ## 💭 Post-Session Interview
-
-  {{ai_generated.interview}}
-
-  ---
-
-  ## 🎁 Closing Script
-
-  {{ai_generated.closing}}
-
-  ---
-
-  ## 🔍 Research Synthesis Prompts
-
-  {{ai_generated.synthesis}}
-
-  ---
-
-  ## 📋 Appendix
-
-  **Materials Checklist:**
-  - [ ] Recording software ready and tested
-  - [ ] Screen sharing tested
-  - [ ] Prototype/product accessible
-  - [ ] Consent form signed
-  - [ ] Compensation ready
-  - [ ] Backup facilitator available
-  - [ ] Discussion guide printed/accessible
-
-  **Post-Session Checklist:**
-  - [ ] Save and backup recording
-  - [ ] Transfer notes to research repository
-  - [ ] Send thank you email
-  - [ ] Process compensation within 24 hours
-  - [ ] Update participant tracker
-  - [ ] Schedule debrief with team
+      5. What are the top 3-5 themes across all participants?
+      6. How confident am I in these findings? What's still unclear?
+      7. What recommendations emerge from these patterns?
+      
+      ---
+      
+      ## 🚨 Emergency Procedures
+      
+      **Technical Issues:**
+      - Have backup meeting link ready
+      - Screen share troubleshooting: Check browser permissions, try different browser
+      - Have phone number as backup contact method
+      
+      **Participant Distress:**
+      - Pause session immediately and check comfort level
+      - Remind participant they can stop at any time
+      - Remind them there are no wrong answers
+      - For veterans: VA Crisis Line: 988, Press 1 (24/7 support)
+      
+      **Data/Privacy Concerns:**
+      - Reassure about data handling and anonymization
+      - Review consent form if needed
+      - Stop recording immediately if requested
+      
+      ---
+      
+      ## 📋 Checklists
+      
+      **Before Session:**
+      - [ ] Recording software ready and tested
+      - [ ] Screen sharing tested
+      - [ ] Prototype/product accessible
+      - [ ] Consent form ready
+      - [ ] Compensation prepared
+      - [ ] Backup facilitator available
+      - [ ] Discussion guide printed/accessible
+      
+      **After Session:**
+      - [ ] Save and backup recording
+      - [ ] Transfer notes to research repository
+      - [ ] Send thank you message
+      - [ ] Process compensation within 24 hours
+      - [ ] Update participant tracker
+      - [ ] Complete synthesis prompts while fresh
+      
+      [END OF TASK 4]
 
 # Processing workflow
 processing_workflow:
-  1. validate_inputs
-  2. execute_ai_generation_tasks
-  3. validate_generated_content
-  4. populate_template
-  5. save_to_outputs
+  - validate_inputs
+  - execute_ai_generation_tasks
+  - concatenate_task_outputs
+  - populate_template
+  - save_to_outputs
+
+# Output template - concatenates all task outputs
+output_template: |
+  # 💬 Discussion Guide
+  
+  {{ai_generated.section_1_setup}}
+  
+  ---
+  
+  {{ai_generated.section_2_activities}}
+  
+  ---
+  
+  {{ai_generated.section_3_closing}}
+  
+  ---
+  
+  {{ai_generated.section_4_appendix}}
+  
+  ---
+  
+  *Generated by Qori • {{current_date}}*
 
 # Output configuration
 output_options:
-  filename: "discussion_guide_{{ai_generated.study_name}}_{{current_date}}.md"
+  filename: "discussion_guide_{{selected_study}}_{{current_date}}.md"
   path: "01-planning/"
   
   delivery:
     github:
       enabled: true
-      commit_message: "Add discussion guide: {{ai_generated.study_name}}"
+      commit_message: "Add discussion guide for {{selected_study}}"
       
     slack:
       enabled: true
-      channel: "#research-planning"
+      channel: "{{study_channel}}"
       message: |
         💬 **Discussion Guide Generated**
-        **Study:** {{ai_generated.study_name}}
+        **Study:** {{selected_study}}
+        **Method:** {{research_method}}
         **Duration:** {{session_length}} minutes
         **Ready for session prep.**
       
@@ -387,9 +525,11 @@ output_options:
           style: "primary"
           url: "{{github_file_url}}"
 
-# Slack UI configuration
-slack_ui:
-  modal:
-    title: "💬 Create Discussion Guide"
-    submit_label: "Generate Guide"
-    close_label: "Cancel"
+# Validation rules
+validation_rules:
+  - rule: "all_sections_present"
+    description: "All 4 task outputs must be present"
+    check: "output contains Study Name, Timing, Objectives, Introduction, Warm-up, Activities, Interview, Closing, Synthesis"
+  - rule: "method_appropriate_content"
+    description: "Main activities should match selected research method"
+    check: "if usability_testing then contains 'Task' else if user_interviews then contains 'Topic Area'"
