@@ -25,7 +25,7 @@ input_processing: summarize_if_long
 llm_config:
   model: "claude-sonnet-4"
   temperature: 0.2
-  max_tokens: 10000
+  max_tokens: 12000
 
 input_variables:
   - research_folder_path
@@ -472,55 +472,521 @@ ai_generation_tasks:
       ---
       
       ============================================================
-      FORMAT D: TEAM READOUT
+      FORMAT D: TEAM READOUTS (Team-Specific)
       ============================================================
       
-      Use this format for: Product Team, Design Team, Engineering Team, Accessibility Team, Content Team
+      IMPORTANT: Select the correct sub-format based on {{target_audience}}.
+      Each team gets findings filtered and framed for their domain.
       
-      Tone: Practical, implementation-focused. What do they need to DO.
-      Length: As needed for actionable detail.
-      Purpose: Sprint planning, implementation guidance, specific fixes.
+      ---
+      
+      ============================================================
+      FORMAT D1: ENGINEERING TEAM
+      ============================================================
+      
+      Use for: Engineering Team, engineering
+      
+      Filter for: Performance issues, technical implementation problems, 
+      accessibility code violations, API/component errors, load times.
+      
+      Frame findings as: Technical issues with specific components affected.
       
       ---
       
       <div align="center">
       
-      # {{target_audience}} READOUT
+      # 🔧 ENGINEERING READOUT
       ## {{study_name}}
       
-      **Date:** [Date] | **Participants:** {{participant_count}} | **Lead:** {{researcher_contact}}
+      **[Date]**
+      
+      ---
+      
+      | Participants | Sessions | Lead Researcher |
+      |:------------:|:--------:|:---------------:|
+      | {{participant_count}} | {{session_count}} | {{researcher_contact}} |
       
       </div>
       
       ---
       
-      ## TL;DR
+      ## TL;DR FOR ENGINEERING
       
-      [3-4 bullets of what THIS team specifically needs to know/do]
-      
-      - 🔴 [Critical action for this team]
-      - 🟡 [Important action for this team]
-      - 🟢 [What's working - don't break this]
+      - 🔴 [Technical issue requiring immediate fix]
+      - 🔴 [Another critical technical issue if applicable]
+      - 🟡 [Performance or implementation improvement needed]
+      - 🟢 [What's working technically - don't break this]
       
       ---
       
-      ## FINDINGS FOR {{target_audience}}
+      ## TECHNICAL ISSUES
+      
+      ### 🔴 Issue 1: [Technical Issue Title]
+      
+      **User Evidence:**
+      > "[Quote describing the problem]"
+      > — **PT00X**
+      
+      | Technical Details | |
+      |:------------------|:--|
+      | **Issue Type** | [Performance / Accessibility / Error Handling / API / Component] |
+      | **Severity** | 🔴 Critical |
+      | **Affected Users** | [X] of [Y] participants ([%]) |
+      | **Component/Screen** | [Specific component, screen, or API affected] |
+      | **Repro Steps** | [If identifiable from research: steps to reproduce] |
+      
+      **Technical Recommendation:**
+      ```
+      [Specific technical fix - e.g., "Add aria-label to button element", 
+      "Implement lazy loading for images", "Add error boundary for API failures"]
+      ```
+      
+      ---
+      
+      ### 🟡 Issue 2: [Technical Issue Title]
+      
+      [Same format]
+      
+      ---
+      
+      ## ACCESSIBILITY VIOLATIONS (Engineering Action Required)
+      
+      | WCAG Criterion | Issue | Component | Fix |
+      |:---------------|:------|:----------|:----|
+      | [1.1.1 Non-text Content] | [Unlabeled button] | [Component] | [Add aria-label] |
+      | [2.1.1 Keyboard] | [Not keyboard accessible] | [Component] | [Add tabindex, handlers] |
+      
+      ---
+      
+      ## PERFORMANCE METRICS OBSERVED
+      
+      | Metric | Observed | Target | Priority |
+      |:-------|:--------:|:------:|:--------:|
+      | [Load time] | [45+ sec] | [<3 sec] | 🔴 |
+      | [Time to interactive] | [X sec] | [<X sec] | 🟡 |
+      
+      ---
+      
+      ## IMPLEMENTATION CHECKLIST
+      
+      - [ ] [Specific technical task with component name]
+      - [ ] [Specific technical task with component name]
+      - [ ] [Specific technical task with component name]
+      - [ ] [Specific technical task with component name]
+      
+      ---
+      
+      ## WORKING WELL (Preserve These Patterns)
+      
+      | Feature | Why It Works (Technically) | Evidence |
+      |:--------|:---------------------------|:---------|
+      | [Feature] | [Technical reason - fast API, good caching, clean component] | "[Quote]" — PT00X |
+      
+      ---
+      
+      **Questions?** {{researcher_contact}} | **Channel:** {{study_channel}}
+      
+      ---
+      
+      ============================================================
+      FORMAT D2: DESIGN TEAM
+      ============================================================
+      
+      Use for: Design Team, design
+      
+      Filter for: Flow issues, pattern problems, visual hierarchy, 
+      discoverability, interaction design, information architecture, consistency.
+      
+      Frame findings as: Design pattern issues with recommended solutions.
+      
+      ---
+      
+      <div align="center">
+      
+      # 🎨 DESIGN READOUT
+      ## {{study_name}}
+      
+      **[Date]**
+      
+      ---
+      
+      | Participants | Sessions | Lead Researcher |
+      |:------------:|:--------:|:---------------:|
+      | {{participant_count}} | {{session_count}} | {{researcher_contact}} |
+      
+      </div>
+      
+      ---
+      
+      ## TL;DR FOR DESIGN
+      
+      - 🔴 [Critical UX pattern issue]
+      - 🔴 [Another critical design issue if applicable]
+      - 🟡 [Flow or hierarchy improvement needed]
+      - 🟢 [Design pattern working well - extend this]
+      
+      ---
+      
+      ## DESIGN PATTERN ISSUES
+      
+      ### 🔴 Issue 1: [Design Pattern Issue Title]
+      
+      **User Behavior Observed:**
+      > "[Quote showing confusion or failure]"
+      > — **PT00X**
+      
+      | Design Details | |
+      |:---------------|:--|
+      | **Pattern Type** | [Navigation / Discoverability / Hierarchy / Interaction / IA / Consistency] |
+      | **Severity** | 🔴 Critical |
+      | **Affected Users** | [X] of [Y] participants ([%]) |
+      | **Screen/Flow** | [Where in the user journey this occurs] |
+      | **User Expectation** | [What users expected to happen] |
+      | **Actual Experience** | [What actually happened] |
+      
+      **Design Recommendation:**
+      
+      | Current State | Recommended Change |
+      |:--------------|:-------------------|
+      | [Current pattern] | [Recommended pattern with rationale] |
+      
+      **Reference Pattern:** [If applicable - cite design system or best practice]
+      
+      ---
+      
+      ### 🟡 Issue 2: [Design Pattern Issue Title]
+      
+      [Same format]
+      
+      ---
+      
+      ## FLOW ANALYSIS
+      
+      **Problem Flow:**
+      ```
+      [Step 1] → [Step 2] → ❌ [Where users got stuck] → [Abandonment]
+      ```
+      
+      **Recommended Flow:**
+      ```
+      [Step 1] → [Step 2] → ✅ [Improved step] → [Success]
+      ```
+      
+      ---
+      
+      ## INFORMATION ARCHITECTURE ISSUES
+      
+      | Content | User Expectation | Current Location | Recommended |
+      |:--------|:-----------------|:-----------------|:------------|
+      | [Content type] | [Where users looked] | [Where it actually is] | [Where it should be] |
+      
+      ---
+      
+      ## DESIGN CHECKLIST
+      
+      - [ ] [Specific design task - e.g., "Redesign search with prominent placement"]
+      - [ ] [Specific design task - e.g., "Simplify messaging flow to 2 steps"]
+      - [ ] [Specific design task - e.g., "Increase touch target size for edit buttons"]
+      - [ ] [Specific design task]
+      
+      ---
+      
+      ## PATTERNS WORKING WELL (Extend These)
+      
+      | Pattern | Why It Works | Where Used | Extend To |
+      |:--------|:-------------|:-----------|:----------|
+      | [Pattern] | "[User quote praising it]" — PT00X | [Current location] | [Where else to apply] |
+      
+      ---
+      
+      **Questions?** {{researcher_contact}} | **Channel:** {{study_channel}}
+      
+      ---
+      
+      ============================================================
+      FORMAT D3: CONTENT TEAM
+      ============================================================
+      
+      Use for: Content Team, content
+      
+      Filter for: Labels, microcopy, error messages, terminology mismatches,
+      reading level issues, unclear instructions, tone problems.
+      
+      Frame findings as: Content issues with before/after copy recommendations.
+      
+      ---
+      
+      <div align="center">
+      
+      # ✍️ CONTENT READOUT
+      ## {{study_name}}
+      
+      **[Date]**
+      
+      ---
+      
+      | Participants | Sessions | Lead Researcher |
+      |:------------:|:--------:|:---------------:|
+      | {{participant_count}} | {{session_count}} | {{researcher_contact}} |
+      
+      </div>
+      
+      ---
+      
+      ## TL;DR FOR CONTENT
+      
+      - 🔴 [Critical labeling or terminology issue]
+      - 🟡 [Microcopy improvement needed]
+      - 🟡 [Error message or instruction unclear]
+      - 🟢 [Content that resonated well with users]
+      
+      ---
+      
+      ## CONTENT ISSUES
+      
+      ### 🔴 Issue 1: [Content Issue Title]
+      
+      **User Confusion:**
+      > "[Quote showing misunderstanding or confusion about terminology/labels]"
+      > — **PT00X**
+      
+      | Content Details | |
+      |:----------------|:--|
+      | **Issue Type** | [Label / Microcopy / Error Message / Terminology / Instructions / Tone] |
+      | **Severity** | 🔴 Critical |
+      | **Affected Users** | [X] of [Y] participants ([%]) |
+      | **Location** | [Screen and specific element] |
+      
+      **Copy Recommendation:**
+      
+      | Current Copy | Recommended Copy | Rationale |
+      |:-------------|:-----------------|:----------|
+      | "[Exact current text]" | "[Recommended text]" | [Why this is clearer for users] |
+      
+      ---
+      
+      ### 🟡 Issue 2: [Content Issue Title]
+      
+      [Same format]
+      
+      ---
+      
+      ## TERMINOLOGY AUDIT
+      
+      | Term Used | User Understanding | User's Mental Model | Recommended Term |
+      |:----------|:-------------------|:--------------------|:-----------------|
+      | [Current term] | [How users interpreted it] | [What they expected] | [Better term] |
+      
+      ---
+      
+      ## ERROR MESSAGE REVIEW
+      
+      | Current Error | User Reaction | Recommended Error | Tone |
+      |:--------------|:--------------|:------------------|:-----|
+      | "[Current message]" | [Confusion/frustration] | "[Clearer message]" | [Helpful/Reassuring] |
+      
+      ---
+      
+      ## CONTENT CHECKLIST
+      
+      - [ ] [Specific copy change with location]
+      - [ ] [Specific label update]
+      - [ ] [Specific error message rewrite]
+      - [ ] [Terminology standardization task]
+      
+      ---
+      
+      ## CONTENT WORKING WELL (Maintain These)
+      
+      | Content Element | Why It Works | Evidence |
+      |:----------------|:-------------|:---------|
+      | [Label/copy] | [Clear, matches user mental model] | "[Quote]" — PT00X |
+      
+      ---
+      
+      **Questions?** {{researcher_contact}} | **Channel:** {{study_channel}}
+      
+      ---
+      
+      ============================================================
+      FORMAT D4: ACCESSIBILITY TEAM
+      ============================================================
+      
+      Use for: Accessibility Team, accessibility
+      
+      Filter for: Screen reader issues, keyboard navigation, WCAG violations,
+      assistive technology problems, inclusive design gaps.
+      
+      Frame findings as: WCAG criterion violations with compliance path.
+      
+      ---
+      
+      <div align="center">
+      
+      # ♿ ACCESSIBILITY READOUT
+      ## {{study_name}}
+      
+      **[Date]**
+      
+      ---
+      
+      | Participants | Sessions | Lead Researcher |
+      |:------------:|:--------:|:---------------:|
+      | {{participant_count}} | {{session_count}} | {{researcher_contact}} |
+      
+      </div>
+      
+      ---
+      
+      ## TL;DR FOR ACCESSIBILITY
+      
+      - 🔴 [Critical WCAG violation blocking users]
+      - 🔴 [Another critical accessibility barrier if applicable]
+      - 🟡 [Accessibility improvement needed]
+      - 🟢 [Accessible pattern working well]
+      
+      ---
+      
+      ## WCAG COMPLIANCE SUMMARY
+      
+      | Level | Violations Found | Status |
+      |:------|:----------------:|:------:|
+      | **Level A** | [X] | 🔴 Critical gaps |
+      | **Level AA** | [X] | 🟡 Improvements needed |
+      | **Level AAA** | [X] | 🟢 / Not assessed |
+      
+      ---
+      
+      ## ACCESSIBILITY VIOLATIONS
+      
+      ### 🔴 Violation 1: WCAG [X.X.X] - [Criterion Name]
+      
+      **User Experience:**
+      > "[Quote from user with assistive technology]"
+      > — **PT00X** [Assistive tech used: VoiceOver/JAWS/etc.]
+      
+      | Violation Details | |
+      |:------------------|:--|
+      | **WCAG Criterion** | [X.X.X - Full criterion name] |
+      | **Level** | [A / AA / AAA] |
+      | **Severity** | 🔴 Critical |
+      | **Assistive Tech Affected** | [Screen readers / Keyboard / Magnification / etc.] |
+      | **Component/Screen** | [Specific location] |
+      | **Current State** | [What's happening now] |
+      
+      **Compliance Path:**
+      
+      | Issue | Fix | WCAG Technique |
+      |:------|:----|:---------------|
+      | [Specific issue] | [Specific fix] | [ARIA technique or HTML fix] |
+      
+      ---
+      
+      ### 🟡 Violation 2: WCAG [X.X.X] - [Criterion Name]
+      
+      [Same format]
+      
+      ---
+      
+      ## ASSISTIVE TECHNOLOGY TESTING SUMMARY
+      
+      | Technology | Tested By | Major Issues | Minor Issues |
+      |:-----------|:----------|:------------:|:------------:|
+      | VoiceOver (iOS) | PT00X | [X] | [X] |
+      | Large Text | PT00X | [X] | [X] |
+      | [Other] | PT00X | [X] | [X] |
+      
+      ---
+      
+      ## ACCESSIBILITY CHECKLIST
+      
+      - [ ] **[WCAG X.X.X]** - [Specific fix for specific component]
+      - [ ] **[WCAG X.X.X]** - [Specific fix for specific component]
+      - [ ] **[WCAG X.X.X]** - [Specific fix for specific component]
+      - [ ] Conduct full accessibility audit for remaining issues
+      
+      ---
+      
+      ## ACCESSIBLE PATTERNS WORKING WELL
+      
+      | Feature | Why It's Accessible | Evidence |
+      |:--------|:--------------------|:---------|
+      | [Feature] | [Technical reason - proper labels, good contrast, etc.] | "[Quote]" — PT00X |
+      
+      ---
+      
+      **Questions?** {{researcher_contact}} | **Channel:** {{study_channel}}
+      
+      ---
+      
+      ============================================================
+      FORMAT D5: PRODUCT TEAM
+      ============================================================
+      
+      Use for: Product Team, product
+      
+      Filter for: All findings, framed for prioritization and roadmap decisions.
+      
+      Frame findings as: User impact with severity/effort for backlog grooming.
+      
+      ---
+      
+      <div align="center">
+      
+      # 📋 PRODUCT READOUT
+      ## {{study_name}}
+      
+      **[Date]**
+      
+      ---
+      
+      | Participants | Sessions | Lead Researcher |
+      |:------------:|:--------:|:---------------:|
+      | {{participant_count}} | {{session_count}} | {{researcher_contact}} |
+      
+      </div>
+      
+      ---
+      
+      ## TL;DR FOR PRODUCT
+      
+      - 🔴 [Critical user impact requiring immediate prioritization]
+      - 🔴 [Another critical issue if applicable]
+      - 🟡 [User pain point for backlog consideration]
+      - 🟢 [Feature/flow validated - users love this]
+      
+      ---
+      
+      ## PRIORITY MATRIX
+      
+      | Finding | User Impact | Severity | Effort | Sprint Recommendation |
+      |:--------|:-----------:|:--------:|:------:|:----------------------|
+      | [Finding 1] | [High/Med/Low] | 🔴 | [H/M/L] | Current sprint |
+      | [Finding 2] | [High/Med/Low] | 🔴 | [H/M/L] | Current sprint |
+      | [Finding 3] | [High/Med/Low] | 🟡 | [H/M/L] | Next sprint |
+      | [Finding 4] | [High/Med/Low] | 🟢 | [H/M/L] | Backlog |
+      
+      ---
+      
+      ## USER IMPACT FINDINGS
       
       ### 🔴 Finding 1: [Title]
       
-      **User Quote:**
-      > "[Exact quote from participant]"
-      > — **PT001** [context]
+      **User Voice:**
+      > "[Quote showing impact]"
+      > — **PT00X**
       
-      | Aspect | Details |
-      |:-------|:--------|
-      | **The Problem** | [Specific description relevant to this team] |
-      | **Severity** | 🔴 Critical |
-      | **Affected** | [X] of [Y] participants ([%]) |
-      | **Where it happens** | [Specific screen/flow/component] |
+      | Product Details | |
+      |:----------------|:--|
+      | **User Impact** | [What users can't do or struggle with] |
+      | **Affected Segment** | [X] of [Y] participants ([%]) |
+      | **Task Completion** | [Success rate if known] |
+      | **Workaround** | [How users currently cope - or "None, abandon task"] |
+      | **Business Impact** | [Support calls, abandonment, satisfaction scores] |
       
-      **Suggested Fix:**
-      [Specific, actionable recommendation for this team]
+      **Acceptance Criteria for Fix:**
+      - [ ] [User should be able to...]
+      - [ ] [Success metric: X]
       
       ---
       
@@ -530,42 +996,51 @@ ai_generation_tasks:
       
       ---
       
-      ## IMPLEMENTATION CHECKLIST
+      ## VALIDATED FEATURES ✅
       
-      - [ ] [Specific task 1 for this team]
-      - [ ] [Specific task 2 for this team]
-      - [ ] [Specific task 3 for this team]
-      - [ ] [Specific task 4 for this team]
-      
-      ---
-      
-      ## WHAT'S WORKING (Don't Break These)
-      
-      | Feature | Why It Works | Evidence |
-      |:--------|:-------------|:---------|
-      | [Feature 1] | [Why users liked it] | "[Quote]" — PT00X |
-      | [Feature 2] | [Why users liked it] | "[Quote]" — PT00X |
+      | Feature | User Feedback | Recommendation |
+      |:--------|:--------------|:---------------|
+      | [Feature] | "[Positive quote]" — PT00X | Keep as-is / Expand to [area] |
       
       ---
       
-      ## OPEN QUESTIONS FOR {{target_audience}}
+      ## BACKLOG RECOMMENDATIONS
       
-      - [Question that emerged from research this team should consider]
-      - [Another question for team discussion]
+      | Priority | Story | Acceptance Criteria | Points (Est.) |
+      |:--------:|:------|:--------------------|:-------------:|
+      | P0 | [Story title] | [Key criteria] | [X] |
+      | P1 | [Story title] | [Key criteria] | [X] |
+      | P2 | [Story title] | [Key criteria] | [X] |
       
       ---
       
-      ## RELATED FILES
+      ## METRICS TO TRACK
       
-      | Document | Link |
-      |:---------|:-----|
-      | Full Research Report | [Link] |
-      | Session Summaries | {{research_folder_path}}/03-fieldwork/session-summaries/ |
-      | Affinity Map | {{research_folder_path}}/04-analysis/affinity-mapping/ |
+      | Metric | Current | Target | Tracks |
+      |:-------|:-------:|:------:|:-------|
+      | [Task completion rate] | [X%] | [Y%] | Finding 1, 2 |
+      | [User satisfaction] | [X] | [Y] | Overall |
       
       ---
       
       **Questions?** {{researcher_contact}} | **Channel:** {{study_channel}}
+      
+      ---
+      
+      ============================================================
+      TEAM FORMAT SELECTION
+      ============================================================
+      
+      Based on {{target_audience}}, select ONE format:
+      
+      - "Engineering Team" or "engineering" → FORMAT D1
+      - "Design Team" or "design" → FORMAT D2
+      - "Content Team" or "content" → FORMAT D3
+      - "Accessibility Team" or "accessibility" → FORMAT D4
+      - "Product Team" or "product" → FORMAT D5
+      
+      Filter findings to include ONLY those relevant to the selected team.
+      If a finding doesn't apply to the team, exclude it entirely.
       
       ---
       
@@ -575,11 +1050,16 @@ ai_generation_tasks:
       
       Based on {{target_audience}}, output ONLY ONE format:
       
-      - Congressional Briefing → FORMAT A
-      - Executive Leadership → FORMAT B
-      - Product Leadership, Design Leadership → FORMAT C
-      - Engineering Team, Design Team, Product Team, Accessibility Team, Content Team → FORMAT D
+      - "Congressional Briefing" → FORMAT A
+      - "Executive Leadership" → FORMAT B
+      - "Product Leadership", "Design Leadership" → FORMAT C
+      - "Engineering Team" → FORMAT D1
+      - "Design Team" → FORMAT D2
+      - "Content Team" → FORMAT D3
+      - "Accessibility Team" → FORMAT D4
+      - "Product Team" → FORMAT D5
       
+      CRITICAL: Filter findings to include ONLY those relevant to the selected team.
       Do not mix formats. Do not include these instructions in output.
 
 output_options:
