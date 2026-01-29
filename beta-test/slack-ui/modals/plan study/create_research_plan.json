@@ -1,14 +1,13 @@
-
 {
   "type": "modal",
   "callback_id": "research_plan_modal",
   "title": {
     "type": "plain_text",
-    "text": "Research Plan"
+    "text": "Research plan"
   },
   "submit": {
     "type": "plain_text",
-    "text": "Generate Plan"
+    "text": "Generate plan"
   },
   "close": {
     "type": "plain_text",
@@ -20,7 +19,7 @@
       "elements": [
         {
           "type": "mrkdwn",
-          "text": "Define your research methodology, timeline, and team. End date auto-calculates from start date and timeline."
+          "text": "Define your research methodology, timeline, and session details. This info will auto-fill participant outreach messages."
         }
       ]
     },
@@ -58,7 +57,7 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*📁 Basic Information*"
+        "text": "*📁 Basic information*"
       }
     },
     {
@@ -66,7 +65,7 @@
       "block_id": "product_area_block",
       "label": {
         "type": "plain_text",
-        "text": "Product/Feature Area *"
+        "text": "Product / feature area *"
       },
       "element": {
         "type": "plain_text_input",
@@ -82,7 +81,7 @@
       "block_id": "study_title_block",
       "label": {
         "type": "plain_text",
-        "text": "Study Title *"
+        "text": "Study title *"
       },
       "element": {
         "type": "plain_text_input",
@@ -100,7 +99,7 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*🎯 Research Context*"
+        "text": "*🎯 Research context*"
       }
     },
     {
@@ -326,6 +325,145 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
+        "text": "*⏱️ Session settings*"
+      }
+    },
+    {
+      "type": "context",
+      "elements": [
+        {
+          "type": "mrkdwn",
+          "text": "Used to auto-fill participant outreach messages"
+        }
+      ]
+    },
+    {
+      "type": "input",
+      "block_id": "session_duration_block",
+      "label": {
+        "type": "plain_text",
+        "text": "Session duration *"
+      },
+      "element": {
+        "type": "static_select",
+        "action_id": "session_duration_select",
+        "placeholder": {
+          "type": "plain_text",
+          "text": "Select..."
+        },
+        "initial_option": {
+          "text": {
+            "type": "plain_text",
+            "text": "45 minutes"
+          },
+          "value": "45"
+        },
+        "options": [
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "30 minutes"
+            },
+            "value": "30"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "45 minutes"
+            },
+            "value": "45"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "60 minutes"
+            },
+            "value": "60"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "90 minutes"
+            },
+            "value": "90"
+          }
+        ]
+      }
+    },
+    {
+      "type": "input",
+      "block_id": "incentive_block",
+      "label": {
+        "type": "plain_text",
+        "text": "Participant incentive *"
+      },
+      "element": {
+        "type": "static_select",
+        "action_id": "incentive_select",
+        "placeholder": {
+          "type": "plain_text",
+          "text": "Select..."
+        },
+        "options": [
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "No incentive"
+            },
+            "value": "none"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "$25"
+            },
+            "value": "25"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "$50"
+            },
+            "value": "50"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "$75"
+            },
+            "value": "75"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "$100"
+            },
+            "value": "100"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "$125"
+            },
+            "value": "125"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "$150"
+            },
+            "value": "150"
+          }
+        ]
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
         "text": "*📅 Timeline*"
       }
     },
@@ -334,7 +472,7 @@
       "block_id": "start_date_block",
       "label": {
         "type": "plain_text",
-        "text": "Start Date *"
+        "text": "Start date *"
       },
       "element": {
         "type": "datepicker",
@@ -387,7 +525,7 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*👤 Research Team*"
+        "text": "*👤 Research team*"
       }
     },
     {
@@ -395,11 +533,11 @@
       "block_id": "lead_researcher_block",
       "label": {
         "type": "plain_text",
-        "text": "Lead Researcher"
+        "text": "Lead researcher"
       },
       "hint": {
         "type": "plain_text",
-        "text": "Auto-synced from research brief"
+        "text": "Auto-synced from your Slack profile"
       },
       "element": {
         "type": "plain_text_input",
@@ -409,11 +547,47 @@
     },
     {
       "type": "input",
+      "block_id": "researcher_title_block",
+      "label": {
+        "type": "plain_text",
+        "text": "Title *"
+      },
+      "element": {
+        "type": "plain_text_input",
+        "action_id": "researcher_title_input",
+        "placeholder": {
+          "type": "plain_text",
+          "text": "e.g., UX Researcher"
+        }
+      }
+    },
+    {
+      "type": "input",
+      "block_id": "researcher_email_block",
+      "label": {
+        "type": "plain_text",
+        "text": "Contact email *"
+      },
+      "hint": {
+        "type": "plain_text",
+        "text": "For participant communication"
+      },
+      "element": {
+        "type": "plain_text_input",
+        "action_id": "researcher_email_input",
+        "placeholder": {
+          "type": "plain_text",
+          "text": "e.g., jordan.researcher@va.gov"
+        }
+      }
+    },
+    {
+      "type": "input",
       "block_id": "team_office_block",
       "optional": true,
       "label": {
         "type": "plain_text",
-        "text": "Team/Office"
+        "text": "Team / office"
       },
       "element": {
         "type": "plain_text_input",
