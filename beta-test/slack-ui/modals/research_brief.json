@@ -288,16 +288,16 @@
           {
             "text": {
               "type": "plain_text",
-              "text": "Survey"
+              "text": "Concept Testing"
             },
-            "value": "survey"
+            "value": "concept_testing"
           },
           {
             "text": {
               "type": "plain_text",
-              "text": "Diary Study"
+              "text": "Survey"
             },
-            "value": "diary_study"
+            "value": "survey"
           },
           {
             "text": {
@@ -316,9 +316,23 @@
           {
             "text": {
               "type": "plain_text",
-              "text": "Concept Testing"
+              "text": "Diary Study"
             },
-            "value": "concept_testing"
+            "value": "diary_study"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "A/B Testing"
+            },
+            "value": "ab_testing"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "Competitive Analysis"
+            },
+            "value": "competitive_analysis"
           },
           {
             "text": {
