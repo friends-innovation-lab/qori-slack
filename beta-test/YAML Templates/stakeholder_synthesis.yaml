@@ -2,30 +2,33 @@ id: stakeholder_synthesis
 name: synthesize_stakeholder_interviews
 
 label: 🏛️ Stakeholder Synthesis
-version: "v2.0"
+version: "v3.0"
 
 description: >
   Synthesize findings from internal stakeholder interviews into comprehensive,
   service blueprint-ready documentation. Aggregates constraints, priorities, 
   backstage processes, and generates questions for user research. Produces
   detailed process maps with failure modes suitable for service design work.
+  
+  v3.0: Refactored to use Claude Sonnet with multi-task generation to prevent
+  output truncation.
 
 author: Qori R&D
 created: 2026-01-08
-last_updated: 2026-01-21
+last_updated: 2026-01-29
 
 input_type: slack_modal_form
 input_processing: auto_file_discovery
 
-# LLM Configuration
+# LLM Configuration - Claude Sonnet
 llm_config:
-  model: "gpt-4o"
+  model: "claude-sonnet-4-20250514"
   temperature: 0.3
-  max_tokens: 12000  # Increased significantly for comprehensive output
+  max_tokens: 8000  # Claude Sonnet supports 8K output
 
 # System limits
 system_limits:
-  max_total_tokens: 80000  # Increased to handle multiple long interviews
+  max_total_tokens: 100000  # Claude has 200K context window
   min_content_threshold: 1000
   max_file_size: 150000
   supported_formats: [".md", ".txt", ".docx"]
@@ -33,7 +36,6 @@ system_limits:
 
 # Slack modal input variables
 input_variables:
-  # Study context (from router/modal)
   - name: selected_study
     type: string
     required: true
@@ -54,8 +56,6 @@ input_variables:
     type: array
     required: false
     description: "Team members to notify"
-  
-  # File selection (from modal form)
   - name: stakeholder_files
     type: array
     required: true
@@ -64,14 +64,10 @@ input_variables:
     type: array
     required: false
     description: "Auto-discovered files from study folder"
-  
-  # Content (processed by backend)
   - name: combined_file_content
     type: string
     required: true
     description: "Combined content of all selected stakeholder files"
-  
-  # System
   - name: current_date
     type: string
     required: true
@@ -80,122 +76,58 @@ input_variables:
 # File discovery system
 auto_file_discovery:
   core_files:
-    # REQUIRED — Stakeholder interview transcripts/notes
     stakeholder_notes:
       file_patterns: ["*stakeholder*", "*transcript*", "*internal*", "*sme*", "*engineering*", "*product_owner*", "*policy*", "*design*", "*lead*", "*response*"]
-      search_paths: ["primary-research/01-planning/stakeholder-interviews/"]
+      search_paths: ["01-planning/stakeholder-interviews/"]
       priority: "required"
       confidence_weight: 80
-      
-    # OPTIONAL — Interview guides for context
     interview_guides:
       file_patterns: ["*guide*"]
-      search_paths: ["primary-research/01-planning/stakeholder-interviews/"]
+      search_paths: ["01-planning/stakeholder-interviews/"]
       priority: "optional"
       confidence_weight: 20
 
-# AI generation task
+# =============================================================================
+# AI GENERATION TASKS - Split into 4 sequential tasks to prevent truncation
+# =============================================================================
+
 ai_generation_tasks:
-  - task_id: "stakeholder_synthesis_complete"
+
+  # -------------------------------------------------------------------------
+  # TASK 1: Overview, Stakeholders, Constraints
+  # -------------------------------------------------------------------------
+  - task_id: "section_1_overview_constraints"
     prompt: |
-      You are synthesizing internal stakeholder interviews into a COMPREHENSIVE document 
-      that will feed directly into service blueprint creation. This requires DETAILED 
-      process mapping, failure mode identification, and cross-stakeholder triangulation.
+      You are synthesizing internal stakeholder interviews. This is TASK 1 of 4.
+      
+      Generate ONLY these sections:
+      1. Title and Overview table
+      2. Stakeholders Interviewed table
+      3. Constraints & Blockers (Technical, Policy, Resource)
       
       ============================================================
-      CRITICAL: PROCESS ALL INPUT FILES
+      RULES
       ============================================================
       
-      BEFORE generating output, you MUST:
-      1. Identify ALL stakeholders in the input data
-      2. Extract insights from EACH stakeholder
-      3. Cross-reference where multiple stakeholders discuss the same topic
-      4. Note where stakeholders have different perspectives on the same issue
+      RULE 1: PROCESS ALL STAKEHOLDERS
+      - Count ALL stakeholders in the input
+      - Extract insights from EACH stakeholder
+      - If you see Engineering Lead, Design Lead, and Policy SME, that's 3 stakeholders
       
-      Count the stakeholders. If you see Engineering Lead, Design Lead, and Policy SME,
-      that's 3 stakeholders and ALL THREE must be represented throughout the output.
-      
-      ============================================================
-      RULES FOR COMPREHENSIVE SYNTHESIS
-      ============================================================
-      
-      RULE 1: CONSTRAINT TRIANGULATION
-      
+      RULE 2: CONSTRAINT TRIANGULATION
       When multiple stakeholders mention the same constraint, show ALL perspectives:
       - Engineering says: [technical angle]
       - Design says: [UX impact angle]  
       - Policy says: [compliance/legal angle]
       
-      This triangulation is ESSENTIAL for service blueprint work.
+      RULE 3: QUANTIFY EVERYTHING
+      Include ALL numbers: drop-off rates, incident counts, time durations, team sizes
       
-      RULE 2: QUANTIFY EVERYTHING POSSIBLE
-      
-      Extract and include ALL numbers mentioned:
-      - Drop-off rates (e.g., "42% drop-off at authentication")
-      - Incident counts (e.g., "847 duplicates per month")
-      - Time durations (e.g., "3-30 seconds latency")
-      - Team sizes, backlog counts, timeline estimates
-      
-      Numbers make constraints concrete and actionable.
-      
-      RULE 3: DETAILED PROCESS MAPPING
-      
-      For each major process, document:
-      - Frontend steps (what user sees)
-      - Backend steps (what happens invisibly)
-      - Failure points with specific failure modes
-      - Systems involved at each step
-      - Where breakdowns occur and WHY
-      
-      RULE 4: SERVICE BLUEPRINT PREPARATION
-      
-      Include a dedicated section mapping:
-      - Frontstage moments → Backstage dependencies
-      - Manual/human processes that support automated flows
-      - "Line of visibility" gaps (what users see vs. reality)
-      
-      RULE 5: CROSS-REFERENCE INSIGHTS
-      
-      When stakeholders reference each other's domains:
-      - Design mentions engineering constraints → note it
-      - Engineering mentions policy blockers → note it
-      - Policy mentions design workarounds → note it
-      
-      These cross-references reveal systemic patterns.
-      
-      RULE 6: AGGREGATE BY THEME, NOT BY INTERVIEW
-      
-      DO NOT structure as "Engineering said X, Design said Y"
-      DO structure as "Authentication Constraint: [Engineering perspective] + [Design perspective] + [Policy perspective]"
-      
-      RULE 7: CITE BY ROLE
-      
-      Use role titles for attribution:
-      - ✅ "Engineering Lead," "Design Lead," "Policy SME"
-      - ❌ Personal names
-      
-      RULE 8: GENERATE ACTIONABLE RESEARCH QUESTIONS
-      
-      For each major insight, generate:
-      - What to explore with users
-      - What method would work best
-      - Why this matters (connection to stakeholder insight)
-      
-      RULE 9: DOCUMENT RECOMMENDED NEXT INTERVIEWS
-      
-      Stakeholders often mention colleagues who know more. Capture:
-      - Name and role
-      - What they'd contribute
-      - Priority level
-      
-      RULE 10: VA CONTEXT
-      
-      - Teams: Product, Engineering, Design, Content, Policy, Operations, OCTO, Clinical
-      - Systems: VistA, Cerner, VA.gov, My HealtheVet, VA Mobile App, ID.me
-      - NEVER mention: Marketing, Sales, CRM, advertising
+      RULE 4: CITE BY ROLE
+      Use "Engineering Lead," "Design Lead," "Policy SME" — not personal names
       
       ============================================================
-      INPUT DATA — PROCESS ALL FILES BELOW
+      INPUT DATA
       ============================================================
       
       **Study:** {{study_name}}
@@ -205,7 +137,7 @@ ai_generation_tasks:
       {{combined_file_content}}
       
       ============================================================
-      NOW GENERATE COMPREHENSIVE OUTPUT
+      GENERATE OUTPUT (Sections 1-3 only)
       ============================================================
       
       # 🏛️ Stakeholder Synthesis: {{study_name}}
@@ -231,8 +163,6 @@ ai_generation_tasks:
       | Role | Team | Tenure | Focus Areas |
       |------|------|--------|-------------|
       | [Role from input] | [Team] | [If mentioned] | [Topics they covered] |
-      | [Role from input] | [Team] | [If mentioned] | [Topics they covered] |
-      | [Role from input] | [Team] | [If mentioned] | [Topics they covered] |
       
       ---
       
@@ -247,8 +177,6 @@ ai_generation_tasks:
       | Constraint | Impact | Downstream Effect | Source(s) |
       |------------|--------|-------------------|-----------|
       | [Constraint with specifics] | [Quantified impact if possible] | [What users experience] | [All roles who mentioned] |
-      | [Constraint] | [Impact] | [User effect] | [Source(s)] |
-      | [Continue for ALL technical constraints mentioned] | | | |
       
       ### Policy Constraints
       
@@ -259,7 +187,6 @@ ai_generation_tasks:
       | Constraint | Impact | User Experience Effect | Source(s) |
       |------------|--------|------------------------|-----------|
       | [Policy constraint with regulation/directive name] | [What it requires] | [How users experience it] | [Source(s)] |
-      | [Continue for ALL policy constraints] | | | |
       
       ### Resource Constraints
       
@@ -268,9 +195,53 @@ ai_generation_tasks:
       | Constraint | Impact | Systemic Effect | Source(s) |
       |------------|--------|-----------------|-----------|
       | [Resource constraint with numbers] | [Quantified impact] | [Organizational effect] | [Source(s)] |
-      | [Continue for ALL resource constraints] | | | |
       
-      ---
+      [END OF SECTION 1-3 — Do not generate beyond this point]
+
+  # -------------------------------------------------------------------------
+  # TASK 2: Strategic Priorities + Backstage Processes
+  # -------------------------------------------------------------------------
+  - task_id: "section_2_priorities_processes"
+    prompt: |
+      You are synthesizing internal stakeholder interviews. This is TASK 2 of 4.
+      
+      Generate ONLY these sections:
+      1. Strategic Priorities
+      2. Backstage Processes (ALL major processes with detailed breakdowns)
+      
+      ============================================================
+      RULES
+      ============================================================
+      
+      RULE 1: DETAILED PROCESS MAPPING
+      For each major process, document:
+      - Frontend steps (what user sees)
+      - Backend steps (what happens invisibly)
+      - Failure points with specific failure modes
+      - Systems involved at each step
+      
+      RULE 2: QUANTIFY EVERYTHING
+      Include ALL numbers: drop-off rates, latency times, incident counts
+      
+      RULE 3: CITE BY ROLE
+      Use "Engineering Lead," "Design Lead," "Policy SME" — not personal names
+      
+      RULE 4: INCLUDE ALL PROCESSES
+      Document EVERY major process mentioned in the interviews
+      
+      ============================================================
+      INPUT DATA
+      ============================================================
+      
+      **Study:** {{study_name}}
+      
+      **Stakeholder Interview Data:**
+      
+      {{combined_file_content}}
+      
+      ============================================================
+      GENERATE OUTPUT (Sections 4-5 only)
+      ============================================================
       
       ## 🎯 Strategic Priorities
       
@@ -279,7 +250,6 @@ ai_generation_tasks:
       | Priority | Driver | Timeline | Aligns With User Needs? | Source |
       |----------|--------|----------|:-----------------------:|--------|
       | [What gets prioritized] | [Why] | [When] | ✅ / ⚠️ / ❌ | [Role] |
-      | [Continue for all priorities mentioned] | | | | |
       
       **Critical Alignment Gap:** [Document any conflicts between stated priorities and user needs]
       
@@ -287,7 +257,7 @@ ai_generation_tasks:
       
       ## ⚙️ Backstage Processes
       
-      ### [Primary Process Name] (e.g., Appointment Creation Flow)
+      ### [First Major Process Name]
       
       > "[Quote explaining this process]" — [Role]
       
@@ -308,25 +278,69 @@ ai_generation_tasks:
       | Failure Point | What Happens | User Experience | Frequency/Severity |
       |---------------|--------------|-----------------|-------------------|
       | [Specific failure] | [Technical explanation] | [What user sees/feels] | [Quantify if possible] |
-      | [Continue for all failure modes] | | | |
       
       **Systems Involved:** [List all systems, APIs, databases, vendors]
       
       ---
       
-      ### [Second Major Process] (e.g., Authentication & Identity Verification)
+      ### [Second Major Process Name]
       
-      > "[Quote]" — [Role]
-      
-      [Follow same detailed structure as above]
+      [Follow same detailed structure]
       
       ---
       
-      ### [Third Major Process if applicable]
+      ### [Third Major Process Name]
       
-      [Continue pattern]
+      [Follow same detailed structure]
       
-      ---
+      [Continue for ALL major processes mentioned in interviews]
+      
+      [END OF SECTION 4-5 — Do not generate beyond this point]
+
+  # -------------------------------------------------------------------------
+  # TASK 3: Service Blueprint + Research Questions
+  # -------------------------------------------------------------------------
+  - task_id: "section_3_blueprint_questions"
+    prompt: |
+      You are synthesizing internal stakeholder interviews. This is TASK 3 of 4.
+      
+      Generate ONLY these sections:
+      1. Service Blueprint Implications
+      2. Questions for User Research
+      
+      ============================================================
+      RULES
+      ============================================================
+      
+      RULE 1: SERVICE BLUEPRINT FOCUS
+      Map frontstage moments to backstage dependencies
+      Identify "line of visibility" gaps
+      Document manual support processes
+      
+      RULE 2: ACTIONABLE RESEARCH QUESTIONS
+      For each question, include:
+      - The stakeholder insight that prompted it
+      - Specific research question
+      - Recommended method
+      
+      RULE 3: PRIORITIZE QUESTIONS
+      - 🔴 High Priority: Critical to understand before design decisions
+      - 🟡 Medium Priority: Important but not blocking
+      - 🟢 Validation: Test stakeholder assumptions
+      
+      ============================================================
+      INPUT DATA
+      ============================================================
+      
+      **Study:** {{study_name}}
+      
+      **Stakeholder Interview Data:**
+      
+      {{combined_file_content}}
+      
+      ============================================================
+      GENERATE OUTPUT (Sections 6-7 only)
+      ============================================================
       
       ## 🎯 Service Blueprint Implications
       
@@ -337,7 +351,6 @@ ai_generation_tasks:
       | Frontstage Moment | Backstage Dependency | Failure Mode |
       |-------------------|----------------------|--------------|
       | [What user sees/does] | [What must work behind scenes] | [How it fails] |
-      | [Continue for key moments] | | |
       
       ### Support Processes Currently Manual
       
@@ -361,8 +374,7 @@ ai_generation_tasks:
       
       | Stakeholder Insight | Research Question | Method |
       |---------------------|-------------------|--------|
-      | [Specific insight from interviews] | [What to ask/observe] | [Interview/observation/etc.] |
-      | [Continue for high-priority questions] | | |
+      | [Specific insight from interviews] | [What to ask/observe] | [Interview/usability test/etc.] |
       
       ### Medium Priority (🟡)
       
@@ -376,7 +388,52 @@ ai_generation_tasks:
       |------------------------|---------------------|
       | [Assumption stated by stakeholder] | [How to test if true] |
       
-      ---
+      [END OF SECTION 6-7 — Do not generate beyond this point]
+
+  # -------------------------------------------------------------------------
+  # TASK 4: Open Questions + Recommendations + Next Steps
+  # -------------------------------------------------------------------------
+  - task_id: "section_4_recommendations"
+    prompt: |
+      You are synthesizing internal stakeholder interviews. This is TASK 4 of 4.
+      
+      Generate ONLY these sections:
+      1. Open Questions
+      2. Recommendations
+      3. Methodology
+      4. Recommended Next Interviews
+      5. References
+      
+      ============================================================
+      RULES
+      ============================================================
+      
+      RULE 1: CAPTURE UNANSWERED QUESTIONS
+      Document questions that couldn't be answered from the interviews
+      Note who might know the answer
+      
+      RULE 2: ACTIONABLE RECOMMENDATIONS
+      Each recommendation should:
+      - Address a specific constraint
+      - Have a feasibility indicator (✅ / ⚠️ / ❌)
+      - Have a suggested owner
+      
+      RULE 3: DOCUMENT RECOMMENDED CONTACTS
+      Stakeholders often mention colleagues who know more — capture these
+      
+      ============================================================
+      INPUT DATA
+      ============================================================
+      
+      **Study:** {{study_name}}
+      
+      **Stakeholder Interview Data:**
+      
+      {{combined_file_content}}
+      
+      ============================================================
+      GENERATE OUTPUT (Sections 8-12 only)
+      ============================================================
       
       ## ❓ Open Questions
       
@@ -443,14 +500,14 @@ ai_generation_tasks:
       
       ## 👥 Recommended Next Interviews
       
-      | Name | Role | Focus Area | Priority |
-      |------|------|------------|----------|
-      | [Name if mentioned by stakeholders] | [Role] | [What they'd contribute] | 🔴 / 🟡 / 🟢 |
-      | [Continue for all recommended contacts] | | | |
+      | Name/Role | Team | Focus Area | Priority |
+      |-----------|------|------------|----------|
+      | [Name if mentioned by stakeholders] | [Team] | [What they'd contribute] | 🔴 / 🟡 / 🟢 |
       
       ---
       
-      ### References
+      <details>
+      <summary>References</summary>
       
       This analysis follows established stakeholder research and service design methods:
       
@@ -459,10 +516,21 @@ ai_generation_tasks:
       - **Stickdorn & Schneider** — "This Is Service Design Thinking" (backstage process mapping)
       - **Kalbach** — "Mapping Experiences" (service blueprint methodology)
       
+      </details>
+      
       ---
       
       *Generated by Qori • {{current_date}}*
 
+# Processing workflow
+processing_workflow:
+  1. validate_inputs
+  2. verify_all_files_loaded
+  3. execute_ai_generation_tasks  # Runs all 4 tasks sequentially
+  4. concatenate_task_outputs     # Combines sections 1-4 into single document
+  5. validate_all_stakeholders_represented
+  6. populate_template
+  7. save_to_outputs
 
 # Output configuration
 output_options:
@@ -472,13 +540,37 @@ output_options:
   path: "01-planning/stakeholder-interviews/"
   filename: "{{selected_study}}_stakeholder_synthesis_{{current_date}}.md"
 
-# Slack output template
+# Concatenate all task outputs into single document
 output_template: |
-  {{ai_generated.stakeholder_synthesis_complete}}
+  {{ai_generated.section_1_overview_constraints}}
+  
+  ---
+  
+  {{ai_generated.section_2_priorities_processes}}
+  
+  ---
+  
+  {{ai_generated.section_3_blueprint_questions}}
+  
+  ---
+  
+  {{ai_generated.section_4_recommendations}}
 
 # GitHub markdown file template
 github_file_template: |
-  {{ai_generated.stakeholder_synthesis_complete}}
+  {{ai_generated.section_1_overview_constraints}}
+  
+  ---
+  
+  {{ai_generated.section_2_priorities_processes}}
+  
+  ---
+  
+  {{ai_generated.section_3_blueprint_questions}}
+  
+  ---
+  
+  {{ai_generated.section_4_recommendations}}
 
 # Validation rules
 validation_rules:
@@ -494,36 +586,28 @@ validation_rules:
   - rule: "quantification"
     description: "Include numbers and metrics where available"
     check: "output contains numeric data from input"
+  - rule: "all_sections_present"
+    description: "All 4 task outputs must be present"
+    check: "output contains Overview, Constraints, Priorities, Processes, Blueprint, Questions, Recommendations"
 
-notes: |
-  v2.0 Major Update — Service Blueprint Ready:
-  - Increased max_tokens from 4500 to 12000 for comprehensive output
-  - Increased max_total_tokens from 50000 to 80000 for multiple long interviews
-  - Added CRITICAL section requiring processing of ALL input files
-  - Added constraint triangulation requirement (multiple stakeholder perspectives)
-  - Added quantification requirement (include all numbers from interviews)
-  - Added detailed process mapping with frontend/backend split
-  - Added failure mode documentation for each process
-  - Added Service Blueprint Implications section
-  - Added Line of Visibility gaps mapping
-  - Added validation rules to check output completeness
-  - Added verify_all_files_loaded and validate_all_stakeholders_represented steps
-  - Enhanced file discovery patterns to catch more stakeholder file types
-  - Added Recommended Next Interviews section with specific people mentioned
+# Slack notifications
+notify:
+  - role: research_team
+    action: "Stakeholder synthesis complete"
+    channel: "{{study_channel}}"
+    message: "🏛️ {{researcher_contact}} completed stakeholder synthesis for {{study_name}}. {{stakeholder_count}} stakeholders analyzed."
+
+# Auto-generated variables
+auto_variables:
+  - current_date: new Date().toISOString().split('T')[0]
+  - stakeholder_count: count_stakeholders_in_output()
+  - github_file_link: generate_github_link(selected_study, current_date)
   
-  v1.1 Updates:
-  - Added complete input_variables with types, required flags, descriptions
-  - Added study context variables (study_name, study_channel, researcher_contact)
-  - Added discovered_files for auto-discovery
-  - Added current_date for output
-  - Updated description to reflect planning context
-  
-  v1.0 Initial release:
-  - Basic aggregation across stakeholder interviews
-  
-  KEY DIFFERENCE FROM v1.x:
-  - v1.x produced summary-level output
-  - v2.0 produces service blueprint-ready detail
+  WHY MULTI-TASK APPROACH:
+  - GPT-4o max output ~4K tokens caused truncation mid-document
+  - Claude Sonnet supports 8K output but complex prompts still risk truncation
+  - Splitting into focused tasks ensures complete output for each section
+  - Each task has clear boundaries ("Do not generate beyond this point")
   
   WHAT THIS SYNTHESIS FEEDS INTO:
   - Service Blueprint (backstage layer with failure modes)
@@ -533,7 +617,7 @@ notes: |
 
 output_use: |
   Synthesize internal stakeholder interviews into comprehensive, service 
-  blueprint-ready documentation. Produces detailed process maps with failure 
-  modes, constraint triangulation across stakeholder perspectives, and 
-  quantified insights suitable for service design work. Run BEFORE user 
-  research to inform discussion guides and research focus.
+  blueprint-ready documentation. Uses 4 sequential AI tasks to ensure 
+  complete output without truncation. Produces detailed process maps with 
+  failure modes, constraint triangulation across stakeholder perspectives, 
+  and quantified insights suitable for service design work.
