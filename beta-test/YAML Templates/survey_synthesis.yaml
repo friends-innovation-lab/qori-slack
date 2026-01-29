@@ -2,41 +2,67 @@ id: survey_synthesis
 name: survey_response_synthesizer
 
 label: 📊 Survey Synthesis
-version: "v2.1"
+version: "v3.0"
 
 description: >
   Analyze open-ended survey responses using thematic analysis.
   Identifies patterns across responses, counts frequency, extracts
   representative quotes, and generates actionable recommendations.
+  
+  v3.0: Switched to Claude Sonnet, improved question_focus handling,
+  removed unused variables for cleaner modal alignment.
 
 author: Qori R&D
 created: 2025-08-11
-last_updated: 2026-01-08
+last_updated: 2026-01-29
 
 input_type: slack_modal_form
 input_processing: auto_file_discovery
 
-# LLM Configuration
+# LLM Configuration - Claude Sonnet
 llm_config:
-  model: "gpt-4o"
+  model: "claude-sonnet-4-20250514"
   temperature: 0.2
-  max_tokens: 4000
+  max_tokens: 6000
 
 # System limits
 system_limits:
   max_total_tokens: 50000
   min_content_threshold: 500
   max_file_size: 200000
-  supported_formats: [".csv", ".xlsx", ".xls", ".json", ".txt", ".md", ".tsv"]
-  max_files_per_analysis: 10
+  supported_formats: [".csv", ".xlsx", ".xls"]
+  max_files_per_analysis: 5
 
 # Slack modal input variables
 input_variables:
-  - selected_study
-  - survey_name
-  - survey_files
-  - question_focus
-  - combined_file_content
+  - name: selected_study
+    type: select
+    required: true
+    description: "Study folder name"
+    
+  - name: survey_name
+    type: text
+    required: true
+    placeholder: "e.g., Post-launch satisfaction survey"
+    description: "Name of the survey being analyzed"
+    
+  - name: question_focus
+    type: textarea
+    required: false
+    placeholder: "e.g., Q5: What was most frustrating? Q8: Any other feedback?"
+    description: "Specific questions to prioritize. If blank, analyzes all text responses."
+    
+  - name: survey_files
+    type: file_input
+    required: true
+    filetypes: ["csv", "xlsx", "xls"]
+    max_files: 5
+    description: "Survey export files"
+    
+  - name: combined_file_content
+    type: textarea
+    required: true
+    description: "Extracted content from uploaded files (provided by backend)"
 
 # File discovery system
 auto_file_discovery:
@@ -101,14 +127,28 @@ ai_generation_tasks:
       - Quotes must be verbatim from responses
       - Never invent responses or fabricate statistics
       
-      RULE 6: VA CONTEXT (if applicable)
+      RULE 6: QUESTION FOCUS
+      
+      {{#if question_focus}}
+      PRIORITIZE these questions in your analysis:
+      {{question_focus}}
+      
+      Focus your thematic analysis primarily on responses to these questions.
+      You may note patterns from other questions if highly relevant.
+      {{else}}
+      Analyze ALL open-ended/text responses in the data.
+      Skip closed-ended questions (multiple choice, ratings, etc.) unless
+      they provide important context for open-ended responses.
+      {{/if}}
+      
+      RULE 7: VA CONTEXT (if applicable)
       
       If this is VA research:
       - Users are Veterans
       - Focus on benefits, healthcare, claims, prescriptions
       - NEVER mention: Marketing, Sales, engagement metrics
       
-      RULE 7: VERIFY BEFORE SUBMITTING
+      RULE 8: VERIFY BEFORE SUBMITTING
       - Theme counts add up correctly
       - Every quote has a respondent ID
       - Sentiment percentages total ~100%
@@ -120,15 +160,21 @@ ai_generation_tasks:
       
       **Study:** {{selected_study}}
       **Survey:** {{survey_name}}
-      **Survey Data:** {{combined_file_content}}
+      {{#if question_focus}}
+      **Questions to Focus On:** {{question_focus}}
+      {{/if}}
+      **Survey Data:** 
+      ---BEGIN DATA---
+      {{combined_file_content}}
+      ---END DATA---
       
       ============================================================
       NOW GENERATE THE COMPLETE OUTPUT BELOW
       ============================================================
       
-      # 📊 Survey Synthesis: {{selected_study}}
+      # 📊 Survey Synthesis: {{survey_name}}
       
-      > **Generated:** {{current_date}} | **[X] responses** | **[Y] themes identified**
+      > **Study:** {{selected_study}} | **Generated:** {{current_date}}
       
       ---
       
@@ -136,9 +182,12 @@ ai_generation_tasks:
       
       | | |
       |---|---|
-      | **Survey** | [Survey name/purpose] |
+      | **Survey** | {{survey_name}} |
       | **Responses Analyzed** | [X] |
-      | **Collection Period** | [Date range if known, otherwise "Not specified"] |
+      | **Themes Identified** | [Y] |
+      {{#if question_focus}}
+      | **Focus Questions** | {{question_focus}} |
+      {{/if}}
       | **Top Finding** | [1 sentence — the most important takeaway] |
       
       ---
@@ -233,8 +282,6 @@ ai_generation_tasks:
       
       > **Legend:** 🔴 High | 🟡 Medium | 🟢 Low
       
-      <br>
-      
       ---
       
       ## Methodology
@@ -243,9 +290,7 @@ ai_generation_tasks:
       
       **Approach:** Open-ended responses were coded for recurring themes, counted for frequency, and analyzed for sentiment patterns. Representative quotes were extracted to illustrate each theme.
       
-      **Data Source:** [X] survey responses
-      
-      <br>
+      **Data Source:** {{survey_name}} — [X] responses
       
       ---
       
@@ -265,7 +310,7 @@ ai_generation_tasks:
 processing_workflow:
   - validate_slack_modal_inputs
   - discover_files_from_study_selection
-  - parse_survey_data  # Handle CSV, Excel, JSON formats
+  - parse_survey_data
   - combine_selected_files_with_truncation
   - execute_survey_synthesis_complete
   - format_slack_output
@@ -288,40 +333,32 @@ output_template: |
 github_file_template: |
   {{ai_generated.survey_synthesis_complete}}
 
-# Study metadata mapping
-study_metadata:
-  "VA Housing Application Usability Study":
-    folder: "va-housing-usability-2025"
-    researcher: "jordan.researcher"
-    channel: "#research-housing-app"
-    focus_area: "housing application usability"
-    
-  "Benefits Portal Navigation Research":
-    folder: "benefits-portal-nav-2025"
-    researcher: "alex.ux"
-    channel: "#research-benefits"
-    focus_area: "benefits portal navigation"
-    
-  "Veteran Onboarding Experience Study":
-    folder: "veteran-onboarding-2025"
-    researcher: "casey.research"
-    channel: "#research-onboarding"
-    focus_area: "veteran onboarding process"
-
 # Auto-generated variables
 auto_variables:
-  - theme_count: extract_theme_count(ai_generated.survey_synthesis_complete) || 4
-  - response_count: extract_response_count(ai_generated.survey_synthesis_complete) || 0
-  - current_date: new Date().toISOString().split('T')[0]
-  - analysis_version: generate_version_number() || "v1.0"
-  - github_file_link: generate_github_link(study_name, current_date)
+  theme_count: "extract_theme_count(ai_generated.survey_synthesis_complete) || 4"
+  response_count: "extract_response_count(ai_generated.survey_synthesis_complete) || 0"
+  current_date: "new Date().toISOString().split('T')[0]"
+  analysis_version: "v3.0"
+  github_file_link: "generate_github_link(selected_study, current_date)"
 
 # Slack notifications
 notify:
   - role: team
     action: "Survey synthesis completed"
     channel: "{{study_channel}}"
-    message: "📊 {{researcher_contact}} completed survey synthesis for {{selected_study}}. {{theme_count}} themes identified from {{response_count}} responses!"
+    message: "📊 Survey synthesis complete for {{selected_study}}. {{theme_count}} themes identified from {{response_count}} responses!"
+
+# Slack UI configuration
+slack_ui:
+  modal:
+    title: "Survey data"
+    submit_label: "Analyze"
+    close_label: "Cancel"
+    
+  error_messages:
+    no_files: "⚠️ Please upload at least one survey file."
+    no_survey_name: "⚠️ Please enter a survey name."
+    processing_failed: "⚠️ Analysis failed. Please check that your files are valid CSV or Excel format."
 
 output_use: |
   Analyze open-ended survey responses using thematic analysis.
