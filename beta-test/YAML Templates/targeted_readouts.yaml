@@ -1,69 +1,23 @@
 id: targeted_readouts
 name: run_targeted_readouts
 label: "🎯 Targeted Readouts"
-version: v3.0
+version: v4.0
 description: |
-  Generate audience-specific research readouts. Supports Congressional Briefings, 
-  Executive Summaries, and Team-specific formats with appropriate tone and structure.
+  Generate audience-specific research reports. Supports Congressional Briefings, 
+  Leadership Briefs, Product Briefs, and Team Readouts with appropriate tone, 
+  structure, and level of detail for each audience.
+  
+  v4.0 Changes:
+  - Added Leadership Brief format (Secretary/SES level)
+  - Added Product Brief format (PO/Director reporting up)
+  - Refined Congressional Briefing format
+  - Improved Team Readout with implementation focus
+  - Increased max_tokens to 10000
+  - Removed backend developer notes
 
 author: Qori R&D
 created: 2025-08-19
-last_updated: 2026-01-07
-
-# ============================================================
-# BACKEND DATA REQUIREMENTS (for Tanzeel)
-# ============================================================
-#
-# This workflow requires actual file contents to be loaded into variables.
-# Without this data, the AI will output "Insufficient data" (correct behavior).
-#
-# REQUIRED DATA FLOW:
-#
-# 1. Session Summaries → {{input_text}} or {{research_readout_data}}
-#    - Location: 03-fieldwork/session-summaries/
-#    - Files: *session_summary*.md (all of them, concatenated)
-#    - Example: PT001_session_summary.md + PT002_session_summary.md + PT003_session_summary.md
-#
-# 2. Research Plan (optional but helpful) → append to {{input_text}}
-#    - Location: 00-planning/research_plan.md
-#    - Contains: methodology, goals, research questions
-#
-# 3. Affinity Map (optional) → append to {{input_text}}
-#    - Location: 04-analysis/affinity-mapping/*.md
-#    - Enhances theme identification
-#
-# BACKEND PSEUDOCODE:
-#
-#   combined_content = ""
-#   
-#   # Load all session summaries (REQUIRED)
-#   session_files = await github_api.list_files("03-fieldwork/session-summaries/")
-#   for file in session_files:
-#       if "session_summary" in file.name:
-#           content = await github_api.get_file_contents(file.path)
-#           combined_content += "\n\n---\n\n" + content
-#   
-#   # Load research plan (optional)
-#   try:
-#       research_plan = await github_api.get_file_contents("00-planning/research_plan.md")
-#       combined_content = research_plan + "\n\n---\n\n" + combined_content
-#   except: pass
-#   
-#   # Load affinity map if exists (optional)
-#   try:
-#       affinity_files = await github_api.list_files("04-analysis/affinity-mapping/")
-#       for file in affinity_files:
-#           content = await github_api.get_file_contents(file.path)
-#           combined_content += "\n\n---\n\n" + content
-#   except: pass
-#   
-#   # Pass to AI
-#   variables["input_text"] = combined_content
-#
-# IF DATA IS EMPTY → AI outputs "Insufficient data" (this is correct behavior)
-# IF DATA IS LOADED → AI generates grounded readout
-#
-# ============================================================
+last_updated: 2026-01-28
 
 input_type: text
 input_processing: summarize_if_long
@@ -71,7 +25,7 @@ input_processing: summarize_if_long
 llm_config:
   model: "claude-sonnet-4"
   temperature: 0.2
-  max_tokens: 5000
+  max_tokens: 10000
 
 input_variables:
   - research_folder_path
@@ -131,19 +85,34 @@ audience_routing:
   congressional:
     - "congressional_briefing"
     - "congressional"
-    - "ses_briefing"
+    - "Congressional Briefing"
     
-  executive:
+  leadership:
     - "executive"
+    - "executive_leadership"
+    - "Executive Leadership"
     - "leadership"
+    - "ses_briefing"
+    - "secretary"
+    
+  product_leadership:
+    - "product_leadership"
+    - "Product Leadership"
+    - "design_leadership"
+    - "Design Leadership"
     - "director"
     
   team:
     - "product"
+    - "Product Team"
     - "design"
+    - "Design Team"
     - "engineering"
+    - "Engineering Team"
     - "accessibility"
+    - "Accessibility Team"
     - "content"
+    - "Content Team"
 
 ai_generation_tasks:
   - task_id: "targeted_readout_complete"
@@ -152,7 +121,7 @@ ai_generation_tasks:
       🚨 CRITICAL GROUNDING RULES - READ FIRST 🚨
       ============================================================
       
-      You are creating a targeted research readout from REAL research data.
+      You are creating a targeted research report from REAL research data.
       
       ABSOLUTE REQUIREMENTS:
       1. ONLY use findings, quotes, and data from the source below
@@ -162,7 +131,7 @@ ai_generation_tasks:
       5. If source data is empty, say so - do not fabricate
       
       If source data is insufficient, output:
-      "⚠️ Insufficient data for targeted readout. Required files may be empty."
+      "⚠️ Insufficient data for targeted report. Required files may be empty."
       
       ============================================================
       SOURCE DATA
@@ -187,9 +156,10 @@ ai_generation_tasks:
       
       Determine audience type from {{target_audience}}:
       
-      CONGRESSIONAL: "congressional_briefing", "congressional", "ses_briefing", "congress"
-      EXECUTIVE: "executive", "leadership", "director", "va_leadership"
-      TEAM: "product", "design", "engineering", "accessibility", "content"
+      CONGRESSIONAL: "Congressional Briefing", "congressional_briefing", "congressional"
+      LEADERSHIP: "Executive Leadership", "executive_leadership", "executive", "leadership", "secretary"
+      PRODUCT_LEADERSHIP: "Product Leadership", "Design Leadership", "product_leadership", "design_leadership", "director"
+      TEAM: "Product Team", "Design Team", "Engineering Team", "Accessibility Team", "Content Team", "product", "design", "engineering", "accessibility", "content"
       
       Select the appropriate format below based on audience type.
       
@@ -197,84 +167,93 @@ ai_generation_tasks:
       FORMAT A: CONGRESSIONAL BRIEFING
       ============================================================
       
-      Use this format if audience is Congressional/SES briefing.
+      Use this format for: Congressional Briefing
       
-      Tone: Formal government language. No consultant jargon. Direct and specific.
-      Length: 1-2 pages maximum. Executives skim.
-      
-      ---
-      
-      # CONGRESSIONAL BRIEFING
-      ## [Study Name]
-      
-      **Date:** [Date] | **Prepared by:** [Researcher] | **Classification:** UNCLASSIFIED
+      Tone: Formal government language. No jargon. Direct and specific.
+      Length: 1-2 pages maximum. Legislators skim.
+      Purpose: Testimony prep, oversight response, budget justification.
       
       ---
       
-      ### BOTTOM LINE UP FRONT
+      <div align="center">
       
-      [2-3 sentences maximum. What Congress needs to know RIGHT NOW.]
+      # 🏛️ CONGRESSIONAL BRIEFING
+      ## {{study_name}}
       
-      - **Issue:** [One sentence describing the problem]
-      - **Impact:** [X] veterans affected by [specific issue]
-      - **Status:** [What VA is doing about it]
-      
-      ---
-      
-      ### BACKGROUND
-      
-      [2-3 sentences. Why this research was conducted.]
-      
-      - **Study Type:** [Usability testing / Interviews / etc.]
-      - **Participants:** [X] veterans, [brief demographics]
-      - **Focus:** [What was being evaluated]
+      **[Date]**
       
       ---
       
-      ### KEY FINDINGS
+      | Classification | Prepared By | Oversight Committee |
+      |:--------------:|:-----------:|:-------------------:|
+      | UNCLASSIFIED | {{researcher_contact}} | {{oversight_committee}} |
       
-      **Finding 1: [Specific title]**
-      - **Veteran Impact:** [How many affected, how severely]
-      - **Evidence:** "[Brief quote from veteran]" — PT00X
-      - **Status:** [Being addressed / Requires action / Under review]
-      
-      **Finding 2: [Specific title]**
-      - **Veteran Impact:** [How many affected, how severely]
-      - **Evidence:** "[Brief quote from veteran]" — PT00X
-      - **Status:** [Being addressed / Requires action / Under review]
-      
-      **Finding 3: [Specific title]**
-      - **Veteran Impact:** [How many affected, how severely]
-      - **Evidence:** "[Brief quote from veteran]" — PT00X
-      - **Status:** [Being addressed / Requires action / Under review]
+      </div>
       
       ---
       
-      ### ACTIONS UNDERWAY
+      ## 📌 BOTTOM LINE UP FRONT
+      
+      > [!IMPORTANT]
+      > [2-3 sentences maximum. What Congress needs to know RIGHT NOW.]
+      
+      | Issue | Veteran Impact | VA Status |
+      |:------|:---------------|:----------|
+      | [Primary issue] | [X] veterans affected | [What VA is doing] |
+      
+      ---
+      
+      ## 📋 BACKGROUND
+      
+      **Why this research was conducted:** [1-2 sentences]
+      
+      | Study Details | |
+      |:--------------|:--|
+      | **Methodology** | [Usability testing / Interviews / etc.] |
+      | **Participants** | [X] veterans |
+      | **Focus Area** | [What was evaluated] |
+      
+      ---
+      
+      ## 🔍 KEY FINDINGS
+      
+      ### Finding 1: [Title]
+      
+      - **Veteran Impact:** [How many affected, severity]
+      - **Evidence:** "[Brief quote]" — PT00X
+      - **Status:** [Being addressed / Requires action]
+      
+      ### Finding 2: [Title]
+      
+      - **Veteran Impact:** [How many affected, severity]
+      - **Evidence:** "[Brief quote]" — PT00X
+      - **Status:** [Being addressed / Requires action]
+      
+      ### Finding 3: [Title]
+      
+      - **Veteran Impact:** [How many affected, severity]
+      - **Evidence:** "[Brief quote]" — PT00X
+      - **Status:** [Being addressed / Requires action]
+      
+      ---
+      
+      ## ✅ ACTIONS UNDERWAY
       
       | Action | Owner | Timeline | Status |
-      |--------|-------|----------|--------|
-      | [Action 1] | [Team/Office] | [Date] | [In Progress/Planned] |
-      | [Action 2] | [Team/Office] | [Date] | [In Progress/Planned] |
-      | [Action 3] | [Team/Office] | [Date] | [In Progress/Planned] |
+      |:-------|:------|:---------|:-------|
+      | [Action 1] | [Team] | [Date] | [In Progress/Planned] |
+      | [Action 2] | [Team] | [Date] | [In Progress/Planned] |
       
       ---
       
-      ### RISK ASSESSMENT
+      ## ⚠️ RISK IF NOT ADDRESSED
       
-      **If not addressed:**
       - [Specific consequence for veterans]
       - [Potential scale of impact]
       
       ---
       
-      ### RESOURCE REQUIREMENTS
-      
-      [Only if applicable - otherwise state "No additional resources required at this time."]
-      
-      ---
-      
-      ### METRICS FOR SUCCESS
+      ## 📊 SUCCESS METRICS
       
       Congress can track progress through:
       - [Metric 1 with target]
@@ -282,132 +261,209 @@ ai_generation_tasks:
       
       ---
       
-      ### LEGISLATIVE ALIGNMENT
-      
-      [Only if {{congressional_mandate}} provided]
-      
-      This research supports compliance with [mandate/bill] by [specific connection].
+      <div align="center">
       
       ---
       
-      **Point of Contact:** {{researcher_contact}}
+      **Point of Contact:** {{researcher_contact}} | **Channel:** {{study_channel}}
       
       ---
       
-      ============================================================
-      FORMAT B: EXECUTIVE SUMMARY
-      ============================================================
+      *Prepared for Congressional Oversight • [Date]*
       
-      Use this format if audience is Executive/Leadership.
-      
-      Tone: Professional, strategic focus. Results and decisions needed.
-      Length: 1 page ideal.
-      
-      ---
-      
-      # EXECUTIVE SUMMARY
-      ## [Study Name]
-      
-      **Date:** [Date] | **Lead:** [Researcher]
-      
-      ---
-      
-      ### KEY TAKEAWAYS
-      
-      1. **[Finding 1]** — [One sentence impact + action needed]
-      2. **[Finding 2]** — [One sentence impact + action needed]  
-      3. **[Finding 3]** — [One sentence impact + action needed]
-      
-      ---
-      
-      ### WHAT'S WORKING
-      
-      - [Positive finding with evidence]
-      
-      ---
-      
-      ### DECISIONS NEEDED
-      
-      | Decision | Options | Recommendation | By When |
-      |----------|---------|----------------|---------|
-      | [Decision 1] | [A or B] | [Recommended option] | [Date] |
-      
-      ---
-      
-      ### RESOURCE IMPLICATIONS
-      
-      - **Timeline:** [Impact on roadmap]
-      - **Staffing:** [Any needs]
-      - **Budget:** [Any implications]
-      
-      ---
-      
-      **Full details:** [Link to complete readout]
+      </div>
       
       ---
       
       ============================================================
-      FORMAT C: TEAM READOUT
+      FORMAT B: LEADERSHIP BRIEF (Executive Leadership)
       ============================================================
       
-      Use this format if audience is Product/Design/Engineering/etc.
+      Use this format for: Executive Leadership, Secretary, SES
       
-      Tone: Practical, implementation-focused. What do they need to DO.
-      Length: As needed for actionable detail.
-      
-      ---
-      
-      # [Team Name] READOUT
-      ## [Study Name]
-      
-      **Date:** [Date] | **Participants:** [X] | **Lead:** [Researcher]
+      Tone: Strategic, mission-focused. Decisions and risk.
+      Length: 1 page. They have 5 minutes.
+      Purpose: Priority setting, budget decisions, risk awareness.
       
       ---
       
-      ### TL;DR FOR [TEAM]
+      <div align="center">
       
-      [3-4 bullets of what THIS team needs to know/do]
+      # 📊 LEADERSHIP BRIEF
+      ## {{study_name}}
       
-      ---
-      
-      ### FINDINGS RELEVANT TO [TEAM]
-      
-      **[Finding 1]**
-      
-      > "[Quote from participant]"
-      > *— PT001*
-      
-      - **The Problem:** [Specific description]
-      - **Severity:** [Critical/High/Medium/Low]
-      - **Affected:** [X] of [Y] participants
-      - **Suggested Fix:** [Specific recommendation]
+      **[Date]**
       
       ---
       
-      **[Finding 2]**
+      | Participants | Sessions | Methodology | Lead Researcher |
+      |:------------:|:--------:|:-----------:|:---------------:|
+      | {{participant_count}} | {{session_count}} | [Type] | {{researcher_contact}} |
+      
+      </div>
+      
+      ---
+      
+      ## 📌 BOTTOM LINE
+      
+      > [!IMPORTANT]
+      > [One sentence: What's the issue and why does it matter to VA's mission?]
+      
+      ---
+      
+      ## 🎯 VETERAN IMPACT
+      
+      | Finding | Veterans Affected | Severity | Mission Risk |
+      |:--------|:-----------------:|:--------:|:-------------|
+      | [Finding 1] | [X] of [Y] | 🔴 Critical | [Risk to VA mission] |
+      | [Finding 2] | [X] of [Y] | 🟡 High | [Risk to VA mission] |
+      | [Finding 3] | [X] of [Y] | 🟢 Low | [Positive/maintain] |
+      
+      ---
+      
+      ## ✅ WHAT'S WORKING
+      
+      - [Positive finding] — preserve and expand
+      
+      ---
+      
+      ## ⚡ DECISION NEEDED
+      
+      | Decision | Options | Recommendation |
+      |:---------|:--------|:---------------|
+      | [What needs deciding] | A: [Option] / B: [Option] | [Recommended + why] |
+      
+      ---
+      
+      ## 💰 RESOURCE IMPLICATIONS
+      
+      | Aspect | Impact |
+      |:-------|:-------|
+      | **Timeline** | [Effect on roadmap] |
+      | **Staffing** | [Any needs or "Current staffing sufficient"] |
+      | **Budget** | [Any implications or "No additional budget required"] |
+      
+      ---
+      
+      ## ⚠️ IF NOT ADDRESSED
+      
+      - [Consequence 1 for veterans]
+      - [Consequence 2 for VA operations/reputation]
+      
+      ---
+      
+      <div align="center">
+      
+      ---
+      
+      **Full Report:** [Link to complete research report]
+      
+      **Contact:** {{researcher_contact}} | **Channel:** {{study_channel}}
+      
+      ---
+      
+      *Prepared for VA Leadership • [Date]*
+      
+      </div>
+      
+      ---
+      
+      ============================================================
+      FORMAT C: PRODUCT BRIEF (Product/Design Leadership)
+      ============================================================
+      
+      Use this format for: Product Leadership, Design Leadership, Directors
+      
+      Tone: Strategic but practical. Roadmap and trade-offs.
+      Length: 1-2 pages. Needs to justify priorities.
+      Purpose: Roadmap decisions, resource requests, stakeholder updates.
+      
+      ---
+      
+      <div align="center">
+      
+      # PRODUCT BRIEF
+      ## {{study_name}}
+      
+      **Date:** [Date] | **Participants:** {{participant_count}} | **Lead:** {{researcher_contact}}
+      
+      </div>
+      
+      ---
+      
+      ## SUMMARY
+      
+      > [!IMPORTANT]
+      > [One sentence: What did we learn and what should we do about it?]
+      
+      ---
+      
+      ## PRIORITY MATRIX
+      
+      | Finding | Severity | User Impact | Effort | Recommendation |
+      |:--------|:--------:|:-----------:|:------:|:---------------|
+      | [Finding 1] | 🔴 Critical | High | Medium | Fix in current sprint |
+      | [Finding 2] | 🟡 High | Medium | High | Plan for next quarter |
+      | [Finding 3] | 🟢 Low | Low | Low | Backlog |
+      
+      ---
+      
+      ## KEY FINDINGS
+      
+      ### 🔴 [Finding 1 Title]
+      
+      **The Problem:** [2-3 sentences describing the issue]
+      
+      **User Evidence:**
+      > "[Quote from participant]" — PT00X
+      
+      **Impact:** [X]% of participants affected | [Effect on task completion/satisfaction]
+      
+      **Recommended Action:** [Specific fix]
+      
+      ---
+      
+      ### 🟡 [Finding 2 Title]
       
       [Same format]
       
       ---
       
-      ### IMPLEMENTATION CHECKLIST
+      ## WHAT'S WORKING
       
-      - [ ] [Specific action item 1]
-      - [ ] [Specific action item 2]
-      - [ ] [Specific action item 3]
-      
-      ---
-      
-      ### QUESTIONS FOR [TEAM]
-      
-      - [Open question from research that team should consider]
+      | Feature/Flow | Evidence | Recommendation |
+      |:-------------|:---------|:---------------|
+      | [What works] | "[Quote]" — PT00X | Maintain / Expand pattern to X |
       
       ---
       
-      ### RELATED FILES
+      ## ROADMAP IMPACT
       
-      - [Session summaries](link)
-      - [Affinity map](link) if available
+      **If we prioritize these fixes:**
+      - [Trade-off 1: What gets delayed]
+      - [Trade-off 2: Resource reallocation]
+      
+      **If we delay these fixes:**
+      - [Risk 1: User impact continues]
+      - [Risk 2: Metric impact]
+      
+      ---
+      
+      ## METRICS TO TRACK
+      
+      | Metric | Current | Target | Timeline |
+      |:-------|:-------:|:------:|:---------|
+      | [Metric 1] | [X] | [Y] | [When] |
+      | [Metric 2] | [X] | [Y] | [When] |
+      
+      ---
+      
+      ## NEXT STEPS
+      
+      | Action | Owner | By When |
+      |:-------|:------|:--------|
+      | [Action 1] | [Team/Person] | [Date] |
+      | [Action 2] | [Team/Person] | [Date] |
       
       ---
       
@@ -416,10 +472,114 @@ ai_generation_tasks:
       ---
       
       ============================================================
+      FORMAT D: TEAM READOUT
+      ============================================================
+      
+      Use this format for: Product Team, Design Team, Engineering Team, Accessibility Team, Content Team
+      
+      Tone: Practical, implementation-focused. What do they need to DO.
+      Length: As needed for actionable detail.
+      Purpose: Sprint planning, implementation guidance, specific fixes.
+      
+      ---
+      
+      <div align="center">
+      
+      # {{target_audience}} READOUT
+      ## {{study_name}}
+      
+      **Date:** [Date] | **Participants:** {{participant_count}} | **Lead:** {{researcher_contact}}
+      
+      </div>
+      
+      ---
+      
+      ## TL;DR
+      
+      [3-4 bullets of what THIS team specifically needs to know/do]
+      
+      - 🔴 [Critical action for this team]
+      - 🟡 [Important action for this team]
+      - 🟢 [What's working - don't break this]
+      
+      ---
+      
+      ## FINDINGS FOR {{target_audience}}
+      
+      ### 🔴 Finding 1: [Title]
+      
+      **User Quote:**
+      > "[Exact quote from participant]"
+      > — **PT001** [context]
+      
+      | Aspect | Details |
+      |:-------|:--------|
+      | **The Problem** | [Specific description relevant to this team] |
+      | **Severity** | 🔴 Critical |
+      | **Affected** | [X] of [Y] participants ([%]) |
+      | **Where it happens** | [Specific screen/flow/component] |
+      
+      **Suggested Fix:**
+      [Specific, actionable recommendation for this team]
+      
+      ---
+      
+      ### 🟡 Finding 2: [Title]
+      
+      [Same format]
+      
+      ---
+      
+      ## IMPLEMENTATION CHECKLIST
+      
+      - [ ] [Specific task 1 for this team]
+      - [ ] [Specific task 2 for this team]
+      - [ ] [Specific task 3 for this team]
+      - [ ] [Specific task 4 for this team]
+      
+      ---
+      
+      ## WHAT'S WORKING (Don't Break These)
+      
+      | Feature | Why It Works | Evidence |
+      |:--------|:-------------|:---------|
+      | [Feature 1] | [Why users liked it] | "[Quote]" — PT00X |
+      | [Feature 2] | [Why users liked it] | "[Quote]" — PT00X |
+      
+      ---
+      
+      ## OPEN QUESTIONS FOR {{target_audience}}
+      
+      - [Question that emerged from research this team should consider]
+      - [Another question for team discussion]
+      
+      ---
+      
+      ## RELATED FILES
+      
+      | Document | Link |
+      |:---------|:-----|
+      | Full Research Report | [Link] |
+      | Session Summaries | {{research_folder_path}}/03-fieldwork/session-summaries/ |
+      | Affinity Map | {{research_folder_path}}/04-analysis/affinity-mapping/ |
+      
+      ---
+      
+      **Questions?** {{researcher_contact}} | **Channel:** {{study_channel}}
+      
+      ---
+      
+      ============================================================
       OUTPUT SELECTION
       ============================================================
       
-      Based on {{target_audience}}, output ONLY the appropriate format above.
+      Based on {{target_audience}}, output ONLY ONE format:
+      
+      - Congressional Briefing → FORMAT A
+      - Executive Leadership → FORMAT B
+      - Product Leadership, Design Leadership → FORMAT C
+      - Engineering Team, Design Team, Product Team, Accessibility Team, Content Team → FORMAT D
+      
       Do not mix formats. Do not include these instructions in output.
 
 output_options:
