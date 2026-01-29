@@ -1,11 +1,17 @@
 id: research_readout
 name: run_research_readout
 label: "📊 Research Report"
-version: v5.0
+version: v5.1
 description: |
-  Generate comprehensive, stakeholder-ready research readouts from session summaries 
+  Generate comprehensive, stakeholder-ready research reports from session summaries 
   and synthesis artifacts. Features professional GitHub styling, industry-standard 
   research documentation structure, and actionable recommendations framework.
+  
+  v5.1 Changes:
+  - Added Research Overview section (why we conducted this research)
+  - Added Research Objectives section (what we set out to learn)
+  - Added Research Questions section (specific questions we aimed to answer)
+  - Pulls context from research plan for stakeholder alignment
   
   v5.0 Changes:
   - Professional GitHub-native styling with centered headers
@@ -141,6 +147,11 @@ ai_generation_tasks:
       - Methodology: Look for "usability testing," "interviews," etc.
       - Product area: What product/app is being researched
       
+      Extract from research plan (for Research Overview section):
+      - Business context / why this research was conducted
+      - Research objectives (what we set out to learn)
+      - Research questions (specific questions we aimed to answer)
+      
       If {{study_name}} or date is blank, infer from content.
       
       ============================================================
@@ -176,6 +187,32 @@ ai_generation_tasks:
       | 🔴 | [Critical finding in one line] | [Business/user impact] | [Immediate action] |
       | 🟡 | [High-priority finding] | [Impact] | [Action] |
       | 🟢 | [What's working well] | [Positive impact] | [Maintain/enhance] |
+      
+      ---
+      
+      ## 🎯 Research Overview
+      
+      ### Why We Conducted This Research
+      
+      [Extract from research plan: 2-3 sentences explaining the business context and what prompted this research. What problem or opportunity drove the need for this study?]
+      
+      ### Research Objectives
+      
+      [Extract from research plan objectives. Format as bullet points starting with action verbs:]
+      
+      - **Understand** [objective 1 from research plan]
+      - **Identify** [objective 2 from research plan]
+      - **Evaluate** [objective 3 from research plan]
+      - **Discover** [objective 4 from research plan, if applicable]
+      
+      ### Research Questions
+      
+      [Extract from research plan. These are the specific questions we set out to answer:]
+      
+      1. [Research question 1 from plan]
+      2. [Research question 2 from plan]
+      3. [Research question 3 from plan]
+      4. [Research question 4 from plan, if applicable]
       
       ---
       
