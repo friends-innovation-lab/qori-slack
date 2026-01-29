@@ -107,11 +107,11 @@ auto_fill_variables:
   - name: researcher_name
     source: "study.researcher.name"
     
+  - name: researcher_title
+    source: "study.researcher.title"
+    
   - name: researcher_email
     source: "study.researcher.email"
-    
-  - name: researcher_phone
-    source: "study.researcher.phone"
     
   - name: incentive_amount
     source: "study.settings.incentive"
@@ -170,9 +170,8 @@ ai_generation_tasks:
       - Participant: {{participant_id}}
       - Study: {{study_name}}
       - Study Description: {{study_description}}
-      - Researcher: {{researcher_name}}
+      - Researcher: {{researcher_name}}, {{researcher_title}}
       - Researcher Email: {{researcher_email}}
-      - Researcher Phone: {{researcher_phone}}
       - Incentive: {{incentive_amount}}
       - Session Duration: {{session_duration}}
       
