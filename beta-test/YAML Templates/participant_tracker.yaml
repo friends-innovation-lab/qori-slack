@@ -64,11 +64,13 @@ status_mappings:
     display: "🚫 Disqualified"
     description: "Did not meet study criteria"
 
-# Recruitment source mappings (removed calendly)
+# Recruitment source mappings - UPDATED
+# Add this to replace the existing recruitment_sources section in participant_tracker.yaml
+
 recruitment_sources:
   internal_panel: "🗂️ Internal VA Panel"
   email_outreach: "📧 Email Outreach"
-  phone: "📞 Phone Recruitment"
+  recruitment_agency: "🏛️ Recruitment Agency"
   referral: "🤝 Referral"
   online: "🌐 Social/Website"
   csv_import: "📊 CSV Import"
