@@ -7,26 +7,6 @@ description: |
   and synthesis artifacts. Features professional GitHub styling, industry-standard 
   research documentation structure, and actionable recommendations framework.
   
-  v5.2 Changes:
-  - Increased max_tokens to 12000 for complete report output
-  - Tightened Research Objectives formatting (learning-focused, not output-focused)
-  - Tightened Research Questions formatting (one line each)
-  - Added guidance note about avoiding "Document..." style objectives
-  
-  v5.1 Changes:
-  - Added Research Overview section (why we conducted this research)
-  - Added Research Objectives section (what we set out to learn)
-  - Added Research Questions section (specific questions we aimed to answer)
-  - Pulls context from research plan for stakeholder alignment
-  
-  v5.0 Changes:
-  - Professional GitHub-native styling with centered headers
-  - Industry-standard research report structure (NNG, IDEO, Portigal)
-  - Enhanced evidence presentation with severity indicators
-  - Confidence and validity framework
-  - Executive-friendly formatting with progressive disclosure
-  - Improved visual hierarchy for stakeholder scanning
-
 author: Qori R&D
 created: 2025-06-26
 last_updated: 2026-01-27
@@ -37,7 +17,7 @@ input_processing: summarize_if_long
 llm_config:
   model: "claude-sonnet-4"
   temperature: 0.3
-  max_tokens: 12000  # Increased for complete report output
+  max_tokens: 12000  
 
 input_variables:
   - research_folder_path
