@@ -3,7 +3,7 @@
   "callback_id": "plan_study_modal",
   "title": {
     "type": "plain_text",
-    "text": "Plan Your Study"
+    "text": "Plan your study"
   },
   "close": {
     "type": "plain_text",
@@ -73,7 +73,7 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*Research Brief*\nDefine scope, objectives, and methodology"
+        "text": "*Research brief*\nDefine scope, objectives, and methodology"
       },
       "accessory": {
         "type": "button",
@@ -89,7 +89,7 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*Stakeholder Interview Guide*\nQuestions for PMs, engineers, policy SMEs"
+        "text": "*Stakeholder guide*\nQuestions for PMs, engineers, policy SMEs"
       },
       "accessory": {
         "type": "button",
@@ -105,7 +105,7 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*Research Plan*\nTimeline, logistics, and session schedule"
+        "text": "*Research plan*\nTimeline, logistics, and session schedule"
       },
       "accessory": {
         "type": "button",
@@ -121,7 +121,7 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*Discussion Guide*\nConversation guide for user research sessions"
+        "text": "*Discussion guide*\nConversation guide for user research sessions"
       },
       "accessory": {
         "type": "button",
@@ -147,7 +147,7 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*Desk Research*\nReports, competitive analysis, background docs"
+        "text": "*Desk research*\nReports, competitive analysis, background docs"
       },
       "accessory": {
         "type": "button",
@@ -163,7 +163,7 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*Stakeholder Notes*\nTranscripts from internal interviews"
+        "text": "*Stakeholder notes*\nTranscripts from internal interviews"
       },
       "accessory": {
         "type": "button",
@@ -179,7 +179,7 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*Survey Data*\nSurvey exports (CSV, Excel) for synthesis"
+        "text": "*Survey data*\nSurvey exports (CSV, Excel) for synthesis"
       },
       "accessory": {
         "type": "button",
