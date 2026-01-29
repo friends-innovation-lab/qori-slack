@@ -1,6 +1,6 @@
 id: research_readout
 name: run_research_readout
-label: "📊 Research Readout"
+label: "📊 Research Report"
 version: v5.0
 description: |
   Generate comprehensive, stakeholder-ready research readouts from session summaries 
@@ -18,54 +18,6 @@ description: |
 author: Qori R&D
 created: 2025-06-26
 last_updated: 2026-01-27
-
-# ============================================================
-# BACKEND DATA REQUIREMENTS (for Tanzeel/Abdul)
-# ============================================================
-# 
-# This workflow requires actual file contents to be loaded into variables.
-# Without this data, the AI will output "Insufficient data" (correct behavior).
-#
-# REQUIRED DATA FLOW:
-#
-# 1. Session Summaries → {{input_text}} or {{research_readout_data}}
-#    - Location: 03-fieldwork/session-summaries/
-#    - Files: *session_summary*.md (all of them, concatenated)
-#    - Example: PT001_session_summary.md + PT002_session_summary.md + PT003_session_summary.md
-#
-# 2. Research Plan → included in {{input_text}} or {{research_readout_data}}
-#    - Location: 00-planning/research_plan.md
-#    - Contains: methodology, goals, research questions
-#
-# OPTIONAL (enhances quality):
-# 3. Affinity Map → append to {{input_text}}
-#    - Location: 04-analysis/affinity-mapping/*.md
-#
-# BACKEND PSEUDOCODE:
-#
-#   combined_content = ""
-#   
-#   # Load research plan
-#   research_plan = await github_api.get_file_contents("00-planning/research_plan.md")
-#   combined_content += research_plan
-#   
-#   # Load all session summaries
-#   session_files = await github_api.list_files("03-fieldwork/session-summaries/")
-#   for file in session_files:
-#       if "session_summary" in file.name:
-#           content = await github_api.get_file_contents(file.path)
-#           combined_content += "\n\n---\n\n" + content
-#   
-#   # Optional: Load affinity map if exists
-#   affinity_files = await github_api.list_files("04-analysis/affinity-mapping/")
-#   for file in affinity_files:
-#       content = await github_api.get_file_contents(file.path)
-#       combined_content += "\n\n---\n\n" + content
-#   
-#   # Pass to AI
-#   variables["input_text"] = combined_content
-#
-# ============================================================
 
 input_type: text
 input_processing: summarize_if_long
@@ -197,7 +149,7 @@ ai_generation_tasks:
       
       <div align="center">
       
-      # 📊 Research Readout
+      # 📊 Research Report
       ## [Study name from source or variable]
       
       **[Actual date]**
@@ -523,19 +475,19 @@ output_options:
 slack_output:
   post_in_channel: true
   create_thread: false
-  title_format: "📊 Research Readout Ready"
+  title_format: "📊 Research Report Ready"
   ping_team: ["{{researcher_contact}}", "{{team_members}}"]
   interactive_elements:
-    - text: "📋 View Full Research Readout"
+    - text: "📋 View Full Research Report"
       url: "{{github_file_link}}"
 
 slack_message_format: |
-  📊 **Research Readout Complete**
+  📊 **Research Report Complete**
   
   **Study:** {{study_name}}
   **Participants:** {{participant_count}} | **Sessions:** {{session_count}}
   
-  👆 **View Full Readout:** [Link]({{github_file_link}})
+  👆 **View Full Report:** [Link]({{github_file_link}})
   
   *Questions?* Contact {{researcher_contact}}
 
@@ -544,46 +496,6 @@ output_template: |
 
 notify:
   - role: research_team
-    action: "Research readout completed"
+    action: "Research report completed"
     channel: "{{study_channel}}"
-    message: "📊 Research readout for {{study_name}} is ready for review."
-
-notes: |
-  v5.0 - Professional Styling & Industry Standards Update
-  
-  VISUAL ENHANCEMENTS:
-  - Centered header with study metadata table
-  - GitHub alert syntax (> [!IMPORTANT], > [!TIP], > [!NOTE])
-  - Three-column findings summary using HTML tables
-  - Side-by-side layout for findings (evidence + metadata)
-  - Collapsible sections for detailed content
-  - Consistent severity indicators (🔴 🟡 🟢)
-  - Inline code styling for severity badges
-  
-  STRUCTURAL IMPROVEMENTS (Industry Standards):
-  - Executive summary follows NNG readout format
-  - Findings structure based on IDEO research templates
-  - Recommendation tables with Owner + Effort estimates
-  - Validity checklist (research rigor transparency)
-  - Progressive disclosure for stakeholder scanning
-  
-  RESEARCH BEST PRACTICES:
-  - Portigal-style evidence presentation (quote → context → implication)
-  - Severity + Frequency + Participants triad for each finding
-  - Explicit "What's Working Well" section (balanced reporting)
-  - Follow-up research gaps documented
-  - Sample characteristics in collapsible detail
-  
-  UNCHANGED:
-  - All input_variables preserved
-  - All core_files and optional_files preserved
-  - All auto_variables preserved
-  - Backend data requirements unchanged
-  - Grounding/anti-hallucination rules unchanged
-  
-  GITHUB COMPATIBILITY:
-  - HTML tables render correctly
-  - Alert syntax works on GitHub
-  - Details/summary for collapsible sections
-  - Div alignment for centered content
-  - All markdown properly escaped
+    message: "📊 Research report for {{study_name}} is ready for review."
