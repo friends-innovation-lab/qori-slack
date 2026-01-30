@@ -1,21 +1,56 @@
-# Sample Input for Stakeholder Interview Guide
+# /qori-plan → Stakeholder Interview Guide — Sample Input
 
-Copy/paste these values into the stakeholder interview guide modal fields.
+Copy/paste these values into the modal fields.
 
 ---
 
-## Who is this stakeholder?
-Design Lead - Mobile App Team
+### Select a study
+```
+VA Health and Benefits Mobile App Navigation Research
+```
 
-## What is their role in relation to this research?
-Primary decision-maker for the mobile app redesign. Responsible for navigation patterns, visual hierarchy, and accessibility compliance. Needs research insights to prioritize design changes for Q1 2026 release.
+### Stakeholder name
+```
+Jasmine Oyelaran
+```
 
-## What do you want to learn from them?
+### Stakeholder role *
+```
+Design Lead
+```
+
+### Team / Department *
+```
+VA Mobile App Design Team
+```
+
+### Interview duration *
+```
+60 minutes
+```
+
+### Focus areas * (select all that apply)
+```
+🔧 Constraints - Technical, policy, resource limitations
+🎯 Priorities - Strategic goals, roadmap
+📋 Requirements - Must-haves, dependencies
+📜 History - Why things are this way
+```
+
+### Key questions you want answered
+```
 - What design constraints exist for the mobile app (technical, brand, accessibility)?
 - What navigation patterns have they already explored or ruled out?
 - What's their hypothesis about why veterans struggle with current navigation?
 - What would "success" look like for the redesign from their perspective?
 - What previous research or analytics have they reviewed?
+```
 
-## What context should they have before the interview?
-Share the current app analytics showing 45% task abandonment and 4.2/10 satisfaction rating. Provide overview of study objectives and participant criteria. Ask them to identify 2-3 specific flows they're most concerned about.
+### User findings to discuss
+```
+- 45% task abandonment rate on mobile app
+- 4.2/10 user satisfaction rating
+- App store reviews consistently mention "can't find what I need"
+- 34% of support calls relate to navigation issues
+- Screen reader users report unlabeled buttons blocking task completion
+```
