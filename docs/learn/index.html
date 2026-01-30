@@ -1,27 +1,287 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Learn Qori</title>
-  <link rel="stylesheet" href="assets/css/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Qori</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        /* Avatar section */
+        .avatar-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .qori-avatar {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px auto;
+            background: linear-gradient(135deg, #007a5a 0%, #00a67d 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(0, 122, 90, 0.3);
+            position: relative;
+        }
+
+        .avatar-letter {
+            font-size: 52px;
+            font-weight: 800;
+            color: white;
+            line-height: 1;
+        }
+
+        .wave-emoji {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            font-size: 32px;
+            animation: wave 2s ease-in-out infinite;
+            transform-origin: 70% 70%;
+        }
+
+        @keyframes wave {
+            0%, 100% { transform: rotate(0deg); }
+            10%, 30% { transform: rotate(14deg); }
+            20% { transform: rotate(-8deg); }
+            40% { transform: rotate(14deg); }
+            50%, 100% { transform: rotate(0deg); }
+        }
+
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1d1c1d;
+            margin-bottom: 8px;
+        }
+
+        .welcome-subtitle {
+            font-size: 16px;
+            color: #616061;
+            line-height: 1.5;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* Section header */
+        .section-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1d1c1d;
+        }
+
+        .section-subtitle {
+            font-size: 14px;
+            color: #616061;
+            margin-top: 4px;
+        }
+
+        /* Topic grid */
+        .topic-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .topic-card {
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 16px 12px;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .topic-card:hover {
+            border-color: #007a5a;
+            background: #f0fdf4;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 122, 90, 0.15);
+        }
+
+        .topic-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .topic-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1d1c1d;
+            line-height: 1.3;
+        }
+
+        /* Quick start */
+        .quick-start {
+            background: #f0fdf4;
+            border: 1px solid #007a5a;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .quick-start-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #007a5a;
+            margin-bottom: 12px;
+        }
+
+        .quick-start-command {
+            background: #1d1c1d;
+            color: #e1e5e9;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 18px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .quick-start-hint {
+            font-size: 12px;
+            color: #616061;
+            margin-top: 12px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e1e5e9;
+        }
+
+        .footer-text {
+            font-size: 13px;
+            color: #868686;
+        }
+
+        .footer-link {
+            color: #007a5a;
+            text-decoration: none;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px;
+            }
+
+            .topic-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .welcome-title {
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h1>Learn Qori</h1>
-  <p>Welcome to the Qori tutorial guide.</p>
+    <div class="container">
+        <div class="avatar-section">
+            <div class="qori-avatar">
+                <span class="avatar-letter">Q</span>
+                <span class="wave-emoji">👋</span>
+            </div>
+            <h1 class="welcome-title">Hi, I'm Qori!</h1>
+            <p class="welcome-subtitle">
+                Your AI research assistant. I help VA research teams manage studies, participants, and synthesis — all from Slack.
+            </p>
+        </div>
 
-  <nav>
-    <ul>
-      <li><a href="request/">Research Request</a></li>
-      <li><a href="plan/">Plan Study</a></li>
-      <li><a href="participants/">Manage Participants</a></li>
-      <li><a href="outreach/">Participant Outreach</a></li>
-      <li><a href="observe/">Observe Sessions</a></li>
-      <li><a href="notes/">Take Notes</a></li>
-      <li><a href="analyze/">Analyze Data</a></li>
-      <li><a href="synthesis/">Synthesis</a></li>
-      <li><a href="report/">Generate Reports</a></li>
-    </ul>
-  </nav>
+        <div class="section-header">
+            <h2 class="section-title">What would you like to learn?</h2>
+            <p class="section-subtitle">Click a topic for an interactive walkthrough</p>
+        </div>
+
+        <div class="topic-grid">
+            <a href="request/" class="topic-card">
+                <div class="topic-icon">📥</div>
+                <div class="topic-title">Research Requests</div>
+            </a>
+            <a href="plan/" class="topic-card">
+                <div class="topic-icon">📋</div>
+                <div class="topic-title">Study Planning</div>
+            </a>
+            <a href="participants/" class="topic-card">
+                <div class="topic-icon">👥</div>
+                <div class="topic-title">Participants</div>
+            </a>
+            <a href="outreach/" class="topic-card">
+                <div class="topic-icon">📬</div>
+                <div class="topic-title">Outreach</div>
+            </a>
+            <a href="observe/" class="topic-card">
+                <div class="topic-icon">👀</div>
+                <div class="topic-title">Observing</div>
+            </a>
+            <a href="notes/" class="topic-card">
+                <div class="topic-icon">📝</div>
+                <div class="topic-title">Note Taking</div>
+            </a>
+            <a href="analyze/" class="topic-card">
+                <div class="topic-icon">🔬</div>
+                <div class="topic-title">Analysis</div>
+            </a>
+            <a href="synthesis/" class="topic-card">
+                <div class="topic-icon">🔍</div>
+                <div class="topic-title">Synthesis</div>
+            </a>
+            <a href="report/" class="topic-card">
+                <div class="topic-icon">📊</div>
+                <div class="topic-title">Reports</div>
+            </a>
+        </div>
+
+        <div class="quick-start">
+            <div class="quick-start-label">⌨️ Quick start — type this in Slack anytime:</div>
+            <div class="quick-start-command">/qori</div>
+            <div class="quick-start-hint">See all available commands</div>
+        </div>
+
+        <div class="footer">
+            <p class="footer-text">
+                Questions? Ask in <a href="#" class="footer-link">#qori-support</a> or contact your research ops team.
+            </p>
+        </div>
+    </div>
 </body>
 </html>
