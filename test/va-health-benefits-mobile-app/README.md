@@ -1,30 +1,43 @@
 # VA Health Benefits Mobile App - Test Data
 
-This folder contains sample data for testing Qori's slash commands. Each subfolder maps to a specific command and contains copy/paste content for testing the UI flows.
+Sample data for testing Qori slash commands. Each file matches modal fields 1:1 for easy copy/paste.
 
 ## Study Overview
 
-**Study Name:** VA Health and Benefits Mobile App Navigation Study
-**Research Focus:** Testing mobile app navigation and information architecture
-**Participants:** 3 test participants (David, Amanda, Marcus)
-**Method:** Usability testing with accessibility focus
+| Field | Value |
+|-------|-------|
+| Study Name | VA Health and Benefits Mobile App Navigation Study |
+| Research Focus | Mobile app navigation and information architecture |
+| Participants | 3 test participants (David, Amanda, Marcus) |
+| Method | Usability testing with accessibility focus |
 
 ## Folder Structure
 
 | Folder | Command | Contents |
 |--------|---------|----------|
-| `qori-request/` | `/qori-request` | Sample research request input |
-| `qori-plan/` | `/qori-plan` | Research brief, plan, guides, desk research, survey data |
-| `qori-participants/` | `/qori-participants` | Individual participant records |
-| `qori-outreach/` | `/qori-outreach` | Context for generating outreach messages |
-| `qori-notes/` | `/qori-notes` | Session notes from observers |
-| `qori-analyze/` | `/qori-analyze` | Raw transcripts for analysis |
-| `qori-synthesis/` | `/qori-synthesis` | Combined session data for cross-session synthesis |
-| `qori-report/` | `/qori-report` | Synthesis output for report generation |
+| `qori-request/` | `/qori-request` | Research request fields |
+| `qori-plan/` | `/qori-plan` | Brief, plan, guides, desk research files, survey CSV |
+| `qori-participants/` | `/qori-participants` | 3 participant records |
+| `qori-outreach/` | `/qori-outreach` | Participant IDs for each message type |
+| `qori-notes/` | `/qori-notes` | Session notes (3 sessions) |
+| `qori-analyze/` | `/qori-analyze` | Raw transcripts (3 transcripts) |
 
 ## How to Use
 
 1. Open the folder for the command you're testing
-2. Copy the content from the sample file
-3. Paste into the corresponding Qori modal field
-4. Submit and verify the output
+2. Each markdown file shows exact field labels from the modal
+3. Copy content from the ``` code blocks
+4. Paste into the corresponding modal field
+5. Submit and verify output
+
+## qori-plan Files
+
+| File | Modal Action |
+|------|--------------|
+| `research-brief-input.md` | Create Research Brief |
+| `research-plan-input.md` | Create Research Plan |
+| `discussion-guide-input.md` | Create Discussion Guide |
+| `stakeholder-guide-input.md` | Create Stakeholder Interview Guide |
+| `desk-research/*.md` | Upload Desk Research (6 files) |
+| `survey-data-sample.csv` | Upload Survey Data |
+| `stakeholder-notes-sample.md` | Upload Stakeholder Notes |

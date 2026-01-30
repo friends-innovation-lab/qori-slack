@@ -1,35 +1,124 @@
-# Research Brief 
+# /qori-plan → Research Brief — Sample Input
 
-## Research Brief Fields
+Copy/paste these values into the modal fields.
 
-**Project Title/Focus:** VA Health and Benefits Mobile App Navigation 
+---
 
-**Study context and motivation:** Current VA mobile app has a 4.2/10 user satisfaction rating with 45% of veterans abandoning tasks mid-completion. Navigation analytics show users frequently use the search function to find basic features, indicating poor information architecture. App store reviews consistently mention "can't find what I need" and "too confusing to navigate." With 78% of veteran interactions happening on mobile devices, improving navigation is critical for veteran access to essential services. Leadership needs actionable insights for mobile app redesign scheduled for Q1 2026.
+### Link to research request
+```
+https://github.com/va-mobile/research/issues/142
+```
 
-**Target barriers to identify:**
-* Confusing main menu structure with overlapping categories (Health vs. Benefits vs. Profile)
-* Poor discoverability of key features like prescription refills and appointment scheduling  
-* Inconsistent navigation patterns between different app sections
-* Search functionality that returns irrelevant or outdated results
-* Information hierarchy that doesn't match veteran mental models
-* Accessibility issues with touch targets and screen reader navigation
+### Study title *
+```
+VA Health and Benefits Mobile App Navigation Study
+```
 
-**User flows/touchpoints to evaluate:**
-* App onboarding and initial feature discovery
-* Main dashboard navigation and task completion
-* Health records access and prescription management flow
-* Appointment scheduling and modification process
-* Benefits status checking and document submission
-* Profile management and notification settings
-* Search behavior and results interaction
+### Stakeholder who requested *
+```
+David Park, Mobile Product Manager
+```
 
-**Stakeholders Consulted:**
-* David Park (Mobile Product Manager) - provided app analytics and feature usage data
-* Angela Foster (VA.gov Information Architect) - shared previous card sorting research findings  
-* Dr. Robert Martinez (Digital Accessibility Specialist) - mobile accessibility compliance insights
-* Jennifer Lee (Customer Support Lead) - top mobile app support ticket categories
-* Carlos Thompson (Mobile Development Lead) - technical constraints and development timeline
+### Lead researcher *
+```
+Taylor Kim
+```
 
-**Research Approach:** Mixed-methods study combining card sorting exercises (8 veterans) and moderated mobile usability testing (8 veterans) to evaluate current information architecture and identify optimal navigation patterns. Focus on veterans who regularly use the mobile app, ensuring representation across age groups and assistive technology users. Sessions will include both iOS and Android testing to account for platform differences.
+### Research team
+```
+Alex Chen (note-taker), Jordan Williams (observer)
+```
 
-**Prepared By:** Taylor Kim, Mobile UX Researcher
+### Business context *
+```
+The VA mobile app has a 4.2/10 user satisfaction rating with 45% task abandonment rate. 78% of veteran interactions now happen on mobile. App store reviews consistently mention "can't find what I need." Support calls show 34% relate to navigation issues. Leadership needs insights for Q1 2026 mobile redesign.
+```
+
+### Research objectives *
+```
+- Where veterans encounter navigation barriers in the mobile app
+- Which navigation patterns (bottom tabs vs hamburger menu) enable faster task completion
+- How accessibility needs affect navigation success
+- Why veterans abandon tasks and resort to phone support
+```
+
+### Primary research questions *
+```
+1. What mental models do veterans use to organize health and benefits information?
+2. Which critical barriers prevent veterans from finding prescription refills, appointments, and benefits status?
+3. How do screen reader users navigate the current app structure?
+4. What causes the 45% task abandonment rate?
+```
+
+### User journeys/flows in scope *
+```
+- App onboarding → Dashboard → Feature discovery
+- Health menu → Prescriptions → Refill request
+- Health menu → Appointments → Schedule new
+- Benefits menu → Claims status → Claim details
+- Profile → Settings → Notification preferences
+```
+
+### Target barriers to investigate *
+```
+- Confusing menu structure (Health vs Benefits vs Profile overlap)
+- Poor discoverability of prescription refills and appointment scheduling
+- Inconsistent navigation patterns between sections
+- Unlabeled buttons blocking screen reader users
+- Information hierarchy not matching veteran mental models
+```
+
+### Team hypotheses
+```
+We believe veterans abandon tasks because: (1) key features are buried too deep in menus, (2) category labels don't match their mental models, (3) screen reader users can't identify unlabeled buttons.
+```
+
+### Primary research method *
+```
+Usability Testing
+```
+
+### Target sample size *
+```
+8-10 participants
+```
+
+### Why this method? *
+```
+Need to observe real-time task completion and identify specific friction points. Usability testing reveals where veterans get stuck, how they recover, and what causes abandonment. Think-aloud protocol captures mental models and expectations.
+```
+
+### Participant criteria *
+```
+Must-haves:
+- Veterans who used VA mobile app in past 90 days
+- Mix of iOS (5) and Android (5) users
+- At least 3 participants using assistive technology (VoiceOver, TalkBack, large text)
+
+Nice-to-haves:
+- Range of ages (25-34, 35-54, 55+)
+- Urban, suburban, and rural locations
+- Mix of tech comfort levels
+
+Exclusions:
+- VA employees
+- Participants in previous VA mobile studies (past 6 months)
+```
+
+### Estimated timeline *
+```
+4 weeks
+```
+
+### Hard deadline
+```
+2025-08-31
+```
+
+### Constraints and risks
+```
+- Limited recruitment pool for assistive technology users
+- Android testing requires device procurement
+- Tight timeline due to Q1 2026 redesign deadline
+- Some participants may have connectivity issues (rural)
+```

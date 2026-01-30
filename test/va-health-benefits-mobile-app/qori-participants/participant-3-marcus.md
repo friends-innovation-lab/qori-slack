@@ -1,21 +1,55 @@
-# Participant 3: PT003 - Marcus Johnson
+# /qori-participants — Participant 3
 
-**Participant Name or Alias:** Marcus Johnson
+Copy/paste these values into the Add Participant modal fields.
 
-**Contact Information:** marcus.j.army@email.com | (555) 345-6789
+---
 
-**How was the participant recruited:** Phone recruitment
+### Participant name or alias *
+```
+Marcus J. (PT003)
+```
 
-**Session Date:** August 14, 2025
+### How was this participant recruited? *
+```
+🏛️ Recruitment agency
+```
 
-**Session Time:** 10:00 AM EST
+### Scheduled date *
+```
+2025-08-14
+```
 
-**Current Status:** Pending response
+### Scheduled time *
+```
+10:00 AM
+```
 
-**Special Accommodations:** Limited data plan; prefers Wi-Fi only sessions; uses large text settings
+### Current status *
+```
+⏳ Pending (awaiting response)
+```
 
-**Participant Demographics:**
-- **Race/Ethnicity:** Black/African American
-- **Age Range:** 55-64
-- **Education Level:** High school diploma
-- **Location:** Rural (Alabama)
+### Race / ethnicity *
+```
+Black or African American
+```
+
+### Age range *
+```
+55-64
+```
+
+### Education level *
+```
+High school diploma / GED
+```
+
+### Location type *
+```
+🌾 Rural
+```
+
+### Notes & accommodations
+```
+Army veteran. Uses large text settings on Android. Limited data plan—prefers Wi-Fi only sessions. Lower tech comfort level. May need extra time for tasks.
+```
