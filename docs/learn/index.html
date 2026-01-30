@@ -8,567 +8,349 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        border: "hsl(214.3 31.8% 91.4%)",
+                        input: "hsl(214.3 31.8% 91.4%)",
+                        ring: "hsl(142.1 76.2% 36.3%)",
+                        background: "hsl(0 0% 100%)",
+                        foreground: "hsl(222.2 84% 4.9%)",
+                        primary: {
+                            DEFAULT: "hsl(142.1 76.2% 36.3%)",
+                            foreground: "hsl(355.7 100% 97.3%)",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(210 40% 96.1%)",
+                            foreground: "hsl(222.2 47.4% 11.2%)",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(210 40% 96.1%)",
+                            foreground: "hsl(215.4 16.3% 46.9%)",
+                        },
+                        accent: {
+                            DEFAULT: "hsl(210 40% 96.1%)",
+                            foreground: "hsl(222.2 47.4% 11.2%)",
+                        },
+                        card: {
+                            DEFAULT: "hsl(0 0% 100%)",
+                            foreground: "hsl(222.2 84% 4.9%)",
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['SF Mono', 'Monaco', 'Consolas', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #fff; }
-
-        /* Sidebar - Light theme */
+        /* Sidebar */
         .sidebar {
             position: fixed;
             left: 0;
             top: 0;
             bottom: 0;
             width: 260px;
-            background: #fafafa;
-            border-right: 1px solid #e5e5e5;
+            background: hsl(210 40% 98%);
+            border-right: 1px solid hsl(214.3 31.8% 91.4%);
             display: flex;
             flex-direction: column;
             z-index: 100;
-        }
-
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid #e5e5e5;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .logo img {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-        }
-
-        .logo-text {
-            font-weight: 700;
-            font-size: 18px;
-            color: #1a1a1a;
-        }
-
-        .sidebar-nav {
-            flex: 1;
             overflow-y: auto;
-            padding: 16px 0;
         }
 
-        .nav-section {
-            margin-bottom: 24px;
-        }
-
-        .nav-section-title {
-            font-size: 11px;
-            font-weight: 600;
-            color: #999;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 8px 20px;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 20px;
-            color: #666;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.15s;
-            border-left: 3px solid transparent;
-        }
-
-        .nav-item:hover {
-            background: #f0f0f0;
-            color: #1a1a1a;
-        }
-
-        .nav-item.active {
-            background: #e8f5e9;
-            color: #007a5a;
-            border-left-color: #007a5a;
-        }
-
-        .nav-icon {
-            font-size: 16px;
-            width: 20px;
-            text-align: center;
-        }
-
-        .nav-badge {
-            margin-left: auto;
-            font-size: 11px;
-            background: #e5e5e5;
-            color: #666;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        .sidebar-footer {
-            padding: 16px 20px;
-            border-top: 1px solid #e5e5e5;
-        }
-
-        .sidebar-footer a {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #999;
-            text-decoration: none;
-            font-size: 13px;
-            padding: 8px 0;
-            transition: color 0.15s;
-        }
-
-        .sidebar-footer a:hover {
-            color: #007a5a;
-        }
-
-        /* Main content */
-        .main {
-            margin-left: 260px;
-            min-height: 100vh;
-            background: #fff;
-        }
-
-        .main-header {
-            position: sticky;
-            top: 0;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(8px);
-            border-bottom: 1px solid #e5e5e5;
-            padding: 16px 40px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 50;
-        }
-
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .main-content {
-            max-width: 900px;
-            padding: 48px 40px 80px;
-        }
-
-        /* Hero */
-        .hero {
-            margin-bottom: 56px;
-        }
-
-        .hero-badge {
-            display: inline-block;
-            background: #e8f5e9;
-            color: #007a5a;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 20px;
-            margin-bottom: 16px;
-        }
-
-        .hero-title {
-            font-size: 44px;
-            font-weight: 700;
-            color: #1a1a1a;
-            margin-bottom: 12px;
-            letter-spacing: -0.02em;
-        }
-
-        .hero-subtitle {
-            font-size: 18px;
-            color: #666;
-            margin-bottom: 28px;
-            max-width: 560px;
-            line-height: 1.6;
-        }
-
-        .hero-command {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            background: linear-gradient(135deg, #007a5a 0%, #00a67d 100%);
-            color: #fff;
-            padding: 16px 24px;
-            border-radius: 12px;
-            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
-            font-size: 18px;
-            font-weight: 600;
+        /* Collapsible sections */
+        .nav-section-toggle {
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 12px rgba(0, 122, 90, 0.25);
+            user-select: none;
         }
 
-        .hero-command:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 122, 90, 0.3);
+        .nav-section-toggle:hover {
+            background: hsl(210 40% 96.1%);
         }
 
-        .hero-command-hint {
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            font-weight: 500;
-            opacity: 0.85;
+        .nav-section-content {
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.2s ease-out;
         }
 
-        /* Phase sections */
-        .phase-section {
-            margin-bottom: 48px;
+        .nav-section.collapsed .nav-section-content {
+            max-height: 0;
         }
 
-        .phase-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
+        .nav-section.collapsed .chevron {
+            transform: rotate(-90deg);
         }
 
-        .phase-icon {
-            font-size: 20px;
+        .chevron {
+            transition: transform 0.2s ease;
         }
 
-        .phase-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1a1a1a;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-        }
-
-        /* Cards */
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 16px;
-        }
-
-        .card {
-            background: #fff;
-            border: 1px solid #e5e5e5;
-            border-radius: 12px;
-            padding: 24px;
-            text-decoration: none;
-            color: inherit;
-            transition: all 0.2s;
-        }
-
-        .card:hover {
-            border-color: #007a5a;
-            box-shadow: 0 4px 16px rgba(0, 122, 90, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-
-        .card-icon {
-            width: 44px;
-            height: 44px;
-            background: #f5f5f5;
-            border-radius: 10px;
+        /* Card image placeholder */
+        .card-image {
+            aspect-ratio: 16 / 9;
+            background: hsl(210 40% 96.1%);
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
-        }
-
-        .card-arrow {
-            color: #ccc;
-            font-size: 20px;
-            transition: transform 0.2s, color 0.2s;
-        }
-
-        .card:hover .card-arrow {
-            color: #007a5a;
-            transform: translateX(4px);
-        }
-
-        .card-title {
-            font-size: 17px;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-bottom: 6px;
-        }
-
-        .card-badge {
-            display: inline-block;
-            background: #e8f5e9;
-            color: #007a5a;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 3px 8px;
-            border-radius: 4px;
-            margin-left: 8px;
-        }
-
-        .card-description {
-            font-size: 14px;
-            color: #666;
             margin-bottom: 16px;
-            line-height: 1.5;
+            overflow: hidden;
         }
 
-        .card-command {
-            display: inline-block;
-            background: #f5f5f5;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
-            font-size: 13px;
-            color: #1a1a1a;
+        .card-image span {
+            font-size: 48px;
+            opacity: 0.5;
         }
 
         /* Mobile */
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .sidebar.open {
+                transform: translateX(0);
             }
             .main {
-                margin-left: 0;
-            }
-            .main-content {
-                padding: 32px 20px 60px;
-            }
-            .hero-title {
-                font-size: 32px;
-            }
-            .cards-grid {
-                grid-template-columns: 1fr;
+                margin-left: 0 !important;
             }
         }
     </style>
 </head>
-<body>
+<body class="font-sans bg-background text-foreground">
     <!-- Sidebar -->
     <aside class="sidebar">
-        <div class="sidebar-header">
-            <a href="./" class="logo">
-                <img src="assets/qori_logo.png" alt="Qori">
-                <span class="logo-text">Qori</span>
+        <!-- Logo -->
+        <div class="p-5 border-b border-border">
+            <a href="./" class="flex items-center gap-3 no-underline">
+                <img src="assets/qori_logo.png" alt="Qori" class="w-8 h-8 rounded-lg">
+                <span class="font-bold text-lg text-foreground">Qori</span>
             </a>
         </div>
 
-        <nav class="sidebar-nav">
-            <div class="nav-section">
-                <div class="nav-section-title">Study Setup</div>
-                <a href="request/" class="nav-item">
-                    <span class="nav-icon">📥</span>
-                    Research Request
-                </a>
-                <a href="plan/" class="nav-item">
-                    <span class="nav-icon">📋</span>
-                    Study Planning
-                    <span class="nav-badge">7</span>
-                </a>
+        <!-- Navigation -->
+        <nav class="flex-1 py-4">
+            <!-- Study Setup -->
+            <div class="nav-section mb-1">
+                <div class="nav-section-toggle flex items-center justify-between px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide" onclick="toggleSection(this)">
+                    <span>Study Setup</span>
+                    <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </div>
+                <div class="nav-section-content">
+                    <a href="request/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <span class="text-base">📥</span>
+                        Research Request
+                    </a>
+                    <a href="plan/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <span class="text-base">📋</span>
+                        Study Planning
+                    </a>
+                </div>
             </div>
 
-            <div class="nav-section">
-                <div class="nav-section-title">Participants</div>
-                <a href="participants/" class="nav-item">
-                    <span class="nav-icon">👥</span>
-                    Manage Participants
-                </a>
-                <a href="outreach/" class="nav-item">
-                    <span class="nav-icon">📬</span>
-                    Outreach Messages
-                    <span class="nav-badge">6</span>
-                </a>
+            <!-- Participants -->
+            <div class="nav-section mb-1">
+                <div class="nav-section-toggle flex items-center justify-between px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide" onclick="toggleSection(this)">
+                    <span>Participants</span>
+                    <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </div>
+                <div class="nav-section-content">
+                    <a href="participants/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <span class="text-base">👥</span>
+                        Manage Participants
+                    </a>
+                    <a href="outreach/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <span class="text-base">📬</span>
+                        Outreach Messages
+                    </a>
+                </div>
             </div>
 
-            <div class="nav-section">
-                <div class="nav-section-title">Sessions</div>
-                <a href="observe/" class="nav-item">
-                    <span class="nav-icon">👀</span>
-                    Request to Observe
-                </a>
-                <a href="notes/" class="nav-item">
-                    <span class="nav-icon">📝</span>
-                    Session Notes
-                </a>
+            <!-- Sessions -->
+            <div class="nav-section mb-1">
+                <div class="nav-section-toggle flex items-center justify-between px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide" onclick="toggleSection(this)">
+                    <span>Sessions</span>
+                    <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </div>
+                <div class="nav-section-content">
+                    <a href="observe/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <span class="text-base">👀</span>
+                        Request to Observe
+                    </a>
+                    <a href="notes/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <span class="text-base">📝</span>
+                        Session Notes
+                    </a>
+                </div>
             </div>
 
-            <div class="nav-section">
-                <div class="nav-section-title">Analysis</div>
-                <a href="analyze/" class="nav-item">
-                    <span class="nav-icon">🔬</span>
-                    Analyze Sessions
-                </a>
-                <a href="synthesis/" class="nav-item">
-                    <span class="nav-icon">🔍</span>
-                    Synthesis
-                </a>
-                <a href="report/" class="nav-item">
-                    <span class="nav-icon">📊</span>
-                    Stakeholder Reports
-                </a>
+            <!-- Analysis -->
+            <div class="nav-section mb-1">
+                <div class="nav-section-toggle flex items-center justify-between px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide" onclick="toggleSection(this)">
+                    <span>Analysis</span>
+                    <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </div>
+                <div class="nav-section-content">
+                    <a href="analyze/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <span class="text-base">🔬</span>
+                        Analyze Sessions
+                    </a>
+                    <a href="synthesis/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <span class="text-base">🔍</span>
+                        Synthesis
+                    </a>
+                    <a href="report/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <span class="text-base">📊</span>
+                        Stakeholder Reports
+                    </a>
+                </div>
             </div>
         </nav>
 
-        <div class="sidebar-footer">
-            <a href="https://github.com/Friends-From-The-City/Qori-Slack-AI-Bot">
-                <span>🐙</span>
+        <!-- Footer -->
+        <div class="p-4 border-t border-border">
+            <a href="https://github.com/Friends-From-The-City/Qori-Slack-AI-Bot" class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                 GitHub
-            </a>
-            <a href="#">
-                <span>💬</span>
-                Support
             </a>
         </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="main">
-        <header class="main-header">
-            <div class="breadcrumb">
-                <span>Learn Qori</span>
-            </div>
-        </header>
-
-        <div class="main-content">
-            <section class="hero">
-                <div class="hero-badge">AI-Powered Research Ops</div>
-                <h1 class="hero-title">Learn Qori</h1>
-                <p class="hero-subtitle">
+    <main class="ml-[260px] min-h-screen">
+        <div class="max-w-[900px] mx-auto px-8 py-16">
+            <!-- Hero -->
+            <section class="mb-16">
+                <h1 class="text-4xl font-bold text-foreground mb-4 tracking-tight">Learn Qori</h1>
+                <p class="text-lg text-muted-foreground max-w-xl leading-relaxed">
                     Your AI research assistant for VA teams. Manage studies, participants, and synthesis — all from Slack.
                 </p>
-                <div class="hero-command" onclick="copyCommand(this)">
-                    /qori
-                    <span class="hero-command-hint">← type in Slack to start</span>
-                </div>
             </section>
 
             <!-- Study Setup -->
-            <section class="phase-section">
-                <div class="phase-header">
-                    <span class="phase-icon">📋</span>
-                    <span class="phase-title">Study Setup</span>
-                </div>
-                <div class="cards-grid">
-                    <a href="request/" class="card">
-                        <div class="card-header">
-                            <div class="card-icon">📥</div>
-                            <span class="card-arrow">→</span>
+            <section id="study-setup" class="mb-16">
+                <h2 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-6">Study Setup</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Research Request -->
+                    <a href="request/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
+                        <div class="card-image bg-muted rounded-lg">
+                            <span>📥</span>
                         </div>
-                        <h3 class="card-title">Research Request</h3>
-                        <p class="card-description">Stakeholders submit research requests to your team. Captures what they need and why.</p>
-                        <div class="card-command">/qori-request</div>
+                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Research Request</h3>
+                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Stakeholders submit research requests to your team. Captures what they need and why.</p>
+                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-request</code>
                     </a>
-                    <a href="plan/" class="card">
-                        <div class="card-header">
-                            <div class="card-icon">📋</div>
-                            <span class="card-arrow">→</span>
+
+                    <!-- Study Planning -->
+                    <a href="plan/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
+                        <div class="card-image bg-muted rounded-lg">
+                            <span>📋</span>
                         </div>
-                        <h3 class="card-title">Study Planning<span class="card-badge">7 actions</span></h3>
-                        <p class="card-description">Create briefs, plans, discussion guides, and upload desk research — all in one command.</p>
-                        <div class="card-command">/qori-plan</div>
+                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Study Planning</h3>
+                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Create briefs, plans, discussion guides, and upload desk research — all in one command.</p>
+                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-plan</code>
                     </a>
                 </div>
             </section>
 
             <!-- Participants -->
-            <section class="phase-section">
-                <div class="phase-header">
-                    <span class="phase-icon">👥</span>
-                    <span class="phase-title">Participants</span>
-                </div>
-                <div class="cards-grid">
-                    <a href="participants/" class="card">
-                        <div class="card-header">
-                            <div class="card-icon">👥</div>
-                            <span class="card-arrow">→</span>
+            <section id="participants" class="mb-16">
+                <h2 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-6">Participants</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Manage Participants -->
+                    <a href="participants/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
+                        <div class="card-image bg-muted rounded-lg">
+                            <span>👥</span>
                         </div>
-                        <h3 class="card-title">Manage Participants</h3>
-                        <p class="card-description">Add and update participants. Track status from recruited to completed.</p>
-                        <div class="card-command">/qori-participants</div>
+                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Manage Participants</h3>
+                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Add and update participants. Track status from recruited to completed.</p>
+                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-participants</code>
                     </a>
-                    <a href="outreach/" class="card">
-                        <div class="card-header">
-                            <div class="card-icon">📬</div>
-                            <span class="card-arrow">→</span>
+
+                    <!-- Outreach Messages -->
+                    <a href="outreach/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
+                        <div class="card-image bg-muted rounded-lg">
+                            <span>📬</span>
                         </div>
-                        <h3 class="card-title">Outreach Messages<span class="card-badge">6 types</span></h3>
-                        <p class="card-description">Generate recruitment emails, reminders, confirmations, and thank-you messages.</p>
-                        <div class="card-command">/qori-outreach</div>
+                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Outreach Messages</h3>
+                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Generate recruitment emails, reminders, confirmations, and thank-you messages.</p>
+                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-outreach</code>
                     </a>
                 </div>
             </section>
 
             <!-- Sessions -->
-            <section class="phase-section">
-                <div class="phase-header">
-                    <span class="phase-icon">🎙️</span>
-                    <span class="phase-title">Sessions</span>
-                </div>
-                <div class="cards-grid">
-                    <a href="observe/" class="card">
-                        <div class="card-header">
-                            <div class="card-icon">👀</div>
-                            <span class="card-arrow">→</span>
+            <section id="sessions" class="mb-16">
+                <h2 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-6">Sessions</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Request to Observe -->
+                    <a href="observe/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
+                        <div class="card-image bg-muted rounded-lg">
+                            <span>👀</span>
                         </div>
-                        <h3 class="card-title">Request to Observe</h3>
-                        <p class="card-description">Team members can request to observe upcoming research sessions.</p>
-                        <div class="card-command">/qori-observe</div>
+                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Request to Observe</h3>
+                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Team members can request to observe upcoming research sessions.</p>
+                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-observe</code>
                     </a>
-                    <a href="notes/" class="card">
-                        <div class="card-header">
-                            <div class="card-icon">📝</div>
-                            <span class="card-arrow">→</span>
+
+                    <!-- Session Notes -->
+                    <a href="notes/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
+                        <div class="card-image bg-muted rounded-lg">
+                            <span>📝</span>
                         </div>
-                        <h3 class="card-title">Session Notes</h3>
-                        <p class="card-description">Observers capture notes and observations during or after sessions.</p>
-                        <div class="card-command">/qori-notes</div>
+                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Session Notes</h3>
+                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Observers capture notes and observations during or after sessions.</p>
+                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-notes</code>
                     </a>
                 </div>
             </section>
 
             <!-- Analysis -->
-            <section class="phase-section">
-                <div class="phase-header">
-                    <span class="phase-icon">🔍</span>
-                    <span class="phase-title">Analysis</span>
-                </div>
-                <div class="cards-grid">
-                    <a href="analyze/" class="card">
-                        <div class="card-header">
-                            <div class="card-icon">🔬</div>
-                            <span class="card-arrow">→</span>
+            <section id="analysis" class="mb-16">
+                <h2 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-6">Analysis</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Analyze Sessions -->
+                    <a href="analyze/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
+                        <div class="card-image bg-muted rounded-lg">
+                            <span>🔬</span>
                         </div>
-                        <h3 class="card-title">Analyze Sessions</h3>
-                        <p class="card-description">AI extracts themes, pain points, and key quotes from individual sessions.</p>
-                        <div class="card-command">/qori-analyze</div>
+                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Analyze Sessions</h3>
+                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">AI extracts themes, pain points, and key quotes from individual sessions.</p>
+                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-analyze</code>
                     </a>
-                    <a href="synthesis/" class="card">
-                        <div class="card-header">
-                            <div class="card-icon">🔍</div>
-                            <span class="card-arrow">→</span>
+
+                    <!-- Synthesis -->
+                    <a href="synthesis/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
+                        <div class="card-image bg-muted rounded-lg">
+                            <span>🔍</span>
                         </div>
-                        <h3 class="card-title">Cross-Session Synthesis</h3>
-                        <p class="card-description">Find patterns across sessions. Generate journey maps, personas, and affinity diagrams.</p>
-                        <div class="card-command">/qori-synthesis</div>
+                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Cross-Session Synthesis</h3>
+                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Find patterns across sessions. Generate journey maps, personas, and affinity diagrams.</p>
+                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-synthesis</code>
                     </a>
-                    <a href="report/" class="card">
-                        <div class="card-header">
-                            <div class="card-icon">📊</div>
-                            <span class="card-arrow">→</span>
+
+                    <!-- Stakeholder Reports -->
+                    <a href="report/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
+                        <div class="card-image bg-muted rounded-lg">
+                            <span>📊</span>
                         </div>
-                        <h3 class="card-title">Stakeholder Reports</h3>
-                        <p class="card-description">Generate polished reports and automatically create GitHub issues from recommendations.</p>
-                        <div class="card-command">/qori-report</div>
+                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Stakeholder Reports</h3>
+                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Generate polished reports and automatically create GitHub issues from recommendations.</p>
+                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-report</code>
                     </a>
                 </div>
             </section>
@@ -576,11 +358,9 @@
     </main>
 
     <script>
-        function copyCommand(element) {
-            navigator.clipboard.writeText('/qori');
-            const original = element.innerHTML;
-            element.innerHTML = '✓ Copied!';
-            setTimeout(() => { element.innerHTML = original; }, 2000);
+        function toggleSection(toggle) {
+            const section = toggle.closest('.nav-section');
+            section.classList.toggle('collapsed');
         }
     </script>
 </body>
