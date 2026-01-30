@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "session_notes_modal",
+  "callback_id": "manual_notes",
   "title": {
     "type": "plain_text",
     "text": "Session notes"

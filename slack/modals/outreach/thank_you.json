@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "thank_you_modal",
+  "callback_id": "thank_you",
   "title": {
     "type": "plain_text",
     "text": "Thank you"

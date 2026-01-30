@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "discussion_guide_modal",
+  "callback_id": "discussion_guide",
   "title": {
     "type": "plain_text",
     "text": "Discussion Guide"

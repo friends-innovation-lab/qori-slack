@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "upload_desk_research_modal",
+  "callback_id": "upload_desk_research",
   "title": {
     "type": "plain_text",
     "text": "Desk research"

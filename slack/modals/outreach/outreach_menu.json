@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "participant_outreach_modal",
+  "callback_id": "outreach_menu",
   "title": {
     "type": "plain_text",
     "text": "Participant outreach"

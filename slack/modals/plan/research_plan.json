@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "research_plan_modal",
+  "callback_id": "research_plan",
   "title": {
     "type": "plain_text",
     "text": "Research plan"

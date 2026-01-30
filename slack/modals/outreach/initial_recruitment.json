@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "initial_recruitment_modal",
+  "callback_id": "initial_recruitment",
   "title": {
     "type": "plain_text",
     "text": "Initial recruitment"

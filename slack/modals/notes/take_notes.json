@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "take_notes_modal",
+  "callback_id": "take_notes",
   "title": {
     "type": "plain_text",
     "text": "Take notes"

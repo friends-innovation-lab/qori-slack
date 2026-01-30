@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "qori_analyze_modal",
+  "callback_id": "analyze_notes",
   "title": {
     "type": "plain_text",
     "text": "Analyze notes"

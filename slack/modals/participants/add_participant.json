@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "add_participant_modal",
+  "callback_id": "add_participant",
   "title": {
     "type": "plain_text",
     "text": "Add participant"

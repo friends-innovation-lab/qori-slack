@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "stakeholder_interview_guide_modal",
+  "callback_id": "stakeholder_interview_guide",
   "title": {
     "type": "plain_text",
     "text": "Stakeholder guide"

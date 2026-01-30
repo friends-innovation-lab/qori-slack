@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "qori_brief_modal",
+  "callback_id": "research_brief",
   "title": {
     "type": "plain_text",
     "text": "Research Brief"
