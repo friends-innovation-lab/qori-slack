@@ -1,61 +1,75 @@
-# Sample Context for /qori-outreach
+# /qori-outreach — Sample Inputs
 
-Use these values when testing different outreach message types.
+Copy/paste these values when testing each outreach message type.
 
 ---
 
 ## Initial Recruitment
 
-**Participant Name:** David Chen
-**Study Name:** VA Health and Benefits Mobile App Navigation Study
-**Session Length:** 60 minutes
-**Compensation:** $75 gift card
-**Scheduling Link:** https://calendly.com/va-research/mobile-nav-study
+### Participant ID or alias *
+```
+David C. (PT001)
+```
+
+### How should they sign up? *
+```
+Please use our Calendly link to select a time that works for you: https://calendly.com/va-research/mobile-nav-study
+
+Or reply to this email with 2-3 times you're available between August 10-20.
+```
 
 ---
 
 ## Session Confirmation
 
-**Participant Name:** Amanda Foster
-**Session Date:** August 13, 2025
-**Session Time:** 3:00 PM EST
-**Session Duration:** 60 minutes
-**Meeting Link:** https://zoom.us/j/123456789
-**Special Instructions:** Please have the VA mobile app installed on your phone before the session.
+### Participant ID or alias *
+```
+Amanda F. (PT002)
+```
+
+_(Session details auto-populated from participant record)_
 
 ---
 
 ## Session Reminder
 
-**Participant Name:** Marcus Johnson
-**Session Date:** Tomorrow (August 14, 2025)
-**Session Time:** 10:00 AM EST
-**Meeting Link:** https://zoom.us/j/123456789
-**Contact:** taylor.kim@va.gov
+### Participant ID or alias *
+```
+Marcus J. (PT003)
+```
+
+_(Session details auto-populated from participant record)_
 
 ---
 
 ## Rescheduling
 
-**Participant Name:** Rosa Martinez
-**Original Date:** August 15, 2025
-**Reason:** Researcher conflict
-**New Available Times:** August 18 at 10am, August 19 at 2pm, August 20 at 11am
-**Tone:** Apologetic, flexible
+### Participant ID or alias *
+```
+Rosa M. (PT004)
+```
+
+_(Used when participant or researcher needs to reschedule)_
 
 ---
 
-## Thank You / Follow-up
+## Follow-up / Thank You
 
-**Participant Name:** David Chen
-**Session Date:** August 12, 2025
-**Compensation:** $75 Amazon gift card (sent separately)
-**Follow-up Ask:** Would you be willing to participate in a follow-up study in 3 months?
+### Participant ID or alias *
+```
+David C. (PT001)
+```
+
+_(Sent after session completion)_
 
 ---
 
-## No-Show Follow-up
+## Test Scenarios
 
-**Participant Name:** [Test participant]
-**Missed Session:** August 14, 2025 at 10:00 AM
-**Tone:** Understanding, offer to reschedule
+| Message Type | Use Case |
+|--------------|----------|
+| Initial Recruitment | First contact to invite participant |
+| Session Confirmation | After participant confirms availability |
+| Session Reminder | 24 hours before session |
+| Rescheduling | When session needs to be moved |
+| Follow-up | Post-session thank you with compensation info |

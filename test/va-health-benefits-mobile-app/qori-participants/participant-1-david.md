@@ -1,21 +1,55 @@
-# Participant 1: PT001 - David Chen
+# /qori-participants — Participant 1
 
-**Participant Name or Alias:** David Chen
+Copy/paste these values into the Add Participant modal fields.
 
-**Contact Information:** david.c.marine@email.com | (555) 123-4567
+---
 
-**How was the participant recruited:** Internal VA panel
+### Participant name or alias *
+```
+David C. (PT001)
+```
 
-**Session Date:** August 12, 2025
+### How was this participant recruited? *
+```
+🏢 Internal panel
+```
 
-**Session Time:** 11:00 AM EST
+### Scheduled date *
+```
+2025-08-12
+```
 
-**Current Status:** Confirmed
+### Scheduled time *
+```
+11:00 AM
+```
 
-**Special Accommodations:** Uses VoiceOver on iPhone; prefers longer sessions to navigate complex flows
+### Current status *
+```
+✅ Confirmed
+```
 
-**Participant Demographics:**
-- **Race/Ethnicity:** Asian/Pacific Islander
-- **Age Range:** 45-54
-- **Education Level:** Bachelor's degree
-- **Location:** Urban (Los Angeles, CA)
+### Race / ethnicity *
+```
+Asian
+```
+
+### Age range *
+```
+45-54
+```
+
+### Education level *
+```
+Bachelor's degree
+```
+
+### Location type *
+```
+🏙️ Urban
+```
+
+### Notes & accommodations
+```
+Uses VoiceOver on iPhone. Marine veteran, 12 years service. Prefers longer sessions to navigate complex flows with screen reader. High technical proficiency with assistive technology.
+```

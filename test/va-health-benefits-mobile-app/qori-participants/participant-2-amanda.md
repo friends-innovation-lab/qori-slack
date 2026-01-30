@@ -1,21 +1,55 @@
-# Participant 2: PT002 - Amanda Foster
+# /qori-participants — Participant 2
 
-**Participant Name or Alias:** Amanda Foster
+Copy/paste these values into the Add Participant modal fields.
 
-**Contact Information:** amanda.f.navy@email.com | (555) 234-5678
+---
 
-**How was the participant recruited:** Email outreach
+### Participant name or alias *
+```
+Amanda F. (PT002)
+```
 
-**Session Date:** August 13, 2025
+### How was this participant recruited? *
+```
+✉️ Email outreach
+```
 
-**Session Time:** 3:00 PM EST
+### Scheduled date *
+```
+2025-08-13
+```
 
-**Current Status:** Confirmed
+### Scheduled time *
+```
+3:00 PM
+```
 
-**Special Accommodations:** Android user; works irregular hours so flexible timing needed
+### Current status *
+```
+✅ Confirmed
+```
 
-**Participant Demographics:**
-- **Race/Ethnicity:** White/Caucasian
-- **Age Range:** 35-44
-- **Education Level:** Some college
-- **Location:** Suburban (Denver, CO area)
+### Race / ethnicity *
+```
+White
+```
+
+### Age range *
+```
+35-44
+```
+
+### Education level *
+```
+Some college
+```
+
+### Location type *
+```
+🏘️ Suburban
+```
+
+### Notes & accommodations
+```
+Android user (Samsung Galaxy). Navy veteran. Works irregular hours—flexible timing needed. Moderate tech comfort level. No assistive technology requirements.
+```
