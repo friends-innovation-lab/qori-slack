@@ -16,11 +16,10 @@ Sample data for testing Qori slash commands. Each file matches modal fields 1:1 
 | Folder | Command | Contents |
 |--------|---------|----------|
 | `qori-request/` | `/qori-request` | Research request fields |
-| `qori-plan/` | `/qori-plan` | Brief, plan, guides, desk research files, survey CSV |
+| `qori-plan/` | `/qori-plan` | Brief, plan, guides, desk research, stakeholder notes, survey CSV |
 | `qori-participants/` | `/qori-participants` | 3 participant records |
 | `qori-outreach/` | `/qori-outreach` | Participant IDs for each message type |
-| `qori-notes/` | `/qori-notes` | Session notes (3 sessions) |
-| `qori-analyze/` | `/qori-analyze` | Raw transcripts (3 transcripts) |
+| `qori-notes/` | `/qori-notes` | Session notes + transcripts (both are input options) |
 
 ## How to Use
 
@@ -40,4 +39,27 @@ Sample data for testing Qori slash commands. Each file matches modal fields 1:1 
 | `stakeholder-guide-input.md` | Create Stakeholder Interview Guide |
 | `desk-research/*.md` | Upload Desk Research (6 files) |
 | `survey-data-sample.csv` | Upload Survey Data |
-| `stakeholder-notes-sample.md` | Upload Stakeholder Notes |
+| `stakeholder-notes-design-lead.md` | Upload Stakeholder Notes (Design Lead) |
+| `stakeholder-notes-engineering-lead.md` | Upload Stakeholder Notes (Engineering Lead) |
+| `stakeholder-notes-policy-sme.md` | Upload Stakeholder Notes (Policy/Compliance SME) |
+
+## qori-notes Files
+
+| File | Modal Action |
+|------|--------------|
+| `session-notes-input-1.md` | Manual Notes input (David) |
+| `session-notes-input-2.md` | Manual Notes input (Amanda) |
+| `session-notes-input-3.md` | Manual Notes input (Marcus) |
+| `transcript-input-1.md` | Upload Transcript input (David) |
+| `transcript-input-2.md` | Upload Transcript input (Amanda) |
+| `transcript-input-3.md` | Upload Transcript input (Marcus) |
+| `session-*-notes.md` | Sample output (processed notes) |
+| `transcript-*-*.md` | Sample output (processed transcripts) |
+
+## qori-participants Files
+
+| File | Participant |
+|------|-------------|
+| `participant-1-david.md` | David Chen (PT001) - Tech-savvy, 38 |
+| `participant-2-amanda.md` | Amanda Rodriguez (PT002) - Screen reader user, 45 |
+| `participant-3-marcus.md` | Marcus Williams (PT003) - Low vision, 62 |
