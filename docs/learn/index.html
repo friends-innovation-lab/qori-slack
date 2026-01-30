@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Learn Qori</title>
+    <title>Learn Qori — AI Research Assistant for VA Teams</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,276 +15,525 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8f9fa;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafafa;
+            color: #1a1a1a;
+            line-height: 1.6;
         }
 
-        .container {
+        /* Header */
+        .header {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            width: 100%;
-            padding: 40px;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        /* Avatar section */
-        .avatar-section {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .qori-avatar {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 20px auto;
-            background: linear-gradient(135deg, #007a5a 0%, #00a67d 100%);
-            border-radius: 20px;
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 24px rgba(0, 122, 90, 0.3);
-            position: relative;
+            justify-content: space-between;
         }
 
-        .avatar-letter {
-            font-size: 52px;
-            font-weight: 800;
-            color: white;
-            line-height: 1;
-        }
-
-        .wave-emoji {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            font-size: 32px;
-            animation: wave 2s ease-in-out infinite;
-            transform-origin: 70% 70%;
-        }
-
-        @keyframes wave {
-            0%, 100% { transform: rotate(0deg); }
-            10%, 30% { transform: rotate(14deg); }
-            20% { transform: rotate(-8deg); }
-            40% { transform: rotate(14deg); }
-            50%, 100% { transform: rotate(0deg); }
-        }
-
-        .welcome-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1d1c1d;
-            margin-bottom: 8px;
-        }
-
-        .welcome-subtitle {
-            font-size: 16px;
-            color: #616061;
-            line-height: 1.5;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        /* Section header */
-        .section-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1d1c1d;
-        }
-
-        .section-subtitle {
-            font-size: 14px;
-            color: #616061;
-            margin-top: 4px;
-        }
-
-        /* Topic grid */
-        .topic-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 32px;
-        }
-
-        .topic-card {
-            border: 1px solid #e1e5e9;
-            border-radius: 8px;
-            padding: 16px 12px;
-            text-align: center;
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             text-decoration: none;
             color: inherit;
-            transition: all 0.2s ease;
-            background: white;
         }
 
-        .topic-card:hover {
-            border-color: #007a5a;
-            background: #f0fdf4;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 122, 90, 0.15);
-        }
-
-        .topic-icon {
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
-
-        .topic-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: #1d1c1d;
-            line-height: 1.3;
-        }
-
-        /* Quick start */
-        .quick-start {
-            background: #f0fdf4;
-            border: 1px solid #007a5a;
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #007a5a 0%, #00a67d 100%);
             border-radius: 8px;
-            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .logo-text {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .header-link {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .header-link:hover {
+            color: #1a1a1a;
+        }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+            padding: 80px 24px 60px;
             text-align: center;
         }
 
-        .quick-start-label {
+        .hero-badge {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #007a5a;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 20px;
+            margin-bottom: 24px;
+        }
+
+        .hero-title {
+            font-size: 48px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-subtitle {
+            font-size: 20px;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .hero-command {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .hero-command:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .hero-command-text {
+            opacity: 0.6;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .copy-icon {
+            opacity: 0.5;
+        }
+
+        /* Workflow section */
+        .workflow-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 24px;
+        }
+
+        .section-label {
+            text-align: center;
             font-size: 13px;
             font-weight: 600;
             color: #007a5a;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
             margin-bottom: 12px;
         }
 
-        .quick-start-command {
-            background: #1d1c1d;
-            color: #e1e5e9;
-            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
-            font-size: 18px;
-            padding: 12px 20px;
-            border-radius: 6px;
-            display: inline-block;
+        .section-title {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 48px;
         }
 
-        .quick-start-hint {
-            font-size: 12px;
-            color: #616061;
-            margin-top: 12px;
+        /* Phase groups */
+        .phase-group {
+            margin-bottom: 48px;
+        }
+
+        .phase-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .phase-icon {
+            font-size: 20px;
+        }
+
+        .phase-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Cards grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 16px;
+            padding: 28px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            border-color: #007a5a;
+            box-shadow: 0 8px 24px rgba(0, 122, 90, 0.08);
+            transform: translateY(-4px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            background: #f5f5f5;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .card-arrow {
+            color: #ccc;
+            font-size: 20px;
+            transition: transform 0.2s, color 0.2s;
+        }
+
+        .card:hover .card-arrow {
+            color: #007a5a;
+            transform: translateX(4px);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .card-description {
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .card-command {
+            display: inline-flex;
+            align-items: center;
+            background: #f5f5f5;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 13px;
+            color: #1a1a1a;
+            align-self: flex-start;
+        }
+
+        /* Actions badge */
+        .actions-badge {
+            background: #e8f5e9;
+            color: #007a5a;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-left: 8px;
         }
 
         /* Footer */
         .footer {
-            text-align: center;
-            margin-top: 24px;
-            padding-top: 24px;
-            border-top: 1px solid #e1e5e9;
+            background: white;
+            border-top: 1px solid #e5e5e5;
+            padding: 40px 24px;
+            margin-top: 40px;
+        }
+
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .footer-text {
-            font-size: 13px;
-            color: #868686;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
         }
 
         .footer-link {
-            color: #007a5a;
+            font-size: 14px;
+            color: #666;
             text-decoration: none;
         }
 
         .footer-link:hover {
-            text-decoration: underline;
+            color: #007a5a;
         }
 
         /* Responsive */
-        @media (max-width: 480px) {
-            .container {
-                padding: 24px;
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 32px;
             }
 
-            .topic-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .hero-subtitle {
+                font-size: 18px;
             }
 
-            .welcome-title {
-                font-size: 24px;
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-nav {
+                display: none;
+            }
+
+            .footer-inner {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="avatar-section">
-            <div class="qori-avatar">
-                <span class="avatar-letter">Q</span>
-                <span class="wave-emoji">👋</span>
+    <header class="header">
+        <div class="header-inner">
+            <a href="./" class="logo">
+                <div class="logo-icon">Q</div>
+                <span class="logo-text">Qori</span>
+            </a>
+            <nav class="header-nav">
+                <a href="#commands" class="header-link">Commands</a>
+                <a href="https://github.com/Friends-From-The-City/Qori-Slack-AI-Bot" class="header-link">GitHub</a>
+                <a href="#" class="header-link">Support</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-badge">✨ AI-Powered Research Ops</div>
+        <h1 class="hero-title">Learn Qori</h1>
+        <p class="hero-subtitle">
+            Your AI research assistant for VA teams. Manage studies, participants, and synthesis — all from Slack.
+        </p>
+        <div class="hero-command" onclick="copyCommand(this)">
+            /qori
+            <span class="hero-command-text">← type this in Slack to start</span>
+        </div>
+    </section>
+
+    <section class="workflow-section" id="commands">
+        <div class="section-label">The Research Workflow</div>
+        <h2 class="section-title">Pick a command to learn</h2>
+
+        <!-- Study Setup Phase -->
+        <div class="phase-group">
+            <div class="phase-header">
+                <span class="phase-icon">📋</span>
+                <span class="phase-title">Study Setup</span>
             </div>
-            <h1 class="welcome-title">Hi, I'm Qori!</h1>
-            <p class="welcome-subtitle">
-                Your AI research assistant. I help VA research teams manage studies, participants, and synthesis — all from Slack.
-            </p>
+            <div class="cards-grid">
+                <a href="request/" class="card">
+                    <div class="card-header">
+                        <div class="card-icon">📥</div>
+                        <span class="card-arrow">→</span>
+                    </div>
+                    <h3 class="card-title">Research Request</h3>
+                    <p class="card-description">Stakeholders submit research requests to your team. Captures what they need and why.</p>
+                    <div class="card-command">/qori-request</div>
+                </a>
+
+                <a href="plan/" class="card">
+                    <div class="card-header">
+                        <div class="card-icon">📋</div>
+                        <span class="card-arrow">→</span>
+                    </div>
+                    <h3 class="card-title">
+                        Study Planning
+                        <span class="actions-badge">7 actions</span>
+                    </h3>
+                    <p class="card-description">Create briefs, plans, discussion guides, and upload desk research — all in one command.</p>
+                    <div class="card-command">/qori-plan</div>
+                </a>
+            </div>
         </div>
 
-        <div class="section-header">
-            <h2 class="section-title">What would you like to learn?</h2>
-            <p class="section-subtitle">Click a topic for an interactive walkthrough</p>
+        <!-- Participants Phase -->
+        <div class="phase-group">
+            <div class="phase-header">
+                <span class="phase-icon">👥</span>
+                <span class="phase-title">Participants</span>
+            </div>
+            <div class="cards-grid">
+                <a href="participants/" class="card">
+                    <div class="card-header">
+                        <div class="card-icon">👥</div>
+                        <span class="card-arrow">→</span>
+                    </div>
+                    <h3 class="card-title">Manage Participants</h3>
+                    <p class="card-description">Add and update participants. Track status from recruited to completed.</p>
+                    <div class="card-command">/qori-participants</div>
+                </a>
+
+                <a href="outreach/" class="card">
+                    <div class="card-header">
+                        <div class="card-icon">📬</div>
+                        <span class="card-arrow">→</span>
+                    </div>
+                    <h3 class="card-title">
+                        Outreach Messages
+                        <span class="actions-badge">6 types</span>
+                    </h3>
+                    <p class="card-description">Generate recruitment emails, reminders, confirmations, and thank-you messages.</p>
+                    <div class="card-command">/qori-outreach</div>
+                </a>
+            </div>
         </div>
 
-        <div class="topic-grid">
-            <a href="request/" class="topic-card">
-                <div class="topic-icon">📥</div>
-                <div class="topic-title">Research Requests</div>
-            </a>
-            <a href="plan/" class="topic-card">
-                <div class="topic-icon">📋</div>
-                <div class="topic-title">Study Planning</div>
-            </a>
-            <a href="participants/" class="topic-card">
-                <div class="topic-icon">👥</div>
-                <div class="topic-title">Participants</div>
-            </a>
-            <a href="outreach/" class="topic-card">
-                <div class="topic-icon">📬</div>
-                <div class="topic-title">Outreach</div>
-            </a>
-            <a href="observe/" class="topic-card">
-                <div class="topic-icon">👀</div>
-                <div class="topic-title">Observing</div>
-            </a>
-            <a href="notes/" class="topic-card">
-                <div class="topic-icon">📝</div>
-                <div class="topic-title">Note Taking</div>
-            </a>
-            <a href="analyze/" class="topic-card">
-                <div class="topic-icon">🔬</div>
-                <div class="topic-title">Analysis</div>
-            </a>
-            <a href="synthesis/" class="topic-card">
-                <div class="topic-icon">🔍</div>
-                <div class="topic-title">Synthesis</div>
-            </a>
-            <a href="report/" class="topic-card">
-                <div class="topic-icon">📊</div>
-                <div class="topic-title">Reports</div>
-            </a>
+        <!-- Sessions Phase -->
+        <div class="phase-group">
+            <div class="phase-header">
+                <span class="phase-icon">🎙️</span>
+                <span class="phase-title">Sessions</span>
+            </div>
+            <div class="cards-grid">
+                <a href="observe/" class="card">
+                    <div class="card-header">
+                        <div class="card-icon">👀</div>
+                        <span class="card-arrow">→</span>
+                    </div>
+                    <h3 class="card-title">Request to Observe</h3>
+                    <p class="card-description">Team members can request to observe upcoming research sessions.</p>
+                    <div class="card-command">/qori-observe</div>
+                </a>
+
+                <a href="notes/" class="card">
+                    <div class="card-header">
+                        <div class="card-icon">📝</div>
+                        <span class="card-arrow">→</span>
+                    </div>
+                    <h3 class="card-title">Session Notes</h3>
+                    <p class="card-description">Observers capture notes and observations during or after sessions.</p>
+                    <div class="card-command">/qori-notes</div>
+                </a>
+            </div>
         </div>
 
-        <div class="quick-start">
-            <div class="quick-start-label">⌨️ Quick start — type this in Slack anytime:</div>
-            <div class="quick-start-command">/qori</div>
-            <div class="quick-start-hint">See all available commands</div>
-        </div>
+        <!-- Analysis Phase -->
+        <div class="phase-group">
+            <div class="phase-header">
+                <span class="phase-icon">🔍</span>
+                <span class="phase-title">Analysis</span>
+            </div>
+            <div class="cards-grid">
+                <a href="analyze/" class="card">
+                    <div class="card-header">
+                        <div class="card-icon">🔬</div>
+                        <span class="card-arrow">→</span>
+                    </div>
+                    <h3 class="card-title">Analyze Sessions</h3>
+                    <p class="card-description">AI extracts themes, pain points, and key quotes from individual sessions.</p>
+                    <div class="card-command">/qori-analyze</div>
+                </a>
 
-        <div class="footer">
-            <p class="footer-text">
-                Questions? Ask in <a href="#" class="footer-link">#qori-support</a> or contact your research ops team.
-            </p>
+                <a href="synthesis/" class="card">
+                    <div class="card-header">
+                        <div class="card-icon">🔍</div>
+                        <span class="card-arrow">→</span>
+                    </div>
+                    <h3 class="card-title">Cross-Session Synthesis</h3>
+                    <p class="card-description">Find patterns across sessions. Generate journey maps, personas, and affinity diagrams.</p>
+                    <div class="card-command">/qori-synthesis</div>
+                </a>
+
+                <a href="report/" class="card">
+                    <div class="card-header">
+                        <div class="card-icon">📊</div>
+                        <span class="card-arrow">→</span>
+                    </div>
+                    <h3 class="card-title">Stakeholder Reports</h3>
+                    <p class="card-description">Generate polished reports and automatically create GitHub issues from recommendations.</p>
+                    <div class="card-command">/qori-report</div>
+                </a>
+            </div>
         </div>
-    </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <p class="footer-text">Built for VA research teams by Lapedra</p>
+            <div class="footer-links">
+                <a href="#" class="footer-link">Documentation</a>
+                <a href="#" class="footer-link">GitHub</a>
+                <a href="#" class="footer-link">Support</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function copyCommand(element) {
+            navigator.clipboard.writeText('/qori');
+            const original = element.innerHTML;
+            element.innerHTML = '✓ Copied!';
+            setTimeout(() => {
+                element.innerHTML = original;
+            }, 2000);
+        }
+    </script>
 </body>
 </html>
