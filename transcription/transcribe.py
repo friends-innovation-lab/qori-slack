@@ -1,1 +1,0 @@
-   # Whisper or AssemblyAI pipeline

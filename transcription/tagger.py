@@ -1,1 +1,0 @@
-# Add quote, sentiment tags
