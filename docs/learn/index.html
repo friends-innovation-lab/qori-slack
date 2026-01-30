@@ -14,25 +14,15 @@
                 extend: {
                     colors: {
                         border: "hsl(214.3 31.8% 91.4%)",
-                        input: "hsl(214.3 31.8% 91.4%)",
-                        ring: "hsl(142.1 76.2% 36.3%)",
                         background: "hsl(0 0% 100%)",
                         foreground: "hsl(222.2 84% 4.9%)",
                         primary: {
                             DEFAULT: "hsl(142.1 76.2% 36.3%)",
                             foreground: "hsl(355.7 100% 97.3%)",
                         },
-                        secondary: {
-                            DEFAULT: "hsl(210 40% 96.1%)",
-                            foreground: "hsl(222.2 47.4% 11.2%)",
-                        },
                         muted: {
                             DEFAULT: "hsl(210 40% 96.1%)",
                             foreground: "hsl(215.4 16.3% 46.9%)",
-                        },
-                        accent: {
-                            DEFAULT: "hsl(210 40% 96.1%)",
-                            foreground: "hsl(222.2 47.4% 11.2%)",
                         },
                         card: {
                             DEFAULT: "hsl(0 0% 100%)",
@@ -41,327 +31,158 @@
                     },
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif'],
-                        mono: ['SF Mono', 'Monaco', 'Consolas', 'monospace'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
                     },
                 }
             }
         }
     </script>
     <style>
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 260px;
-            background: hsl(210 40% 98%);
-            border-right: 1px solid hsl(214.3 31.8% 91.4%);
-            display: flex;
-            flex-direction: column;
-            z-index: 100;
-            overflow-y: auto;
-        }
-
-        /* Collapsible sections */
-        .nav-section-toggle {
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .nav-section-toggle:hover {
-            background: hsl(210 40% 96.1%);
-        }
-
-        .nav-section-content {
-            max-height: 500px;
-            overflow: hidden;
-            transition: max-height 0.2s ease-out;
-        }
-
-        .nav-section.collapsed .nav-section-content {
-            max-height: 0;
-        }
-
-        .nav-section.collapsed .chevron {
-            transform: rotate(-90deg);
-        }
-
-        .chevron {
-            transition: transform 0.2s ease;
-        }
-
-        /* Card image placeholder */
         .card-image {
             aspect-ratio: 16 / 9;
-            background: hsl(210 40% 96.1%);
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 16px;
-            overflow: hidden;
+            box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
         }
-
         .card-image span {
             font-size: 48px;
-            opacity: 0.5;
-        }
-
-        /* Mobile */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .main {
-                margin-left: 0 !important;
-            }
+            opacity: 0.6;
         }
     </style>
 </head>
-<body class="font-sans bg-background text-foreground">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <!-- Logo -->
-        <div class="p-5 border-b border-border">
-            <a href="./" class="flex items-center gap-3 no-underline">
+<body class="font-sans bg-background text-foreground antialiased">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
+        <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="./" class="flex items-center gap-3">
                 <img src="assets/qori_logo.png" alt="Qori" class="w-8 h-8 rounded-lg">
-                <span class="font-bold text-lg text-foreground">Qori</span>
+                <span class="font-semibold text-lg text-foreground">Qori</span>
             </a>
-        </div>
-
-        <!-- Navigation -->
-        <nav class="flex-1 py-4">
-            <!-- Study Setup -->
-            <div class="nav-section mb-1">
-                <div class="nav-section-toggle flex items-center justify-between px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide" onclick="toggleSection(this)">
-                    <span>Study Setup</span>
-                    <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </div>
-                <div class="nav-section-content">
-                    <a href="request/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
-                        <span class="text-base">📥</span>
-                        Research Request
-                    </a>
-                    <a href="plan/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
-                        <span class="text-base">📋</span>
-                        Study Planning
-                    </a>
-                </div>
-            </div>
-
-            <!-- Participants -->
-            <div class="nav-section mb-1">
-                <div class="nav-section-toggle flex items-center justify-between px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide" onclick="toggleSection(this)">
-                    <span>Participants</span>
-                    <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </div>
-                <div class="nav-section-content">
-                    <a href="participants/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
-                        <span class="text-base">👥</span>
-                        Manage Participants
-                    </a>
-                    <a href="outreach/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
-                        <span class="text-base">📬</span>
-                        Outreach Messages
-                    </a>
-                </div>
-            </div>
-
-            <!-- Sessions -->
-            <div class="nav-section mb-1">
-                <div class="nav-section-toggle flex items-center justify-between px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide" onclick="toggleSection(this)">
-                    <span>Sessions</span>
-                    <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </div>
-                <div class="nav-section-content">
-                    <a href="observe/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
-                        <span class="text-base">👀</span>
-                        Request to Observe
-                    </a>
-                    <a href="notes/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
-                        <span class="text-base">📝</span>
-                        Session Notes
-                    </a>
-                </div>
-            </div>
-
-            <!-- Analysis -->
-            <div class="nav-section mb-1">
-                <div class="nav-section-toggle flex items-center justify-between px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide" onclick="toggleSection(this)">
-                    <span>Analysis</span>
-                    <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </div>
-                <div class="nav-section-content">
-                    <a href="analyze/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
-                        <span class="text-base">🔬</span>
-                        Analyze Sessions
-                    </a>
-                    <a href="synthesis/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
-                        <span class="text-base">🔍</span>
-                        Synthesis
-                    </a>
-                    <a href="report/" class="flex items-center gap-3 px-5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
-                        <span class="text-base">📊</span>
-                        Stakeholder Reports
-                    </a>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Footer -->
-        <div class="p-4 border-t border-border">
             <a href="https://github.com/Friends-From-The-City/Qori-Slack-AI-Bot" class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                 GitHub
             </a>
         </div>
-    </aside>
+    </header>
 
     <!-- Main Content -->
-    <main class="ml-[260px] min-h-screen">
-        <div class="max-w-[900px] mx-auto px-8 py-16">
-            <!-- Hero -->
-            <section class="mb-16">
-                <h1 class="text-4xl font-bold text-foreground mb-4 tracking-tight">Learn Qori</h1>
-                <p class="text-lg text-muted-foreground max-w-xl leading-relaxed">
-                    Your AI research assistant for VA teams. Manage studies, participants, and synthesis — all from Slack.
-                </p>
-            </section>
+    <main class="max-w-4xl mx-auto px-6 py-16">
+        <!-- Hero -->
+        <section class="mb-16 text-center">
+            <h1 class="text-4xl font-bold text-foreground mb-4 tracking-tight">Learn Qori</h1>
+            <p class="text-lg text-muted-foreground mb-6 max-w-xl mx-auto">
+                Your AI research assistant for VA teams. Manage studies, participants, and synthesis — all from Slack.
+            </p>
+            <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-sm px-4 py-2 rounded-lg">/qori</code>
+        </section>
 
-            <!-- Study Setup -->
-            <section id="study-setup" class="mb-16">
-                <h2 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-6">Study Setup</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Research Request -->
-                    <a href="request/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
-                        <div class="card-image bg-muted rounded-lg">
-                            <span>📥</span>
-                        </div>
-                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Research Request</h3>
-                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Stakeholders submit research requests to your team. Captures what they need and why.</p>
-                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-request</code>
-                    </a>
+        <!-- Study Setup -->
+        <section class="mb-12">
+            <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-6">Study Setup</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <a href="request/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
+                        <span>📥</span>
+                    </div>
+                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Research Request</h3>
+                    <p class="text-sm text-muted-foreground mb-4">Stakeholders submit research requests to your team.</p>
+                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-request</code>
+                </a>
+                <a href="plan/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
+                        <span>📋</span>
+                    </div>
+                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Study Planning</h3>
+                    <p class="text-sm text-muted-foreground mb-4">Create briefs, plans, and discussion guides.</p>
+                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-plan</code>
+                </a>
+            </div>
+        </section>
 
-                    <!-- Study Planning -->
-                    <a href="plan/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
-                        <div class="card-image bg-muted rounded-lg">
-                            <span>📋</span>
-                        </div>
-                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Study Planning</h3>
-                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Create briefs, plans, discussion guides, and upload desk research — all in one command.</p>
-                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-plan</code>
-                    </a>
-                </div>
-            </section>
+        <!-- Participants -->
+        <section class="mb-12">
+            <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-6">Participants</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <a href="participants/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
+                        <span>👥</span>
+                    </div>
+                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Manage Participants</h3>
+                    <p class="text-sm text-muted-foreground mb-4">Add and update participants. Track recruitment status.</p>
+                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-participants</code>
+                </a>
+                <a href="outreach/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
+                        <span>📬</span>
+                    </div>
+                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Outreach Messages</h3>
+                    <p class="text-sm text-muted-foreground mb-4">Generate recruitment emails, reminders, and thank-yous.</p>
+                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-outreach</code>
+                </a>
+            </div>
+        </section>
 
-            <!-- Participants -->
-            <section id="participants" class="mb-16">
-                <h2 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-6">Participants</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Manage Participants -->
-                    <a href="participants/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
-                        <div class="card-image bg-muted rounded-lg">
-                            <span>👥</span>
-                        </div>
-                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Manage Participants</h3>
-                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Add and update participants. Track status from recruited to completed.</p>
-                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-participants</code>
-                    </a>
+        <!-- Sessions -->
+        <section class="mb-12">
+            <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-6">Sessions</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <a href="observe/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
+                        <span>👀</span>
+                    </div>
+                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Request to Observe</h3>
+                    <p class="text-sm text-muted-foreground mb-4">Team members request to observe sessions.</p>
+                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-observe</code>
+                </a>
+                <a href="notes/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
+                        <span>📝</span>
+                    </div>
+                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Session Notes</h3>
+                    <p class="text-sm text-muted-foreground mb-4">Capture notes and observations during sessions.</p>
+                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-notes</code>
+                </a>
+            </div>
+        </section>
 
-                    <!-- Outreach Messages -->
-                    <a href="outreach/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
-                        <div class="card-image bg-muted rounded-lg">
-                            <span>📬</span>
-                        </div>
-                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Outreach Messages</h3>
-                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Generate recruitment emails, reminders, confirmations, and thank-you messages.</p>
-                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-outreach</code>
-                    </a>
-                </div>
-            </section>
-
-            <!-- Sessions -->
-            <section id="sessions" class="mb-16">
-                <h2 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-6">Sessions</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Request to Observe -->
-                    <a href="observe/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
-                        <div class="card-image bg-muted rounded-lg">
-                            <span>👀</span>
-                        </div>
-                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Request to Observe</h3>
-                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Team members can request to observe upcoming research sessions.</p>
-                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-observe</code>
-                    </a>
-
-                    <!-- Session Notes -->
-                    <a href="notes/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
-                        <div class="card-image bg-muted rounded-lg">
-                            <span>📝</span>
-                        </div>
-                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Session Notes</h3>
-                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Observers capture notes and observations during or after sessions.</p>
-                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-notes</code>
-                    </a>
-                </div>
-            </section>
-
-            <!-- Analysis -->
-            <section id="analysis" class="mb-16">
-                <h2 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-6">Analysis</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Analyze Sessions -->
-                    <a href="analyze/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
-                        <div class="card-image bg-muted rounded-lg">
-                            <span>🔬</span>
-                        </div>
-                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Analyze Sessions</h3>
-                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">AI extracts themes, pain points, and key quotes from individual sessions.</p>
-                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-analyze</code>
-                    </a>
-
-                    <!-- Synthesis -->
-                    <a href="synthesis/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
-                        <div class="card-image bg-muted rounded-lg">
-                            <span>🔍</span>
-                        </div>
-                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Cross-Session Synthesis</h3>
-                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Find patterns across sessions. Generate journey maps, personas, and affinity diagrams.</p>
-                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-synthesis</code>
-                    </a>
-
-                    <!-- Stakeholder Reports -->
-                    <a href="report/" class="group block bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-sm transition-all">
-                        <div class="card-image bg-muted rounded-lg">
-                            <span>📊</span>
-                        </div>
-                        <h3 class="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">Stakeholder Reports</h3>
-                        <p class="text-sm text-muted-foreground mb-3 leading-relaxed">Generate polished reports and automatically create GitHub issues from recommendations.</p>
-                        <code class="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">/qori-report</code>
-                    </a>
-                </div>
-            </section>
-        </div>
+        <!-- Analysis -->
+        <section class="mb-12">
+            <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-6">Analysis</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <a href="analyze/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
+                        <span>🔬</span>
+                    </div>
+                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Analyze Sessions</h3>
+                    <p class="text-sm text-muted-foreground mb-4">Extract themes, pain points, and key quotes.</p>
+                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-analyze</code>
+                </a>
+                <a href="synthesis/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
+                        <span>🔍</span>
+                    </div>
+                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Cross-Session Synthesis</h3>
+                    <p class="text-sm text-muted-foreground mb-4">Find patterns across sessions.</p>
+                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-synthesis</code>
+                </a>
+                <a href="report/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
+                        <span>📊</span>
+                    </div>
+                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Stakeholder Reports</h3>
+                    <p class="text-sm text-muted-foreground mb-4">Generate reports and create GitHub issues.</p>
+                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-report</code>
+                </a>
+            </div>
+        </section>
     </main>
 
-    <script>
-        function toggleSection(toggle) {
-            const section = toggle.closest('.nav-section');
-            section.classList.toggle('collapsed');
-        }
-    </script>
+    <!-- Footer -->
+    <footer class="border-t border-border py-8">
+        <p class="text-center text-sm text-muted-foreground">Built for research teams by Qori</p>
+    </footer>
 </body>
 </html>
