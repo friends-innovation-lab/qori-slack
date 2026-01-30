@@ -211,15 +211,15 @@ ai_generation_tasks:
       - [ ] [Relevant document or finding to reference]
       - [ ] [User research finding that needs stakeholder context]
       
-      {{#if user_findings}}
+      {% if user_findings %}
       **User findings to explore:**
       {{user_findings}}
-      {{/if}}
+      {% endif %}
       
-      {{#if research_questions}}
+      {% if research_questions %}
       **Key questions to answer:**
       {{research_questions}}
-      {{/if}}
+      {% endif %}
       
       ---
       
@@ -255,7 +255,7 @@ ai_generation_tasks:
       
       [REPEAT FOR EACH SELECTED FOCUS AREA]
       
-      {{#if user_findings}}
+      {% if user_findings %}
       ### Section: Connecting to User Research (X min)
       
       > *Share user findings and get stakeholder perspective*
@@ -267,7 +267,7 @@ ai_generation_tasks:
       | [User pain point from {{user_findings}}] | "What's happening on your end that might contribute to this?" |
       | [User confusion from {{user_findings}}] | "Is this expected? What constraints led to this design?" |
       
-      {{/if}}
+      {% endif %}
       
       ---
       
