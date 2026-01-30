@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "session_confirmation_modal",
+  "callback_id": "session_confirmation",
   "title": {
     "type": "plain_text",
     "text": "Session confirmation"

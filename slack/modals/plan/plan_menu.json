@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "plan_study_modal",
+  "callback_id": "plan_menu",
   "title": {
     "type": "plain_text",
     "text": "Plan your study"

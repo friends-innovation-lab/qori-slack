@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "upload_survey_data_modal",
+  "callback_id": "upload_survey_data",
   "title": {
     "type": "plain_text",
     "text": "Survey data"

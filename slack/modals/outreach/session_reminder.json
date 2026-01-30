@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "session_reminder_modal",
+  "callback_id": "session_reminder",
   "title": {
     "type": "plain_text",
     "text": "Session reminder"

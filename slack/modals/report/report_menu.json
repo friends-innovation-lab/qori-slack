@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "reports_modal",
+  "callback_id": "report_menu",
   "title": {
     "type": "plain_text",
     "text": "Research reports"

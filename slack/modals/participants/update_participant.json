@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "update_participant_modal",
+  "callback_id": "update_participant",
   "title": {
     "type": "plain_text",
     "text": "Update participant"

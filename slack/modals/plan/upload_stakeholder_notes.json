@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "upload_stakeholder_notes_modal",
+  "callback_id": "upload_stakeholder_notes",
   "title": {
     "type": "plain_text",
     "text": "Stakeholder notes"

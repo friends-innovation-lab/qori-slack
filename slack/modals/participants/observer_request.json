@@ -1,6 +1,6 @@
 {
 	"type": "modal",
-	"callback_id": "observer_request_modal",
+	"callback_id": "observer_request",
 	"title": {
 		"type": "plain_text",
 		"text": "Observer request"

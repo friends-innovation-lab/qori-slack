@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "upload_transcript_modal",
+  "callback_id": "upload_transcript",
   "title": {
     "type": "plain_text",
     "text": "Upload transcript"

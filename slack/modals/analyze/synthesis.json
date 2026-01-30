@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "qori_synthesis",
+  "callback_id": "synthesis",
   "title": {
     "type": "plain_text",
     "text": "Synthesize study"

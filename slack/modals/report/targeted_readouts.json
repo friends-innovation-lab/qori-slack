@@ -1,6 +1,6 @@
 {
   "type": "modal",
-  "callback_id": "targeted_readouts_modal",
+  "callback_id": "targeted_readouts",
   "title": {
     "type": "plain_text",
     "text": "Targeted readouts"
