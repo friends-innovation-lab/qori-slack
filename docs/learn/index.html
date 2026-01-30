@@ -6,7 +6,7 @@
     <title>Learn Qori — AI Research Assistant for VA Teams</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -24,165 +24,292 @@
                             DEFAULT: "hsl(210 40% 96.1%)",
                             foreground: "hsl(215.4 16.3% 46.9%)",
                         },
-                        card: {
-                            DEFAULT: "hsl(0 0% 100%)",
-                            foreground: "hsl(222.2 84% 4.9%)",
-                        },
                     },
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif'],
                         mono: ['ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
                     },
+                    letterSpacing: {
+                        tighter: '-0.02em',
+                    }
                 }
             }
         }
     </script>
     <style>
-        .card-image {
-            aspect-ratio: 16 / 9;
-            border-radius: 8px;
+        .tab-bar {
+            background: #18181b;
+            border-radius: 9999px;
+            padding: 6px;
+            display: inline-flex;
+            gap: 4px;
+        }
+        .tab {
+            padding: 10px 20px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
-            justify-content: center;
-            margin-bottom: 16px;
-            box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+            gap: 8px;
+            text-decoration: none;
         }
-        .card-image span {
-            font-size: 48px;
-            opacity: 0.6;
+        .tab.active {
+            background: white;
+            color: #18181b;
+        }
+        .tab:not(.active) {
+            color: #a1a1aa;
+        }
+        .tab:not(.active):hover {
+            color: white;
+        }
+        .screenshot-container {
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15);
+            overflow: hidden;
+        }
+        .slack-header {
+            background: #4a154b;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .slack-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .feature-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.2s;
+        }
+        .feature-card:hover {
+            box-shadow: 0 10px 40px -10px rgb(0 0 0 / 0.1);
+            transform: translateY(-2px);
         }
     </style>
 </head>
-<body class="font-sans bg-background text-foreground antialiased">
+<body class="font-sans bg-white text-zinc-900 antialiased">
     <!-- Header -->
-    <header class="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
-        <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+    <header class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-100">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
             <a href="./" class="flex items-center gap-3">
                 <img src="assets/qori_logo.png" alt="Qori" class="w-8 h-8 rounded-lg">
-                <span class="font-semibold text-lg text-foreground">Qori</span>
+                <span class="font-semibold text-lg">Qori</span>
             </a>
-            <a href="https://github.com/Friends-From-The-City/Qori-Slack-AI-Bot" class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <a href="https://github.com/Friends-From-The-City/Qori-Slack-AI-Bot" class="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 transition-colors">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                 GitHub
             </a>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-4xl mx-auto px-6 py-16">
-        <!-- Hero -->
-        <section class="mb-16 text-center">
-            <h1 class="text-4xl font-bold text-foreground mb-4 tracking-tight">Learn Qori</h1>
-            <p class="text-lg text-muted-foreground mb-6 max-w-xl mx-auto">
-                Your AI research assistant for VA teams. Manage studies, participants, and synthesis — all from Slack.
+    <!-- Hero Section -->
+    <section class="pt-32 pb-8 px-6">
+        <div class="max-w-4xl mx-auto text-center">
+            <!-- Headline -->
+            <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter text-zinc-900 mb-6">
+                AI-powered research ops<br>for VA teams
+            </h1>
+
+            <!-- Subtitle -->
+            <p class="text-xl text-zinc-500 max-w-2xl mx-auto mb-12">
+                Manage studies, recruit participants, capture insights, and generate reports — all from Slack.
             </p>
-            <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-sm px-4 py-2 rounded-lg">/qori</code>
-        </section>
 
-        <!-- Study Setup -->
-        <section class="mb-12">
-            <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-6">Study Setup</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <a href="request/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
-                        <span>📥</span>
-                    </div>
-                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Research Request</h3>
-                    <p class="text-sm text-muted-foreground mb-4">Stakeholders submit research requests to your team.</p>
-                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-request</code>
+            <!-- Tab Bar -->
+            <div class="tab-bar mb-16">
+                <a href="#study-setup" class="tab active" data-tab="setup">
+                    <span>📋</span> Study Setup
                 </a>
-                <a href="plan/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
-                        <span>📋</span>
-                    </div>
-                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Study Planning</h3>
-                    <p class="text-sm text-muted-foreground mb-4">Create briefs, plans, and discussion guides.</p>
-                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-plan</code>
+                <a href="#participants" class="tab" data-tab="participants">
+                    <span>👥</span> Participants
+                </a>
+                <a href="#sessions" class="tab" data-tab="sessions">
+                    <span>🎯</span> Sessions
+                </a>
+                <a href="#analysis" class="tab" data-tab="analysis">
+                    <span>📊</span> Analysis
                 </a>
             </div>
-        </section>
+        </div>
 
-        <!-- Participants -->
-        <section class="mb-12">
-            <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-6">Participants</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <a href="participants/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
-                        <span>👥</span>
+        <!-- Screenshot/Visual -->
+        <div class="max-w-5xl mx-auto">
+            <div class="screenshot-container">
+                <!-- Fake Slack Header -->
+                <div class="slack-header">
+                    <div class="flex gap-2">
+                        <div class="slack-dot bg-red-400"></div>
+                        <div class="slack-dot bg-yellow-400"></div>
+                        <div class="slack-dot bg-green-400"></div>
                     </div>
-                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Manage Participants</h3>
-                    <p class="text-sm text-muted-foreground mb-4">Add and update participants. Track recruitment status.</p>
-                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-participants</code>
-                </a>
-                <a href="outreach/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
-                        <span>📬</span>
+                    <span class="text-white/80 text-sm font-medium">Slack — #research-team</span>
+                </div>
+                <!-- Fake Slack Content -->
+                <div class="p-6 bg-white">
+                    <div class="flex gap-4 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold">Q</div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-semibold text-zinc-900">Qori</span>
+                                <span class="text-xs text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded">APP</span>
+                                <span class="text-xs text-zinc-400">10:42 AM</span>
+                            </div>
+                            <div class="bg-zinc-50 border border-zinc-200 rounded-lg p-4">
+                                <div class="font-semibold text-zinc-900 mb-2">📋 New Study Created</div>
+                                <div class="text-sm text-zinc-600 mb-3">Your study "Benefits Claims UX Research" has been set up with:</div>
+                                <div class="grid grid-cols-2 gap-3 text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-emerald-500">✓</span>
+                                        <span class="text-zinc-600">Research brief</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-emerald-500">✓</span>
+                                        <span class="text-zinc-600">Discussion guide</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-emerald-500">✓</span>
+                                        <span class="text-zinc-600">8 participants recruited</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-emerald-500">✓</span>
+                                        <span class="text-zinc-600">Sessions scheduled</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Outreach Messages</h3>
-                    <p class="text-sm text-muted-foreground mb-4">Generate recruitment emails, reminders, and thank-yous.</p>
-                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-outreach</code>
-                </a>
+                    <div class="flex items-center gap-3 border-t border-zinc-100 pt-4">
+                        <div class="flex-1 bg-zinc-100 rounded-lg px-4 py-3 text-zinc-400 text-sm">/qori-plan create-study</div>
+                        <button class="bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium">Send</button>
+                    </div>
+                </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- Sessions -->
-        <section class="mb-12">
-            <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-6">Sessions</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <a href="observe/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
-                        <span>👀</span>
-                    </div>
-                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Request to Observe</h3>
-                    <p class="text-sm text-muted-foreground mb-4">Team members request to observe sessions.</p>
-                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-observe</code>
-                </a>
-                <a href="notes/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
-                        <span>📝</span>
-                    </div>
-                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Session Notes</h3>
-                    <p class="text-sm text-muted-foreground mb-4">Capture notes and observations during sessions.</p>
-                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-notes</code>
-                </a>
+    <!-- Features Grid -->
+    <section class="py-24 px-6">
+        <div class="max-w-6xl mx-auto">
+            <!-- Study Setup -->
+            <div id="study-setup" class="mb-20">
+                <div class="text-center mb-12">
+                    <span class="inline-block bg-zinc-900 text-white text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full mb-4">Study Setup</span>
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight">Plan and organize your research</h2>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <a href="request/" class="feature-card group">
+                        <div class="text-3xl mb-4">📥</div>
+                        <h3 class="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">Research Request</h3>
+                        <p class="text-zinc-500 mb-4">Stakeholders submit research requests to your team.</p>
+                        <code class="text-sm font-mono bg-zinc-100 px-3 py-1 rounded-full text-zinc-600">/qori-request</code>
+                    </a>
+                    <a href="plan/" class="feature-card group">
+                        <div class="text-3xl mb-4">📋</div>
+                        <h3 class="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">Study Planning</h3>
+                        <p class="text-zinc-500 mb-4">Create briefs, plans, and discussion guides.</p>
+                        <code class="text-sm font-mono bg-zinc-100 px-3 py-1 rounded-full text-zinc-600">/qori-plan</code>
+                    </a>
+                </div>
             </div>
-        </section>
 
-        <!-- Analysis -->
-        <section class="mb-12">
-            <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-6">Analysis</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <a href="analyze/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
-                        <span>🔬</span>
-                    </div>
-                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Analyze Sessions</h3>
-                    <p class="text-sm text-muted-foreground mb-4">Extract themes, pain points, and key quotes.</p>
-                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-analyze</code>
-                </a>
-                <a href="synthesis/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
-                        <span>🔍</span>
-                    </div>
-                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Cross-Session Synthesis</h3>
-                    <p class="text-sm text-muted-foreground mb-4">Find patterns across sessions.</p>
-                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-synthesis</code>
-                </a>
-                <a href="report/" class="group block bg-card border border-border rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-                    <div class="card-image bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50">
-                        <span>📊</span>
-                    </div>
-                    <h3 class="font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">Stakeholder Reports</h3>
-                    <p class="text-sm text-muted-foreground mb-4">Generate reports and create GitHub issues.</p>
-                    <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-xs px-2 py-1 rounded">/qori-report</code>
-                </a>
+            <!-- Participants -->
+            <div id="participants" class="mb-20">
+                <div class="text-center mb-12">
+                    <span class="inline-block bg-zinc-900 text-white text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full mb-4">Participants</span>
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight">Recruit and manage participants</h2>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <a href="participants/" class="feature-card group">
+                        <div class="text-3xl mb-4">👥</div>
+                        <h3 class="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">Manage Participants</h3>
+                        <p class="text-zinc-500 mb-4">Add and update participants. Track recruitment status.</p>
+                        <code class="text-sm font-mono bg-zinc-100 px-3 py-1 rounded-full text-zinc-600">/qori-participants</code>
+                    </a>
+                    <a href="outreach/" class="feature-card group">
+                        <div class="text-3xl mb-4">📬</div>
+                        <h3 class="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">Outreach Messages</h3>
+                        <p class="text-zinc-500 mb-4">Generate recruitment emails, reminders, and thank-yous.</p>
+                        <code class="text-sm font-mono bg-zinc-100 px-3 py-1 rounded-full text-zinc-600">/qori-outreach</code>
+                    </a>
+                </div>
             </div>
-        </section>
-    </main>
+
+            <!-- Sessions -->
+            <div id="sessions" class="mb-20">
+                <div class="text-center mb-12">
+                    <span class="inline-block bg-zinc-900 text-white text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full mb-4">Sessions</span>
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight">Run and document sessions</h2>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <a href="observe/" class="feature-card group">
+                        <div class="text-3xl mb-4">👀</div>
+                        <h3 class="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">Request to Observe</h3>
+                        <p class="text-zinc-500 mb-4">Team members request to observe sessions.</p>
+                        <code class="text-sm font-mono bg-zinc-100 px-3 py-1 rounded-full text-zinc-600">/qori-observe</code>
+                    </a>
+                    <a href="notes/" class="feature-card group">
+                        <div class="text-3xl mb-4">📝</div>
+                        <h3 class="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">Session Notes</h3>
+                        <p class="text-zinc-500 mb-4">Capture notes and observations during sessions.</p>
+                        <code class="text-sm font-mono bg-zinc-100 px-3 py-1 rounded-full text-zinc-600">/qori-notes</code>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Analysis -->
+            <div id="analysis">
+                <div class="text-center mb-12">
+                    <span class="inline-block bg-zinc-900 text-white text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full mb-4">Analysis</span>
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight">Analyze and share insights</h2>
+                </div>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <a href="analyze/" class="feature-card group">
+                        <div class="text-3xl mb-4">🔬</div>
+                        <h3 class="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">Analyze Sessions</h3>
+                        <p class="text-zinc-500 mb-4">Extract themes, pain points, and key quotes.</p>
+                        <code class="text-sm font-mono bg-zinc-100 px-3 py-1 rounded-full text-zinc-600">/qori-analyze</code>
+                    </a>
+                    <a href="synthesis/" class="feature-card group">
+                        <div class="text-3xl mb-4">🔍</div>
+                        <h3 class="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">Synthesis</h3>
+                        <p class="text-zinc-500 mb-4">Find patterns across sessions.</p>
+                        <code class="text-sm font-mono bg-zinc-100 px-3 py-1 rounded-full text-zinc-600">/qori-synthesis</code>
+                    </a>
+                    <a href="report/" class="feature-card group">
+                        <div class="text-3xl mb-4">📊</div>
+                        <h3 class="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">Reports</h3>
+                        <p class="text-zinc-500 mb-4">Generate stakeholder reports.</p>
+                        <code class="text-sm font-mono bg-zinc-100 px-3 py-1 rounded-full text-zinc-600">/qori-report</code>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Footer -->
-    <footer class="border-t border-border py-8">
-        <p class="text-center text-sm text-muted-foreground">Built for research teams by Qori</p>
+    <footer class="border-t border-zinc-100 py-12">
+        <p class="text-center text-sm text-zinc-400">Built for research teams by Qori</p>
     </footer>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>
