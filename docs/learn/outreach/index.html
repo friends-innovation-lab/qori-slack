@@ -3,269 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Participant Outreach — Learn Qori</title>
+    <title>Outreach Messages — Learn Qori</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #fff; }
-
-        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; background: #fafafa; border-right: 1px solid #e5e5e5; display: flex; flex-direction: column; z-index: 100; }
-        .sidebar-header { padding: 20px; border-bottom: 1px solid #e5e5e5; }
-        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
-        .logo img { width: 36px; height: 36px; border-radius: 8px; }
-        .logo-text { font-weight: 700; font-size: 18px; color: #1a1a1a; }
-        .sidebar-nav { flex: 1; overflow-y: auto; padding: 16px 0; }
-        .nav-section { margin-bottom: 24px; }
-        .nav-section-title { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 20px; }
-        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; color: #666; text-decoration: none; font-size: 14px; font-weight: 500; transition: all 0.15s; border-left: 3px solid transparent; }
-        .nav-item:hover { background: #f0f0f0; color: #1a1a1a; }
-        .nav-item.active { background: #e8f5e9; color: #007a5a; border-left-color: #007a5a; }
-        .nav-icon { font-size: 16px; width: 20px; text-align: center; }
-        .nav-badge { margin-left: auto; font-size: 11px; background: #e5e5e5; color: #666; padding: 2px 6px; border-radius: 4px; }
-        .sidebar-footer { padding: 16px 20px; border-top: 1px solid #e5e5e5; }
-        .sidebar-footer a { display: flex; align-items: center; gap: 10px; color: #999; text-decoration: none; font-size: 13px; padding: 8px 0; transition: color 0.15s; }
-        .sidebar-footer a:hover { color: #007a5a; }
-
-        .main { margin-left: 260px; min-height: 100vh; background: #fff; }
-        .main-header { position: sticky; top: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e5e5e5; padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; z-index: 50; }
-        .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #666; }
-        .breadcrumb a { color: #666; text-decoration: none; }
-        .breadcrumb a:hover { color: #007a5a; }
-        .breadcrumb-sep { color: #ccc; }
-        .main-content { max-width: 800px; padding: 48px 40px 80px; }
-
-        .phase-badge { display: inline-flex; align-items: center; gap: 6px; background: #f3e5f5; color: #7b1fa2; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; margin-bottom: 16px; }
-        .page-title { font-size: 36px; font-weight: 700; color: #1a1a1a; margin-bottom: 12px; letter-spacing: -0.02em; }
-        .page-description { font-size: 17px; color: #666; max-width: 560px; line-height: 1.6; margin-bottom: 32px; }
-
-        .command-hero { background: #1a1a1a; border-radius: 12px; padding: 24px 28px; margin-bottom: 40px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
-        .command-main { display: flex; flex-direction: column; gap: 6px; }
-        .command-label { font-size: 12px; color: #888; font-weight: 500; }
-        .command-text { font-family: 'SF Mono', Monaco, 'Courier New', monospace; font-size: 26px; color: #fff; font-weight: 600; }
-        .command-copy { background: #007a5a; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.2s; }
-        .command-copy:hover { background: #006649; }
-
-        .gif-section { margin-bottom: 40px; }
-        .gif-container { background: #f5f5f5; border-radius: 12px; overflow: hidden; aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; border: 1px solid #e5e5e5; }
-        .gif-placeholder { text-align: center; color: #999; }
-        .gif-placeholder-icon { font-size: 40px; margin-bottom: 8px; }
-        .gif-placeholder-text { font-size: 13px; }
-        .gif-caption { margin-top: 10px; font-size: 13px; color: #666; text-align: center; }
-
-        .section-title { font-size: 20px; font-weight: 700; color: #1a1a1a; margin-bottom: 20px; }
-        .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 40px; }
-        .action-card { background: #fafafa; border: 1px solid #e5e5e5; border-radius: 10px; padding: 16px; display: flex; gap: 12px; }
-        .action-icon { font-size: 20px; flex-shrink: 0; }
-        .action-title { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 2px; }
-        .action-description { font-size: 13px; color: #666; }
-
-        .tips-section { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 20px; margin-bottom: 40px; }
-        .tips-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-        .tips-icon { font-size: 18px; }
-        .tips-title { font-size: 15px; font-weight: 600; color: #166534; }
-        .tips-list { list-style: none; }
-        .tips-list li { font-size: 13px; color: #166534; padding: 5px 0; padding-left: 18px; position: relative; }
-        .tips-list li::before { content: '->'; position: absolute; left: 0; color: #22c55e; }
-
-        .nav-footer { display: flex; justify-content: space-between; padding-top: 24px; border-top: 1px solid #e5e5e5; }
-        .nav-link { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; padding: 12px 16px; border: 1px solid #e5e5e5; border-radius: 10px; transition: all 0.2s; }
-        .nav-link:hover { border-color: #007a5a; background: #f0fdf4; }
-        .nav-link-arrow { font-size: 18px; color: #999; }
-        .nav-link:hover .nav-link-arrow { color: #007a5a; }
-        .nav-link-label { font-size: 11px; color: #666; margin-bottom: 2px; }
-        .nav-link-title { font-size: 14px; font-weight: 600; color: #1a1a1a; }
-        .nav-link.next { flex-direction: row-reverse; text-align: right; }
-
-        @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); }
-            .main { margin-left: 0; }
-            .main-content { padding: 32px 20px 60px; }
-            .page-title { font-size: 28px; }
-            .actions-grid { grid-template-columns: 1fr; }
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        border: "hsl(214.3 31.8% 91.4%)",
+                        background: "hsl(0 0% 100%)",
+                        foreground: "hsl(222.2 84% 4.9%)",
+                        primary: { DEFAULT: "hsl(142.1 76.2% 36.3%)", foreground: "hsl(355.7 100% 97.3%)" },
+                        muted: { DEFAULT: "hsl(210 40% 96.1%)", foreground: "hsl(215.4 16.3% 46.9%)" },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
+                    },
+                }
+            }
         }
-    </style>
+    </script>
 </head>
-<body>
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <a href="../" class="logo">
-                <img src="../assets/qori_logo.png" alt="Qori">
-                <span class="logo-text">Qori</span>
+<body class="font-sans bg-background text-foreground antialiased">
+    <header class="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
+        <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="../" class="flex items-center gap-3">
+                <img src="../assets/qori_logo.png" alt="Qori" class="w-8 h-8 rounded-lg">
+                <span class="font-semibold text-lg text-foreground">Qori</span>
+            </a>
+            <a href="https://github.com/Friends-From-The-City/Qori-Slack-AI-Bot" class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                GitHub
             </a>
         </div>
-        <nav class="sidebar-nav">
-            <div class="nav-section">
-                <div class="nav-section-title">Study Setup</div>
-                <a href="../request/" class="nav-item">
-                    <span class="nav-icon">📥</span>Research Request
-                </a>
-                <a href="../plan/" class="nav-item">
-                    <span class="nav-icon">📋</span>Study Planning<span class="nav-badge">7</span>
-                </a>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 py-16">
+        <div class="text-center mb-8">
+            <span class="inline-block bg-foreground text-background text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full mb-4">Participants</span>
+            <div class="flex items-center justify-center gap-2">
+                <a href="../participants/" class="inline-block border border-border text-muted-foreground hover:text-foreground hover:border-foreground text-sm font-medium px-4 py-1.5 rounded-full transition-colors">Manage Participants</a>
+                <span class="inline-block bg-foreground text-background text-sm font-medium px-4 py-1.5 rounded-full">Outreach Messages</span>
             </div>
-            <div class="nav-section">
-                <div class="nav-section-title">Participants</div>
-                <a href="../participants/" class="nav-item">
-                    <span class="nav-icon">👥</span>Manage Participants
-                </a>
-                <a href="../outreach/" class="nav-item active">
-                    <span class="nav-icon">📬</span>Outreach Messages<span class="nav-badge">6</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <div class="nav-section-title">Sessions</div>
-                <a href="../observe/" class="nav-item">
-                    <span class="nav-icon">👀</span>Request to Observe
-                </a>
-                <a href="../notes/" class="nav-item">
-                    <span class="nav-icon">📝</span>Session Notes
-                </a>
-            </div>
-            <div class="nav-section">
-                <div class="nav-section-title">Analysis</div>
-                <a href="../analyze/" class="nav-item">
-                    <span class="nav-icon">🔬</span>Analyze Sessions
-                </a>
-                <a href="../synthesis/" class="nav-item">
-                    <span class="nav-icon">🔍</span>Synthesis
-                </a>
-                <a href="../report/" class="nav-item">
-                    <span class="nav-icon">📊</span>Stakeholder Reports
-                </a>
-            </div>
-        </nav>
-        <div class="sidebar-footer">
-            <a href="https://github.com/Friends-From-The-City/Qori-Slack-AI-Bot"><span>🐙</span>GitHub</a>
-            <a href="#"><span>💬</span>Support</a>
         </div>
-    </aside>
 
-    <main class="main">
-        <header class="main-header">
-            <div class="breadcrumb">
-                <a href="../">Learn</a>
-                <span class="breadcrumb-sep">/</span>
-                <span>Participant Outreach</span>
-            </div>
-        </header>
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-foreground mb-4 tracking-tight">Outreach Messages</h1>
+            <p class="text-lg text-muted-foreground max-w-xl mx-auto mb-6">Generate recruitment emails, reminders, confirmations.</p>
+            <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-sm px-4 py-2 rounded-lg">/qori-outreach</code>
+        </div>
 
-        <div class="main-content">
-            <div class="phase-badge">
-                <span>👥</span>
-                <span>Participants</span>
-            </div>
-
-            <h1 class="page-title">Participant Outreach</h1>
-            <p class="page-description">
-                Generate recruitment emails, reminders, confirmations, and thank-you messages. Six message types to cover the full participant journey.
-            </p>
-
-            <div class="command-hero">
-                <div class="command-main">
-                    <span class="command-label">Type this in Slack</span>
-                    <span class="command-text">/qori-outreach</span>
-                </div>
-                <button class="command-copy" onclick="copyCommand()">Copy command</button>
-            </div>
-
-            <div class="gif-section">
-                <div class="gif-container">
-                    <div class="gif-placeholder">
-                        <div class="gif-placeholder-icon">🎬</div>
-                        <div class="gif-placeholder-text">GIF: Selecting message type and generating personalized email</div>
-                    </div>
-                </div>
-                <p class="gif-caption">Choose a message type, select participants, and Qori generates personalized messages</p>
-            </div>
-
-            <h2 class="section-title">What you can do</h2>
-            <div class="actions-grid">
-                <div class="action-card">
-                    <div class="action-icon">📨</div>
-                    <div class="action-content">
-                        <h3 class="action-title">Recruitment Email</h3>
-                        <p class="action-description">Initial outreach to potential participants</p>
-                    </div>
-                </div>
-                <div class="action-card">
-                    <div class="action-icon">📅</div>
-                    <div class="action-content">
-                        <h3 class="action-title">Scheduling Request</h3>
-                        <p class="action-description">Ask participants to choose available times</p>
-                    </div>
-                </div>
-                <div class="action-card">
-                    <div class="action-icon">✅</div>
-                    <div class="action-content">
-                        <h3 class="action-title">Confirmation Email</h3>
-                        <p class="action-description">Confirm scheduled session with details</p>
-                    </div>
-                </div>
-                <div class="action-card">
-                    <div class="action-icon">🔔</div>
-                    <div class="action-content">
-                        <h3 class="action-title">Reminder Email</h3>
-                        <p class="action-description">Day-before or morning-of reminders</p>
-                    </div>
-                </div>
-                <div class="action-card">
-                    <div class="action-icon">🙏</div>
-                    <div class="action-content">
-                        <h3 class="action-title">Thank You Email</h3>
-                        <p class="action-description">Post-session appreciation with incentive info</p>
-                    </div>
-                </div>
-                <div class="action-card">
-                    <div class="action-icon">🔄</div>
-                    <div class="action-content">
-                        <h3 class="action-title">Follow-up Email</h3>
-                        <p class="action-description">Re-engage participants who haven't responded</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tips-section">
-                <div class="tips-header">
-                    <span class="tips-icon">💡</span>
-                    <h3 class="tips-title">Tips for success</h3>
-                </div>
-                <ul class="tips-list">
-                    <li>Messages auto-fill with participant names and study details from your plan</li>
-                    <li>Edit generated messages before sending — AI is a starting point</li>
-                    <li>Use reminders to reduce no-shows (send 24 hours and 1 hour before)</li>
-                </ul>
-            </div>
-
-            <nav class="nav-footer">
-                <a href="../participants/" class="nav-link prev">
-                    <span class="nav-link-arrow">←</span>
-                    <div class="nav-link-content">
-                        <span class="nav-link-label">Previous</span>
-                        <span class="nav-link-title">Manage Participants</span>
-                    </div>
-                </a>
-                <a href="../observe/" class="nav-link next">
-                    <span class="nav-link-arrow">→</span>
-                    <div class="nav-link-content">
-                        <span class="nav-link-label">Next</span>
-                        <span class="nav-link-title">Request to Observe</span>
-                    </div>
-                </a>
-            </nav>
+        <div class="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50 rounded-xl p-8 text-center">
+            <p class="text-muted-foreground">Tutorial content coming soon</p>
         </div>
     </main>
 
-    <script>
-        function copyCommand() {
-            navigator.clipboard.writeText('/qori-outreach');
-            const btn = document.querySelector('.command-copy');
-            const original = btn.textContent;
-            btn.textContent = '✓ Copied!';
-            setTimeout(() => { btn.textContent = original; }, 2000);
-        }
-    </script>
+    <footer class="border-t border-border py-8">
+        <p class="text-center text-sm text-muted-foreground">Built for research teams by Qori</p>
+    </footer>
 </body>
 </html>
