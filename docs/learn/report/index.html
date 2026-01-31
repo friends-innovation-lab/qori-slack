@@ -6,8 +6,9 @@
     <title>Stakeholder Reports — Learn Qori</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -27,44 +28,173 @@
             }
         }
     </script>
+    <style>
+        .feature-card:hover .screenshot {
+            transform: rotate(0deg) scale(1.05);
+        }
+        .screenshot {
+            transition: transform 0.3s ease;
+        }
+    </style>
 </head>
 <body class="font-sans bg-background text-foreground antialiased">
-    <header class="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
-        <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="../" class="flex items-center gap-3">
-                <img src="../assets/qori_logo.png" alt="Qori" class="w-8 h-8 rounded-lg">
-                <span class="font-semibold text-lg text-foreground">Qori</span>
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="../" class="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span class="text-sm font-medium">Learn Qori</span>
             </a>
-            <a href="https://github.com/Friends-From-The-City/Qori-Slack-AI-Bot" class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <a href="https://github.com/Friends-From-The-City/Qori-Slack-AI-Bot" class="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                GitHub
             </a>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-6 py-16">
-        <div class="text-center mb-8">
-            <span class="inline-block bg-foreground text-background text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full mb-4">Analysis</span>
-            <div class="flex items-center justify-center gap-2 flex-wrap">
-                <a href="../analyze/" class="inline-block border border-border text-muted-foreground hover:text-foreground hover:border-foreground text-sm font-medium px-4 py-1.5 rounded-full transition-colors">Analyze Sessions</a>
-                <a href="../synthesis/" class="inline-block border border-border text-muted-foreground hover:text-foreground hover:border-foreground text-sm font-medium px-4 py-1.5 rounded-full transition-colors">Synthesis</a>
-                <span class="inline-block bg-foreground text-background text-sm font-medium px-4 py-1.5 rounded-full">Stakeholder Reports</span>
+    <main>
+        <!-- Hero Section -->
+        <section class="pt-16 pb-12 px-6">
+            <div class="max-w-4xl mx-auto text-center">
+                <!-- Phase Badge -->
+                <span class="inline-block bg-green-100 text-green-700 text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full mb-6">Analysis</span>
+
+                <!-- Sibling Navigation -->
+                <div class="flex items-center justify-center gap-2 flex-wrap mb-8">
+                    <a href="../analyze/" class="inline-block border border-border text-muted-foreground hover:text-foreground hover:border-foreground text-sm font-medium px-4 py-1.5 rounded-full transition-colors">Analyze</a>
+                    <a href="../synthesis/" class="inline-block border border-border text-muted-foreground hover:text-foreground hover:border-foreground text-sm font-medium px-4 py-1.5 rounded-full transition-colors">Synthesis</a>
+                    <span class="inline-block bg-foreground text-background text-sm font-medium px-4 py-1.5 rounded-full">Report</span>
+                </div>
+
+                <!-- Title -->
+                <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-4">Stakeholder Reports</h1>
+                <p class="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">Create polished research reports ready to share with stakeholders and leadership.</p>
+
+                <!-- Command Box -->
+                <div class="inline-flex items-center gap-3 bg-zinc-100 rounded-xl px-6 py-3 mb-12">
+                    <code class="font-mono text-lg text-zinc-800">/qori-report</code>
+                    <button onclick="navigator.clipboard.writeText('/qori-report')" class="p-2 hover:bg-zinc-200 rounded-lg transition-colors" title="Copy command">
+                        <i data-lucide="copy" class="w-4 h-4 text-zinc-500"></i>
+                    </button>
+                </div>
+
+                <!-- Video/GIF Placeholder -->
+                <div class="max-w-4xl mx-auto">
+                    <div class="aspect-video bg-zinc-900 rounded-2xl shadow-2xl flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="play" class="w-8 h-8 text-white"></i>
+                            </div>
+                            <p class="text-zinc-400">Demo video coming soon</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-muted-foreground mt-4 flex items-center justify-center gap-2">
+                        <i data-lucide="play-circle" class="w-4 h-4"></i>
+                        Watch with audio · 2 min
+                    </p>
+                </div>
             </div>
-        </div>
+        </section>
 
-        <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-foreground mb-4 tracking-tight">Stakeholder Reports</h1>
-            <p class="text-lg text-muted-foreground max-w-xl mx-auto mb-6">Generate polished reports, auto-create GitHub issues.</p>
-            <code class="inline-block bg-zinc-100 text-zinc-800 font-mono text-sm px-4 py-2 rounded-lg">/qori-report</code>
-        </div>
+        <!-- Feature Cards Section -->
+        <section class="py-16 px-6">
+            <div class="max-w-5xl mx-auto">
+                <h2 class="text-3xl font-bold text-center mb-12">What you can do</h2>
 
-        <div class="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/50 rounded-xl p-8 text-center">
-            <p class="text-muted-foreground">Tutorial content coming soon</p>
-        </div>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <!-- Executive Summary -->
+                    <div class="feature-card group">
+                        <div class="bg-emerald-500 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
+                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
+                                <i data-lucide="file-text" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div class="screenshot bg-white rounded-lg shadow-2xl w-56 h-36 flex items-center justify-center rotate-1">
+                                <span class="text-zinc-400 text-sm text-center px-2">Screenshot: Exec Summary</span>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-semibold mt-4">Executive Summary</h3>
+                        <p class="text-muted-foreground">One-page overview for busy stakeholders.</p>
+                    </div>
+
+                    <!-- Full Report -->
+                    <div class="feature-card group">
+                        <div class="bg-teal-500 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
+                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
+                                <i data-lucide="presentation" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div class="screenshot bg-white rounded-lg shadow-2xl w-56 h-36 flex items-center justify-center -rotate-1">
+                                <span class="text-zinc-400 text-sm text-center px-2">Screenshot: Full Report</span>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-semibold mt-4">Full Report</h3>
+                        <p class="text-muted-foreground">Complete findings with evidence and recommendations.</p>
+                    </div>
+
+                    <!-- Congressional Briefing -->
+                    <div class="feature-card group">
+                        <div class="bg-blue-500 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
+                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
+                                <i data-lucide="landmark" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div class="screenshot bg-white rounded-lg shadow-2xl w-56 h-36 flex items-center justify-center rotate-1">
+                                <span class="text-zinc-400 text-sm text-center px-2">Screenshot: Briefing</span>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-semibold mt-4">Congressional Briefing</h3>
+                        <p class="text-muted-foreground">Formal format for government presentations.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tips Section -->
+        <section class="py-12 px-6">
+            <div class="max-w-3xl mx-auto">
+                <div class="bg-emerald-50 rounded-2xl p-8 border border-emerald-100">
+                    <h3 class="text-lg font-semibold text-emerald-900 mb-4 flex items-center gap-2">
+                        <i data-lucide="lightbulb" class="w-5 h-5"></i>
+                        Tips for success
+                    </h3>
+                    <ul class="space-y-3 text-emerald-800">
+                        <li class="flex items-start gap-3">
+                            <span class="text-emerald-500 mt-1">•</span>
+                            <span>Use <strong>Executive Summary</strong> for quick leadership updates</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-emerald-500 mt-1">•</span>
+                            <span>Reports auto-generate GitHub issues for recommended actions</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-emerald-500 mt-1">•</span>
+                            <span>Review generated content before sharing — AI may need tweaks</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Navigation -->
+        <section class="py-12 px-6">
+            <div class="max-w-3xl mx-auto">
+                <div class="flex justify-start">
+                    <a href="../synthesis/" class="flex-1 max-w-xs p-6 border border-border rounded-xl hover:border-foreground transition-colors group">
+                        <div class="text-sm text-muted-foreground mb-1 flex items-center gap-1">
+                            <i data-lucide="arrow-left" class="w-3 h-3"></i>
+                            Previous
+                        </div>
+                        <div class="font-semibold group-hover:text-primary transition-colors">Synthesis</div>
+                    </a>
+                </div>
+            </div>
+        </section>
     </main>
 
+    <!-- Footer -->
     <footer class="border-t border-border py-8">
         <p class="text-center text-sm text-muted-foreground">Built for research teams by Qori</p>
     </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
 </html>
