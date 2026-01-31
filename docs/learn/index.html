@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -192,6 +193,70 @@
                     <div class="flex items-center gap-3 border-t border-zinc-100 pt-4">
                         <div class="flex-1 bg-zinc-100 rounded-lg px-4 py-3 text-zinc-400 text-sm">/qori-plan create-study</div>
                         <button class="bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Research on Autopilot Section -->
+    <section class="py-20 px-6" style="background-color: #D4A000;">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- Left: Feature Cards Grid -->
+                <div class="order-2 lg:order-1">
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-4">Research on Autopilot</h2>
+                    <p class="text-lg text-zinc-800 mb-8">Let AI handle the repetitive work while you focus on insights.</p>
+
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <!-- Card 1: Auto-generate Guides -->
+                        <div class="bg-zinc-900 rounded-2xl p-6 border border-zinc-700">
+                            <div class="w-10 h-10 bg-zinc-800 rounded-xl flex items-center justify-center mb-4">
+                                <i data-lucide="file-text" class="w-5 h-5 text-yellow-400"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-white mb-2">Auto-generate Guides</h3>
+                            <p class="text-sm text-zinc-400">Discussion guides drafted from your research objectives.</p>
+                        </div>
+
+                        <!-- Card 2: Smart Analysis -->
+                        <div class="bg-zinc-900 rounded-2xl p-6 border border-zinc-700">
+                            <div class="w-10 h-10 bg-zinc-800 rounded-xl flex items-center justify-center mb-4">
+                                <i data-lucide="brain" class="w-5 h-5 text-yellow-400"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-white mb-2">Smart Analysis</h3>
+                            <p class="text-sm text-zinc-400">AI extracts themes, quotes, and patterns from sessions.</p>
+                        </div>
+
+                        <!-- Card 3: Instant Reports -->
+                        <div class="bg-zinc-900 rounded-2xl p-6 border border-zinc-700">
+                            <div class="w-10 h-10 bg-zinc-800 rounded-xl flex items-center justify-center mb-4">
+                                <i data-lucide="presentation" class="w-5 h-5 text-yellow-400"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-white mb-2">Instant Reports</h3>
+                            <p class="text-sm text-zinc-400">Stakeholder-ready reports generated in seconds.</p>
+                        </div>
+
+                        <!-- Card 4: PII Protection -->
+                        <div class="bg-zinc-900 rounded-2xl p-6 border border-zinc-700">
+                            <div class="w-10 h-10 bg-zinc-800 rounded-xl flex items-center justify-center mb-4">
+                                <i data-lucide="shield-check" class="w-5 h-5 text-yellow-400"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-white mb-2">PII Protection</h3>
+                            <p class="text-sm text-zinc-400">Sensitive data automatically redacted from outputs.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Video/Animation Placeholder -->
+                <div class="order-1 lg:order-2">
+                    <div class="aspect-video bg-zinc-900 rounded-2xl shadow-2xl flex items-center justify-center border border-zinc-700">
+                        <div class="text-center">
+                            <div class="w-20 h-20 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="play" class="w-10 h-10 text-white"></i>
+                            </div>
+                            <p class="text-zinc-400 text-lg font-medium">See Qori in action</p>
+                            <p class="text-zinc-500 text-sm mt-1">Demo video coming soon</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -406,24 +471,6 @@
         </div>
     </section>
 
-    <!-- CTA Section -->
-    <section class="py-24 px-6 bg-zinc-900">
-        <div class="max-w-4xl mx-auto text-center">
-            <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-6">Ready to streamline your research?</h2>
-            <p class="text-xl text-zinc-400 max-w-2xl mx-auto mb-10">Get started with Qori in your Slack workspace. All commands, right where your team works.</p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="https://github.com/Friends-From-The-City/Qori-Slack-AI-Bot" class="inline-flex items-center justify-center gap-2 bg-white text-zinc-900 font-semibold px-8 py-4 rounded-full hover:bg-zinc-100 transition-colors">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                    View on GitHub
-                </a>
-                <a href="#study-setup" class="inline-flex items-center justify-center gap-2 border border-zinc-700 text-white font-semibold px-8 py-4 rounded-full hover:bg-zinc-800 transition-colors">
-                    Explore the guides
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </a>
-            </div>
-        </div>
-    </section>
-
     <!-- All Commands Reference -->
     <section class="py-24 px-6">
         <div class="max-w-4xl mx-auto">
@@ -518,6 +565,9 @@
     </footer>
 
     <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
         // Tab switching
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', function(e) {
