@@ -28,14 +28,6 @@
             }
         }
     </script>
-    <style>
-        .feature-card:hover .screenshot {
-            transform: rotate(0deg) scale(1.05);
-        }
-        .screenshot {
-            transition: transform 0.3s ease;
-        }
-    </style>
 </head>
 <body class="font-sans bg-background text-foreground antialiased">
     <!-- Header -->
@@ -101,87 +93,141 @@
 
                 <div class="grid md:grid-cols-2 gap-8">
                     <!-- Initial Recruitment -->
-                    <div class="feature-card group">
-                        <div class="bg-rose-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="send" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Recruitment Email</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-rose-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Recruitment Email</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-3/4"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-5/6"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Initial Recruitment</h3>
-                        <p class="text-muted-foreground">First outreach to potential participants.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Initial Recruitment</h3>
+                            <p class="text-muted-foreground">First outreach to potential participants.</p>
+                        </div>
                     </div>
 
                     <!-- Session Confirmation -->
-                    <div class="feature-card group">
-                        <div class="bg-emerald-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="calendar-check" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center -rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Confirmation</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-emerald-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Confirmation</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-2/3"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-4/5"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Session Confirmation</h3>
-                        <p class="text-muted-foreground">Confirm scheduled session details.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Session Confirmation</h3>
+                            <p class="text-muted-foreground">Confirm scheduled session details.</p>
+                        </div>
                     </div>
 
                     <!-- Session Reminder -->
-                    <div class="feature-card group">
-                        <div class="bg-amber-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="bell" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Reminder</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-amber-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Reminder</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-5/6"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-3/4"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Session Reminder</h3>
-                        <p class="text-muted-foreground">Remind participants before their session.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Session Reminder</h3>
+                            <p class="text-muted-foreground">Remind participants before their session.</p>
+                        </div>
                     </div>
 
                     <!-- Rescheduling -->
-                    <div class="feature-card group">
-                        <div class="bg-sky-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="calendar-clock" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center -rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Reschedule</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-sky-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Reschedule</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-3/4"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-5/6"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Rescheduling Request</h3>
-                        <p class="text-muted-foreground">Handle schedule changes gracefully.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Rescheduling Request</h3>
+                            <p class="text-muted-foreground">Handle schedule changes gracefully.</p>
+                        </div>
                     </div>
 
                     <!-- Follow-up -->
-                    <div class="feature-card group">
-                        <div class="bg-purple-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="reply" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Follow-up</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-purple-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Follow-up</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-2/3"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-4/5"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Follow-up</h3>
-                        <p class="text-muted-foreground">Follow up with non-responders.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Follow-up</h3>
+                            <p class="text-muted-foreground">Follow up with non-responders.</p>
+                        </div>
                     </div>
 
                     <!-- Thank You -->
-                    <div class="feature-card group">
-                        <div class="bg-pink-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="heart" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center -rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Thank You</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-pink-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Thank You</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-4/5"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-2/3"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Thank You</h3>
-                        <p class="text-muted-foreground">Express gratitude after sessions.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Thank You</h3>
+                            <p class="text-muted-foreground">Express gratitude after sessions.</p>
+                        </div>
                     </div>
                 </div>
             </div>

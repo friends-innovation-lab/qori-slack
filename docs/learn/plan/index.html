@@ -28,14 +28,6 @@
             }
         }
     </script>
-    <style>
-        .feature-card:hover .screenshot {
-            transform: rotate(0deg) scale(1.05);
-        }
-        .screenshot {
-            transition: transform 0.3s ease;
-        }
-    </style>
 </head>
 <body class="font-sans bg-background text-foreground antialiased">
     <!-- Header -->
@@ -101,101 +93,164 @@
 
                 <div class="grid md:grid-cols-2 gap-8">
                     <!-- Research Brief -->
-                    <div class="feature-card group">
-                        <div class="bg-amber-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="file-text" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Research Brief</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-violet-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Research Brief</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-3/4"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-5/6"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Create Research Brief</h3>
-                        <p class="text-muted-foreground">High-level summary for stakeholder alignment.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Create Research Brief</h3>
+                            <p class="text-muted-foreground">High-level summary for stakeholder alignment.</p>
+                        </div>
                     </div>
 
                     <!-- Research Plan -->
-                    <div class="feature-card group">
-                        <div class="bg-sky-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="clipboard-list" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center -rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Research Plan</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-sky-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Research Plan</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-2/3"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-4/5"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Create Research Plan</h3>
-                        <p class="text-muted-foreground">Methodology, timeline, and research questions.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Create Research Plan</h3>
+                            <p class="text-muted-foreground">Methodology, timeline, and research questions.</p>
+                        </div>
                     </div>
 
                     <!-- Discussion Guide -->
-                    <div class="feature-card group">
-                        <div class="bg-emerald-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="message-square" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Discussion Guide</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-emerald-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Discussion Guide</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-5/6"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-3/4"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Create Discussion Guide</h3>
-                        <p class="text-muted-foreground">Interview questions and prompts for sessions.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Create Discussion Guide</h3>
+                            <p class="text-muted-foreground">Interview questions and prompts for sessions.</p>
+                        </div>
                     </div>
 
                     <!-- Stakeholder Guide -->
-                    <div class="feature-card group">
-                        <div class="bg-purple-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="users" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center -rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Stakeholder Guide</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-amber-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Stakeholder Guide</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-3/4"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-5/6"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Create Stakeholder Guide</h3>
-                        <p class="text-muted-foreground">Observer instructions and session etiquette.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Create Stakeholder Guide</h3>
+                            <p class="text-muted-foreground">Observer instructions and session etiquette.</p>
+                        </div>
                     </div>
 
                     <!-- Desk Research -->
-                    <div class="feature-card group">
-                        <div class="bg-orange-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="book-open" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Desk Research</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-rose-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Desk Research</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-2/3"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-4/5"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Upload Desk Research</h3>
-                        <p class="text-muted-foreground">Import existing research and secondary sources.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Upload Desk Research</h3>
+                            <p class="text-muted-foreground">Import existing research and secondary sources.</p>
+                        </div>
                     </div>
 
                     <!-- Survey Data -->
-                    <div class="feature-card group">
-                        <div class="bg-pink-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="bar-chart-3" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center -rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Survey Data</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-cyan-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Survey Data</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-4/5"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-2/3"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Upload Survey Data</h3>
-                        <p class="text-muted-foreground">Import quantitative data and survey results.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Upload Survey Data</h3>
+                            <p class="text-muted-foreground">Import quantitative data and survey results.</p>
+                        </div>
                     </div>
 
                     <!-- Stakeholder Notes -->
-                    <div class="feature-card group md:col-span-2 md:max-w-md md:mx-auto">
-                        <div class="bg-teal-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="sticky-note" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Stakeholder Notes</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100 md:col-span-2 md:max-w-md md:mx-auto">
+                        <div class="bg-teal-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Stakeholder Notes</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-5/6"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-3/4"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Upload Stakeholder Notes</h3>
-                        <p class="text-muted-foreground">Capture notes from stakeholder conversations.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Upload Stakeholder Notes</h3>
+                            <p class="text-muted-foreground">Capture notes from stakeholder conversations.</p>
+                        </div>
                     </div>
                 </div>
             </div>

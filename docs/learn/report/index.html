@@ -28,14 +28,6 @@
             }
         }
     </script>
-    <style>
-        .feature-card:hover .screenshot {
-            transform: rotate(0deg) scale(1.05);
-        }
-        .screenshot {
-            transition: transform 0.3s ease;
-        }
-    </style>
 </head>
 <body class="font-sans bg-background text-foreground antialiased">
     <!-- Header -->
@@ -102,45 +94,72 @@
 
                 <div class="grid md:grid-cols-3 gap-8">
                     <!-- Executive Summary -->
-                    <div class="feature-card group">
-                        <div class="bg-emerald-500 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="file-text" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-56 h-36 flex items-center justify-center rotate-1">
-                                <span class="text-zinc-400 text-sm text-center px-2">Screenshot: Exec Summary</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-emerald-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Exec Summary</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-3/4"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-5/6"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Executive Summary</h3>
-                        <p class="text-muted-foreground">One-page overview for busy stakeholders.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Executive Summary</h3>
+                            <p class="text-muted-foreground">One-page overview for busy stakeholders.</p>
+                        </div>
                     </div>
 
                     <!-- Full Report -->
-                    <div class="feature-card group">
-                        <div class="bg-teal-500 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="presentation" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-56 h-36 flex items-center justify-center -rotate-1">
-                                <span class="text-zinc-400 text-sm text-center px-2">Screenshot: Full Report</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-teal-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Full Report</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-2/3"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-4/5"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Full Report</h3>
-                        <p class="text-muted-foreground">Complete findings with evidence and recommendations.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Full Report</h3>
+                            <p class="text-muted-foreground">Complete findings with evidence and recommendations.</p>
+                        </div>
                     </div>
 
                     <!-- Congressional Briefing -->
-                    <div class="feature-card group">
-                        <div class="bg-blue-500 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="landmark" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-56 h-36 flex items-center justify-center rotate-1">
-                                <span class="text-zinc-400 text-sm text-center px-2">Screenshot: Briefing</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-blue-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Briefing</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-5/6"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-3/4"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Congressional Briefing</h3>
-                        <p class="text-muted-foreground">Formal format for government presentations.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Congressional Briefing</h3>
+                            <p class="text-muted-foreground">Formal format for government presentations.</p>
+                        </div>
                     </div>
                 </div>
             </div>

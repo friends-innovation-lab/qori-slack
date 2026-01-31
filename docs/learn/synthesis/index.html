@@ -28,14 +28,6 @@
             }
         }
     </script>
-    <style>
-        .feature-card:hover .screenshot {
-            transform: rotate(0deg) scale(1.05);
-        }
-        .screenshot {
-            transition: transform 0.3s ease;
-        }
-    </style>
 </head>
 <body class="font-sans bg-background text-foreground antialiased">
     <!-- Header -->
@@ -102,59 +94,95 @@
 
                 <div class="grid md:grid-cols-2 gap-8">
                     <!-- Affinity Map -->
-                    <div class="feature-card group">
-                        <div class="bg-fuchsia-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="layout-grid" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Affinity Map</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-fuchsia-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Affinity Map</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-3/4"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-5/6"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Affinity Map</h3>
-                        <p class="text-muted-foreground">Group related insights across sessions.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Affinity Map</h3>
+                            <p class="text-muted-foreground">Group related insights across sessions.</p>
+                        </div>
                     </div>
 
                     <!-- Journey Map -->
-                    <div class="feature-card group">
-                        <div class="bg-cyan-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="git-branch" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center -rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Journey Map</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-cyan-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Journey Map</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-2/3"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-4/5"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Journey Map</h3>
-                        <p class="text-muted-foreground">Visualize user experience over time.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Journey Map</h3>
+                            <p class="text-muted-foreground">Visualize user experience over time.</p>
+                        </div>
                     </div>
 
                     <!-- Personas -->
-                    <div class="feature-card group">
-                        <div class="bg-amber-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="user-circle" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Personas</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-amber-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Personas</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-5/6"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-3/4"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Personas</h3>
-                        <p class="text-muted-foreground">Generate user personas from research data.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Personas</h3>
+                            <p class="text-muted-foreground">Generate user personas from research data.</p>
+                        </div>
                     </div>
 
                     <!-- Usability Issues -->
-                    <div class="feature-card group">
-                        <div class="bg-rose-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="alert-triangle" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-72 h-44 flex items-center justify-center -rotate-1">
-                                <span class="text-zinc-400 text-sm">Screenshot: Issues List</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-rose-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Issues List</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-3/4"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-5/6"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Usability Issues</h3>
-                        <p class="text-muted-foreground">Catalog problems found during sessions.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Usability Issues</h3>
+                            <p class="text-muted-foreground">Catalog problems found during sessions.</p>
+                        </div>
                     </div>
                 </div>
             </div>
