@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Learn Qori — AI Research Assistant for VA Teams</title>
+    <title>Qori — Where UX research gets done</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,6 +13,9 @@
         tailwind.config = {
             theme: {
                 extend: {
+                    maxWidth: {
+                        'container': '1200px',
+                    },
                     colors: {
                         border: "hsl(214.3 31.8% 91.4%)",
                         background: "hsl(0 0% 100%)",
@@ -102,7 +105,7 @@
 <body class="font-sans bg-white text-zinc-900 antialiased">
     <!-- Header -->
     <header class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-100">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="max-w-container mx-auto px-6 py-4 flex items-center justify-between">
             <a href="./" class="flex items-center gap-3">
                 <img src="assets/qori_logo.png" alt="Qori" class="w-8 h-8 rounded-lg">
                 <span class="font-semibold text-lg">Qori</span>
@@ -114,169 +117,124 @@
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="pt-32 pb-8 px-6">
-        <div class="max-w-4xl mx-auto text-center">
-            <!-- Headline -->
-            <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter text-zinc-900 mb-6">
-                AI-powered research ops<br>for VA teams
-            </h1>
-
-            <!-- Subtitle -->
-            <p class="text-xl text-zinc-500 max-w-2xl mx-auto mb-12">
-                Manage studies, recruit participants, capture insights, and generate reports — all from Slack.
-            </p>
-
-            <!-- Tab Bar -->
-            <div class="tab-bar mb-16">
-                <a href="#study-setup" class="tab active" data-tab="setup">
-                    <span>📋</span> Study Setup
-                </a>
-                <a href="#participants" class="tab" data-tab="participants">
-                    <span>👥</span> Participants
-                </a>
-                <a href="#sessions" class="tab" data-tab="sessions">
-                    <span>🎯</span> Sessions
-                </a>
-                <a href="#analysis" class="tab" data-tab="analysis">
-                    <span>📊</span> Analysis
-                </a>
-            </div>
-        </div>
-
-        <!-- Screenshot/Visual -->
-        <div class="max-w-5xl mx-auto">
-            <div class="screenshot-container">
-                <!-- Fake Slack Header -->
-                <div class="slack-header">
-                    <div class="flex gap-2">
-                        <div class="slack-dot bg-red-400"></div>
-                        <div class="slack-dot bg-yellow-400"></div>
-                        <div class="slack-dot bg-green-400"></div>
+    <!-- Hero Section - Split Layout -->
+    <section class="pt-32 pb-24 px-6">
+        <div class="max-w-container mx-auto">
+            <div class="grid lg:grid-cols-2 gap-12 items-center min-h-[500px]">
+                <!-- Left: Text Content -->
+                <div>
+                    <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-zinc-900 mb-8">
+                        Where UX research gets done
+                    </h1>
+                    <p class="text-xl md:text-2xl text-zinc-500 mb-10 max-w-lg">
+                        Plan studies, recruit participants, capture insights, and share findings — all without leaving Slack.
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <a href="#commands" class="inline-flex items-center justify-center gap-2 bg-zinc-900 text-white font-medium px-8 py-4 rounded-full hover:bg-zinc-800 transition-colors text-lg">
+                            View all commands
+                        </a>
+                        <a href="https://github.com/Friends-From-The-City/Qori-Slack-AI-Bot" class="inline-flex items-center justify-center gap-2 bg-white text-zinc-900 font-medium px-8 py-4 rounded-full border border-zinc-200 hover:bg-zinc-50 transition-colors text-lg">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                            GitHub
+                        </a>
                     </div>
-                    <span class="text-white/80 text-sm font-medium">Slack — #research-team</span>
                 </div>
-                <!-- Fake Slack Content -->
-                <div class="p-6 bg-white">
-                    <div class="flex gap-4 mb-6">
-                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold">Q</div>
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="font-semibold text-zinc-900">Qori</span>
-                                <span class="text-xs text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded">APP</span>
-                                <span class="text-xs text-zinc-400">10:42 AM</span>
-                            </div>
-                            <div class="bg-zinc-50 border border-zinc-200 rounded-lg p-4">
-                                <div class="font-semibold text-zinc-900 mb-2">📋 New Study Created</div>
-                                <div class="text-sm text-zinc-600 mb-3">Your study "Benefits Claims UX Research" has been set up with:</div>
-                                <div class="grid grid-cols-2 gap-3 text-sm">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-emerald-500">✓</span>
-                                        <span class="text-zinc-600">Research brief</span>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-emerald-500">✓</span>
-                                        <span class="text-zinc-600">Discussion guide</span>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-emerald-500">✓</span>
-                                        <span class="text-zinc-600">8 participants recruited</span>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-emerald-500">✓</span>
-                                        <span class="text-zinc-600">Sessions scheduled</span>
+
+                <!-- Right: Slack Mockup -->
+                <div class="screenshot-container">
+                    <div class="slack-header">
+                        <div class="flex gap-2">
+                            <div class="slack-dot bg-red-400"></div>
+                            <div class="slack-dot bg-yellow-400"></div>
+                            <div class="slack-dot bg-green-400"></div>
+                        </div>
+                        <span class="text-white/80 text-sm font-medium">Slack — #research-team</span>
+                    </div>
+                    <div class="p-6 bg-white">
+                        <div class="flex gap-4 mb-6">
+                            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold">Q</div>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="font-semibold text-zinc-900">Qori</span>
+                                    <span class="text-xs text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded">APP</span>
+                                    <span class="text-xs text-zinc-400">10:42 AM</span>
+                                </div>
+                                <div class="bg-zinc-50 border border-zinc-200 rounded-lg p-4">
+                                    <div class="font-semibold text-zinc-900 mb-2">New Study Created</div>
+                                    <div class="text-sm text-zinc-600 mb-3">Your study "Checkout Flow Redesign" is ready:</div>
+                                    <div class="grid grid-cols-2 gap-2 text-sm">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-emerald-500">✓</span>
+                                            <span class="text-zinc-600">Research brief</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-emerald-500">✓</span>
+                                            <span class="text-zinc-600">Discussion guide</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-emerald-500">✓</span>
+                                            <span class="text-zinc-600">8 participants</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-emerald-500">✓</span>
+                                            <span class="text-zinc-600">Sessions scheduled</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="flex items-center gap-3 border-t border-zinc-100 pt-4">
-                        <div class="flex-1 bg-zinc-100 rounded-lg px-4 py-3 text-zinc-400 text-sm">/qori-plan create-study</div>
-                        <button class="bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium">Send</button>
+                        <div class="flex items-center gap-3 border-t border-zinc-100 pt-4">
+                            <div class="flex-1 bg-zinc-100 rounded-lg px-4 py-2.5 text-zinc-400 text-sm">/qori-plan create-study</div>
+                            <button class="bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium">Send</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Research on Autopilot Section - LottieFiles Style -->
-    <section class="py-16 px-6">
-        <div class="max-w-6xl mx-auto">
-            <!-- Rounded yellow container -->
-            <div class="rounded-3xl px-8 md:px-16 pt-16 pb-8" style="background-color: #D4A000;">
-                <!-- Centered Header -->
-                <div class="text-center mb-12">
-                    <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-900 mb-6">
-                        Research on Autopilot
-                    </h2>
-                    <p class="text-lg md:text-xl text-zinc-800 max-w-2xl mx-auto mb-8">
-                        Let AI handle the repetitive operational work — from drafting guides to analyzing sessions — so you can focus on what matters: insights.
-                    </p>
-                    <a href="#study-setup" class="inline-flex items-center justify-center gap-2 bg-white text-zinc-900 font-medium px-6 py-3 rounded-full border border-zinc-300 hover:bg-zinc-50 transition-colors">
-                        Explore AI features
-                    </a>
+    <!-- Feature Strip - LottieFiles Style -->
+    <section class="py-6 px-6 bg-zinc-50">
+        <div class="max-w-container mx-auto">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <!-- Lives in Slack -->
+                <div class="flex items-center gap-4 bg-white rounded-2xl p-5 border border-zinc-100">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="message-square" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-zinc-900">Lives in Slack</h3>
+                        <p class="text-sm text-zinc-500">zero learning curve</p>
+                    </div>
                 </div>
-
-                <!-- Dark container with cards + video -->
-                <div class="bg-zinc-900 rounded-3xl p-6 md:p-8">
-                    <div class="grid lg:grid-cols-5 gap-6">
-                        <!-- Left: 2x2 Feature Cards Grid (takes 2 columns) -->
-                        <div class="lg:col-span-2 grid grid-cols-2 gap-4">
-                            <!-- Card 1: Auto-generate Guides -->
-                            <div class="bg-zinc-800 rounded-2xl p-5">
-                                <div class="w-10 h-10 flex items-center justify-center mb-12">
-                                    <i data-lucide="file-text" class="w-6 h-6 text-white"></i>
-                                </div>
-                                <h3 class="text-base font-semibold text-white mb-2">Auto-generate Guides</h3>
-                                <p class="text-sm text-zinc-400 leading-relaxed">Discussion guides drafted from your research objectives.</p>
-                            </div>
-
-                            <!-- Card 2: Smart Analysis -->
-                            <div class="bg-zinc-800 rounded-2xl p-5">
-                                <div class="w-10 h-10 flex items-center justify-center mb-12">
-                                    <i data-lucide="sparkles" class="w-6 h-6 text-white"></i>
-                                </div>
-                                <h3 class="text-base font-semibold text-white mb-2">Smart Analysis</h3>
-                                <p class="text-sm text-zinc-400 leading-relaxed">AI extracts themes, quotes, and patterns from sessions.</p>
-                            </div>
-
-                            <!-- Card 3: Instant Reports -->
-                            <div class="bg-zinc-800 rounded-2xl p-5">
-                                <div class="w-10 h-10 flex items-center justify-center mb-12">
-                                    <i data-lucide="file-chart-line" class="w-6 h-6 text-white"></i>
-                                </div>
-                                <h3 class="text-base font-semibold text-white mb-2">Instant Reports</h3>
-                                <p class="text-sm text-zinc-400 leading-relaxed">Stakeholder-ready reports generated in seconds.</p>
-                            </div>
-
-                            <!-- Card 4: PII Protection -->
-                            <div class="bg-zinc-800 rounded-2xl p-5">
-                                <div class="w-10 h-10 flex items-center justify-center mb-12">
-                                    <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
-                                </div>
-                                <h3 class="text-base font-semibold text-white mb-2">PII Protection</h3>
-                                <p class="text-sm text-zinc-400 leading-relaxed">Sensitive data automatically redacted from outputs.</p>
-                            </div>
-                        </div>
-
-                        <!-- Right: Video/Animation Placeholder (takes 3 columns) -->
-                        <div class="lg:col-span-3">
-                            <div class="h-full min-h-[300px] lg:min-h-full bg-gradient-to-br from-orange-400 via-pink-500 to-purple-600 rounded-2xl flex items-center justify-center relative overflow-hidden">
-                                <!-- Decorative elements -->
-                                <div class="absolute inset-0 opacity-30">
-                                    <div class="absolute top-1/4 left-1/4 w-2 h-2 bg-white rounded-full"></div>
-                                    <div class="absolute top-1/3 right-1/3 w-1.5 h-1.5 bg-white rounded-full"></div>
-                                    <div class="absolute bottom-1/4 right-1/4 w-2 h-2 bg-white rounded-full"></div>
-                                </div>
-                                <div class="text-center z-10">
-                                    <div class="w-16 h-16 bg-white/20 backdrop-blur rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <i data-lucide="play" class="w-8 h-8 text-white"></i>
-                                    </div>
-                                    <p class="text-white text-lg font-medium">See Qori in action</p>
-                                    <p class="text-white/70 text-sm mt-1">Demo video coming soon</p>
-                                </div>
-                            </div>
-                        </div>
+                <!-- AI-Powered -->
+                <div class="flex items-center gap-4 bg-white rounded-2xl p-5 border border-zinc-100">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="sparkles" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-zinc-900">AI-Powered</h3>
+                        <p class="text-sm text-zinc-500">automates the grunt work</p>
+                    </div>
+                </div>
+                <!-- Privacy First -->
+                <div class="flex items-center gap-4 bg-white rounded-2xl p-5 border border-zinc-100">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-500 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-zinc-900">Privacy First</h3>
+                        <p class="text-sm text-zinc-500">built-in PII redaction</p>
+                    </div>
+                </div>
+                <!-- GitHub-backed -->
+                <div class="flex items-center gap-4 bg-white rounded-2xl p-5 border border-zinc-100">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="git-branch" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-zinc-900">GitHub-backed</h3>
+                        <p class="text-sm text-zinc-500">version-controlled artifacts</p>
                     </div>
                 </div>
             </div>
@@ -285,7 +243,7 @@
 
     <!-- Features Grid -->
     <section class="py-24 px-6">
-        <div class="max-w-6xl mx-auto">
+        <div class="max-w-container mx-auto">
             <!-- Study Setup -->
             <div id="study-setup" class="mb-20">
                 <div class="text-center mb-12">
@@ -384,7 +342,7 @@
 
     <!-- How It Works -->
     <section class="py-24 px-6 bg-zinc-50">
-        <div class="max-w-6xl mx-auto">
+        <div class="max-w-container mx-auto">
             <div class="text-center mb-16">
                 <span class="inline-block bg-zinc-900 text-white text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full mb-4">How It Works</span>
                 <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">Research workflow, simplified</h2>
@@ -419,75 +377,83 @@
         </div>
     </section>
 
-    <!-- All Commands Reference -->
-    <section class="py-24 px-6">
-        <div class="max-w-4xl mx-auto">
-            <div class="text-center mb-12">
-                <span class="inline-block bg-zinc-900 text-white text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full mb-4">Quick Reference</span>
-                <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">All commands at a glance</h2>
-                <p class="text-xl text-zinc-500">Copy any command and run it in your Slack workspace.</p>
-            </div>
+    <!-- Research on Autopilot Section - LottieFiles Style -->
+    <section class="py-16 px-6">
+        <div class="max-w-container mx-auto">
+            <!-- Rounded yellow container -->
+            <div class="rounded-3xl px-8 md:px-16 pt-16 pb-10" style="background-color: #E9A825;">
+                <!-- Centered Header -->
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-900 mb-6">
+                        Research on Autopilot
+                    </h2>
+                    <p class="text-lg md:text-xl text-zinc-800 max-w-2xl mx-auto mb-8">
+                        Let AI handle the repetitive operational work — from drafting guides to analyzing sessions — so you can focus on what matters: insights.
+                    </p>
+                    <a href="#study-setup" class="inline-flex items-center justify-center gap-2 bg-white text-zinc-900 font-medium px-6 py-3 rounded-full border border-zinc-300 hover:bg-zinc-50 transition-colors">
+                        Explore AI features
+                    </a>
+                </div>
 
-            <div class="bg-zinc-50 rounded-2xl p-8 border border-zinc-100">
-                <div class="grid gap-4">
-                    <div class="flex items-center justify-between py-3 border-b border-zinc-200">
-                        <div class="flex items-center gap-4">
-                            <code class="font-mono bg-white px-4 py-2 rounded-lg border border-zinc-200 text-sm">/qori</code>
-                            <span class="text-zinc-600">Show all available commands</span>
+                <!-- Dark container with cards + video -->
+                <div class="bg-zinc-900 rounded-3xl p-6 md:p-10">
+                    <div class="grid lg:grid-cols-5 gap-6">
+                        <!-- Left: 2x2 Feature Cards Grid (takes 2 columns) -->
+                        <div class="lg:col-span-2 grid grid-cols-2 gap-5">
+                            <!-- Card 1: Auto-generate Guides -->
+                            <div class="bg-zinc-800 rounded-2xl p-6">
+                                <div class="w-10 h-10 flex items-center justify-center mb-10">
+                                    <i data-lucide="file-text" class="w-6 h-6 text-white"></i>
+                                </div>
+                                <h3 class="text-base font-semibold text-white mb-2">Auto-generate Guides</h3>
+                                <p class="text-sm text-zinc-400 leading-relaxed">Discussion guides drafted from your research objectives.</p>
+                            </div>
+
+                            <!-- Card 2: Smart Analysis -->
+                            <div class="bg-zinc-800 rounded-2xl p-6">
+                                <div class="w-10 h-10 flex items-center justify-center mb-10">
+                                    <i data-lucide="sparkles" class="w-6 h-6 text-white"></i>
+                                </div>
+                                <h3 class="text-base font-semibold text-white mb-2">Smart Analysis</h3>
+                                <p class="text-sm text-zinc-400 leading-relaxed">AI extracts themes, quotes, and patterns from sessions.</p>
+                            </div>
+
+                            <!-- Card 3: Instant Reports -->
+                            <div class="bg-zinc-800 rounded-2xl p-6">
+                                <div class="w-10 h-10 flex items-center justify-center mb-10">
+                                    <i data-lucide="file-chart-line" class="w-6 h-6 text-white"></i>
+                                </div>
+                                <h3 class="text-base font-semibold text-white mb-2">Instant Reports</h3>
+                                <p class="text-sm text-zinc-400 leading-relaxed">Stakeholder-ready reports generated in seconds.</p>
+                            </div>
+
+                            <!-- Card 4: PII Protection -->
+                            <div class="bg-zinc-800 rounded-2xl p-6">
+                                <div class="w-10 h-10 flex items-center justify-center mb-10">
+                                    <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
+                                </div>
+                                <h3 class="text-base font-semibold text-white mb-2">PII Protection</h3>
+                                <p class="text-sm text-zinc-400 leading-relaxed">Sensitive data automatically redacted from outputs.</p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="flex items-center justify-between py-3 border-b border-zinc-200">
-                        <div class="flex items-center gap-4">
-                            <code class="font-mono bg-white px-4 py-2 rounded-lg border border-zinc-200 text-sm">/qori-request</code>
-                            <span class="text-zinc-600">Submit a research request</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between py-3 border-b border-zinc-200">
-                        <div class="flex items-center gap-4">
-                            <code class="font-mono bg-white px-4 py-2 rounded-lg border border-zinc-200 text-sm">/qori-plan</code>
-                            <span class="text-zinc-600">Create study plans and guides</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between py-3 border-b border-zinc-200">
-                        <div class="flex items-center gap-4">
-                            <code class="font-mono bg-white px-4 py-2 rounded-lg border border-zinc-200 text-sm">/qori-participants</code>
-                            <span class="text-zinc-600">Manage study participants</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between py-3 border-b border-zinc-200">
-                        <div class="flex items-center gap-4">
-                            <code class="font-mono bg-white px-4 py-2 rounded-lg border border-zinc-200 text-sm">/qori-outreach</code>
-                            <span class="text-zinc-600">Generate outreach messages</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between py-3 border-b border-zinc-200">
-                        <div class="flex items-center gap-4">
-                            <code class="font-mono bg-white px-4 py-2 rounded-lg border border-zinc-200 text-sm">/qori-observe</code>
-                            <span class="text-zinc-600">Request to observe a session</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between py-3 border-b border-zinc-200">
-                        <div class="flex items-center gap-4">
-                            <code class="font-mono bg-white px-4 py-2 rounded-lg border border-zinc-200 text-sm">/qori-notes</code>
-                            <span class="text-zinc-600">Capture session notes</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between py-3 border-b border-zinc-200">
-                        <div class="flex items-center gap-4">
-                            <code class="font-mono bg-white px-4 py-2 rounded-lg border border-zinc-200 text-sm">/qori-analyze</code>
-                            <span class="text-zinc-600">Analyze session data</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between py-3 border-b border-zinc-200">
-                        <div class="flex items-center gap-4">
-                            <code class="font-mono bg-white px-4 py-2 rounded-lg border border-zinc-200 text-sm">/qori-synthesis</code>
-                            <span class="text-zinc-600">Cross-session synthesis</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between py-3">
-                        <div class="flex items-center gap-4">
-                            <code class="font-mono bg-white px-4 py-2 rounded-lg border border-zinc-200 text-sm">/qori-report</code>
-                            <span class="text-zinc-600">Generate stakeholder reports</span>
+
+                        <!-- Right: Video/Animation Placeholder (takes 3 columns) -->
+                        <div class="lg:col-span-3">
+                            <div class="h-full min-h-[300px] lg:min-h-full bg-gradient-to-br from-orange-400 via-pink-500 to-purple-600 rounded-2xl flex items-center justify-center relative overflow-hidden">
+                                <!-- Decorative elements -->
+                                <div class="absolute inset-0 opacity-30">
+                                    <div class="absolute top-1/4 left-1/4 w-2 h-2 bg-white rounded-full"></div>
+                                    <div class="absolute top-1/3 right-1/3 w-1.5 h-1.5 bg-white rounded-full"></div>
+                                    <div class="absolute bottom-1/4 right-1/4 w-2 h-2 bg-white rounded-full"></div>
+                                </div>
+                                <div class="text-center z-10">
+                                    <div class="w-16 h-16 bg-white/20 backdrop-blur rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <i data-lucide="play" class="w-8 h-8 text-white"></i>
+                                    </div>
+                                    <p class="text-white text-lg font-medium">See Qori in action</p>
+                                    <p class="text-white/70 text-sm mt-1">Demo video coming soon</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -495,15 +461,159 @@
         </div>
     </section>
 
+    <!-- All Commands Reference - Visual Grid -->
+    <section id="commands" class="py-24 px-6">
+        <div class="max-w-container mx-auto">
+            <div class="text-center mb-16">
+                <span class="inline-block bg-zinc-900 text-white text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full mb-4">Quick Reference</span>
+                <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">All commands at a glance</h2>
+                <p class="text-xl text-zinc-500">Type any command in Slack to get started.</p>
+            </div>
+
+            <!-- Command Grid -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- /qori -->
+                <a href="#" class="group bg-white border border-zinc-200 rounded-2xl p-6 hover:border-zinc-300 hover:shadow-lg transition-all">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center flex-shrink-0 group-hover:bg-zinc-900 transition-colors">
+                            <i data-lucide="terminal" class="w-5 h-5 text-zinc-600 group-hover:text-white transition-colors"></i>
+                        </div>
+                        <div>
+                            <code class="text-sm font-mono font-semibold text-zinc-900">/qori</code>
+                            <p class="text-sm text-zinc-500 mt-1">Show all available commands</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- /qori-request -->
+                <a href="request/" class="group bg-white border border-zinc-200 rounded-2xl p-6 hover:border-violet-300 hover:shadow-lg transition-all">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0 group-hover:bg-violet-500 transition-colors">
+                            <i data-lucide="inbox" class="w-5 h-5 text-violet-600 group-hover:text-white transition-colors"></i>
+                        </div>
+                        <div>
+                            <code class="text-sm font-mono font-semibold text-zinc-900">/qori-request</code>
+                            <p class="text-sm text-zinc-500 mt-1">Submit a research request</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- /qori-plan -->
+                <a href="plan/" class="group bg-white border border-zinc-200 rounded-2xl p-6 hover:border-blue-300 hover:shadow-lg transition-all">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500 transition-colors">
+                            <i data-lucide="clipboard-list" class="w-5 h-5 text-blue-600 group-hover:text-white transition-colors"></i>
+                        </div>
+                        <div>
+                            <code class="text-sm font-mono font-semibold text-zinc-900">/qori-plan</code>
+                            <p class="text-sm text-zinc-500 mt-1">Create study plans and guides</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- /qori-participants -->
+                <a href="participants/" class="group bg-white border border-zinc-200 rounded-2xl p-6 hover:border-emerald-300 hover:shadow-lg transition-all">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-500 transition-colors">
+                            <i data-lucide="users" class="w-5 h-5 text-emerald-600 group-hover:text-white transition-colors"></i>
+                        </div>
+                        <div>
+                            <code class="text-sm font-mono font-semibold text-zinc-900">/qori-participants</code>
+                            <p class="text-sm text-zinc-500 mt-1">Manage study participants</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- /qori-outreach -->
+                <a href="outreach/" class="group bg-white border border-zinc-200 rounded-2xl p-6 hover:border-amber-300 hover:shadow-lg transition-all">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-500 transition-colors">
+                            <i data-lucide="send" class="w-5 h-5 text-amber-600 group-hover:text-white transition-colors"></i>
+                        </div>
+                        <div>
+                            <code class="text-sm font-mono font-semibold text-zinc-900">/qori-outreach</code>
+                            <p class="text-sm text-zinc-500 mt-1">Generate outreach messages</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- /qori-observe -->
+                <a href="observe/" class="group bg-white border border-zinc-200 rounded-2xl p-6 hover:border-pink-300 hover:shadow-lg transition-all">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center flex-shrink-0 group-hover:bg-pink-500 transition-colors">
+                            <i data-lucide="eye" class="w-5 h-5 text-pink-600 group-hover:text-white transition-colors"></i>
+                        </div>
+                        <div>
+                            <code class="text-sm font-mono font-semibold text-zinc-900">/qori-observe</code>
+                            <p class="text-sm text-zinc-500 mt-1">Request to observe a session</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- /qori-notes -->
+                <a href="notes/" class="group bg-white border border-zinc-200 rounded-2xl p-6 hover:border-orange-300 hover:shadow-lg transition-all">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-500 transition-colors">
+                            <i data-lucide="edit-3" class="w-5 h-5 text-orange-600 group-hover:text-white transition-colors"></i>
+                        </div>
+                        <div>
+                            <code class="text-sm font-mono font-semibold text-zinc-900">/qori-notes</code>
+                            <p class="text-sm text-zinc-500 mt-1">Capture session notes</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- /qori-analyze -->
+                <a href="analyze/" class="group bg-white border border-zinc-200 rounded-2xl p-6 hover:border-red-300 hover:shadow-lg transition-all">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0 group-hover:bg-red-500 transition-colors">
+                            <i data-lucide="microscope" class="w-5 h-5 text-red-600 group-hover:text-white transition-colors"></i>
+                        </div>
+                        <div>
+                            <code class="text-sm font-mono font-semibold text-zinc-900">/qori-analyze</code>
+                            <p class="text-sm text-zinc-500 mt-1">Analyze session data</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- /qori-synthesis -->
+                <a href="synthesis/" class="group bg-white border border-zinc-200 rounded-2xl p-6 hover:border-purple-300 hover:shadow-lg transition-all">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-500 transition-colors">
+                            <i data-lucide="layers" class="w-5 h-5 text-purple-600 group-hover:text-white transition-colors"></i>
+                        </div>
+                        <div>
+                            <code class="text-sm font-mono font-semibold text-zinc-900">/qori-synthesis</code>
+                            <p class="text-sm text-zinc-500 mt-1">Cross-session synthesis</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- /qori-report -->
+                <a href="report/" class="group bg-white border border-zinc-200 rounded-2xl p-6 hover:border-teal-300 hover:shadow-lg transition-all">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center flex-shrink-0 group-hover:bg-teal-500 transition-colors">
+                            <i data-lucide="file-bar-chart" class="w-5 h-5 text-teal-600 group-hover:text-white transition-colors"></i>
+                        </div>
+                        <div>
+                            <code class="text-sm font-mono font-semibold text-zinc-900">/qori-report</code>
+                            <p class="text-sm text-zinc-500 mt-1">Generate stakeholder reports</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
     <!-- Footer -->
     <footer class="border-t border-zinc-100 py-12">
-        <div class="max-w-6xl mx-auto px-6">
+        <div class="max-w-container mx-auto px-6">
             <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                 <div class="flex items-center gap-3">
                     <img src="assets/qori_logo.png" alt="Qori" class="w-8 h-8 rounded-lg">
                     <span class="font-semibold">Qori</span>
                 </div>
-                <p class="text-sm text-zinc-400">Built for research teams. Open source on GitHub.</p>
+                <p class="text-sm text-zinc-400">Made for researchers who move fast. Open source.</p>
                 <a href="https://github.com/Friends-From-The-City/Qori-Slack-AI-Bot" class="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 transition-colors">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                     GitHub
