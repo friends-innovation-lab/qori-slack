@@ -28,14 +28,6 @@
             }
         }
     </script>
-    <style>
-        .feature-card:hover .screenshot {
-            transform: rotate(0deg) scale(1.05);
-        }
-        .screenshot {
-            transition: transform 0.3s ease;
-        }
-    </style>
 </head>
 <body class="font-sans bg-background text-foreground antialiased">
     <!-- Header -->
@@ -101,45 +93,72 @@
 
                 <div class="grid md:grid-cols-3 gap-8">
                     <!-- Add Single -->
-                    <div class="feature-card group">
-                        <div class="bg-violet-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="user-plus" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-56 h-36 flex items-center justify-center rotate-1">
-                                <span class="text-zinc-400 text-sm text-center px-2">Screenshot: Add Participant</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-violet-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Add Participant</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-3/4"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-5/6"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Add Single Participant</h3>
-                        <p class="text-muted-foreground">Add one participant at a time with details.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Add Single Participant</h3>
+                            <p class="text-muted-foreground">Add one participant at a time with details.</p>
+                        </div>
                     </div>
 
                     <!-- Bulk Add -->
-                    <div class="feature-card group">
-                        <div class="bg-fuchsia-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="users-round" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-56 h-36 flex items-center justify-center -rotate-1">
-                                <span class="text-zinc-400 text-sm text-center px-2">Screenshot: Bulk Add</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-fuchsia-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Bulk Add</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-2/3"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-4/5"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Bulk Add (2-5)</h3>
-                        <p class="text-muted-foreground">Add multiple participants at once.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Bulk Add (2-5)</h3>
+                            <p class="text-muted-foreground">Add multiple participants at once.</p>
+                        </div>
                     </div>
 
                     <!-- Update Status -->
-                    <div class="feature-card group">
-                        <div class="bg-rose-400 rounded-2xl p-8 h-64 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur rounded-full p-2">
-                                <i data-lucide="refresh-cw" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div class="screenshot bg-white rounded-lg shadow-2xl w-56 h-36 flex items-center justify-center rotate-1">
-                                <span class="text-zinc-400 text-sm text-center px-2">Screenshot: Update Status</span>
+                    <div class="rounded-3xl overflow-hidden border border-zinc-100">
+                        <div class="bg-rose-300 pt-12 pb-8 px-8 flex items-center justify-center">
+                            <div class="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xs p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-zinc-400 text-xs ml-2">Update Status</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-2 bg-zinc-700 rounded w-5/6"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-full"></div>
+                                    <div class="h-2 bg-zinc-700 rounded w-3/4"></div>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-xl font-semibold mt-4">Update Status</h3>
-                        <p class="text-muted-foreground">Track recruitment and session status.</p>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold text-foreground mb-2">Update Status</h3>
+                            <p class="text-muted-foreground">Track recruitment and session status.</p>
+                        </div>
                     </div>
                 </div>
             </div>
