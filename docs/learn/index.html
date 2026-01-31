@@ -13,6 +13,9 @@
         tailwind.config = {
             theme: {
                 extend: {
+                    maxWidth: {
+                        'container': '1200px',
+                    },
                     colors: {
                         border: "hsl(214.3 31.8% 91.4%)",
                         background: "hsl(0 0% 100%)",
@@ -102,7 +105,7 @@
 <body class="font-sans bg-white text-zinc-900 antialiased">
     <!-- Header -->
     <header class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-100">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="max-w-container mx-auto px-6 py-4 flex items-center justify-between">
             <a href="./" class="flex items-center gap-3">
                 <img src="assets/qori_logo.png" alt="Qori" class="w-8 h-8 rounded-lg">
                 <span class="font-semibold text-lg">Qori</span>
@@ -201,7 +204,7 @@
 
     <!-- Features Grid -->
     <section class="py-24 px-6">
-        <div class="max-w-6xl mx-auto">
+        <div class="max-w-container mx-auto">
             <!-- Study Setup -->
             <div id="study-setup" class="mb-20">
                 <div class="text-center mb-12">
@@ -300,7 +303,7 @@
 
     <!-- How It Works -->
     <section class="py-24 px-6 bg-zinc-50">
-        <div class="max-w-6xl mx-auto">
+        <div class="max-w-container mx-auto">
             <div class="text-center mb-16">
                 <span class="inline-block bg-zinc-900 text-white text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full mb-4">How It Works</span>
                 <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">Research workflow, simplified</h2>
@@ -337,9 +340,9 @@
 
     <!-- Research on Autopilot Section - LottieFiles Style -->
     <section class="py-16 px-6">
-        <div class="max-w-5xl mx-auto">
+        <div class="max-w-container mx-auto">
             <!-- Rounded yellow container -->
-            <div class="rounded-3xl px-8 md:px-16 pt-16 pb-8" style="background-color: #E9A825;">
+            <div class="rounded-3xl px-8 md:px-16 pt-16 pb-10" style="background-color: #E9A825;">
                 <!-- Centered Header -->
                 <div class="text-center mb-12">
                     <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-900 mb-6">
@@ -354,13 +357,13 @@
                 </div>
 
                 <!-- Dark container with cards + video -->
-                <div class="bg-zinc-900 rounded-3xl p-6 md:p-8">
+                <div class="bg-zinc-900 rounded-3xl p-6 md:p-10">
                     <div class="grid lg:grid-cols-5 gap-6">
                         <!-- Left: 2x2 Feature Cards Grid (takes 2 columns) -->
-                        <div class="lg:col-span-2 grid grid-cols-2 gap-4">
+                        <div class="lg:col-span-2 grid grid-cols-2 gap-5">
                             <!-- Card 1: Auto-generate Guides -->
-                            <div class="bg-zinc-800 rounded-2xl p-5">
-                                <div class="w-10 h-10 flex items-center justify-center mb-12">
+                            <div class="bg-zinc-800 rounded-2xl p-6">
+                                <div class="w-10 h-10 flex items-center justify-center mb-10">
                                     <i data-lucide="file-text" class="w-6 h-6 text-white"></i>
                                 </div>
                                 <h3 class="text-base font-semibold text-white mb-2">Auto-generate Guides</h3>
@@ -368,8 +371,8 @@
                             </div>
 
                             <!-- Card 2: Smart Analysis -->
-                            <div class="bg-zinc-800 rounded-2xl p-5">
-                                <div class="w-10 h-10 flex items-center justify-center mb-12">
+                            <div class="bg-zinc-800 rounded-2xl p-6">
+                                <div class="w-10 h-10 flex items-center justify-center mb-10">
                                     <i data-lucide="sparkles" class="w-6 h-6 text-white"></i>
                                 </div>
                                 <h3 class="text-base font-semibold text-white mb-2">Smart Analysis</h3>
@@ -377,8 +380,8 @@
                             </div>
 
                             <!-- Card 3: Instant Reports -->
-                            <div class="bg-zinc-800 rounded-2xl p-5">
-                                <div class="w-10 h-10 flex items-center justify-center mb-12">
+                            <div class="bg-zinc-800 rounded-2xl p-6">
+                                <div class="w-10 h-10 flex items-center justify-center mb-10">
                                     <i data-lucide="file-chart-line" class="w-6 h-6 text-white"></i>
                                 </div>
                                 <h3 class="text-base font-semibold text-white mb-2">Instant Reports</h3>
@@ -386,8 +389,8 @@
                             </div>
 
                             <!-- Card 4: PII Protection -->
-                            <div class="bg-zinc-800 rounded-2xl p-5">
-                                <div class="w-10 h-10 flex items-center justify-center mb-12">
+                            <div class="bg-zinc-800 rounded-2xl p-6">
+                                <div class="w-10 h-10 flex items-center justify-center mb-10">
                                     <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
                                 </div>
                                 <h3 class="text-base font-semibold text-white mb-2">PII Protection</h3>
@@ -421,7 +424,7 @@
 
     <!-- All Commands Reference -->
     <section class="py-24 px-6">
-        <div class="max-w-4xl mx-auto">
+        <div class="max-w-container mx-auto">
             <div class="text-center mb-12">
                 <span class="inline-block bg-zinc-900 text-white text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full mb-4">Quick Reference</span>
                 <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">All commands at a glance</h2>
@@ -497,7 +500,7 @@
 
     <!-- Footer -->
     <footer class="border-t border-zinc-100 py-12">
-        <div class="max-w-6xl mx-auto px-6">
+        <div class="max-w-container mx-auto px-6">
             <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                 <div class="flex items-center gap-3">
                     <img src="assets/qori_logo.png" alt="Qori" class="w-8 h-8 rounded-lg">
