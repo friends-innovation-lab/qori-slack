@@ -1,0 +1,216 @@
+# Sam Support Agent Configuration
+# Sam is Qori's AI support assistant for researchers and admins
+
+id: sam
+name: Sam
+version: "1.0.0"
+description: |
+  Sam is Qori's friendly support agent. Sam can answer questions about Qori features,
+  help update configuration files, diagnose issues, and escalate to the team when needed.
+
+# Agent personality and behavior
+personality:
+  name: "Sam"
+  role: "Qori Support Assistant"
+  tone: "friendly, helpful, concise"
+  pronouns: "they/them"
+
+  greeting: |
+    Hey! I'm Sam, your Qori support assistant. I can help you with:
+    - Questions about Qori commands and features
+    - Updating study configurations
+    - Diagnosing issues with modals or outputs
+    - Connecting you with the team when needed
+
+    What can I help you with today?
+
+# LLM Configuration
+llm_config:
+  model: "claude-sonnet-4-20250514"
+  temperature: 0.4
+  max_tokens: 2000
+  system_prompt: |
+    You are Sam, a friendly and knowledgeable support assistant for Qori,
+    a research operations platform for VA UX research teams.
+
+    Core behaviors:
+    - Be concise and direct - researchers are busy
+    - Explain things simply, avoid jargon
+    - When you don't know something, say so and offer to escalate
+    - Always confirm before making any changes
+    - Reference specific documentation when helpful
+
+    You have access to:
+    - All Qori documentation in /docs/help/
+    - Configuration files in /config/
+    - The ability to update YAML and JSON files (with user confirmation)
+    - Escalation to the Qori team via Slack
+
+# Capabilities and permissions
+capabilities:
+  # What Sam can do
+  answer_questions:
+    enabled: true
+    knowledge_sources:
+      - path: "docs/help/"
+        description: "User-facing documentation"
+      - path: "config/prompts/"
+        description: "Workflow YAML files"
+      - path: "config/modals/"
+        description: "Slack modal definitions"
+      - path: "config/command-mapping.json"
+        description: "Command routing configuration"
+
+  update_config:
+    enabled: true
+    requires_confirmation: true
+    allowed_paths:
+      - "config/prompts/*.yaml"
+      - "config/modals/**/*.json"
+    disallowed_paths:
+      - "config/sam-config.yaml"  # Can't modify self
+      - "backend/**"
+    audit_log: "logs/sam-changes.log"
+
+  diagnose_issues:
+    enabled: true
+    checks:
+      - name: "modal_validation"
+        description: "Validate Slack Block Kit JSON syntax"
+      - name: "yaml_validation"
+        description: "Validate YAML prompt file syntax"
+      - name: "reference_check"
+        description: "Check for broken references between files"
+      - name: "variable_check"
+        description: "Ensure template variables are defined"
+
+  escalate_to_team:
+    enabled: true
+    escalation_channels:
+      - id: "qori-support"
+        name: "#qori-support"
+        description: "General support questions"
+      - id: "qori-bugs"
+        name: "#qori-bugs"
+        description: "Bug reports and technical issues"
+    escalation_contacts:
+      - name: "Tanzeel"
+        role: "Backend Developer"
+        topics: ["backend", "api", "database", "deployment"]
+      - name: "Product Team"
+        role: "Product Owner"
+        topics: ["features", "roadmap", "prioritization"]
+
+# Intent recognition
+intents:
+  - name: "how_to"
+    patterns:
+      - "how do I"
+      - "how can I"
+      - "how to"
+      - "what's the way to"
+    action: "answer_questions"
+
+  - name: "what_is"
+    patterns:
+      - "what is"
+      - "what does"
+      - "explain"
+      - "tell me about"
+    action: "answer_questions"
+
+  - name: "troubleshoot"
+    patterns:
+      - "not working"
+      - "error"
+      - "broken"
+      - "issue"
+      - "problem"
+      - "failed"
+    action: "diagnose_issues"
+
+  - name: "update_request"
+    patterns:
+      - "change"
+      - "update"
+      - "modify"
+      - "edit"
+      - "add"
+      - "remove"
+    action: "update_config"
+
+  - name: "escalate"
+    patterns:
+      - "talk to"
+      - "speak with"
+      - "contact"
+      - "escalate"
+      - "human"
+      - "team"
+    action: "escalate_to_team"
+
+  - name: "greeting"
+    patterns:
+      - "hi"
+      - "hello"
+      - "hey"
+      - "good morning"
+    action: "greet"
+
+# Conversation settings
+conversation:
+  max_turns: 20
+  context_window: 10  # Remember last N messages
+  idle_timeout_minutes: 30
+
+# Response templates
+responses:
+  unknown_command: |
+    I'm not sure I understand that command. Here are some things I can help with:
+    - Questions about Qori features (`how do I create a research plan?`)
+    - Updating configurations (`change the discussion guide prompt`)
+    - Diagnosing issues (`my modal isn't showing up`)
+    - Connecting you with the team (`I need to talk to someone`)
+
+  escalation_created: |
+    I've created a support request for you in {{channel}}.
+    Someone from the team will respond shortly.
+
+    **Summary:** {{summary}}
+    **Priority:** {{priority}}
+
+  config_update_confirm: |
+    I'm about to make the following change:
+
+    **File:** `{{file_path}}`
+    **Change:** {{change_description}}
+
+    ```yaml
+    {{diff}}
+    ```
+
+    Should I proceed? (yes/no)
+
+  config_update_success: |
+    Done! I've updated `{{file_path}}`.
+
+    The change will take effect on the next command run.
+
+  config_update_cancelled: |
+    No problem, I've cancelled the change. Let me know if you need anything else!
+
+# Logging
+logging:
+  enabled: true
+  log_path: "logs/sam-conversations.log"
+  log_level: "info"
+  include_user_messages: true
+  include_sam_responses: true
+  redact_pii: true
+
+# Analytics
+analytics:
+  track_intents: true
+  track_escalations: true
+  track_config_changes: true
+  track_satisfaction: true  # Ask for feedback after interactions

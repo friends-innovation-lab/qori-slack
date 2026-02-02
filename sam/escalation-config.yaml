@@ -1,0 +1,285 @@
+# Sam Escalation Configuration
+# Defines how Sam routes and handles support escalations
+
+version: "1.0.0"
+
+# Escalation channels
+channels:
+  - id: qori-support
+    name: "#qori-support"
+    description: "General support questions and feature requests"
+    default: true
+    notification_type: "channel_message"
+
+  - id: qori-bugs
+    name: "#qori-bugs"
+    description: "Bug reports and technical issues"
+    notification_type: "channel_message"
+    auto_create_issue: true
+
+  - id: qori-urgent
+    name: "#qori-urgent"
+    description: "Urgent production issues"
+    notification_type: "channel_message_with_mention"
+    mention_group: "@qori-oncall"
+
+# Team contacts
+contacts:
+  - name: "Tanzeel"
+    slack_id: "U_TANZEEL"  # Replace with actual Slack ID
+    role: "Backend Developer"
+    topics:
+      - backend
+      - api
+      - database
+      - deployment
+      - github_integration
+      - slack_integration
+    availability: "weekdays 9am-5pm EST"
+
+  - name: "Product Team"
+    slack_id: "G_PRODUCT"  # Replace with actual group ID
+    role: "Product Owners"
+    topics:
+      - features
+      - roadmap
+      - prioritization
+      - user_feedback
+      - requirements
+
+  - name: "Research Lead"
+    slack_id: "U_RESEARCH_LEAD"  # Replace with actual Slack ID
+    role: "Research Operations Lead"
+    topics:
+      - research_methodology
+      - va_compliance
+      - study_design
+      - participant_recruiting
+
+# Priority levels and SLAs
+priority_levels:
+  urgent:
+    label: "Urgent"
+    emoji: ":rotating_light:"
+    color: "#FF0000"
+    response_sla_minutes: 15
+    resolution_sla_hours: 4
+    auto_escalate: true
+    triggers:
+      - "production down"
+      - "data loss"
+      - "security issue"
+      - "can't access"
+
+  high:
+    label: "High"
+    emoji: ":warning:"
+    color: "#FF9900"
+    response_sla_minutes: 60
+    resolution_sla_hours: 24
+    triggers:
+      - "blocking work"
+      - "deadline today"
+      - "broken feature"
+      - "urgent"
+
+  normal:
+    label: "Normal"
+    emoji: ":information_source:"
+    color: "#0066CC"
+    response_sla_minutes: 240
+    resolution_sla_hours: 72
+    default: true
+
+  low:
+    label: "Low"
+    emoji: ":thought_balloon:"
+    color: "#666666"
+    response_sla_minutes: 1440  # 24 hours
+    resolution_sla_hours: 168   # 1 week
+    triggers:
+      - "nice to have"
+      - "when you have time"
+      - "no rush"
+      - "minor"
+
+# Issue categories for routing
+categories:
+  - id: bug_report
+    label: "Bug Report"
+    channel: qori-bugs
+    contact: "Tanzeel"
+    keywords:
+      - bug
+      - broken
+      - error
+      - not working
+      - crash
+      - failed
+
+  - id: feature_request
+    label: "Feature Request"
+    channel: qori-support
+    contact: "Product Team"
+    keywords:
+      - feature
+      - request
+      - would be nice
+      - suggestion
+      - enhancement
+
+  - id: how_to
+    label: "How-To Question"
+    channel: qori-support
+    contact: null  # Sam should handle
+    keywords:
+      - how do I
+      - how to
+      - how can I
+      - help with
+
+  - id: config_change
+    label: "Configuration Change"
+    channel: qori-support
+    contact: "Tanzeel"
+    keywords:
+      - change
+      - update
+      - modify
+      - config
+      - setting
+
+  - id: research_methodology
+    label: "Research Methodology"
+    channel: qori-support
+    contact: "Research Lead"
+    keywords:
+      - methodology
+      - research design
+      - participants
+      - recruiting
+      - VA compliance
+
+  - id: access_issue
+    label: "Access Issue"
+    channel: qori-urgent
+    contact: "Tanzeel"
+    keywords:
+      - can't access
+      - permission
+      - login
+      - authentication
+
+# Escalation workflow
+workflow:
+  # When Sam creates an escalation
+  on_create:
+    - action: "post_to_channel"
+      template: "escalation_message"
+    - action: "log_escalation"
+      log_path: "logs/escalations.log"
+    - action: "notify_user"
+      template: "escalation_created_dm"
+
+  # When someone claims the escalation
+  on_claim:
+    - action: "update_message"
+      template: "escalation_claimed"
+    - action: "notify_user"
+      template: "escalation_claimed_dm"
+
+  # When escalation is resolved
+  on_resolve:
+    - action: "update_message"
+      template: "escalation_resolved"
+    - action: "notify_user"
+      template: "escalation_resolved_dm"
+    - action: "request_feedback"
+      template: "satisfaction_survey"
+
+  # Auto-escalation rules
+  auto_escalate:
+    - condition: "no_response_after_sla"
+      action: "mention_oncall"
+    - condition: "priority_urgent_no_claim"
+      action: "dm_all_contacts"
+
+# Message templates
+templates:
+  escalation_message:
+    blocks:
+      - type: header
+        text: "{{priority_emoji}} Support Escalation [{{priority}}]"
+      - type: section
+        fields:
+          - label: "From"
+            value: "<@{{user_id}}>"
+          - label: "Category"
+            value: "{{category}}"
+          - label: "Time"
+            value: "{{timestamp}}"
+      - type: section
+        text: "*Summary:*\n{{summary}}"
+      - type: section
+        text: "*Context:*\n{{context}}"
+      - type: actions
+        elements:
+          - type: button
+            text: "Claim"
+            action_id: "escalation_claim"
+            style: primary
+          - type: button
+            text: "Resolve"
+            action_id: "escalation_resolve"
+
+  escalation_created_dm:
+    text: |
+      I've created a support request in {{channel}}.
+
+      **Summary:** {{summary}}
+      **Priority:** {{priority}}
+
+      Someone from the team will respond within {{response_sla}}.
+
+  escalation_claimed_dm:
+    text: |
+      Good news! {{claimer}} has picked up your support request.
+
+      They should be in touch shortly.
+
+  escalation_resolved_dm:
+    text: |
+      Your support request has been resolved by {{resolver}}.
+
+      **Resolution:** {{resolution_notes}}
+
+      Was this helpful? Reply with :thumbsup: or :thumbsdown:
+
+  satisfaction_survey:
+    blocks:
+      - type: section
+        text: "How was your support experience?"
+      - type: actions
+        elements:
+          - type: button
+            text: ":thumbsup: Great"
+            action_id: "feedback_positive"
+          - type: button
+            text: ":thumbsdown: Could be better"
+            action_id: "feedback_negative"
+
+# Logging and metrics
+metrics:
+  track:
+    - escalation_count_by_category
+    - escalation_count_by_priority
+    - average_response_time
+    - average_resolution_time
+    - satisfaction_score
+    - escalation_rate  # % of conversations that escalate
+
+  alerts:
+    - condition: "response_time > sla * 1.5"
+      action: "alert_management"
+    - condition: "escalation_rate > 30%"
+      action: "review_sam_training"

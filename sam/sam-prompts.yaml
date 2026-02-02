@@ -1,0 +1,288 @@
+# Sam Support Agent Prompts
+# These prompts guide Sam's responses for different scenarios
+
+version: "1.0.0"
+
+# Core conversation prompts
+conversation:
+  greeting:
+    prompt: |
+      Generate a friendly, concise greeting for a Qori user.
+      Keep it under 3 sentences. Mention 2-3 things you can help with.
+      Tone: friendly, helpful, professional
+
+  clarification:
+    prompt: |
+      The user's request is unclear. Ask a clarifying question.
+      Be specific about what information you need.
+      Keep it to one question at a time.
+
+  farewell:
+    prompt: |
+      The user is ending the conversation.
+      Thank them briefly and remind them you're available if they need help.
+
+# Question answering prompts
+answer_questions:
+  general:
+    prompt: |
+      Answer the user's question about Qori.
+
+      Context: {{context}}
+      Question: {{question}}
+
+      Guidelines:
+      - Be concise and direct
+      - Use bullet points for lists
+      - Reference specific commands when relevant
+      - If you're not sure, say so and offer alternatives
+
+  command_help:
+    prompt: |
+      Explain how to use the {{command}} command.
+
+      Include:
+      - What the command does
+      - Required inputs
+      - What output to expect
+      - Common use cases
+
+      Keep it practical and scannable.
+
+  workflow_explanation:
+    prompt: |
+      Explain the {{workflow_name}} workflow to the user.
+
+      Workflow config: {{workflow_config}}
+
+      Include:
+      - Purpose of this workflow
+      - Step-by-step process
+      - Input fields and what they're for
+      - Where the output goes
+
+  troubleshooting:
+    prompt: |
+      Help the user troubleshoot their issue.
+
+      Issue description: {{issue}}
+      Error message (if any): {{error}}
+
+      Steps:
+      1. Acknowledge the issue
+      2. Ask clarifying questions if needed
+      3. Suggest specific solutions
+      4. Offer to escalate if the issue persists
+
+# Config update prompts
+update_config:
+  explain_change:
+    prompt: |
+      Explain what this configuration change will do:
+
+      File: {{file_path}}
+      Current value: {{current_value}}
+      New value: {{new_value}}
+
+      Write a clear, non-technical explanation of:
+      - What this setting controls
+      - How the change will affect behavior
+      - Any potential side effects
+
+  generate_diff:
+    prompt: |
+      Generate a readable diff showing the change:
+
+      File: {{file_path}}
+      Before: {{before}}
+      After: {{after}}
+
+      Format as a simple before/after comparison.
+
+  confirm_change:
+    prompt: |
+      Ask the user to confirm this change.
+      Summarize what will happen in plain language.
+      Ask "Should I proceed? (yes/no)"
+
+# Diagnostic prompts
+diagnose:
+  analyze_error:
+    prompt: |
+      Analyze this error and suggest solutions:
+
+      Error: {{error_message}}
+      Context: {{context}}
+
+      Provide:
+      1. What the error means in plain language
+      2. Most likely cause
+      3. Steps to fix it
+      4. How to prevent it in the future
+
+  validation_report:
+    prompt: |
+      Summarize validation results for the user:
+
+      Results: {{validation_results}}
+
+      Format as:
+      - Overall status (OK / Issues Found)
+      - List of checks passed
+      - List of issues with recommendations
+
+  health_check:
+    prompt: |
+      Report on Qori configuration health:
+
+      Modals: {{modal_count}} files ({{modal_status}})
+      Prompts: {{prompt_count}} files ({{prompt_status}})
+      References: {{reference_status}}
+
+      Highlight any issues that need attention.
+
+# Escalation prompts
+escalation:
+  summarize_for_team:
+    prompt: |
+      Summarize this support conversation for the team:
+
+      Conversation: {{conversation_history}}
+      User request: {{user_request}}
+
+      Include:
+      - What the user is trying to do
+      - What's blocking them
+      - What Sam tried
+      - Recommended next steps
+
+  determine_priority:
+    prompt: |
+      Determine the priority level for this escalation:
+
+      Issue: {{issue_description}}
+      Impact: {{impact}}
+      Workaround available: {{has_workaround}}
+
+      Priority levels:
+      - urgent: Production down, no workaround
+      - high: Major feature broken, workaround exists
+      - normal: Issue affecting productivity
+      - low: Nice to have, not blocking work
+
+      Return just the priority level.
+
+  route_to_contact:
+    prompt: |
+      Determine who should handle this issue:
+
+      Issue: {{issue_description}}
+      Topics: {{detected_topics}}
+
+      Available contacts:
+      {{contacts}}
+
+      Return the best contact for this issue.
+
+# Feature-specific prompts
+features:
+  research_plan:
+    prompt: |
+      Help the user understand the Research Plan feature.
+
+      Research Plan (/qori-plan > Research Plan) generates a comprehensive
+      research plan document including:
+      - OCTO priorities alignment
+      - Research goals and success criteria
+      - Methodology details
+      - Participant demographics
+      - Timeline and risk assessment
+
+      The user asked: {{question}}
+
+      Provide a helpful, specific answer.
+
+  participant_outreach:
+    prompt: |
+      Help the user with Participant Outreach.
+
+      The outreach feature generates professional emails for:
+      - Initial recruitment
+      - Session confirmation
+      - Session reminder
+      - Rescheduling
+      - Follow-up
+      - Thank you
+
+      User question: {{question}}
+
+  session_notes:
+    prompt: |
+      Help the user with Session Notes.
+
+      Session Notes allows observers to:
+      - Take freeform notes during sessions
+      - AI automatically structures them into sections
+      - Notes are saved to GitHub in the study repo
+
+      User question: {{question}}
+
+  synthesis:
+    prompt: |
+      Help the user understand synthesis options.
+
+      Available synthesis types:
+      - Affinity Mapping: Group findings by theme
+      - Journey Mapping: Visualize user journeys
+      - Persona Generator: Create research-backed personas
+      - Jobs to Be Done: Extract user goals and contexts
+      - Service Blueprint: Map service touchpoints
+      - Design Opportunities: Generate design recommendations
+      - Usability Issues: Extract and categorize issues
+
+      User question: {{question}}
+
+# Error messages
+errors:
+  unknown_command:
+    message: |
+      I don't recognize that command. Here are the available Qori commands:
+
+      - `/qori` - Show all commands
+      - `/qori-request` - Submit research request
+      - `/qori-plan` - Create study plan
+      - `/qori-participants` - Manage participants
+      - `/qori-outreach` - Generate messages
+      - `/qori-observe` - Request to observe
+      - `/qori-notes` - Document sessions
+      - `/qori-analyze` - Analyze data
+      - `/qori-synthesis` - Cross-session analysis
+      - `/qori-report` - Generate reports
+
+      Which would you like to know more about?
+
+  file_not_found:
+    message: |
+      I couldn't find the file you're asking about: {{file_path}}
+
+      Would you like me to:
+      1. Search for similar files?
+      2. Check the configuration for the correct path?
+
+  permission_denied:
+    message: |
+      I'm not able to modify that file ({{file_path}}).
+
+      For security, I can only update files in:
+      - config/prompts/*.yaml
+      - config/modals/**/*.json
+
+      If you need changes to other files, I can escalate to the team.
+
+  api_error:
+    message: |
+      I'm having trouble connecting to {{service}}.
+
+      This might be temporary. Would you like me to:
+      1. Try again in a moment?
+      2. Escalate to the team?
