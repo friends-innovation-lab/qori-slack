@@ -269,7 +269,7 @@ ai_generation_tasks:
 # =============================================================================
 
 output_template: |
-  📧 **{{message_type | humanize}} Generated**
+  📧 **{{message_type}} Generated**
   
   **To:** {{participant_id}}
   **Subject:** {{ai_generated.subject_line}}
