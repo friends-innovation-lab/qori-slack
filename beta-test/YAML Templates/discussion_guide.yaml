@@ -257,7 +257,7 @@ ai_generation_tasks:
       ### Topic Area 3: [Topic Name]
       [Same format]
       
-      {{else if research_method == "concept_testing"}}
+      {% else if research_method == "concept_testing" %}
       *Show each concept and gather reactions. Don't explain or defend the concept — let participants react naturally.*
       
       ### Concept 1: [Concept Name]
