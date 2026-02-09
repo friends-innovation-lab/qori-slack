@@ -7,17 +7,17 @@
 
 Hi PT001,
 
-I hope this message finds you well! My name is Abdul Rehman, and I'm a researcher working on improving digital experiences for users.
+I hope this email finds you well! My name is Abdul Rehman, and I'm a researcher working on improving how people navigate claim status systems.
 
-I'm reaching out because we're conducting a study called "Claim Status Navigation Testing." This study will help us understand how people interact with claim status systems and identify ways to make them more user-friendly.
+I'm reaching out because we're conducting a study called "Claim Status Navigation Testing." This study will help us understand how people interact with claim status tools and identify ways to make them more user-friendly.
 
-If you choose to participate, you'll be asked to complete some tasks while we observe how you navigate through different interfaces. The session will take place remotely, and we'll work around your schedule to find a time that works best for you.
+If you choose to participate, you'll be asked to complete some tasks related to checking claim status information. The session should take about [duration will be confirmed].
 
-Your participation is completely voluntary, and you can withdraw at any time without any consequences. Your insights will be incredibly valuable in helping us create better digital experiences for everyone.
+Your participation is completely voluntary, and you can withdraw at any time without any consequences. Your input will help us create better experiences for people who need to check their claim status.
 
-When you have a moment, feel free to reach out if you're interested or have any questions about the study. I'm happy to provide more details about what's involved.
+If you have any questions or would like to learn more, please don't hesitate to reach out to me directly.
 
-Thank you for considering this opportunity to help improve user experiences!
+Thank you for considering this opportunity to help improve these important tools.
 
 Best regards,
 
