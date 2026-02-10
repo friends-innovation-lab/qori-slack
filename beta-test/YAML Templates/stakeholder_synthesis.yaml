@@ -2,20 +2,21 @@ id: stakeholder_synthesis
 name: synthesize_stakeholder_interviews
 
 label: 🏛️ Stakeholder Synthesis
-version: "v3.0"
+version: "v3.1"
 
 description: >
   Synthesize findings from internal stakeholder interviews into comprehensive,
   service blueprint-ready documentation. Aggregates constraints, priorities, 
   backstage processes, and generates questions for user research. Produces
-  detailed process maps with failure modes suitable for service design work.
+  visual sequence diagrams for process maps with failure modes suitable for 
+  service design work. Renders as interactive diagrams on GitHub.
   
-  v3.0: Refactored to use Claude Sonnet with multi-task generation to prevent
-  output truncation.
+  v3.1: Backstage processes now output as Mermaid sequence diagrams instead
+  of numbered lists. Renders visually on GitHub.
 
 author: Qori R&D
 created: 2026-01-08
-last_updated: 2026-01-29
+last_updated: 2026-02-10
 
 input_type: slack_modal_form
 input_processing: auto_file_discovery
@@ -214,11 +215,13 @@ ai_generation_tasks:
       ============================================================
       
       RULE 1: DETAILED PROCESS MAPPING
-      For each major process, document:
-      - Frontend steps (what user sees)
-      - Backend steps (what happens invisibly)
-      - Failure points with specific failure modes
-      - Systems involved at each step
+      For each major process, create a Mermaid sequence diagram showing:
+      - User actions (frontstage)
+      - System interactions (backstage, invisible to user)
+      - Failure points with ⚠️ markers and failure rates
+      - Wait times and delays using Note blocks
+      - Actual system names from interviews as participants
+      Plus a failure table and systems list after each diagram
       
       RULE 2: QUANTIFY EVERYTHING
       Include ALL numbers: drop-off rates, latency times, incident counts
@@ -263,15 +266,26 @@ ai_generation_tasks:
       
       > "[Additional perspective]" — [Different Role]
       
-      **Frontend Steps (User-Facing):**
-      1. [Step with detail]
-      2. [Step — note drop-off points with ← **X% drop-off here** if data available]
-      3. [Continue all steps]
+      **Process Flow:**
       
-      **Backend Steps (Invisible to User):**
-      1. [Backend step with system involved]
-      2. [Step — note latency/failure risk]
-      3. [Continue all steps]
+      ```mermaid
+      sequenceDiagram
+          actor User
+          participant Frontend as Frontend/UI
+          participant Backend as Backend System
+          participant Legacy as Legacy/External
+          participant Staff as Staff/Manual
+          
+          User->>Frontend: [First user action]
+          Frontend->>Backend: [API call or system request]
+          Backend->>Legacy: [Backend process step]
+          Note over User,Frontend: [Drop-off rate if available, e.g. "40% drop-off here"]
+          Legacy-->>Backend: [Response — note failures like "⚠️ Timeout (X% failure rate)"]
+          Backend-->>Frontend: [What gets returned]
+          Note over Backend,Staff: [Invisible delays, e.g. "Manual review — avg 3 days"]
+          Staff->>Legacy: [Manual intervention step]
+          Legacy-->>User: [Final notification/result]
+      ```
       
       **Where It Breaks Down:**
       
@@ -285,15 +299,40 @@ ai_generation_tasks:
       
       ### [Second Major Process Name]
       
-      [Follow same detailed structure]
+      > "[Quote]" — [Role]
+      
+      **Process Flow:**
+      
+      ```mermaid
+      sequenceDiagram
+          actor User
+          participant Frontend as Frontend/UI
+          participant Backend as Backend System
+          participant Legacy as Legacy/External
+          participant Staff as Staff/Manual
+          
+          [Map the process steps as above — adapt participants to match actual systems mentioned]
+      ```
+      
+      **Where It Breaks Down:**
+      
+      | Failure Point | What Happens | User Experience | Frequency/Severity |
+      |---------------|--------------|-----------------|-------------------|
+      | [Specific failure] | [Technical explanation] | [What user sees/feels] | [Quantify if possible] |
+      
+      **Systems Involved:** [List all systems, APIs, databases, vendors]
       
       ---
       
-      ### [Third Major Process Name]
+      [Continue for ALL major processes mentioned in interviews — each gets its own sequence diagram]
       
-      [Follow same detailed structure]
-      
-      [Continue for ALL major processes mentioned in interviews]
+      IMPORTANT RULES FOR SEQUENCE DIAGRAMS:
+      - Adapt the participant names to match ACTUAL systems mentioned in interviews (e.g. "VA.gov", "VistA", "VBMS")
+      - Use Note blocks for drop-off rates, wait times, and invisible delays
+      - Use -->> (dashed arrows) for responses and failure paths
+      - Use ⚠️ emoji in failure/risk steps
+      - Keep diagrams to 8-15 steps max — split complex processes into sub-diagrams if needed
+      - Every diagram must be valid Mermaid syntax — no unclosed blocks
       
       [END OF SECTION 4-5 — Do not generate beyond this point]
 
@@ -581,8 +620,8 @@ validation_rules:
     description: "Major constraints should show multiple stakeholder perspectives"
     check: "constraints section includes multiple source attributions"
   - rule: "process_detail"
-    description: "Process maps must include both frontend and backend steps"
-    check: "backstage processes section contains 'Frontend Steps' and 'Backend Steps'"
+    description: "Process maps must include Mermaid sequence diagrams with failure points"
+    check: "backstage processes section contains 'sequenceDiagram' and 'Where It Breaks Down'"
   - rule: "quantification"
     description: "Include numbers and metrics where available"
     check: "output contains numeric data from input"
@@ -604,6 +643,14 @@ auto_variables:
   github_file_link: "generate_github_link(selected_study, current_date)"
 
 notes: |
+  v3.1 Update — Mermaid Sequence Diagrams for Backstage Processes:
+  - Replaced numbered frontend/backend step lists with Mermaid sequence diagrams
+  - Processes now render as interactive visual flows on GitHub
+  - Sequence diagrams show user actions, system interactions, and failure points inline
+  - Participants auto-adapt to actual system names from interview data
+  - Updated validation rules to check for sequenceDiagram blocks
+  - Failure tables retained below each diagram for detailed breakdown
+  
   v3.0 Major Update — Claude Sonnet + Multi-Task Architecture:
   - Switched from GPT-4o to Claude Sonnet (claude-sonnet-4-20250514)
   - Split single mega-task into 4 sequential tasks to prevent truncation:
@@ -637,6 +684,7 @@ notes: |
 output_use: |
   Synthesize internal stakeholder interviews into comprehensive, service 
   blueprint-ready documentation. Uses 4 sequential AI tasks to ensure 
-  complete output without truncation. Produces detailed process maps with 
-  failure modes, constraint triangulation across stakeholder perspectives, 
-  and quantified insights suitable for service design work.
+  complete output without truncation. Produces Mermaid sequence diagrams 
+  for backstage process flows with failure modes, constraint triangulation 
+  across stakeholder perspectives, and quantified insights suitable for 
+  service design work. Process diagrams render visually on GitHub.
