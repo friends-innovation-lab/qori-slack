@@ -8,11 +8,11 @@
 
 | | |
 |---|---|
-| **Stakeholders Interviewed** | 3 internal stakeholders |
-| **Teams Represented** | Policy & Compliance, Mobile Engineering, Mobile Design |
+| **Stakeholders Interviewed** | 3 |
+| **Teams Represented** | Policy & Compliance, Engineering, Design |
 | **Key Constraint** | Backend API latency (8-12 seconds average response time) |
 | **Key Insight** | Mobile app constrained by systems designed for desktop/batch processing |
-| **Critical Gap** | No control over backend performance despite owning user experience |
+| **Critical Gap** | 12 engineers supporting 2+ million veterans with no control over backend performance |
 
 ---
 
@@ -30,32 +30,30 @@
 
 ### Technical Constraints
 
-> "Our claims status API aggregates data from multiple VBA systems. Each hop adds latency. By the time the response reaches the app, we're looking at 8-12 seconds on average. Some users on poor connections see 20+ seconds." — Engineering Lead
+> "Our claims status API, for example, aggregates data from multiple VBA systems. Each hop adds latency. By the time the response reaches the app, we're looking at 8-12 seconds on average. Some users on poor connections see 20+ seconds." — Engineering Lead
 
 > "I can design the most beautiful, intuitive interface in the world, but if the data takes 10 seconds to load, the design fails. Loading states, error states, empty states—these aren't edge cases for us, they're primary states." — Design Lead
 
 | Constraint | Impact | Downstream Effect | Source(s) |
 |------------|--------|-------------------|-----------|
-| Backend API latency (8-12 sec avg, 20+ sec worst case) | Veterans wait extensively for basic data | App perceived as "slow"; loading spinners dominate experience | Engineering Lead, Design Lead |
-| Two native codebases (iOS/Android) | Every feature built twice; 20-30% overhead for accessibility | Slower feature delivery; platform inconsistencies | Engineering Lead, Design Lead |
-| 12 engineers for 2M+ veterans | Understaffed 3-4x vs comparable consumer apps | 20% capacity spent on maintenance; limited feature development | Engineering Lead |
-| VA Design System (VADS) web-first | Mobile patterns are afterthoughts; lengthy approval for new components | Compromised mobile UX; design workarounds | Design Lead |
-| Third-party identity components (ID.me) | Can't fix accessibility issues in verification flow | Onboarding accessibility gaps outside VA control | Engineering Lead, Design Lead |
+| Backend API latency (8-12 sec avg, 20+ sec worst case) | Veterans wait extensively for data | App perceived as "slow"; loading spinners become primary experience | Engineering Lead, Design Lead |
+| Two native codebases (iOS/Android) | Every feature built twice; 20-30% overhead for accessibility | Delayed feature delivery; platform inconsistencies | Engineering Lead, Design Lead |
+| 12 engineers for 2+ million users | Understaffed 3-4x compared to similar consumer apps | Technical debt accumulates; maintenance consumes 20% capacity | Engineering Lead |
+| Backend dependency for API changes | 6+ month timeline for simple API enhancements | Can't fix performance issues; must design around limitations | Engineering Lead, Design Lead |
 
 ### Policy Constraints
 
-> "Protected Health Information (PHI) is the big one. HIPAA is strict about how PHI can be displayed, transmitted, and stored. Lock screen notifications are a classic example—'Dr. Smith confirmed your Tuesday appointment' contains PHI. The doctor's name reveals the patient-provider relationship." — Policy SME
+> "Protected Health Information (PHI) is the big one. HIPAA is strict about how PHI can be displayed, transmitted, and stored. On mobile, this creates specific challenges." — Policy SME
 
-> "Session timeout policy is the one I fight most. VA policy requires session timeout after 30 minutes of inactivity for PHI access. Mobile usage patterns are bursty—veterans open the app, check something, put it down, come back later." — Design Lead
+> "Session timeout policy is the one I fight most. VA policy requires session timeout after 30 minutes of inactivity for PHI access. I understand the security rationale, but mobile usage patterns are bursty." — Design Lead
 
 | Constraint | Impact | User Experience Effect | Source(s) |
 |------------|--------|------------------------|-----------|
-| PHI lock screen restrictions | No rich notifications allowed | Generic alerts only: "You have a new secure message" vs useful previews | Policy SME, Design Lead |
-| IAL2 identity verification requirement | Federal mandate for PHI access | Painful onboarding: document upload, selfie verification, knowledge questions | Policy SME, Engineering Lead, Design Lead |
-| 30-minute session timeout | HIPAA Security Rule requirement | Disrupts mobile usage patterns; frequent re-authentication needed | Policy SME, Design Lead |
-| Legal consent language requirements | Full terms must be visible; no summaries without approval | Screens of legalese; consent fatigue; veterans scroll past without reading | Policy SME, Design Lead |
-| Section 508 accessibility compliance | Non-negotiable federal requirement | 20-30% development overhead; features cannot ship inaccessible | Policy SME, Engineering Lead, Design Lead |
-| Inter-agency data governance | VHA, VBA, ID.me have separate policies | Multi-stakeholder approval needed for changes; slow coordination | Policy SME, Engineering Lead |
+| PHI lock screen restrictions | No rich notifications allowed (can't show doctor names, prescription details) | Generic notifications: "You have a new secure message" vs useful previews | Policy SME, Design Lead |
+| IAL2 identity verification requirement | Federal mandate for document upload, selfie verification, knowledge questions | Painful onboarding; veterans abandon during verification process | Policy SME, Design Lead |
+| 30-minute session timeout | HIPAA Security Rule requirement | Disrupts mobile usage patterns; veterans get logged out mid-task | Policy SME, Design Lead |
+| Consent content length | Legal requires full terms visible; no summaries without approval | Screens of legalese; consent fatigue; veterans scroll past without reading | Policy SME, Design Lead |
+| Inter-agency coordination (VHA, VBA, ID.me) | Multiple stakeholders must agree on changes | Simple changes take months; competing priorities create feature conflicts | Policy SME, Engineering Lead, Design Lead |
 
 ### Resource Constraints
 
@@ -63,11 +61,10 @@
 
 | Constraint | Impact | Systemic Effect | Source(s) |
 |------------|--------|-----------------|-----------|
-| 6 designers for 2M+ veterans | Can't do proper discovery → testing → iteration process | Assumptions-based design; limited research validation | Design Lead |
-| Federal hiring process delays | 6 months to fill engineering positions | Understaffing persists; contractor dependency | Engineering Lead |
-| Shared research capacity | 4-6 weeks to get usability testing scheduled | Features ship without user validation | Design Lead |
-| Backend API dependency | Can't fix slow APIs; changes take 6+ months through tickets | Client-side optimizations hit ceiling; user experience limited by external systems | Engineering Lead, Design Lead |
-| Legacy technical debt from 2021 launch | Pandemic pressure created compromises now load-bearing | 20% engineering capacity spent on maintenance; navigation architecture constrains new features | Engineering Lead, Design Lead |
+| 6 designers for 2+ million users | Can't do proper discovery → testing → iteration process | Assumptions-based design; no time for usability testing (4-6 week wait) | Design Lead |
+| Federal hiring process delays | 6+ months to fill engineering positions | Good engineers get other offers faster; team stays understaffed | Engineering Lead |
+| Research capacity shared across VA properties | 4-6 week wait for usability testing | Ship features without user validation; find problems after launch | Design Lead |
+| Approval process (security, privacy, accessibility reviews) | "Quick" fixes take weeks, not days | Can't respond rapidly to user issues; release cycles constrained | Engineering Lead, Policy SME |
 
 ---
 
@@ -75,73 +72,102 @@
 
 > "My job is risk mitigation. A privacy breach affecting veterans would be catastrophic—not just legally, but for veteran trust in VA." — Policy SME
 
-> "Product sees competitor apps with slick features and wants parity. But those apps have 10x our resources and don't have our backend constraints." — Engineering Lead
+> "We're twelve engineers supporting two platforms, multiple feature areas, and an app used by millions of veterans. For context, a comparably complex consumer app would have 3-4x the engineering headcount." — Engineering Lead
 
 | Priority | Driver | Timeline | Aligns With User Needs? | Source |
 |----------|--------|----------|:-----------------------:|--------|
 | Zero out accessibility bugs | Section 508 compliance; legal risk | Next quarter | ✅ | Engineering Lead |
-| Backend API performance improvements | 8-12 second response times hurting UX | Dependent on VBA/VHA roadmaps | ✅ | Engineering Lead |
-| Privacy/security compliance | HIPAA, federal requirements, veteran trust | Ongoing/non-negotiable | ⚠️ | Policy SME |
-| Feature parity with web properties | VHA/VBA stakeholder requests | Ongoing pressure | ❌ | Design Lead |
+| Backend API improvements | 8-12 second response times hurting UX | VBA/VHA roadmap dependent | ✅ | Engineering Lead |
+| Privacy/security compliance | HIPAA, federal requirements | Ongoing | ⚠️ | Policy SME |
 | Technical debt reduction | 20% capacity tax from 2021 launch decisions | Competes with features | ⚠️ | Engineering Lead |
-| Design system mobile optimization | VADS built web-first, mobile afterthought | Slow approval process | ✅ | Design Lead |
+| Design system mobile optimization | VADS built web-first, mobile afterthought | Lengthy approval process | ✅ | Design Lead |
+| Identity verification improvements | IAL2 federal requirement, mobile not optimized | ID.me/Login.gov roadmap | ✅ | Policy SME |
 
-**Critical Alignment Gap:** Feature parity requests from VHA/VBA conflict with mobile-first design principles. Veterans want simple, fast mobile experiences, but stakeholders push for comprehensive feature replication from web properties.
+**Critical Alignment Gap:** Security and compliance priorities often conflict with user experience needs. Veterans want fast, convenient access, but federal requirements mandate friction for protection. The 30-minute session timeout exemplifies this tension—policy-required but disruptive to mobile usage patterns.
 
 ---
 
 ## ⚙️ Backstage Processes
 
+> This section maps the invisible systems behind each veteran-facing touchpoint. The overview diagram below shows how processes connect; detailed sequence diagrams follow for each.
+
+### System Overview
+
+```mermaid
+flowchart LR
+    subgraph Veteran Touchpoints
+        A[Download & Onboard]
+        B[Check Claims Status]
+        C[View Health Records]
+        D[Refill Prescriptions]
+    end
+    
+    A -->|"IAL2 verification"| IDME[ID.me/Login.gov]
+    IDME -->|"Token exchange"| AUTH[VA Auth Services]
+    AUTH -->|"Session mgmt"| B
+    AUTH -->|"Session mgmt"| C
+    AUTH -->|"Session mgmt"| D
+    B -->|"4-5 system hops"| VBA[VBA Backend Systems]
+    C -->|"EHR aggregation"| VHA[VHA Health Systems]
+    D -->|"Rx routing"| PHARM[VA Pharmacy Systems]
+    
+    style A fill:#fff3e0,stroke:#e65100
+    style B fill:#e3f2fd,stroke:#1565c0
+    style C fill:#e8f5e9,stroke:#2e7d32
+    style D fill:#f3e5f5,stroke:#7b1fa2
+```
+
+---
+
 ### Identity Verification & Onboarding
 
-> "IAL2 identity verification is federal policy, not VA choice. The document upload, selfie verification, knowledge-based questions—these are federal requirements for accessing this level of sensitive data." — Policy SME
+> "IAL2 identity verification is driving most of [the onboarding frustration]. The document photography, selfie matching, and knowledge questions are federal requirements for accessing this level of sensitive data." — Policy SME
 
-> "Veterans download the app expecting to check their claim status in 30 seconds. Instead, they face: download → account creation → identity proofing (multiple steps) → MFA setup → waiting for verification → finally, access." — Design Lead
+> "The identity verification flow uses components from ID.me that we can't modify. We've filed issues, but we're dependent on them to fix." — Engineering Lead
 
 **Process Flow:**
 
 ```mermaid
 sequenceDiagram
     actor Veteran
-    participant MobileApp as VA Mobile App
-    participant IDProvider as ID.me/Login.gov
-    participant VAAuth as VA Auth Services
-    participant VBASystem as VBA Backend
+    participant App as Mobile App
+    participant IDme as ID.me/Login.gov
+    participant VA_Auth as VA Auth Services
+    participant Backend as VA Backend
     
-    Veteran->>MobileApp: Download app, tap "Sign In"
-    MobileApp->>IDProvider: Redirect to identity verification
-    Note over Veteran,IDProvider: 40% abandon during ID proofing
-    IDProvider->>Veteran: Request document photos
-    Veteran->>IDProvider: Upload driver's license photo
-    Note over IDProvider: ⚠️ Photo fails 3+ times (mobile camera issues)
-    IDProvider->>Veteran: Request selfie verification
-    Veteran->>IDProvider: Take selfie
-    IDProvider->>Veteran: Knowledge-based questions
-    Note over IDProvider,VAAuth: Manual review - avg 24-48 hours
-    IDProvider-->>VAAuth: IAL2 verification complete
-    VAAuth->>MobileApp: Authentication token
-    MobileApp->>VBASystem: Request user data
-    Note over MobileApp,VBASystem: 8-12 second response time
-    VBASystem-->>MobileApp: User profile data
-    MobileApp-->>Veteran: Access granted to app features
+    Veteran->>App: Downloads app, taps "Sign In"
+    App->>IDme: Redirects to identity verification
+    Note over Veteran,IDme: 40% abandon during document upload
+    IDme->>Veteran: Request driver's license photo
+    Veteran->>IDme: Attempts photo capture ⚠️ Fails 3x for many users
+    IDme->>Veteran: Request selfie verification
+    Veteran->>IDme: Selfie capture ⚠️ Lighting/positioning issues
+    IDme->>Veteran: Knowledge-based questions
+    Note over IDme,VA_Auth: Manual review if automated fails - avg 24-48 hours
+    IDme-->>VA_Auth: Identity verified (or failed)
+    VA_Auth->>Backend: Create/link VA account
+    Backend-->>App: Session established ⚠️ 8-12 sec response time
+    App-->>Veteran: Access granted to app features
 ```
 
 **Where It Breaks Down:**
 
 | Failure Point | What Happens | User Experience | Frequency/Severity |
 |---------------|--------------|-----------------|-------------------|
-| Document photo capture | Mobile camera quality/positioning issues | Multiple failed attempts, frustration | 40% abandon during ID proofing |
-| Manual verification delay | ID.me/Login.gov manual review queue | 24-48 hour wait after completing steps | Standard process |
-| Session timeout during onboarding | 30-minute policy kicks in mid-process | Must restart verification | Unknown frequency |
-| Backend data load failure | VBA systems timeout or error | Successful auth but no data access | 8-12 second average response |
+| Document photo capture | Camera quality, lighting, positioning issues | Multiple failed attempts, frustration | 40% abandon here |
+| Selfie verification | Face matching algorithm failures | "Try again" loops, some never succeed | High - mentioned by all stakeholders |
+| Knowledge-based questions | Credit/address history questions fail | Dead end for veterans with limited credit history | Moderate |
+| Manual review queue | Automated verification fails, goes to human review | 24-48 hour wait with no status updates | Low frequency, high impact |
 
-**Systems Involved:** VA Mobile App, ID.me, Login.gov, VA Auth Services, VBA Backend Systems, VHA Systems
+> ✅ **Working Pattern — Biometric Re-authentication:** Instead of full credential entry after session timeout, veterans can use Face ID or Touch ID for quick re-entry. This maintains security while reducing friction for returning users.
+
+**Systems Involved:** ID.me, Login.gov, VA Auth Services, VBA account systems, VHA account systems
 
 ---
 
-### Claims Status Retrieval
+### Claims Status Checking
 
-> "Our claims status API aggregates data from multiple VBA systems. Each hop adds latency. By the time the response reaches the app, we're looking at 8-12 seconds on average. Some users on poor connections see 20+ seconds." — Engineering Lead
+> "Our claims status API aggregates data from multiple VBA systems. Each hop adds latency. By the time the response reaches the app, we're looking at 8-12 seconds on average." — Engineering Lead
 
 > "What the API gives us is: claim type, filing date, status (one of about 8 values), and sometimes a vague 'steps completed' indicator. That's not enough for veterans who want to understand why their claim is taking six months." — Design Lead
 
@@ -150,264 +176,245 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor Veteran
-    participant MobileApp as VA Mobile App
-    participant APIGateway as VA API Gateway
-    participant VBMS as VBMS System
-    participant BGS as Benefits Gateway Service
-    participant SHARE as SHARE Database
-    participant VACOLS as VACOLS System
+    participant App as Mobile App
+    participant Gateway as API Gateway
+    participant VBA1 as VBA System 1
+    participant VBA2 as VBA System 2
+    participant VBA3 as VBA System 3
+    participant Cache as Cache Layer
     
-    Veteran->>MobileApp: Tap "Claims" tab
-    MobileApp->>APIGateway: GET /claims/status
-    Note over MobileApp: Show skeleton loading screen
-    APIGateway->>VBMS: Query claim records
-    VBMS->>BGS: Get claim details
-    BGS->>SHARE: Lookup evidence status
-    SHARE->>VACOLS: Check appeals data
-    Note over APIGateway,VACOLS: 4-5 system hops, each adds 2-3 seconds
-    VACOLS-->>SHARE: Appeals status
-    SHARE-->>BGS: Evidence compilation
-    Note over BGS: ⚠️ Timeout 15% of requests
-    BGS-->>VBMS: Aggregated claim data
-    VBMS-->>APIGateway: Claim status response
-    Note over APIGateway: 8-12 second total response time
-    APIGateway-->>MobileApp: JSON payload (limited fields)
-    MobileApp-->>Veteran: Display claim status
+    Veteran->>App: Taps "Claims" in navigation
+    App->>Gateway: Request claims data with auth token
+    Gateway->>VBA1: Query claim basic info ⚠️ 3-4 sec latency
+    Gateway->>VBA2: Query claim status updates ⚠️ 2-3 sec latency  
+    Gateway->>VBA3: Query evidence/documents ⚠️ 3-5 sec latency
+    Note over VBA1,VBA3: Systems designed for batch processing, not real-time
+    VBA1-->>Gateway: Basic claim data
+    VBA2-->>Gateway: Status codes (internal jargon)
+    VBA3-->>Gateway: Document list ⚠️ Sometimes times out
+    Gateway->>Cache: Store response for 1 hour
+    Gateway-->>App: Aggregated response (8-12 seconds total)
+    App-->>Veteran: Claims list with minimal detail
 ```
 
 **Where It Breaks Down:**
 
 | Failure Point | What Happens | User Experience | Frequency/Severity |
 |---------------|--------------|-----------------|-------------------|
-| BGS timeout | Benefits Gateway Service fails to respond | "Unable to load claims" error | 15% of requests |
-| Multiple system latency | Each system hop adds 2-3 seconds | 8-12 second wait minimum | Every request |
-| Limited API data | Only basic status fields returned | Vague status like "Pending Decision Approval" | All responses |
-| Status terminology changes | VBA changes internal terms without notice | Plain language translations break | Periodic |
+| VBA system latency | Each system adds 2-5 seconds | Long loading times, 8-12 sec average | Every request |
+| Document service timeout | VBA3 doesn't respond within timeout window | Claims show without document status | 15-20% of requests |
+| Status terminology changes | VBA changes internal codes without notice | Plain language translations break | Periodic, high confusion |
+| Cache staleness | Hour-old data shown while veteran expects real-time | Veteran sees outdated status | Constant tension |
 
-**Systems Involved:** VA Mobile App, VA API Gateway, VBMS, Benefits Gateway Service (BGS), SHARE Database, VACOLS System
+> ✅ **Working Pattern — Progressive Loading:** Claims list loads basic info first (2 seconds), then progressively adds status details and documents. Veterans see useful information quickly even while full data loads.
 
----
-
-### Session Management & Authentication
-
-> "HIPAA Security Rule requires safeguards against unauthorized access. Session timeout after inactivity is a standard safeguard. VA policy is 30 minutes of inactivity." — Policy SME
-
-> "The authentication layer is complex. We support Login.gov and ID.me, each with their own token management. Refresh flows, session extension, biometric re-authentication—there's a lot of state to manage." — Engineering Lead
-
-**Process Flow:**
-
-```mermaid
-sequenceDiagram
-    actor Veteran
-    participant MobileApp as VA Mobile App
-    participant BiometricOS as iOS/Android Biometrics
-    participant VAAuth as VA Auth Services
-    participant TokenStore as Token Management
-    participant BackendAPI as VA Backend APIs
-    
-    Veteran->>MobileApp: Open app after inactivity
-    MobileApp->>TokenStore: Check session validity
-    Note over TokenStore: 30-minute timeout policy
-    TokenStore-->>MobileApp: Session expired
-    MobileApp->>Veteran: Request biometric re-auth
-    Veteran->>BiometricOS: Face ID/Touch ID
-    BiometricOS-->>MobileApp: Biometric verified
-    MobileApp->>VAAuth: Request token refresh
-    Note over VAAuth: ⚠️ Refresh token expired (full re-auth required)
-    VAAuth-->>MobileApp: Token refresh failed
-    MobileApp->>Veteran: Redirect to full login
-    Veteran->>MobileApp: Complete full authentication
-    MobileApp->>BackendAPI: API call with new token
-    BackendAPI-->>MobileApp: Protected data
-    MobileApp-->>Veteran: Display requested information
-```
-
-**Where It Breaks Down:**
-
-| Failure Point | What Happens | User Experience | Frequency/Severity |
-|---------------|--------------|-----------------|-------------------|
-| 30-minute timeout | Session expires during mobile usage gaps | Must re-authenticate frequently | Policy-mandated |
-| Biometric failure | Face ID/Touch ID doesn't work | Full credential re-entry required | ~10% of attempts |
-| Refresh token expiration | Token can't be refreshed silently | Unexpected logout, full re-auth | Most common support ticket |
-| Mid-task timeout | Session expires during form completion | Lost form data, must restart | Unknown frequency |
-
-**Systems Involved:** VA Mobile App, iOS/Android Biometric Systems, VA Auth Services, Token Management System, ID.me, Login.gov
+**Systems Involved:** VBA Claims system, VBA Evidence system, VBA Status system, API Gateway, Redis cache
 
 ---
 
-### Health Data Retrieval
+### Health Records Access
 
 > "Health records are slow because the data payloads are large. A veteran with decades of VA care has megabytes of records. We've implemented pagination, but the initial load is still heavy." — Engineering Lead
 
-> "Session display was debated extensively. Should the app show the names of previous session attendees? If a veteran had a mental health appointment, displaying the therapist's name next to the session could reveal the nature of care." — Policy SME
+> "We cannot log PHI or PII. That limits debugging. When something goes wrong for a veteran, we can't see the specific data involved—we see anonymized patterns." — Policy SME
 
 **Process Flow:**
 
 ```mermaid
 sequenceDiagram
     actor Veteran
-    participant MobileApp as VA Mobile App
-    participant MHVProxy as My HealtheVet Proxy
-    participant VistA as VistA EHR System
-    participant CDW as Clinical Data Warehouse
-    participant PHIFilter as PHI Filtering Service
+    participant App as Mobile App
+    participant Gateway as API Gateway
+    participant VHA as VHA Health Systems
+    participant EHR as Electronic Health Records
+    participant Privacy as Privacy Filter
     
-    Veteran->>MobileApp: Tap "Health" section
-    MobileApp->>MHVProxy: GET /health/summary
-    MHVProxy->>VistA: Query patient records
-    VistA->>CDW: Aggregate multi-facility data
-    Note over CDW: Decades of records = megabytes
-    CDW-->>VistA: Raw clinical data
-    VistA-->>MHVProxy: EHR response
-    MHVProxy->>PHIFilter: Apply privacy rules
-    Note over PHIFilter: Strip provider names, sensitive details
-    PHIFilter-->>MHVProxy: Filtered health data
-    Note over MHVProxy: 5-8 second response for full records
-    MHVProxy-->>MobileApp: JSON health summary
-    MobileApp-->>Veteran: Display appointments, prescriptions
+    Veteran->>App: Taps "Health Records"
+    App->>Gateway: Request health summary
+    Gateway->>VHA: Authenticate and query patient records
+    VHA->>EHR: Fetch records for veteran ⚠️ Large payload - MBs of data
+    Note over EHR,Privacy: PHI filtering - cannot log for debugging
+    EHR-->>Privacy: Raw health records
+    Privacy->>Privacy: Filter sensitive/restricted records
+    Privacy-->>VHA: Filtered records ⚠️ 5-8 sec processing
+    VHA-->>Gateway: Health data payload
+    Gateway-->>App: Paginated response (first 20 records)
+    App-->>Veteran: Health summary displayed
 ```
 
 **Where It Breaks Down:**
 
 | Failure Point | What Happens | User Experience | Frequency/Severity |
 |---------------|--------------|-----------------|-------------------|
-| Large payload size | Megabytes of historical data | 5-8 second initial load | Veterans with long history |
-| Multi-facility aggregation | CDW must query multiple VistA instances | Extended response times | Multi-facility veterans |
-| PHI filtering overhead | Privacy rules applied to every field | Additional processing delay | Every request |
-| VistA system variability | Different facilities have different VistA versions | Inconsistent data formats | Facility-dependent |
+| Large payload processing | Decades of records = megabytes of data | Slow initial load, 5-8 seconds | Veterans with long history |
+| Privacy filtering overhead | Each record checked for restricted content | Additional processing delay | Every request |
+| Pagination complexity | Mobile needs smaller chunks than API provides | Multiple round trips for full data | Ongoing UX friction |
+| Debug limitations | PHI cannot be logged when errors occur | Harder to troubleshoot user-specific issues | Impacts support quality |
 
-**Systems Involved:** VA Mobile App, My HealtheVet Proxy, VistA EHR Systems, Clinical Data Warehouse (CDW), PHI Filtering Service
+> ✅ **Working Pattern — Skeleton Screens:** Health records show placeholder cards that fill in as data arrives. Veterans see immediate feedback that data is loading rather than blank screens.
+
+**Systems Involved:** VHA Health systems, Electronic Health Records (EHR), Privacy filtering service, API Gateway
 
 ---
 
 ### Prescription Refill Process
 
-> "We use background refresh to update cached data when the app isn't in use. We batch API calls where possible." — Engineering Lead
+> "Appointments are actually pretty fast—that's one of our better-performing areas because the scheduling API is more modern." — Engineering Lead
 
-> "Optimistic UI shows success immediately for actions, confirming in the background. When a veteran requests a prescription refill, we show 'Refill requested' instantly, rather than waiting for the API round-trip." — Design Lead
+> "When a veteran requests a prescription refill, we show 'Refill requested' instantly, rather than waiting for the API round-trip. If it fails, we surface an error. Failures are rare enough that this improves perceived experience." — Design Lead
 
 **Process Flow:**
 
 ```mermaid
 sequenceDiagram
     actor Veteran
-    participant MobileApp as VA Mobile App
-    participant RxAPI as Prescription API
-    participant CMOP as CMOP System
-    participant Pharmacy as VA Pharmacy
-    participant NotificationSvc as Notification Service
+    participant App as Mobile App
+    participant Gateway as API Gateway
+    participant Pharmacy as VA Pharmacy System
+    participant Inventory as Inventory System
+    participant Notification as Notification Service
     
-    Veteran->>MobileApp: Tap "Refill" on prescription
-    MobileApp-->>Veteran: Show "Refill requested" immediately
-    Note over
+    Veteran->>App: Taps "Refill" on prescription
+    App-->>Veteran: Shows "Refill requested" immediately (optimistic UI)
+    App->>Gateway: Submit refill request
+    Gateway->>Pharmacy: Process refill request
+    Pharmacy->>Inventory: Check medication availability ⚠️ Sometimes out of stock
+    Inventory-->>Pharmacy: Stock status
+    Note over Pharmacy,Notification: Refill processing - 1-2 business days
+    Pharmacy->>Notification: Send status update
+    Notification-->>App: Push notification ⚠️ Generic message due to PHI restrictions
+    App-->>Veteran: "Prescription update available"
+```
+
+**Where It Breaks Down:**
+
+| Failure Point | What Happens | User Experience | Frequency/Severity |
+|---------------|--------------|-----------------|-------------------|
+| Inventory stock-out | Medication not available at requested pharmacy | Refill denied, veteran must call or wait | 5-10% of requests |
+| Notification restrictions | PHI rules prevent specific medication names in push notifications | Generic "update available" messages | All notifications |
+| Optimistic UI failure | Refill request fails after showing success | Veteran thinks it worked, later discovers it didn't | <5% but high confusion |
+| Processing delays
 
 ---
 
 ## 🎯 Service Blueprint Implications
 
-> Key inputs for backstage/support layer mapping
+> Organizational and perception-layer insights that complement the
+> detailed process maps in Backstage Processes above.
 
-### Frontstage Moments That Depend on Fragile Backstage
+### Frontstage ↔ Backstage Disconnect
 
-| Frontstage Moment | Backstage Dependency | Failure Mode |
-|-------------------|----------------------|--------------|
-| User taps "Check Claim Status" | 4-5 VBA systems must respond + aggregate data | 8-12 second wait, timeouts create "app is broken" perception |
-| User completes identity verification | ID.me/Login.gov systems + VA token exchange + IAL2 validation | Multi-step failures with generic error messages; users blame VA app |
-| User receives push notification | PHI filtering + notification service + device delivery | Notifications so generic ("You have a message") they're not actionable |
-| User tries to refill prescription | VHA prescription system + inventory check + pharmacy routing | Optimistic UI shows "requested" but backend failure invisible until later |
-| User session expires after 30min | HIPAA timeout policy + biometric re-auth + token refresh | Appears as "app logged me out randomly" - policy invisible to user |
-| User takes screenshot of health data | Screen recording protection + PHI exposure warnings | No clear feedback about privacy implications of sharing screenshots |
+> Where the user's mental model diverges from the system reality.
+> For detailed system flows, see the sequence diagrams in Backstage
+> Processes above.
 
-### Support Processes Currently Manual
+| What the User Experiences | What's Actually Happening | Design Implication |
+|---------------------------|---------------------------|-------------------|
+| "The app is slow" | 8-12 second API responses from VBA/VHA systems designed for batch processing, not mobile | Loading states are primary experience, not edge case—design must make waiting feel purposeful |
+| Simple "check claim status" request | Data aggregated from 4-5 separate VBA systems in real-time | Set expectation that comprehensive information takes time; consider progressive disclosure |
+| App randomly logs them out | 30-minute HIPAA-mandated session timeout triggered by mobile usage patterns (check, put down, return later) | Design session warnings and biometric re-auth as core flows, not error recovery |
+| Notifications aren't helpful ("You have a new message") | PHI restrictions prevent showing doctor names or appointment details on lock screen | Educate users why privacy-protective notifications serve their interests |
+| Onboarding "should be simple" | IAL2 federal identity verification + MFA setup + multiple system authentications | Reframe as "protecting your sensitive data" rather than bureaucratic friction |
 
-| Process | Current State | Risk |
-|---------|---------------|------|
-| API change requests to VHA/VBA | Engineering submits tickets, waits 6+ months for prioritization | Mobile team can't fix user-reported data issues; appears unresponsive |
-| Accessibility bug remediation | Manual testing finds issues competing with feature work | Known a11y problems persist; Section 508 compliance at risk |
-| Cross-platform release coordination | iOS App Store (days) vs Google Play (hours) review cycles | Staggered releases create user confusion about feature availability |
-| Claims terminology translation | Manual mapping when VBA changes internal terms without notice | Plain language translations break; users see jargon unexpectedly |
-| Third-party component accessibility | Filing issues with ID.me for unlabeled elements; waiting for fixes | Identity verification flow has a11y gaps VA can't directly resolve |
-| Performance issue diagnosis | Tracing problems across mobile → API gateway → multiple backends | Root cause analysis takes days; users experience "slowness" without resolution timeline |
+### Support Processes Outside the Product
+
+> Organizational processes that keep the product running but aren't
+> captured in the technical system flows above.
+
+| Process | Current State | Risk | Affects |
+|---------|---------------|------|---------|
+| API change requests to VBA/VHA | Ticket-based system; 6+ month timeline for simple enhancements | Mobile team can't fix slow/limited APIs that users blame on the app | All data-heavy features feel broken |
+| Accessibility bug triage | Competes with feature work; manual testing time-constrained | Known a11y issues persist; some third-party components (ID.me) unfixable | Veterans with disabilities get degraded experience |
+| Legal consent language approval | Full text required; plain language summaries rejected | Veterans experience "consent fatigue" and don't read terms they're agreeing to | Informed consent becomes meaningless checkbox |
+| Cross-platform release coordination | iOS App Store review takes days/weeks; Android faster but unpredictable | Can't do simultaneous releases; features stagger between platforms | Inconsistent experience creates support burden |
+| Policy interpretation for new features | Each feature reviewed by multiple offices (Privacy, Legal, 508) | "Innovation tax" of weeks added to every release cycle | Team designs around constraints rather than user needs |
 
 ### Line of Visibility Gaps
 
-| Users See | Users Don't See | Creates Confusion When... |
-|-----------|-----------------|---------------------------|
-| "Loading..." for 12 seconds | Claims data aggregating from 4-5 separate VBA systems | Users think app is broken, not that backend is complex |
-| Generic error: "Something went wrong" | Specific API failures, authentication token issues, system timeouts | Users can't troubleshoot or understand if problem is temporary |
-| Session timeout after 30 minutes | HIPAA Security Rule requirement driving policy | Feels like arbitrary app limitation, not security protection |
-| Minimal lock screen notifications | PHI privacy protection preventing rich content | Notifications seem useless compared to other apps |
-| Identity verification steps | IAL2 federal requirement for PHI access | Onboarding feels like VA bureaucracy, not security necessity |
-| Features missing on one platform | Engineering building everything twice; iOS/Android divergence | Users assume VA doesn't care about their platform |
+> The most impactful gaps between what users see and what they
+> don't — written as design insights, not technical summaries.
+
+| Users Believe | Reality | Opportunity |
+|---------------|---------|-------------|
+| VA controls the entire app experience | Identity verification, session management, and data availability controlled by external systems (ID.me, Login.gov, VBA/VHA APIs) | Surface when delays/issues are "not VA"—manage attribution of problems |
+| More information should be available | Claims API only provides 8 status values; detailed examiner notes and timelines don't exist in accessible form | Design "information roadmap" showing what will be available when, rather than promising what doesn't exist |
+| Privacy restrictions are bureaucratic overhead | PHI lock screen limitations protect veterans from spouse/coworker/family seeing sensitive health information | Reframe privacy as protection, not punishment—let veterans understand the trade-offs |
+| The app should work like consumer apps | Federal accessibility, security, and privacy requirements add 20-30% development overhead and constrain UX patterns | Set mobile government app expectations, not commercial app expectations |
+| Design team controls the experience | Navigation structure based on 2021 API organization; information architecture constrained by backend data structure | Acknowledge when UX issues require backend investment, not just design fixes |
 
 ---
 
 ## 🔍 Questions for User Research
 
-> Based on stakeholder input, explore these with participants
+> Based on stakeholder input, explore these with participants.
+> Priority levels: 🔴 Blocking · 🟡 Important · 🟢 Validation
 
-### High Priority (🔴)
+### Blocking Questions (🔴)
 
-| Stakeholder Insight | Research Question | Method |
-|---------------------|-------------------|--------|
-| Policy: "Veterans want rich notifications but PHI can't appear on lock screen" | How do veterans currently use notifications? What information do they want vs. need? Would they accept privacy trade-offs for convenience? | **Diary study** + contextual interviews about notification usage patterns |
-| Engineering: "80% of 'slowness' is backend latency we can't fix" | Which specific delays feel most frustrating? Do loading states/skeleton screens actually help perception? | **Usability testing** with performance monitoring; measure perceived vs. actual wait times |
-| Design: "Onboarding abandonment driven by identity verification length, not complexity" | At what point do veterans abandon onboarding? What would motivate them to continue through verification? | **Funnel analysis** + exit interviews with veterans who abandoned setup |
-| Policy: "Session timeout disrupts mobile usage patterns but can't be extended" | How do veterans actually use the app throughout the day? When do timeouts feel most disruptive? | **Mobile ethnography** tracking app usage patterns over 1-2 weeks |
-| Engineering: "Navigation based on API organization, not user mental models" | How do veterans expect health and benefits information to be organized? What's their mental model? | **Card sorting** + tree testing for information architecture |
-
-### Medium Priority (🟡)
+> Must answer before making design decisions
 
 | Stakeholder Insight | Research Question | Method |
 |---------------------|-------------------|--------|
-| Design: "VHA vs VBA competing for home screen prominence" | Do veterans see health and benefits as integrated or separate? How do they prioritize access? | **Journey mapping** across health and benefits tasks |
-| Policy: "Consent fatigue - veterans scroll past legal text without reading" | What consent information do veterans actually want to know? How can we make consent meaningful? | **Consent flow usability testing** with comprehension checks |
-| Engineering: "Feature flags create navigation complexity for different users" | Do veterans notice inconsistent experiences? How does personalization affect discoverability? | **Comparative testing** of personalized vs. standard navigation |
-| Design: "Claims terminology changes without notice, breaking translations" | Do plain language translations actually help understanding? What happens when jargon appears unexpectedly? | **Content testing** comparing technical vs. plain language versions |
-| Engineering: "Accessibility bugs compete with feature work for priority" | How do veterans with disabilities experience current accessibility gaps? What's the impact of unlabeled elements? | **Accessibility-focused usability testing** with assistive technology users |
+| Engineering: "80% of slowness is backend latency we can't fix" | What loading experiences feel acceptable vs. frustrating? At what wait time do users abandon? | Usability testing with timed tasks; prototype different loading patterns |
+| Design: "Onboarding abandonment driven by identity verification, not app UX" | Where exactly do users drop off in ID.me/Login.gov flows? What would motivate them to persist? | Funnel analysis + user interviews during/after failed onboarding attempts |
+| Policy: "IAL2 verification friction is intentional security—users should understand the trade-off" | Do users understand why identity verification is required? Would security framing increase completion? | Concept testing of different onboarding messaging approaches |
+| Engineering: "Navigation structure based on API organization, not user mental models" | How do users expect to find claim status, appointments, messages? What's their task-based mental model? | Card sorting + tree testing of information architecture options |
 
-### Validation Questions (🟢)
+### Important Questions (🟡)
+
+> Address during study — informs but doesn't block
+
+| Stakeholder Insight | Research Question | Method |
+|---------------------|-------------------|--------|
+| Design: "Veterans want claim details that don't exist in the API" | What specific claim information do users need to feel informed? What would reduce anxiety during long waits? | User interviews + journey mapping of claims experience |
+| Policy: "Minimal notifications protect privacy but users find them useless" | Would users opt into richer notifications if they understood privacy trade-offs? How would they want to control this? | Concept testing of notification privacy controls |
+| Engineering: "Accessibility bugs compete with feature work for priority" | How do accessibility issues actually impact veterans with disabilities using the app? | Usability testing with assistive technology users |
+| Design: "Session timeout disrupts mobile usage patterns" | How do users actually use the app throughout the day? What's the impact of forced re-authentication? | Diary study of natural app usage patterns |
+| Policy: "Consent screens cause fatigue but legal won't approve summaries" | What consent information do users actually want to know? What feels like important vs. legal boilerplate? | Content testing of consent language variations |
+
+### Assumption Validation (🟢)
+
+> Test stakeholder assumptions with real users
 
 | Stakeholder Assumption | Validate With Users |
 |------------------------|---------------------|
-| **Policy**: "Privacy protections support military culture reluctance to share health struggles" | Do veterans actually want health information hidden from family/household members? |
-| **Design**: "Veterans abandon onboarding because 'it's taking too long' not 'it's too hard'" | What specific onboarding steps feel excessive vs. necessary to veterans? |
-| **Engineering**: "Biometric re-authentication reduces session timeout friction" | Do veterans prefer biometric re-auth to full login after timeout? |
-| **Policy**: "Veterans would accept privacy trade-offs for notification convenience if properly informed" | Would veterans opt into richer notifications with clear privacy explanations? |
-| **Design**: "Skeleton screens and progressive loading improve perceived performance" | Do loading state improvements actually reduce frustration with slow responses? |
-| **Engineering**: "Veterans blame the app for backend system limitations they can't see" | Do veterans understand when problems are VA app vs. VA systems vs. third-party services? |
+| Policy: "Veterans appreciate privacy protections once they understand them" | Do users value PHI protection in notifications, or do they prioritize convenience? |
+| Design: "Progressive loading makes long waits feel better" | Compare user satisfaction with skeleton screens vs. simple spinners vs. progress indicators |
+| Engineering: "Biometric re-auth after timeout is good compromise between security and UX" | How do users experience biometric re-auth? Is it seen as helpful or another barrier? |
+| Policy: "Veterans would accept longer onboarding if they understood it prevents fraud" | Does security-focused messaging improve onboarding completion vs. convenience-focused messaging? |
+| Design: "Cross-platform compromises are invisible to users" | Do users notice navigation/interaction differences from platform conventions? Does it matter? |
+| Engineering: "Users blame the app for backend API problems" | What do users attribute slow performance to? Do they distinguish between app vs. system issues? |
 
 ---
 
 ## ❓ Open Questions
 
-> Questions that couldn't be answered — need follow-up interviews or data
+> Questions that couldn't be answered — need follow-up interviews or data.
+> Priority levels: 🔴 Blocking · 🟡 Important · 🟢 Strategic
 
 ### Immediate Follow-Up Needed (🔴)
 
 | Question | Who Might Know | Why It Matters |
 |----------|----------------|----------------|
-| What would a proper informed consent flow for user-controlled privacy settings look like? | Office of General Counsel | Could unlock richer notifications and reduce privacy friction |
-| What's the specific timeline for backend API improvements that would help mobile performance? | Marcus Johnson (Backend Integration) | Engineering team hitting ceiling of client-side optimizations |
-| How often does manual accessibility testing actually happen vs. should happen? | Priya Sharma (Accessibility Engineering) | Known a11y bugs competing with feature work |
-| What data exists on veteran satisfaction/ease of use beyond app store ratings? | Research/Analytics team | Design team can't prove impact of improvements |
+| What specific API response times are veterans experiencing by feature area? | Marcus Johnson (Backend Integration) | Need baseline data to prioritize performance improvements and set realistic expectations |
+| How often does manual accessibility testing happen currently? | Priya Sharma (Accessibility Engineering) | Critical for understanding accessibility debt and resource planning |
+| What would layered consent proposal need to include for legal approval? | Office of General Counsel | Could significantly improve onboarding experience if achievable |
 
-### Needs Policy/Legal Clarification (🟡)
+### Needs Clarification (🟡)
 
 | Question | Who Might Know | Why It Matters |
 |----------|----------------|----------------|
-| What would it take to get approval for layered consent (summary + full terms)? | Office of General Counsel | Could reduce consent fatigue while maintaining legal protection |
-| Is there appetite for mobile-specific policy guidance to supplement desktop-era regulations? | Dr. Rebecca Okonkwo + Policy leadership | Current policies don't fit mobile usage patterns well |
-| What's the liability exposure for AI/ML features that make benefit recommendations? | Office of General Counsel | Blocking potential helpful features due to unclear risk |
-| Could session timeout be extended with additional security controls (e.g., enhanced biometrics)? | Policy + Security teams | 30-minute timeout disrupts mobile usage patterns |
+| Is there appetite for user research specifically on consent experience? | Dr. Rebecca Okonkwo (Policy SME) | Could provide evidence for policy change proposals |
+| What's the timeline for VADS mobile component improvements? | Alicia Torres (VA.gov Design System Lead) | Affects design capability roadmap and resource planning |
+| How do VBA and VHA coordinate mobile app priorities? | Product leadership | Understanding governance could reduce competing priority tensions |
 
 ### Requires Cross-Team Coordination (🟡)
 
 | Question | Teams Involved | Why It Matters |
 |----------|----------------|----------------|
-| What would it take to restructure navigation based on user mental models vs. API organization? | Design + Engineering + Product | Current structure confusing but changing affects deep linking, analytics, caching |
-| How can we better coordinate VHA vs. VBA feature priorities for limited home screen real estate? | Product + VHA + VBA stakeholders | Competing priorities creating cluttered experience |
-| What's the process for getting mobile-optimized identity verification flows prioritized by ID.me/Login.gov? | Policy + Product + ID.me/Login.gov | Biggest onboarding friction point outside VA's direct control |
+| What would backend API redesign for mobile require? | Engineering, VBA/VHA API teams, Infrastructure | 80% of performance issues stem from backend; need coordinated solution |
+| How can navigation be restructured without breaking existing user patterns? | Design, Engineering, Product, Analytics | Major UX improvement opportunity but high technical complexity |
+| What's the process for proposing user-controlled privacy settings? | Policy, Legal, Design, Engineering | Could address notification usefulness while maintaining privacy |
 
 ---
 
@@ -417,28 +424,27 @@ sequenceDiagram
 
 | Action | Constraint Addressed | Feasibility | Owner |
 |--------|---------------------|-------------|-------|
-| Conduct user research specifically on consent experience to build case for legal changes | Consent fatigue, legal language requirements | ✅ | Research Team |
-| Create accessibility bug zero-out sprint plan with product buy-in | Known a11y issues competing with features | ⚠️ | Engineering + Product |
-| Document and prioritize "aspirational" designs with missing API data requirements | Claims detail limitations, API constraints | ✅ | Design + Product |
-| Establish regular cross-platform accessibility testing schedule | Platform-specific a11y bugs slipping through | ✅ | Engineering |
+| Audit and fix known accessibility bugs in critical flows | Unlabeled buttons, screen reader issues | ✅ | Engineering + Design |
+| Document API response time baselines by feature | Performance expectations, engineering prioritization | ✅ | Engineering |
+| Create mobile-specific error message library | Generic error messages confusing veterans | ✅ | Design + Content |
 
 ### Near-Term Actions (🟡 Medium Priority)
 
 | Action | Constraint Addressed | Feasibility | Owner |
 |--------|---------------------|-------------|-------|
-| Pilot layered consent approach with legal approval for specific low-risk features | Consent screen length, legal requirements | ⚠️ | Policy + Legal + Design |
-| Create mobile-specific VADS component proposal process with faster approval | Design system gaps, component approval delays | ⚠️ | Design System Team |
-| Implement better perceived performance patterns for 10+ second API calls | Backend latency, "slow" user experience | ✅ | Design + Engineering |
-| Establish VHA/VBA coordination process for competing mobile feature priorities | Information architecture tensions | ⚠️ | Product + Stakeholders |
+| Pilot layered consent approach with legal approval | Consent fatigue, onboarding abandonment | ⚠️ | Policy + Legal + Design |
+| Implement feature-specific consent flows | Reduce upfront consent burden | ⚠️ | Policy + Engineering |
+| Create "aspirational design" documentation for API advocacy | Limited claims data, slow backend responses | ✅ | Design + Product |
+| Establish regular accessibility testing schedule | Accessibility regression bugs | ⚠️ | Engineering + Design |
 
 ### Strategic Actions (🟢 Long-Term)
 
 | Action | Constraint Addressed | Feasibility | Owner |
 |--------|---------------------|-------------|-------|
-| Advocate for mobile-first API redesign with VBA/VHA backend teams | 8-12 second response times, mobile usage patterns | ❌ | Engineering + Product |
-| Propose user-controlled privacy settings with proper informed consent framework | Notification limitations, privacy vs. convenience | ❌ | Policy + Legal |
-| Build case for navigation restructure based on user mental models vs. API structure | Navigation confusion, legacy architecture | ❌ | Design + Engineering + Product |
-| Develop comprehensive veteran satisfaction measurement system beyond app store ratings | Inability to prove design impact | ⚠️ | Research + Analytics |
+| Advocate for mobile-optimized backend APIs | 8-12 second response times, data structure mismatches | ❌ | Product + Engineering + VBA/VHA |
+| Redesign navigation based on user mental models | Navigation confusion, feature discoverability | ⚠️ | Design + Engineering + Product |
+| Implement user-controlled privacy settings with proper consent | Notification usefulness vs. privacy | ❌ | Policy + Legal + Design |
+| Establish dedicated mobile design system components | Cross-platform compromises, design consistency | ⚠️ | Design + Engineering |
 
 ---
 
@@ -446,17 +452,18 @@ sequenceDiagram
 
 **Framework:** Stakeholder Research Synthesis for Service Design
 
-**Approach:** Aggregated findings from 3 internal stakeholder interviews (Policy SME, Engineering Lead, Design Lead), organized by constraint type, priority alignment, and backstage process mapping. Cross-referenced insights across technical, design, and policy perspectives to identify systemic patterns and root causes.
+**Approach:** Aggregated findings from 3 internal stakeholder interviews, organized by constraint type, priority alignment, and backstage process mapping. Cross-referenced insights across Policy, Engineering, and Design perspectives to identify systemic patterns and root causes.
 
 **Key Synthesis Methods:**
-- Constraint triangulation (same issues from technical, design, and policy angles)
-- Process mapping with failure mode identification  
+- Constraint triangulation (same issue from technical, design, and policy angles)
+- Process mapping with failure mode identification
+- Design pattern recognition (documenting what works, not just what's broken)
 - Priority alignment analysis (stated priorities vs. user needs)
-- Open question documentation for follow-up research
+- Open question documentation for follow-up
 
 **Data Sources:**
 - Dr. Rebecca Okonkwo, Policy & Compliance SME (55 minutes)
-- Tomás Rivera, Engineering Lead (52 minutes)  
+- Tomás Rivera, Engineering Lead (52 minutes)
 - Jasmine Oyelaran, Design Lead (49 minutes)
 
 ---
@@ -465,16 +472,16 @@ sequenceDiagram
 
 | Name/Role | Team | Focus Area | Priority |
 |-----------|------|------------|----------|
-| Office of General Counsel | Legal | Consent language approval, liability concerns, AI/ML risk assessment | 🔴 |
-| Marcus Johnson | Backend Integration | Specific VBA/VHA API limitations, improvement timelines | 🔴 |
-| VBA Privacy Officer | Benefits Data | Claims data governance, exposure limits, terminology changes | 🔴 |
-| Priya Sharma | Accessibility Engineering | A11y implementation challenges, testing frequency, mobile patterns | 🟡 |
+| Marcus Johnson | Backend Integration | Specific VBA/VHA API limitations and improvement roadmap | 🔴 |
+| Office of General Counsel | Legal | Consent language requirements, liability concerns, approval processes | 🔴 |
+| Priya Sharma | Accessibility Engineering | Implementation challenges, testing frequency, remediation priorities | 🔴 |
+| VBA Privacy Officer | Benefits Data Governance | Claims data exposure limits, inter-agency coordination | 🟡 |
 | Ryan Chen | Content Design | Language constraints, legal terminology, plain language tensions | 🟡 |
-| 508 Compliance Office | Accessibility | Review process, escalation triggers, mobile-specific guidance | 🟡 |
-| ID.me/Login.gov Product Teams | Identity Verification | Mobile optimization roadmap, VA-specific improvements | 🟡 |
-| DevOps Lead | Infrastructure | Deployment constraints, performance infrastructure, monitoring | 🟡 |
+| 508 Compliance Office | Accessibility Review | Review process, escalation triggers, compliance requirements | 🟡 |
+| ID.me/Login.gov Product Teams | Identity Verification | Mobile optimization roadmap, constraint explanations | 🟡 |
+| DevOps Lead | Infrastructure | Deployment constraints, performance infrastructure limitations | 🟢 |
 | Alicia Torres | VA.gov Design System | Mobile pattern gaps, component approval process | 🟢 |
-| Dr. Keisha Williams | Center for Innovation | Cognitive accessibility research, veteran-specific needs | 🟢 |
+| App Beta Program Veterans | User Community | Longitudinal perspective on app changes, detailed feedback patterns | 🟢 |
 
 ---
 
