@@ -4,7 +4,7 @@
 
 | Total | Confirmed | Pending | Completed |
 |:-----:|:---------:|:-------:|:---------:|
-| 1 | 1 | 0 | 0 |
+| 2 | 2 | 0 | 0 |
 
 **Last Updated:** February 10, 2026 by U01SC2TNYKU
 
@@ -14,6 +14,7 @@
 
 | ID | Alias | Recruited Via | Scheduled | Status | Notes & Accommodations |
 |----|-------|---------------|-----------|--------|------------------------|
+| 8 | PT002 | email_outreach | 2026-02-17 14:00 | confirmed | Uses VoiceOver on iPhone. Marine veteran, 12 years service. Prefers longer sessions to navigate complex flows with screen reader. High technical proficiency with assistive technology. |
 | 7 | PT001 | email_outreach | 2026-02-16 11:00 | confirmed |  |
 
 ---
@@ -22,9 +23,9 @@
 
 | Recruitment Method | Count | Percentage |
 |--------------------|-------|------------|
-| 📧 Email Outreach | 1 | 100% |
+| 📧 Email Outreach | 2 | 100% |
 
-Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
+Recruitment effectiveness: 100% conversion rate (2 confirmed of 2 recruited)
 
 ---
 
@@ -55,25 +56,29 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 
 | Category | Count | Percentage |
 |----------|-------|------------|
-| Asian | 1 | 100% |
+| black | 1 | 50% |
+| Asian | 1 | 50% |
 
 **Age Range:**
 
 | Range | Count | Percentage |
 |-------|-------|------------|
-| 35-44 | 1 | 100% |
+| 25-34 | 1 | 50% |
+| 35-44 | 1 | 50% |
 
 **Education Level:**
 
 | Level | Count | Percentage |
 |-------|-------|------------|
-| bachelor | 1 | 100% |
+| master | 1 | 50% |
+| bachelor | 1 | 50% |
 
 **Location Type:**
 
 | Type | Count | Percentage |
 |------|-------|------------|
-| Suburban | 1 | 100% |
+| Urban | 1 | 50% |
+| Suburban | 1 | 50% |
 
 </details>
 
@@ -81,6 +86,7 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 
 ## ♿ Accessibility & Accommodations
 
+- **8:** Uses VoiceOver on iPhone. Marine veteran, 12 years service. Prefers longer sessions to navigate complex flows with screen reader. High technical proficiency with assistive technology.
 
 **Preparation Checklist:**
 - [ ] Interpreter services arranged (if needed)
@@ -94,7 +100,7 @@ Recruitment effectiveness: 100% conversion rate (1 confirmed of 1 recruited)
 ## 📌 Next Steps
 
 > [!NOTE]
-> Continue recruiting to reach minimum of 3 participants (2 more needed)
+> Continue recruiting to reach minimum of 3 participants (1 more needed)
 
 ---
 
