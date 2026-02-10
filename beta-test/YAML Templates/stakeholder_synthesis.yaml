@@ -2,7 +2,7 @@ id: stakeholder_synthesis
 name: synthesize_stakeholder_interviews
 
 label: 🏛️ Stakeholder Synthesis
-version: "v3.1"
+version: "v3.2"
 
 description: >
   Synthesize findings from internal stakeholder interviews into comprehensive,
@@ -11,8 +11,9 @@ description: >
   visual sequence diagrams for process maps with failure modes suitable for 
   service design work. Renders as interactive diagrams on GitHub.
   
-  v3.1: Backstage processes now output as Mermaid sequence diagrams instead
-  of numbered lists. Renders visually on GitHub.
+  v3.2: Added high-level service overview diagram, fixed truncation on complex
+  processes, reduced redundancy between process maps and blueprint section,
+  added design pattern recognition, aligned priority indicators across sections.
 
 author: Qori R&D
 created: 2026-01-08
@@ -230,7 +231,42 @@ ai_generation_tasks:
       Use "Engineering Lead," "Design Lead," "Policy SME" — not personal names
       
       RULE 4: INCLUDE ALL PROCESSES
-      Document EVERY major process mentioned in the interviews
+      Document EVERY major process mentioned in the interviews.
+      If the interviews reference 4+ processes, prioritize by user impact and
+      ensure every diagram is COMPLETE before starting the next one.
+      
+      RULE 5: COMPLETE EVERY DIAGRAM — NEVER TRUNCATE
+      Each Mermaid sequence diagram MUST:
+      - End with a closing ``` (triple backtick)
+      - Be followed by its "Where It Breaks Down" table
+      - Be followed by its "Systems Involved" line
+      If you are running low on output space, SIMPLIFY the remaining diagrams
+      (fewer steps, combine system hops) rather than leaving ANY diagram
+      incomplete. A complete 6-step diagram is better than a truncated 15-step one.
+      
+      RULE 6: IDENTIFY POSITIVE DESIGN PATTERNS
+      When stakeholders describe solutions that ARE working well (e.g., optimistic
+      UI, background refresh, caching, progressive loading), call these out in a
+      "✅ Working Pattern" callout after the failure table. Format:
+      
+      > ✅ **Working Pattern — [Pattern Name]:** [Brief description of what the
+      > team is doing well and why it works, with stakeholder attribution]
+      
+      This ensures the synthesis captures what's succeeding, not just what's broken.
+      
+      RULE 7: HIGH-LEVEL OVERVIEW DIAGRAM
+      BEFORE the individual process sections, generate a single Mermaid flowchart
+      that maps the veteran's journey across all backstage processes. This gives
+      readers an orientation map before diving into detailed sequences. Format:
+      
+      ```mermaid
+      flowchart LR
+          A[Touchpoint 1] -->|dependency| B[Touchpoint 2]
+          B -->|dependency| C[Touchpoint 3]
+      ```
+      
+      Keep this overview to ONE level of detail — touchpoints and the systems
+      connecting them. The detailed sequence diagrams below handle the rest.
       
       ============================================================
       INPUT DATA
@@ -259,6 +295,43 @@ ai_generation_tasks:
       ---
       
       ## ⚙️ Backstage Processes
+      
+      > This section maps the invisible systems behind each veteran-facing
+      > touchpoint. The overview diagram below shows how processes connect;
+      > detailed sequence diagrams follow for each.
+      
+      ### System Overview
+      
+      ```mermaid
+      flowchart LR
+          subgraph Veteran Touchpoints
+              A[Download & Onboard]
+              B[Check Claims]
+              C[View Health Records]
+              D[Refill Prescriptions]
+          end
+          
+          A -->|"ID.me / Login.gov"| AUTH[Auth Services]
+          AUTH -->|"Token exchange"| B
+          AUTH -->|"Session mgmt"| C
+          AUTH -->|"Session mgmt"| D
+          B -->|"4-5 system hops"| VBA[VBA Backend Systems]
+          C -->|"EHR query"| VHA[VHA Health Systems]
+          D -->|"Rx routing"| PHARM[VA Pharmacy Systems]
+          
+          style A fill:#fff3e0,stroke:#e65100
+          style B fill:#e3f2fd,stroke:#1565c0
+          style C fill:#e8f5e9,stroke:#2e7d32
+          style D fill:#f3e5f5,stroke:#7b1fa2
+      ```
+      
+      > ☝️ **How to read this section:** The overview above shows the veteran
+      > journey and system dependencies at a glance. Each process below expands
+      > into a detailed sequence diagram showing every system hop, failure point,
+      > and delay. Adapt the overview to match the ACTUAL processes found in the
+      > interview data — the example above is illustrative.
+      
+      ---
       
       ### [First Major Process Name]
       
@@ -292,6 +365,10 @@ ai_generation_tasks:
       | Failure Point | What Happens | User Experience | Frequency/Severity |
       |---------------|--------------|-----------------|-------------------|
       | [Specific failure] | [Technical explanation] | [What user sees/feels] | [Quantify if possible] |
+      
+      > ✅ **Working Pattern — [Name]:** [If stakeholders described a successful
+      > mitigation for this process, document it here. If none mentioned, omit
+      > this callout entirely — don't fabricate patterns.]
       
       **Systems Involved:** [List all systems, APIs, databases, vendors]
       
@@ -332,7 +409,10 @@ ai_generation_tasks:
       - Use -->> (dashed arrows) for responses and failure paths
       - Use ⚠️ emoji in failure/risk steps
       - Keep diagrams to 8-15 steps max — split complex processes into sub-diagrams if needed
-      - Every diagram must be valid Mermaid syntax — no unclosed blocks
+      - Every diagram MUST be valid Mermaid syntax — no unclosed blocks
+      - EVERY diagram MUST end with closing ``` followed by its failure table
+      - If running low on space: simplify remaining diagrams, never truncate them
+      - Include ✅ Working Pattern callouts only when stakeholders explicitly described a successful approach — do NOT fabricate patterns
       
       [END OF SECTION 4-5 — Do not generate beyond this point]
 
@@ -351,10 +431,26 @@ ai_generation_tasks:
       RULES
       ============================================================
       
-      RULE 1: SERVICE BLUEPRINT FOCUS
-      Map frontstage moments to backstage dependencies
-      Identify "line of visibility" gaps
-      Document manual support processes
+      RULE 1: SERVICE BLUEPRINT FOCUS — NO REDUNDANCY
+      The backstage process maps (Task 2) already document detailed system
+      interactions and failure points. This section should ADD NEW INSIGHT,
+      not repeat what's already documented. Specifically:
+      
+      - "Frontstage Moments That Depend on Fragile Backstage": Focus on the
+        RELATIONSHIP between what users see and what's invisible — not the
+        technical details (those are in the sequence diagrams). Reference the
+        process diagrams: "See [Process Name] flow above" where helpful.
+      
+      - "Support Processes Currently Manual": Document processes that are NOT
+        covered in the sequence diagrams — the organizational/operational
+        processes that support the technical systems (e.g., how API change
+        requests get filed, how accessibility bugs get triaged, how releases
+        get coordinated across platforms).
+      
+      - "Line of Visibility Gaps": This is the unique value of this section.
+        Focus on the PERCEPTION gaps — what users believe vs. what's actually
+        happening. This should read as insights for design, not as a re-summary
+        of the backstage processes.
       
       RULE 2: ACTIONABLE RESEARCH QUESTIONS
       For each question, include:
@@ -362,10 +458,11 @@ ai_generation_tasks:
       - Specific research question
       - Recommended method
       
-      RULE 3: PRIORITIZE QUESTIONS
-      - 🔴 High Priority: Critical to understand before design decisions
-      - 🟡 Medium Priority: Important but not blocking
-      - 🟢 Validation: Test stakeholder assumptions
+      RULE 3: CONSISTENT PRIORITY INDICATORS
+      Use the SAME priority framework across all sections of this document:
+      - 🔴 = Blocking or critical — must address before design decisions
+      - 🟡 = Important but not blocking — address during study
+      - 🟢 = Validation — test assumptions, confirm direction
       
       ============================================================
       INPUT DATA
@@ -383,45 +480,63 @@ ai_generation_tasks:
       
       ## 🎯 Service Blueprint Implications
       
-      > Key inputs for backstage/support layer mapping
+      > Organizational and perception-layer insights that complement the
+      > detailed process maps in Backstage Processes above.
       
-      ### Frontstage Moments That Depend on Fragile Backstage
+      ### Frontstage ↔ Backstage Disconnect
       
-      | Frontstage Moment | Backstage Dependency | Failure Mode |
-      |-------------------|----------------------|--------------|
-      | [What user sees/does] | [What must work behind scenes] | [How it fails] |
+      > Where the user's mental model diverges from the system reality.
+      > For detailed system flows, see the sequence diagrams in Backstage
+      > Processes above.
       
-      ### Support Processes Currently Manual
+      | What the User Experiences | What's Actually Happening | Design Implication |
+      |---------------------------|---------------------------|-------------------|
+      | [User-facing moment] | [Backstage reality — brief, reference diagram if applicable] | [What this means for design decisions] |
       
-      | Process | Current State | Risk |
-      |---------|---------------|------|
-      | [Manual process] | [How it's handled now] | [What could go wrong] |
+      ### Support Processes Outside the Product
+      
+      > Organizational processes that keep the product running but aren't
+      > captured in the technical system flows above.
+      
+      | Process | Current State | Risk | Affects |
+      |---------|---------------|------|---------|
+      | [Operational/org process] | [How it works now] | [What could go wrong] | [Which user-facing experience] |
       
       ### Line of Visibility Gaps
       
-      | Users See | Users Don't See | Creates Confusion When... |
-      |-----------|-----------------|---------------------------|
-      | [Frontend reality] | [Backend reality] | [Mismatch scenario] |
+      > The most impactful gaps between what users see and what they
+      > don't — written as design insights, not technical summaries.
+      
+      | Users Believe | Reality | Opportunity |
+      |---------------|---------|-------------|
+      | [User's mental model] | [Actual system behavior] | [Design opportunity to bridge the gap] |
       
       ---
       
       ## 🔍 Questions for User Research
       
-      > Based on stakeholder input, explore these with participants
+      > Based on stakeholder input, explore these with participants.
+      > Priority levels: 🔴 Blocking · 🟡 Important · 🟢 Validation
       
-      ### High Priority (🔴)
+      ### Blocking Questions (🔴)
+      
+      > Must answer before making design decisions
       
       | Stakeholder Insight | Research Question | Method |
       |---------------------|-------------------|--------|
       | [Specific insight from interviews] | [What to ask/observe] | [Interview/usability test/etc.] |
       
-      ### Medium Priority (🟡)
+      ### Important Questions (🟡)
+      
+      > Address during study — informs but doesn't block
       
       | Stakeholder Insight | Research Question | Method |
       |---------------------|-------------------|--------|
       | [Insight] | [Question] | [Method] |
       
-      ### Validation Questions (🟢)
+      ### Assumption Validation (🟢)
+      
+      > Test stakeholder assumptions with real users
       
       | Stakeholder Assumption | Validate With Users |
       |------------------------|---------------------|
@@ -460,6 +575,12 @@ ai_generation_tasks:
       RULE 3: DOCUMENT RECOMMENDED CONTACTS
       Stakeholders often mention colleagues who know more — capture these
       
+      RULE 4: CONSISTENT PRIORITY INDICATORS
+      Use the SAME priority framework across all sections of this document:
+      - 🔴 = Blocking or critical — must address immediately
+      - 🟡 = Important — needs attention but not blocking
+      - 🟢 = Strategic — long-term or low-urgency
+      
       ============================================================
       INPUT DATA
       ============================================================
@@ -476,7 +597,8 @@ ai_generation_tasks:
       
       ## ❓ Open Questions
       
-      > Questions that couldn't be answered — need follow-up interviews or data
+      > Questions that couldn't be answered — need follow-up interviews or data.
+      > Priority levels: 🔴 Blocking · 🟡 Important · 🟢 Strategic
       
       ### Immediate Follow-Up Needed (🔴)
       
@@ -484,11 +606,11 @@ ai_generation_tasks:
       |----------|----------------|----------------|
       | [Unanswered question] | [Specific person/role if mentioned] | [Impact on research/design] |
       
-      ### Needs Policy/Legal Clarification (🟡)
+      ### Needs Clarification (🟡)
       
       | Question | Who Might Know | Why It Matters |
       |----------|----------------|----------------|
-      | [Policy question] | [Role] | [Impact] |
+      | [Policy/legal/technical question] | [Role] | [Impact] |
       
       ### Requires Cross-Team Coordination (🟡)
       
@@ -529,6 +651,7 @@ ai_generation_tasks:
       **Key Synthesis Methods:**
       - Constraint triangulation (same issue from technical, design, and policy angles)
       - Process mapping with failure mode identification
+      - Design pattern recognition (documenting what works, not just what's broken)
       - Priority alignment analysis (stated priorities vs. user needs)
       - Open question documentation for follow-up
       
@@ -568,6 +691,7 @@ processing_workflow:
   - execute_ai_generation_tasks  # Runs all 4 tasks sequentially
   - concatenate_task_outputs     # Combines sections 1-4 into single document
   - validate_all_stakeholders_represented
+  - validate_all_diagrams_complete
   - populate_template
   - save_to_outputs
 
@@ -622,12 +746,21 @@ validation_rules:
   - rule: "process_detail"
     description: "Process maps must include Mermaid sequence diagrams with failure points"
     check: "backstage processes section contains 'sequenceDiagram' and 'Where It Breaks Down'"
+  - rule: "diagram_completeness"
+    description: "Every Mermaid code block must be properly closed"
+    check: "count of opening ``` equals count of closing ``` in backstage section"
+  - rule: "overview_diagram_present"
+    description: "High-level flowchart must appear before individual process diagrams"
+    check: "backstage processes section contains 'flowchart' before first 'sequenceDiagram'"
   - rule: "quantification"
     description: "Include numbers and metrics where available"
     check: "output contains numeric data from input"
   - rule: "all_sections_present"
     description: "All 4 task outputs must be present"
     check: "output contains Overview, Constraints, Priorities, Processes, Blueprint, Questions, Recommendations"
+  - rule: "priority_indicator_consistency"
+    description: "🔴🟡🟢 indicators must use the same meaning across all sections"
+    check: "priority indicators follow Blocking/Important/Strategic framework throughout"
 
 # Slack notifications
 notify:
@@ -643,6 +776,24 @@ auto_variables:
   github_file_link: "generate_github_link(selected_study, current_date)"
 
 notes: |
+  v3.2 Update — Overview Diagrams, Anti-Truncation, Pattern Recognition:
+  - Added high-level Mermaid flowchart at top of Backstage Processes as
+    orientation map before detailed sequence diagrams
+  - Fixed truncation: RULE 5 instructs AI to simplify remaining diagrams
+    rather than truncate — a complete 6-step diagram beats a cut-off 15-step one
+  - Added RULE 6: Working Pattern recognition — captures what's succeeding,
+    not just what's broken (e.g., optimistic UI, background refresh)
+  - Reduced redundancy: Service Blueprint section now explicitly avoids
+    re-describing process details already in sequence diagrams. Three sub-sections
+    refocused: "Frontstage ↔ Backstage Disconnect" (perception gaps),
+    "Support Processes Outside the Product" (org-level, not technical),
+    "Line of Visibility Gaps" (design insights with Opportunity column)
+  - Aligned priority indicators: 🔴🟡🟢 now mean Blocking/Important/Strategic
+    consistently across Open Questions, Research Questions, and Recommendations
+  - Added diagram_completeness and overview_diagram_present validation rules
+  - Added validate_all_diagrams_complete to processing workflow
+  - Added "Design pattern recognition" to Methodology synthesis methods
+  
   v3.1 Update — Mermaid Sequence Diagrams for Backstage Processes:
   - Replaced numbered frontend/backend step lists with Mermaid sequence diagrams
   - Processes now render as interactive visual flows on GitHub
@@ -675,6 +826,13 @@ notes: |
   - Splitting into focused tasks ensures complete output for each section
   - Each task has clear boundaries (Do not generate beyond this point)
   
+  v3.2 ANTI-TRUNCATION STRATEGY:
+  - RULE 5 in Task 2 tells the AI to simplify rather than truncate
+  - "A complete 6-step diagram is better than a truncated 15-step one"
+  - If 4+ processes found, the AI budgets output space across all of them
+  - diagram_completeness validation catches unclosed Mermaid blocks
+  - Processing workflow now includes validate_all_diagrams_complete step
+  
   WHAT THIS SYNTHESIS FEEDS INTO:
   - Service Blueprint (backstage layer with failure modes)
   - Discussion guide creation (informed by stakeholder input)
@@ -684,7 +842,9 @@ notes: |
 output_use: |
   Synthesize internal stakeholder interviews into comprehensive, service 
   blueprint-ready documentation. Uses 4 sequential AI tasks to ensure 
-  complete output without truncation. Produces Mermaid sequence diagrams 
-  for backstage process flows with failure modes, constraint triangulation 
-  across stakeholder perspectives, and quantified insights suitable for 
-  service design work. Process diagrams render visually on GitHub.
+  complete output without truncation. Produces a high-level service overview
+  flowchart plus detailed Mermaid sequence diagrams for backstage process 
+  flows with failure modes and working pattern recognition. Features 
+  constraint triangulation across stakeholder perspectives, quantified 
+  insights, and consistent priority indicators (🔴🟡🟢) across all sections.
+  Process diagrams render visually on GitHub.
