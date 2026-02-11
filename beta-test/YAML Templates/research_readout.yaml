@@ -17,7 +17,7 @@ input_processing: summarize_if_long
 llm_config:
   model: "claude-sonnet-4"
   temperature: 0.3
-  max_tokens: 12000  
+  max_tokens: 16000  
 
 input_variables:
   - research_folder_path
