@@ -141,6 +141,26 @@ ai_generation_tasks:
       If {{study_name}} or date is blank, infer from content.
       
       ============================================================
+      OUTPUT PRIORITIES - READ BEFORE WRITING
+      ============================================================
+      
+      ⚠️ CRITICAL: You MUST complete ALL sections of this report 
+      through the final Qori attribution line. Do not stop early.
+      
+      To ensure completion:
+      - Limit Detailed Findings to the TOP 5 most critical/high 
+        severity findings only. Use the full table+quote format 
+        for these 5.
+      - Any remaining lower-severity findings should appear ONLY 
+        in the "Findings at a Glance" summary table, not as 
+        detailed finding blocks.
+      - Keep "What We Observed" to 2-3 sentences max per finding.
+      - Use 1-2 quotes per finding, not 3+.
+      - All sections after Detailed Findings (What's Working Well, 
+        Participant Overview, Methodology, Recommended Actions, 
+        Appendix) are REQUIRED. Do not skip them.
+      
+      ============================================================
       OUTPUT FORMAT - PROFESSIONAL GITHUB STYLING
       ============================================================
       
@@ -243,6 +263,8 @@ ai_generation_tasks:
       
       ## 🔍 Detailed Findings
       
+      <!-- MAX 5 detailed findings. Additional findings go in Findings at a Glance only. -->
+      
       ### Finding 1: [Specific title from data]
       
       <table>
@@ -306,7 +328,7 @@ ai_generation_tasks:
       
       #### What We Observed
       
-      [2-3 sentence description grounded in source data. Be specific about the behavior, context, and consequence.]
+      [2-3 sentence description grounded in source data.]
       
       #### Supporting Evidence
       
@@ -349,7 +371,7 @@ ai_generation_tasks:
       
       ---
       
-      [Repeat this same Finding format for all remaining findings from source data.]
+      [Continue with Findings 3-5 using same format. STOP at 5 findings maximum, then proceed to "What's Working Well".]
       
       ---
       
