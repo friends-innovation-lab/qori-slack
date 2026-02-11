@@ -18,15 +18,15 @@
 ## 📌 Executive Summary
 
 > [!IMPORTANT]
-> **Bottom Line:** Critical accessibility violations and navigation inefficiencies are blocking Veterans from completing essential health and benefits tasks, requiring immediate fixes to button labeling and information architecture.
+> **Bottom Line:** Critical accessibility violations and navigation inefficiencies in the VA mobile app are preventing veterans from completing essential health and benefits tasks, requiring immediate fixes to button labeling and information architecture.
 
 ### Key Takeaways
 
 | Priority | Finding | Impact | Action Required |
 |:--------:|:--------|:-------|:----------------|
-| 🔴 | Unlabeled buttons prevent task completion for screen reader users | Complete accessibility barriers for disabled Veterans | Audit and fix all button accessibility labels |
-| 🟡 | Claims status buried in navigation despite daily usage | Daily friction for power users checking critical information | Elevate claims status to home screen |
-| 🟢 | Logical menu structure and prescription management work well | Veterans can navigate efficiently when labels are clear | Maintain and expand successful patterns |
+| 🔴 | Unlabeled buttons block screen reader users from task completion | Veterans with disabilities cannot access critical VA services | Audit and fix all button accessibility labels |
+| 🟡 | Claims status buried under multiple navigation levels despite daily usage | Power users experience friction accessing most-needed information | Elevate claims status to home screen |
+| 🟢 | Logical main menu structure aligns with veteran mental models | Veterans can navigate efficiently when accessibility barriers are removed | Maintain Health/Benefits/Payments/Profile organization |
 
 ---
 
@@ -34,21 +34,21 @@
 
 ### Why We Conducted This Research
 
-This research informed the VA product team's decision on which navigation improvements to prioritize for the mobile app redesign in Q1 2026, specifically focusing on main menu restructuring, search functionality enhancements, and information hierarchy changes to address the 45% task abandonment rate and improve user satisfaction from 4.2/10 to above 7/10.
+This research informed the VA product team's decision on which navigation improvements to prioritize for the mobile app redesign in Q1 2026, specifically focusing on main menu restructuring, search functionality enhancements, and information hierarchy changes. The findings help Veterans complete health and benefits tasks more efficiently by creating clearer pathways to essential services like appointment scheduling, prescription refills, and disability claim tracking.
 
 ### Research Objectives
 
-- **Identify** specific navigation and information architecture issues that contribute to task abandonment
-- **Understand** veteran mental models for organizing health and benefits services  
+- **Identify** specific navigation and information architecture issues that contribute to the 45% task abandonment rate
+- **Understand** veteran mental models for organizing health and benefits services within the mobile app
 - **Evaluate** current task completion flows across health and benefits features
-- **Prioritize** actionable design solutions for navigation improvements
+- **Prioritize** actionable design solutions to improve user satisfaction from 4.2/10 to above 7/10
 
 ### Research Questions
 
 1. What navigation pain points cause users to abandon critical tasks like appointment scheduling and disability claim status checks?
 2. How do veterans expect to navigate health and benefits tasks compared to other government and healthcare mobile applications?
 3. Which proposed information architecture improvements would reduce task completion time and increase success rates?
-4. What are the top 5 navigation issues that directly impact veteran satisfaction with the mobile app?
+4. What are the top 5 navigation barriers preventing efficient access to frequently used veteran services?
 
 ---
 
@@ -61,10 +61,10 @@ This research informed the VA product team's decision on which navigation improv
 ### 🔴 Critical Issues
 **4 findings**
 
-- Unlabeled buttons block screen reader users
-- Claims status requires excessive navigation
-- Search functionality completely fails
-- Text scaling inconsistently implemented
+- Unlabeled buttons block screen reader navigation
+- Claims status requires excessive navigation taps
+- Search functionality fails for common queries
+- Session timeouts disrupt active task completion
 
 </td>
 <td width="33%" valign="top">
@@ -73,9 +73,9 @@ This research informed the VA product team's decision on which navigation improv
 **4 findings**
 
 - Touch targets too small for motor accessibility
-- Session timeouts disrupt active tasks
-- Technical jargon confuses users
-- Important buttons hidden at bottom of screens
+- Technical jargon confuses claim status understanding
+- Inconsistent text scaling across UI elements
+- Interface elements hidden at bottom of screens
 
 </td>
 <td width="33%" valign="top">
@@ -83,9 +83,9 @@ This research informed the VA product team's decision on which navigation improv
 ### 🟢 Working Well
 **3 findings**
 
-- Logical main menu structure
-- Prescription management section
-- Home screen appointment display
+- Logical main menu structure (Health/Benefits/Payments/Profile)
+- Home screen appointments provide immediate access
+- Prescription management section properly labeled
 
 </td>
 </tr>
@@ -95,7 +95,7 @@ This research informed the VA product team's decision on which navigation improv
 
 ## 🔍 Detailed Findings
 
-### Finding 1: Unlabeled Buttons Create Complete Accessibility Barriers
+### Finding 1: Unlabeled Buttons Create Critical Accessibility Barriers
 
 <table>
 <tr>
@@ -103,7 +103,7 @@ This research informed the VA product team's decision on which navigation improv
 
 #### What We Observed
 
-Multiple buttons throughout the interface were announced only as "Button" by VoiceOver, providing no indication of their function or purpose. This prevented the screen reader user from completing basic tasks and created significant frustration during navigation.
+Multiple buttons throughout the interface were announced only as "Button" by VoiceOver, providing no indication of their function or purpose. This prevented the screen reader user from completing tasks efficiently and created significant accessibility barriers for navigation.
 
 #### Supporting Evidence
 
@@ -113,7 +113,7 @@ Multiple buttons throughout the interface were announced only as "Button" by Voi
 
 > "I shouldn't have to guess what buttons do. That's basic accessibility."
 > 
-> — **PT001** *Expressing frustration with unlabeled interface elements*
+> — **PT001**
 
 </td>
 <td width="30%" valign="top">
@@ -138,11 +138,11 @@ PT001
 <details>
 <summary><strong>💡 Recommendation</strong></summary>
 
-**Suggested Action:** Conduct comprehensive audit of all buttons and interactive elements to ensure proper accessibility labels are implemented
+**Suggested Action:** Conduct comprehensive audit of all buttons and implement descriptive accessibility labels
 
-**Rationale:** This is a fundamental accessibility requirement that blocks disabled Veterans from using the app
+**Rationale:** Screen reader users rely entirely on proper labeling to navigate interfaces, and unlabeled buttons create complete task blockers
 
-**Owner:** Development Team with Accessibility Lead
+**Owner:** UX/Accessibility Team
 
 **Effort Estimate:** Medium
 
@@ -150,7 +150,7 @@ PT001
 
 ---
 
-### Finding 2: Claims Status Buried Despite Daily Usage Needs
+### Finding 2: Claims Status Buried Despite Daily Usage Patterns
 
 <table>
 <tr>
@@ -158,7 +158,7 @@ PT001
 
 #### What We Observed
 
-The participant who checks claims status daily had to navigate through multiple menu levels and tap 5 times to reach this critical information. This creates unnecessary friction for one of the most frequently used features by Veterans with pending disability claims.
+The participant who checks claims daily had to navigate through multiple menu levels and tap 5 times to reach status information. This creates unnecessary friction for one of the most frequently accessed features by veterans with pending disability claims.
 
 #### Supporting Evidence
 
@@ -168,7 +168,7 @@ The participant who checks claims status daily had to navigate through multiple 
 
 > "I had to tap like five times to get to my claim status."
 > 
-> — **PT002** *Describing navigation inefficiency*
+> — **PT002**
 
 </td>
 <td width="30%" valign="top">
@@ -193,9 +193,9 @@ PT002
 <details>
 <summary><strong>💡 Recommendation</strong></summary>
 
-**Suggested Action:** Add claims status widget to customizable home screen for quick access
+**Suggested Action:** Add claims status widget to customizable home screen
 
-**Rationale:** Daily usage patterns indicate this should be immediately accessible, not buried in navigation
+**Rationale:** Daily usage patterns indicate this should be immediately accessible rather than buried in navigation hierarchy
 
 **Owner:** Product Team
 
@@ -205,7 +205,7 @@ PT002
 
 ---
 
-### Finding 3: Search Functionality Completely Fails for Common Queries
+### Finding 3: Search Functionality Fails for Common Queries
 
 <table>
 <tr>
@@ -219,14 +219,14 @@ The search feature failed to return useful results for common queries like "clai
 
 > "The search doesn't find what I'm looking for. I typed 'claim' and got nothing useful."
 > 
-> — **PT002** *Attempting to find claims information via search*
+> — **PT002**
 
 </td>
 <td width="30%" valign="top">
 
 **Severity**
 
-`🔴 CRITICAL`
+`🟡 HIGH`
 
 **Frequency**
 
@@ -244,11 +244,11 @@ PT002
 <details>
 <summary><strong>💡 Recommendation</strong></summary>
 
-**Suggested Action:** Redesign search to include contextual results for common VA terms and services
+**Suggested Action:** Redesign search to include contextual results for common veteran terms
 
-**Rationale:** Search should be a reliable fallback when navigation fails, not another dead end
+**Rationale:** Search should surface relevant results for basic queries that veterans commonly use
 
-**Owner:** Development Team
+**Owner:** Engineering Team
 
 **Effort Estimate:** High
 
@@ -256,7 +256,7 @@ PT002
 
 ---
 
-### Finding 4: Inconsistent Text Scaling Undermines Accessibility Settings
+### Finding 4: Session Timeouts Disrupt Active Task Completion
 
 <table>
 <tr>
@@ -264,17 +264,13 @@ PT002
 
 #### What We Observed
 
-Despite having large text settings enabled, some UI elements didn't scale properly, including buttons, icons, and input fields. This forced the participant to strain to read content even with accessibility features activated.
+Session timeout occurred twice during the session, with the second instance causing loss of a secure message draft that had to be restarted. This creates significant frustration and task abandonment for users actively engaged with the application.
 
 #### Supporting Evidence
 
-> "Text is still too small in some places even with the large text setting."
+> "Why does this keep logging me out? I was just using it an hour ago."
 > 
-> — **PT003** *Navy veteran with vision decline*
-
-> "The big text option is helpful. I can actually read this."
-> 
-> — **PT003** *Noting when text scaling worked properly*
+> — **PT003** *Navy veteran experiencing session timeout*
 
 </td>
 <td width="30%" valign="top">
@@ -299,11 +295,11 @@ PT003
 <details>
 <summary><strong>💡 Recommendation</strong></summary>
 
-**Suggested Action:** Audit and fix text scaling implementation across all UI components
+**Suggested Action:** Extend session timeout for active users or implement draft saving
 
-**Rationale:** Inconsistent accessibility features reduce their effectiveness and create user frustration
+**Rationale:** Users actively engaging with the app should not lose work due to aggressive timeout policies
 
-**Owner:** Development Team
+**Owner:** Engineering Team
 
 **Effort Estimate:** Medium
 
@@ -311,7 +307,7 @@ PT003
 
 ---
 
-### Finding 5: Session Timeouts Disrupt Active Task Completion
+### Finding 5: Touch Targets Too Small for Motor Accessibility
 
 <table>
 <tr>
@@ -319,13 +315,13 @@ PT003
 
 #### What We Observed
 
-Session timeout occurred twice during the session, with the second instance causing loss of a secure message draft that had to be restarted. This created significant frustration and forced re-authentication during active use.
+The participant with age-related motor control difficulties experienced 3 miss-taps during the session and moved slowly and deliberately when attempting to tap buttons due to their small size. This creates physical strain and reduces confidence in navigation.
 
 #### Supporting Evidence
 
-> "Why does this keep logging me out? I was just using it an hour ago."
+> "I need bigger buttons. These are hard to tap with my fingers."
 > 
-> — **PT003** *Expressing frustration with session management*
+> — **PT003** *Navy veteran with motor accessibility needs*
 
 </td>
 <td width="30%" valign="top">
@@ -350,11 +346,11 @@ PT003
 <details>
 <summary><strong>💡 Recommendation</strong></summary>
 
-**Suggested Action:** Extend session timeout for active users or implement draft saving functionality
+**Suggested Action:** Increase minimum touch target sizes to meet accessibility guidelines
 
-**Rationale:** Session interruptions during active use create unnecessary friction and data loss
+**Rationale:** Larger touch targets accommodate users with motor difficulties and improve overall usability
 
-**Owner:** Development Team
+**Owner:** UX Team
 
 **Effort Estimate:** Medium
 
@@ -370,8 +366,8 @@ PT003
 | Positive Finding | Evidence | Participant(s) |
 |:-----------------|:---------|:---------------|
 | **Logical Main Menu Structure** | "The main menu structure makes sense - Health, Benefits, Payments, Profile. That's logical." | PT001 |
-| **Prescription Management Section** | "This section actually works pretty well - I can understand what each section contains." | PT001 |
 | **Home Screen Appointments** | "I like that my appointments are right on the home screen. That's what I check most." | PT002 |
+| **Prescription Management Section** | "This section actually works pretty well - I can understand what each section contains." | PT001 |
 
 ---
 
@@ -379,9 +375,9 @@ PT003
 
 | ID | Context | Key Contribution | Notable Quotes |
 |:---|:--------|:-----------------|:---------------|
-| **PT001** | Marine veteran using VoiceOver screen reader | Identified critical accessibility violations | "Every button needs a proper label. I shouldn't have to guess what things do." |
-| **PT002** | Army veteran, daily app user with pending claim | Highlighted navigation inefficiencies for power users | "I wish I could just have claims on my home screen." |
-| **PT003** | Navy veteran with vision decline and motor difficulties | Revealed accessibility implementation gaps | "I need bigger buttons. These are hard to tap with my fingers." |
+| **PT001** | Marine veteran with VoiceOver, expert screen reader user | Highlighted critical accessibility violations blocking task completion | "Every button needs a proper label. I shouldn't have to guess what things do." |
+| **PT002** | Army veteran, daily app user with pending disability claim | Revealed navigation friction for power users and search failures | "I wish I could just have claims on my home screen." |
+| **PT003** | Navy veteran with age-related vision and motor accessibility needs | Demonstrated impact of inconsistent accessibility implementation | "Text is still too small in some places even with the large text setting." |
 
 <details>
 <summary><strong>📋 Sample Characteristics</strong></summary>
@@ -390,11 +386,11 @@ PT003
 |:---------------|:-------------|
 | Total Participants | 3 |
 | Service Branch | Marine (1), Army (1), Navy (1) |
-| Assistive Technology Users | 1 of 3 (33%) |
-| Daily App Users | 1 of 3 (33%) |
+| Assistive Technology Users | 1 (VoiceOver), 1 (Large Text/Bold Text) |
+| App Usage Patterns | Daily (1), Primary tasks focused (2) |
 
 > [!NOTE]
-> Small sample size limits generalizability, but findings reveal critical accessibility and navigation issues that likely affect broader veteran population.
+> Small sample size limits generalizability, but findings represent critical accessibility and navigation issues that affect veteran access to essential services.
 
 </details>
 
@@ -404,7 +400,7 @@ PT003
 
 | Aspect | Details |
 |:-------|:--------|
-| **Research Type** | Usability Testing with Card Sorting and Competitive Analysis |
+| **Research Type** | Usability Testing with Task-Based Scenarios |
 | **Sessions Conducted** | 3 |
 | **Session Duration** | 90 minutes (planned) |
 | **Research Focus** | Navigation structure, information architecture, search functionality, and task completion flows |
@@ -419,10 +415,7 @@ PT003
 
 | # | Action | Addresses Finding | Owner | Effort |
 |:-:|:-------|:------------------|:------|:------:|
-| 1 | **Audit and fix all unlabeled buttons with descriptive accessibility labels** | Unlabeled buttons block task completion | Development Team | M |
-| 2 | **Implement consistent text scaling across all UI components** | Text scaling inconsistently implemented | Development Team | M |
+| 1 | **Audit and fix all unlabeled buttons with descriptive accessibility labels** | Unlabeled buttons block screen reader navigation | UX/Accessibility Team | M |
+| 2 | **Add claims status widget to customizable home screen** | Claims status buried despite daily usage | Product Team | H |
 
-### 🟡 Short-Term (1-2 Months)
-
-| # | Action | Addresses Finding | Owner | Effort |
-|:-:|:
+### 
