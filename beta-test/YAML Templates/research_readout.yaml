@@ -17,7 +17,7 @@ input_processing: summarize_if_long
 llm_config:
   model: "claude-sonnet-4"
   temperature: 0.3
-  max_tokens: 16000  
+  max_tokens: 16000
 
 input_variables:
   - research_folder_path
@@ -306,13 +306,13 @@ ai_generation_tasks:
       
       #### What We Observed
       
-      [Description grounded in source data]
+      [2-3 sentence description grounded in source data. Be specific about the behavior, context, and consequence.]
       
       #### Supporting Evidence
       
       > "[Exact quote from source]"
       > 
-      > — **PT00X**
+      > — **PT00X** *[Brief context if available]*
       
       </td>
       <td width="30%" valign="top">
@@ -324,6 +324,7 @@ ai_generation_tasks:
       **Frequency**
       
       [X] of [Y] participants
+      ([percentage]%)
       
       **Participants**
       
@@ -336,19 +337,19 @@ ai_generation_tasks:
       <details>
       <summary><strong>💡 Recommendation</strong></summary>
       
-      **Suggested Action:** [Recommendation]
+      **Suggested Action:** [Specific, actionable recommendation]
       
-      **Rationale:** [Why]
+      **Rationale:** [Why this addresses the finding]
       
-      **Owner:** [Team]
+      **Owner:** [Suggested team/role]
+      
+      **Effort Estimate:** [Low / Medium / High]
       
       </details>
       
       ---
       
-      ### Finding 3: [Specific title from data]
-      
-      [Same format - continue for all major findings]
+      [Repeat this same Finding format for all remaining findings from source data.]
       
       ---
       
