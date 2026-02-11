@@ -1,0 +1,50 @@
+🛠 **GitHub Issues Created**
+
+**Study:** 2027 VA Health and Benefits Mobile App Navigation Study
+**Repository:** 
+
+```json
+{
+  "study": "2027 VA Health and Benefits Mobile App Navigation Study",
+  "generated_date": "January 7, 2026",
+  "total_issues": 4,
+  "issues": [
+    {
+      "number": 1,
+      "title": "[Critical] Add accessible labels to unlabeled buttons for screen readers",
+      "labels": ["research-finding", "critical", "accessibility"],
+      "priority": "Critical",
+      "effort": "Medium (3-5 days)",
+      "body": "## Problem\n\nScreen reader users cannot identify button functions because multiple buttons announce only as \"Button\" without descriptive text, preventing task completion and creating complete accessibility barriers.\n\n## Evidence\n\n**Study:** 2027 VA Health and Benefits Mobile App Navigation Study\n**Severity:** Critical | **Affected:** 1 of 3 participants (33%)\n\n> \"There's a button that just says 'Button' without any descriptive text. That's not helpful at all.\"\n> — PT001\n\n> \"I shouldn't have to guess what buttons do. That's basic accessibility.\"\n> — PT001\n\n**Observed behavior:** PT001 was prevented from completing basic tasks due to unlabeled interface elements and experienced significant frustration during navigation.\n\n## Acceptance Criteria\n\n- [ ] All buttons have proper accessibility labels implemented\n- [ ] Screen reader announces button purpose clearly (not just \"Button\")\n- [ ] Comprehensive audit completed of all interactive elements\n- [ ] Testing completed with VoiceOver to verify fixes\n\n## Implementation Notes\n\nConduct comprehensive audit of all buttons and interactive elements to ensure proper accessibility labels are implemented. This is a fundamental accessibility requirement that blocks disabled Veterans from using the app.\n\n## Research Source\n\n[Link to research readout]\n\n---\n*Issue generated from research findings by Qori*"
+    },
+    {
+      "number": 2,
+      "title": "[Critical] Elevate claims status to home screen for daily users",
+      "labels": ["research-finding", "critical", "navigation"],
+      "priority": "Critical",
+      "effort": "Large (1-2 weeks)",
+      "body": "## Problem\n\nVeterans who check claims status daily must navigate through multiple menu levels and tap 5 times to reach this critical information, creating unnecessary friction for frequently used functionality.\n\n## Evidence\n\n**Study:** 2027 VA Health and Benefits Mobile App Navigation Study\n**Severity:** Critical | **Affected:** 1 of 3 participants (33%)\n\n> \"Why is claims under Benefits and not on the main screen? I check that every day.\"\n> — PT002\n\n> \"I had to tap like five times to get to my claim status.\"\n> — PT002\n\n**Observed behavior:** PT002, who checks claims status daily, had to navigate through multiple menu levels, demonstrating navigation inefficiency for power users.\n\n## Acceptance Criteria\n\n- [ ] Claims status widget added to customizable home screen\n- [ ] Quick access reduces navigation from 5 taps to 1-2 taps\n- [ ] Widget shows current claim status without requiring additional navigation\n- [ ] Testing completed with daily users to verify improved efficiency\n\n## Implementation Notes\n\nAdd claims status widget to customizable home screen for quick access. Daily usage patterns indicate this should be immediately accessible, not buried in navigation.\n\n## Research Source\n\n[Link to research readout]\n\n---\n*Issue generated from research findings by Qori*"
+    },
+    {
+      "number": 3,
+      "title": "[Critical] Fix search functionality to return results for common VA terms",
+      "labels": ["research-finding", "critical", "navigation"],
+      "priority": "Critical",
+      "effort": "Large (1-2 weeks)",
+      "body": "## Problem\n\nSearch functionality completely fails for common queries like \"claim,\" returning no useful results and forcing users to abandon search and navigate manually.\n\n## Evidence\n\n**Study:** 2027 VA Health and Benefits Mobile App Navigation Study\n**Severity:** Critical | **Affected:** 1 of 3 participants (33%)\n\n> \"The search doesn't find what I'm looking for. I typed 'claim' and got nothing useful.\"\n> — PT002\n\n**Observed behavior:** PT002 was forced to abandon search and navigate manually after search failed to return useful results for common VA terms.\n\n## Acceptance Criteria\n\n- [ ] Search returns relevant results for common VA terms (\"claim\", \"appointment\", \"benefits\")\n- [ ] Contextual results include related services and information\n- [ ] Search acts as reliable fallback when navigation fails\n- [ ] Testing completed with common user queries to verify functionality\n\n## Implementation Notes\n\nRedesign search to include contextual results for common VA terms and services. Search should be a reliable fallback when navigation fails, not another dead end.\n\n## Research Source\n\n[Link to research readout]\n\n---\n*Issue generated from research findings by Qori*"
+    },
+    {
+      "number": 4,
+      "title": "[High] Fix inconsistent text scaling across all UI components",
+      "labels": ["research-finding", "high-priority", "accessibility"],
+      "priority": "High",
+      "effort": "Medium (3-5 days)",
+      "body": "## Problem\n\nText scaling settings don't work consistently across all UI elements, including buttons, icons, and input fields, forcing users to strain to read content even with accessibility features enabled.\n\n## Evidence\n\n**Study:** 2027 VA Health and Benefits Mobile App Navigation Study\n**Severity:** High | **Affected:** 1 of 3 participants (33%)\n\n> \"Text is still too small in some places even with the large text setting.\"\n> — PT003\n\n> \"The big text option is helpful. I can actually read this.\"\n> — PT003\n\n**Observed behavior:** PT003 had to strain to read content in some areas despite having large text settings enabled, showing inconsistent implementation.\n\n## Acceptance Criteria\n\n- [ ] All UI components properly scale with system text size settings\n- [ ] Buttons, icons, and input fields scale consistently\n- [ ] Large text settings work reliably across entire app\n- [ ] Testing completed with various text size settings to verify consistency\n\n## Implementation Notes\n\nAudit and fix text scaling implementation across all UI components. Inconsistent accessibility features reduce their effectiveness and create user frustration.\n\n## Research Source\n\n[Link to research readout]\n\n---\n*Issue generated from research findings by Qori*"
+    }
+  ]
+}
+```
+
+🔗 **View Issues:** /issues?q=is:issue+label:research-finding
+
+*Questions?* Contact lapedra@cityfriends.tech
