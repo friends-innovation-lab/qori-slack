@@ -189,7 +189,7 @@ ai_generation_tasks:
       
       ## Research Source
       
-      [Link to full research readout]
+      📊 [Full Research Readout]({{readout_link}})
       
       ---
       *Issue generated from research findings by Qori*
@@ -242,7 +242,7 @@ ai_generation_tasks:
             "labels": ["research-finding", "critical", "accessibility"],
             "priority": "Critical",
             "effort": "Medium (3-5 days)",
-            "body": "## Problem\n\nScreen reader users cannot identify button functions. Buttons announce only as \"Button\" without descriptive text, blocking task completion.\n\n## Evidence\n\n**Study:** 2026 VA Health and Benefits Mobile App\n**Severity:** Critical | **Affected:** 1 of 1 screen reader users (100%)\n\n> \"There's some buttons that just say 'Button' without any descriptive text.\"\n> — PT001\n\n**Observed behavior:** PT001 had to guess button functions and could not complete appointment scheduling task.\n\n## Acceptance Criteria\n\n- [ ] All buttons have descriptive aria-labels or visible text\n- [ ] Screen reader announces button purpose (e.g., \"Schedule appointment\" not \"Button\")\n- [ ] Tested with VoiceOver and TalkBack\n\n## Implementation Notes\n\nAudit all interactive elements. Priority: appointment scheduling flow, profile section, claims navigation.\n\n## Research Source\n\n[Link to research readout]\n\n---\n*Issue generated from research findings by Qori*"
+            "body": "## Problem\n\nScreen reader users cannot identify button functions. Buttons announce only as \"Button\" without descriptive text, blocking task completion.\n\n## Evidence\n\n**Study:** 2026 VA Health and Benefits Mobile App\n**Severity:** Critical | **Affected:** 1 of 1 screen reader users (100%)\n\n> \"There's some buttons that just say 'Button' without any descriptive text.\"\n> — PT001\n\n**Observed behavior:** PT001 had to guess button functions and could not complete appointment scheduling task.\n\n## Acceptance Criteria\n\n- [ ] All buttons have descriptive aria-labels or visible text\n- [ ] Screen reader announces button purpose (e.g., \"Schedule appointment\" not \"Button\")\n- [ ] Tested with VoiceOver and TalkBack\n\n## Implementation Notes\n\nAudit all interactive elements. Priority: appointment scheduling flow, profile section, claims navigation.\n\n## Research Source\n\n[Link to research readout]({{readout_link}})\n\n---\n*Issue generated from research findings by Qori*"
           
         ]
       
