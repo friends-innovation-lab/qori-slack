@@ -9,47 +9,6 @@ description: |
 author: Qori R&D
 created: 2025-08-19
 last_updated: 2026-01-07
-
-# ============================================================
-# BACKEND DATA REQUIREMENTS (for Tanzeel)
-# ============================================================
-#
-# This workflow requires Research Readout content to be loaded.
-# Without this data, the AI will output "Insufficient data" (correct behavior).
-#
-# REQUIRED DATA FLOW:
-#
-# 1. Research Readout → {{research_readout_data}}
-#    - Location: 05-findings/research_readout_*.md
-#    - This is the PRIMARY source for GitHub issues
-#    - Already contains: findings, severity, quotes, recommendations
-#
-# ALTERNATIVE (if readout not available):
-# 2. Session Summaries → {{research_readout_data}}
-#    - Location: 03-fieldwork/session-summaries/
-#    - Concatenate all session summaries
-#
-# BACKEND PSEUDOCODE:
-#
-#   # Try to load research readout first (preferred)
-#   readout_files = await github_api.list_files("05-findings/")
-#   for file in readout_files:
-#       if "research_readout" in file.name:
-#           content = await github_api.get_file_contents(file.path)
-#           variables["research_readout_data"] = content
-#           break
-#   
-#   # Fallback to session summaries if no readout
-#   if not variables["research_readout_data"]:
-#       combined = ""
-#       session_files = await github_api.list_files("03-fieldwork/session-summaries/")
-#       for file in session_files:
-#           content = await github_api.get_file_contents(file.path)
-#           combined += "\n\n---\n\n" + content
-#       variables["research_readout_data"] = combined
-#
-# ============================================================
-
 input_type: text
 input_processing: summarize_if_long
 
