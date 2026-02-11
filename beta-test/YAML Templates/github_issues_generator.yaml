@@ -9,6 +9,47 @@ description: |
 author: Qori R&D
 created: 2025-08-19
 last_updated: 2026-01-07
+
+# ============================================================
+# BACKEND DATA REQUIREMENTS (for Tanzeel)
+# ============================================================
+#
+# This workflow requires Research Readout content to be loaded.
+# Without this data, the AI will output "Insufficient data" (correct behavior).
+#
+# REQUIRED DATA FLOW:
+#
+# 1. Research Readout → {{research_readout_data}}
+#    - Location: 05-findings/research_readout_*.md
+#    - This is the PRIMARY source for GitHub issues
+#    - Already contains: findings, severity, quotes, recommendations
+#
+# ALTERNATIVE (if readout not available):
+# 2. Session Summaries → {{research_readout_data}}
+#    - Location: 03-fieldwork/session-summaries/
+#    - Concatenate all session summaries
+#
+# BACKEND PSEUDOCODE:
+#
+#   # Try to load research readout first (preferred)
+#   readout_files = await github_api.list_files("05-findings/")
+#   for file in readout_files:
+#       if "research_readout" in file.name:
+#           content = await github_api.get_file_contents(file.path)
+#           variables["research_readout_data"] = content
+#           break
+#   
+#   # Fallback to session summaries if no readout
+#   if not variables["research_readout_data"]:
+#       combined = ""
+#       session_files = await github_api.list_files("03-fieldwork/session-summaries/")
+#       for file in session_files:
+#           content = await github_api.get_file_contents(file.path)
+#           combined += "\n\n---\n\n" + content
+#       variables["research_readout_data"] = combined
+#
+# ============================================================
+
 input_type: text
 input_processing: summarize_if_long
 
@@ -148,7 +189,7 @@ ai_generation_tasks:
       
       ## Research Source
       
-      [Link to full research readout]
+      📊 [Full Research Readout]({{readout_link}})
       
       ---
       *Issue generated from research findings by Qori*
@@ -201,7 +242,7 @@ ai_generation_tasks:
             "labels": ["research-finding", "critical", "accessibility"],
             "priority": "Critical",
             "effort": "Medium (3-5 days)",
-            "body": "## Problem\n\nScreen reader users cannot identify button functions. Buttons announce only as \"Button\" without descriptive text, blocking task completion.\n\n## Evidence\n\n**Study:** 2026 VA Health and Benefits Mobile App\n**Severity:** Critical | **Affected:** 1 of 1 screen reader users (100%)\n\n> \"There's some buttons that just say 'Button' without any descriptive text.\"\n> — PT001\n\n**Observed behavior:** PT001 had to guess button functions and could not complete appointment scheduling task.\n\n## Acceptance Criteria\n\n- [ ] All buttons have descriptive aria-labels or visible text\n- [ ] Screen reader announces button purpose (e.g., \"Schedule appointment\" not \"Button\")\n- [ ] Tested with VoiceOver and TalkBack\n\n## Implementation Notes\n\nAudit all interactive elements. Priority: appointment scheduling flow, profile section, claims navigation.\n\n## Research Source\n\n[Link to research readout]\n\n---\n*Issue generated from research findings by Qori*"
+            "body": "## Problem\n\nScreen reader users cannot identify button functions. Buttons announce only as \"Button\" without descriptive text, blocking task completion.\n\n## Evidence\n\n**Study:** 2026 VA Health and Benefits Mobile App\n**Severity:** Critical | **Affected:** 1 of 1 screen reader users (100%)\n\n> \"There's some buttons that just say 'Button' without any descriptive text.\"\n> — PT001\n\n**Observed behavior:** PT001 had to guess button functions and could not complete appointment scheduling task.\n\n## Acceptance Criteria\n\n- [ ] All buttons have descriptive aria-labels or visible text\n- [ ] Screen reader announces button purpose (e.g., \"Schedule appointment\" not \"Button\")\n- [ ] Tested with VoiceOver and TalkBack\n\n## Implementation Notes\n\nAudit all interactive elements. Priority: appointment scheduling flow, profile section, claims navigation.\n\n## Research Source\n\n[Link to research readout]({{readout_link}})\n\n---\n*Issue generated from research findings by Qori*"
           
         ]
       
