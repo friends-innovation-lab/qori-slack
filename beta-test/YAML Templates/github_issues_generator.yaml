@@ -37,6 +37,7 @@ last_updated: 2026-01-07
 #       if "research_readout" in file.name:
 #           content = await github_api.get_file_contents(file.path)
 #           variables["research_readout_data"] = content
+#           variables["readout_link"] = f"https://github.com/{variables['github_repository']}/blob/main/{file.path}"
 #           break
 #   
 #   # Fallback to session summaries if no readout
@@ -47,6 +48,7 @@ last_updated: 2026-01-07
 #           content = await github_api.get_file_contents(file.path)
 #           combined += "\n\n---\n\n" + content
 #       variables["research_readout_data"] = combined
+#       variables["readout_link"] = f"https://github.com/{variables['github_repository']}/tree/main/03-fieldwork/session-summaries/"
 #
 # ============================================================
 
@@ -69,13 +71,15 @@ input_variables:
   - github_labels
   - github_assignees
   - max_issues
-  - readout_link
 
 auto_variables:
   - current_date: |
       new Date().toISOString().split('T')[0]
   - github_repo_url: |
       "https://github.com/{{github_repository}}"
+  - readout_link: |
+      // Set by backend pseudocode above. Fallback if not set:
+      "https://github.com/{{github_repository}}/tree/main/05-findings/"
 
 ai_generation_tasks:
   - task_id: "github_issues_complete"
