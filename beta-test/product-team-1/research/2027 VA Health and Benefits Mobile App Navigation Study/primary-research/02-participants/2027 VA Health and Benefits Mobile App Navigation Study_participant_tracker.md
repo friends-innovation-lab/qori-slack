@@ -36,6 +36,7 @@ Recruitment effectiveness: 100% conversion rate (3 confirmed of 3 recruited)
 
 | Session | Date/Time | Observers | Capacity | Pending Requests | Guidelines Sent |
 |---------|-----------|-----------|----------|------------------|-----------------|
+| PT001 | TBD | lapedra,tamara (🏛️ Stakeholder) | 1/3 | 0 | ✅ Sent |
 | PT002 | TBD | lapedra,naeemabdulrehman08 (👁️ Silent Observer) | 1/3 | 0 | ✅ Sent |
 | PT003 | TBD | lapedra (📝 Note-taker) | 1/3 | 0 | ✅ Sent |
 
@@ -45,7 +46,7 @@ Recruitment effectiveness: 100% conversion rate (3 confirmed of 3 recruited)
 | 📝 Note-taker | 1 | PT003 |
 | 👁️ Silent Observer | 1 | PT002 |
 | 📊 PM Observer | 0 | - |
-| 🏛️ Stakeholder | 0 | - |
+| 🏛️ Stakeholder | 1 | PT001 |
 ---
 
 <details>
