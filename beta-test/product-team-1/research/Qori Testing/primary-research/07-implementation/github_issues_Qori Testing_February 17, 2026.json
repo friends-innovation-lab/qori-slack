@@ -5,16 +5,16 @@
 
 {
   "study": "Qori Testing",
-  "generated_date": "January 27, 2026",
+  "generated_date": "January 8, 2026",
   "total_issues": 3,
   "issues": [
     {
       "number": 1,
       "title": "[Critical] Simplify login process and provide clear password guidance",
-      "labels": ["research-finding", "critical", "ui"],
+      "labels": ["research-finding", "critical", "ui", "content"],
       "priority": "Critical",
       "effort": "Medium (3-5 days)",
-      "body": "## Problem\n\nUsers are experiencing confusion and frustration during the login process, unable to determine which password to use.\n\n## Evidence\n\n**Study:** Qori Testing\n**Severity:** Critical | **Affected:** 1 of 3 participants\n\n> \"I couldn't figure out which password to use, it was really confusing.\"\n> — PT002\n\n**Observed behavior:** PT002 struggled with password selection during login process\n\n## Acceptance Criteria\n\n- [ ] Provide clear instructions and guidance for the login process\n- [ ] Add helpful text or tooltips explaining password requirements\n- [ ] Test login flow with users to ensure clarity\n- [ ] Reduce confusion points in authentication flow\n\n## Implementation Notes\n\nProvide clear instructions and guidance for the login process to improve user experience and reduce frustration.\n\n## Research Source\n\n📊 [Full Research Readout](https://github.com/Friends-From-The-City/CivicMind-Slack-AI-Bot/tree/main/beta-test/product-team-1/research/Qori Testing/primary-research/05-findings)\n\n---\n*Issue generated from research findings by Qori*"
+      "body": "## Problem\n\nUsers are experiencing confusion and frustration during the login process, unable to determine which password to use.\n\n## Evidence\n\n**Study:** Qori Testing\n**Severity:** Critical | **Affected:** 1 of 3 participants\n\n> \"I couldn't figure out which password to use, it was really confusing.\"\n> — PT002\n\n**Observed behavior:** PT002 struggled with password selection during login attempt.\n\n## Acceptance Criteria\n\n- [ ] Provide clear instructions and guidance for the login process\n- [ ] Add helpful text indicating which type of password/credentials to use\n- [ ] Test login flow with users to ensure clarity\n- [ ] Reduce login-related support requests\n\n## Implementation Notes\n\nFocus on clear messaging and user guidance. Consider adding contextual help or tooltips to clarify password requirements.\n\n## Research Source\n\n📊 [Full Research Readout](https://github.com/Friends-From-The-City/CivicMind-Slack-AI-Bot/tree/main/beta-test/product-team-1/research/Qori Testing/primary-research/05-findings)\n\n---\n*Issue generated from research findings by Qori*"
     },
     {
       "number": 2,
@@ -22,15 +22,15 @@
       "labels": ["research-finding", "high-priority", "ui"],
       "priority": "High",
       "effort": "Large (1-2 weeks)",
-      "body": "## Problem\n\nUsers are unable to efficiently find content due to missing search functionality, leading to time-consuming navigation.\n\n## Evidence\n\n**Study:** Qori Testing\n**Severity:** High | **Affected:** 1 of 3 participants\n\n> \"I wish there was a search bar, it would have saved me a lot of time.\"\n> — PT002\n\n**Observed behavior:** PT002 spent excessive time navigating without search capability\n\n## Acceptance Criteria\n\n- [ ] Implement a search bar feature for better user experience\n- [ ] Ensure search functionality covers relevant content areas\n- [ ] Test search performance and accuracy\n- [ ] Validate time savings with users\n\n## Implementation Notes\n\nImplement a search bar feature for better user experience and improved efficiency.\n\n## Research Source\n\n📊 [Full Research Readout](https://github.com/Friends-From-The-City/CivicMind-Slack-AI-Bot/tree/main/beta-test/product-team-1/research/Qori Testing/primary-research/05-findings)\n\n---\n*Issue generated from research findings by Qori*"
+      "body": "## Problem\n\nUsers are spending excessive time navigating without search functionality, impacting their efficiency and experience.\n\n## Evidence\n\n**Study:** Qori Testing\n**Severity:** High | **Affected:** 1 of 3 participants\n\n> \"I wish there was a search bar, it would have saved me a lot of time.\"\n> — PT002\n\n**Observed behavior:** PT002 experienced time delays due to absence of search function.\n\n## Acceptance Criteria\n\n- [ ] Implement a search bar feature in prominent location\n- [ ] Ensure search functionality covers relevant content areas\n- [ ] Test search accuracy and speed with users\n- [ ] Measure time savings compared to navigation without search\n\n## Implementation Notes\n\nPrioritize search functionality that covers the most commonly accessed content and features.\n\n## Research Source\n\n📊 [Full Research Readout](https://github.com/Friends-From-The-City/CivicMind-Slack-AI-Bot/tree/main/beta-test/product-team-1/research/Qori Testing/primary-research/05-findings)\n\n---\n*Issue generated from research findings by Qori*"
     },
     {
       "number": 3,
-      "title": "[Medium] Improve navigation labels for clearer user guidance",
-      "labels": ["research-finding", "medium-priority", "navigation"],
+      "title": "[Medium] Improve navigation labels for clearer user wayfinding",
+      "labels": ["research-finding", "medium-priority", "navigation", "content"],
       "priority": "Medium",
       "effort": "Small (1-2 days)",
-      "body": "## Problem\n\nUsers are experiencing confusion when trying to locate specific features due to unclear navigation labels.\n\n## Evidence\n\n**Study:** Qori Testing\n**Severity:** Medium | **Affected:** 1 of 3 participants\n\n> \"I wasn't sure where to find the settings, the labels were not very clear.\"\n> — PT002\n\n**Observed behavior:** PT002 had difficulty locating settings due to unclear navigation labels\n\n## Acceptance Criteria\n\n- [ ] Review and improve navigation labels for better clarity\n- [ ] Ensure labels clearly indicate their destination or function\n- [ ] Test navigation with users to validate improvements\n- [ ] Focus on commonly accessed areas like settings\n\n## Implementation Notes\n\nImprove navigation labels for easier user navigation and better user experience.\n\n## Research Source\n\n📊 [Full Research Readout](https://github.com/Friends-From-The-City/CivicMind-Slack-AI-Bot/tree/main/beta-test/product-team-1/research/Qori Testing/primary-research/05-findings)\n\n---\n*Issue generated from research findings by Qori*"
+      "body": "## Problem\n\nUsers are experiencing confusion when trying to locate specific sections like settings due to unclear navigation labels.\n\n## Evidence\n\n**Study:** Qori Testing\n**Severity:** Medium | **Affected:** 1 of 3 participants\n\n> \"I wasn't sure where to find the settings, the labels were not very clear.\"\n> — PT002\n\n**Observed behavior:** PT002 had difficulty locating settings due to unclear navigation labels.\n\n## Acceptance Criteria\n\n- [ ] Review and improve navigation labels for better clarity\n- [ ] Ensure labels clearly indicate their destination/function\n- [ ] Test navigation labels with users for comprehension\n- [ ] Reduce time spent searching for common features like settings\n\n## Implementation Notes\n\nFocus on commonly used navigation items first, particularly settings and other frequently accessed sections.\n\n## Research Source\n\n📊 [Full Research Readout](https://github.com/Friends-From-The-City/CivicMind-Slack-AI-Bot/tree/main/beta-test/product-team-1/research/Qori Testing/primary-research/05-findings)\n\n---\n*Issue generated from research findings by Qori*"
     }
   ]
 }
