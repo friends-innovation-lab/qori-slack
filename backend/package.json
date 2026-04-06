@@ -1,0 +1,93 @@
+{
+  "name": "express-starter",
+  "version": "1.0.0",
+  "description": "A boilerplate for Node.js api projects",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mucahitnezir/express-starter.git"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Tanzeel Saleem",
+    "email": "tanzeelsaleem10@gmail.com"
+  },
+  "scripts": {
+    "build": "babel src --out-dir dist",
+    "start": "node ./dist/bin/www.js",
+    "prod": "node --require module-alias/register src/app.js",
+    "dev": "nodemon --require module-alias/register src/app.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "NODE_ENV=test mocha --require @babel/register --exit",
+    "db:migrate": "npx sequelize-cli db:migrate"
+  },
+  "dependencies": {
+    "@chroma-core/default-embed": "^0.1.8",
+    "@langchain/anthropic": "^1.3.11",
+    "@langchain/community": "^0.3.45",
+    "@langchain/core": "^1.1.16",
+    "@langchain/langgraph": "^0.3.5",
+    "@langchain/openai": "^0.5.13",
+    "@octokit/rest": "^22.0.0",
+    "@sentry/node": "^6.7.2",
+    "@sentry/tracing": "^6.7.2",
+    "@slack/bolt": "^4.3.0",
+    "@supabase/supabase-js": "^2.50.0",
+    "axios": "^1.9.0",
+    "bcrypt": "^5.0.0",
+    "bull": "^4.16.5",
+    "chromadb": "^3.0.3",
+    "compression": "^1.7.4",
+    "cookie-parser": "~1.4.4",
+    "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
+    "debug": "~2.6.9",
+    "dotenv": "^8.6.0",
+    "express": "~4.16.1",
+    "express-validator": "^6.4.1",
+    "handlebars": "^4.7.8",
+    "http-errors": "~1.6.3",
+    "js-yaml": "^4.1.0",
+    "jsonwebtoken": "^8.5.1",
+    "langchain": "^1.2.11",
+    "module-alias": "^2.2.3",
+    "morgan": "~1.9.1",
+    "nodemailer": "^6.4.16",
+    "nunjucks": "^3.2.4",
+    "openai": "^5.3.0",
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.7.3",
+    "pg-hstore": "^2.3.4",
+    "redis": "^4.7.0",
+    "sequelize": "^6.20.1",
+    "slugify": "^1.6.6",
+    "swagger-ui-express": "^4.1.4"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.6",
+    "@babel/node": "^7.8.7",
+    "@babel/preset-env": "^7.9.6",
+    "@babel/register": "^7.9.0",
+    "@types/node": "^22.14.1",
+    "@types/superagent": "^8.1.9",
+    "babel-plugin-module-resolver": "^4.0.0",
+    "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-import-resolver-babel-module": "^5.1.2",
+    "eslint-plugin-import": "^2.20.2",
+    "mocha": "^7.1.2",
+    "nodemon": "^2.0.3",
+    "sequelize-cli": "^6.4.1"
+  },
+  "engines": {
+    "node": ">=16.0.0 <=22.11.0",
+    "npm": "8"
+  },
+  "type": "commonjs",
+  "_moduleAliases": {
+    "@": "src"
+  }
+}
