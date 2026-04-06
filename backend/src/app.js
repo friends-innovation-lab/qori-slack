@@ -59,13 +59,7 @@ const sequelize = new Sequelize({
   password: DB_PASSWORD,
   host: DB_HOST,
   dialect: 'postgres',
-  port: DB_PORT,
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false  // For development
-    }
-  }
+  port: DB_PORT
 });
 
 sequelize
