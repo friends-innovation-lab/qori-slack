@@ -1,5 +1,3 @@
-// config/sequelize.js
-
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -21,12 +19,6 @@ module.exports = {
     database: DB_NAME,
     port: Number(DB_PORT),
     logging: false,
-    dialectOptions: {
-      ssl: {
-        require: false,
-        rejectUnauthorized: false,
-      },
-    },
   },
   production: {
     dialect: DB_DIALECT,
@@ -36,11 +28,5 @@ module.exports = {
     database: DB_NAME,
     port: Number(DB_PORT),
     logging: false,
-    dialectOptions: {
-      ssl: {
-        require: false,
-        rejectUnauthorized: false,
-      },
-    },
   },
 };
