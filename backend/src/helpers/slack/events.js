@@ -158,27 +158,10 @@ slackApp.command('/civicmind', async ({ command, ack, client }) => {
     }
 
     if (action === 'ask') {
-      if (!arg) {
-        await client.chat.update({
-          channel: placeholder.channel,
-          ts: placeholder.ts,
-          text: '❓ Usage: /civicmind ask <your question here>'
-        });
-        return;
-      }
-
-      const folder = await getChannelConfigByChannelId(command.channel_id);
-      const file = await fetchFileFromRepo(
-        folder.repo,
-        folder.product_folder_name,
-        folder.sub_folder_name
-      );
-      const answer = await runRAG(arg, file.content, file.name);
-
       await client.chat.update({
         channel: placeholder.channel,
         ts: placeholder.ts,
-        text: `${answer}`
+        text: "This command isn't available yet. RAG-based study search is planned for a future release."
       });
       return;
     }
@@ -200,59 +183,19 @@ slackApp.command('/civicmind', async ({ command, ack, client }) => {
     }
 
     if (action === 'ask-study') {
-      if (!arg) {
-        await client.chat.update({
-          channel: placeholder.channel,
-          ts: placeholder.ts,
-          text: '❓ Usage: /civicmind ask <your question here>'
-        });
-        return;
-      }
-      // const [ folder, ...rest ] = arg.trim().split(/\s+/);
-      // const question = rest.join(' ');
-      //   console.log("🚀 ~ slackApp.command ~ question:",folder, question)
-
-      const answer = await runRagV2.invoke({ input: arg });
-
       await client.chat.update({
         channel: placeholder.channel,
         ts: placeholder.ts,
-        text: `${answer}`
+        text: "This command isn't available yet. RAG-based study search is planned for a future release."
       });
       return;
     }
 
     if (action === "create-template-study") {
-      // Right at the top of your handler:
-      const rawArgs = arg.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
-      // strip quotes
-      const parts = rawArgs.map(a => a.replace(/^"|"$/g, ''));
-
-      // Now destructure:
-      const [template, folder, ...rest] = parts;
-      const question = rest.join(' ');
-      console.log("🚀 ~ slackApp.command ~ question:", question, "???", template, "////", folder)
-
-      // Validate:
-      if (!template || !folder || !question) {
-        await client.chat.update({
-          channel: placeholder.channel,
-          ts: placeholder.ts,
-          text: '❓ Usage: /civicmind ask <template> "<folder>" <your question here>'
-        });
-        return;
-      }
-
-      console.log("🚀 ~ slackApp.command ~ question:", template, question, folder)
-      const file = await fetchFileFromRepo(process.env.GITHUB_REPO, "beta-test/YAML Templates", template);
-      const customPrompt = buildPromptFromYaml(file.content);
-      console.log("🚀 ~ slackApp.command ~ prompt:", customPrompt)
-      const answer = await runRagV2.invoke({ input: question, promptTemplate: customPrompt, targetStudies: folder });
-
       await client.chat.update({
         channel: placeholder.channel,
         ts: placeholder.ts,
-        text: `${answer}`
+        text: "This command isn't available yet. RAG-based study search is planned for a future release."
       });
       return;
     }
@@ -1079,23 +1022,11 @@ slackApp.view('ask-study-modal', async ({ ack, view, client, body }) => {
   await ack();
 
   const { channelId } = JSON.parse(view.private_metadata);
-  const subfolder = view.state.values.subfolder_block.subfolder_selected.selected_option.value;
-  const question = view.state.values.question_block.question_input.value;
-  console.log("🚀 ~ slackApp.view ~ question:", question)
-  const placeholder = await client.chat.postMessage({
-    channel: channelId,
-    text: '⏳ Processing your request…'
-  });
-
-  const answer = await runRagV2.invoke({ input: question, targetStudies: subfolder });
 
   await client.chat.postMessage({
-    channel: placeholder.channel,
-    ts: placeholder.ts,
-    text: `📝 *Q:* ${question}\n*A:* ${answer}`
+    channel: channelId,
+    text: "This command isn't available yet. RAG-based study search is planned for a future release."
   });
-
-  // …your logic here…
 });
 
 // 1️⃣ Command handler: fetch both folder & template lists
@@ -1173,32 +1104,15 @@ slackApp.view('ask-study-modal', async ({ ack, view, client, body }) => {
 //   });
 // });
 
-// 2️⃣ Handle submission of the modal
+// 2️⃣ Handle submission of the modal (template + folder variant)
 slackApp.view('ask-study-modal', async ({ ack, view, client }) => {
   await ack();
 
   const { channelId } = JSON.parse(view.private_metadata);
 
-  const folder = view.state.values.folder_block.folder_selected.selected_option.value;
-  const template = view.state.values.template_block.template_selected.selected_option.value;
-  console.log("🚀 ~ slackApp.view ~ template:", template)
-  const question = view.state.values.question_block.question_input.value;
-
-  const placeholder = await client.chat.postMessage({
-    channel: channelId,
-    text: '⏳ Processing your request…'
-  });
-
-  const file = await fetchFileFromRepo(process.env.GITHUB_REPO, "beta-test/YAML Templates", template);
-  const customPrompt = buildPromptFromYaml(file.content);
-
-  // kick off your RAG (or whatever) with both folder + template
-  const answer = await runRagV2.invoke({ input: question, promptTemplate: customPrompt, targetStudies: folder });
-
   await client.chat.postMessage({
-    channel: placeholder.channel,
-    ts: placeholder.ts,
-    text: `📝 *Q:* ${question}\n*Template:* ${template}\n*A:* ${answer}`
+    channel: channelId,
+    text: "This command isn't available yet. RAG-based study search is planned for a future release."
   });
 });
 

@@ -1,0 +1,6 @@
+# Generated from imports in sam-agent.py — versions need verification by original developer.
+# Only external (non-stdlib) packages are listed.
+
+anthropic
+slack_sdk
+pyyaml
