@@ -322,7 +322,7 @@ const handleObserverApproval = async ({ ack, body, client }) => {
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: `<https://github.com/Friends-From-The-City/CivicMind-Slack-AI-Bot/blob/main/beta-test/templates/primary-research/03-fieldwork/observer_guidelines.md|:book: View Observer Guidelines>`,
+            text: `<https://github.com/Friends-Innovation-Lab/qori-slack/blob/main/beta-test/templates/primary-research/03-fieldwork/observer_guidelines.md|:book: View Observer Guidelines>`,
           },
         },
         {

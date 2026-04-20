@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+> This repo was originally `Friends-From-The-City/Qori-Slack-AI-Bot` and was transferred to `Friends-Innovation-Lab/qori-slack` on 2026-04-20. It is the Slack surface of Qori; the web surface lives at `Friends-Innovation-Lab/qori` (separate repo).
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## What is Qori?

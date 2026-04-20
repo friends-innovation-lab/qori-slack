@@ -113,7 +113,7 @@ Qori weaves research directly into the way public interest teams build. It conne
 ---
 
 ## 📌 Follow the MVP Progress  
-Stay up-to-date with feature development by following our [CivicMind MVP GitHub Project Board](https://github.com/orgs/Friends-From-The-City/projects/2)
+Stay up-to-date with feature development by following our [CivicMind MVP GitHub Project Board](https://github.com/orgs/Friends-Innovation-Lab/projects/2)
 
 ---
 

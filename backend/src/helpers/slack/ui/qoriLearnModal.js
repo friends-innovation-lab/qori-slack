@@ -76,7 +76,7 @@ const QORI_LEARN_TOPICS = {
   }
 };
 
-const QORI_LEARN_BASE_URL = "https://friends-from-the-city.github.io/Qori-Slack-AI-Bot/learn";
+const QORI_LEARN_BASE_URL = "https://friends-innovation-lab.github.io/qori-slack/learn";
 
 // Helper function to build welcome message blocks
 function buildWelcomeMessage() {
@@ -381,7 +381,7 @@ function buildConfirmationMessage(topic) {
         elements: [
           {
             type: "mrkdwn",
-            text: `Opens in your browser · <${tutorialUrl}|friends-from-the-city.github.io>`
+            text: `Opens in your browser · <${tutorialUrl}|friends-innovation-lab.github.io>`
           }
         ]
       }
