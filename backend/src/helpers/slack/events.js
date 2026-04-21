@@ -294,7 +294,7 @@ slackApp.command('/civicmind', async ({ command, ack, client }) => {
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: '*`/start-research`*\nStart research activities directly (create plan, brief, discussion guide, or upload desk research).'
+            text: '*`/qori-start`*\nStart research activities directly (create plan, brief, discussion guide, or upload desk research).'
           }
         },
 
@@ -789,7 +789,7 @@ slackApp.command('/qori-delete', async ({ ack, command, client }) => {
     if (studies.length === 0) {
       await client.chat.postMessage({
         channel: channelId,
-        text: '❌ You have no studies to delete. Create a study first with `/start-research`.'
+        text: '❌ You have no studies to delete. Create a study first with `/qori-start`.'
       });
       return;
     }
@@ -1237,7 +1237,7 @@ slackApp.command('/qori-plan', async ({ ack, body, client, command }) => {
           {
             text: {
               type: "plain_text",
-              text: "No studies found - create one with /start-research",
+              text: "No studies found - create one with /qori-start",
             },
             value: "no_studies",
           },
@@ -1293,7 +1293,7 @@ slackApp.action('study_select', async ({ ack, body, client }) => {
   });
 });
 
-slackApp.command('/start-research', startResearchHandler);
+slackApp.command('/qori-start', startResearchHandler);
 
 slackApp.options('user_select', async ({ ack, body, view, client }) => {
   // Parse out the channelId we stored
@@ -2788,7 +2788,7 @@ slackApp.view('upload_desk_research_modal', async ({ ack, view, body, client }) 
   if (!studyName) {
     await client.chat.postMessage({
       channel: channelId || body.channel?.id || body.user?.id,
-      text: "❌ Study name is required but could not be determined. Please ensure you have a study selected or create one with `/start-research`."
+      text: "❌ Study name is required but could not be determined. Please ensure you have a study selected or create one with `/qori-start`."
     });
     return;
   }
@@ -3163,7 +3163,7 @@ slackApp.action("copy_email_formatted", async ({ ack, body, client }) => {
 
 
 // 1️⃣ Slash command: open modal with just Folder picker
-slackApp.command('/syncfolder', async ({ ack, command, client }) => {
+slackApp.command('/qori-sync', async ({ ack, command, client }) => {
   await ack();
 
   // stash channel for later
