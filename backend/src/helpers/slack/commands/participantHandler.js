@@ -3,7 +3,7 @@ const { updateParticipantStatusModal } = require("../ui/outreach/updateParticipa
 const { getStudiesByUser } = require("../../../services/research_study.service");
 const studyParticipantService = require("../../../services/study_participant.service");
 const { processParticipantYamlTemplate } = require("../../../helpers/participantYamlProcessor");
-const { fetchFileFromRepo } = require("../../github");
+const { getConfigRepo, fetchFileFromRepo } = require("../../github");
 
 const participantHandler = async ({ ack, body, client, command }) => {
   try {
@@ -393,7 +393,7 @@ const handleUpdateParticipantSubmission = async ({ ack, body, view, client }) =>
         const allParticipants = await studyParticipantService.getParticipantsByStudy(studyId);
 
         // Process the YAML template to update the tracker
-        const yamlTemplateFile = await fetchFileFromRepo(process.env.GITHUB_REPO, "beta-test/YAML Templates", "participant_tracker.yaml");
+        const yamlTemplateFile = await fetchFileFromRepo(getConfigRepo(), "beta-test/YAML Templates", "participant_tracker.yaml");
 
         if (yamlTemplateFile && yamlTemplateFile.content) {
           const templateData = {

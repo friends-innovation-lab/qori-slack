@@ -1,6 +1,6 @@
 const { buildReadoutModal } = require('../ui/readoutModal');
 const { getResearchStudyWithRoles, getStudiesByUser } = require('../../../services/research_study.service');
-const { fetchFileFromRepo, fetchFileFromRepoByPath, readFolders, parseGitHubIssues, createGitHubIssues } = require('../../github');
+const { getConfigRepo, fetchFileFromRepo, fetchFileFromRepoByPath, readFolders, parseGitHubIssues, createGitHubIssues } = require('../../github');
 const { processYamlTemplate } = require('../../yamlProcessor');
 const researchPlanService = require('../../../services/research_plan.service');
 const sessionSummaryService = require('../../../services/session-summary.service');
@@ -398,7 +398,7 @@ const handleReadoutModalSubmission = async ({ ack, body, view, client }) => {
       yamlTemplateName = 'github_issues_generator.yaml';
     }
 
-    const file = await fetchFileFromRepo(process.env.GITHUB_REPO, "beta-test/YAML Templates", yamlTemplateName);
+    const file = await fetchFileFromRepo(getConfigRepo(), "beta-test/YAML Templates", yamlTemplateName);
     const aiCheck = reportType === 'github_issues';
     const renderedYaml = await processYamlTemplate(file.content, reportData, selectedStudy.path, 'primary-research', aiCheck);
 

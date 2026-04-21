@@ -17,6 +17,12 @@ Qori is an AI-powered research operations platform for VA (Veterans Affairs) UX 
 
 **Config-driven AI pipeline:** The intelligence layer lives in YAML files, not in application code. Each YAML defines input variables, chained `ai_generation_tasks` (sequential LLM calls), output templates (Handlebars-style `{{ai_generated.*}}`), and delivery options. **Important:** at runtime the backend fetches YAML templates from the GitHub repo (e.g., `beta-test/YAML Templates/`), not from the local `config/prompts/` directory. The local copies appear to be reference/development versions.
 
+**Two-repo GitHub architecture:** The backend uses two GitHub repos, controlled by env vars:
+- `GITHUB_REPO` — the **content repo** where studies are created, documents are written, and issues are filed (e.g., `qori-studies`).
+- `GITHUB_CONFIG_REPO` — the **config repo** where templates (`beta-test/templates/`) and YAML prompts (`beta-test/YAML Templates/`) are read from (e.g., `qori-slack`). If not set, falls back to `GITHUB_REPO` for backward compatibility.
+
+In code, config reads go through `getConfigRepo()` (defined in `github.js`), which returns `GITHUB_CONFIG_REPO || GITHUB_REPO`. Content writes use `GITHUB_REPO` directly.
+
 **Model resolution:** All `/qori-*` commands go through `backend/src/helpers/langchain.js:99-114`, which creates a `ChatAnthropic` instance. Model is `ANTHROPIC_MODEL_NAME` env var, falling back to `claude-sonnet-4-20250514`. The `llm_config` blocks in YAML prompt files (some say `gpt-4o`) are parsed but **never read** — dead config.
 
 **RAG pipeline (currently disabled for alpha):** `backend/src/helpers/ragV2.js` contains a vector search Q&A pipeline using OpenAI (`gpt-4o-mini` + embeddings) and Supabase as the vector store. It is gated on env vars (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `OPENAI_API_KEY`) — if any are missing, the server boots cleanly and RAG commands respond with a "not available yet" message. The RAG command handlers in `events.js` (`/civicmind ask-study`, `/civicmind create-template-study`, `/ask-study` modal, `/civicmind ask`) are disabled and return a user-friendly message. See "How to re-enable RAG" below.

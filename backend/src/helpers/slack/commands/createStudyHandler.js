@@ -1,6 +1,6 @@
 const { createStudyModal } = require("../ui/createStudyModal");
 const { getChannelConfigByChannelId } = require("../../../services/channel-config.service");
-const { readFolders, copyFilesToFolder, fetchFileFromRepoByPath, createOrUpdateFileOnGitHub } = require("../../github");
+const { getConfigRepo, readFolders, copyFilesToFolder, fetchFileFromRepoByPath, createOrUpdateFileOnGitHub } = require("../../github");
 const { addResearchStudyWithRoles } = require("../../../services/research_study.service");
 
 /**
@@ -177,7 +177,7 @@ const handleCreateStudySubmission = async ({ ack, body, view, client }) => {
 
     // Create study with GitHub folder
     const info = await getChannelConfigByChannelId(channelId);
-    const response = await readFolders('beta-test/templates', process.env.GITHUB_REPO);
+    const response = await readFolders('beta-test/templates', getConfigRepo());
     const result = await copyFilesToFolder(
       response,
       `${info.sub_folder_name}/research`,

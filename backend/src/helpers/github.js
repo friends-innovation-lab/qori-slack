@@ -2,6 +2,14 @@
 // src/helpers/github.js
 const path = require('path');
 
+/**
+ * Returns the repo used for config reads (templates, YAML prompts).
+ * Falls back to GITHUB_REPO if GITHUB_CONFIG_REPO is not set.
+ */
+function getConfigRepo() {
+  return process.env.GITHUB_CONFIG_REPO || process.env.GITHUB_REPO;
+}
+
 function getDestPath(filePath, baseFolder, folder, targetFolder) {
   const parts = filePath.split(path.posix.sep);
   const tmplIdx = parts.indexOf('templates');
@@ -601,6 +609,7 @@ async function deleteStudyFolderFromGitHub(folderPath, repo) {
 }
 
 module.exports = {
+  getConfigRepo,
   copyFilesToFolder,
   readFolderContents,
   listAllTopLevelFolders,

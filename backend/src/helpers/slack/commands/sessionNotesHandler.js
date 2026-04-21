@@ -2,7 +2,7 @@ const { sessionNotesModal, buildSessionNotesView } = require("../ui/sessionNotes
 const sessionObserverService = require("../../../services/session_observer.service");
 const sessionParticipantService = require("../../../services/study_participant.service");
 const { getResearchStudyWithRoles } = require("../../../services/research_study.service");
-const { fetchFileFromRepo, createOrUpdateFileOnGitHub } = require("../../github");
+const { getConfigRepo, fetchFileFromRepo, createOrUpdateFileOnGitHub } = require("../../github");
 const { processYamlTemplate } = require("../../yamlProcessor");
 const { studyNotesService } = require("../../../services");
 const { processSlackFiles } = require("../../pdfProcessor");
@@ -344,7 +344,7 @@ ${rawContent}`;
 
     // Process with YAML template
     const study = await getResearchStudyWithRoles(templateData.study_name);
-    const file = await fetchFileFromRepo(process.env.GITHUB_REPO, "beta-test/YAML Templates", yamlTemplateName);
+    const file = await fetchFileFromRepo(getConfigRepo(), "beta-test/YAML Templates", yamlTemplateName);
     renderedYaml = await processYamlTemplate(file.content, templateData, study.path);
     console.log("🚀 ~ handleSessionNotesSubmission ~ renderedYaml:", renderedYaml);
 

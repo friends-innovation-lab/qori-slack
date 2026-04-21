@@ -2,7 +2,7 @@ const { requestObserveSessionModal } = require("../ui/requestObserveSessionModal
 const { getResearchStudyWithRoles } = require("../../../services/research_study.service");
 const sessionObserverService = require("../../../services/session_observer.service");
 const studyParticipantService = require("../../../services/study_participant.service");
-const { fetchFileFromRepo } = require("../../github");
+const { getConfigRepo, fetchFileFromRepo } = require("../../github");
 const { processObserverYamlTemplate } = require("../../observerYamlProcessor");
 
 const observeSessionHandler = async ({ ack, body, client, command }) => {
@@ -270,7 +270,7 @@ const handleObserverApproval = async ({ ack, body, client }) => {
     let githubUrl;
 
     try {
-      const file = await fetchFileFromRepo(process.env.GITHUB_REPO, "beta-test/YAML Templates", "participant_tracker.yaml");
+      const file = await fetchFileFromRepo(getConfigRepo(), "beta-test/YAML Templates", "participant_tracker.yaml");
 
       const inputData = {
         study_id: study.id,
@@ -388,7 +388,7 @@ const handleObserverDenial = async ({ ack, body, client }) => {
     let githubUrl;
 
     try {
-      const file = await fetchFileFromRepo(process.env.GITHUB_REPO, "beta-test/YAML Templates", "participant_tracker.yaml");
+      const file = await fetchFileFromRepo(getConfigRepo(), "beta-test/YAML Templates", "participant_tracker.yaml");
 
       const inputData = {
         study_id: study.id,

@@ -2,7 +2,7 @@ const { requestResearchModal } = require("../ui/requestResearchModal");
 const { createStudyModal } = require("../ui/createStudyModal");
 const { createStudyFromRequestModal } = require("../ui/createStudyFromRequestModal");
 const { researchBriefModal } = require("../ui/researchBriefModal");
-const { fetchFileFromRepo, readFolders, copyFilesToFolder } = require("../../github");
+const { getConfigRepo, fetchFileFromRepo, readFolders, copyFilesToFolder } = require("../../github");
 const { processYamlTemplate } = require("../../yamlProcessor");
 
 /**
@@ -97,7 +97,7 @@ const handleRequestResearchSubmission = async ({ ack, body, view, client }) => {
     let requestUrl = null;
     let requestPath = null;
     try {
-      const yamlFile = await fetchFileFromRepo(process.env.GITHUB_REPO, "beta-test/YAML Templates", "research_request.yaml");
+      const yamlFile = await fetchFileFromRepo(getConfigRepo(), "beta-test/YAML Templates", "research_request.yaml");
       
       // Process YAML template - file will be created in tester_content folder
       // Path and filename come from the YAML file configuration

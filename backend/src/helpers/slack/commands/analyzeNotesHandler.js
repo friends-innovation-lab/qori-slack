@@ -3,7 +3,7 @@ const { getStudiesByUser, getResearchStudyWithRoles } = require("../../../servic
 const { studyNotesService } = require("../../../services");
 const sessionSummaryService = require("../../../services/session-summary.service");
 const sessionObserverService = require("../../../services/session_observer.service");
-const { fetchFileFromRepoByPath, fetchFileFromRepo } = require("../../../helpers/github");
+const { getConfigRepo, fetchFileFromRepoByPath, fetchFileFromRepo } = require("../../../helpers/github");
 const { processYamlTemplate } = require("../../../helpers/yamlProcessor");
 
 // Command handler to open the analyze notes modal
@@ -175,7 +175,7 @@ const handleAnalyzeNotesSubmission = async ({ ack, body, view, client }) => {
     console.log("🚀 ~ handleAnalyzeNotesSubmission ~ templateData:", templateData)
 
     // Process the YAML template
-    const yamlTemplateFile = await fetchFileFromRepo(process.env.GITHUB_REPO, "beta-test/YAML Templates", "session_summary.yaml");
+    const yamlTemplateFile = await fetchFileFromRepo(getConfigRepo(), "beta-test/YAML Templates", "session_summary.yaml");
 
     const renderedYaml = await processYamlTemplate(yamlTemplateFile.content, templateData, study?.path);
 
