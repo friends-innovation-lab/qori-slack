@@ -55,6 +55,23 @@ docker-compose up    # Starts app (3000), postgres (5432), redis (6379)
 
 **Environment:** Copy `backend/.env.example` to `backend/.env`. Required variables: Slack tokens (`SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`, `SLACK_APP_TOKEN`), `GITHUB_TOKEN`/`GITHUB_OWNER`/`GITHUB_REPO`, `ANTHROPIC_API_KEY`, database credentials. See `.env.example` for the full list with descriptions.
 
+## Railway Deployment (Production)
+
+**Migrated 2026-04-23.** The backend runs on Railway with Postgres and Redis as managed services. Slack commands work end-to-end on the Railway URL.
+
+**Services:**
+- **Backend** — Node.js service, deployed from `backend/` on push to `main`
+- **Postgres** — Railway-managed, connection string provided as `DATABASE_URL`
+- **Redis** — Railway-managed, connection string provided as `REDIS_URL`
+
+**Environment variables** are set in Railway's Variables tab per service. All the same vars from `.env.example` apply. Two gotchas to know:
+
+1. **No spaces around `=` in Railway variables.** Railway's UI trims values, but if you paste `DB_DIALECT = postgres` (with spaces) from another source, the value becomes ` postgres` (leading space) and Sequelize will fail with "Dialect needs to be explicitly supplied." Always use `DB_DIALECT=postgres` with no spaces.
+
+2. **Postgres public URL for migrations.** Railway's internal Postgres hostname only resolves inside the private network. To run `npx sequelize-cli db:migrate` from your local machine or a one-off Railway shell, use the **public** connection URL from the Postgres service's Connect tab (it has a `railway.app` hostname and a mapped port). The internal URL works for the backend service at runtime since it's on the same private network.
+
+**Deploy flow:** Push to `main` → Railway auto-deploys. No CI/CD pipeline config needed — Railway watches the repo directly.
+
 ## Key Directories
 
 - `config/modals/` — Slack Block Kit modal JSON definitions, organized by command (plan/, analyze/, outreach/, etc.)
