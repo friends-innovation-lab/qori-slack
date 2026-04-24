@@ -57,18 +57,20 @@ docker-compose up    # Starts app (3000), postgres (5432), redis (6379)
 
 ## Railway Deployment (Production)
 
-**Migrated 2026-04-23.** The backend runs on Railway with Postgres and Redis as managed services. Slack commands work end-to-end on the Railway URL.
+**Migrated 2026-04-23. Verified end-to-end 2026-04-24.** The backend runs on Railway with Postgres and Redis as managed services. Slack commands work end-to-end on the Railway URL (~95% of flows working as of 2026-04-24 alpha test).
 
 **Services:**
 - **Backend** — Node.js service, deployed from `backend/` on push to `main`
-- **Postgres** — Railway-managed, connection string provided as `DATABASE_URL`
+- **Postgres** — Railway-managed, connection string provided as `DATABASE_URL`. All 22 migrations run successfully. You can browse tables directly in Railway's Data tab.
 - **Redis** — Railway-managed, connection string provided as `REDIS_URL`
 
-**Environment variables** are set in Railway's Variables tab per service. All the same vars from `.env.example` apply. Two gotchas to know:
+**Environment variables** are set in Railway's Variables tab per service. All the same vars from `.env.example` apply. Three gotchas to know:
 
 1. **No spaces around `=` in Railway variables.** Railway's UI trims values, but if you paste `DB_DIALECT = postgres` (with spaces) from another source, the value becomes ` postgres` (leading space) and Sequelize will fail with "Dialect needs to be explicitly supplied." Always use `DB_DIALECT=postgres` with no spaces.
 
-2. **Postgres public URL for migrations.** Railway's internal Postgres hostname only resolves inside the private network. To run `npx sequelize-cli db:migrate` from your local machine or a one-off Railway shell, use the **public** connection URL from the Postgres service's Connect tab (it has a `railway.app` hostname and a mapped port). The internal URL works for the backend service at runtime since it's on the same private network.
+2. **Token values can get truncated/malformed on paste.** Both `SLACK_APP_TOKEN` and `GITHUB_TOKEN` were broken on initial setup because the value was truncated when pasted into Railway's Variables UI. If a token-based service fails to authenticate, re-paste the full value and verify character count matches the source.
+
+3. **Postgres public URL for migrations.** Railway's internal Postgres hostname (`postgres.railway.internal`) only resolves inside the private network. To run `npx sequelize-cli db:migrate` from your local machine or via `railway run`, use the **public** connection URL (with `DATABASE_PUBLIC_URL` fields) from the Postgres service's Connect tab (it has a `railway.app` hostname and a mapped port). The internal URL works for the backend service at runtime since it's on the same private network.
 
 **Deploy flow:** Push to `main` → Railway auto-deploys. No CI/CD pipeline config needed — Railway watches the repo directly.
 

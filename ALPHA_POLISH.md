@@ -5,7 +5,7 @@ Running log of small bugs, UX rough edges, and cleanup tasks discovered during a
 ## How this works
 - Add items as I find them. One line per item.
 - When I sit down to fix a batch, move completed items under "Fixed" with the commit SHA.
-- Severity: 🔴 blocks a user flow / 🟡 annoying but workable / 🟢 cosmetic.
+- Severity: 🔴 flow-blocker / 🟡 data integrity / 🟢 UX polish / 🔵 cosmetic.
 
 ## Command status
 
@@ -60,6 +60,39 @@ Modern Docker Compose ignores it and warns on every command. Cosmetic fix: delet
 ### 🟢 `/syncfolder` reference may still exist in UI text
 The handler was renamed from `/syncfolder` to `/qori-sync` but we should audit all user-facing strings for stale mentions. Also audit for `/start-research` → `/qori-start` in any missed help text.
 
+## Post-Railway Alpha Test Findings (2026-04-24)
+
+Discovered during first full end-to-end alpha test on Railway. ~95% of flows working.
+
+### 🔴 Flow-blockers
+
+- **`/qori-synthesis`: Usability Issues section doesn't generate.** Service blueprint modal should pull in stakeholder notes but doesn't.
+- **Reports and some synthesis notes getting truncated.** Suspect token limit issue in YAML templates — generated content is cut off mid-section.
+- **Observer manager saves over the participant** when a new observer is added to the same session. Observer count stays at 1/3 instead of counting up.
+
+### 🟡 Data integrity
+
+- **`/qori-update-participant`: new notes overwrite original notes** instead of appending or versioning. Previous notes are lost.
+- **Project Timeline in Research Plan doesn't read from date inputs** in the modal. Timeline section ignores the dates the user entered.
+- **Generation dates on synthesis files are incorrect.** Affinity mapping and other synthesis outputs show wrong dates.
+
+### 🟢 UX polish
+
+- **Email output contains `**` markdown bolds** that should be stripped for plain text email clients.
+- **"Continue to another email" button in email flow doesn't work.** Flow dead-ends after first email.
+- **Follow-up message modal missing a duration button.** Results in placeholder text (e.g., `{{duration}}`) being inserted into the output.
+- **Observer notification threshold is 2 participants, should be 3 or 4.** Was set to 2 for testing — needs to be raised for production use.
+
+### 🔵 Cosmetic (save for last)
+
+- **YAML template audit for modern GitHub output styling.** Review all generated files for consistent, clean Markdown rendering on GitHub.
+
 ## Fixed
 
 (Move items here with the commit SHA when resolved.)
+
+### ✅ Railway migration (2026-04-23 – 2026-04-24)
+Railway deployment complete. Backend, Postgres, and Redis all running. 22 migrations applied. End-to-end Slack flow verified.
+
+### ✅ Env var debugging (2026-04-23 – 2026-04-24)
+`SLACK_APP_TOKEN` and `GITHUB_TOKEN` were both truncated/malformed when pasted into Railway's Variables UI. Fixed by re-pasting full values. Documented in CLAUDE.md as a gotcha.
