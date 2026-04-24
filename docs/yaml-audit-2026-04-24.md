@@ -1,3 +1,7 @@
+---
+render_with_liquid: false
+---
+
 # YAML Template Variable Audit
 
 **Date:** 2026-04-24
