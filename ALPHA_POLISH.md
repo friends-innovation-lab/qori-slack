@@ -78,9 +78,9 @@ Discovered during first full end-to-end alpha test on Railway. ~95% of flows wor
 
 ### 🟢 UX polish
 
-- **Email output contains `**` markdown bolds** that should be stripped for plain text email clients.
+- **Email output contains `**` markdown bolds** in both follow-up email and session confirmation email. Nuance: the output is valid Markdown (correct for GitHub files), but renders as raw `**text**` in Slack modal previews because Slack uses mrkdwn (single `*` for bold). Fix needs to handle both destinations — keep proper Markdown for GitHub-stored files, but convert to mrkdwn or strip asterisks for Slack preview display.
 - **"Continue to another email" button in email flow doesn't work.** Flow dead-ends after first email.
-- **Follow-up message modal missing a duration button.** Results in placeholder text (e.g., `{{duration}}`) being inserted into the output.
+- **Follow-up message modal missing a duration input field.** Body outputs literal `[duration will be confirmed when scheduled]` as placeholder text because there's no duration field in the modal to pull from.
 - **Observer notification threshold is 2 participants, should be 3 or 4.** Was set to 2 for testing — needs to be raised for production use.
 
 ### 🔵 Cosmetic (save for last)
