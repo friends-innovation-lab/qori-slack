@@ -7,7 +7,7 @@
 import type { ApplicationContext } from '../types/application-context';
 import type { StudyResource, ArtifactResource, EvidenceSourceResource, EvidenceConstructResource } from '../types/api-responses';
 import { assertStudyAccessByActor } from '../services/authorization.service';
-import { resourceNotFound } from '../types/api-errors';
+import { resourceNotFound, invalidState } from '../types/api-errors';
 import sequelize from '../database';
 
 /**
@@ -326,6 +326,37 @@ export async function getCascadeReadiness(ctx: ApplicationContext, studyPublicId
   }
 
   return { ready: missing.length === 0, missing };
+}
+
+/**
+ * Resubmit a brief after changes were requested.
+ *
+ * Transitions brief_status from changes_requested → pending_approval.
+ * Only the study creator (or project member) can resubmit.
+ */
+export async function resubmitBrief(
+  ctx: ApplicationContext,
+  studyPublicId: string,
+): Promise<{ new_status: string }> {
+  const study = await resolveStudy(studyPublicId, ctx.organization.id);
+  if (!study) throw resourceNotFound('Study');
+
+  await assertStudyAccessByActor(ctx.actor.id, study.id, ctx.organization.id);
+
+  if (study.brief_status !== 'changes_requested') {
+    throw invalidState(
+      study.brief_status === 'approved'
+        ? 'Brief has already been approved'
+        : 'Brief is not in changes_requested status',
+    );
+  }
+
+  await study.update({
+    brief_status: 'pending_approval',
+    brief_change_feedback: null,
+  });
+
+  return { new_status: 'pending_approval' };
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────

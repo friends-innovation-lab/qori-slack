@@ -77,6 +77,16 @@ router.post('/:studyId/brief/request-changes', requireAuth, async (req, res, nex
   }
 });
 
+// Resubmit a brief after changes were requested
+router.post('/:studyId/brief/resubmit', requireAuth, async (req, res, next) => {
+  try {
+    const result = await studyAppService.resubmitBrief(req.ctx!, req.params.studyId as string);
+    res.json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // ─── Plan sub-routes ──────────────────────────────────────────────
 
 // Get plan details for a study
