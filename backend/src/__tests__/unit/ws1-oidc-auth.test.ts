@@ -190,6 +190,51 @@ describe('Test auth remains blocked after OIDC addition', () => {
   });
 });
 
+// ─── Issuer URL construction (regression: no double slashes) ────
+
+describe('issuerUrl construction', () => {
+  // The helper is not exported, but we can test the same logic directly
+  // since it's a pure function: new URL(path, base-with-trailing-slash)
+  function issuerUrl(issuer: string, path: string): string {
+    const base = issuer.endsWith('/') ? issuer : `${issuer}/`;
+    return new URL(path, base).toString();
+  }
+
+  it('issuer WITH trailing slash produces clean authorize URL', () => {
+    const url = issuerUrl('https://dev-abc.us.auth0.com/', 'authorize');
+    expect(url).toBe('https://dev-abc.us.auth0.com/authorize');
+    expect(url).not.toContain('//authorize');
+  });
+
+  it('issuer WITHOUT trailing slash produces clean authorize URL', () => {
+    const url = issuerUrl('https://dev-abc.us.auth0.com', 'authorize');
+    expect(url).toBe('https://dev-abc.us.auth0.com/authorize');
+  });
+
+  it('issuer WITH trailing slash produces clean oauth/token URL', () => {
+    const url = issuerUrl('https://dev-abc.us.auth0.com/', 'oauth/token');
+    expect(url).toBe('https://dev-abc.us.auth0.com/oauth/token');
+    expect(url).not.toContain('//oauth');
+  });
+
+  it('issuer WITHOUT trailing slash produces clean oauth/token URL', () => {
+    const url = issuerUrl('https://dev-abc.us.auth0.com', 'oauth/token');
+    expect(url).toBe('https://dev-abc.us.auth0.com/oauth/token');
+  });
+
+  it('issuer with path component preserves path', () => {
+    const url = issuerUrl('https://login.example.com/realms/qori/', 'protocol/openid-connect/token');
+    expect(url).toBe('https://login.example.com/realms/qori/protocol/openid-connect/token');
+  });
+
+  it('issuer identity is preserved (no mutation)', () => {
+    // The issuer string itself must remain unchanged for JWT iss claim validation
+    const issuer = 'https://dev-abc.us.auth0.com/';
+    issuerUrl(issuer, 'authorize');
+    expect(issuer).toBe('https://dev-abc.us.auth0.com/');
+  });
+});
+
 // ─── Existing endpoints preserved ───────────────────────────────
 
 describe('Existing auth endpoints preserved', () => {
