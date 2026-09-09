@@ -23,6 +23,12 @@ declare module 'express-session' {
     organizationPublicId?: string;
     authProvider?: string;
     authenticatedAt?: number;
+    /** OIDC Authorization Code flow — one-time state nonce */
+    oidcState?: string;
+    /** OIDC PKCE code verifier (stored server-side, never sent to browser) */
+    oidcCodeVerifier?: string;
+    /** Timestamp when OIDC state was created (for expiry) */
+    oidcStateCreatedAt?: number;
   }
 }
 
