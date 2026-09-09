@@ -7,10 +7,86 @@
 
 import type { ApplicationContext } from '../types/application-context';
 import type { ProjectResource, StudyResource, GovernanceResource } from '../types/api-responses';
-import { listProjectsByOrg, getProjectByIdAndOrg, getProjectStudiesByOrg } from '../services/project.service';
-import { isProjectMemberByActor } from '../services/authorization.service';
+import { listProjectsByOrg, getProjectByIdAndOrg, getProjectStudiesByOrg, createProjectFromName } from '../services/project.service';
+import { isProjectMemberByActor, addProjectMember, setProjectStakeholder } from '../services/authorization.service';
+import { scaffoldProject } from '../services/scaffolding.service';
 import { resourceNotFound, authorizationDenied } from '../types/api-errors';
 import sequelize from '../database';
+
+// ─── Input Types ──────────────────────────────────────────────────
+
+export interface CreateProjectInput {
+  name: string;
+  problem_statement: string;
+  description?: string;
+  approver_actor_public_id?: string;
+}
+
+// ─── Create Project ───────────────────────────────────────────────
+
+/**
+ * Create a new research project — the adapter-neutral business operation.
+ *
+ * Extracted from projectStartHandler.ts so both Slack and Workspace
+ * adapters call the same operation. Slack-specific post-processing
+ * (channel creation, DMs) stays in the Slack handler.
+ */
+export async function createProject(
+  ctx: ApplicationContext,
+  input: CreateProjectInput,
+): Promise<ProjectResource> {
+  // 1. Create project record
+  const project = await createProjectFromName(input.name, {
+    description: input.description,
+    problem_statement: input.problem_statement,
+    created_by: ctx.actor.publicId,
+    status: 'active',
+  });
+
+  // 2. Add creator as owner — dual-write: PLAT-2 actor-based + legacy Slack-based
+  const ProjectMembershipModel = sequelize.models.ProjectMembership;
+  if (ProjectMembershipModel) {
+    await ProjectMembershipModel.findOrCreate({
+      where: { project_id: project.id, actor_id: ctx.actor.id },
+      defaults: { project_id: project.id, actor_id: ctx.actor.id, role: 'owner' },
+    });
+  }
+  // Legacy project_members for Slack handler compatibility (userId = actor publicId)
+  await addProjectMember(project.id, ctx.actor.publicId, 'creator', 'owner');
+
+  // 3. Set stakeholder if provided
+  if (input.approver_actor_public_id) {
+    const ActorModel = sequelize.models.Actor;
+    if (ActorModel) {
+      const approver = await ActorModel.findOne({
+        where: { public_id: input.approver_actor_public_id },
+      }) as { id: number; public_id: string } | null;
+      if (approver) {
+        if (ProjectMembershipModel) {
+          await ProjectMembershipModel.findOrCreate({
+            where: { project_id: project.id, actor_id: approver.id },
+            defaults: { project_id: project.id, actor_id: approver.id, role: 'researcher' },
+          });
+        }
+        await addProjectMember(project.id, approver.public_id, 'explicit', 'member');
+        await setProjectStakeholder(project.id, approver.public_id);
+      }
+    }
+  }
+
+  // 4. Scaffold GitHub folder (non-blocking)
+  try {
+    await scaffoldProject(
+      project.slug,
+      project.name,
+      ctx.actor.displayName || 'Researcher',
+    );
+  } catch (err) {
+    console.warn('[PROJECT] GitHub scaffold failed (non-blocking):', err instanceof Error ? err.message : err);
+  }
+
+  return mapProjectResource(project, ctx.organization.publicId);
+}
 
 /**
  * List all projects the actor has access to within their organization.

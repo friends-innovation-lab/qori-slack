@@ -35,6 +35,7 @@ class ResearchStudy extends Model<
 > {
   // — Attributes —
   declare id: CreationOptional<number>;
+  declare public_id: CreationOptional<string>;
   declare project_id: ForeignKey<number>;
   declare name: string;
   declare slug: string | null;
@@ -124,6 +125,12 @@ export default (sequelize: Sequelize) => {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
+      },
+      public_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        unique: true,
+        defaultValue: DataTypes.UUIDV4,
       },
       project_id: {
         type: DataTypes.INTEGER,

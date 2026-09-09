@@ -1,10 +1,13 @@
 /**
  * /api/v1/studies — Study endpoints, org-scoped.
+ *
+ * WS-1: Added brief and plan sub-routes for Workspace operating loop.
  */
 
 import { Router } from 'express';
 import { requireAuth } from '../../../middleware/auth';
 import * as studyAppService from '../../../application/study.app-service';
+import * as approvalAppService from '../../../application/approval.app-service';
 
 const router = Router();
 
@@ -17,6 +20,96 @@ router.get('/:studyId', requireAuth, async (req, res, next) => {
     next(error);
   }
 });
+
+// ─── Brief sub-routes ─────────────────────────────────────────────
+
+// Get brief details for a study
+router.get('/:studyId/brief', requireAuth, async (req, res, next) => {
+  try {
+    const result = await studyAppService.getStudyBrief(req.ctx!, req.params.studyId as string);
+    res.json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Approve a brief
+router.post('/:studyId/brief/approve', requireAuth, async (req, res, next) => {
+  try {
+    const { studyId, projectId, studyName } = await studyAppService.resolveStudyContext(
+      req.ctx!, req.params.studyId as string,
+    );
+    const result = await approvalAppService.executeDocumentApproval(req.ctx!, {
+      documentType: 'brief',
+      studyId,
+      projectId,
+      studyName,
+      action: 'approve',
+    });
+    res.json({ data: { new_status: result.newStatus } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Request changes on a brief
+router.post('/:studyId/brief/request-changes', requireAuth, async (req, res, next) => {
+  try {
+    const { comment } = req.body;
+    if (!comment || typeof comment !== 'string') {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Comment is required when requesting changes' } });
+      return;
+    }
+    const { studyId, projectId, studyName } = await studyAppService.resolveStudyContext(
+      req.ctx!, req.params.studyId as string,
+    );
+    const result = await approvalAppService.executeDocumentApproval(req.ctx!, {
+      documentType: 'brief',
+      studyId,
+      projectId,
+      studyName,
+      action: 'request_changes',
+      comment,
+    });
+    res.json({ data: { new_status: result.newStatus } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Resubmit a brief after changes were requested
+router.post('/:studyId/brief/resubmit', requireAuth, async (req, res, next) => {
+  try {
+    const result = await studyAppService.resubmitBrief(req.ctx!, req.params.studyId as string);
+    res.json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ─── Plan sub-routes ──────────────────────────────────────────────
+
+// Get plan details for a study
+router.get('/:studyId/plan', requireAuth, async (req, res, next) => {
+  try {
+    const result = await studyAppService.getStudyPlan(req.ctx!, req.params.studyId as string);
+    res.json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get cascade readiness for plan creation
+router.get('/:studyId/cascade-readiness', requireAuth, async (req, res, next) => {
+  try {
+    const result = await studyAppService.getCascadeReadiness(req.ctx!, req.params.studyId as string);
+    res.json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ─── Existing sub-routes ──────────────────────────────────────────
 
 // Get evidence sources for a study
 router.get('/:studyId/sources', requireAuth, async (req, res, next) => {

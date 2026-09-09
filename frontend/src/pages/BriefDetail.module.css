@@ -1,0 +1,93 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+}
+
+.docLink {
+  font-weight: 600;
+}
+
+.sectionTitle {
+  font-size: var(--text-h3-size);
+  margin-bottom: var(--space-4);
+}
+
+.fieldList {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: var(--space-2) var(--space-4);
+}
+
+.fieldList dt {
+  font-weight: 600;
+  font-size: var(--text-secondary-size);
+  color: var(--color-text-muted);
+}
+
+.fieldList dd {
+  font-size: var(--text-body-size);
+  margin: 0;
+}
+
+/* Decision bar */
+
+.decisionBar {
+  margin-top: var(--space-6);
+  padding: var(--space-5);
+  background-color: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.decisionTitle {
+  font-size: var(--text-h4-size);
+  margin-bottom: var(--space-4);
+}
+
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.checkItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-size: var(--text-body-size);
+}
+
+.checkItem input[type="checkbox"] {
+  margin-top: 4px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-text);
+}
+
+.decisionActions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.changesForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.consequence {
+  margin-top: var(--space-3);
+  font-size: var(--text-secondary-size);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+@media (max-width: 767px) {
+  .fieldList {
+    grid-template-columns: 1fr;
+  }
+}

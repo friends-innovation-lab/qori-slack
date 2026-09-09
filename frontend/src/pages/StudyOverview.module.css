@@ -1,0 +1,57 @@
+.layout {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.attentionCard {
+  margin-bottom: var(--space-4);
+}
+
+.attentionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-weight: 500;
+}
+
+.sectionTitle {
+  font-size: var(--text-h3-size);
+  margin-bottom: var(--space-3);
+}
+
+.nextAction {
+  margin-top: var(--space-4);
+}
+
+.glanceCard {
+  margin-top: var(--space-4);
+}
+
+.glanceList {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: var(--space-2) var(--space-4);
+}
+
+.glanceList dt {
+  font-weight: 600;
+  font-size: var(--text-secondary-size);
+  color: var(--color-text-muted);
+}
+
+.glanceList dd {
+  margin: 0;
+  text-transform: capitalize;
+}
+
+@media (max-width: 1023px) {
+  .layout {
+    flex-direction: column;
+  }
+}

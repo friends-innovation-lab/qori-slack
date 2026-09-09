@@ -1,0 +1,136 @@
+.rail {
+  width: 200px;
+  flex-shrink: 0;
+  padding: var(--space-4) 0;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  position: relative;
+}
+
+/* Spine line */
+.list::before {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 20px;
+  bottom: 20px;
+  width: 2px;
+  background-color: var(--color-border);
+}
+
+.item {
+  position: relative;
+}
+
+.node {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--color-text);
+  font-size: var(--text-secondary-size);
+  position: relative;
+  transition: background-color var(--motion-fast);
+}
+
+.node:hover {
+  background-color: var(--color-surface-hover);
+  text-decoration: none;
+}
+
+.active {
+  background-color: var(--color-surface-selected);
+  font-weight: 600;
+}
+
+.currentMarker {
+  position: absolute;
+  left: 0;
+  top: var(--space-2);
+  bottom: var(--space-2);
+  width: 3px;
+  background-color: var(--color-brand);
+  border-radius: 0 2px 2px 0;
+}
+
+.icon {
+  flex-shrink: 0;
+  z-index: 1;
+  background-color: var(--color-surface);
+}
+
+.label {
+  flex: 1;
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption-size);
+  color: var(--color-text-muted);
+}
+
+.hint {
+  display: block;
+  padding: 0 var(--space-3) 0 calc(var(--space-3) + 24px);
+  font-size: var(--text-caption-size);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* States */
+
+.locked {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.locked .icon { color: var(--color-dep-locked); }
+
+.readiness_warning .icon { color: var(--color-dep-readiness-warn); }
+
+.suggested .icon { color: var(--color-dep-suggested); }
+
+.free .icon { color: var(--color-dep-free); }
+
+.current .icon { color: var(--color-dep-current); }
+
+/* Responsive: horizontal strip on tablet */
+@media (max-width: 1023px) {
+  .rail {
+    width: 100%;
+    padding: 0;
+    overflow-x: auto;
+  }
+
+  .list {
+    flex-direction: row;
+    gap: 0;
+  }
+
+  .list::before { display: none; }
+
+  .node {
+    white-space: nowrap;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .hint { display: none; }
+
+  .currentMarker {
+    left: var(--space-2);
+    right: var(--space-2);
+    top: auto;
+    bottom: 0;
+    width: auto;
+    height: 3px;
+    border-radius: 2px 2px 0 0;
+  }
+}
