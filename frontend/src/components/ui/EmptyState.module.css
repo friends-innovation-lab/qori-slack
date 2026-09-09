@@ -1,0 +1,28 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-8) var(--space-6);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.heading {
+  font-size: var(--text-h3-size);
+  line-height: var(--text-h3-line);
+  font-weight: var(--text-h3-weight);
+  margin-bottom: var(--space-2);
+}
+
+.description {
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-5);
+}
+
+.action {
+  display: flex;
+  gap: var(--space-3);
+}

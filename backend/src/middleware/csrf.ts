@@ -36,10 +36,17 @@ export function generateCsrfToken(res: Response): string {
   const signature = signToken(token);
   const isProd = process.env.NODE_ENV === 'production';
 
+  // Match session cookie topology — SESSION_SAMESITE controls both cookies.
+  const rawSameSite = (process.env.SESSION_SAMESITE || 'lax').toLowerCase();
+  const sameSite: 'lax' | 'none' | 'strict' =
+    rawSameSite === 'none' ? 'none' :
+    rawSameSite === 'strict' ? 'strict' : 'lax';
+  const secure = sameSite === 'none' ? true : isProd;
+
   res.cookie(CSRF_COOKIE_NAME, `${token}.${signature}`, {
     httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
+    secure,
+    sameSite,
     path: '/',
     maxAge: 86400000, // 24h
   });

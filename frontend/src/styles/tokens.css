@@ -1,0 +1,151 @@
+/**
+ * Qori Design Tokens — CSS custom properties from design-tokens.json v0.1.0
+ *
+ * Agency-themable tokens are marked. State/custody/dependency tokens are fixed.
+ * Scale discipline: every spacing value must be a space-scale step.
+ */
+
+:root {
+  /* ─── Space scale (fixed) ─── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* ─── Typography (fixed) ─── */
+  --font-display: 'Public Sans', system-ui, sans-serif;
+  --font-ui: 'Public Sans', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --text-h1-size: 28px;
+  --text-h1-line: 34px;
+  --text-h1-weight: 700;
+  --text-h2-size: 22px;
+  --text-h2-line: 28px;
+  --text-h2-weight: 700;
+  --text-h3-size: 18px;
+  --text-h3-line: 24px;
+  --text-h3-weight: 700;
+  --text-h4-size: 15px;
+  --text-h4-line: 20px;
+  --text-h4-weight: 600;
+  --text-body-size: 15px;
+  --text-body-line: 24px;
+  --text-body-weight: 400;
+  --text-body-strong-weight: 600;
+  --text-secondary-size: 13px;
+  --text-secondary-line: 20px;
+  --text-caption-size: 12px;
+  --text-caption-line: 16px;
+  --text-caption-weight: 500;
+  --text-mono-size: 13px;
+  --text-mono-line: 20px;
+
+  /* ─── Radius (fixed) ─── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+
+  /* ─── Elevation (fixed) ─── */
+  --elevation-0: none;
+  --elevation-sm: 0 1px 2px rgba(26, 25, 21, 0.06);
+  --elevation-md: 0 4px 16px rgba(26, 25, 21, 0.10);
+  --elevation-lg: 0 8px 32px rgba(26, 25, 21, 0.14);
+
+  /* ─── Border (fixed) ─── */
+  --border-width: 1px;
+  --border-width-emphasis: 2px;
+
+  /* ─── Layout (fixed) ─── */
+  --layout-content-max: 1440px;
+  --layout-sidenav: 264px;
+  --layout-sidenav-collapsed: 64px;
+  --layout-topbar: 56px;
+  --layout-drawer: 480px;
+  --layout-trace-panel: 384px;
+  --layout-grid-columns: 12;
+  --layout-gutter: 24px;
+  --layout-gutter-narrow: 16px;
+  --layout-page-pad-xl: 32px;
+  --layout-page-pad-md: 24px;
+  --layout-page-pad-sm: 16px;
+
+  /* ─── Breakpoints (reference, not directly usable in var()) ─── */
+  /* sm: 0, md: 768px, lg: 1024px, xl: 1440px */
+
+  /* ─── Motion (fixed) ─── */
+  --motion-fast: 100ms;
+  --motion-base: 180ms;
+  --motion-slow: 240ms;
+  --motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* ─── Focus (fixed) ─── */
+  --focus-ring: 2px solid var(--color-focus);
+  --focus-offset: 2px;
+
+  /* ─── Color: surfaces (warm-neutral defaults) ─── */
+  --color-paper: #FAF9F7;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F3F1ED;
+  --color-surface-hover: #F6F4F0;
+  --color-surface-selected: #FBF4DC; /* agency-themable */
+
+  /* ─── Color: text ─── */
+  --color-text: #1A1915;
+  --color-text-muted: #5C594F;
+  --color-text-meta: #44423C;
+  --color-text-on-brand: #1A1915;
+
+  /* ─── Color: borders ─── */
+  --color-border: #E5E2DA;
+  --color-border-emphasis: #C9C5BA;
+
+  /* ─── Color: brand (agency-themable) ─── */
+  --color-brand: #FFD43B;
+  --color-brand-ink: #1A1915;
+
+  /* ─── Color: interactive (agency-themable) ─── */
+  --color-link: #3D5A99;
+  --color-focus: #3D5A99;
+
+  /* ─── Color: semantic (fixed) ─── */
+  --color-success: #2E7D4F;
+  --color-success-surface: #E8F3EC;
+  --color-warning: #9A6A00;
+  --color-warning-surface: #FBF1DC;
+  --color-error: #B3372B;
+  --color-error-surface: #FBE9E6;
+  --color-info: #2F6C8F;
+  --color-info-surface: #E7F1F6;
+
+  /* ─── Color: state grammar (fixed) ─── */
+  --color-state-proposed-border: var(--color-border-emphasis);
+  --color-state-accepted-border: var(--color-text);
+  --color-state-rejected-border: var(--color-border-emphasis);
+  --color-state-rejected-text: var(--color-text-muted);
+
+  /* ─── Color: AI-suggested (fixed) ─── */
+  --color-ai-suggested-border: var(--color-border-emphasis);
+  --color-ai-suggested-surface: var(--color-surface-muted);
+
+  /* ─── Color: dependency/lifecycle (fixed) ─── */
+  --color-dep-locked: var(--color-error);
+  --color-dep-readiness-warn: var(--color-warning);
+  --color-dep-suggested: var(--color-success);
+  --color-dep-free: var(--color-text-muted);
+  --color-dep-current: var(--color-brand);
+}
+
+/* ─── Reduced motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 100ms;
+    --motion-slow: 100ms;
+  }
+}

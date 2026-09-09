@@ -1,0 +1,26 @@
+.card {
+  background-color: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: background-color var(--motion-fast) var(--motion-ease);
+}
+
+.default {
+  padding: var(--space-5);
+}
+
+.compact {
+  padding: var(--space-4);
+}
+
+.interactive {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.interactive:hover {
+  background-color: var(--color-surface-hover);
+  text-decoration: none;
+}

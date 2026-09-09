@@ -1,0 +1,50 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--color-paper);
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  padding-top: var(--layout-topbar);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  max-width: var(--layout-content-max);
+  padding: var(--space-6) var(--layout-page-pad-xl);
+  outline: none; /* Skip-link target — focus ring not needed */
+}
+
+.toastRegion {
+  position: fixed;
+  bottom: var(--space-5);
+  right: var(--space-5);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  pointer-events: none;
+}
+
+.toastRegion > * {
+  pointer-events: auto;
+}
+
+/* ─── Responsive ─── */
+
+@media (max-width: 1023px) {
+  .main {
+    padding: var(--space-5) var(--layout-page-pad-md);
+  }
+}
+
+@media (max-width: 767px) {
+  .main {
+    padding: var(--space-4) var(--layout-page-pad-sm);
+    padding-bottom: calc(var(--space-8) + var(--space-4)); /* Room for bottom tab bar */
+  }
+}

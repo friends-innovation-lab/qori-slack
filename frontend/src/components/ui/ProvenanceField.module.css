@@ -1,0 +1,22 @@
+.provenance {
+  font-size: var(--text-secondary-size);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.source {
+  color: var(--color-link);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  cursor: help;
+}
+
+.derivedValue {
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-surface-muted);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+}

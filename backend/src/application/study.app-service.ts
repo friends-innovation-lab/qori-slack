@@ -124,6 +124,210 @@ export async function getStudyArtifacts(
   }));
 }
 
+// ─── WS-1: Brief, Plan, Cascade Readiness ────────────────────────
+
+/**
+ * Resolve study internal IDs for route handlers that need to delegate
+ * to application services requiring numeric IDs.
+ */
+export async function resolveStudyContext(
+  ctx: ApplicationContext,
+  studyPublicId: string,
+): Promise<{ studyId: number; projectId: number; studyName: string }> {
+  const study = await resolveStudy(studyPublicId, ctx.organization.id);
+  if (!study) throw resourceNotFound('Study');
+
+  await assertStudyAccessByActor(ctx.actor.id, study.id, ctx.organization.id);
+
+  return {
+    studyId: study.id,
+    projectId: study.project_id,
+    studyName: study.name,
+  };
+}
+
+/**
+ * Get brief details for a study — status, approval info, cascade fields.
+ */
+export async function getStudyBrief(ctx: ApplicationContext, studyPublicId: string) {
+  const study = await resolveStudy(studyPublicId, ctx.organization.id);
+  if (!study) throw resourceNotFound('Study');
+
+  await assertStudyAccessByActor(ctx.actor.id, study.id, ctx.organization.id);
+
+  // Load cascade variables for the brief
+  const StudyVariableModel = sequelize.models.StudyVariable;
+  const cascadeFields: Record<string, string | null> = {
+    research_objectives: null,
+    research_questions: null,
+    target_barriers: null,
+    methodology_selection: null,
+    timeline_preference: null,
+    start_date: null,
+    participant_approach: null,
+    budget: null,
+  };
+
+  if (StudyVariableModel) {
+    const vars = await StudyVariableModel.findAll({
+      where: {
+        study_id: study.id,
+        variable_name: Object.keys(cascadeFields),
+      },
+    }) as any[];
+
+    for (const v of vars) {
+      const val = v.value;
+      // study_variables.value is JSONB — may be string, array, or object
+      cascadeFields[v.variable_name] = typeof val === 'string' ? val :
+        Array.isArray(val) ? JSON.stringify(val) : val ? String(val) : null;
+    }
+  }
+
+  // Resolve brief reviewer display name
+  let reviewerDisplayName: string | null = null;
+  if (study.brief_reviewer_id) {
+    const ActorModel = sequelize.models.Actor;
+    if (ActorModel) {
+      const reviewer = await ActorModel.findOne({
+        where: { public_id: study.brief_reviewer_id },
+        attributes: ['display_name'],
+      }) as { display_name: string | null } | null;
+      reviewerDisplayName = reviewer?.display_name || null;
+    }
+  }
+
+  // Get brief artifact URL
+  const ArtifactModel = sequelize.models.ResearchArtifact;
+  let briefUrl: string | null = null;
+  if (ArtifactModel) {
+    const briefArtifact = await ArtifactModel.findOne({
+      where: { study_id: study.id, artifact_type: 'research_brief' },
+      attributes: ['id'],
+      order: [['created_at', 'DESC']],
+    }) as any;
+    if (briefArtifact) {
+      // GitHub URL from study path
+      briefUrl = study.link || null;
+    }
+  }
+
+  return {
+    study: {
+      public_id: study.public_id || String(study.id),
+      name: study.name,
+      status: study.status || 'active',
+      brief_status: study.brief_status || null,
+      project_public_id: study.project?.slug || '',
+      created_at: study.created_at?.toISOString() || new Date().toISOString(),
+    },
+    brief_status: study.brief_status || null,
+    brief_approved_at: study.brief_approved_at?.toISOString() || null,
+    brief_approved_by: study.brief_approved_by || null,
+    brief_change_feedback: study.brief_change_feedback || null,
+    brief_reviewer_display_name: reviewerDisplayName,
+    brief_url: briefUrl,
+    cascade_fields: cascadeFields,
+  };
+}
+
+/**
+ * Get plan details for a study.
+ */
+export async function getStudyPlan(ctx: ApplicationContext, studyPublicId: string) {
+  const study = await resolveStudy(studyPublicId, ctx.organization.id);
+  if (!study) throw resourceNotFound('Study');
+
+  await assertStudyAccessByActor(ctx.actor.id, study.id, ctx.organization.id);
+
+  const ResearchPlanModel = sequelize.models.ResearchPlan;
+  let planUrl: string | null = null;
+  let planCreatedAt: string | null = null;
+  if (ResearchPlanModel) {
+    const plan = await ResearchPlanModel.findOne({
+      where: { study_id: study.id },
+      order: [['created_at', 'DESC']],
+    }) as any;
+    if (plan) {
+      planUrl = plan.url || plan.link || null;
+      planCreatedAt = plan.created_at?.toISOString() || null;
+    }
+  }
+
+  // Load inherited context from cascade variables
+  const StudyVariableModel = sequelize.models.StudyVariable;
+  const inheritedKeys = [
+    'research_objectives', 'research_questions', 'target_barriers',
+    'methodology_selection', 'timeline_phases', 'participant_approach',
+    'compensation', 'deliverables',
+  ];
+  const inherited: Record<string, string | null> = {};
+  for (const k of inheritedKeys) inherited[k] = null;
+
+  if (StudyVariableModel) {
+    const vars = await StudyVariableModel.findAll({
+      where: { study_id: study.id, variable_name: inheritedKeys },
+    }) as any[];
+    for (const v of vars) {
+      const val = v.value;
+      inherited[v.variable_name] = typeof val === 'string' ? val :
+        Array.isArray(val) ? JSON.stringify(val) : val ? String(val) : null;
+    }
+  }
+
+  return {
+    study: {
+      public_id: study.public_id || String(study.id),
+      name: study.name,
+      status: study.status || 'active',
+      brief_status: study.brief_status || null,
+      project_public_id: study.project?.slug || '',
+      created_at: study.created_at?.toISOString() || new Date().toISOString(),
+    },
+    plan_url: planUrl,
+    plan_created_at: planCreatedAt,
+    inherited_context: inherited,
+  };
+}
+
+/**
+ * Check cascade readiness for plan creation.
+ */
+export async function getCascadeReadiness(ctx: ApplicationContext, studyPublicId: string) {
+  const study = await resolveStudy(studyPublicId, ctx.organization.id);
+  if (!study) throw resourceNotFound('Study');
+
+  await assertStudyAccessByActor(ctx.actor.id, study.id, ctx.organization.id);
+
+  const requiredVars = [
+    { variable: 'research_objectives', human_label: 'Research objectives', resolution_hint: 'Complete the research brief' },
+    { variable: 'research_questions', human_label: 'Research questions', resolution_hint: 'Complete the research brief' },
+    { variable: 'target_barriers', human_label: 'Target barriers', resolution_hint: 'Complete the research brief' },
+  ];
+
+  const StudyVariableModel = sequelize.models.StudyVariable;
+  const missing: Array<{ variable: string; human_label: string; resolution_hint: string }> = [];
+
+  if (StudyVariableModel) {
+    const vars = await StudyVariableModel.findAll({
+      where: {
+        study_id: study.id,
+        variable_name: requiredVars.map(v => v.variable),
+      },
+      attributes: ['variable_name'],
+    }) as any[];
+
+    const found = new Set(vars.map((v: any) => v.variable_name));
+    for (const req of requiredVars) {
+      if (!found.has(req.variable)) missing.push(req);
+    }
+  } else {
+    missing.push(...requiredVars);
+  }
+
+  return { ready: missing.length === 0, missing };
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────
 
 async function resolveStudy(publicIdOrId: string, organizationId: number) {

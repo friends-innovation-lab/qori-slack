@@ -8,6 +8,30 @@ import * as projectAppService from '../../../application/project.app-service';
 
 const router = Router();
 
+// Create a new project
+router.post('/', requireAuth, async (req, res, next) => {
+  try {
+    const { name, problem_statement, description, approver_actor_public_id } = req.body;
+    if (!name || typeof name !== 'string') {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Project name is required' } });
+      return;
+    }
+    if (!problem_statement || typeof problem_statement !== 'string') {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Problem statement is required' } });
+      return;
+    }
+    const result = await projectAppService.createProject(req.ctx!, {
+      name,
+      problem_statement,
+      description: typeof description === 'string' ? description : undefined,
+      approver_actor_public_id: typeof approver_actor_public_id === 'string' ? approver_actor_public_id : undefined,
+    });
+    res.status(201).json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // List projects the actor has access to
 router.get('/', requireAuth, async (req, res, next) => {
   try {

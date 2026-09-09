@@ -7,7 +7,8 @@
  * Security:
  * - HttpOnly cookies (no JS access)
  * - Secure in production (HTTPS only)
- * - SameSite=Lax (CSRF mitigation, compatible with OIDC redirects)
+ * - SameSite configurable via SESSION_SAMESITE env var (lax|none); defaults to lax
+ * - SameSite=None requires Secure=true (enforced)
  * - Bounded expiration (24h absolute, 2h idle via rolling)
  * - Session secret from env, never hardcoded
  */
@@ -45,6 +46,24 @@ export function createSessionMiddleware(): RequestHandler {
   const isProd = process.env.NODE_ENV === 'production';
   const maxAge = parseInt(process.env.SESSION_MAX_AGE_MS || '86400000', 10); // 24h default
 
+  // Topology-aware cookie policy:
+  // SESSION_SAMESITE controls cross-origin behavior for Workspace↔API separation.
+  // Default: 'lax' (conservative). Set to 'none' for cross-origin Railway deployments.
+  // SameSite=None requires Secure=true — enforced below.
+  const rawSameSite = (process.env.SESSION_SAMESITE || 'lax').toLowerCase();
+  const sameSite: 'lax' | 'none' | 'strict' =
+    rawSameSite === 'none' ? 'none' :
+    rawSameSite === 'strict' ? 'strict' : 'lax';
+
+  // Secure is required when SameSite=None. In production, always secure.
+  const secure = sameSite === 'none' ? true : isProd;
+
+  if (sameSite === 'none' && !secure) {
+    // This branch can't actually be reached due to the ternary above,
+    // but documents the invariant: SameSite=None + Secure=false is invalid.
+    throw new Error('[SESSION] SameSite=None requires Secure=true');
+  }
+
   const sessionConfig: session.SessionOptions = {
     secret,
     name: 'qori.sid',
@@ -53,8 +72,8 @@ export function createSessionMiddleware(): RequestHandler {
     rolling: true, // Reset expiry on activity (idle timeout)
     cookie: {
       httpOnly: true,
-      secure: isProd,
-      sameSite: 'lax',
+      secure,
+      sameSite,
       maxAge: Number.isFinite(maxAge) && maxAge > 0 ? maxAge : 86400000,
       path: '/',
     },
