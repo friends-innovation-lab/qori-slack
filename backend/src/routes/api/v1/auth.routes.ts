@@ -57,6 +57,15 @@ function generateCodeChallenge(verifier: string): string {
 /** OIDC state nonce expiry: 10 minutes */
 const OIDC_STATE_MAX_AGE_MS = 10 * 60 * 1000;
 
+/** Join a path onto an issuer URL without producing double slashes. */
+function issuerUrl(issuer: string, path: string): string {
+  // new URL(path, base) requires the base to end with '/' for correct
+  // resolution when the base has no trailing path component, so we
+  // normalise but never strip meaningful path segments.
+  const base = issuer.endsWith('/') ? issuer : `${issuer}/`;
+  return new URL(path, base).toString();
+}
+
 // ─── OIDC Authorization Code + PKCE Flow ────────────────────────
 
 /**
@@ -93,7 +102,7 @@ router.get('/oidc/authorize', (req, res) => {
   }
 
   // Construct IdP authorization URL
-  const authUrl = new URL(`${config.issuer}/authorize`);
+  const authUrl = new URL(issuerUrl(config.issuer, 'authorize'));
   authUrl.searchParams.set('response_type', 'code');
   authUrl.searchParams.set('client_id', config.clientId);
   authUrl.searchParams.set('redirect_uri', config.redirectUri);
@@ -213,7 +222,7 @@ router.get('/oidc/callback', async (req, res) => {
   // ── Exchange authorization code for tokens ──────────────────
   let tokenResponse: { id_token?: string; access_token?: string };
   try {
-    const tokenUrl = `${config.issuer}/oauth/token`;
+    const tokenUrl = issuerUrl(config.issuer, 'oauth/token');
     const body = new URLSearchParams({
       grant_type: 'authorization_code',
       code,
