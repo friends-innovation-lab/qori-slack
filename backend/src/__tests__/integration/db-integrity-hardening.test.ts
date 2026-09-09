@@ -28,8 +28,8 @@ async function seedProject(slug = 'test-proj'): Promise<number> {
 /** Insert a study and return its id */
 async function seedStudy(projectId: number, name = 'test-study'): Promise<number> {
   const [rows] = await sequelize.query(
-    `INSERT INTO research_studies (project_id, name, channel_name, created_by, researcher_name, researcher_email, created_at, updated_at)
-     VALUES (${projectId}, '${name}', 'chan-test', 'U_TEST', 'Tester', 'test@test.com', NOW(), NOW())
+    `INSERT INTO research_studies (project_id, name, channel_name, created_by, researcher_name, researcher_email, public_id, created_at, updated_at)
+     VALUES (${projectId}, '${name}', 'chan-test', 'U_TEST', 'Tester', 'test@test.com', gen_random_uuid(), NOW(), NOW())
      RETURNING id`
   );
   return (rows as any[])[0].id;

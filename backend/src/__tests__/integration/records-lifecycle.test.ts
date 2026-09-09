@@ -74,11 +74,11 @@ async function seedProject(slug = 'gov6-test'): Promise<number> {
 
 async function seedStudy(projectId: number, name = 'test-study'): Promise<{ id: number; public_id: string }> {
   const [rows] = await sequelize.query(
-    `INSERT INTO research_studies (project_id, name, channel_name, created_by, researcher_name, researcher_email, created_at, updated_at)
-     VALUES (${projectId}, '${name}', 'chan-test', 'U_TEST', 'Tester', 'test@test.com', NOW(), NOW())
-     RETURNING id`
+    `INSERT INTO research_studies (project_id, name, channel_name, created_by, researcher_name, researcher_email, public_id, created_at, updated_at)
+     VALUES (${projectId}, '${name}', 'chan-test', 'U_TEST', 'Tester', 'test@test.com', gen_random_uuid(), NOW(), NOW())
+     RETURNING id, public_id`
   );
-  return { id: (rows as any[])[0].id, public_id: '' }; // studies don't have public_id yet
+  return { id: (rows as any[])[0].id, public_id: (rows as any[])[0].public_id };
 }
 
 async function seedSource(projectId: number): Promise<string> {
