@@ -175,6 +175,9 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+# Node
+node_modules/
+
 # TypeScript
 *.tsbuildinfo
 backend/.DS_Store

@@ -73,6 +73,89 @@ describe('Session cookie policy', () => {
   });
 });
 
+// ─── Session proxy + secure cookie behind TLS-terminating proxy ──
+
+describe('Session proxy configuration for reverse-proxy HTTPS', () => {
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    jest.resetModules();
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+    jest.resetModules();
+  });
+
+  /**
+   * Helper: spy on express-session to capture the options it receives.
+   * Returns the SessionOptions passed to the session() call.
+   */
+  function captureSessionOptions() {
+    let captured: Record<string, unknown> | undefined;
+    jest.doMock('express-session', () => {
+      const fn = (opts: Record<string, unknown>) => {
+        captured = opts;
+        return (_req: unknown, _res: unknown, next: () => void) => next();
+      };
+      fn.default = fn;
+      return fn;
+    });
+    // Ensure Redis store doesn't interfere
+    delete process.env.REDIS_URL;
+    process.env.SESSION_SECRET = 'test-secret-for-proxy-tests';
+
+    const { createSessionMiddleware } = require('../../middleware/session');
+    createSessionMiddleware();
+    return captured!;
+  }
+
+  it('sets proxy: true when SameSite=None (cross-site Railway topology)', () => {
+    process.env.SESSION_SAMESITE = 'none';
+    const opts = captureSessionOptions();
+    expect(opts.proxy).toBe(true);
+    expect((opts.cookie as Record<string, unknown>).secure).toBe(true);
+    expect((opts.cookie as Record<string, unknown>).sameSite).toBe('none');
+  });
+
+  it('sets proxy: true in production (secure cookies require proxy trust)', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.SESSION_SAMESITE = 'lax';
+    const opts = captureSessionOptions();
+    expect(opts.proxy).toBe(true);
+    expect((opts.cookie as Record<string, unknown>).secure).toBe(true);
+  });
+
+  it('does not set proxy when cookies are not Secure (local dev)', () => {
+    process.env.NODE_ENV = 'development';
+    process.env.SESSION_SAMESITE = 'lax';
+    const opts = captureSessionOptions();
+    expect(opts.proxy).toBeUndefined();
+    expect((opts.cookie as Record<string, unknown>).secure).toBe(false);
+  });
+
+  it('saveUninitialized is false (new sessions require explicit save)', () => {
+    process.env.SESSION_SAMESITE = 'none';
+    const opts = captureSessionOptions();
+    expect(opts.saveUninitialized).toBe(false);
+  });
+
+  it('SameSite=None forces Secure=true (invariant)', () => {
+    process.env.SESSION_SAMESITE = 'none';
+    process.env.NODE_ENV = 'development'; // even in dev
+    const opts = captureSessionOptions();
+    expect((opts.cookie as Record<string, unknown>).secure).toBe(true);
+    expect((opts.cookie as Record<string, unknown>).sameSite).toBe('none');
+  });
+
+  it('cookie name is qori.sid', () => {
+    process.env.SESSION_SAMESITE = 'none';
+    const opts = captureSessionOptions();
+    expect(opts.name).toBe('qori.sid');
+  });
+});
+
 // ─── CSRF topology ──────────────────────────────────────────────
 
 describe('CSRF cookie topology', () => {
