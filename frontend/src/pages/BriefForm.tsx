@@ -58,7 +58,7 @@ export function BriefForm() {
   const { studyPublicId } = useParams<{ studyPublicId: string }>();
   const navigate = useNavigate();
   const { data: study, isLoading: studyLoading, error: studyError } = useStudy(studyPublicId || '');
-  const submitBrief = useSubmitBrief(study?.project_public_id || '');
+  const submitBrief = useSubmitBrief(studyPublicId || '');
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
