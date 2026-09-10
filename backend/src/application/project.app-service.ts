@@ -254,6 +254,7 @@ function mapStudyResource(s: any, projectSlug: string): StudyResource {
     public_id: s.public_id || String(s.id),
     name: s.name,
     status: s.status || 'active',
+    brief_status: s.brief_status || null,
     project_public_id: projectSlug,
     created_at: s.created_at?.toISOString() || new Date().toISOString(),
   };

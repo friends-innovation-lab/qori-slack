@@ -31,6 +31,20 @@ describe('home.app-service', () => {
   });
 });
 
+describe('StudyVariable column references', () => {
+  it('study app-service queries variable_key, not variable_name', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../application/study.app-service.ts'),
+      'utf8',
+    );
+    // study_variables table column is variable_key, not variable_name
+    expect(source).not.toContain('variable_name');
+    expect(source).toContain('variable_key');
+  });
+});
+
 describe('StudyStatus model-schema alignment', () => {
   it('model init does not declare created_at (table has approved_at instead)', () => {
     const fs = require('fs');
