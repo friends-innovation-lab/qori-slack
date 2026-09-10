@@ -86,6 +86,16 @@ router.post('/:studyId/brief', requireAuth, async (req, res, next) => {
       discoverySelections: req.body.discovery_selections || [],
     });
 
+    // Update study brief_status (mirrors Slack handler behavior)
+    const study = await sequelize.models.ResearchStudy.findByPk(studyId);
+    if (study) {
+      await study.update({
+        brief_status: 'pending_approval',
+        link: result.url,
+        updated_at: new Date(),
+      });
+    }
+
     res.status(201).json({
       data: {
         study_public_id: req.params.studyId,

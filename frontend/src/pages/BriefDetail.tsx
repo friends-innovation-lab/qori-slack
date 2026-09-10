@@ -41,6 +41,7 @@ export function BriefDetail() {
   const isPendingApproval = brief.brief_status === 'pending_approval';
   const isApproved = brief.brief_status === 'approved';
   const isChangesRequested = brief.brief_status === 'changes_requested';
+  const hasCascadeContent = Object.values(brief.cascade_fields).some(Boolean);
 
   const allChecked = Object.values(checklist).every(Boolean);
 
@@ -111,32 +112,56 @@ export function BriefDetail() {
         {/* Cascade fields summary */}
         <Card>
           <h2 className={styles.sectionTitle}>Brief summary</h2>
-          <dl className={styles.fieldList}>
-            {brief.cascade_fields.research_objectives && (
-              <>
-                <dt>Research objectives</dt>
-                <dd>{brief.cascade_fields.research_objectives}</dd>
-              </>
-            )}
-            {brief.cascade_fields.methodology_selection && (
-              <>
-                <dt>Methodology</dt>
-                <dd>{brief.cascade_fields.methodology_selection}</dd>
-              </>
-            )}
-            {brief.cascade_fields.start_date && (
-              <>
-                <dt>Start date</dt>
-                <dd>{brief.cascade_fields.start_date}</dd>
-              </>
-            )}
-            {brief.cascade_fields.participant_approach && (
-              <>
-                <dt>Participant approach</dt>
-                <dd>{brief.cascade_fields.participant_approach}</dd>
-              </>
-            )}
-          </dl>
+          {hasCascadeContent ? (
+            <dl className={styles.fieldList}>
+              {brief.cascade_fields.research_objectives && (
+                <>
+                  <dt>Research objectives</dt>
+                  <dd>{brief.cascade_fields.research_objectives}</dd>
+                </>
+              )}
+              {brief.cascade_fields.research_questions && (
+                <>
+                  <dt>Research questions</dt>
+                  <dd>{brief.cascade_fields.research_questions}</dd>
+                </>
+              )}
+              {brief.cascade_fields.target_barriers && (
+                <>
+                  <dt>Target barriers</dt>
+                  <dd>{brief.cascade_fields.target_barriers}</dd>
+                </>
+              )}
+              {brief.cascade_fields.methodology_selection && (
+                <>
+                  <dt>Methodology</dt>
+                  <dd>{brief.cascade_fields.methodology_selection}</dd>
+                </>
+              )}
+              {brief.cascade_fields.participant_approach && (
+                <>
+                  <dt>Participant approach</dt>
+                  <dd>{brief.cascade_fields.participant_approach}</dd>
+                </>
+              )}
+              {brief.cascade_fields.start_date && (
+                <>
+                  <dt>Start date</dt>
+                  <dd>{brief.cascade_fields.start_date}</dd>
+                </>
+              )}
+              {brief.cascade_fields.budget && (
+                <>
+                  <dt>Budget</dt>
+                  <dd>{brief.cascade_fields.budget}</dd>
+                </>
+              )}
+            </dl>
+          ) : (
+            <p className={styles.emptyNote}>
+              Brief content will appear here after generation completes.
+            </p>
+          )}
         </Card>
       </div>
 
