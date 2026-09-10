@@ -32,6 +32,8 @@ export enum ApiErrorCode {
   ARTIFACT_NOT_APPROVED = 'ARTIFACT_NOT_APPROVED',
   /** Publication is not in a retryable state */
   PUBLICATION_NOT_RETRYABLE = 'PUBLICATION_NOT_RETRYABLE',
+  /** Resource already exists (e.g., duplicate slug) */
+  RESOURCE_CONFLICT = 'RESOURCE_CONFLICT',
   /** Unexpected server error — details intentionally omitted */
   INTERNAL_ERROR = 'INTERNAL_ERROR',
 }
@@ -111,4 +113,8 @@ export function artifactNotApproved(message = 'Artifact must be approved before 
 
 export function publicationNotRetryable(message = 'Publication is not in a retryable state'): AppError {
   return new AppError(ApiErrorCode.PUBLICATION_NOT_RETRYABLE, message, 409);
+}
+
+export function resourceConflict(message: string): AppError {
+  return new AppError(ApiErrorCode.RESOURCE_CONFLICT, message, 409);
 }

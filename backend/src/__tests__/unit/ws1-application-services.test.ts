@@ -55,6 +55,49 @@ describe('project.app-service', () => {
   });
 });
 
+describe('project slug conflict error mapping', () => {
+  it('duplicate slug throws AppError with RESOURCE_CONFLICT, not plain Error', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../services/project.service.ts'),
+      'utf8',
+    );
+    // Must use resourceConflict (AppError) not plain Error for duplicate slug
+    expect(source).toContain('resourceConflict');
+    expect(source).not.toMatch(/throw new Error\(.*already exists/);
+  });
+
+  it('RESOURCE_CONFLICT error code exists in ApiErrorCode enum', () => {
+    const { ApiErrorCode } = require('../../types/api-errors');
+    expect(ApiErrorCode.RESOURCE_CONFLICT).toBe('RESOURCE_CONFLICT');
+  });
+
+  it('resourceConflict factory returns 409 status', () => {
+    const { resourceConflict } = require('../../types/api-errors');
+    const err = resourceConflict('test');
+    expect(err.httpStatus).toBe(409);
+    expect(err.code).toBe('RESOURCE_CONFLICT');
+    expect(err.message).toBe('test');
+  });
+
+  it('apiErrorHandler maps AppError to correct response shape', () => {
+    const { AppError, ApiErrorCode } = require('../../types/api-errors');
+    const { apiErrorHandler } = require('../../middleware/apiErrorHandler');
+    const err = new AppError(ApiErrorCode.RESOURCE_CONFLICT, 'Duplicate slug', 409);
+    let responseStatus: number | undefined;
+    let responseBody: any;
+    const res = {
+      status(s: number) { responseStatus = s; return this; },
+      json(b: any) { responseBody = b; },
+    };
+    apiErrorHandler(err, {} as any, res as any, (() => {}) as any);
+    expect(responseStatus).toBe(409);
+    expect(responseBody.error.code).toBe('RESOURCE_CONFLICT');
+    expect(responseBody.error.message).toBe('Duplicate slug');
+  });
+});
+
 describe('project creation contract — organization_id binding', () => {
   it('createProject passes organization_id from context to service layer', () => {
     // Verify the app service passes org context to createProjectFromName
