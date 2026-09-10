@@ -41,6 +41,7 @@ export async function createProject(
     problem_statement: input.problem_statement,
     created_by: ctx.actor.publicId,
     status: 'active',
+    organization_id: ctx.organization.id,
   });
 
   // 2. Add creator as owner — dual-write: PLAT-2 actor-based + legacy Slack-based

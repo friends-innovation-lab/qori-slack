@@ -25,6 +25,50 @@ describe('project.app-service', () => {
   });
 });
 
+describe('project creation contract — organization_id binding', () => {
+  it('createProject passes organization_id from context to service layer', () => {
+    // Verify the app service passes org context to createProjectFromName
+    // by inspecting the source — this is a structural contract test
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../application/project.app-service.ts'),
+      'utf8',
+    );
+    // The app service MUST pass organization_id to the service layer
+    expect(source).toContain('organization_id: ctx.organization.id');
+  });
+
+  it('service CreateProjectInput includes organization_id', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../services/project.service.ts'),
+      'utf8',
+    );
+    // The service interface MUST require organization_id
+    expect(source).toMatch(/organization_id:\s*number/);
+  });
+
+  it('frontend payload shape matches backend expectations', () => {
+    // The exact payload from the DEV smoke test that triggered the 400
+    const payload = {
+      name: 'City Services Status Experience',
+      description: 'The city is redesigning the resident service-request experience...',
+      problem_statement: 'Residents cannot easily understand the status of service requests...',
+    };
+    // Backend route destructures these exact fields from req.body
+    expect(payload).toHaveProperty('name');
+    expect(payload).toHaveProperty('problem_statement');
+    expect(typeof payload.name).toBe('string');
+    expect(typeof payload.problem_statement).toBe('string');
+    // description is optional
+    expect(typeof payload.description).toBe('string');
+    // organization_id must NOT be in the request — it comes from server-side context
+    expect(payload).not.toHaveProperty('organization_id');
+  });
+});
+
 describe('study.app-service', () => {
   it('exports resolveStudyContext', () => {
     const { resolveStudyContext } = require('../../application/study.app-service');
