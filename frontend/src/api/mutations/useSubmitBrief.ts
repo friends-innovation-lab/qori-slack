@@ -8,20 +8,20 @@ interface SubmitBriefResult {
   brief_status: string;
 }
 
-export function useSubmitBrief(projectPublicId: string) {
+export function useSubmitBrief(studyPublicId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (input: SubmitBriefInput) => {
       const res = await api
-        .post(`projects/${projectPublicId}/briefs`, { json: input })
+        .post(`studies/${studyPublicId}/brief`, { json: input })
         .json<{ data: SubmitBriefResult }>();
       return res.data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['home'] });
-      queryClient.invalidateQueries({ queryKey: ['project', projectPublicId] });
       queryClient.invalidateQueries({ queryKey: ['study', data.study_public_id] });
+      queryClient.invalidateQueries({ queryKey: ['study', data.study_public_id, 'brief'] });
     },
   });
 }

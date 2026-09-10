@@ -8,6 +8,7 @@ import { Router } from 'express';
 import { requireAuth } from '../../../middleware/auth';
 import * as studyAppService from '../../../application/study.app-service';
 import * as approvalAppService from '../../../application/approval.app-service';
+import { executeBrief } from '../../../application/brief.app-service';
 
 const router = Router();
 
@@ -28,6 +29,70 @@ router.get('/:studyId/brief', requireAuth, async (req, res, next) => {
   try {
     const result = await studyAppService.getStudyBrief(req.ctx!, req.params.studyId as string);
     res.json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Generate/submit a brief for a study
+router.post('/:studyId/brief', requireAuth, async (req, res, next) => {
+  try {
+    const { problem_statement, learning_objectives, methodology } = req.body;
+    if (!problem_statement || typeof problem_statement !== 'string') {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Problem statement is required' } });
+      return;
+    }
+    if (!learning_objectives || typeof learning_objectives !== 'string') {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Learning objectives are required' } });
+      return;
+    }
+    if (!methodology || typeof methodology !== 'string') {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Methodology is required' } });
+      return;
+    }
+
+    // Resolve study context
+    const { studyId, projectId, studyName } = await studyAppService.resolveStudyContext(
+      req.ctx!, req.params.studyId as string,
+    );
+
+    // Get project for slug/name
+    const sequelize = require('../../../database').default;
+    const project = await sequelize.models.Project.findByPk(projectId);
+    if (!project) {
+      res.status(404).json({ error: { code: 'RESOURCE_NOT_FOUND', message: 'Project not found' } });
+      return;
+    }
+
+    const actorName = req.ctx!.actor.displayName || 'Researcher';
+    const result = await executeBrief(req.ctx!, {
+      projectId,
+      projectSlug: project.slug,
+      projectName: project.name,
+      leadResearcher: actorName,
+      requestorName: actorName,
+      createdByActorId: req.ctx!.actor.publicId,
+      researcherEmail: '',
+      problemStatement: problem_statement,
+      learningObjectives: learning_objectives,
+      outOfScope: req.body.out_of_scope || '',
+      methodology: methodology,
+      methodologyValue: req.body.method_override || methodology,
+      participantApproach: req.body.participant_approach || '',
+      recruitmentSources: req.body.recruitment_sources || '',
+      startDate: req.body.start_date || '',
+      decisionDeadline: req.body.decision_deadline || '',
+      budget: req.body.budget || '',
+      discoverySelections: req.body.discovery_selections || [],
+    });
+
+    res.status(201).json({
+      data: {
+        study_public_id: req.params.studyId,
+        brief_url: result.url,
+        brief_status: 'pending_approval',
+      },
+    });
   } catch (error) {
     next(error);
   }
