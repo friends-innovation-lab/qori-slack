@@ -38,6 +38,7 @@ export interface ProjectResource {
   slug: string;
   name: string;
   description: string | null;
+  problem_statement: string | null;
   status: string;
   organization_public_id: string;
   team_public_id: string | null;
