@@ -10,7 +10,8 @@ import type { ProjectResource, StudyResource, GovernanceResource } from '../type
 import { listProjectsByOrg, getProjectByIdAndOrg, getProjectStudiesByOrg, createProjectFromName } from '../services/project.service';
 import { isProjectMemberByActor, addProjectMember, setProjectStakeholder } from '../services/authorization.service';
 import { scaffoldProject } from '../services/scaffolding.service';
-import { resourceNotFound, authorizationDenied } from '../types/api-errors';
+import { resourceNotFound, authorizationDenied, resourceConflict } from '../types/api-errors';
+import { addResearchStudyWithRoles } from '../services/research_study.service';
 import sequelize from '../database';
 
 // ─── Input Types ──────────────────────────────────────────────────
@@ -87,6 +88,52 @@ export async function createProject(
   }
 
   return mapProjectResource(project, ctx.organization.publicId);
+}
+
+// ─── Create Study ──────────────────────────────────────────────────
+
+export interface CreateStudyInput {
+  name: string;
+}
+
+/**
+ * Create a new research study within a project.
+ * Returns a minimal StudyResource so the frontend can navigate to the brief form.
+ */
+export async function createStudyForProject(
+  ctx: ApplicationContext,
+  projectPublicId: string,
+  input: CreateStudyInput,
+): Promise<StudyResource> {
+  const project = await getProjectBySlugOrId(projectPublicId, ctx.organization.id) as any;
+  if (!project) throw resourceNotFound('Project');
+
+  const isMember = await isProjectMemberByActor(ctx.actor.id, project.id);
+  if (!isMember) throw authorizationDenied('Not a project member');
+
+  // Check for existing study with same name in this project
+  const existingStudies = await getProjectStudiesByOrg(project.id, ctx.organization.id);
+  const duplicate = existingStudies.find(
+    (s: any) => s.name.toLowerCase() === input.name.trim().toLowerCase(),
+  );
+  if (duplicate) {
+    throw resourceConflict('A study with this name already exists in this project.');
+  }
+
+  const actorName = ctx.actor.displayName || 'Researcher';
+  const channelName = `study-${input.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60)}`;
+
+  const study = await addResearchStudyWithRoles({
+    name: input.name.trim(),
+    project_id: project.id,
+    created_by: ctx.actor.publicId,
+    researcher_name: actorName,
+    researcher_email: '', // Workspace flow doesn't require email
+    channel_name: channelName,
+    status: 'active',
+  });
+
+  return mapStudyResource(study as any, project.public_id || project.slug);
 }
 
 /**

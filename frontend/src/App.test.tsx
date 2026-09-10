@@ -38,6 +38,7 @@ function TestApp({ initialEntries }: { initialEntries: string[] }) {
               <Route path="/studies/:studyPublicId/plan" element={<div data-testid="plan">Plan</div>} />
               <Route path="/studies/:studyPublicId/plan/new" element={<div data-testid="plan-form">PlanForm</div>} />
               <Route path="/projects/new" element={<div data-testid="new-project">NewProject</div>} />
+              <Route path="/projects/:projectPublicId" element={<div data-testid="project-detail">ProjectDetail</div>} />
             </Route>
           </Routes>
         </AuthProvider>

@@ -62,6 +62,25 @@ router.get('/:projectSlug/studies', requireAuth, async (req, res, next) => {
   }
 });
 
+// Create a study within a project
+router.post('/:projectSlug/studies', requireAuth, async (req, res, next) => {
+  try {
+    const { name } = req.body;
+    if (!name || typeof name !== 'string') {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Study name is required' } });
+      return;
+    }
+    const result = await projectAppService.createStudyForProject(
+      req.ctx!,
+      req.params.projectSlug as string,
+      { name },
+    );
+    res.status(201).json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Get governance summary for a project
 router.get('/:projectSlug/governance', requireAuth, async (req, res, next) => {
   try {

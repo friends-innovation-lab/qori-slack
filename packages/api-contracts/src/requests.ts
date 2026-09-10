@@ -11,6 +11,10 @@ export interface CreateProjectInput {
   approver_actor_public_id?: string;
 }
 
+export interface CreateStudyInput {
+  name: string;
+}
+
 export interface SubmitBriefInput {
   problem_statement: string;
   learning_objectives: string;
