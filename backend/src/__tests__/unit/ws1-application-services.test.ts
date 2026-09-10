@@ -31,6 +31,33 @@ describe('home.app-service', () => {
   });
 });
 
+describe('addStudyStatus handles missing file_name', () => {
+  it('does not query with undefined file_name', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../services/study-status.service.ts'),
+      'utf8',
+    );
+    // file_name dedup lookup must be guarded — undefined file_name crashes Postgres
+    expect(source).toMatch(/if\s*\(\s*fileName\s*\)/);
+    // Null fallback for create
+    expect(source).toContain("file_name: fileName || null");
+  });
+
+  it('approval route passes documentUrl from study.link', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../routes/api/v1/studies.routes.ts'),
+      'utf8',
+    );
+    // Both approve and request-changes routes must pass documentUrl
+    const approveSection = source.split('brief/approve')[1]?.split('brief/request-changes')[0] || '';
+    expect(approveSection).toContain('documentUrl');
+  });
+});
+
 describe('Brief generation idempotency guard', () => {
   it('POST brief route checks brief_status before calling executeBrief', () => {
     const fs = require('fs');

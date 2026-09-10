@@ -23,45 +23,45 @@ const addStudyStatus = async (data: StudyStatusInput): Promise<StudyStatus> => {
     let fileName = data.file_name;
     if (!fileName && data.path) {
       const urlParts = data.path.split('/');
-      fileName = urlParts[urlParts.length - 1]; // Get the last part of the URL
+      fileName = urlParts[urlParts.length - 1] || undefined;
     }
 
+    // Dedup by file_name only when a meaningful file_name exists.
+    // Workspace approval may not have a file_name (adapter-independent).
+    if (fileName) {
+      const existingRecord = await StudyStatusModel.findOne({
+        where: { file_name: fileName },
+      });
 
-    // Check if a record with this file_name already exists
-    const existingRecord = await StudyStatusModel.findOne({
-      where: { file_name: fileName },
-    });
+      if (existingRecord) {
+        // Update existing record
+        const updateData: Record<string, unknown> = {
+          study_id: data.study_id,
+          path: data.path || existingRecord.path,
+          status: data.status,
+          updated_at: new Date(),
+        };
 
-    if (existingRecord) {
-      // Update existing record
-      const updateData: Record<string, unknown> = {
-        study_id: data.study_id,
-        path: data.path,
-        status: data.status,
-        updated_at: new Date(),
-      };
+        if (data.status === 'approve') {
+          updateData.reason = null;
+          updateData.requested_by = null;
+          updateData.approved_by = data.approved_by;
+        } else {
+          if (data.reason !== undefined) updateData.reason = data.reason;
+          if (data.requested_by !== undefined) updateData.requested_by = data.requested_by;
+          if (data.approved_by !== undefined) updateData.approved_by = data.approved_by;
+        }
 
-      // For approvals, clear reason and requested_by
-      if (data.status === 'approve') {
-        updateData.reason = null;
-        updateData.requested_by = null;
-        updateData.approved_by = data.approved_by;
-      } else {
-        // For other statuses, update relevant fields
-        if (data.reason !== undefined) updateData.reason = data.reason;
-        if (data.requested_by !== undefined) updateData.requested_by = data.requested_by;
-        if (data.approved_by !== undefined) updateData.approved_by = data.approved_by;
+        const updatedRecord = await existingRecord.update(updateData);
+        return updatedRecord;
       }
-
-      const updatedRecord = await existingRecord.update(updateData);
-      return updatedRecord;
     }
 
-    // Create new record
+    // Create new record — file_name is nullable in the schema
     const createData = {
       ...data,
-      path: data.path,
-      file_name: fileName,
+      path: data.path || null,
+      file_name: fileName || null,
     };
 
     const record = await StudyStatusModel.create(createData as CreationAttributes<StudyStatus>);
