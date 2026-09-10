@@ -5,6 +5,7 @@ import type { ResearchStudy } from '../database/models/research_study';
 import type { CreationAttributes } from 'sequelize';
 
 import sequelize from '../database';
+import { resourceConflict, validationError } from '../types/api-errors';
 
 // Typed model references — cast once, use everywhere.
 const ProjectModel = sequelize.models.Project as typeof Project;
@@ -284,11 +285,11 @@ export async function createProjectFromName(
 ): Promise<Project> {
   const slug = generateSlug(name);
   if (!slug) {
-    throw new Error('Project name must contain at least one alphanumeric character');
+    throw validationError('Project name must contain at least one alphanumeric character');
   }
   const available = await isSlugAvailable(slug);
   if (!available) {
-    throw new Error(`A project with slug "${slug}" already exists. Choose a different name.`);
+    throw resourceConflict('A project with this name already exists. Choose a different name.');
   }
   return createProject({ ...data, name, slug });
 }
