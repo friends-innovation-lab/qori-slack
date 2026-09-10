@@ -32,6 +32,7 @@ export function useRequestChanges(studyPublicId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['study', studyPublicId] });
+      queryClient.invalidateQueries({ queryKey: ['study', studyPublicId, 'brief'] });
       queryClient.invalidateQueries({ queryKey: ['home'] });
     },
   });

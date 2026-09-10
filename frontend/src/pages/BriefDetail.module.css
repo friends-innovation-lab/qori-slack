@@ -37,6 +37,15 @@
   font-style: italic;
 }
 
+.feedbackText {
+  margin-top: var(--space-2);
+  white-space: pre-wrap;
+}
+
+.reviseAction {
+  margin-top: var(--space-3);
+}
+
 /* Decision bar */
 
 .decisionBar {

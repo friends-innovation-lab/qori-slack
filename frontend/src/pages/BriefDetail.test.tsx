@@ -194,4 +194,78 @@ describe('BriefDetail page', () => {
     renderWithProviders(<BriefDetail />);
     expect(screen.getByText(/View full brief on GitHub/)).toBeInTheDocument();
   });
+
+  it('shows "Revise brief" action when changes_requested', () => {
+    mockUseStudyBrief.mockReturnValue({
+      data: makeBrief({
+        brief_status: 'changes_requested',
+        study: {
+          public_id: 'study-uuid-1', name: 'Claims Usability', status: 'active',
+          brief_status: 'changes_requested', project_public_id: 'p1',
+          created_at: new Date().toISOString(),
+        },
+        brief_change_feedback: 'Please expand the participant criteria.',
+      }),
+      isLoading: false,
+      error: null,
+    });
+    renderWithProviders(<BriefDetail />);
+    expect(screen.getByText('Revise brief')).toBeInTheDocument();
+    expect(screen.getByText(/Please expand the participant criteria/)).toBeInTheDocument();
+  });
+
+  it('shows reviewer name when changes_requested and reviewer known', () => {
+    mockUseStudyBrief.mockReturnValue({
+      data: makeBrief({
+        brief_status: 'changes_requested',
+        study: {
+          public_id: 'study-uuid-1', name: 'Claims Usability', status: 'active',
+          brief_status: 'changes_requested', project_public_id: 'p1',
+          created_at: new Date().toISOString(),
+        },
+        brief_change_feedback: 'Needs more detail on timeline.',
+        brief_reviewer_display_name: 'Jordan Lee',
+      }),
+      isLoading: false,
+      error: null,
+    });
+    renderWithProviders(<BriefDetail />);
+    expect(screen.getByText(/Jordan Lee/)).toBeInTheDocument();
+  });
+
+  it('"Revise brief" links to the brief form', () => {
+    mockUseStudyBrief.mockReturnValue({
+      data: makeBrief({
+        brief_status: 'changes_requested',
+        study: {
+          public_id: 'study-uuid-1', name: 'Claims Usability', status: 'active',
+          brief_status: 'changes_requested', project_public_id: 'p1',
+          created_at: new Date().toISOString(),
+        },
+        brief_change_feedback: 'Fix scope.',
+      }),
+      isLoading: false,
+      error: null,
+    });
+    renderWithProviders(<BriefDetail />);
+    const link = screen.getByText('Revise brief').closest('a');
+    expect(link).toHaveAttribute('href', '/studies/study-uuid-1/brief/new');
+  });
+
+  it('does not show approval bar when changes_requested', () => {
+    mockUseStudyBrief.mockReturnValue({
+      data: makeBrief({
+        brief_status: 'changes_requested',
+        study: {
+          public_id: 'study-uuid-1', name: 'Claims Usability', status: 'active',
+          brief_status: 'changes_requested', project_public_id: 'p1',
+          created_at: new Date().toISOString(),
+        },
+      }),
+      isLoading: false,
+      error: null,
+    });
+    renderWithProviders(<BriefDetail />);
+    expect(screen.queryByText('Approve brief')).not.toBeInTheDocument();
+  });
 });

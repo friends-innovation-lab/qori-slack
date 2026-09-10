@@ -56,6 +56,18 @@ describe('Brief generation idempotency guard', () => {
     expect(source).toMatch(/brief_status.*pending_approval[\s\S]*?res\.status\(200\)/);
   });
 
+  it('POST brief clears brief_change_feedback on regeneration (resubmit semantics)', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../routes/api/v1/studies.routes.ts'),
+      'utf8',
+    );
+    // After regeneration, stale feedback must be cleared so it doesn't
+    // appear as an active unresolved request in the new pending_approval state
+    expect(source).toContain('brief_change_feedback: null');
+  });
+
   it('resubmit endpoint exists to allow regeneration after changes_requested', () => {
     const fs = require('fs');
     const path = require('path');

@@ -28,6 +28,7 @@ export function BriefDetail() {
 
   const [showChangesForm, setShowChangesForm] = useState(false);
   const [changeFeedback, setChangeFeedback] = useState('');
+  const [changesSubmitted, setChangesSubmitted] = useState(false);
   const [checklist, setChecklist] = useState({
     scope: false,
     timeline: false,
@@ -54,6 +55,7 @@ export function BriefDetail() {
     await requestChanges.mutateAsync({ comment: changeFeedback });
     setShowChangesForm(false);
     setChangeFeedback('');
+    setChangesSubmitted(true);
   }
 
   return (
@@ -88,9 +90,25 @@ export function BriefDetail() {
         </Alert>
       )}
 
-      {isChangesRequested && brief.brief_change_feedback && (
+      {isChangesRequested && (
         <Alert variant="warning" title="Changes requested">
-          {brief.brief_change_feedback}
+          {brief.brief_reviewer_display_name && (
+            <p><strong>{brief.brief_reviewer_display_name}</strong> requested changes.</p>
+          )}
+          {brief.brief_change_feedback && (
+            <p className={styles.feedbackText}>{brief.brief_change_feedback}</p>
+          )}
+          <div className={styles.reviseAction}>
+            <Link to={`/studies/${studyPublicId}/brief/new`}>
+              <Button>Revise brief</Button>
+            </Link>
+          </div>
+        </Alert>
+      )}
+
+      {changesSubmitted && !isChangesRequested && (
+        <Alert variant="success" title="Changes requested and sent to the researcher">
+          Your feedback has been saved. The researcher will see it when they open the brief.
         </Alert>
       )}
 
