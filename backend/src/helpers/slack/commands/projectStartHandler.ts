@@ -13,6 +13,7 @@ import type { WebClient } from '@slack/web-api';
 import { createProjectFromName, bindProjectToChannel } from '../../../services/project.service';
 import { scaffoldProject } from '../../../services/scaffolding.service';
 import { addProjectMember, setProjectStakeholder } from '../../../services/authorization.service';
+import { resolveOrganizationFromWorkspace } from '../../../services/actorResolution.service';
 import { projectCreationModal, type ProjectCreationModalMetadata } from '../ui/projectCreationModal';
 
 // ─── Channel naming utilities ────────────────────────────────────
@@ -153,6 +154,21 @@ async function handleProjectCreateSubmission({ ack, body, view, client }: SlackV
   let createdChannelName: string | undefined;
   let channelError: string | undefined;
 
+  // Resolve organization from Slack workspace
+  const workspaceId = body.team?.id || (body as any).team_id;
+  const org = workspaceId
+    ? await resolveOrganizationFromWorkspace('slack', workspaceId)
+    : null;
+  if (!org) {
+    console.error(`[PROJECT] No organization bound to Slack workspace ${workspaceId}`);
+    await client.chat.postEphemeral({
+      channel: metadata.channelId || body.user.id,
+      user: body.user.id,
+      text: ':warning: Could not create project — this Slack workspace is not linked to a Qori organization. Contact your administrator.',
+    });
+    return;
+  }
+
   // Create the project
   try {
     const project = await createProjectFromName(projectName, {
@@ -160,6 +176,7 @@ async function handleProjectCreateSubmission({ ack, body, view, client }: SlackV
       problem_statement: projectProblemStatement,
       created_by: body.user.id,
       status: 'active',
+      organization_id: org.id,
     });
 
     // Add creator as project owner

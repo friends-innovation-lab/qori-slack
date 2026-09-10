@@ -19,6 +19,7 @@ interface CreateProjectInput {
   created_by: string;
   channel_id?: string | null;
   team_slug?: string | null;
+  organization_id: number;
 }
 
 interface UpdateProjectInput {
