@@ -9,6 +9,7 @@ import { requireAuth } from '../../../middleware/auth';
 import * as studyAppService from '../../../application/study.app-service';
 import * as approvalAppService from '../../../application/approval.app-service';
 import { executeBrief } from '../../../application/brief.app-service';
+import { executePlan } from '../../../application/plan.app-service';
 
 const router = Router();
 
@@ -191,6 +192,49 @@ router.post('/:studyId/brief/resubmit', requireAuth, async (req, res, next) => {
 });
 
 // ─── Plan sub-routes ──────────────────────────────────────────────
+
+// Generate/submit a plan for a study
+router.post('/:studyId/plan', requireAuth, async (req, res, next) => {
+  try {
+    const { studyId, projectId, studyName } = await studyAppService.resolveStudyContext(
+      req.ctx!, req.params.studyId as string,
+    );
+
+    // Idempotency guard: if a plan record already exists for this study,
+    // return the existing plan instead of regenerating.
+    const sequelize = require('../../../database').default;
+    const existingPlan = await sequelize.models.ResearchPlan?.findOne({
+      where: { study_id: studyId },
+      order: [['created_at', 'DESC']],
+    });
+    if (existingPlan) {
+      res.status(200).json({
+        data: {
+          plan_url: existingPlan.file_url || existingPlan.url || null,
+        },
+      });
+      return;
+    }
+
+    const actorName = req.ctx!.actor.displayName || 'Researcher';
+    const result = await executePlan(req.ctx!, {
+      studyId,
+      studyName,
+      projectId,
+      leadResearcher: actorName,
+      createdByActorId: req.ctx!.actor.publicId,
+      operationalRisks: req.body.operational_risks || '',
+    });
+
+    res.status(201).json({
+      data: {
+        plan_url: result.url,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // Get plan details for a study
 router.get('/:studyId/plan', requireAuth, async (req, res, next) => {
