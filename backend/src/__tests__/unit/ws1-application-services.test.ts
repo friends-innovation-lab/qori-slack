@@ -16,6 +16,36 @@ describe('home.app-service', () => {
     const { getHomeData } = require('../../application/home.app-service');
     expect(typeof getHomeData).toBe('function');
   });
+
+  it('does not query created_at on StudyStatus (column does not exist)', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../application/home.app-service.ts'),
+      'utf8',
+    );
+    // StudyStatus table (research_status) has approved_at but NOT created_at.
+    // Using created_at in order/where/attributes causes SequelizeDatabaseError.
+    // Response output keys named created_at are fine — they map FROM approved_at.
+    expect(source).not.toMatch(/order.*\[\s*['"]created_at['"]/);
+  });
+});
+
+describe('StudyStatus model-schema alignment', () => {
+  it('model init does not declare created_at (table has approved_at instead)', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../database/models/study_status.ts'),
+      'utf8',
+    );
+    // timestamps: false — Sequelize must not auto-add createdAt
+    expect(source).toContain('timestamps: false');
+    // Model must NOT define a created_at column (table doesn't have one)
+    expect(source).not.toMatch(/created_at:\s*\{/);
+    // Model MUST define approved_at (the actual timestamp column)
+    expect(source).toMatch(/approved_at:\s*\{/);
+  });
 });
 
 describe('project.app-service', () => {

@@ -144,7 +144,7 @@ export async function getHomeData(ctx: ApplicationContext): Promise<HomeData> {
   let recentActivity: ActivityEvent[] = [];
   if (StudyStatusModel && projectIds.length > 0) {
     const statuses = await StudyStatusModel.findAll({
-      order: [['created_at', 'DESC']],
+      order: [['approved_at', 'DESC']],
       limit: 10,
       include: [{
         model: ResearchStudyModel,
@@ -160,7 +160,7 @@ export async function getHomeData(ctx: ApplicationContext): Promise<HomeData> {
       description: `${ss.status} — ${ss.study?.name || 'Unknown study'}`,
       study_public_id: ss.study?.public_id || String(ss.study?.id),
       study_name: ss.study?.name || null,
-      created_at: ss.created_at?.toISOString() || new Date().toISOString(),
+      created_at: ss.approved_at?.toISOString() || new Date().toISOString(),
     }));
   }
 
