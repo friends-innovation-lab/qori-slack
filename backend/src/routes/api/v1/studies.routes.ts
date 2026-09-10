@@ -56,8 +56,24 @@ router.post('/:studyId/brief', requireAuth, async (req, res, next) => {
       req.ctx!, req.params.studyId as string,
     );
 
-    // Get project for slug/name
+    // Idempotency guard: if a brief is already pending_approval or approved for
+    // this lifecycle state, return the existing brief instead of regenerating.
+    // Legitimate regeneration only happens after an explicit resubmit transition
+    // (changes_requested → null brief_status via resubmit endpoint).
     const sequelize = require('../../../database').default;
+    const currentStudy = await sequelize.models.ResearchStudy.findByPk(studyId);
+    if (currentStudy?.brief_status === 'pending_approval' || currentStudy?.brief_status === 'approved') {
+      res.status(200).json({
+        data: {
+          study_public_id: req.params.studyId,
+          brief_url: currentStudy.link || null,
+          brief_status: currentStudy.brief_status,
+        },
+      });
+      return;
+    }
+
+    // Get project for slug/name
     const project = await sequelize.models.Project.findByPk(projectId);
     if (!project) {
       res.status(404).json({ error: { code: 'RESOURCE_NOT_FOUND', message: 'Project not found' } });
