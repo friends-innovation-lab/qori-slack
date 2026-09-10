@@ -70,9 +70,16 @@ export function createSessionMiddleware(): RequestHandler {
     throw new Error('[SESSION] SameSite=None requires Secure=true');
   }
 
+  // When cookies are Secure, express-session must trust X-Forwarded-Proto
+  // so it emits Set-Cookie behind a TLS-terminating proxy (e.g. Railway).
+  // Without this, req.protocol stays 'http' and express-session suppresses
+  // the Secure cookie even though the client connection is HTTPS.
+  const proxy = secure ? true : undefined;
+
   const sessionConfig: session.SessionOptions = {
     secret,
     name: 'qori.sid',
+    proxy,
     resave: false,
     saveUninitialized: false,
     rolling: true, // Reset expiry on activity (idle timeout)
