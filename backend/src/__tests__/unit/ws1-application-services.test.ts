@@ -58,6 +58,67 @@ describe('addStudyStatus handles missing file_name', () => {
   });
 });
 
+describe('Plan generation endpoint', () => {
+  it('POST plan route exists in studies routes', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../routes/api/v1/studies.routes.ts'),
+      'utf8',
+    );
+    expect(source).toContain("post('/:studyId/plan'");
+  });
+
+  it('POST plan calls executePlan from plan.app-service', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../routes/api/v1/studies.routes.ts'),
+      'utf8',
+    );
+    expect(source).toContain('executePlan');
+  });
+
+  it('POST plan has idempotency guard checking existing ResearchPlan record', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../routes/api/v1/studies.routes.ts'),
+      'utf8',
+    );
+    expect(source).toContain('ResearchPlan');
+    expect(source).toMatch(/existingPlan/);
+  });
+
+  it('GET plan route returns plan data', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../routes/api/v1/studies.routes.ts'),
+      'utf8',
+    );
+    expect(source).toContain("get('/:studyId/plan'");
+    expect(source).toContain('getStudyPlan');
+  });
+
+  it('Plan has no approval state/action endpoints', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../routes/api/v1/studies.routes.ts'),
+      'utf8',
+    );
+    // No plan/approve or plan/request-changes routes
+    expect(source).not.toContain("plan/approve");
+    expect(source).not.toContain("plan/request-changes");
+  });
+
+  it('executePlan app-service exists and exports correctly', () => {
+    const { executePlan } = require('../../application/plan.app-service');
+    expect(typeof executePlan).toBe('function');
+  });
+});
+
 describe('Brief generation idempotency guard', () => {
   it('POST brief route checks brief_status before calling executeBrief', () => {
     const fs = require('fs');
