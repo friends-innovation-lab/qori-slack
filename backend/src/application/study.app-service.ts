@@ -238,7 +238,7 @@ export async function getStudyPlan(ctx: ApplicationContext, studyPublicId: strin
       order: [['created_at', 'DESC']],
     }) as any;
     if (plan) {
-      planUrl = plan.url || plan.link || null;
+      planUrl = plan.file_url || null;
       planCreatedAt = plan.created_at?.toISOString() || null;
     }
   }
