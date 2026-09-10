@@ -14,6 +14,7 @@ import { BriefDetail } from '@/pages/BriefDetail';
 import { StudyOverview } from '@/pages/StudyOverview';
 import { PlanForm } from '@/pages/PlanForm';
 import { PlanDetail } from '@/pages/PlanDetail';
+import { Projects } from '@/pages/Projects';
 import { Login } from '@/pages/Login';
 
 const queryClient = new QueryClient({
@@ -39,6 +40,7 @@ export function App() {
                   <AppShell>
                     <Routes>
                       <Route index element={<Home />} />
+                      <Route path="projects" element={<Projects />} />
                       <Route path="projects/new" element={<NewProject />} />
                       <Route path="studies/:studyPublicId/brief/new" element={<BriefForm />} />
                       <Route path="studies/:studyPublicId/brief" element={<BriefDetail />} />

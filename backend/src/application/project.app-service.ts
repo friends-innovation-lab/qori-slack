@@ -194,6 +194,7 @@ function mapProjectResource(p: any, orgPublicId: string): ProjectResource {
     slug: p.slug,
     name: p.name,
     description: p.description || null,
+    problem_statement: p.problem_statement || null,
     status: p.status || 'active',
     organization_public_id: orgPublicId,
     team_public_id: null, // Team public_id resolution deferred
