@@ -102,11 +102,14 @@ router.post('/:studyId/brief', requireAuth, async (req, res, next) => {
       discoverySelections: req.body.discovery_selections || [],
     });
 
-    // Update study brief_status (mirrors Slack handler behavior)
+    // Update study brief_status (mirrors Slack handler + resubmitBrief semantics).
+    // When regenerating after changes_requested, clear stale feedback so it doesn't
+    // appear as an active unresolved request in the new pending_approval state.
     const study = await sequelize.models.ResearchStudy.findByPk(studyId);
     if (study) {
       await study.update({
         brief_status: 'pending_approval',
+        brief_change_feedback: null,
         link: result.url,
         updated_at: new Date(),
       });

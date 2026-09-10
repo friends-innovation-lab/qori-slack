@@ -9,7 +9,7 @@ import { useNavigate, useParams } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useStudy } from '@/api/queries/useStudy';
+import { useStudy, useStudyBrief } from '@/api/queries/useStudy';
 import { useSubmitBrief } from '@/api/mutations/useSubmitBrief';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { Input } from '@/components/ui/Input';
@@ -58,8 +58,12 @@ export function BriefForm() {
   const { studyPublicId } = useParams<{ studyPublicId: string }>();
   const navigate = useNavigate();
   const { data: study, isLoading: studyLoading, error: studyError } = useStudy(studyPublicId || '');
+  const { data: existingBrief } = useStudyBrief(studyPublicId || '');
   const submitBrief = useSubmitBrief(studyPublicId || '');
   const [serverError, setServerError] = useState<string | null>(null);
+
+  const isRevision = existingBrief?.brief_status === 'changes_requested';
+  const cascade = existingBrief?.cascade_fields;
 
   const {
     register,
@@ -68,16 +72,16 @@ export function BriefForm() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      problem_statement: '',
-      learning_objectives: '',
+      problem_statement: cascade?.research_objectives || '',
+      learning_objectives: cascade?.research_objectives || '',
       out_of_scope: '',
-      methodology: '',
+      methodology: cascade?.methodology_selection || '',
       method_override: '',
-      participant_approach: '',
+      participant_approach: cascade?.participant_approach || '',
       recruitment_sources: '',
-      start_date: getNextMonday(),
+      start_date: cascade?.start_date || getNextMonday(),
       decision_deadline: '',
-      budget: '',
+      budget: cascade?.budget || '',
     },
   });
 
@@ -112,15 +116,21 @@ export function BriefForm() {
   return (
     <>
       <PageHeader
-        title="Research Brief"
+        title={isRevision ? 'Revise Brief' : 'Research Brief'}
         breadcrumbs={[
           { label: 'Home', to: '/' },
           { label: study.name, to: `/studies/${studyPublicId}` },
-          { label: 'New brief' },
+          { label: isRevision ? 'Revise brief' : 'New brief' },
         ]}
       />
 
       <form onSubmit={handleSubmit(onSubmit)} className={styles.form} noValidate>
+        {isRevision && existingBrief?.brief_change_feedback && (
+          <Alert variant="warning" title="Reviewer feedback">
+            {existingBrief.brief_change_feedback}
+          </Alert>
+        )}
+
         {serverError && (
           <Alert variant="error" title="Brief generation failed">
             {serverError}

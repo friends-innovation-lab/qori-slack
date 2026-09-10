@@ -133,6 +133,8 @@ export async function executeDocumentApproval(
         newStatus = 'changes_requested';
         await study.update({
           brief_status: 'changes_requested',
+          brief_change_feedback: input.comment || null,
+          brief_reviewer_id: ctx.actor.publicId,
         });
         break;
       }
