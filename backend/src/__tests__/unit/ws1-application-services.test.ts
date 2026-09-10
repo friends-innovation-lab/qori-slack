@@ -117,6 +117,19 @@ describe('Plan generation endpoint', () => {
     const { executePlan } = require('../../application/plan.app-service');
     expect(typeof executePlan).toBe('function');
   });
+
+  it('getStudyPlan reads plan.file_url, not plan.url or plan.link', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../application/study.app-service.ts'),
+      'utf8',
+    );
+    // ResearchPlan model has file_url, not url or link
+    expect(source).toContain('plan.file_url');
+    expect(source).not.toMatch(/plan\.url\b/);
+    expect(source).not.toContain('plan.link');
+  });
 });
 
 describe('Brief generation idempotency guard', () => {
