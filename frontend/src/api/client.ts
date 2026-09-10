@@ -52,6 +52,7 @@ export const api = ky.create({
       },
     ],
   },
+  timeout: 120_000, // 2 min — accommodates LLM generation pipelines (brief, plan)
   retry: {
     limit: 0, // No automatic retries — let TanStack Query handle retry logic
   },
