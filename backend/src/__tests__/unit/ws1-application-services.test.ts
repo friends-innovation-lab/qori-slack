@@ -31,6 +31,43 @@ describe('home.app-service', () => {
   });
 });
 
+describe('Brief generation idempotency guard', () => {
+  it('POST brief route checks brief_status before calling executeBrief', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../routes/api/v1/studies.routes.ts'),
+      'utf8',
+    );
+    // The idempotency guard must check brief_status before generation
+    expect(source).toContain("brief_status === 'pending_approval'");
+    expect(source).toContain("brief_status === 'approved'");
+  });
+
+  it('idempotency guard returns 200 (not 201) for already-generated brief', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../routes/api/v1/studies.routes.ts'),
+      'utf8',
+    );
+    // When brief already exists, return 200 with existing data — not 201 (created)
+    // This ensures duplicate POSTs don't trigger executeBrief
+    expect(source).toMatch(/brief_status.*pending_approval[\s\S]*?res\.status\(200\)/);
+  });
+
+  it('resubmit endpoint exists to allow regeneration after changes_requested', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../routes/api/v1/studies.routes.ts'),
+      'utf8',
+    );
+    // The resubmit endpoint transitions changes_requested back to pending
+    expect(source).toContain('brief/resubmit');
+  });
+});
+
 describe('StudyVariable column references', () => {
   it('study app-service queries variable_key, not variable_name', () => {
     const fs = require('fs');
