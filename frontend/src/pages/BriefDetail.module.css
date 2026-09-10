@@ -31,6 +31,12 @@
   margin: 0;
 }
 
+.emptyNote {
+  font-size: var(--text-secondary-size);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
 /* Decision bar */
 
 .decisionBar {

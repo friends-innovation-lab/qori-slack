@@ -135,5 +135,63 @@ describe('BriefDetail page', () => {
     });
     renderWithProviders(<BriefDetail />);
     expect(screen.getByText(/Understand scheduling pain points/)).toBeInTheDocument();
+    expect(screen.getByText(/How do Veterans find appointments/)).toBeInTheDocument();
+  });
+
+  it('shows all populated cascade fields', () => {
+    mockUseStudyBrief.mockReturnValue({
+      data: makeBrief({
+        cascade_fields: {
+          research_objectives: 'Test objectives',
+          research_questions: 'Test questions',
+          target_barriers: 'Access barriers',
+          methodology_selection: 'user_interviews',
+          timeline_preference: null,
+          start_date: '2026-10-01',
+          participant_approach: '8 Veterans',
+          budget: '$800',
+        },
+      }),
+      isLoading: false,
+      error: null,
+    });
+    renderWithProviders(<BriefDetail />);
+    expect(screen.getByText('Test objectives')).toBeInTheDocument();
+    expect(screen.getByText('Test questions')).toBeInTheDocument();
+    expect(screen.getByText('Access barriers')).toBeInTheDocument();
+    expect(screen.getByText('user_interviews')).toBeInTheDocument();
+    expect(screen.getByText('8 Veterans')).toBeInTheDocument();
+    expect(screen.getByText('$800')).toBeInTheDocument();
+  });
+
+  it('shows empty note when no cascade content exists', () => {
+    mockUseStudyBrief.mockReturnValue({
+      data: makeBrief({
+        cascade_fields: {
+          research_objectives: null,
+          research_questions: null,
+          target_barriers: null,
+          methodology_selection: null,
+          timeline_preference: null,
+          start_date: null,
+          participant_approach: null,
+          budget: null,
+        },
+      }),
+      isLoading: false,
+      error: null,
+    });
+    renderWithProviders(<BriefDetail />);
+    expect(screen.getByText(/Brief content will appear/)).toBeInTheDocument();
+  });
+
+  it('shows GitHub link when brief_url exists', () => {
+    mockUseStudyBrief.mockReturnValue({
+      data: makeBrief({ brief_url: 'https://github.com/org/repo/blob/main/study/brief.md' }),
+      isLoading: false,
+      error: null,
+    });
+    renderWithProviders(<BriefDetail />);
+    expect(screen.getByText(/View full brief on GitHub/)).toBeInTheDocument();
   });
 });

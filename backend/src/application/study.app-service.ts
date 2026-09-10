@@ -198,20 +198,8 @@ export async function getStudyBrief(ctx: ApplicationContext, studyPublicId: stri
     }
   }
 
-  // Get brief artifact URL
-  const ArtifactModel = sequelize.models.ResearchArtifact;
-  let briefUrl: string | null = null;
-  if (ArtifactModel) {
-    const briefArtifact = await ArtifactModel.findOne({
-      where: { study_id: study.id, artifact_type: 'research_brief' },
-      attributes: ['id'],
-      order: [['created_at', 'DESC']],
-    }) as any;
-    if (briefArtifact) {
-      // GitHub URL from study path
-      briefUrl = study.link || null;
-    }
-  }
+  // Brief URL — stored on study.link by both Slack and REST handlers after generation
+  const briefUrl: string | null = study.link || null;
 
   return {
     study: {
