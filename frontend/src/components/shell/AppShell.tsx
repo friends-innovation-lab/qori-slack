@@ -39,7 +39,7 @@ export function AppShell({ children }: AppShellProps) {
         navCollapsed={navCollapsed}
       />
 
-      <div className={styles.body}>
+      <div className={`${styles.body} ${navCollapsed ? styles.bodyCollapsed : ''}`}>
         <SideNav
           collapsed={navCollapsed}
           mobileOpen={mobileNavOpen}

@@ -9,6 +9,13 @@
   display: flex;
   flex: 1;
   padding-top: var(--layout-topbar);
+  /* Offset for fixed SideNav — desktop expanded by default */
+  margin-left: var(--layout-sidenav);
+  transition: margin-left var(--motion-base) var(--motion-ease);
+}
+
+.bodyCollapsed {
+  margin-left: var(--layout-sidenav-collapsed);
 }
 
 .main {
@@ -36,13 +43,31 @@
 
 /* ─── Responsive ─── */
 
+/* Tablet: SideNav is always icon rail */
 @media (max-width: 1023px) {
+  .body {
+    margin-left: var(--layout-sidenav-collapsed);
+  }
+
+  .bodyCollapsed {
+    margin-left: var(--layout-sidenav-collapsed);
+  }
+
   .main {
     padding: var(--space-5) var(--layout-page-pad-md);
   }
 }
 
+/* Mobile: SideNav is overlay, no offset */
 @media (max-width: 767px) {
+  .body {
+    margin-left: 0;
+  }
+
+  .bodyCollapsed {
+    margin-left: 0;
+  }
+
   .main {
     padding: var(--space-4) var(--layout-page-pad-sm);
     padding-bottom: calc(var(--space-8) + var(--space-4)); /* Room for bottom tab bar */
