@@ -20,6 +20,15 @@ const IPV6_PATTERN = /^[0-9a-fA-F]*:[0-9a-fA-F:]+$/;
 
 export function parseTrustedProxy(raw: string | undefined): boolean | number | string | string[] {
   if (raw === undefined || raw === '' || raw === 'false') {
+    // Railway (and similar platforms) always send X-Forwarded-* headers.
+    // When the topology requires Secure cookies (SameSite=None or production),
+    // trust exactly one proxy hop so Express reads X-Forwarded-Proto correctly
+    // and express-rate-limit does not reject X-Forwarded-For.
+    const sameSite = (process.env.SESSION_SAMESITE || '').toLowerCase();
+    const isProd = process.env.NODE_ENV === 'production';
+    if (sameSite === 'none' || isProd) {
+      return 1;
+    }
     return false;
   }
 

@@ -11,6 +11,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { randomBytes, createHmac } from 'crypto';
+import { resolveCookiePolicy, setRawCookie } from './cookiePolicy';
 
 const CSRF_COOKIE_NAME = 'qori.csrf';
 const CSRF_HEADER_NAME = 'x-csrf-token';
@@ -30,25 +31,21 @@ function signToken(token: string): string {
 
 /**
  * Generate a new CSRF token and set the cookie.
+ *
+ * Uses setRawCookie (top-level cookie@0.7.x) instead of res.cookie()
+ * because Express 4.16.x bundles cookie@0.3.1 which throws on SameSite=None.
  */
 export function generateCsrfToken(res: Response): string {
   const token = randomBytes(TOKEN_LENGTH).toString('hex');
   const signature = signToken(token);
-  const isProd = process.env.NODE_ENV === 'production';
+  const { sameSite, secure } = resolveCookiePolicy();
 
-  // Match session cookie topology — SESSION_SAMESITE controls both cookies.
-  const rawSameSite = (process.env.SESSION_SAMESITE || 'lax').toLowerCase();
-  const sameSite: 'lax' | 'none' | 'strict' =
-    rawSameSite === 'none' ? 'none' :
-    rawSameSite === 'strict' ? 'strict' : 'lax';
-  const secure = sameSite === 'none' ? true : isProd;
-
-  res.cookie(CSRF_COOKIE_NAME, `${token}.${signature}`, {
+  setRawCookie(res, CSRF_COOKIE_NAME, `${token}.${signature}`, {
     httpOnly: true,
     secure,
     sameSite,
     path: '/',
-    maxAge: 86400000, // 24h
+    maxAge: 86400, // seconds (cookie@0.7.x uses seconds, not ms)
   });
 
   return token;
