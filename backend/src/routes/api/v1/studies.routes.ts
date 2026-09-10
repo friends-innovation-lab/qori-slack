@@ -133,12 +133,17 @@ router.post('/:studyId/brief/approve', requireAuth, async (req, res, next) => {
     const { studyId, projectId, studyName } = await studyAppService.resolveStudyContext(
       req.ctx!, req.params.studyId as string,
     );
+    // Resolve study link for audit trail (file_name derived from URL)
+    const studyRecord = await require('../../../database').default.models.ResearchStudy.findByPk(studyId, {
+      attributes: ['link'],
+    });
     const result = await approvalAppService.executeDocumentApproval(req.ctx!, {
       documentType: 'brief',
       studyId,
       projectId,
       studyName,
       action: 'approve',
+      documentUrl: studyRecord?.link || undefined,
     });
     res.json({ data: { new_status: result.newStatus } });
   } catch (error) {
@@ -157,6 +162,9 @@ router.post('/:studyId/brief/request-changes', requireAuth, async (req, res, nex
     const { studyId, projectId, studyName } = await studyAppService.resolveStudyContext(
       req.ctx!, req.params.studyId as string,
     );
+    const studyForUrl = await require('../../../database').default.models.ResearchStudy.findByPk(studyId, {
+      attributes: ['link'],
+    });
     const result = await approvalAppService.executeDocumentApproval(req.ctx!, {
       documentType: 'brief',
       studyId,
@@ -164,6 +172,7 @@ router.post('/:studyId/brief/request-changes', requireAuth, async (req, res, nex
       studyName,
       action: 'request_changes',
       comment,
+      documentUrl: studyForUrl?.link || undefined,
     });
     res.json({ data: { new_status: result.newStatus } });
   } catch (error) {
