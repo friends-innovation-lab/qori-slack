@@ -15,6 +15,7 @@
 
 import session from 'express-session';
 import type { RequestHandler } from 'express';
+import { resolveCookiePolicy } from './cookiePolicy';
 
 // Extend express-session types
 declare module 'express-session' {
@@ -49,26 +50,8 @@ export function createSessionMiddleware(): RequestHandler {
     return (_req, _res, next) => next();
   }
 
-  const isProd = process.env.NODE_ENV === 'production';
   const maxAge = parseInt(process.env.SESSION_MAX_AGE_MS || '86400000', 10); // 24h default
-
-  // Topology-aware cookie policy:
-  // SESSION_SAMESITE controls cross-origin behavior for Workspace↔API separation.
-  // Default: 'lax' (conservative). Set to 'none' for cross-origin Railway deployments.
-  // SameSite=None requires Secure=true — enforced below.
-  const rawSameSite = (process.env.SESSION_SAMESITE || 'lax').toLowerCase();
-  const sameSite: 'lax' | 'none' | 'strict' =
-    rawSameSite === 'none' ? 'none' :
-    rawSameSite === 'strict' ? 'strict' : 'lax';
-
-  // Secure is required when SameSite=None. In production, always secure.
-  const secure = sameSite === 'none' ? true : isProd;
-
-  if (sameSite === 'none' && !secure) {
-    // This branch can't actually be reached due to the ternary above,
-    // but documents the invariant: SameSite=None + Secure=false is invalid.
-    throw new Error('[SESSION] SameSite=None requires Secure=true');
-  }
+  const { sameSite, secure } = resolveCookiePolicy();
 
   // When cookies are Secure, express-session must trust X-Forwarded-Proto
   // so it emits Set-Cookie behind a TLS-terminating proxy (e.g. Railway).
@@ -110,7 +93,7 @@ export function createSessionMiddleware(): RequestHandler {
     } catch (err) {
       console.warn('[SESSION] Redis store unavailable, using memory store:', err instanceof Error ? err.message : err);
     }
-  } else if (isProd) {
+  } else if (process.env.NODE_ENV === 'production') {
     console.warn('[SESSION] No REDIS_URL in production — sessions will not persist across restarts');
   }
 
