@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/api/client';
-import type { ProjectResource } from '@qori/api-contracts';
+import type { ProjectResource, StudyResource } from '@qori/api-contracts';
 
 export function useProjects() {
   return useQuery({
@@ -22,5 +22,18 @@ export function useProject(publicId: string) {
       return res.data;
     },
     enabled: !!publicId,
+  });
+}
+
+export function useProjectStudies(projectPublicId: string) {
+  return useQuery({
+    queryKey: ['project', projectPublicId, 'studies'],
+    queryFn: async () => {
+      const res = await api
+        .get(`projects/${projectPublicId}/studies`)
+        .json<{ data: StudyResource[] }>();
+      return res.data;
+    },
+    enabled: !!projectPublicId,
   });
 }
