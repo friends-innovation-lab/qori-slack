@@ -23,7 +23,8 @@ export async function getStudy(ctx: ApplicationContext, studyPublicId: string): 
     public_id: study.public_id || String(study.id),
     name: study.name,
     status: study.status || 'active',
-    project_public_id: study.project?.slug || '',
+    brief_status: study.brief_status || null,
+    project_public_id: study.project?.public_id || study.project?.slug || '',
     created_at: study.created_at?.toISOString() || new Date().toISOString(),
   };
 }
@@ -172,14 +173,14 @@ export async function getStudyBrief(ctx: ApplicationContext, studyPublicId: stri
     const vars = await StudyVariableModel.findAll({
       where: {
         study_id: study.id,
-        variable_name: Object.keys(cascadeFields),
+        variable_key: Object.keys(cascadeFields),
       },
     }) as any[];
 
     for (const v of vars) {
       const val = v.value;
       // study_variables.value is JSONB — may be string, array, or object
-      cascadeFields[v.variable_name] = typeof val === 'string' ? val :
+      cascadeFields[v.variable_key] = typeof val === 'string' ? val :
         Array.isArray(val) ? JSON.stringify(val) : val ? String(val) : null;
     }
   }
@@ -266,11 +267,11 @@ export async function getStudyPlan(ctx: ApplicationContext, studyPublicId: strin
 
   if (StudyVariableModel) {
     const vars = await StudyVariableModel.findAll({
-      where: { study_id: study.id, variable_name: inheritedKeys },
+      where: { study_id: study.id, variable_key: inheritedKeys },
     }) as any[];
     for (const v of vars) {
       const val = v.value;
-      inherited[v.variable_name] = typeof val === 'string' ? val :
+      inherited[v.variable_key] = typeof val === 'string' ? val :
         Array.isArray(val) ? JSON.stringify(val) : val ? String(val) : null;
     }
   }
@@ -312,12 +313,12 @@ export async function getCascadeReadiness(ctx: ApplicationContext, studyPublicId
     const vars = await StudyVariableModel.findAll({
       where: {
         study_id: study.id,
-        variable_name: requiredVars.map(v => v.variable),
+        variable_key: requiredVars.map(v => v.variable),
       },
-      attributes: ['variable_name'],
+      attributes: ['variable_key'],
     }) as any[];
 
-    const found = new Set(vars.map((v: any) => v.variable_name));
+    const found = new Set(vars.map((v: any) => v.variable_key));
     for (const req of requiredVars) {
       if (!found.has(req.variable)) missing.push(req);
     }

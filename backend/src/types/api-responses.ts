@@ -49,6 +49,7 @@ export interface StudyResource {
   public_id: string;
   name: string;
   status: string;
+  brief_status: string | null;
   project_public_id: string;
   created_at: string;
 }
