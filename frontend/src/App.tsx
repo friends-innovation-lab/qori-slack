@@ -10,10 +10,10 @@ import { AppShell } from '@/components/shell/AppShell';
 import { Home } from '@/pages/Home';
 import { NewProject } from '@/pages/NewProject';
 import { BriefForm } from '@/pages/BriefForm';
-import { BriefDetail } from '@/pages/BriefDetail';
+import { BriefDocument } from '@/pages/BriefDocument';
 import { StudyOverview } from '@/pages/StudyOverview';
 import { PlanForm } from '@/pages/PlanForm';
-import { PlanDetail } from '@/pages/PlanDetail';
+import { PlanDocument } from '@/pages/PlanDocument';
 import { Projects } from '@/pages/Projects';
 import { ProjectDetail } from '@/pages/ProjectDetail';
 import { Login } from '@/pages/Login';
@@ -45,10 +45,10 @@ export function App() {
                       <Route path="projects/new" element={<NewProject />} />
                       <Route path="projects/:projectPublicId" element={<ProjectDetail />} />
                       <Route path="studies/:studyPublicId/brief/new" element={<BriefForm />} />
-                      <Route path="studies/:studyPublicId/brief" element={<BriefDetail />} />
+                      <Route path="studies/:studyPublicId/brief" element={<BriefDocument />} />
                       <Route path="studies/:studyPublicId" element={<StudyOverview />} />
                       <Route path="studies/:studyPublicId/plan/new" element={<PlanForm />} />
-                      <Route path="studies/:studyPublicId/plan" element={<PlanDetail />} />
+                      <Route path="studies/:studyPublicId/plan" element={<PlanDocument />} />
                       <Route path="*" element={<Home />} />
                     </Routes>
                   </AppShell>
