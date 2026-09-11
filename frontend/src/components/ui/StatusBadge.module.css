@@ -35,6 +35,12 @@
   color: var(--color-info);
 }
 
+.danger {
+  background-color: var(--color-error-surface);
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
 .muted {
   background-color: var(--color-surface-muted);
   border-color: var(--color-border);

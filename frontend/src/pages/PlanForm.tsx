@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { ProvenanceField } from '@/components/ui/ProvenanceField';
+import { ObjectivesList, QuestionsList, ScalarField } from '@/components/ui/CascadeFields';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import styles from './PlanForm.module.css';
@@ -119,55 +120,24 @@ export function PlanForm() {
           />
         </fieldset>
 
-        {/* Inherited context (read-only) */}
+        {/* Inherited context (read-only, structured) */}
         {brief && (
           <fieldset className={styles.fieldset}>
-            <legend className={styles.legend}>Inherited from the approved brief</legend>
+            <legend className={styles.legend}>
+              Inherited from the approved brief
+              <span className={styles.readOnlyBadge}>read-only</span>
+            </legend>
 
-            {brief.cascade_fields.research_objectives && (
-              <ProvenanceField
-                label="Research objectives"
-                provenanceLabel="From the approved brief"
-                variant="derived"
-                defaultValue={brief.cascade_fields.research_objectives}
-              />
-            )}
+            <div className={styles.inheritedContent}>
+              <ObjectivesList raw={brief.cascade_fields.research_objectives} />
+              <QuestionsList raw={brief.cascade_fields.research_questions} />
 
-            {brief.cascade_fields.research_questions && (
-              <ProvenanceField
-                label="Research questions"
-                provenanceLabel="From the approved brief"
-                variant="derived"
-                defaultValue={brief.cascade_fields.research_questions}
-              />
-            )}
-
-            {brief.cascade_fields.methodology_selection && (
-              <ProvenanceField
-                label="Methodology"
-                provenanceLabel="From the approved brief"
-                variant="derived"
-                defaultValue={brief.cascade_fields.methodology_selection.replace(/_/g, ' ')}
-              />
-            )}
-
-            {brief.cascade_fields.participant_approach && (
-              <ProvenanceField
-                label="Participant approach"
-                provenanceLabel="From the approved brief"
-                variant="derived"
-                defaultValue={brief.cascade_fields.participant_approach}
-              />
-            )}
-
-            {brief.cascade_fields.start_date && (
-              <ProvenanceField
-                label="Start date"
-                provenanceLabel="From the approved brief"
-                variant="derived"
-                defaultValue={brief.cascade_fields.start_date}
-              />
-            )}
+              <dl>
+                <ScalarField label="Methodology" value={brief.cascade_fields.methodology_selection?.replace(/_/g, ' ') || null} />
+                <ScalarField label="Participants" value={brief.cascade_fields.participant_approach} />
+                <ScalarField label="Start date" value={brief.cascade_fields.start_date} />
+              </dl>
+            </div>
           </fieldset>
         )}
 

@@ -159,7 +159,7 @@ describe('BriefDetail page', () => {
     expect(screen.getByText('Test objectives')).toBeInTheDocument();
     expect(screen.getByText('Test questions')).toBeInTheDocument();
     expect(screen.getByText('Access barriers')).toBeInTheDocument();
-    expect(screen.getByText('user_interviews')).toBeInTheDocument();
+    expect(screen.getByText('user interviews')).toBeInTheDocument();
     expect(screen.getByText('8 Veterans')).toBeInTheDocument();
     expect(screen.getByText('$800')).toBeInTheDocument();
   });

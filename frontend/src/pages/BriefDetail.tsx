@@ -17,6 +17,7 @@ import { Card } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Textarea } from '@/components/ui/Textarea';
+import { ObjectivesList, QuestionsList, BarriersList, ScalarField } from '@/components/ui/CascadeFields';
 import styles from './BriefDetail.module.css';
 
 export function BriefDetail() {
@@ -127,60 +128,27 @@ export function BriefDetail() {
           </Card>
         )}
 
-        {/* Cascade fields summary */}
-        <Card>
-          <h2 className={styles.sectionTitle}>Brief summary</h2>
-          {hasCascadeContent ? (
-            <dl className={styles.fieldList}>
-              {brief.cascade_fields.research_objectives && (
-                <>
-                  <dt>Research objectives</dt>
-                  <dd>{brief.cascade_fields.research_objectives}</dd>
-                </>
-              )}
-              {brief.cascade_fields.research_questions && (
-                <>
-                  <dt>Research questions</dt>
-                  <dd>{brief.cascade_fields.research_questions}</dd>
-                </>
-              )}
-              {brief.cascade_fields.target_barriers && (
-                <>
-                  <dt>Target barriers</dt>
-                  <dd>{brief.cascade_fields.target_barriers}</dd>
-                </>
-              )}
-              {brief.cascade_fields.methodology_selection && (
-                <>
-                  <dt>Methodology</dt>
-                  <dd>{brief.cascade_fields.methodology_selection}</dd>
-                </>
-              )}
-              {brief.cascade_fields.participant_approach && (
-                <>
-                  <dt>Participant approach</dt>
-                  <dd>{brief.cascade_fields.participant_approach}</dd>
-                </>
-              )}
-              {brief.cascade_fields.start_date && (
-                <>
-                  <dt>Start date</dt>
-                  <dd>{brief.cascade_fields.start_date}</dd>
-                </>
-              )}
-              {brief.cascade_fields.budget && (
-                <>
-                  <dt>Budget</dt>
-                  <dd>{brief.cascade_fields.budget}</dd>
-                </>
-              )}
+        {/* Structured cascade fields */}
+        {hasCascadeContent ? (
+          <Card>
+            <ObjectivesList raw={brief.cascade_fields.research_objectives} />
+            <QuestionsList raw={brief.cascade_fields.research_questions} />
+            <BarriersList raw={brief.cascade_fields.target_barriers} />
+
+            <dl className={styles.scalarGroup}>
+              <ScalarField label="Methodology" value={brief.cascade_fields.methodology_selection?.replace(/_/g, ' ') || null} />
+              <ScalarField label="Participant approach" value={brief.cascade_fields.participant_approach} />
+              <ScalarField label="Start date" value={brief.cascade_fields.start_date} />
+              <ScalarField label="Budget" value={brief.cascade_fields.budget} />
             </dl>
-          ) : (
+          </Card>
+        ) : (
+          <Card>
             <p className={styles.emptyNote}>
               Brief content will appear here after generation completes.
             </p>
-          )}
-        </Card>
+          </Card>
+        )}
       </div>
 
       {/* Approval decision bar */}

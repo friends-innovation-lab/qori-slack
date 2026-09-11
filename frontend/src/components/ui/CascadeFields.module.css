@@ -1,0 +1,127 @@
+.section {
+  margin-bottom: var(--space-5);
+}
+
+.section:last-child {
+  margin-bottom: 0;
+}
+
+.heading {
+  font-size: var(--text-secondary-size);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-3);
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-size);
+  line-height: 1.5;
+}
+
+.itemId {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption-size);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.itemText {
+  flex: 1;
+  min-width: 0;
+}
+
+.source {
+  font-size: var(--text-secondary-size);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.priority {
+  flex-shrink: 0;
+  font-size: var(--text-caption-size);
+  font-weight: 600;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-full);
+  border: var(--border-width) solid;
+  white-space: nowrap;
+}
+
+.primary {
+  color: var(--color-success);
+  border-color: var(--color-success);
+  background-color: var(--color-success-surface);
+}
+
+.secondary {
+  color: var(--color-info);
+  border-color: var(--color-info);
+  background-color: var(--color-info-surface);
+}
+
+.exploratory {
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+  background-color: var(--color-surface-muted);
+}
+
+.plainText {
+  font-size: var(--text-body-size);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  color: var(--color-text);
+}
+
+.scalar {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+}
+
+.scalarLabel {
+  font-weight: 600;
+  font-size: var(--text-secondary-size);
+  color: var(--color-text-muted);
+  min-width: 140px;
+  flex-shrink: 0;
+}
+
+.scalarValue {
+  font-size: var(--text-body-size);
+  margin: 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 767px) {
+  .item {
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .scalar {
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .scalarLabel {
+    min-width: 0;
+  }
+}
