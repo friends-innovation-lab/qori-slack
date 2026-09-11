@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
+import { ObjectivesList, QuestionsList, BarriersList, ScalarField } from '@/components/ui/CascadeFields';
 import styles from './PlanDetail.module.css';
 
 export function PlanDetail() {
@@ -74,34 +75,22 @@ export function PlanDetail() {
           </a>
         </Card>
 
-        {/* Inherited context summary */}
+        {/* Inherited context from Brief */}
         <Card>
-          <h2 className={styles.sectionTitle}>Plan context</h2>
-          <dl className={styles.fieldList}>
-            {plan.inherited_context.research_objectives && (
-              <>
-                <dt>Objectives</dt>
-                <dd>{plan.inherited_context.research_objectives}</dd>
-              </>
-            )}
-            {plan.inherited_context.methodology_selection && (
-              <>
-                <dt>Methodology</dt>
-                <dd>{plan.inherited_context.methodology_selection.replace(/_/g, ' ')}</dd>
-              </>
-            )}
-            {plan.inherited_context.timeline_phases && (
-              <>
-                <dt>Timeline</dt>
-                <dd>{plan.inherited_context.timeline_phases}</dd>
-              </>
-            )}
-            {plan.inherited_context.participant_approach && (
-              <>
-                <dt>Participants</dt>
-                <dd>{plan.inherited_context.participant_approach}</dd>
-              </>
-            )}
+          <h2 className={styles.sectionTitle}>
+            Inherited from Brief
+            <span className={styles.inheritedLabel}>read-only</span>
+          </h2>
+          <ObjectivesList raw={plan.inherited_context.research_objectives} />
+          <QuestionsList raw={plan.inherited_context.research_questions} />
+          <BarriersList raw={plan.inherited_context.target_barriers} />
+
+          <dl className={styles.scalarGroup}>
+            <ScalarField label="Methodology" value={plan.inherited_context.methodology_selection?.replace(/_/g, ' ') || null} />
+            <ScalarField label="Participants" value={plan.inherited_context.participant_approach} />
+            <ScalarField label="Timeline" value={plan.inherited_context.timeline_phases} />
+            <ScalarField label="Compensation" value={plan.inherited_context.compensation} />
+            <ScalarField label="Deliverables" value={plan.inherited_context.deliverables} />
           </dl>
         </Card>
       </div>

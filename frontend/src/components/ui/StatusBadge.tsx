@@ -3,11 +3,12 @@
  * Color never alone — always shape + glyph + text.
  */
 
-import { Circle, CheckCircle, Clock, FileText, Archive, Sparkles } from 'lucide-react';
+import { Circle, CheckCircle, Clock, FileText, Archive, Sparkles, AlertTriangle } from 'lucide-react';
 import styles from './StatusBadge.module.css';
 
 type BadgeStatus =
   | 'draft'
+  | 'active'
   | 'pending_approval'
   | 'approved'
   | 'changes_requested'
@@ -18,9 +19,10 @@ type BadgeStatus =
 
 const config: Record<BadgeStatus, { icon: typeof Circle; label: string; className: string }> = {
   draft: { icon: FileText, label: 'Draft', className: 'neutral' },
+  active: { icon: CheckCircle, label: 'Active', className: 'success' },
   pending_approval: { icon: Clock, label: 'Needs approval', className: 'warning' },
   approved: { icon: CheckCircle, label: 'Approved', className: 'success' },
-  changes_requested: { icon: Clock, label: 'Changes requested', className: 'warning' },
+  changes_requested: { icon: AlertTriangle, label: 'Changes requested', className: 'danger' },
   published: { icon: CheckCircle, label: 'Published', className: 'success' },
   archived: { icon: Archive, label: 'Archived', className: 'muted' },
   generating: { icon: Circle, label: 'Generating...', className: 'info' },
