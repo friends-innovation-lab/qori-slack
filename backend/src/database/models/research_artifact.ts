@@ -69,9 +69,11 @@ class ResearchArtifact extends Model<
     this.belongsTo(models.ResearchStudy, {
       foreignKey: 'study_id', as: 'study', onDelete: 'CASCADE',
     });
-    this.hasMany(models.ArtifactSection, {
-      foreignKey: 'artifact_id', as: 'sections', onDelete: 'CASCADE',
-    });
+    if (models.ArtifactSection) {
+      this.hasMany(models.ArtifactSection, {
+        foreignKey: 'artifact_id', as: 'sections', onDelete: 'CASCADE',
+      });
+    }
   }
 }
 
