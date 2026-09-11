@@ -9,6 +9,7 @@ import { requireAuth } from '../../../middleware/auth';
 import * as studyAppService from '../../../application/study.app-service';
 import * as approvalAppService from '../../../application/approval.app-service';
 import { executeBrief } from '../../../application/brief.app-service';
+import { updateBriefContent, updatePlanContent } from '../../../application/content-update.app-service';
 import { executePlan } from '../../../application/plan.app-service';
 
 const router = Router();
@@ -282,6 +283,46 @@ router.get('/:studyId/evidence', requireAuth, async (req, res, next) => {
 router.get('/:studyId/artifacts', requireAuth, async (req, res, next) => {
   try {
     const result = await studyAppService.getStudyArtifacts(req.ctx!, req.params.studyId as string);
+    res.json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ─── Content PATCH endpoints (WS-2 document workspace) ──────────
+
+// Update Brief content (prose sections + structured arrays)
+router.patch('/:studyId/brief/content', requireAuth, async (req, res, next) => {
+  try {
+    const { artifact_version, sections, structured } = req.body;
+    if (typeof artifact_version !== 'number') {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'artifact_version is required' } });
+      return;
+    }
+    const result = await updateBriefContent(req.ctx!, req.params.studyId as string, {
+      artifact_version,
+      sections,
+      structured,
+    });
+    res.json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update Plan content (prose sections + structured arrays)
+router.patch('/:studyId/plan/content', requireAuth, async (req, res, next) => {
+  try {
+    const { artifact_version, sections, structured } = req.body;
+    if (typeof artifact_version !== 'number') {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'artifact_version is required' } });
+      return;
+    }
+    const result = await updatePlanContent(req.ctx!, req.params.studyId as string, {
+      artifact_version,
+      sections,
+      structured,
+    });
     res.json({ data: result });
   } catch (error) {
     next(error);

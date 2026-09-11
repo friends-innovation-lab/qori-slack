@@ -8,10 +8,11 @@
  * Brief is the only approval-gated artifact. Review rail on the right.
  */
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router';
 import { useStudyBrief } from '@/api/queries/useStudy';
 import { useApproveBrief, useRequestChanges } from '@/api/mutations/useApproveBrief';
+import { useSaveBriefContent } from '@/api/mutations/useSaveContent';
 import { useAuth } from '@/auth/AuthProvider';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +20,9 @@ import { Alert } from '@/components/ui/Alert';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Textarea } from '@/components/ui/Textarea';
+import { ArtifactEditor } from '@/components/study/editor/ArtifactEditor';
+import { serializeBrief } from '@/components/study/editor/serializer';
+import { useSavePipeline } from '@/components/study/editor/useSavePipeline';
 import {
   ArtifactTabs, DocumentSection, Masthead, FactsGrid,
   StructuredItemRow, DocumentTable, CollapsibleSection,
@@ -37,6 +41,73 @@ function safeParse<T>(raw: string | null): T[] {
   catch { return []; }
 }
 
+/**
+ * Build initial HTML content for the TipTap editor from Brief API data.
+ * This is editor presentation state, NOT canonical — the serializer
+ * converts edits back to Qori-owned payloads on save.
+ */
+function buildBriefEditorContent(
+  _brief: any,
+  prose: Record<string, string | null>,
+  objectives: Objective[],
+  questions: Question[],
+  barriers: Barrier[],
+  methodology: string | null,
+): string {
+  const parts: string[] = [];
+
+  // Summary
+  if (prose.summary) {
+    parts.push(`<h2>Summary</h2>${prose.summary}`);
+  }
+
+  // Problem + barriers
+  if (prose.problem_narrative) {
+    parts.push(`<h2>Problem</h2>${prose.problem_narrative}`);
+  }
+  if (barriers.length > 0) {
+    parts.push('<h3>Target barriers for validation</h3>');
+    for (const b of barriers) {
+      parts.push(`<p><strong>${b.id}</strong> ${b.barrier}${b.source ? ` — <em>${b.source}</em>` : ''}</p>`);
+    }
+  }
+
+  // Objectives
+  if (objectives.length > 0) {
+    parts.push('<h2>What we\'ll learn</h2>');
+    for (const o of objectives) {
+      parts.push(`<p><strong>${o.id}</strong> ${o.objective}</p>`);
+    }
+  }
+
+  // Questions
+  if (questions.length > 0) {
+    parts.push('<h3>Research questions</h3>');
+    for (const q of questions) {
+      parts.push(`<p><strong>${q.id}</strong> ${q.question}${q.priority ? ` (${q.priority})` : ''}</p>`);
+    }
+  }
+
+  // Method
+  if (methodology || prose.method_prose) {
+    parts.push('<h2>Method</h2>');
+    if (methodology) parts.push(`<p><strong>Approach</strong> — ${methodology}</p>`);
+    if (prose.method_prose) parts.push(prose.method_prose);
+  }
+
+  // Participants
+  if (prose.participants_prose) {
+    parts.push(`<h2>Participants</h2>${prose.participants_prose}`);
+  }
+
+  // Out of scope
+  if (prose.out_of_scope) {
+    parts.push(`<h2>Out of scope</h2>${prose.out_of_scope}`);
+  }
+
+  return parts.join('\n') || '<p>No content available for editing. Generate a brief first.</p>';
+}
+
 export function BriefDocument() {
   const { studyPublicId } = useParams<{ studyPublicId: string }>();
   useAuth();
@@ -44,12 +115,50 @@ export function BriefDocument() {
   const approveBrief = useApproveBrief(studyPublicId || '');
   const requestChanges = useRequestChanges(studyPublicId || '');
 
+  const saveBrief = useSaveBriefContent(studyPublicId || '');
+  const pipeline = useSavePipeline();
+  const editorRef = useRef<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+
   const [showChangesForm, setShowChangesForm] = useState(false);
   const [changeFeedback, setChangeFeedback] = useState('');
   const [changesSubmitted, setChangesSubmitted] = useState(false);
   const [checklist, setChecklist] = useState({
     scope: false, timeline: false, participants: false, budget: false,
   });
+
+  const handleEdit = useCallback(() => {
+    setIsEditing(true);
+    setIsDirty(false);
+    pipeline.reset();
+  }, [pipeline]);
+
+  const handleCancel = useCallback(() => {
+    setIsEditing(false);
+    setIsDirty(false);
+    pipeline.reset();
+  }, [pipeline]);
+
+  const handleSave = useCallback(async () => {
+    if (!editorRef.current || !brief) return;
+    const artifactVersion = (brief as any).artifact_version || 1;
+    const serialized = serializeBrief(editorRef.current);
+
+    pipeline.startSave();
+    try {
+      const result = await saveBrief.mutateAsync({
+        artifact_version: artifactVersion,
+        sections: serialized.sections,
+        structured: serialized.structured,
+      });
+      pipeline.completeSave(result);
+      setIsEditing(false);
+      setIsDirty(false);
+    } catch (err) {
+      pipeline.failSave(err instanceof Error ? err.message : 'Save failed');
+    }
+  }, [brief, saveBrief, pipeline]);
 
   if (isLoading) return <Skeleton variant="card" count={3} />;
   if (error || !brief) return <ErrorState message="Could not load brief." />;
@@ -123,16 +232,30 @@ export function BriefDocument() {
           </div>
         </div>
         <div className={docStyles.pageActions}>
-          <SaveStateIndicator state="saved" />
-          {!isChangesRequested && (
-            <Link to={`/studies/${studyPublicId}/brief/new`}>
-              <Button variant="secondary">Edit</Button>
-            </Link>
-          )}
-          {isChangesRequested && (
-            <Link to={`/studies/${studyPublicId}/brief/new`}>
-              <Button>Revise</Button>
-            </Link>
+          <SaveStateIndicator
+            state={isEditing ? (isDirty ? 'dirty' : 'saved') : pipeline.state === 'sync_failed' ? 'error' : 'saved'}
+            label={pipeline.state === 'saving' ? 'Saving...' : pipeline.state === 'sync_failed' ? 'Saved — GitHub sync pending' : undefined}
+          />
+          {!isEditing ? (
+            <>
+              {!isChangesRequested && (
+                <Button variant="secondary" onClick={handleEdit}>Edit</Button>
+              )}
+              {isChangesRequested && (
+                <Button onClick={handleEdit}>Revise</Button>
+              )}
+            </>
+          ) : (
+            <>
+              <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
+              <Button
+                onClick={handleSave}
+                disabled={!isDirty || pipeline.state === 'saving'}
+                loading={pipeline.state === 'saving'}
+              >
+                Save
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -173,10 +296,35 @@ export function BriefDocument() {
         </Alert>
       )}
 
+      {/* Save failure banner */}
+      {pipeline.state === 'save_failed' && (
+        <Alert variant="error" title="Save failed">
+          {pipeline.error || 'Could not save changes. Your edits are still in the editor — try again.'}
+        </Alert>
+      )}
+      {pipeline.state === 'sync_failed' && (
+        <Alert variant="warning" title="Saved — GitHub sync pending">
+          Your changes were saved to Qori. The GitHub projection failed and can be retried.
+          {pipeline.error && <> ({pipeline.error})</>}
+        </Alert>
+      )}
+
       {/* Document body */}
       <div className={docStyles.docWrap}>
         <div className={docStyles.docCol}>
 
+          {/* Edit mode: TipTap editor */}
+          {isEditing && (
+            <ArtifactEditor
+              initialContent={buildBriefEditorContent(brief, prose, objectives, questions, barriers, methodology)}
+              onDirtyChange={setIsDirty}
+              editorRef={editorRef}
+            />
+          )}
+
+          {/* View mode: read-only document sections */}
+          {!isEditing && (
+          <>
           {/* Masthead (system) */}
           <Masthead
             studyName={brief.study.name}
@@ -333,10 +481,12 @@ export function BriefDocument() {
               Generated by Qori. The Workspace is the editing surface; GitHub holds the durable rendered projection.
             </p>
           </CollapsibleSection>
+          </>
+          )}
         </div>
 
-        {/* Review rail (Brief only) — right side */}
-        {(isPendingApproval || isApproved) && (
+        {/* Review rail (Brief only) — right side, hidden during editing */}
+        {!isEditing && (isPendingApproval || isApproved) && (
           <aside className={styles.reviewRail} aria-label="Review">
             {isPendingApproval && (
               <div className={styles.railCard}>
