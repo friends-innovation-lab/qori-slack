@@ -385,6 +385,61 @@ export async function executeBrief(
 
   const url: string = renderedYaml.result.url;
 
+  // Persist AI-generated prose into artifact_sections (canonical editable content).
+  // These are the LLM-generated sections from the YAML template that become editable
+  // in the Workspace. Stored as Markdown, not raw editor HTML.
+  if (renderedYaml.artifactPublicId && renderedYaml.aiResponses) {
+    try {
+      const { getArtifactByPublicId } = require('../services/artifact.service');
+      const artifact = await getArtifactByPublicId(renderedYaml.artifactPublicId);
+      if (artifact) {
+        const ArtifactSectionModel = sequelize.models.ArtifactSection;
+        if (ArtifactSectionModel) {
+          const sectionMap: Record<string, string> = {
+            summary: 'summary',
+            problem_narrative: 'problem_narrative',
+            method_rationale: 'method_prose',
+            participant_rationale: 'participants_prose',
+            out_of_scope_rationale: 'out_of_scope',
+            approval_items: 'approval_items',
+            descriptive_title: 'descriptive_title',
+          };
+          for (const [aiKey, sectionKey] of Object.entries(sectionMap)) {
+            const content = renderedYaml.aiResponses[aiKey];
+            if (content) {
+              await ArtifactSectionModel.findOrCreate({
+                where: { artifact_id: artifact.id, section_key: sectionKey },
+                defaults: {
+                  artifact_id: artifact.id,
+                  section_key: sectionKey,
+                  content_type: 'prose',
+                  content,
+                  updated_by: input.createdByActorId,
+                },
+              });
+            }
+          }
+          // Also persist the structured risks (AI-generated JSON)
+          const risksContent = renderedYaml.aiResponses.risks_raw;
+          if (risksContent) {
+            await ArtifactSectionModel.findOrCreate({
+              where: { artifact_id: artifact.id, section_key: 'risks' },
+              defaults: {
+                artifact_id: artifact.id,
+                section_key: 'risks',
+                content_type: 'structured_json',
+                content: risksContent,
+                updated_by: input.createdByActorId,
+              },
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[BRIEF] Section capture failed (non-blocking):', err instanceof Error ? err.message : err);
+    }
+  }
+
   await addStudyStatus({
     study_id: studyId,
     path: url,

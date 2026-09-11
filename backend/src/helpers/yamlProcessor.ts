@@ -909,9 +909,5 @@ export async function processYamlTemplate(
     });
   }
 
-  if (aiCheck) {
-    return { result, outputTemplate, aiResponses, extractionPromise, artifactPublicId };
-  } else {
-    return { result, outputTemplate, extractionPromise, artifactPublicId };
-  }
+  return { result, outputTemplate, aiResponses, extractionPromise, artifactPublicId };
 }

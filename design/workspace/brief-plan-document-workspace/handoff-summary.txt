@@ -1,0 +1,32 @@
+QORI BRIEF + PLAN HANDOFF — SUMMARY
+package path: qori-brief-plan-handoff/ (project root)
+file count: 15
+
+top-level files/folders:
+  README.md
+  interaction-model.md
+  implementation-handoff.md
+  state-matrix.md
+  accessibility-notes.md
+  handoff-summary.txt
+  assets/ (css/qori-workspace.css, js/prototype.js; no images needed)
+  brief/ (4 state screens)
+  plan/ (2 state screens)
+  responsive/ (2 mobile frames)
+
+known gaps from CD design:
+  - design/workspace/ and frontend/src/ not visible on qori-slack@main; component
+    names must be reconciled against the implementation branch
+  - save-failure / GitHub-sync-failure states specified in interaction-model.md
+    and state-matrix.md but not built as HTML screens
+  - confirm-discard dialog on Cancel-while-dirty specified, not built
+  - traceability hover/click and section-level comments are anticipated only
+
+confirmation: nothing was committed — no repo modification, no PR, no push.
+This package lives only in the design workspace's temporary export directory.
+
+zip/download: use the download card provided in chat (the folder is zipped
+automatically as qori-brief-plan-handoff.zip), or zip the folder locally:
+  zip -r qori-brief-plan-handoff.zip qori-brief-plan-handoff/
+
+link validation: PASS — all relative href/src references resolve

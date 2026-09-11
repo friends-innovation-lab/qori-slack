@@ -57,6 +57,7 @@ class ResearchArtifact extends Model<
   declare last_write_error: string | null;
   declare last_write_attempted_at: Date | null;
   declare semantic_key: string;
+  declare content_version: CreationOptional<number>;
   declare created_by: string;
   declare created_at: CreationOptional<Date>;
   declare updated_at: CreationOptional<Date>;
@@ -67,6 +68,9 @@ class ResearchArtifact extends Model<
     });
     this.belongsTo(models.ResearchStudy, {
       foreignKey: 'study_id', as: 'study', onDelete: 'CASCADE',
+    });
+    this.hasMany(models.ArtifactSection, {
+      foreignKey: 'artifact_id', as: 'sections', onDelete: 'CASCADE',
     });
   }
 }
@@ -92,6 +96,7 @@ export default (sequelize: Sequelize) => {
       last_write_error: { type: DataTypes.STRING, allowNull: true },
       last_write_attempted_at: { type: DataTypes.DATE, allowNull: true },
       semantic_key: { type: DataTypes.STRING(300), allowNull: false, unique: true },
+      content_version: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
       created_by: { type: DataTypes.STRING(100), allowNull: false },
       created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: sequelize.literal('CURRENT_TIMESTAMP') },
       updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: sequelize.literal('CURRENT_TIMESTAMP') },
