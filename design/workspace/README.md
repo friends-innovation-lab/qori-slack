@@ -53,3 +53,19 @@ Phase 8 — Interaction Layer (participant drawer, peek + trail, dialogs, ⌘K p
 4. Work Queue wiring
 5. Readout viewer + publish; tickets after CA-003
 Design rules binding implementation: design-system.md (product-wide rules list), design-tokens.json v0.2, component-inventory.md (fixed rules header), content-design.md (provenance voice, no pipeline vocabulary), uswds-mapping.md, classifications.md.
+
+---
+
+## brief-plan-document-workspace/
+
+Authoritative Design 2 extension for the Brief + Plan document workspace experience.
+
+Covers:
+- Brief document view (approved, pending approval, changes requested)
+- Brief edit mode (TipTap-based whole-document editing)
+- Brief review / approval rail
+- Plan document view
+- Plan edit mode
+- Responsive / mobile states (430px breakpoint)
+
+See `brief-plan-document-workspace/README.md` for the full specification, interaction model, state matrix, accessibility notes, and implementation handoff.

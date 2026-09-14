@@ -20,6 +20,7 @@ import { calculatePerPersonCompensation } from '../utils/compensationCalculator'
 import { buildTimelinePhases, buildTimelineSummary } from '../utils/timelineComputation';
 import { readUpstreamVariablesByContext, type VariableContext } from '../helpers/studyVariables';
 import research_planService from '../services/research_plan.service';
+import sequelize from '../database';
 
 // ─── Input/Output Types ──────────────────────────────────────────
 
@@ -184,6 +185,63 @@ export async function executePlan(
     file_url: url,
     created_by: input.createdByActorId,
   });
+
+  // Persist AI-generated prose into artifact_sections
+  if (renderedYaml.artifactPublicId && renderedYaml.aiResponses) {
+    try {
+      const { getArtifactByPublicId } = require('../services/artifact.service');
+      const artifact = await getArtifactByPublicId(renderedYaml.artifactPublicId);
+      if (artifact) {
+        const ArtifactSectionModel = sequelize.models.ArtifactSection;
+        if (ArtifactSectionModel) {
+          const sectionMap: Record<string, string> = {
+            summary: 'plan_summary',
+            background: 'plan_background',
+            method_approach: 'plan_method_approach',
+            session_format_detail: 'plan_session_format',
+            data_collection_methods: 'plan_data_collection',
+            participant_composition_prose: 'plan_participants_prose',
+            participant_glance: 'plan_participant_glance',
+            deliverables_narrative: 'plan_deliverables',
+          };
+          for (const [aiKey, sectionKey] of Object.entries(sectionMap)) {
+            const content = renderedYaml.aiResponses[aiKey];
+            if (content) {
+              await ArtifactSectionModel.findOrCreate({
+                where: { artifact_id: artifact.id, section_key: sectionKey },
+                defaults: {
+                  artifact_id: artifact.id,
+                  section_key: sectionKey,
+                  content_type: 'prose',
+                  content,
+                  updated_by: input.createdByActorId,
+                },
+              });
+            }
+          }
+          // Persist structured JSON sections
+          for (const jsonKey of ['risks_raw', 'brief_operationalization']) {
+            const jsonContent = renderedYaml.aiResponses[jsonKey];
+            if (jsonContent) {
+              const sectionKey = jsonKey === 'risks_raw' ? 'plan_risks' : 'plan_commitments';
+              await ArtifactSectionModel.findOrCreate({
+                where: { artifact_id: artifact.id, section_key: sectionKey },
+                defaults: {
+                  artifact_id: artifact.id,
+                  section_key: sectionKey,
+                  content_type: 'structured_json',
+                  content: jsonContent,
+                  updated_by: input.createdByActorId,
+                },
+              });
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[PLAN] Section capture failed (non-blocking):', err instanceof Error ? err.message : err);
+    }
+  }
 
   await addStudyStatus({
     study_id: input.studyId,

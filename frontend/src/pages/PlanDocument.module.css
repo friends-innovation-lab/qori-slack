@@ -1,0 +1,31 @@
+.page {
+  max-width: 1200px;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-caption-size);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.breadcrumbs a {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+.sep {
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 767px) {
+  .page {
+    max-width: 100%;
+  }
+}

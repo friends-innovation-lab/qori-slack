@@ -201,13 +201,58 @@ export async function getStudyBrief(ctx: ApplicationContext, studyPublicId: stri
   // Brief URL — stored on study.link by both Slack and REST handlers after generation
   const briefUrl: string | null = study.link || null;
 
+  // Load artifact sections (editable prose) and artifact version
+  const ArtifactModel = sequelize.models.ResearchArtifact;
+  const ArtifactSectionModel = sequelize.models.ArtifactSection;
+  const proseSections: Record<string, string | null> = {};
+  let artifactVersion = 1;
+  let artifactPublicId: string | null = null;
+
+  if (ArtifactModel) {
+    const artifact = await ArtifactModel.findOne({
+      where: { study_id: study.id, artifact_type: 'brief' },
+      attributes: ['id', 'public_id', 'content_version', 'template_id', 'template_version', 'created_at', 'path'],
+      order: [['created_at', 'DESC']],
+    }) as any;
+
+    if (artifact) {
+      artifactVersion = artifact.content_version || 1;
+      artifactPublicId = artifact.public_id || null;
+
+      if (ArtifactSectionModel) {
+        const sections = await ArtifactSectionModel.findAll({
+          where: { artifact_id: artifact.id },
+        }) as any[];
+        for (const s of sections) {
+          proseSections[s.section_key] = s.content || null;
+        }
+      }
+    }
+  }
+
+  // Parse structured arrays from cascade fields (return as objects, not JSON strings)
+  function safeParse(raw: string | null): unknown[] {
+    if (!raw) return [];
+    try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; }
+    catch { return []; }
+  }
+
+  // Study metadata for masthead
+  const studyMetadata = {
+    study_name: study.name,
+    researcher_name: study.researcher_name || null,
+    created_by_name: study.created_by || null,
+    study_path: study.path || null,
+    created_at: study.created_at?.toISOString() || null,
+  };
+
   return {
     study: {
       public_id: study.public_id || String(study.id),
       name: study.name,
       status: study.status || 'active',
       brief_status: study.brief_status || null,
-      project_public_id: study.project?.slug || '',
+      project_public_id: study.project?.public_id || study.project?.slug || '',
       created_at: study.created_at?.toISOString() || new Date().toISOString(),
     },
     brief_status: study.brief_status || null,
@@ -216,7 +261,20 @@ export async function getStudyBrief(ctx: ApplicationContext, studyPublicId: stri
     brief_change_feedback: study.brief_change_feedback || null,
     brief_reviewer_display_name: reviewerDisplayName,
     brief_url: briefUrl,
+    artifact_version: artifactVersion,
+    artifact_public_id: artifactPublicId,
+    // Backward-compatible flat strings
     cascade_fields: cascadeFields,
+    // Parsed structured arrays for document rendering
+    structured_fields: {
+      research_objectives: safeParse(cascadeFields.research_objectives),
+      research_questions: safeParse(cascadeFields.research_questions),
+      target_barriers: safeParse(cascadeFields.target_barriers),
+    },
+    // AI-generated prose sections stored in artifact_sections
+    prose_sections: proseSections,
+    // Study metadata for masthead rendering
+    study_metadata: studyMetadata,
   };
 }
 
@@ -264,18 +322,68 @@ export async function getStudyPlan(ctx: ApplicationContext, studyPublicId: strin
     }
   }
 
+  // Load artifact sections (editable prose) and artifact version
+  const ArtifactModel = sequelize.models.ResearchArtifact;
+  const ArtifactSectionModel = sequelize.models.ArtifactSection;
+  const planProseSections: Record<string, string | null> = {};
+  let planArtifactVersion = 1;
+  let planArtifactPublicId: string | null = null;
+
+  if (ArtifactModel) {
+    const artifact = await ArtifactModel.findOne({
+      where: { study_id: study.id, artifact_type: 'plan' },
+      attributes: ['id', 'public_id', 'content_version'],
+      order: [['created_at', 'DESC']],
+    }) as any;
+
+    if (artifact) {
+      planArtifactVersion = artifact.content_version || 1;
+      planArtifactPublicId = artifact.public_id || null;
+
+      if (ArtifactSectionModel) {
+        const sections = await ArtifactSectionModel.findAll({
+          where: { artifact_id: artifact.id },
+        }) as any[];
+        for (const s of sections) {
+          planProseSections[s.section_key] = s.content || null;
+        }
+      }
+    }
+  }
+
+  // Parse structured arrays for document rendering
+  function safeParsePlan(raw: string | null): unknown[] {
+    if (!raw) return [];
+    try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; }
+    catch { return []; }
+  }
+
   return {
     study: {
       public_id: study.public_id || String(study.id),
       name: study.name,
       status: study.status || 'active',
       brief_status: study.brief_status || null,
-      project_public_id: study.project?.slug || '',
+      project_public_id: study.project?.public_id || study.project?.slug || '',
       created_at: study.created_at?.toISOString() || new Date().toISOString(),
     },
     plan_url: planUrl,
     plan_created_at: planCreatedAt,
+    artifact_version: planArtifactVersion,
+    artifact_public_id: planArtifactPublicId,
     inherited_context: inherited,
+    structured_fields: {
+      research_objectives: safeParsePlan(inherited.research_objectives),
+      research_questions: safeParsePlan(inherited.research_questions),
+      target_barriers: safeParsePlan(inherited.target_barriers),
+    },
+    prose_sections: planProseSections,
+    study_metadata: {
+      study_name: study.name,
+      researcher_name: study.researcher_name || null,
+      study_path: study.path || null,
+      created_at: study.created_at?.toISOString() || null,
+    },
   };
 }
 

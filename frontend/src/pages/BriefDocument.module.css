@@ -1,0 +1,97 @@
+.page {
+  max-width: 1200px;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-caption-size);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.breadcrumbs a {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+.sep {
+  color: var(--color-text-muted);
+}
+
+/* Review rail */
+
+.reviewRail {
+  width: 320px;
+  flex-shrink: 0;
+  position: sticky;
+  top: calc(var(--layout-topbar) + var(--space-4));
+  align-self: flex-start;
+}
+
+.railCard {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.railCardHeader {
+  padding: var(--space-3) var(--space-4);
+  font-weight: 600;
+  font-size: var(--text-secondary-size);
+  background-color: var(--color-surface-muted);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.railCardBody {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.checklistGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.checkItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-size: var(--text-secondary-size);
+  line-height: 1.5;
+}
+
+.checkItem input[type="checkbox"] {
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-text);
+  flex-shrink: 0;
+}
+
+.railActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+@media (max-width: 1023px) {
+  .reviewRail {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .page {
+    max-width: 100%;
+  }
+}

@@ -52,6 +52,8 @@ import IntegrationCredential from './models/integration_credential';
 import OrganizationMembership from './models/organization_membership';
 // PLAT-3: Identity provider bindings
 import IdentityProviderBinding from './models/identity_provider_binding';
+// WS-2: Artifact sections (editable prose content)
+import ArtifactSection from './models/artifact_section';
 
 
 // Set environment and configuration
@@ -112,6 +114,7 @@ const modelDefiners = [
   IntegrationCredential,
   OrganizationMembership,
   IdentityProviderBinding,
+  ArtifactSection,
 ];
 
 // Register all models with Sequelize
