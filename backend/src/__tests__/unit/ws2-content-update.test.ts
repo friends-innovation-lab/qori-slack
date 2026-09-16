@@ -435,3 +435,33 @@ describe('ArtifactSection model', () => {
     expect(source).toContain('ArtifactSection,');
   });
 });
+
+// ═══════════════════════════════════════════════════════════
+// Schema validator coverage
+// ═══════════════════════════════════════════════════════════
+
+describe('Schema validator model discovery', () => {
+  it('validate-schema.js discovers models dynamically (no hardcoded list)', () => {
+    const source = fs.readFileSync(
+      path.resolve(SRC_ROOT, '../scripts/validate-schema.js'),
+      'utf-8',
+    );
+    // Must use dynamic directory scanning, not a hardcoded require list
+    expect(source).toContain('readdirSync(MODELS_DIR)');
+    expect(source).not.toMatch(/require\('\.\.\/src\/database\/models\/channel_config'\)/);
+  });
+
+  it('model file count matches database index imports', () => {
+    const modelsDir = path.resolve(SRC_ROOT, 'database/models');
+    const modelFiles = fs.readdirSync(modelsDir)
+      .filter((f: string) => f.endsWith('.ts') && !f.endsWith('.d.ts'));
+
+    const indexSource = readSrc('database/index.ts');
+    const importCount = (indexSource.match(/import\s+\w+\s+from\s+'\.\/models\//g) || []).length;
+
+    // Every model file should have a corresponding import in index.ts
+    // Allow model files that may not need registration (edge case)
+    expect(importCount).toBeGreaterThanOrEqual(modelFiles.length - 2);
+    expect(importCount).toBeLessThanOrEqual(modelFiles.length + 1);
+  });
+});
