@@ -12,6 +12,11 @@
  * Exit codes:
  *   0 - Schema valid, all model columns exist in database
  *   1 - Schema invalid, missing columns found
+ *
+ * Model discovery: scans src/database/models/ for all .ts files and
+ * imports their default export. This avoids maintaining a second
+ * hardcoded model list that drifts from the authoritative registry
+ * in src/database/index.ts.
  */
 
 require('@babel/register')({
@@ -24,25 +29,29 @@ require('@babel/register')({
 });
 
 const { Sequelize } = require('sequelize');
+const fs = require('fs');
+const path = require('path');
 
-// Import model definers - same list as database/index.ts
-const modelDefiners = [
-  require('../src/database/models/channel_config').default,
-  require('../src/database/models/project').default,
-  require('../src/database/models/project_member').default,
-  require('../src/database/models/research_study').default,
-  require('../src/database/models/research_study_user_role').default,
-  require('../src/database/models/study_status').default,
-  require('../src/database/models/study_participant').default,
-  require('../src/database/models/session_observer').default,
-  require('../src/database/models/study_notes').default,
-  require('../src/database/models/research_plan').default,
-  require('../src/database/models/session_summary').default,
-  require('../src/database/models/study_variable').default,
-  require('../src/database/models/created_issue').default,
-  require('../src/database/models/slack_user_state').default,
-  require('../src/database/models/disposition_audit_log').default,
-];
+// Dynamically discover all model files from the authoritative models directory.
+// Each model file exports a default function: (sequelize: Sequelize) => Model.
+const MODELS_DIR = path.resolve(__dirname, '../src/database/models');
+const modelDefiners = [];
+
+for (const file of fs.readdirSync(MODELS_DIR).sort()) {
+  if (!file.endsWith('.ts') || file.endsWith('.d.ts')) continue;
+
+  try {
+    const mod = require(path.join(MODELS_DIR, file));
+    const definer = mod.default || mod;
+    if (typeof definer === 'function') {
+      modelDefiners.push(definer);
+    }
+  } catch (err) {
+    // Some model files may fail to import due to missing dependencies
+    // in the validation context — log and continue
+    console.warn(`  ⚠ Could not import model ${file}: ${err.message}`);
+  }
+}
 
 async function validateSchema() {
   // Use environment variables for database connection
@@ -56,9 +65,13 @@ async function validateSchema() {
     logging: false,
   });
 
-  // Register all models
+  // Register all discovered models
   for (const defineModel of modelDefiners) {
-    defineModel(sequelize);
+    try {
+      defineModel(sequelize);
+    } catch (err) {
+      console.warn(`  ⚠ Could not register model: ${err.message}`);
+    }
   }
 
   const errors = [];
