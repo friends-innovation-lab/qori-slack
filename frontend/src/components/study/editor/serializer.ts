@@ -132,9 +132,120 @@ function extractTextContent(node: any): string {
     .join('');
 }
 
-function extractProseFromSection(_editor: Editor, _sectionId: string): string | null {
-  // For now, return null — prose extraction from TipTap nodes will be
-  // implemented when the editor rendering is wired. The serializer
-  // architecture is correct; the HTML-to-Markdown conversion happens here.
-  return null;
+/**
+ * Extract prose content from a qoriSection node.
+ * Converts TipTap JSON to HTML string for backend storage.
+ *
+ * Skips heading nodes (section titles) and qoriStructuredItem nodes
+ * (those are handled separately). Returns the remaining prose content.
+ */
+function extractProseFromSection(editor: Editor, sectionId: string): string | null {
+  const doc = editor.getJSON() as any;
+  if (!doc.content) return null;
+
+  // Find the qoriSection node with matching sectionId
+  const sectionNode = doc.content.find(
+    (node: any) => node.type === 'qoriSection' && node.attrs?.sectionId === sectionId
+  );
+
+  if (!sectionNode || !sectionNode.content) return null;
+
+  // Extract prose content (skip headings and structured items)
+  const proseNodes = sectionNode.content.filter((child: any) => {
+    // Skip headings (section titles)
+    if (child.type === 'heading') return false;
+    // Skip structured items (handled separately)
+    if (child.type === 'qoriStructuredItem') return false;
+    // Skip system blocks
+    if (child.type === 'qoriSystemBlock') return false;
+    return true;
+  });
+
+  if (proseNodes.length === 0) return null;
+
+  // Convert prose nodes to HTML
+  const html = proseNodes.map((node: any) => nodeToHtml(node)).join('');
+  return html.trim() || null;
+}
+
+/**
+ * Convert a TipTap JSON node to HTML string.
+ * Handles common node types: paragraph, text, bold, italic, link, list.
+ */
+function nodeToHtml(node: any): string {
+  if (!node) return '';
+
+  switch (node.type) {
+    case 'text': {
+      let text = escapeHtml(node.text || '');
+      // Apply marks (bold, italic, link, etc.)
+      if (node.marks) {
+        for (const mark of node.marks) {
+          if (mark.type === 'bold') {
+            text = `<strong>${text}</strong>`;
+          } else if (mark.type === 'italic') {
+            text = `<em>${text}</em>`;
+          } else if (mark.type === 'link' && mark.attrs?.href) {
+            text = `<a href="${escapeHtml(mark.attrs.href)}">${text}</a>`;
+          } else if (mark.type === 'superscript') {
+            text = `<sup>${text}</sup>`;
+          }
+        }
+      }
+      return text;
+    }
+
+    case 'paragraph': {
+      const content = node.content?.map((c: any) => nodeToHtml(c)).join('') || '';
+      return `<p>${content}</p>`;
+    }
+
+    case 'bulletList': {
+      const items = node.content?.map((item: any) => {
+        const itemContent = item.content?.map((c: any) => nodeToHtml(c)).join('') || '';
+        return `<li>${itemContent}</li>`;
+      }).join('') || '';
+      return `<ul>${items}</ul>`;
+    }
+
+    case 'orderedList': {
+      const items = node.content?.map((item: any) => {
+        const itemContent = item.content?.map((c: any) => nodeToHtml(c)).join('') || '';
+        return `<li>${itemContent}</li>`;
+      }).join('') || '';
+      return `<ol>${items}</ol>`;
+    }
+
+    case 'listItem': {
+      const content = node.content?.map((c: any) => nodeToHtml(c)).join('') || '';
+      return content; // List items are wrapped by parent
+    }
+
+    case 'blockquote': {
+      const content = node.content?.map((c: any) => nodeToHtml(c)).join('') || '';
+      return `<blockquote>${content}</blockquote>`;
+    }
+
+    case 'hardBreak':
+      return '<br>';
+
+    default:
+      // For unknown node types, try to extract content recursively
+      if (node.content) {
+        return node.content.map((c: any) => nodeToHtml(c)).join('');
+      }
+      return '';
+  }
+}
+
+/**
+ * Escape HTML special characters to prevent XSS.
+ */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }

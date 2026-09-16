@@ -45,6 +45,13 @@ function safeParse<T>(raw: string | null): T[] {
  * Build initial HTML content for the TipTap editor from Brief API data.
  * This is editor presentation state, NOT canonical — the serializer
  * converts edits back to Qori-owned payloads on save.
+ *
+ * Content is wrapped in <section data-qori-section="..."> tags so TipTap
+ * parses them into qoriSection nodes with sectionId attributes. This enables
+ * the serializer to identify which section each edit belongs to.
+ *
+ * Section keys MUST match backend artifact_sections.section_key values:
+ * - summary, problem_narrative, method_prose, participants_prose, out_of_scope
  */
 function buildBriefEditorContent(
   _brief: any,
@@ -56,53 +63,61 @@ function buildBriefEditorContent(
 ): string {
   const parts: string[] = [];
 
-  // Summary
+  // Summary — editable generated prose (section_key: 'summary')
   if (prose.summary) {
-    parts.push(`<h2>Summary</h2>${prose.summary}`);
+    parts.push(`<section data-qori-section="summary" data-provenance="generated"><h2>Summary</h2>${prose.summary}</section>`);
   }
 
-  // Problem + barriers
-  if (prose.problem_narrative) {
-    parts.push(`<h2>Problem</h2>${prose.problem_narrative}`);
-  }
-  if (barriers.length > 0) {
-    parts.push('<h3>Target barriers for validation</h3>');
-    for (const b of barriers) {
-      parts.push(`<p><strong>${b.id}</strong> ${b.barrier}${b.source ? ` — <em>${b.source}</em>` : ''}</p>`);
+  // Problem + barriers — prose is editable, barriers are canonical structured items
+  // section_key: 'problem_narrative'
+  if (prose.problem_narrative || barriers.length > 0) {
+    let problemContent = '<h2>Problem</h2>';
+    if (prose.problem_narrative) {
+      problemContent += prose.problem_narrative;
     }
+    if (barriers.length > 0) {
+      problemContent += '<h3>Target barriers for validation</h3>';
+      for (const b of barriers) {
+        problemContent += `<p><strong>${b.id}</strong> ${b.barrier}${b.source ? ` — <em>${b.source}</em>` : ''}</p>`;
+      }
+    }
+    parts.push(`<section data-qori-section="problem_narrative" data-provenance="generated">${problemContent}</section>`);
   }
 
-  // Objectives
+  // Objectives — canonical structured items, not editable prose
   if (objectives.length > 0) {
-    parts.push('<h2>What we\'ll learn</h2>');
+    let objContent = '<h2>What we\'ll learn</h2>';
     for (const o of objectives) {
-      parts.push(`<p><strong>${o.id}</strong> ${o.objective}</p>`);
+      objContent += `<p><strong>${o.id}</strong> ${o.objective}</p>`;
     }
+    parts.push(`<section data-qori-section="objectives" data-provenance="canonical">${objContent}</section>`);
   }
 
-  // Questions
+  // Questions — canonical structured items
   if (questions.length > 0) {
-    parts.push('<h3>Research questions</h3>');
+    let qContent = '<h3>Research questions</h3>';
     for (const q of questions) {
-      parts.push(`<p><strong>${q.id}</strong> ${q.question}${q.priority ? ` (${q.priority})` : ''}</p>`);
+      qContent += `<p><strong>${q.id}</strong> ${q.question}${q.priority ? ` (${q.priority})` : ''}</p>`;
     }
+    parts.push(`<section data-qori-section="questions" data-provenance="canonical">${qContent}</section>`);
   }
 
-  // Method
+  // Method — editable generated prose (section_key: 'method_prose')
   if (methodology || prose.method_prose) {
-    parts.push('<h2>Method</h2>');
-    if (methodology) parts.push(`<p><strong>Approach</strong> — ${methodology}</p>`);
-    if (prose.method_prose) parts.push(prose.method_prose);
+    let methodContent = '<h2>Method</h2>';
+    if (methodology) methodContent += `<p><strong>Approach</strong> — ${methodology}</p>`;
+    if (prose.method_prose) methodContent += prose.method_prose;
+    parts.push(`<section data-qori-section="method_prose" data-provenance="generated">${methodContent}</section>`);
   }
 
-  // Participants
+  // Participants — editable generated prose (section_key: 'participants_prose')
   if (prose.participants_prose) {
-    parts.push(`<h2>Participants</h2>${prose.participants_prose}`);
+    parts.push(`<section data-qori-section="participants_prose" data-provenance="generated"><h2>Participants</h2>${prose.participants_prose}</section>`);
   }
 
-  // Out of scope
+  // Out of scope — editable generated prose (section_key: 'out_of_scope')
   if (prose.out_of_scope) {
-    parts.push(`<h2>Out of scope</h2>${prose.out_of_scope}`);
+    parts.push(`<section data-qori-section="out_of_scope" data-provenance="generated"><h2>Out of scope</h2>${prose.out_of_scope}</section>`);
   }
 
   return parts.join('\n') || '<p>No content available for editing. Generate a brief first.</p>';
