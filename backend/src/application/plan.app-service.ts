@@ -22,6 +22,23 @@ import { readUpstreamVariablesByContext, type VariableContext } from '../helpers
 import research_planService from '../services/research_plan.service';
 import sequelize from '../database';
 
+// ─── Generation Error Types ─────────────────────────────────────
+
+/**
+ * Thrown when plan generation completes but produces incomplete content.
+ * Mirror of BriefGenerationIncompleteError for consistency.
+ */
+export class PlanGenerationIncompleteError extends Error {
+  readonly code = 'PLAN_GENERATION_INCOMPLETE';
+  readonly missingFields: string[];
+
+  constructor(missingFields: string[]) {
+    super(`Plan generation incomplete: missing ${missingFields.join(', ')}`);
+    this.name = 'PlanGenerationIncompleteError';
+    this.missingFields = missingFields;
+  }
+}
+
 // ─── Input/Output Types ──────────────────────────────────────────
 
 export interface PlanInput {
@@ -52,6 +69,8 @@ export interface PlanResult {
   /** Cascade extraction outcome */
   extractionSuccess: boolean;
   extractionVariableCount: number;
+  /** Artifact public ID for lifecycle validation */
+  artifactPublicId?: string;
 }
 
 // ─── Main Orchestration ─────────────────────────────────────────
@@ -259,5 +278,6 @@ export async function executePlan(
     targetBarriersCount: Array.isArray(upstreamBarriers) ? upstreamBarriers.length : 0,
     extractionSuccess,
     extractionVariableCount,
+    artifactPublicId: renderedYaml.artifactPublicId || undefined,
   };
 }

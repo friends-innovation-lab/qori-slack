@@ -53,6 +53,13 @@ export interface BriefInput {
 
   /** Discovery artifact selections (type::slug format) */
   discoverySelections: string[];
+
+  /**
+   * When provided, use this exact study instead of name-based lookup/creation.
+   * Required for REST API calls where the study already exists with a different
+   * name format (e.g., human-readable vs slug). Prevents duplicate study creation.
+   */
+  existingStudyId?: number;
 }
 
 export interface BriefBarrier {
@@ -86,6 +93,29 @@ export interface BriefResult {
   /** Cascade extraction outcome */
   extractionSuccess: boolean;
   extractionVariableCount: number;
+  /** Artifact public ID for lifecycle validation */
+  artifactPublicId?: string;
+  /** Methodology value for lifecycle validation */
+  methodology: string;
+  /** Participant approach for lifecycle validation */
+  participantApproach: string;
+}
+
+// ─── Generation Error Types ─────────────────────────────────────
+
+/**
+ * Thrown when brief generation completes but produces incomplete content.
+ * The caller should NOT transition to pending_approval in this case.
+ */
+export class BriefGenerationIncompleteError extends Error {
+  readonly code = 'BRIEF_GENERATION_INCOMPLETE';
+  readonly missingFields: string[];
+
+  constructor(missingFields: string[]) {
+    super(`Brief generation incomplete: missing ${missingFields.join(', ')}`);
+    this.name = 'BriefGenerationIncompleteError';
+    this.missingFields = missingFields;
+  }
 }
 
 // ─── Discovery type maps ────────────────────────────────────────
@@ -176,52 +206,86 @@ export async function executeBrief(
   // Authorization: actor must have project access
   await assertProjectAccessByActor(ctx.actor.id, input.projectId, ctx.organization.id);
 
+  // Use project slug as study name for new studies (Phase 2D: single-study-per-project)
   const studyName = input.projectSlug;
-
-  // Study creation or lookup
-  let study = await getStudyByProjectAndName(input.projectId, studyName);
+  let study: Awaited<ReturnType<typeof getStudyByProjectAndName>> | null = null;
   let studyId: number;
 
-  if (!study || !study.path) {
-    const t = await sequelize.transaction();
-    try {
-      const project = await getProjectById(input.projectId);
-      if (!project) throw new Error('Project not found');
+  // If existingStudyId is provided, use that exact study instead of name-based lookup.
+  // This prevents the bug where REST API passes a different name format than the existing
+  // study, causing duplicate study creation.
+  if (input.existingStudyId) {
+    const StudyModel = sequelize.models.ResearchStudy;
+    const existingStudy = await StudyModel.findByPk(input.existingStudyId) as Awaited<ReturnType<typeof getStudyByProjectAndName>> | null;
 
-      const scaffoldResult = await scaffoldStudy(
-        project.slug,
-        studyName,
-        studyName,
-        project.name,
-        input.leadResearcher,
-      );
+    if (!existingStudy) {
+      throw new Error(`Study with ID ${input.existingStudyId} not found`);
+    }
 
-      if (scaffoldResult.errors.length > 0) {
-        console.warn('Study scaffolding had non-fatal errors:', scaffoldResult.errors);
-      }
+    // Verify study belongs to the specified project (security check)
+    if ((existingStudy as unknown as { project_id: number }).project_id !== input.projectId) {
+      throw new Error(`Study ${input.existingStudyId} does not belong to project ${input.projectId}`);
+    }
 
-      study = await addResearchStudyWithRoles({
-        name: studyName,
-        project_id: input.projectId,
-        slug: studyName,
-        description: 'Created from research brief',
-        created_by: input.createdByActorId,
-        researcher_name: input.leadResearcher,
-        researcher_email: input.researcherEmail,
-        link: scaffoldResult.studyReadmeUrl,
-        path: `${project.slug}/${studyName}`,
-        channel_name: '',
-        assignments: [],
+    study = existingStudy;
+    studyId = study.id;
+
+    // Populate missing path/slug metadata if needed (migration scenario)
+    const project = await getProjectById(input.projectId);
+    if (!study.path && project) {
+      const derivedSlug = study.slug || study.name.toLowerCase().replace(/\s+/g, '-');
+      await study.update({
+        path: `${project.slug}/${derivedSlug}`,
+        slug: study.slug || derivedSlug,
+        updated_at: new Date(),
       });
-
-      studyId = study.id;
-      await t.commit();
-    } catch (err) {
-      await t.rollback();
-      throw err;
+      console.log(`[BRIEF] Populated missing path on study ${studyId}: ${study.path}`);
     }
   } else {
-    studyId = study.id;
+    // Legacy path: name-based lookup/create (used by Slack handlers)
+    study = await getStudyByProjectAndName(input.projectId, studyName);
+
+    if (!study || !study.path) {
+      const t = await sequelize.transaction();
+      try {
+        const project = await getProjectById(input.projectId);
+        if (!project) throw new Error('Project not found');
+
+        const scaffoldResult = await scaffoldStudy(
+          project.slug,
+          studyName,
+          studyName,
+          project.name,
+          input.leadResearcher,
+        );
+
+        if (scaffoldResult.errors.length > 0) {
+          console.warn('Study scaffolding had non-fatal errors:', scaffoldResult.errors);
+        }
+
+        study = await addResearchStudyWithRoles({
+          name: studyName,
+          project_id: input.projectId,
+          slug: studyName,
+          description: 'Created from research brief',
+          created_by: input.createdByActorId,
+          researcher_name: input.leadResearcher,
+          researcher_email: input.researcherEmail,
+          link: scaffoldResult.studyReadmeUrl,
+          path: `${project.slug}/${studyName}`,
+          channel_name: '',
+          assignments: [],
+        });
+
+        studyId = study.id;
+        await t.commit();
+      } catch (err) {
+        await t.rollback();
+        throw err;
+      }
+    } else {
+      studyId = study.id;
+    }
   }
 
   // Parse budget and target participants
@@ -450,11 +514,14 @@ export async function executeBrief(
   return {
     url,
     studyId,
-    studyName,
+    studyName: study?.name || studyName,
     objectives: researchObjectives,
     researchQuestions,
     targetBarriers,
     extractionSuccess,
     extractionVariableCount,
+    artifactPublicId: renderedYaml.artifactPublicId || undefined,
+    methodology: input.methodology,
+    participantApproach: input.participantApproach,
   };
 }

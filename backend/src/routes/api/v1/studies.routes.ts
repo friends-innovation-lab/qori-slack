@@ -8,9 +8,9 @@ import { Router } from 'express';
 import { requireAuth } from '../../../middleware/auth';
 import * as studyAppService from '../../../application/study.app-service';
 import * as approvalAppService from '../../../application/approval.app-service';
-import { executeBrief } from '../../../application/brief.app-service';
+import { executeBrief, BriefGenerationIncompleteError } from '../../../application/brief.app-service';
 import { updateBriefContent, updatePlanContent } from '../../../application/content-update.app-service';
-import { executePlan } from '../../../application/plan.app-service';
+import { executePlan, PlanGenerationIncompleteError } from '../../../application/plan.app-service';
 
 const router = Router();
 
@@ -53,7 +53,7 @@ router.post('/:studyId/brief', requireAuth, async (req, res, next) => {
       return;
     }
 
-    // Resolve study context
+    // Resolve study context — studyId is the EXACT study we must operate on
     const { studyId, projectId, studyName } = await studyAppService.resolveStudyContext(
       req.ctx!, req.params.studyId as string,
     );
@@ -83,6 +83,11 @@ router.post('/:studyId/brief', requireAuth, async (req, res, next) => {
     }
 
     const actorName = req.ctx!.actor.displayName || 'Researcher';
+
+    // CRITICAL FIX: Pass existingStudyId to ensure executeBrief uses THIS exact study.
+    // Previously, executeBrief used project slug as the study name, which caused a
+    // name mismatch when the study was created with a human-readable name. This led
+    // to duplicate study creation and orphaned brief_status on the wrong study.
     const result = await executeBrief(req.ctx!, {
       projectId,
       projectSlug: project.slug,
@@ -102,11 +107,66 @@ router.post('/:studyId/brief', requireAuth, async (req, res, next) => {
       decisionDeadline: req.body.decision_deadline || '',
       budget: req.body.budget || '',
       discoverySelections: req.body.discovery_selections || [],
+      existingStudyId: studyId,  // Use exact study identity, not name-based lookup
     });
 
-    // Update study brief_status (mirrors Slack handler + resubmitBrief semantics).
-    // When regenerating after changes_requested, clear stale feedback so it doesn't
-    // appear as an active unresolved request in the new pending_approval state.
+    // ── LIFECYCLE INVARIANT GUARD ──
+    // A Brief MUST NOT transition to pending_approval unless the minimum canonical
+    // Brief commitments were successfully generated AND persisted to the SAME study.
+    //
+    // Verify persisted state from DB rather than trusting in-memory result arrays,
+    // to catch scenarios where extraction or artifact persistence failed silently.
+    const missingPrerequisites: string[] = [];
+
+    // 1. Verify artifact was created for THIS study
+    const artifact = await sequelize.models.ResearchArtifact?.findOne({
+      where: { study_id: studyId, artifact_type: 'brief' },
+      order: [['created_at', 'DESC']],
+    });
+    if (!artifact) {
+      missingPrerequisites.push('artifact not created');
+    } else {
+      // 2. Verify artifact_sections were written (prose content)
+      const sectionCount = await sequelize.models.ArtifactSection?.count({
+        where: { artifact_id: artifact.id },
+      });
+      if (!sectionCount || sectionCount < 3) {
+        // Expect at minimum: summary, problem_narrative, method_prose
+        missingPrerequisites.push(`insufficient artifact sections (found ${sectionCount || 0}, need >= 3)`);
+      }
+    }
+
+    // 3. Verify study_variables were written (cascade extraction)
+    const variableCount = await sequelize.models.StudyVariable?.count({
+      where: { study_id: studyId, scope: 'study' },
+    });
+    if (!variableCount || variableCount < 3) {
+      // Expect at minimum: research_objectives, research_questions, target_barriers
+      missingPrerequisites.push(`insufficient study variables (found ${variableCount || 0}, need >= 3)`);
+    }
+
+    // 4. Verify in-memory result meets minimum content requirements
+    if (result.objectives.length === 0) {
+      missingPrerequisites.push('no research objectives');
+    }
+    if (result.researchQuestions.length === 0) {
+      missingPrerequisites.push('no research questions');
+    }
+    if (result.targetBarriers.length === 0) {
+      missingPrerequisites.push('no target barriers');
+    }
+    if (!result.methodology) {
+      missingPrerequisites.push('no methodology');
+    }
+
+    // If any prerequisite is missing, do NOT transition to pending_approval.
+    // Return a structured error so the caller knows what failed.
+    if (missingPrerequisites.length > 0) {
+      console.error(`[BRIEF] Lifecycle guard failed for study ${studyId}:`, missingPrerequisites);
+      throw new BriefGenerationIncompleteError(missingPrerequisites);
+    }
+
+    // All prerequisites met — safe to transition to pending_approval
     const study = await sequelize.models.ResearchStudy.findByPk(studyId);
     if (study) {
       await study.update({
@@ -125,6 +185,17 @@ router.post('/:studyId/brief', requireAuth, async (req, res, next) => {
       },
     });
   } catch (error) {
+    // Handle BriefGenerationIncompleteError with appropriate status
+    if (error instanceof BriefGenerationIncompleteError) {
+      res.status(422).json({
+        error: {
+          code: error.code,
+          message: error.message,
+          missing_fields: error.missingFields,
+        },
+      });
+      return;
+    }
     next(error);
   }
 });
@@ -227,12 +298,55 @@ router.post('/:studyId/plan', requireAuth, async (req, res, next) => {
       operationalRisks: req.body.operational_risks || '',
     });
 
+    // ── LIFECYCLE INVARIANT GUARD (Plan) ──
+    // Verify persisted state before considering the plan successfully generated.
+    const missingPrerequisites: string[] = [];
+
+    // 1. Verify artifact was created for THIS study
+    const artifact = await sequelize.models.ResearchArtifact?.findOne({
+      where: { study_id: studyId, artifact_type: 'plan' },
+      order: [['created_at', 'DESC']],
+    });
+    if (!artifact) {
+      missingPrerequisites.push('artifact not created');
+    } else {
+      // 2. Verify artifact_sections were written (prose content)
+      const sectionCount = await sequelize.models.ArtifactSection?.count({
+        where: { artifact_id: artifact.id },
+      });
+      if (!sectionCount || sectionCount < 2) {
+        missingPrerequisites.push(`insufficient artifact sections (found ${sectionCount || 0}, need >= 2)`);
+      }
+    }
+
+    // 3. Verify cascade extraction succeeded
+    if (!result.extractionSuccess) {
+      missingPrerequisites.push('cascade extraction failed');
+    }
+
+    // If any prerequisite is missing, return error
+    if (missingPrerequisites.length > 0) {
+      console.error(`[PLAN] Lifecycle guard failed for study ${studyId}:`, missingPrerequisites);
+      throw new PlanGenerationIncompleteError(missingPrerequisites);
+    }
+
     res.status(201).json({
       data: {
         plan_url: result.url,
       },
     });
   } catch (error) {
+    // Handle PlanGenerationIncompleteError with appropriate status
+    if (error instanceof PlanGenerationIncompleteError) {
+      res.status(422).json({
+        error: {
+          code: error.code,
+          message: error.message,
+          missing_fields: error.missingFields,
+        },
+      });
+      return;
+    }
     next(error);
   }
 });
