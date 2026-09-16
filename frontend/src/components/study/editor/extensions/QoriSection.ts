@@ -21,7 +21,19 @@ export const QoriSection = Node.create({
   },
 
   parseHTML() {
-    return [{ tag: 'section[data-qori-section]' }];
+    return [
+      {
+        tag: 'section[data-qori-section]',
+        getAttrs: (element) => {
+          // Extract data attributes from the DOM element
+          const el = element as HTMLElement;
+          return {
+            sectionId: el.getAttribute('data-qori-section'),
+            provenance: el.getAttribute('data-provenance') || 'generated',
+          };
+        },
+      },
+    ];
   },
 
   renderHTML({ HTMLAttributes }) {
