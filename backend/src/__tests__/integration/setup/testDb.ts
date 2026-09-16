@@ -40,6 +40,7 @@ import SurveyCodingRun from '../../../database/models/survey_coding_run';
 import SurveyCodingAssignment from '../../../database/models/survey_coding_assignment';
 import SurveyCodingEntryReview from '../../../database/models/survey_coding_entry_review';
 import ResearchArtifact from '../../../database/models/research_artifact';
+import ArtifactSection from '../../../database/models/artifact_section';
 import ArtifactEvidenceRef from '../../../database/models/artifact_evidence_ref';
 import DataSubject from '../../../database/models/data_subject';
 import DataSubjectLink from '../../../database/models/data_subject_link';
@@ -92,7 +93,7 @@ export function getTestDb(): Sequelize {
     DispositionAuditLog, EvidenceSource, EvidenceConstruct, EvidenceRelationship,
     SurveyFieldSchema, SurveyQualitativeEntry, SurveyCodebook, SurveyCode, SurveyCodeExample,
     SurveyCodingRun, SurveyCodingAssignment, SurveyCodingEntryReview,
-    ResearchArtifact, ArtifactEvidenceRef,
+    ResearchArtifact, ArtifactSection, ArtifactEvidenceRef,
     DataSubject, DataSubjectLink, EvidenceSubjectAttribution,
     RecordsSchedule, RecordsManagementAssignment,
     RecordsHold, RecordsHoldTarget, RecordsDispositionEvent,
