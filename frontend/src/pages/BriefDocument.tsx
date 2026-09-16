@@ -160,6 +160,15 @@ export function BriefDocument() {
     const artifactVersion = (brief as any).artifact_version || 1;
     const serialized = serializeBrief(editorRef.current);
 
+    // Save-success invariant: prevent empty PATCH from reporting success
+    const hasSections = Object.keys(serialized.sections).length > 0;
+    const hasStructured = Object.keys(serialized.structured).length > 0;
+    if (!hasSections && !hasStructured) {
+      console.error('[BriefDocument] Serializer produced empty payload despite dirty state. Check TipTap hydration.');
+      pipeline.failSave('No changes detected. Editor may not have parsed sections correctly.');
+      return;
+    }
+
     pipeline.startSave();
     try {
       const result = await saveBrief.mutateAsync({
