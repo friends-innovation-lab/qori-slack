@@ -12,13 +12,53 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import type { Editor } from '@tiptap/react';
+import type { Editor, JSONContent } from '@tiptap/react';
 import { serializeBrief } from '../serializer';
 
-// Mock editor with getJSON method
+/**
+ * Simple markdown serializer for testing.
+ * Converts TipTap JSON to markdown-like output.
+ */
+function simpleMarkdownSerialize(doc: JSONContent): string {
+  if (!doc.content) return '';
+
+  return doc.content.map((node) => {
+    if (node.type === 'paragraph') {
+      return serializeInline(node.content || []);
+    }
+    if (node.type === 'bulletList') {
+      return (node.content || []).map((item) => {
+        const text = serializeInline(item.content?.[0]?.content || []);
+        return `- ${text}`;
+      }).join('\n');
+    }
+    return '';
+  }).join('\n\n');
+}
+
+function serializeInline(content: JSONContent[]): string {
+  return content.map((node) => {
+    if (node.type === 'text') {
+      let text = node.text || '';
+      if (node.marks) {
+        for (const mark of node.marks) {
+          if (mark.type === 'bold') text = `**${text}**`;
+          if (mark.type === 'italic') text = `*${text}*`;
+        }
+      }
+      return text;
+    }
+    return '';
+  }).join('');
+}
+
+// Mock editor with getJSON and markdown.serialize methods
 function createMockEditor(json: any): Editor {
   return {
     getJSON: () => json,
+    markdown: {
+      serialize: (doc: JSONContent) => simpleMarkdownSerialize(doc),
+    },
   } as unknown as Editor;
 }
 
@@ -121,8 +161,8 @@ describe('serializeBrief', () => {
 
     const result = serializeBrief(editor);
 
-    expect(result.sections.summary).toContain('<strong>bold</strong>');
-    expect(result.sections.summary).toContain('<em>italic</em>');
+    expect(result.sections.summary).toContain('**bold**');
+    expect(result.sections.summary).toContain('*italic*');
   });
 
   it('handles lists correctly', () => {
@@ -156,10 +196,8 @@ describe('serializeBrief', () => {
 
     const result = serializeBrief(editor);
 
-    expect(result.sections.summary).toContain('<ul>');
-    expect(result.sections.summary).toContain('<li>');
-    expect(result.sections.summary).toContain('Item 1');
-    expect(result.sections.summary).toContain('Item 2');
+    expect(result.sections.summary).toContain('- Item 1');
+    expect(result.sections.summary).toContain('- Item 2');
   });
 
   it('returns empty sections object when no editable sections', () => {
@@ -173,7 +211,7 @@ describe('serializeBrief', () => {
     expect(result.structured).toEqual({});
   });
 
-  it('escapes HTML special characters in text', () => {
+  it('preserves special characters in markdown output', () => {
     const editor = createMockEditor({
       content: [
         {
@@ -191,9 +229,10 @@ describe('serializeBrief', () => {
 
     const result = serializeBrief(editor);
 
-    expect(result.sections.summary).toContain('&lt;');
-    expect(result.sections.summary).toContain('&gt;');
-    expect(result.sections.summary).toContain('&amp;&amp;');
+    // Markdown output preserves special characters as-is (no HTML escaping)
+    expect(result.sections.summary).toContain('x < y');
+    expect(result.sections.summary).toContain('y > z');
+    expect(result.sections.summary).toContain('&&');
   });
 
   it('extracts structured items from sections', () => {

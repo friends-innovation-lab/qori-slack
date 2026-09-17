@@ -10,6 +10,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router';
+import type { JSONContent } from '@tiptap/react';
 import { useStudyBrief } from '@/api/queries/useStudy';
 import { useApproveBrief, useRequestChanges } from '@/api/mutations/useApproveBrief';
 import { useSaveBriefContent } from '@/api/mutations/useSaveContent';
@@ -22,6 +23,8 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { Textarea } from '@/components/ui/Textarea';
 import { ArtifactEditor } from '@/components/study/editor/ArtifactEditor';
 import { serializeBrief } from '@/components/study/editor/serializer';
+import { buildEditorDocument } from '@/components/study/editor/markdownBridge';
+import { MarkdownDisplay } from '@/components/study/editor/MarkdownDisplay';
 import { useSavePipeline } from '@/components/study/editor/useSavePipeline';
 import {
   ArtifactTabs, DocumentSection, Masthead, FactsGrid,
@@ -42,85 +45,101 @@ function safeParse<T>(raw: string | null): T[] {
 }
 
 /**
- * Build initial HTML content for the TipTap editor from Brief API data.
- * This is editor presentation state, NOT canonical — the serializer
- * converts edits back to Qori-owned payloads on save.
+ * Build TipTap editor document from Brief API data.
  *
- * Content is wrapped in <section data-qori-section="..."> tags so TipTap
- * parses them into qoriSection nodes with sectionId attributes. This enables
- * the serializer to identify which section each edit belongs to.
+ * Architecture:
+ * - Each prose section is stored as canonical MARKDOWN
+ * - Parse each section's markdown separately via @tiptap/markdown
+ * - Wrap parsed content in qoriSection nodes with sectionId
+ * - Returns JSONContent for the editor
+ *
+ * This preserves Qori section identity while enabling rich TipTap editing.
+ * The serializer converts edits back to MARKDOWN on save.
  *
  * Section keys MUST match backend artifact_sections.section_key values:
  * - summary, problem_narrative, method_prose, participants_prose, out_of_scope
  */
 function buildBriefEditorContent(
-  _brief: any,
   prose: Record<string, string | null>,
-  objectives: Objective[],
-  questions: Question[],
-  barriers: Barrier[],
   methodology: string | null,
-): string {
-  const parts: string[] = [];
+): JSONContent {
+  const sections: Array<{
+    sectionId: string;
+    markdown: string;
+    provenance?: 'canonical' | 'generated' | 'system' | 'inherited';
+    title?: string;
+  }> = [];
 
   // Summary — editable generated prose (section_key: 'summary')
   if (prose.summary) {
-    parts.push(`<section data-qori-section="summary" data-provenance="generated"><h2>Summary</h2>${prose.summary}</section>`);
+    sections.push({
+      sectionId: 'summary',
+      markdown: prose.summary,
+      provenance: 'generated',
+      title: 'Summary',
+    });
   }
 
-  // Problem + barriers — prose is editable, barriers are canonical structured items
-  // section_key: 'problem_narrative'
-  if (prose.problem_narrative || barriers.length > 0) {
-    let problemContent = '<h2>Problem</h2>';
-    if (prose.problem_narrative) {
-      problemContent += prose.problem_narrative;
-    }
-    if (barriers.length > 0) {
-      problemContent += '<h3>Target barriers for validation</h3>';
-      for (const b of barriers) {
-        problemContent += `<p><strong>${b.id}</strong> ${b.barrier}${b.source ? ` — <em>${b.source}</em>` : ''}</p>`;
-      }
-    }
-    parts.push(`<section data-qori-section="problem_narrative" data-provenance="generated">${problemContent}</section>`);
-  }
-
-  // Objectives — canonical structured items, not editable prose
-  if (objectives.length > 0) {
-    let objContent = '<h2>What we\'ll learn</h2>';
-    for (const o of objectives) {
-      objContent += `<p><strong>${o.id}</strong> ${o.objective}</p>`;
-    }
-    parts.push(`<section data-qori-section="objectives" data-provenance="canonical">${objContent}</section>`);
-  }
-
-  // Questions — canonical structured items
-  if (questions.length > 0) {
-    let qContent = '<h3>Research questions</h3>';
-    for (const q of questions) {
-      qContent += `<p><strong>${q.id}</strong> ${q.question}${q.priority ? ` (${q.priority})` : ''}</p>`;
-    }
-    parts.push(`<section data-qori-section="questions" data-provenance="canonical">${qContent}</section>`);
+  // Problem — editable generated prose (section_key: 'problem_narrative')
+  // Note: barriers are displayed in view mode only, not in editor
+  if (prose.problem_narrative) {
+    sections.push({
+      sectionId: 'problem_narrative',
+      markdown: prose.problem_narrative,
+      provenance: 'generated',
+      title: 'Problem',
+    });
   }
 
   // Method — editable generated prose (section_key: 'method_prose')
-  if (methodology || prose.method_prose) {
-    let methodContent = '<h2>Method</h2>';
-    if (methodology) methodContent += `<p><strong>Approach</strong> — ${methodology}</p>`;
-    if (prose.method_prose) methodContent += prose.method_prose;
-    parts.push(`<section data-qori-section="method_prose" data-provenance="generated">${methodContent}</section>`);
+  if (prose.method_prose) {
+    // Prepend methodology as context if available
+    const methodMarkdown = methodology
+      ? `**Approach** — ${methodology}\n\n${prose.method_prose}`
+      : prose.method_prose;
+    sections.push({
+      sectionId: 'method_prose',
+      markdown: methodMarkdown,
+      provenance: 'generated',
+      title: 'Method',
+    });
   }
 
   // Participants — editable generated prose (section_key: 'participants_prose')
   if (prose.participants_prose) {
-    parts.push(`<section data-qori-section="participants_prose" data-provenance="generated"><h2>Participants</h2>${prose.participants_prose}</section>`);
+    sections.push({
+      sectionId: 'participants_prose',
+      markdown: prose.participants_prose,
+      provenance: 'generated',
+      title: 'Participants',
+    });
   }
 
   // Out of scope — editable generated prose (section_key: 'out_of_scope')
   if (prose.out_of_scope) {
-    parts.push(`<section data-qori-section="out_of_scope" data-provenance="generated"><h2>Out of scope</h2>${prose.out_of_scope}</section>`);
+    sections.push({
+      sectionId: 'out_of_scope',
+      markdown: prose.out_of_scope,
+      provenance: 'generated',
+      title: 'Out of scope',
+    });
   }
 
-  return parts.join('\n') || '<p>No content available for editing. Generate a brief first.</p>';
+  // Build document using markdown bridge
+  // Note: Objectives, questions, barriers are canonical items shown in view mode only
+  if (sections.length === 0) {
+    return {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text: 'No content available for editing. Generate a brief first.' }],
+        },
+      ],
+    };
+  }
+
+  return buildEditorDocument(sections);
 }
 
 export function BriefDocument() {
@@ -340,7 +359,7 @@ export function BriefDocument() {
           {/* Edit mode: TipTap editor */}
           {isEditing && (
             <ArtifactEditor
-              initialContent={buildBriefEditorContent(brief, prose, objectives, questions, barriers, methodology)}
+              initialContent={buildBriefEditorContent(prose, methodology)}
               onDirtyChange={setIsDirty}
               editorRef={editorRef}
             />
@@ -359,7 +378,7 @@ export function BriefDocument() {
           {/* Summary (generated) */}
           <DocumentSection sectionId="summary" title="Summary" provenance="generated" editable>
             {prose.summary ? (
-              <div className={docStyles.blockProse} dangerouslySetInnerHTML={{ __html: prose.summary }} />
+              <MarkdownDisplay markdown={prose.summary} className={docStyles.blockProse} />
             ) : brief.cascade_fields.research_objectives ? (
               <p className={docStyles.block}>Brief generated. See sections below for details.</p>
             ) : null}
@@ -369,7 +388,7 @@ export function BriefDocument() {
           {/* Problem + Barriers (generated + canonical) */}
           <DocumentSection sectionId="problem" title="Problem" provenance="generated" editable>
             {prose.problem_narrative && (
-              <div className={docStyles.blockProse} dangerouslySetInnerHTML={{ __html: prose.problem_narrative }} />
+              <MarkdownDisplay markdown={prose.problem_narrative} className={docStyles.blockProse} />
             )}
             {barriers.length > 0 && (
               <>
@@ -404,14 +423,14 @@ export function BriefDocument() {
               </div>
             )}
             {prose.method_prose && (
-              <div className={docStyles.blockProse} dangerouslySetInnerHTML={{ __html: prose.method_prose }} />
+              <MarkdownDisplay markdown={prose.method_prose} className={docStyles.blockProse} />
             )}
           </DocumentSection>
 
           {/* Participants (generated + canonical) */}
           <DocumentSection sectionId="participants" title="Participants" provenance="generated" editable>
             {prose.participants_prose && (
-              <div className={docStyles.blockProse} dangerouslySetInnerHTML={{ __html: prose.participants_prose }} />
+              <MarkdownDisplay markdown={prose.participants_prose} className={docStyles.blockProse} />
             )}
             {!prose.participants_prose && brief.cascade_fields.participant_approach && (
               <p className={docStyles.block}>{brief.cascade_fields.participant_approach}</p>
@@ -422,7 +441,7 @@ export function BriefDocument() {
           {(prose.out_of_scope || brief.cascade_fields.research_objectives) && (
             <DocumentSection sectionId="scope" title="Out of scope" provenance="generated" editable>
               {prose.out_of_scope ? (
-                <div className={docStyles.blockProse} dangerouslySetInnerHTML={{ __html: prose.out_of_scope }} />
+                <MarkdownDisplay markdown={prose.out_of_scope} className={docStyles.blockProse} />
               ) : null}
             </DocumentSection>
           )}
@@ -456,7 +475,7 @@ export function BriefDocument() {
             <DocumentSection sectionId="approval" title="Approval" provenance="system" editable={false}>
               <div className={docStyles.systemBlock}>
                 <span className={docStyles.systemLabel}>System</span>
-                <div className={docStyles.blockProse} dangerouslySetInnerHTML={{ __html: prose.approval_items }} />
+                <MarkdownDisplay markdown={prose.approval_items} className={docStyles.blockProse} />
               </div>
             </DocumentSection>
           )}
