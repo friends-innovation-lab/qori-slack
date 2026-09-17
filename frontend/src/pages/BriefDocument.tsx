@@ -223,14 +223,51 @@ export function BriefDocument() {
   const prose = (brief as any).prose_sections || {};
   const meta = (brief as any).study_metadata || {};
 
-  // Quick facts
+  // Parse timeline phases from cascade (structured data)
+  let timelinePhases: Array<{ phase: string; dates: string; duration?: string }> = [];
+  if (brief.cascade_fields.timeline_phases) {
+    try { timelinePhases = JSON.parse(brief.cascade_fields.timeline_phases); } catch { /* ignore */ }
+  }
+
+  // Derive timeline duration and date range from timeline_phases
+  let timelineDuration = '';
+  let timelineDateRange = '';
+  if (timelinePhases.length > 0) {
+    // Get first phase start and last phase end from the dates field
+    const firstPhase = timelinePhases[0];
+    const lastPhase = timelinePhases[timelinePhases.length - 1];
+    // Dates are typically formatted as "Sep 14 – Sep 25, 2026"
+    const firstDates = firstPhase.dates?.split('–').map(s => s.trim()) || [];
+    const lastDates = lastPhase.dates?.split('–').map(s => s.trim()) || [];
+    const startDate = firstDates[0] || '';
+    const endDate = lastDates[1] || lastDates[0] || '';
+    // Calculate total duration from individual phase durations if available
+    const totalWeeks = timelinePhases.reduce((sum, p) => {
+      const match = p.duration?.match(/(\d+)\s*week/i);
+      return sum + (match ? parseInt(match[1], 10) : 0);
+    }, 0);
+    timelineDuration = totalWeeks > 0 ? `${totalWeeks} weeks` : '';
+    timelineDateRange = startDate && endDate ? `${startDate} – ${endDate}` : '';
+  }
+
+  // Quick facts — matches design: Method, Participants, Timeline, Decision deadline, Budget
   const methodology = brief.cascade_fields.methodology_selection?.replace(/_/g, ' ') || null;
+  const sessionFormat = brief.cascade_fields.session_format || null;
+  const sessionDuration = brief.cascade_fields.session_duration || null;
+  const methodSub = [sessionFormat, sessionDuration].filter(Boolean).join(' · ') || undefined;
+  const decisionDeadline = brief.cascade_fields.decision_deadline || null;
+
   const facts = [
-    methodology ? { label: 'Method', value: methodology } : null,
+    methodology ? { label: 'Method', value: methodology, sub: methodSub } : null,
     brief.cascade_fields.participant_approach ? { label: 'Participants', value: brief.cascade_fields.participant_approach } : null,
-    brief.cascade_fields.start_date ? { label: 'Start date', value: brief.cascade_fields.start_date } : null,
+    (timelineDuration || timelineDateRange) ? {
+      label: 'Timeline',
+      value: timelineDuration || 'See timeline',
+      sub: timelineDateRange || undefined,
+    } : null,
+    decisionDeadline ? { label: 'Decision deadline', value: decisionDeadline } : null,
     brief.cascade_fields.budget ? { label: 'Budget', value: brief.cascade_fields.budget } : null,
-  ].filter(Boolean) as { label: string; value: string }[];
+  ].filter(Boolean) as { label: string; value: string; sub?: string }[];
 
   // Risks from prose_sections or cascade
   let risks: Array<{ risk: string; source: string; mitigation: string }> = [];
@@ -461,11 +498,29 @@ export function BriefDocument() {
           )}
 
           {/* Timeline (system) */}
-          {brief.cascade_fields.start_date && (
+          {(timelinePhases.length > 0 || brief.cascade_fields.start_date) && (
             <DocumentSection sectionId="timeline" title="Timeline" provenance="system" editable={false}>
               <div className={docStyles.systemBlock}>
                 <span className={docStyles.systemLabel}>System</span>
-                <p><strong>Start date:</strong> {brief.cascade_fields.start_date}</p>
+                {/* Phase table from timeline_phases */}
+                {timelinePhases.length > 0 ? (
+                  <>
+                    <DocumentTable
+                      columns={[
+                        { key: 'phase', label: 'Phase' },
+                        { key: 'dates', label: 'Dates' },
+                      ]}
+                      rows={timelinePhases}
+                    />
+                    {decisionDeadline && (
+                      <p style={{ marginTop: 'var(--space-3)' }}>
+                        <strong>Hard deadline</strong> &mdash; {decisionDeadline}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p><strong>Start date:</strong> {brief.cascade_fields.start_date}</p>
+                )}
               </div>
             </DocumentSection>
           )}
