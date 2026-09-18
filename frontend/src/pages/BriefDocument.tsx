@@ -189,7 +189,7 @@ export function BriefDocument() {
   const [showChangesForm, setShowChangesForm] = useState(false);
   const [changeFeedback, setChangeFeedback] = useState('');
   const [changesSubmitted, setChangesSubmitted] = useState(false);
-  const [showReviewRail, setShowReviewRail] = useState(false);
+  const [showReviewRail, setShowReviewRail] = useState(true);
   const [showRailOverlay, setShowRailOverlay] = useState(false);
   const [checklist, setChecklist] = useState({
     scope: false, timeline: false, participants: false, budget: false,
@@ -304,8 +304,13 @@ export function BriefDocument() {
     const n = typeof s.count === 'number' ? s.count : parseInt(String(s.count), 10);
     return sum + (isNaN(n) ? 0 : n);
   }, 0);
-  const participantFactValue = participantCount > 0 ? `${participantCount} participants` : null;
+  const participantFactValue = participantCount > 0 ? `${participantCount} residents` : null;
   const participantFactSub = participantSegments.length > 0 ? `${participantSegments.length} segment${participantSegments.length !== 1 ? 's' : ''}` : undefined;
+
+  // Decision deadline context (e.g., "Q1 portal release planning")
+  const decisionDeadlineContext = brief.cascade_fields.decision_deadline_context || null;
+  // Budget purpose (e.g., "Participant incentives")
+  const budgetPurpose = brief.cascade_fields.budget_purpose || null;
 
   const facts = [
     methodology ? { label: 'Method', value: methodology, sub: methodSub } : null,
@@ -315,8 +320,8 @@ export function BriefDocument() {
       value: timelineDuration || 'See timeline',
       sub: timelineDateRange || undefined,
     } : null,
-    decisionDeadline ? { label: 'Decision deadline', value: decisionDeadline } : null,
-    brief.cascade_fields.budget ? { label: 'Budget', value: brief.cascade_fields.budget } : null,
+    decisionDeadline ? { label: 'Decision deadline', value: decisionDeadline, sub: decisionDeadlineContext || undefined } : null,
+    brief.cascade_fields.budget ? { label: 'Budget', value: brief.cascade_fields.budget, sub: budgetPurpose || undefined } : null,
   ].filter(Boolean) as { label: string; value: string; sub?: string }[];
 
   // Risks from prose_sections or cascade

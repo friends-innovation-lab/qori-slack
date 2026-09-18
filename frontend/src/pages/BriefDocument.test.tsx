@@ -45,9 +45,10 @@ function makeBrief(overrides: any = {}) {
     cascade_fields: {
       research_objectives: null, research_questions: null, target_barriers: null,
       methodology_selection: 'usability_testing', timeline_preference: null, timeline_phases: null,
-      start_date: '2026-10-01', decision_deadline: null, participant_approach: '8 Veterans',
-      participant_segments: null, recruitment_sources: null, session_format: null,
-      session_duration: null, budget: '$800', requestor_name: null, discovery_sources: null,
+      start_date: '2026-10-01', decision_deadline: null, decision_deadline_context: null,
+      participant_approach: '8 Veterans', participant_segments: null, recruitment_sources: null,
+      session_format: null, session_duration: null, budget: '$800', budget_purpose: null,
+      requestor_name: null, discovery_sources: null,
     },
     structured_fields: {
       research_objectives: [{ id: 'OBJ-001', objective: 'Understand scheduling' }],
@@ -142,18 +143,17 @@ describe('BriefDocument', () => {
   // ─── Visual Parity Regression Tests ───────────────────────────────────────
 
   describe('visual parity (design reference)', () => {
-    it('review rail is closed by default — no rail content visible until Review clicked', () => {
+    it('review sidebar is visible by default for approved briefs', () => {
       mockBrief.mockReturnValue({
         data: makeBrief({ brief_status: 'approved' }),
         isLoading: false, error: null,
       });
       renderWithProviders(<BriefDocument />);
-      // Review button should be present
-      expect(screen.getByRole('button', { name: 'Review' })).toBeInTheDocument();
-      // Rail content should NOT be visible (rail is closed by default)
+      // Close review button should be present (rail is open by default)
+      expect(screen.getByRole('button', { name: 'Close review' })).toBeInTheDocument();
+      // Rail content should be visible (at least one ASIDE with aria-label="Review")
       const railLabels = screen.queryAllByLabelText('Review');
-      // The aside with aria-label="Review" should not exist when rail is closed
-      expect(railLabels.filter(el => el.tagName === 'ASIDE').length).toBe(0);
+      expect(railLabels.filter(el => el.tagName === 'ASIDE').length).toBeGreaterThanOrEqual(1);
     });
 
     it('participants Quick Fact shows concise count/segments, never full prose', () => {
@@ -175,8 +175,8 @@ describe('BriefDocument', () => {
         isLoading: false, error: null,
       });
       renderWithProviders(<BriefDocument />);
-      // Should show concise participant count in Quick Facts
-      expect(screen.getByText('8 participants')).toBeInTheDocument();
+      // Should show concise participant count in Quick Facts (reference uses "residents")
+      expect(screen.getByText('8 residents')).toBeInTheDocument();
       expect(screen.getByText('3 segments')).toBeInTheDocument();
       // Quick Facts Participants label should exist
       const participantsLabels = screen.getAllByText('Participants');

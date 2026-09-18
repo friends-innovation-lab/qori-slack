@@ -118,12 +118,14 @@ export interface StudyBriefResource {
     timeline_phases: string | null;
     start_date: string | null;
     decision_deadline: string | null;
+    decision_deadline_context: string | null;
     participant_approach: string | null;
     participant_segments: string | null;
     recruitment_sources: string | null;
     session_format: string | null;
     session_duration: string | null;
     budget: string | null;
+    budget_purpose: string | null;
     requestor_name: string | null;
     discovery_sources: string | null;
   };
