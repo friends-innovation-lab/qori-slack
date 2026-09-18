@@ -36,19 +36,19 @@ describe('IdTag', () => {
 describe('ProvenanceTag', () => {
   it('renders canonical tag', () => {
     render(<ProvenanceTag provenance="canonical" editable />);
-    expect(screen.getByText(/Canonical/)).toBeInTheDocument();
-    expect(screen.getByText(/editable/)).toBeInTheDocument();
+    expect(screen.getByText(/CANONICAL/i)).toBeInTheDocument();
+    expect(screen.getByText(/EDITABLE/i)).toBeInTheDocument();
   });
 
   it('renders system read-only tag', () => {
     render(<ProvenanceTag provenance="system" editable={false} />);
-    expect(screen.getByText(/System/)).toBeInTheDocument();
-    expect(screen.getByText(/read-only/)).toBeInTheDocument();
+    expect(screen.getByText(/SYSTEM/i)).toBeInTheDocument();
+    expect(screen.getByText(/READ-ONLY/i)).toBeInTheDocument();
   });
 
   it('renders inherited tag', () => {
     render(<ProvenanceTag provenance="inherited" editable={false} />);
-    expect(screen.getByText(/Inherited/)).toBeInTheDocument();
+    expect(screen.getByText(/INHERITED/i)).toBeInTheDocument();
   });
 });
 
@@ -60,7 +60,7 @@ describe('DocumentSection', () => {
       </DocumentSection>,
     );
     expect(screen.getByText('Summary')).toBeInTheDocument();
-    expect(screen.getByText(/Generated/)).toBeInTheDocument();
+    expect(screen.getByText(/GENERATED/i)).toBeInTheDocument();
     expect(screen.getByText('Test content')).toBeInTheDocument();
   });
 

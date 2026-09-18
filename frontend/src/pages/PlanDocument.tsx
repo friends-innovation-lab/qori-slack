@@ -11,6 +11,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router';
+import type { JSONContent } from '@tiptap/react';
 import { useStudyPlan } from '@/api/queries/useStudy';
 import { useSavePlanContent } from '@/api/mutations/useSaveContent';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -21,6 +22,8 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ArtifactEditor } from '@/components/study/editor/ArtifactEditor';
 import { serializePlan } from '@/components/study/editor/serializer';
+import { buildEditorDocument } from '@/components/study/editor/markdownBridge';
+import { MarkdownDisplay } from '@/components/study/editor/MarkdownDisplay';
 import { useSavePipeline } from '@/components/study/editor/useSavePipeline';
 import {
   ArtifactTabs, DocumentSection, Masthead, FactsGrid,
@@ -117,13 +120,6 @@ export function PlanDocument() {
   const meta = (plan as any).study_metadata || {};
   const methodology = plan.inherited_context.methodology_selection?.replace(/_/g, ' ') || null;
 
-  // Quick facts
-  const facts = [
-    methodology ? { label: 'Method', value: methodology } : null,
-    plan.inherited_context.participant_approach ? { label: 'Participants', value: plan.inherited_context.participant_approach } : null,
-    plan.inherited_context.timeline_phases ? { label: 'Timeline', value: 'See timeline section' } : null,
-  ].filter(Boolean) as { label: string; value: string }[];
-
   // Parse structured JSON sections
   let risks: Array<{ risk: string; likelihood: string; mitigation: string }> = [];
   if (prose.plan_risks) {
@@ -146,6 +142,49 @@ export function PlanDocument() {
   if (plan.inherited_context.deliverables) {
     try { deliverables = JSON.parse(plan.inherited_context.deliverables); } catch { /* ignore */ }
   }
+
+  // Derive research period from timeline phases if available
+  let researchPeriod: { start: string; end: string; duration: string } | null = null;
+  if (timelinePhases.length > 0) {
+    // Get first phase start and last phase end from the dates field
+    const firstPhase = timelinePhases[0];
+    const lastPhase = timelinePhases[timelinePhases.length - 1];
+    // Dates are typically formatted as "Sep 14 – Sep 25, 2026"
+    const firstDates = firstPhase.dates?.split('–').map(s => s.trim()) || [];
+    const lastDates = lastPhase.dates?.split('–').map(s => s.trim()) || [];
+    const startDate = firstDates[0] || '';
+    const endDate = lastDates[1] || lastDates[0] || '';
+    // Calculate total duration from individual phase durations if available
+    const totalWeeks = timelinePhases.reduce((sum, p) => {
+      const match = p.duration?.match(/(\d+)\s*week/i);
+      return sum + (match ? parseInt(match[1], 10) : 0);
+    }, 0);
+    researchPeriod = {
+      start: startDate,
+      end: endDate,
+      duration: totalWeeks > 0 ? `${totalWeeks} weeks` : '',
+    };
+  }
+
+  // Session info from prose or cascade (if structured source exists)
+  const sessionFormat = plan.inherited_context.session_format || null;
+  const sessionDuration = plan.inherited_context.session_duration || null;
+
+  // Quick facts — matches design: Method, Participants, Sessions, Timeline
+  const facts = [
+    methodology ? { label: 'Method', value: methodology } : null,
+    plan.inherited_context.participant_approach ? { label: 'Participants', value: plan.inherited_context.participant_approach } : null,
+    (sessionDuration || sessionFormat) ? {
+      label: 'Sessions',
+      value: sessionDuration || '',
+      sub: sessionFormat || undefined,
+    } : null,
+    researchPeriod ? {
+      label: 'Timeline',
+      value: researchPeriod.duration || 'See timeline',
+      sub: researchPeriod.start && researchPeriod.end ? `${researchPeriod.start} – ${researchPeriod.end}` : undefined,
+    } : null,
+  ].filter(Boolean) as { label: string; value: string; sub?: string }[];
 
   return (
     <div className={styles.page}>
@@ -235,7 +274,7 @@ export function PlanDocument() {
           {/* Summary (generated) */}
           <DocumentSection sectionId="summary" title="Summary" provenance="generated" editable>
             {prose.plan_summary ? (
-              <div className={docStyles.blockProse} dangerouslySetInnerHTML={{ __html: prose.plan_summary }} />
+              <MarkdownDisplay markdown={prose.plan_summary} className={docStyles.blockProse} />
             ) : (
               <p className={docStyles.block}>Plan generated. See sections below.</p>
             )}
@@ -245,7 +284,7 @@ export function PlanDocument() {
           {/* Background (generated) */}
           {prose.plan_background && (
             <DocumentSection sectionId="background" title="Background" provenance="generated" editable>
-              <div className={docStyles.blockProse} dangerouslySetInnerHTML={{ __html: prose.plan_background }} />
+              <MarkdownDisplay markdown={prose.plan_background} className={docStyles.blockProse} />
             </DocumentSection>
           )}
 
@@ -275,18 +314,18 @@ export function PlanDocument() {
               </div>
             )}
             {prose.plan_method_approach && (
-              <div className={docStyles.blockProse} dangerouslySetInnerHTML={{ __html: prose.plan_method_approach }} />
+              <MarkdownDisplay markdown={prose.plan_method_approach} className={docStyles.blockProse} />
             )}
             {prose.plan_session_format && (
               <>
                 <h3 className={docStyles.secSubheading}>Session format</h3>
-                <div className={docStyles.blockProse} dangerouslySetInnerHTML={{ __html: prose.plan_session_format }} />
+                <MarkdownDisplay markdown={prose.plan_session_format} className={docStyles.blockProse} />
               </>
             )}
             {prose.plan_data_collection && (
               <>
                 <h3 className={docStyles.secSubheading}>Data collection</h3>
-                <div className={docStyles.blockProse} dangerouslySetInnerHTML={{ __html: prose.plan_data_collection }} />
+                <MarkdownDisplay markdown={prose.plan_data_collection} className={docStyles.blockProse} />
               </>
             )}
           </DocumentSection>
@@ -294,7 +333,7 @@ export function PlanDocument() {
           {/* Participants (generated) */}
           <DocumentSection sectionId="participants" title="Participants" provenance="generated" editable>
             {prose.plan_participants_prose ? (
-              <div className={docStyles.blockProse} dangerouslySetInnerHTML={{ __html: prose.plan_participants_prose }} />
+              <MarkdownDisplay markdown={prose.plan_participants_prose} className={docStyles.blockProse} />
             ) : plan.inherited_context.participant_approach ? (
               <p className={docStyles.block}>{plan.inherited_context.participant_approach}</p>
             ) : null}
@@ -307,18 +346,35 @@ export function PlanDocument() {
           </DocumentSection>
 
           {/* Timeline (system — derived) */}
-          {timelinePhases.length > 0 && (
+          {(timelinePhases.length > 0 || researchPeriod) && (
             <DocumentSection sectionId="timeline" title="Timeline" provenance="system" editable={false}>
               <div className={docStyles.systemBlock}>
                 <span className={docStyles.systemLabel}>System</span>
-                <DocumentTable
-                  columns={[
-                    { key: 'phase', label: 'Phase' },
-                    { key: 'dates', label: 'Dates' },
-                    { key: 'duration', label: 'Duration', align: 'right' },
-                  ]}
-                  rows={timelinePhases}
-                />
+                {/* Research period header — per approved design */}
+                {researchPeriod && (
+                  <div className={docStyles.researchPeriod}>
+                    <span className={docStyles.periodLabel}>Research period</span>
+                    <span className={docStyles.periodValue}>
+                      {researchPeriod.start && researchPeriod.end
+                        ? `${researchPeriod.start} – ${researchPeriod.end}`
+                        : 'See phases below'}
+                    </span>
+                    {researchPeriod.duration && (
+                      <span className={docStyles.periodDuration}>{researchPeriod.duration}</span>
+                    )}
+                  </div>
+                )}
+                {/* Phase table */}
+                {timelinePhases.length > 0 && (
+                  <DocumentTable
+                    columns={[
+                      { key: 'phase', label: 'Phase' },
+                      { key: 'dates', label: 'Dates' },
+                      { key: 'duration', label: 'Duration', align: 'right' },
+                    ]}
+                    rows={timelinePhases}
+                  />
+                )}
               </div>
             </DocumentSection>
           )}
@@ -327,7 +383,7 @@ export function PlanDocument() {
           {(prose.plan_deliverables || deliverables.length > 0) && (
             <DocumentSection sectionId="deliverables" title="Deliverables" provenance="generated" editable>
               {prose.plan_deliverables ? (
-                <div className={docStyles.blockProse} dangerouslySetInnerHTML={{ __html: prose.plan_deliverables }} />
+                <MarkdownDisplay markdown={prose.plan_deliverables} className={docStyles.blockProse} />
               ) : deliverables.length > 0 ? (
                 <DocumentTable
                   columns={[
@@ -420,35 +476,111 @@ export function PlanDocument() {
 }
 
 /**
- * Build initial HTML content for the Plan TipTap editor.
- * Editable prose sections only — inherited objectives/questions stay read-only.
+ * Build TipTap editor document from Plan API data.
+ *
+ * Architecture:
+ * - Each prose section is stored as canonical MARKDOWN
+ * - Parse each section's markdown separately via @tiptap/markdown
+ * - Wrap parsed content in qoriSection nodes with sectionId
+ * - Returns JSONContent for the editor
+ *
+ * This preserves Qori section identity while enabling rich TipTap editing.
+ * The serializer converts edits back to MARKDOWN on save.
+ *
+ * Inherited objectives/questions are NOT included — they remain read-only.
+ *
+ * Section keys MUST match backend artifact_sections.section_key values:
+ * - plan_summary, plan_background, plan_method_approach, plan_session_format,
+ *   plan_data_collection, plan_participants_prose, plan_deliverables
  */
 function buildPlanEditorContent(
   prose: Record<string, string | null>,
   methodology: string | null,
-): string {
-  const parts: string[] = [];
+): JSONContent {
+  const sections: Array<{
+    sectionId: string;
+    markdown: string;
+    provenance?: 'canonical' | 'generated' | 'system' | 'inherited';
+    title?: string;
+  }> = [];
 
+  // Summary — editable generated prose (section_key: 'plan_summary')
   if (prose.plan_summary) {
-    parts.push(`<h2>Summary</h2>${prose.plan_summary}`);
-  }
-  if (prose.plan_background) {
-    parts.push(`<h2>Background</h2>${prose.plan_background}`);
-  }
-  // Objectives and questions are inherited — NOT included in editor
-  if (methodology || prose.plan_method_approach) {
-    parts.push('<h2>Method</h2>');
-    if (methodology) parts.push(`<p><strong>Approach</strong> — ${methodology}</p>`);
-    if (prose.plan_method_approach) parts.push(prose.plan_method_approach);
-    if (prose.plan_session_format) parts.push(`<h3>Session format</h3>${prose.plan_session_format}`);
-    if (prose.plan_data_collection) parts.push(`<h3>Data collection</h3>${prose.plan_data_collection}`);
-  }
-  if (prose.plan_participants_prose) {
-    parts.push(`<h2>Participants</h2>${prose.plan_participants_prose}`);
-  }
-  if (prose.plan_deliverables) {
-    parts.push(`<h2>Deliverables</h2>${prose.plan_deliverables}`);
+    sections.push({
+      sectionId: 'plan_summary',
+      markdown: prose.plan_summary,
+      provenance: 'generated',
+      title: 'Summary',
+    });
   }
 
-  return parts.join('\n') || '<p>No editable content available. Generate a plan first.</p>';
+  // Background — editable generated prose (section_key: 'plan_background')
+  if (prose.plan_background) {
+    sections.push({
+      sectionId: 'plan_background',
+      markdown: prose.plan_background,
+      provenance: 'generated',
+      title: 'Background',
+    });
+  }
+
+  // Method — editable generated prose (section_key: 'plan_method_approach')
+  // Includes approach, session format, and data collection as combined markdown
+  if (prose.plan_method_approach || prose.plan_session_format || prose.plan_data_collection) {
+    let methodMarkdown = '';
+    if (methodology) {
+      methodMarkdown += `**Approach** — ${methodology}\n\n`;
+    }
+    if (prose.plan_method_approach) {
+      methodMarkdown += prose.plan_method_approach;
+    }
+    if (prose.plan_session_format) {
+      methodMarkdown += `\n\n### Session format\n\n${prose.plan_session_format}`;
+    }
+    if (prose.plan_data_collection) {
+      methodMarkdown += `\n\n### Data collection\n\n${prose.plan_data_collection}`;
+    }
+    sections.push({
+      sectionId: 'plan_method_approach',
+      markdown: methodMarkdown.trim(),
+      provenance: 'generated',
+      title: 'Method',
+    });
+  }
+
+  // Participants — editable generated prose (section_key: 'plan_participants_prose')
+  if (prose.plan_participants_prose) {
+    sections.push({
+      sectionId: 'plan_participants_prose',
+      markdown: prose.plan_participants_prose,
+      provenance: 'generated',
+      title: 'Participants',
+    });
+  }
+
+  // Deliverables — editable generated prose (section_key: 'plan_deliverables')
+  if (prose.plan_deliverables) {
+    sections.push({
+      sectionId: 'plan_deliverables',
+      markdown: prose.plan_deliverables,
+      provenance: 'generated',
+      title: 'Deliverables',
+    });
+  }
+
+  // Build document using markdown bridge
+  // Note: Objectives, questions are inherited — shown in view mode only
+  if (sections.length === 0) {
+    return {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text: 'No content available for editing. Generate a plan first.' }],
+        },
+      ],
+    };
+  }
+
+  return buildEditorDocument(sections);
 }

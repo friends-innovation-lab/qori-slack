@@ -104,7 +104,9 @@ describe('BriefDocument', () => {
       isLoading: false, error: null,
     });
     renderWithProviders(<BriefDocument />);
-    expect(screen.getByText('Fix scope')).toBeInTheDocument();
+    // Multiple elements may display the feedback (main alert + review rail)
+    const feedbackElements = screen.getAllByText('Fix scope');
+    expect(feedbackElements.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Revise')).toBeInTheDocument();
   });
 

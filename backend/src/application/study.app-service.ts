@@ -164,9 +164,17 @@ export async function getStudyBrief(ctx: ApplicationContext, studyPublicId: stri
     target_barriers: null,
     methodology_selection: null,
     timeline_preference: null,
+    timeline_phases: null,
     start_date: null,
+    decision_deadline: null,
     participant_approach: null,
+    participant_segments: null,
+    recruitment_sources: null,
+    session_format: null,
+    session_duration: null,
     budget: null,
+    requestor_name: null,
+    discovery_sources: null,
   };
 
   if (StudyVariableModel) {
@@ -207,6 +215,17 @@ export async function getStudyBrief(ctx: ApplicationContext, studyPublicId: stri
   const proseSections: Record<string, string | null> = {};
   let artifactVersion = 1;
   let artifactPublicId: string | null = null;
+  let artifactMetadata: {
+    created_at: string | null;
+    template_id: string | null;
+    template_version: string | null;
+    path: string | null;
+  } = {
+    created_at: null,
+    template_id: null,
+    template_version: null,
+    path: null,
+  };
 
   if (ArtifactModel) {
     const artifact = await ArtifactModel.findOne({
@@ -218,6 +237,12 @@ export async function getStudyBrief(ctx: ApplicationContext, studyPublicId: stri
     if (artifact) {
       artifactVersion = artifact.content_version || 1;
       artifactPublicId = artifact.public_id || null;
+      artifactMetadata = {
+        created_at: artifact.created_at?.toISOString() || null,
+        template_id: artifact.template_id || null,
+        template_version: artifact.template_version || null,
+        path: artifact.path || null,
+      };
 
       if (ArtifactSectionModel) {
         const sections = await ArtifactSectionModel.findAll({
@@ -241,6 +266,7 @@ export async function getStudyBrief(ctx: ApplicationContext, studyPublicId: stri
   const studyMetadata = {
     study_name: study.name,
     researcher_name: study.researcher_name || null,
+    requestor_name: cascadeFields.requestor_name || null,
     created_by_name: study.created_by || null,
     study_path: study.path || null,
     created_at: study.created_at?.toISOString() || null,
@@ -263,6 +289,7 @@ export async function getStudyBrief(ctx: ApplicationContext, studyPublicId: stri
     brief_url: briefUrl,
     artifact_version: artifactVersion,
     artifact_public_id: artifactPublicId,
+    artifact_metadata: artifactMetadata,
     // Backward-compatible flat strings
     cascade_fields: cascadeFields,
     // Parsed structured arrays for document rendering
@@ -270,6 +297,8 @@ export async function getStudyBrief(ctx: ApplicationContext, studyPublicId: stri
       research_objectives: safeParse(cascadeFields.research_objectives),
       research_questions: safeParse(cascadeFields.research_questions),
       target_barriers: safeParse(cascadeFields.target_barriers),
+      participant_segments: safeParse(cascadeFields.participant_segments),
+      discovery_sources: safeParse(cascadeFields.discovery_sources),
     },
     // AI-generated prose sections stored in artifact_sections
     prose_sections: proseSections,

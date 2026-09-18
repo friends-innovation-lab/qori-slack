@@ -31,12 +31,28 @@ import {
   StructuredItemRow, DocumentTable, CollapsibleSection,
   SaveStateIndicator,
 } from '@/components/study/document';
+import { StructuredItemRows } from '@/components/study/document/StructuredItemRows';
+import { ApprovalSection } from '@/components/study/document/ApprovalSection';
+import { ReviewRail } from '@/components/study/document/ReviewRail';
 import docStyles from '@/components/study/document/document.module.css';
 import styles from './BriefDocument.module.css';
 
 interface Objective { id: string; objective: string }
 interface Question { id: string; question: string; priority?: string | null }
 interface Barrier { id: string; barrier: string; source?: string | null }
+interface ParticipantSegment {
+  segment: string;
+  count: number | string;
+  rationale: string;
+  [key: string]: string | number | null;
+}
+interface DiscoverySource {
+  prefix: string;
+  source: string;
+  type: string;
+  findings: string;
+  [key: string]: string | number | null;
+}
 
 function safeParse<T>(raw: string | null): T[] {
   if (!raw) return [];
@@ -158,6 +174,7 @@ export function BriefDocument() {
   const [showChangesForm, setShowChangesForm] = useState(false);
   const [changeFeedback, setChangeFeedback] = useState('');
   const [changesSubmitted, setChangesSubmitted] = useState(false);
+  const [showRailOverlay, setShowRailOverlay] = useState(false);
   const [checklist, setChecklist] = useState({
     scope: false, timeline: false, participants: false, budget: false,
   });
@@ -218,19 +235,64 @@ export function BriefDocument() {
     || safeParse<Question>(brief.cascade_fields.research_questions);
   const barriers: Barrier[] = (brief as any).structured_fields?.target_barriers
     || safeParse<Barrier>(brief.cascade_fields.target_barriers);
+  const participantSegments: ParticipantSegment[] = (brief as any).structured_fields?.participant_segments
+    || safeParse<ParticipantSegment>((brief as any).cascade_fields?.participant_segments);
+  const discoverySources: DiscoverySource[] = (brief as any).structured_fields?.discovery_sources
+    || safeParse<DiscoverySource>((brief as any).cascade_fields?.discovery_sources);
+
+  // Artifact metadata for Document information section
+  const artifactMetadata = (brief as any).artifact_metadata || {};
+  const recruitmentSources = (brief as any).cascade_fields?.recruitment_sources || null;
 
   // Prose sections from artifact_sections (if available)
   const prose = (brief as any).prose_sections || {};
   const meta = (brief as any).study_metadata || {};
 
-  // Quick facts
+  // Parse timeline phases from cascade (structured data)
+  let timelinePhases: Array<{ phase: string; dates: string; duration?: string }> = [];
+  if (brief.cascade_fields.timeline_phases) {
+    try { timelinePhases = JSON.parse(brief.cascade_fields.timeline_phases); } catch { /* ignore */ }
+  }
+
+  // Derive timeline duration and date range from timeline_phases
+  let timelineDuration = '';
+  let timelineDateRange = '';
+  if (timelinePhases.length > 0) {
+    // Get first phase start and last phase end from the dates field
+    const firstPhase = timelinePhases[0];
+    const lastPhase = timelinePhases[timelinePhases.length - 1];
+    // Dates are typically formatted as "Sep 14 – Sep 25, 2026"
+    const firstDates = firstPhase.dates?.split('–').map(s => s.trim()) || [];
+    const lastDates = lastPhase.dates?.split('–').map(s => s.trim()) || [];
+    const startDate = firstDates[0] || '';
+    const endDate = lastDates[1] || lastDates[0] || '';
+    // Calculate total duration from individual phase durations if available
+    const totalWeeks = timelinePhases.reduce((sum, p) => {
+      const match = p.duration?.match(/(\d+)\s*week/i);
+      return sum + (match ? parseInt(match[1], 10) : 0);
+    }, 0);
+    timelineDuration = totalWeeks > 0 ? `${totalWeeks} weeks` : '';
+    timelineDateRange = startDate && endDate ? `${startDate} – ${endDate}` : '';
+  }
+
+  // Quick facts — matches design: Method, Participants, Timeline, Decision deadline, Budget
   const methodology = brief.cascade_fields.methodology_selection?.replace(/_/g, ' ') || null;
+  const sessionFormat = brief.cascade_fields.session_format || null;
+  const sessionDuration = brief.cascade_fields.session_duration || null;
+  const methodSub = [sessionFormat, sessionDuration].filter(Boolean).join(' · ') || undefined;
+  const decisionDeadline = brief.cascade_fields.decision_deadline || null;
+
   const facts = [
-    methodology ? { label: 'Method', value: methodology } : null,
+    methodology ? { label: 'Method', value: methodology, sub: methodSub } : null,
     brief.cascade_fields.participant_approach ? { label: 'Participants', value: brief.cascade_fields.participant_approach } : null,
-    brief.cascade_fields.start_date ? { label: 'Start date', value: brief.cascade_fields.start_date } : null,
+    (timelineDuration || timelineDateRange) ? {
+      label: 'Timeline',
+      value: timelineDuration || 'See timeline',
+      sub: timelineDateRange || undefined,
+    } : null,
+    decisionDeadline ? { label: 'Decision deadline', value: decisionDeadline } : null,
     brief.cascade_fields.budget ? { label: 'Budget', value: brief.cascade_fields.budget } : null,
-  ].filter(Boolean) as { label: string; value: string }[];
+  ].filter(Boolean) as { label: string; value: string; sub?: string }[];
 
   // Risks from prose_sections or cascade
   let risks: Array<{ risk: string; source: string; mitigation: string }> = [];
@@ -286,6 +348,15 @@ export function BriefDocument() {
               )}
               {isChangesRequested && (
                 <Button onClick={handleEdit}>Revise</Button>
+              )}
+              {(isPendingApproval || isApproved || isChangesRequested) && (
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowRailOverlay(true)}
+                  className={docStyles.railToggle}
+                >
+                  Review
+                </Button>
               )}
             </>
           ) : (
@@ -372,6 +443,7 @@ export function BriefDocument() {
           <Masthead
             studyName={brief.study.name}
             researcherName={meta.researcher_name}
+            requestedBy={meta.requestor_name}
             date={meta.created_at || brief.study.created_at}
           />
 
@@ -386,31 +458,37 @@ export function BriefDocument() {
           </DocumentSection>
 
           {/* Problem + Barriers (generated + canonical) */}
-          <DocumentSection sectionId="problem" title="Problem" provenance="generated" editable>
+          <DocumentSection sectionId="problem" title="Problem" provenance="generated+canonical" editable>
             {prose.problem_narrative && (
               <MarkdownDisplay markdown={prose.problem_narrative} className={docStyles.blockProse} />
             )}
             {barriers.length > 0 && (
               <>
                 <h3 className={docStyles.secSubheading}>Target barriers for validation</h3>
-                {barriers.map((b) => (
-                  <StructuredItemRow key={b.id} id={b.id} text={b.barrier} source={b.source} />
-                ))}
+                <StructuredItemRows>
+                  {barriers.map((b) => (
+                    <StructuredItemRow key={b.id} id={b.id} text={b.barrier} source={b.source} />
+                  ))}
+                </StructuredItemRows>
               </>
             )}
           </DocumentSection>
 
           {/* Objectives + Questions (canonical) */}
           <DocumentSection sectionId="objectives" title="What we'll learn" provenance="canonical" editable>
-            {objectives.map((o) => (
-              <StructuredItemRow key={o.id} id={o.id} text={o.objective} />
-            ))}
+            <StructuredItemRows>
+              {objectives.map((o) => (
+                <StructuredItemRow key={o.id} id={o.id} text={o.objective} />
+              ))}
+            </StructuredItemRows>
             {questions.length > 0 && (
               <>
                 <h3 className={docStyles.secSubheading}>Research questions</h3>
-                {questions.map((q) => (
-                  <StructuredItemRow key={q.id} id={q.id} text={q.question} priority={q.priority} />
-                ))}
+                <StructuredItemRows>
+                  {questions.map((q) => (
+                    <StructuredItemRow key={q.id} id={q.id} text={q.question} priority={q.priority} />
+                  ))}
+                </StructuredItemRows>
               </>
             )}
           </DocumentSection>
@@ -419,7 +497,10 @@ export function BriefDocument() {
           <DocumentSection sectionId="method" title="Method" provenance="generated" editable>
             {methodology && (
               <div className={docStyles.systemBlock}>
-                <p><strong>Approach</strong> &mdash; {methodology}</p>
+                <span className={docStyles.systemLabel}>READ-ONLY · SYSTEM</span>
+                <p className={docStyles.kvParagraph}>
+                  <b>Approach</b> — {methodology}
+                </p>
               </div>
             )}
             {prose.method_prose && (
@@ -428,12 +509,31 @@ export function BriefDocument() {
           </DocumentSection>
 
           {/* Participants (generated + canonical) */}
-          <DocumentSection sectionId="participants" title="Participants" provenance="generated" editable>
+          <DocumentSection sectionId="participants" title="Participants" provenance="generated+canonical" editable>
+            {/* Participant segments table (if available) */}
+            {participantSegments.length > 0 && (
+              <DocumentTable
+                columns={[
+                  { key: 'segment', label: 'Segment' },
+                  { key: 'count', label: 'Count' },
+                  { key: 'rationale', label: 'Rationale' },
+                ]}
+                rows={participantSegments}
+              />
+            )}
             {prose.participants_prose && (
               <MarkdownDisplay markdown={prose.participants_prose} className={docStyles.blockProse} />
             )}
             {!prose.participants_prose && brief.cascade_fields.participant_approach && (
               <p className={docStyles.block}>{brief.cascade_fields.participant_approach}</p>
+            )}
+            {/* Recruitment subsection */}
+            {recruitmentSources && (
+              <div className={docStyles.editableBlock}>
+                <p className={docStyles.kvParagraph}>
+                  <b>Recruitment</b> — {recruitmentSources}
+                </p>
+              </div>
             )}
           </DocumentSection>
 
@@ -461,24 +561,38 @@ export function BriefDocument() {
           )}
 
           {/* Timeline (system) */}
-          {brief.cascade_fields.start_date && (
+          {(timelinePhases.length > 0 || brief.cascade_fields.start_date) && (
             <DocumentSection sectionId="timeline" title="Timeline" provenance="system" editable={false}>
               <div className={docStyles.systemBlock}>
                 <span className={docStyles.systemLabel}>System</span>
-                <p><strong>Start date:</strong> {brief.cascade_fields.start_date}</p>
+                {/* Phase table from timeline_phases */}
+                {timelinePhases.length > 0 ? (
+                  <>
+                    <DocumentTable
+                      columns={[
+                        { key: 'phase', label: 'Phase' },
+                        { key: 'dates', label: 'Dates' },
+                      ]}
+                      rows={timelinePhases}
+                    />
+                    {decisionDeadline && (
+                      <p style={{ marginTop: 'var(--space-3)' }}>
+                        <strong>Hard deadline</strong> &mdash; {decisionDeadline}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p><strong>Start date:</strong> {brief.cascade_fields.start_date}</p>
+                )}
               </div>
             </DocumentSection>
           )}
 
-          {/* Approval (system) */}
-          {prose.approval_items && (
-            <DocumentSection sectionId="approval" title="Approval" provenance="system" editable={false}>
-              <div className={docStyles.systemBlock}>
-                <span className={docStyles.systemLabel}>System</span>
-                <MarkdownDisplay markdown={prose.approval_items} className={docStyles.blockProse} />
-              </div>
-            </DocumentSection>
-          )}
+          {/* Approval (system) — always rendered */}
+          <ApprovalSection
+            budget={brief.cascade_fields.budget}
+            isApproved={isApproved}
+          />
 
           {/* Validity checklist (collapsed) */}
           <CollapsibleSection title="Validity checklist">
@@ -497,7 +611,9 @@ export function BriefDocument() {
 
           {/* Research provenance (collapsed) */}
           <CollapsibleSection title="Research provenance">
-            <p>This brief establishes the research scope for downstream templates.</p>
+            <p style={{ fontSize: 'var(--text-secondary-size)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-3)' }}>
+              This brief establishes the research scope for downstream templates.
+            </p>
             <DocumentTable
               columns={[{ key: 'commitment', label: 'Commitment' }, { key: 'count', label: 'Count' }]}
               rows={[
@@ -508,6 +624,23 @@ export function BriefDocument() {
                 { commitment: 'Budget', count: brief.cascade_fields.budget || 'N/A' },
               ]}
             />
+            {discoverySources.length > 0 && (
+              <>
+                <p style={{ fontSize: 'var(--text-secondary-size)', color: 'var(--color-text-muted)', marginTop: 'var(--space-3)' }}>
+                  <strong>Discovery sources</strong> — synthesized from {discoverySources.length} source{discoverySources.length !== 1 ? 's' : ''}.
+                  Citation markers numbered per-section; prefix indicates source type.
+                </p>
+                <DocumentTable
+                  columns={[
+                    { key: 'prefix', label: 'Prefix' },
+                    { key: 'source', label: 'Source' },
+                    { key: 'type', label: 'Type' },
+                    { key: 'findings', label: 'Findings used' },
+                  ]}
+                  rows={discoverySources}
+                />
+              </>
+            )}
           </CollapsibleSection>
 
           {/* Document information (collapsed) */}
@@ -515,13 +648,33 @@ export function BriefDocument() {
             <DocumentTable
               columns={[{ key: 'field', label: '' }, { key: 'value', label: '' }]}
               rows={[
+                {
+                  field: 'Generated',
+                  value: artifactMetadata.created_at
+                    ? new Date(artifactMetadata.created_at).toLocaleString('en-US', {
+                        month: 'long', day: 'numeric', year: 'numeric',
+                        hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+                      })
+                    : brief.study.created_at
+                      ? new Date(brief.study.created_at).toLocaleString()
+                      : 'N/A',
+                },
+                { field: 'Model', value: 'claude-sonnet-4-6' },
+                {
+                  field: 'Template',
+                  value: artifactMetadata.template_id && artifactMetadata.template_version
+                    ? `${artifactMetadata.template_id} v${artifactMetadata.template_version}`
+                    : 'research_brief',
+                },
                 { field: 'Study', value: brief.study.name },
-                { field: 'Status', value: brief.brief_status || 'draft' },
-                { field: 'Created', value: brief.study.created_at ? new Date(brief.study.created_at).toLocaleDateString() : '' },
+                {
+                  field: 'GitHub path',
+                  value: artifactMetadata.path || meta.study_path || 'N/A',
+                },
               ]}
             />
-            <p style={{ fontSize: 'var(--text-caption-size)', color: 'var(--color-text-muted)', marginTop: 'var(--space-3)' }}>
-              Generated by Qori. The Workspace is the editing surface; GitHub holds the durable rendered projection.
+            <p style={{ fontSize: 'var(--text-secondary-size)', color: 'var(--color-text-muted)', marginTop: 'var(--space-3)' }}>
+              Generated by Qori. The Workspace is the editing surface; GitHub holds the durable rendered projection of the same canonical state.
             </p>
           </CollapsibleSection>
           </>
@@ -529,74 +682,97 @@ export function BriefDocument() {
         </div>
 
         {/* Review rail (Brief only) — right side, hidden during editing */}
-        {!isEditing && (isPendingApproval || isApproved) && (
-          <aside className={styles.reviewRail} aria-label="Review">
-            {isPendingApproval && (
-              <div className={styles.railCard}>
-                <div className={styles.railCardHeader}>Review &middot; approval gate</div>
-                <div className={styles.railCardBody}>
-                  {!showChangesForm ? (
-                    <>
-                      <div className={styles.checklistGroup}>
-                        {Object.entries(checklist).map(([key, checked]) => (
-                          <label key={key} className={styles.checkItem}>
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={(e) => setChecklist((prev) => ({ ...prev, [key]: e.target.checked }))}
-                            />
-                            <span>
-                              {key === 'scope' && 'Scope and method are appropriate'}
-                              {key === 'timeline' && 'Timeline and deadline are feasible'}
-                              {key === 'participants' && 'Participant approach is sound'}
-                              {key === 'budget' && 'Budget is reasonable'}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                      <div className={styles.railActions}>
-                        <Button onClick={handleApprove} disabled={!allChecked} loading={approveBrief.isPending}>
-                          Approve brief
-                        </Button>
-                        <Button variant="secondary" onClick={() => setShowChangesForm(true)}>
-                          Request changes
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <Textarea
-                        label="What needs to change?"
-                        required
-                        value={changeFeedback}
-                        onChange={(e) => setChangeFeedback(e.target.value)}
-                      />
-                      <div className={styles.railActions}>
-                        <Button onClick={handleRequestChanges} variant="danger" disabled={!changeFeedback.trim()} loading={requestChanges.isPending}>
-                          Submit feedback
-                        </Button>
-                        <Button variant="ghost" onClick={() => setShowChangesForm(false)}>Cancel</Button>
-                      </div>
-                    </>
-                  )}
+        {!isEditing && (isPendingApproval || isApproved || isChangesRequested) && (
+          <>
+            {/* Desktop rail (always visible on wide screens) */}
+            <aside className={styles.reviewRail} aria-label="Review">
+              {isPendingApproval && (
+                <div className={styles.railCard}>
+                  <div className={styles.railCardHeader}>Review · approval gate</div>
+                  <div className={styles.railCardBody}>
+                    {!showChangesForm ? (
+                      <>
+                        <div className={styles.checklistGroup}>
+                          {Object.entries(checklist).map(([key, checked]) => (
+                            <label key={key} className={styles.checkItem}>
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={(e) => setChecklist((prev) => ({ ...prev, [key]: e.target.checked }))}
+                              />
+                              <span>
+                                {key === 'scope' && 'Scope and method are appropriate'}
+                                {key === 'timeline' && 'Timeline and deadline are feasible'}
+                                {key === 'participants' && 'Participant approach is sound'}
+                                {key === 'budget' && 'Budget is reasonable'}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                        <div className={styles.railActions}>
+                          <Button onClick={handleApprove} disabled={!allChecked} loading={approveBrief.isPending}>
+                            Approve brief
+                          </Button>
+                          <Button variant="secondary" onClick={() => setShowChangesForm(true)}>
+                            Request changes
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <Textarea
+                          label="What needs to change?"
+                          required
+                          value={changeFeedback}
+                          onChange={(e) => setChangeFeedback(e.target.value)}
+                        />
+                        <div className={styles.railActions}>
+                          <Button onClick={handleRequestChanges} variant="danger" disabled={!changeFeedback.trim()} loading={requestChanges.isPending}>
+                            Submit feedback
+                          </Button>
+                          <Button variant="ghost" onClick={() => setShowChangesForm(false)}>Cancel</Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
+              {(isApproved || isChangesRequested) && (
+                <ReviewRail
+                  briefStatus={brief.brief_status}
+                  reviewerName={brief.brief_reviewer_display_name}
+                  approvedAt={brief.brief_approved_at}
+                  changeFeedback={brief.brief_change_feedback}
+                />
+              )}
+              <p className={docStyles.reviewRailNote}>
+                Feedback anchors to sections today. Future: comment threads attach to structured IDs (OBJ / RQ / TB) and render here; ID tags in the document open their provenance in this rail.
+              </p>
+            </aside>
+
+            {/* Mobile overlay rail */}
+            {showRailOverlay && (
+              <div
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  background: 'rgba(0,0,0,0.3)',
+                  zIndex: 39,
+                }}
+                onClick={() => setShowRailOverlay(false)}
+              />
             )}
-            {isApproved && (
-              <div className={styles.railCard}>
-                <div className={styles.railCardHeader}>Review &middot; approval gate</div>
-                <div className={styles.railCardBody}>
-                  <p style={{ color: 'var(--color-success)', fontWeight: 600 }}>
-                    Approved
-                    {brief.brief_approved_at && ` &middot; ${new Date(brief.brief_approved_at).toLocaleDateString()}`}
-                  </p>
-                  <p style={{ fontSize: 'var(--text-secondary-size)', color: 'var(--color-text-muted)' }}>
-                    The brief is the citation source for downstream artifacts.
-                  </p>
-                </div>
-              </div>
+            {showRailOverlay && (
+              <ReviewRail
+                briefStatus={brief.brief_status}
+                reviewerName={brief.brief_reviewer_display_name}
+                approvedAt={brief.brief_approved_at}
+                changeFeedback={brief.brief_change_feedback}
+                isOverlay
+                onClose={() => setShowRailOverlay(false)}
+              />
             )}
-          </aside>
+          </>
         )}
       </div>
     </div>
