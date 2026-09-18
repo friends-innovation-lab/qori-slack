@@ -61,6 +61,24 @@ function safeParse<T>(raw: string | null): T[] {
 }
 
 /**
+ * Strip leading "Approach" line from method prose if present.
+ * The Approach is rendered as a system block; we don't want it duplicated in the editable prose.
+ */
+function stripLeadingApproach(prose: string): string {
+  // Match lines like "**Approach** — ...", "Approach — ...", or HTML <p><b>Approach</b> — ...</p>
+  const patterns = [
+    /^\s*\*\*Approach\*\*\s*[—–-]\s*[^\n]*\n*/i,
+    /^\s*Approach\s*[—–-]\s*[^\n]*\n*/i,
+    /^\s*<p>\s*<b>Approach<\/b>\s*[—–-][^<]*<\/p>\s*/i,
+  ];
+  let result = prose;
+  for (const pattern of patterns) {
+    result = result.replace(pattern, '');
+  }
+  return result.trim();
+}
+
+/**
  * Build TipTap editor document from Brief API data.
  *
  * Architecture:
@@ -77,7 +95,6 @@ function safeParse<T>(raw: string | null): T[] {
  */
 function buildBriefEditorContent(
   prose: Record<string, string | null>,
-  methodology: string | null,
 ): JSONContent {
   const sections: Array<{
     sectionId: string;
@@ -108,14 +125,12 @@ function buildBriefEditorContent(
   }
 
   // Method — editable generated prose (section_key: 'method_prose')
+  // Note: The system Approach block is rendered separately in view mode.
+  // Do NOT prepend methodology here — that caused duplication.
   if (prose.method_prose) {
-    // Prepend methodology as context if available
-    const methodMarkdown = methodology
-      ? `**Approach** — ${methodology}\n\n${prose.method_prose}`
-      : prose.method_prose;
     sections.push({
       sectionId: 'method_prose',
-      markdown: methodMarkdown,
+      markdown: prose.method_prose,
       provenance: 'generated',
       title: 'Method',
     });
@@ -174,6 +189,7 @@ export function BriefDocument() {
   const [showChangesForm, setShowChangesForm] = useState(false);
   const [changeFeedback, setChangeFeedback] = useState('');
   const [changesSubmitted, setChangesSubmitted] = useState(false);
+  const [showReviewRail, setShowReviewRail] = useState(false);
   const [showRailOverlay, setShowRailOverlay] = useState(false);
   const [checklist, setChecklist] = useState({
     scope: false, timeline: false, participants: false, budget: false,
@@ -282,9 +298,18 @@ export function BriefDocument() {
   const methodSub = [sessionFormat, sessionDuration].filter(Boolean).join(' · ') || undefined;
   const decisionDeadline = brief.cascade_fields.decision_deadline || null;
 
+  // Derive concise participant summary from segments (reference: "8 residents" / "3 segments")
+  // Never use participants_prose in Quick Facts
+  const participantCount = participantSegments.reduce((sum, s) => {
+    const n = typeof s.count === 'number' ? s.count : parseInt(String(s.count), 10);
+    return sum + (isNaN(n) ? 0 : n);
+  }, 0);
+  const participantFactValue = participantCount > 0 ? `${participantCount} participants` : null;
+  const participantFactSub = participantSegments.length > 0 ? `${participantSegments.length} segment${participantSegments.length !== 1 ? 's' : ''}` : undefined;
+
   const facts = [
     methodology ? { label: 'Method', value: methodology, sub: methodSub } : null,
-    brief.cascade_fields.participant_approach ? { label: 'Participants', value: brief.cascade_fields.participant_approach } : null,
+    participantFactValue ? { label: 'Participants', value: participantFactValue, sub: participantFactSub } : null,
     (timelineDuration || timelineDateRange) ? {
       label: 'Timeline',
       value: timelineDuration || 'See timeline',
@@ -352,10 +377,16 @@ export function BriefDocument() {
               {(isPendingApproval || isApproved || isChangesRequested) && (
                 <Button
                   variant="secondary"
-                  onClick={() => setShowRailOverlay(true)}
-                  className={docStyles.railToggle}
+                  onClick={() => {
+                    // On mobile (< 1240px), use overlay; on desktop, toggle inline rail
+                    if (window.innerWidth < 1240) {
+                      setShowRailOverlay(true);
+                    } else {
+                      setShowReviewRail((prev) => !prev);
+                    }
+                  }}
                 >
-                  Review
+                  {showReviewRail ? 'Close review' : 'Review'}
                 </Button>
               )}
             </>
@@ -430,7 +461,7 @@ export function BriefDocument() {
           {/* Edit mode: TipTap editor */}
           {isEditing && (
             <ArtifactEditor
-              initialContent={buildBriefEditorContent(prose, methodology)}
+              initialContent={buildBriefEditorContent(prose)}
               onDirtyChange={setIsDirty}
               editorRef={editorRef}
             />
@@ -504,7 +535,7 @@ export function BriefDocument() {
               </div>
             )}
             {prose.method_prose && (
-              <MarkdownDisplay markdown={prose.method_prose} className={docStyles.blockProse} />
+              <MarkdownDisplay markdown={stripLeadingApproach(prose.method_prose)} className={docStyles.blockProse} />
             )}
           </DocumentSection>
 
@@ -514,9 +545,9 @@ export function BriefDocument() {
             {participantSegments.length > 0 && (
               <DocumentTable
                 columns={[
-                  { key: 'segment', label: 'Segment' },
-                  { key: 'count', label: 'Count' },
-                  { key: 'rationale', label: 'Rationale' },
+                  { key: 'segment', label: 'Segment', width: '28%' },
+                  { key: 'count', label: 'Count', width: '10%', align: 'center' },
+                  { key: 'rationale', label: 'Rationale', width: '62%' },
                 ]}
                 rows={participantSegments}
               />
@@ -681,14 +712,24 @@ export function BriefDocument() {
           )}
         </div>
 
-        {/* Review rail (Brief only) — right side, hidden during editing */}
+        {/* Review rail (Brief only) — right side, hidden during editing, closed by default */}
         {!isEditing && (isPendingApproval || isApproved || isChangesRequested) && (
           <>
-            {/* Desktop rail (always visible on wide screens) */}
+            {/* Desktop rail (opened via Review button, closed by default) */}
+            {showReviewRail && (
             <aside className={styles.reviewRail} aria-label="Review">
               {isPendingApproval && (
                 <div className={styles.railCard}>
-                  <div className={styles.railCardHeader}>Review · approval gate</div>
+                  <div className={styles.railCardHeader}>
+                    Review · approval gate
+                    <button
+                      className={docStyles.railCloseButton}
+                      style={{ display: 'inline-block' }}
+                      onClick={() => setShowReviewRail(false)}
+                    >
+                      Close ✕
+                    </button>
+                  </div>
                   <div className={styles.railCardBody}>
                     {!showChangesForm ? (
                       <>
@@ -743,12 +784,14 @@ export function BriefDocument() {
                   reviewerName={brief.brief_reviewer_display_name}
                   approvedAt={brief.brief_approved_at}
                   changeFeedback={brief.brief_change_feedback}
+                  onClose={() => setShowReviewRail(false)}
                 />
               )}
               <p className={docStyles.reviewRailNote}>
                 Feedback anchors to sections today. Future: comment threads attach to structured IDs (OBJ / RQ / TB) and render here; ID tags in the document open their provenance in this rail.
               </p>
             </aside>
+            )}
 
             {/* Mobile overlay rail */}
             {showRailOverlay && (

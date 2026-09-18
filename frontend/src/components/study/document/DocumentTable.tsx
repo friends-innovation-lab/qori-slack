@@ -8,6 +8,7 @@ interface Column {
   key: string;
   label: string;
   align?: 'left' | 'center' | 'right';
+  width?: string;  // e.g., '80px', '30%'
 }
 
 interface DocumentTableProps {
@@ -22,7 +23,7 @@ export function DocumentTable({ columns, rows }: DocumentTableProps) {
       <thead>
         <tr>
           {columns.map((col) => (
-            <th key={col.key} style={{ textAlign: col.align || 'left' }}>
+            <th key={col.key} style={{ textAlign: col.align || 'left', width: col.width }}>
               {col.label}
             </th>
           ))}
@@ -32,7 +33,7 @@ export function DocumentTable({ columns, rows }: DocumentTableProps) {
         {rows.map((row, i) => (
           <tr key={i}>
             {columns.map((col) => (
-              <td key={col.key} style={{ textAlign: col.align || 'left' }}>
+              <td key={col.key} style={{ textAlign: col.align || 'left', width: col.width }}>
                 {row[col.key] ?? ''}
               </td>
             ))}

@@ -138,4 +138,106 @@ describe('BriefDocument', () => {
     renderWithProviders(<BriefDocument />);
     expect(screen.getByText(/Could not load brief/)).toBeInTheDocument();
   });
+
+  // ─── Visual Parity Regression Tests ───────────────────────────────────────
+
+  describe('visual parity (design reference)', () => {
+    it('review rail is closed by default — no rail content visible until Review clicked', () => {
+      mockBrief.mockReturnValue({
+        data: makeBrief({ brief_status: 'approved' }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+      // Review button should be present
+      expect(screen.getByRole('button', { name: 'Review' })).toBeInTheDocument();
+      // Rail content should NOT be visible (rail is closed by default)
+      const railLabels = screen.queryAllByLabelText('Review');
+      // The aside with aria-label="Review" should not exist when rail is closed
+      expect(railLabels.filter(el => el.tagName === 'ASIDE').length).toBe(0);
+    });
+
+    it('participants Quick Fact shows concise count/segments, never full prose', () => {
+      mockBrief.mockReturnValue({
+        data: makeBrief({
+          cascade_fields: {
+            ...makeBrief().cascade_fields,
+            participant_approach: 'This is a long prose description',
+          },
+          structured_fields: {
+            ...makeBrief().structured_fields,
+            participant_segments: [
+              { segment: 'Active users', count: 4, rationale: 'Main group' },
+              { segment: 'First-time users', count: 2, rationale: 'New users' },
+              { segment: 'Power users', count: 2, rationale: 'Expert group' },
+            ],
+          },
+        }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+      // Should show concise participant count in Quick Facts
+      expect(screen.getByText('8 participants')).toBeInTheDocument();
+      expect(screen.getByText('3 segments')).toBeInTheDocument();
+      // Quick Facts Participants label should exist
+      const participantsLabels = screen.getAllByText('Participants');
+      expect(participantsLabels.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('method Approach appears exactly once — no duplication', () => {
+      mockBrief.mockReturnValue({
+        data: makeBrief({
+          cascade_fields: { ...makeBrief().cascade_fields, methodology_selection: 'usability_testing' },
+          prose_sections: { ...makeBrief().prose_sections, method_prose: 'Sessions combine think-aloud protocols...' },
+        }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+      // The "Approach" label (as a bold term) should appear exactly once in the Method system block
+      // It should NOT appear in the method_prose editable content
+      const approachLabels = screen.getAllByText('Approach');
+      expect(approachLabels.length).toBe(1);
+      // Verify the method prose is rendered (without duplication)
+      expect(screen.getByText(/think-aloud protocols/)).toBeInTheDocument();
+    });
+
+    it('renders all five Quick Facts when data exists', () => {
+      mockBrief.mockReturnValue({
+        data: makeBrief({
+          cascade_fields: {
+            ...makeBrief().cascade_fields,
+            methodology_selection: 'usability_testing',
+            session_format: 'Remote',
+            session_duration: '60 minutes',
+            decision_deadline: 'Nov 2, 2026',
+            budget: '$800',
+            timeline_phases: JSON.stringify([
+              { phase: 'Planning', dates: 'Sep 14 – Sep 25, 2026', duration: '2 weeks' },
+              { phase: 'Fieldwork', dates: 'Sep 28 – Oct 9, 2026', duration: '2 weeks' },
+            ]),
+          },
+          structured_fields: {
+            ...makeBrief().structured_fields,
+            participant_segments: [
+              { segment: 'Active users', count: 4, rationale: 'Main group' },
+              { segment: 'First-time users', count: 4, rationale: 'New users' },
+            ],
+          },
+        }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+      // All five Quick Fact labels should be present (use getAllByText since labels may appear in headings too)
+      const methodLabels = screen.getAllByText('Method');
+      const participantsLabels = screen.getAllByText('Participants');
+      const timelineLabels = screen.getAllByText('Timeline');
+      const deadlineLabels = screen.getAllByText('Decision deadline');
+      const budgetLabels = screen.getAllByText('Budget');
+      // Each Quick Fact label should appear at least once
+      expect(methodLabels.length).toBeGreaterThanOrEqual(1);
+      expect(participantsLabels.length).toBeGreaterThanOrEqual(1);
+      expect(timelineLabels.length).toBeGreaterThanOrEqual(1);
+      expect(deadlineLabels.length).toBeGreaterThanOrEqual(1);
+      expect(budgetLabels.length).toBeGreaterThanOrEqual(1);
+    });
+  });
 });

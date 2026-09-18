@@ -570,11 +570,6 @@
   background: none;
   border: 0;
   cursor: pointer;
-  display: none;
-}
-
-.reviewRail.overlay .railCloseButton {
-  display: inline-block;
 }
 
 /* Rail toggle button (shown on smaller screens) */

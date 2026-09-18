@@ -39,8 +39,12 @@ export function ReviewRail({
       <div className={styles.reviewCard}>
         <div className={styles.reviewCardHeader}>
           Review · approval gate
-          {isOverlay && (
-            <button className={styles.railCloseButton} onClick={onClose}>
+          {onClose && (
+            <button
+              className={styles.railCloseButton}
+              style={{ display: 'inline-block' }}
+              onClick={onClose}
+            >
               Close ✕
             </button>
           )}
