@@ -6,10 +6,12 @@ import type { ReactNode } from 'react';
 import { ProvenanceTag } from './ProvenanceTag';
 import styles from './document.module.css';
 
+type Provenance = 'canonical' | 'generated' | 'system' | 'inherited' | 'generated+canonical';
+
 interface DocumentSectionProps {
   sectionId: string;
   title: string;
-  provenance?: 'canonical' | 'generated' | 'system' | 'inherited';
+  provenance?: Provenance;
   editable?: boolean;
   children: ReactNode;
 }

@@ -58,7 +58,7 @@ describe('PlanDocument', () => {
   it('marks inherited sections as read-only', () => {
     mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
     renderWithProviders(<PlanDocument />);
-    const inheritedTags = screen.getAllByText(/Inherited/);
+    const inheritedTags = screen.getAllByText(/INHERITED/i);
     expect(inheritedTags.length).toBeGreaterThanOrEqual(1);
   });
 

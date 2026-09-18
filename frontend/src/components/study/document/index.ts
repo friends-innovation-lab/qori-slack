@@ -1,3 +1,4 @@
+export { ApprovalSection } from './ApprovalSection';
 export { ArtifactTabs } from './ArtifactTabs';
 export { CollapsibleSection } from './CollapsibleSection';
 export { DocumentSection } from './DocumentSection';
@@ -6,5 +7,7 @@ export { FactsGrid } from './FactsGrid';
 export { IdTag } from './IdTag';
 export { Masthead } from './Masthead';
 export { ProvenanceTag } from './ProvenanceTag';
+export { ReviewRail } from './ReviewRail';
 export { SaveStateIndicator } from './SaveStateIndicator';
 export { StructuredItemRow } from './StructuredItemRow';
+export { StructuredItemRows } from './StructuredItemRows';
