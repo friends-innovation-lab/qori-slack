@@ -335,7 +335,7 @@ export async function getStudyPlan(ctx: ApplicationContext, studyPublicId: strin
   const inheritedKeys = [
     'research_objectives', 'research_questions', 'target_barriers',
     'methodology_selection', 'timeline_phases', 'participant_approach',
-    'compensation', 'deliverables',
+    'session_format', 'session_duration', 'compensation', 'deliverables',
   ];
   const inherited: Record<string, string | null> = {};
   for (const k of inheritedKeys) inherited[k] = null;

@@ -115,9 +115,17 @@ export interface StudyBriefResource {
     target_barriers: string | null;
     methodology_selection: string | null;
     timeline_preference: string | null;
+    timeline_phases: string | null;
     start_date: string | null;
+    decision_deadline: string | null;
     participant_approach: string | null;
+    participant_segments: string | null;
+    recruitment_sources: string | null;
+    session_format: string | null;
+    session_duration: string | null;
     budget: string | null;
+    requestor_name: string | null;
+    discovery_sources: string | null;
   };
 }
 
@@ -132,6 +140,8 @@ export interface StudyPlanResource {
     methodology_selection: string | null;
     timeline_phases: string | null;
     participant_approach: string | null;
+    session_format: string | null;
+    session_duration: string | null;
     compensation: string | null;
     deliverables: string | null;
   };

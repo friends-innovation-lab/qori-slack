@@ -40,6 +40,8 @@ function makePlan(overrides: Partial<StudyPlanResource> = {}): StudyPlanResource
       methodology_selection: 'usability_testing',
       timeline_phases: '4 weeks',
       participant_approach: '8 Veterans',
+      session_format: null,
+      session_duration: null,
       compensation: '$50 per session',
       deliverables: null,
     },

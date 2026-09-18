@@ -44,8 +44,10 @@ function makeBrief(overrides: any = {}) {
     artifact_version: 1,
     cascade_fields: {
       research_objectives: null, research_questions: null, target_barriers: null,
-      methodology_selection: 'usability_testing', timeline_preference: null,
-      start_date: '2026-10-01', participant_approach: '8 Veterans', budget: '$800',
+      methodology_selection: 'usability_testing', timeline_preference: null, timeline_phases: null,
+      start_date: '2026-10-01', decision_deadline: null, participant_approach: '8 Veterans',
+      participant_segments: null, recruitment_sources: null, session_format: null,
+      session_duration: null, budget: '$800', requestor_name: null, discovery_sources: null,
     },
     structured_fields: {
       research_objectives: [{ id: 'OBJ-001', objective: 'Understand scheduling' }],

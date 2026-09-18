@@ -31,7 +31,8 @@ function makePlan(overrides: any = {}) {
       research_objectives: JSON.stringify([{ id: 'OBJ-001', objective: 'Test objective' }]),
       research_questions: JSON.stringify([{ id: 'RQ-001', question: 'Test question', priority: 'Primary' }]),
       target_barriers: null, methodology_selection: 'usability_testing',
-      timeline_phases: null, participant_approach: '8 Veterans', compensation: null, deliverables: null,
+      timeline_phases: null, participant_approach: '8 Veterans', session_format: null,
+      session_duration: null, compensation: null, deliverables: null,
     },
     structured_fields: {
       research_objectives: [{ id: 'OBJ-001', objective: 'Test objective' }],
