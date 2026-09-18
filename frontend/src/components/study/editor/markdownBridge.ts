@@ -25,7 +25,7 @@ import { TaskItem } from '@tiptap/extension-task-item';
 /**
  * Section provenance types from QoriSection extension.
  */
-type SectionProvenance = 'canonical' | 'generated' | 'system' | 'inherited';
+export type SectionProvenance = 'canonical' | 'generated' | 'system' | 'inherited';
 
 /**
  * Cached parsing editor instance.

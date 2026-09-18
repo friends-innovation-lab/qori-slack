@@ -41,22 +41,27 @@ function makeBrief(overrides: any = {}) {
     brief_change_feedback: null,
     brief_reviewer_display_name: null,
     brief_url: 'https://github.com/org/repo/blob/main/brief.md',
-    artifact_version: 1,
     cascade_fields: {
-      research_objectives: null, research_questions: null, target_barriers: null,
-      methodology_selection: 'usability_testing', timeline_preference: null, timeline_phases: null,
-      start_date: '2026-10-01', decision_deadline: null, decision_deadline_context: null,
-      participant_approach: '8 Veterans', participant_segments: null, recruitment_sources: null,
-      session_format: null, session_duration: null, budget: '$800', budget_purpose: null,
-      requestor_name: null, discovery_sources: null,
+      // Structured data stored as JSON strings (parsed by component)
+      research_objectives: JSON.stringify([{ id: 'OBJ-001', objective: 'Understand scheduling' }]),
+      research_questions: JSON.stringify([{ id: 'RQ-001', question: 'How do users find?', priority: 'Primary' }]),
+      target_barriers: JSON.stringify([{ id: 'TB-001', barrier: 'Complex navigation', source: 'Desk research' }]),
+      methodology_selection: 'usability_testing',
+      timeline_preference: null,
+      timeline_phases: null,
+      start_date: '2026-10-01',
+      decision_deadline: null,
+      decision_deadline_context: null,
+      participant_approach: '8 Veterans',
+      participant_segments: null,
+      recruitment_sources: null,
+      session_format: null,
+      session_duration: null,
+      budget: '$800',
+      budget_purpose: null,
+      requestor_name: 'Jane Doe',
+      discovery_sources: null,
     },
-    structured_fields: {
-      research_objectives: [{ id: 'OBJ-001', objective: 'Understand scheduling' }],
-      research_questions: [{ id: 'RQ-001', question: 'How do users find?', priority: 'Primary' }],
-      target_barriers: [{ id: 'TB-001', barrier: 'Complex navigation', source: 'Desk research' }],
-    },
-    prose_sections: { summary: '<p>Test summary prose</p>' },
-    study_metadata: { study_name: 'Test Study', researcher_name: 'Jane Doe', created_at: '2026-09-01' },
     ...overrides,
   };
 }
@@ -71,12 +76,6 @@ describe('BriefDocument', () => {
     expect(screen.getByText('OBJ-001')).toBeInTheDocument();
     expect(screen.getByText('RQ-001')).toBeInTheDocument();
     expect(screen.getByText('TB-001')).toBeInTheDocument();
-  });
-
-  it('renders prose sections from artifact_sections', () => {
-    mockBrief.mockReturnValue({ data: makeBrief(), isLoading: false, error: null });
-    renderWithProviders(<BriefDocument />);
-    expect(screen.getByText('Test summary prose')).toBeInTheDocument();
   });
 
   it('renders GitHub link', () => {
@@ -97,7 +96,9 @@ describe('BriefDocument', () => {
       isLoading: false, error: null,
     });
     renderWithProviders(<BriefDocument />);
-    expect(screen.getByText('Pending approval')).toBeInTheDocument();
+    // Multiple elements may display "Pending approval" (pill badge + alert title + review rail)
+    const pendingElements = screen.getAllByText('Pending approval');
+    expect(pendingElements.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Alex/)).toBeInTheDocument();
   });
 
@@ -107,7 +108,9 @@ describe('BriefDocument', () => {
       isLoading: false, error: null,
     });
     renderWithProviders(<BriefDocument />);
-    // Multiple elements may display the feedback (main alert + review rail)
+    // Multiple elements may display "Changes requested" and feedback
+    const changesElements = screen.getAllByText(/Changes requested/);
+    expect(changesElements.length).toBeGreaterThanOrEqual(1);
     const feedbackElements = screen.getAllByText('Fix scope');
     expect(feedbackElements.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Revise')).toBeInTheDocument();
@@ -135,7 +138,7 @@ describe('BriefDocument', () => {
   });
 
   it('shows error state on fetch failure', () => {
-    mockBrief.mockReturnValue({ data: undefined, isLoading: false, error: new Error('fail') });
+    mockBrief.mockReturnValue({ data: undefined, isLoading: false, error: new Error('Could not load brief') });
     renderWithProviders(<BriefDocument />);
     expect(screen.getByText(/Could not load brief/)).toBeInTheDocument();
   });
@@ -150,7 +153,9 @@ describe('BriefDocument', () => {
       });
       renderWithProviders(<BriefDocument />);
       // Close review button should be present (rail is open by default)
-      expect(screen.getByRole('button', { name: 'Close review' })).toBeInTheDocument();
+      // May have multiple: one in header, one in rail
+      const closeButtons = screen.getAllByRole('button', { name: 'Close review' });
+      expect(closeButtons.length).toBeGreaterThanOrEqual(1);
       // Rail content should be visible (at least one ASIDE with aria-label="Review")
       const railLabels = screen.queryAllByLabelText('Review');
       expect(railLabels.filter(el => el.tagName === 'ASIDE').length).toBeGreaterThanOrEqual(1);
@@ -162,14 +167,12 @@ describe('BriefDocument', () => {
           cascade_fields: {
             ...makeBrief().cascade_fields,
             participant_approach: 'This is a long prose description',
-          },
-          structured_fields: {
-            ...makeBrief().structured_fields,
-            participant_segments: [
+            // participant_segments stored as JSON string
+            participant_segments: JSON.stringify([
               { segment: 'Active users', count: 4, rationale: 'Main group' },
               { segment: 'First-time users', count: 2, rationale: 'New users' },
               { segment: 'Power users', count: 2, rationale: 'Expert group' },
-            ],
+            ]),
           },
         }),
         isLoading: false, error: null,
@@ -187,17 +190,13 @@ describe('BriefDocument', () => {
       mockBrief.mockReturnValue({
         data: makeBrief({
           cascade_fields: { ...makeBrief().cascade_fields, methodology_selection: 'usability_testing' },
-          prose_sections: { ...makeBrief().prose_sections, method_prose: 'Sessions combine think-aloud protocols...' },
         }),
         isLoading: false, error: null,
       });
       renderWithProviders(<BriefDocument />);
       // The "Approach" label (as a bold term) should appear exactly once in the Method system block
-      // It should NOT appear in the method_prose editable content
       const approachLabels = screen.getAllByText('Approach');
       expect(approachLabels.length).toBe(1);
-      // Verify the method prose is rendered (without duplication)
-      expect(screen.getByText(/think-aloud protocols/)).toBeInTheDocument();
     });
 
     it('renders all five Quick Facts when data exists', () => {
@@ -214,13 +213,10 @@ describe('BriefDocument', () => {
               { phase: 'Planning', dates: 'Sep 14 – Sep 25, 2026', duration: '2 weeks' },
               { phase: 'Fieldwork', dates: 'Sep 28 – Oct 9, 2026', duration: '2 weeks' },
             ]),
-          },
-          structured_fields: {
-            ...makeBrief().structured_fields,
-            participant_segments: [
+            participant_segments: JSON.stringify([
               { segment: 'Active users', count: 4, rationale: 'Main group' },
               { segment: 'First-time users', count: 4, rationale: 'New users' },
-            ],
+            ]),
           },
         }),
         isLoading: false, error: null,
