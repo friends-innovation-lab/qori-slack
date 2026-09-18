@@ -152,7 +152,7 @@ export function BriefDocument() {
     : null;
 
   return (
-    <div className="brief-doc">
+    <div className={`brief-doc${isEditing ? ' is-editing' : ''}`}>
       {/* Breadcrumbs */}
       <nav className="crumbs" aria-label="Breadcrumb" style={{ fontSize: '13.5px', color: '#565c65', marginBottom: '14px', display: 'flex', gap: '8px' }}>
         <Link to="/" style={{ color: '#005ea2' }}>Home</Link>
@@ -168,8 +168,8 @@ export function BriefDocument() {
           <h1 style={{ fontSize: '34px', fontWeight: 700, margin: 0, lineHeight: 1.15 }}>Research Brief</h1>
           <div style={{ marginTop: '8px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
             {isApproved && <span className="pill success">✓ Approved</span>}
-            {isPendingApproval && <span className="pill" style={{ color: '#6b5410', borderColor: '#c2a53a', background: '#faf3d1' }}>Pending approval</span>}
-            {isChangesRequested && <span className="pill" style={{ color: '#b50909', borderColor: '#b50909', background: '#f8eae7' }}>Changes requested</span>}
+            {isPendingApproval && <span className="pill warn">Pending approval</span>}
+            {isChangesRequested && <span className="pill error">Changes requested</span>}
             {brief.brief_url && (
               <a href={brief.brief_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13.5px' }}>
                 View on GitHub ↗
@@ -241,11 +241,13 @@ export function BriefDocument() {
 
       {isPendingApproval && (
         <div style={{ display: 'flex', gap: '14px', padding: '16px 20px', margin: '20px 0 0', borderLeft: '8px solid #ffbe2e', background: '#faf3d1', alignItems: 'flex-start' }}>
-          <span style={{ color: '#ffbe2e', lineHeight: 0 }}>⏳</span>
+          <span style={{ color: '#ffbe2e', lineHeight: 0, flexShrink: 0 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+          </span>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '2px' }}>Pending approval</div>
             <div style={{ fontSize: '14px', lineHeight: 1.55, color: '#3d4551' }}>
-              {brief.brief_reviewer_display_name && <>Assigned to {brief.brief_reviewer_display_name}. </>}
+              {brief.brief_reviewer_display_name && <>Sent to <b>{brief.brief_reviewer_display_name}</b> for approval. </>}
               Use the Review panel to approve or request changes.
             </div>
           </div>
@@ -254,7 +256,9 @@ export function BriefDocument() {
 
       {isChangesRequested && (
         <div style={{ display: 'flex', gap: '14px', padding: '16px 20px', margin: '20px 0 0', borderLeft: '8px solid #b50909', background: '#f8eae7', alignItems: 'flex-start' }}>
-          <span style={{ color: '#b50909', lineHeight: 0 }}>⚠</span>
+          <span style={{ color: '#b50909', lineHeight: 0, flexShrink: 0 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          </span>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '2px' }}>Changes requested</div>
             <div style={{ fontSize: '14px', lineHeight: 1.55, color: '#3d4551' }}>

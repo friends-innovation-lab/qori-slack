@@ -16,6 +16,8 @@
   --link: #005ea2;
   --link-hover: #1a4480;
   --focus: #2491ff;
+  --gold: #ffbe2e;
+  --gold-tint: #fdf3d7;
   --success: #00a91c;
   --success-dark: #4d8055;
   --success-ink: #446443;
@@ -23,9 +25,14 @@
   --success-border: #b4d0b9;
   --error: #b50909;
   --error-tint: #f8eae7;
+  --error-border: #f39268;
   --info: #00bde3;
   --info-ink: #2e6276;
   --info-tint: #e7f6f8;
+  --warn: #ffbe2e;
+  --warn-ink: #6b5410;
+  --warn-tint: #faf3d1;
+  --warn-border: #c2a53a;
   --font: 'Public Sans', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
   --serif: 'Public Sans', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
@@ -313,6 +320,7 @@
 }
 
 .brief-doc .blk .lock {
+  display: none; /* Hidden by default (view mode) */
   position: absolute;
   right: 4px;
   top: 4px;
@@ -326,8 +334,14 @@
   z-index: 2;
 }
 
-/* Provenance tags */
+/* Show lock badge on hover of read-only block in edit mode */
+.brief-doc.is-editing .blk.ro:hover .lock {
+  display: block;
+}
+
+/* Provenance tags — hidden in view mode, visible only in edit mode */
 .brief-doc .prov {
+  display: none; /* Hidden by default (view mode) */
   margin-left: auto;
   font-size: 10px;
   font-weight: 700;
@@ -339,6 +353,11 @@
   text-transform: uppercase;
   white-space: nowrap;
   align-self: center;
+}
+
+/* Show provenance badges only in edit mode */
+.brief-doc.is-editing .prov {
+  display: inline-flex;
 }
 
 .brief-doc .prov.canonical {
@@ -382,6 +401,18 @@
   color: var(--ink-3);
   background: var(--bg-3);
   border-color: var(--border-2);
+}
+
+.brief-doc .pill.warn {
+  color: var(--warn-ink);
+  border-color: var(--warn-border);
+  background: var(--warn-tint);
+}
+
+.brief-doc .pill.error {
+  color: var(--error);
+  border-color: var(--error);
+  background: var(--error-tint);
 }
 
 /* Review rail */
