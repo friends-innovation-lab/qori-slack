@@ -484,7 +484,7 @@ export async function executeBrief(
             }
           }
           // Also persist the structured risks (AI-generated JSON)
-          const risksContent = renderedYaml.aiResponses.risks_raw;
+          const risksContent = renderedYaml.aiResponses.risks;
           if (risksContent) {
             await ArtifactSectionModel.findOrCreate({
               where: { artifact_id: artifact.id, section_key: 'risks' },

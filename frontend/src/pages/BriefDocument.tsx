@@ -118,10 +118,13 @@ export function BriefDocument() {
   // Risks from prose_sections.risks (stored as structured JSON)
   const risks: Risk[] = brief.prose_sections?.risks ? safeParse(brief.prose_sections.risks) : [];
 
-  // Prose sections for fallback rendering
+  // Prose sections from artifact_sections table
+  const summaryProse = brief.prose_sections?.summary || null;
+  const problemProse = brief.prose_sections?.problem_narrative || null;
   const outOfScopeProse = brief.prose_sections?.out_of_scope || null;
   const participantsProse = brief.prose_sections?.participants_prose || null;
   const methodProse = brief.prose_sections?.method_prose || null;
+  const approvalItems = brief.prose_sections?.approval_items || null;
 
   const methodology = brief.cascade_fields.methodology_selection?.replace(/_/g, ' ') || null;
   const sessionFormat = brief.cascade_fields.session_format || null;
@@ -303,6 +306,12 @@ export function BriefDocument() {
               {/* Summary */}
               <section className="doc-sec" data-sec="summary">
                 <h2>Summary<span className="prov">GENERATED · EDITABLE</span></h2>
+                {summaryProse && (
+                  <div className="blk ed">
+                    <span className="grip" aria-hidden="true">⋮⋮</span>
+                    <div dangerouslySetInnerHTML={{ __html: summaryProse }} />
+                  </div>
+                )}
                 {/* Quick Facts */}
                 <div className="blk ro">
                   <span className="lock">READ-ONLY · SYSTEM</span>
@@ -347,62 +356,72 @@ export function BriefDocument() {
               </section>
 
               {/* Problem */}
-              {barriers.length > 0 && (
+              {(problemProse || barriers.length > 0) && (
                 <section className="doc-sec" data-sec="problem">
                   <h2>Problem<span className="prov">GENERATED + CANONICAL</span></h2>
-                  <h3>Target barriers for validation</h3>
-                  <div className="blk ed">
-                    <span className="grip" aria-hidden="true">⋮⋮</span>
-                    <div className="itemrows">
-                      {barriers.map((b) => (
-                        <div key={b.id} className="itemrow">
-                          <span className="idtag" title={`${b.id} — stable canonical ID`}>{b.id}</span>
-                          <span className="txt">{b.barrier}{b.source && <em> — {b.source}</em>}</span>
-                        </div>
-                      ))}
+                  {problemProse && (
+                    <div className="blk ed">
+                      <span className="grip" aria-hidden="true">⋮⋮</span>
+                      <div dangerouslySetInnerHTML={{ __html: problemProse }} />
                     </div>
-                  </div>
+                  )}
+                  {barriers.length > 0 && (
+                    <>
+                      <h3>Target barriers for validation</h3>
+                      <div className="blk ed">
+                        <span className="grip" aria-hidden="true">⋮⋮</span>
+                        <div className="itemrows">
+                          {barriers.map((b) => (
+                            <div key={b.id} className="itemrow">
+                              <span className="idtag" title={`${b.id} — stable canonical ID`}>{b.id}</span>
+                              <span className="txt">{b.barrier}{b.source && <em> — {b.source}</em>}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </section>
               )}
 
-              {/* Objectives */}
-              {objectives.length > 0 && (
+              {/* What we'll learn (Objectives + Research Questions) */}
+              {(objectives.length > 0 || questions.length > 0) && (
                 <section className="doc-sec" data-sec="objectives">
                   <h2>What we'll learn<span className="prov canonical">CANONICAL · EDITABLE</span></h2>
-                  <div className="blk ed">
-                    <span className="grip" aria-hidden="true">⋮⋮</span>
-                    <div className="itemrows">
-                      {objectives.map((o) => (
-                        <div key={o.id} className="itemrow">
-                          <span className="idtag" title={`${o.id} — stable canonical ID`}>{o.id}</span>
-                          <span className="txt">{o.objective}</span>
-                        </div>
-                      ))}
+                  {objectives.length > 0 && (
+                    <div className="blk ed">
+                      <span className="grip" aria-hidden="true">⋮⋮</span>
+                      <div className="itemrows">
+                        {objectives.map((o) => (
+                          <div key={o.id} className="itemrow">
+                            <span className="idtag" title={`${o.id} — stable canonical ID`}>{o.id}</span>
+                            <span className="txt">{o.objective}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </section>
-              )}
-
-              {/* Research questions */}
-              {questions.length > 0 && (
-                <section className="doc-sec" data-sec="questions">
-                  <h2>Research questions<span className="prov canonical">CANONICAL · EDITABLE</span></h2>
-                  <div className="blk ed">
-                    <span className="grip" aria-hidden="true">⋮⋮</span>
-                    <div className="itemrows">
-                      {questions.map((q) => (
-                        <div key={q.id} className="itemrow">
-                          <span className="idtag" title={`${q.id} — stable canonical ID`}>{q.id}</span>
-                          <span className="txt">{q.question}</span>
-                          {q.priority && (
-                            <span className={`pill ${q.priority === 'Primary' ? 'success' : q.priority === 'Secondary' ? 'info' : 'gray'}`}>
-                              {q.priority}
-                            </span>
-                          )}
+                  )}
+                  {questions.length > 0 && (
+                    <>
+                      <h3>Research questions</h3>
+                      <div className="blk ed">
+                        <span className="grip" aria-hidden="true">⋮⋮</span>
+                        <div className="itemrows">
+                          {questions.map((q) => (
+                            <div key={q.id} className="itemrow">
+                              <span className="idtag" title={`${q.id} — stable canonical ID`}>{q.id}</span>
+                              <span className="txt">{q.question}</span>
+                              {q.priority && (
+                                <span className={`pill ${q.priority === 'Primary' ? 'success' : q.priority === 'Secondary' ? 'info' : 'gray'}`}>
+                                  {q.priority}
+                                </span>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                      </div>
+                    </>
+                  )}
                 </section>
               )}
 
@@ -563,7 +582,57 @@ export function BriefDocument() {
                 </section>
               )}
 
+              {/* Approval */}
+              <section className="doc-sec" data-sec="approval">
+                <h2>Approval<span className="prov system">SYSTEM · READ-ONLY</span></h2>
+                <div className="blk ro">
+                  <span className="lock">READ-ONLY · SYSTEM</span>
+                  {approvalItems ? (
+                    <div dangerouslySetInnerHTML={{ __html: approvalItems }} />
+                  ) : (
+                    <ul className="prose-list" style={{ listStyle: 'none', paddingLeft: '2px' }}>
+                      <li style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '14px', color: isApproved ? 'var(--success-ink)' : 'var(--ink-4)' }}>{isApproved ? '☑' : '☐'}</span>
+                        Stakeholder approves scope and method
+                      </li>
+                      <li style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '14px', color: isApproved ? 'var(--success-ink)' : 'var(--ink-4)' }}>{isApproved ? '☑' : '☐'}</span>
+                        Stakeholder approves timeline and deadline
+                      </li>
+                      <li style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '14px', color: isApproved ? 'var(--success-ink)' : 'var(--ink-4)' }}>{isApproved ? '☑' : '☐'}</span>
+                        Budget confirmed{brief.cascade_fields.budget && ` (${brief.cascade_fields.budget})`}
+                      </li>
+                      <li style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '14px', color: isApproved ? 'var(--success-ink)' : 'var(--ink-4)' }}>{isApproved ? '☑' : '☐'}</span>
+                        Recruitment criteria validated
+                      </li>
+                    </ul>
+                  )}
+                  <p style={{ fontSize: '14.5px', color: 'var(--ink-3)' }}>
+                    Once approved, the lead researcher will produce a detailed research plan covering session protocols, recruitment mechanics, and analysis approach.
+                  </p>
+                </div>
+              </section>
+
               {/* Collapsible sections */}
+              <details className="sys">
+                <summary>Validity checklist</summary>
+                <div className="inner">
+                  <table className="doc-table">
+                    <thead><tr><th>Check</th><th>Result</th></tr></thead>
+                    <tbody>
+                      <tr><td>Problem statement grounds target barriers</td><td></td></tr>
+                      <tr><td>Learning objectives map to research questions</td><td></td></tr>
+                      <tr><td>Methodology fits the research questions</td><td></td></tr>
+                      <tr><td>Participant approach addresses criteria</td><td></td></tr>
+                      <tr><td>Discovery sources cited where used</td><td></td></tr>
+                      <tr><td>Out of scope is explicit</td><td></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+
               <details className="sys">
                 <summary>Research provenance</summary>
                 <div className="inner">
