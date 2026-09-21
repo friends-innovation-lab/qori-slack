@@ -254,18 +254,21 @@ describe('BriefDocument', () => {
       expect(budgetLabels.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('renders Out of scope section from prose_sections', () => {
+    it('renders Out of scope section with markdown formatting', () => {
       mockBrief.mockReturnValue({
         data: makeBrief({
           prose_sections: {
-            out_of_scope: '<p>This study will not cover accessibility testing or mobile platforms.</p>',
+            // Markdown content (not HTML) - rendered by MarkdownDisplay
+            out_of_scope: '- **Accessibility testing** — outside scope\n- **Mobile platforms** — separate study',
           },
         }),
         isLoading: false, error: null,
       });
       renderWithProviders(<BriefDocument />);
       expect(screen.getByText('Out of scope')).toBeInTheDocument();
-      expect(screen.getByText(/accessibility testing/)).toBeInTheDocument();
+      // Bold text should render
+      expect(screen.getByText('Accessibility testing')).toBeInTheDocument();
+      expect(screen.getByText('Mobile platforms')).toBeInTheDocument();
     });
 
     it('renders Risks table from prose_sections.risks JSON', () => {
@@ -286,7 +289,7 @@ describe('BriefDocument', () => {
       expect(screen.getByText('Scope creep')).toBeInTheDocument();
     });
 
-    it('renders Participants section with prose fallback when no segments', () => {
+    it('renders Participants GFM table from prose fallback', () => {
       mockBrief.mockReturnValue({
         data: makeBrief({
           cascade_fields: {
@@ -294,15 +297,23 @@ describe('BriefDocument', () => {
             participant_segments: null,
             participant_approach: '8 Veterans with varying experience levels',
           },
+          structured_fields: {
+            ...makeBrief().structured_fields,
+            participant_segments: [], // Empty, triggers prose fallback
+          },
           prose_sections: {
-            participants_prose: '<p>We will recruit Veterans who have used VA services.</p>',
+            // GFM table markdown - rendered by MarkdownDisplay
+            participants_prose: '| Segment | Count | Rationale |\n|---|---|---|\n| Veterans | 4 | Primary group |\n| Caregivers | 4 | Secondary group |',
           },
         }),
         isLoading: false, error: null,
       });
       renderWithProviders(<BriefDocument />);
       expect(screen.getByText('Participants')).toBeInTheDocument();
-      expect(screen.getByText(/Veterans who have used VA services/)).toBeInTheDocument();
+      // Table cells should render
+      expect(screen.getByText('Veterans')).toBeInTheDocument();
+      expect(screen.getByText('Caregivers')).toBeInTheDocument();
+      expect(screen.getByText('Primary group')).toBeInTheDocument();
     });
 
     it('renders Timeline section with fallback when no phases', () => {
@@ -320,6 +331,89 @@ describe('BriefDocument', () => {
       renderWithProviders(<BriefDocument />);
       expect(screen.getByText('Timeline')).toBeInTheDocument();
       expect(screen.getByText('Start date')).toBeInTheDocument();
+    });
+
+    it('renders Summary markdown with bold formatting', () => {
+      mockBrief.mockReturnValue({
+        data: makeBrief({
+          prose_sections: {
+            summary: 'This study will reveal **key insights** about user behavior.',
+          },
+        }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+      expect(screen.getByText('Summary')).toBeInTheDocument();
+      expect(screen.getByText('key insights')).toBeInTheDocument();
+    });
+
+    it('renders Problem markdown with paragraphs', () => {
+      mockBrief.mockReturnValue({
+        data: makeBrief({
+          prose_sections: {
+            problem_narrative: 'Users face **significant barriers** when navigating the system.',
+          },
+        }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+      expect(screen.getByText('Problem')).toBeInTheDocument();
+      expect(screen.getByText('significant barriers')).toBeInTheDocument();
+    });
+
+    it('renders Method markdown prose', () => {
+      mockBrief.mockReturnValue({
+        data: makeBrief({
+          cascade_fields: {
+            ...makeBrief().cascade_fields,
+            methodology_selection: 'usability_testing',
+          },
+          prose_sections: {
+            method_prose: 'Sessions will include **think-aloud protocol** and screen recording.',
+          },
+        }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+      // Method appears in Quick Facts and section heading
+      const methodLabels = screen.getAllByText('Method');
+      expect(methodLabels.length).toBeGreaterThanOrEqual(1);
+      // Markdown bold should render
+      expect(screen.getByText('think-aloud protocol')).toBeInTheDocument();
+    });
+
+    it('renders Approval section exactly once', () => {
+      mockBrief.mockReturnValue({
+        data: makeBrief({ brief_status: 'approved' }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+      // Approval heading should appear exactly once
+      const approvalHeadings = screen.getAllByText('Approval');
+      expect(approvalHeadings.length).toBe(1);
+      // Should show the 4 checklist items
+      expect(screen.getByText(/Stakeholder approves scope and method/)).toBeInTheDocument();
+      expect(screen.getByText(/Stakeholder approves timeline and deadline/)).toBeInTheDocument();
+      expect(screen.getByText(/Budget confirmed/)).toBeInTheDocument();
+      expect(screen.getByText(/Recruitment criteria validated/)).toBeInTheDocument();
+    });
+
+    it('Risks table renders from JSON, not markdown', () => {
+      mockBrief.mockReturnValue({
+        data: makeBrief({
+          prose_sections: {
+            risks: JSON.stringify([
+              { risk: 'Recruitment delay', source: 'Scheduling', mitigation: 'Start early' },
+            ]),
+          },
+        }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+      expect(screen.getByText('Risks')).toBeInTheDocument();
+      expect(screen.getByText('Recruitment delay')).toBeInTheDocument();
+      expect(screen.getByText('Scheduling')).toBeInTheDocument();
+      expect(screen.getByText('Start early')).toBeInTheDocument();
     });
   });
 });

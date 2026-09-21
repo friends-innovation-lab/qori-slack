@@ -18,6 +18,8 @@ import { ArtifactEditor } from '@/components/study/editor/ArtifactEditor';
 import { serializeBrief } from '@/components/study/editor/serializer';
 import { buildEditorDocument, type SectionProvenance } from '@/components/study/editor/markdownBridge';
 import { useSavePipeline } from '@/components/study/editor/useSavePipeline';
+import { MarkdownDisplay } from '@/components/study/editor/MarkdownDisplay';
+import { ApprovalSection } from '@/components/study/document/ApprovalSection';
 import '@/styles/brief-document.css';
 
 interface Objective { id: string; objective: string }
@@ -124,7 +126,6 @@ export function BriefDocument() {
   const outOfScopeProse = brief.prose_sections?.out_of_scope || null;
   const participantsProse = brief.prose_sections?.participants_prose || null;
   const methodProse = brief.prose_sections?.method_prose || null;
-  const approvalItems = brief.prose_sections?.approval_items || null;
 
   const methodology = brief.cascade_fields.methodology_selection?.replace(/_/g, ' ') || null;
   const sessionFormat = brief.cascade_fields.session_format || null;
@@ -309,7 +310,7 @@ export function BriefDocument() {
                 {summaryProse && (
                   <div className="blk ed">
                     <span className="grip" aria-hidden="true">⋮⋮</span>
-                    <div dangerouslySetInnerHTML={{ __html: summaryProse }} />
+                    <MarkdownDisplay markdown={summaryProse} />
                   </div>
                 )}
                 {/* Quick Facts */}
@@ -362,7 +363,7 @@ export function BriefDocument() {
                   {problemProse && (
                     <div className="blk ed">
                       <span className="grip" aria-hidden="true">⋮⋮</span>
-                      <div dangerouslySetInnerHTML={{ __html: problemProse }} />
+                      <MarkdownDisplay markdown={problemProse} />
                     </div>
                   )}
                   {barriers.length > 0 && (
@@ -436,7 +437,7 @@ export function BriefDocument() {
                   {methodProse && (
                     <div className="blk ed">
                       <span className="grip" aria-hidden="true">⋮⋮</span>
-                      <div dangerouslySetInnerHTML={{ __html: methodProse }} />
+                      <MarkdownDisplay markdown={methodProse} />
                     </div>
                   )}
                 </section>
@@ -473,7 +474,7 @@ export function BriefDocument() {
                   ) : participantsProse ? (
                     <div className="blk ed">
                       <span className="grip" aria-hidden="true">⋮⋮</span>
-                      <div dangerouslySetInnerHTML={{ __html: participantsProse }} />
+                      <MarkdownDisplay markdown={participantsProse} />
                     </div>
                   ) : (
                     <div className="blk ro">
@@ -500,7 +501,7 @@ export function BriefDocument() {
                   <h2>Out of scope<span className="prov">GENERATED · EDITABLE</span></h2>
                   <div className="blk ed">
                     <span className="grip" aria-hidden="true">⋮⋮</span>
-                    <div dangerouslySetInnerHTML={{ __html: outOfScopeProse }} />
+                    <MarkdownDisplay markdown={outOfScopeProse} />
                   </div>
                 </section>
               )}
@@ -582,38 +583,8 @@ export function BriefDocument() {
                 </section>
               )}
 
-              {/* Approval */}
-              <section className="doc-sec" data-sec="approval">
-                <h2>Approval<span className="prov system">SYSTEM · READ-ONLY</span></h2>
-                <div className="blk ro">
-                  <span className="lock">READ-ONLY · SYSTEM</span>
-                  {approvalItems ? (
-                    <div dangerouslySetInnerHTML={{ __html: approvalItems }} />
-                  ) : (
-                    <ul className="prose-list" style={{ listStyle: 'none', paddingLeft: '2px' }}>
-                      <li style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: '14px', color: isApproved ? 'var(--success-ink)' : 'var(--ink-4)' }}>{isApproved ? '☑' : '☐'}</span>
-                        Stakeholder approves scope and method
-                      </li>
-                      <li style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: '14px', color: isApproved ? 'var(--success-ink)' : 'var(--ink-4)' }}>{isApproved ? '☑' : '☐'}</span>
-                        Stakeholder approves timeline and deadline
-                      </li>
-                      <li style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: '14px', color: isApproved ? 'var(--success-ink)' : 'var(--ink-4)' }}>{isApproved ? '☑' : '☐'}</span>
-                        Budget confirmed{brief.cascade_fields.budget && ` (${brief.cascade_fields.budget})`}
-                      </li>
-                      <li style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: '14px', color: isApproved ? 'var(--success-ink)' : 'var(--ink-4)' }}>{isApproved ? '☑' : '☐'}</span>
-                        Recruitment criteria validated
-                      </li>
-                    </ul>
-                  )}
-                  <p style={{ fontSize: '14.5px', color: 'var(--ink-3)' }}>
-                    Once approved, the lead researcher will produce a detailed research plan covering session protocols, recruitment mechanics, and analysis approach.
-                  </p>
-                </div>
-              </section>
+              {/* Approval — uses ApprovalSection component (single source of truth) */}
+              <ApprovalSection budget={brief.cascade_fields.budget} isApproved={isApproved} />
 
               {/* Collapsible sections */}
               <details className="sys">
