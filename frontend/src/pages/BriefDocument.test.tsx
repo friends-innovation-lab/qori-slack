@@ -62,6 +62,16 @@ function makeBrief(overrides: any = {}) {
       requestor_name: 'Jane Doe',
       discovery_sources: null,
     },
+    // prose_sections from artifact_sections table
+    prose_sections: {},
+    // structured_fields pre-parsed by backend
+    structured_fields: {
+      research_objectives: [{ id: 'OBJ-001', objective: 'Understand scheduling' }],
+      research_questions: [{ id: 'RQ-001', question: 'How do users find?', priority: 'Primary' }],
+      target_barriers: [{ id: 'TB-001', barrier: 'Complex navigation', source: 'Desk research' }],
+      participant_segments: [],
+      discovery_sources: [],
+    },
     ...overrides,
   };
 }
@@ -167,12 +177,20 @@ describe('BriefDocument', () => {
           cascade_fields: {
             ...makeBrief().cascade_fields,
             participant_approach: 'This is a long prose description',
-            // participant_segments stored as JSON string
             participant_segments: JSON.stringify([
               { segment: 'Active users', count: 4, rationale: 'Main group' },
               { segment: 'First-time users', count: 2, rationale: 'New users' },
               { segment: 'Power users', count: 2, rationale: 'Expert group' },
             ]),
+          },
+          // structured_fields pre-parsed by backend takes priority
+          structured_fields: {
+            ...makeBrief().structured_fields,
+            participant_segments: [
+              { segment: 'Active users', count: 4, rationale: 'Main group' },
+              { segment: 'First-time users', count: 2, rationale: 'New users' },
+              { segment: 'Power users', count: 2, rationale: 'Expert group' },
+            ],
           },
         }),
         isLoading: false, error: null,
@@ -234,6 +252,74 @@ describe('BriefDocument', () => {
       expect(timelineLabels.length).toBeGreaterThanOrEqual(1);
       expect(deadlineLabels.length).toBeGreaterThanOrEqual(1);
       expect(budgetLabels.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('renders Out of scope section from prose_sections', () => {
+      mockBrief.mockReturnValue({
+        data: makeBrief({
+          prose_sections: {
+            out_of_scope: '<p>This study will not cover accessibility testing or mobile platforms.</p>',
+          },
+        }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+      expect(screen.getByText('Out of scope')).toBeInTheDocument();
+      expect(screen.getByText(/accessibility testing/)).toBeInTheDocument();
+    });
+
+    it('renders Risks table from prose_sections.risks JSON', () => {
+      mockBrief.mockReturnValue({
+        data: makeBrief({
+          prose_sections: {
+            risks: JSON.stringify([
+              { risk: 'Low recruitment', source: 'Past studies', mitigation: 'Start early' },
+              { risk: 'Scope creep', source: 'Stakeholder requests', mitigation: 'Lock brief' },
+            ]),
+          },
+        }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+      expect(screen.getByText('Risks')).toBeInTheDocument();
+      expect(screen.getByText('Low recruitment')).toBeInTheDocument();
+      expect(screen.getByText('Scope creep')).toBeInTheDocument();
+    });
+
+    it('renders Participants section with prose fallback when no segments', () => {
+      mockBrief.mockReturnValue({
+        data: makeBrief({
+          cascade_fields: {
+            ...makeBrief().cascade_fields,
+            participant_segments: null,
+            participant_approach: '8 Veterans with varying experience levels',
+          },
+          prose_sections: {
+            participants_prose: '<p>We will recruit Veterans who have used VA services.</p>',
+          },
+        }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+      expect(screen.getByText('Participants')).toBeInTheDocument();
+      expect(screen.getByText(/Veterans who have used VA services/)).toBeInTheDocument();
+    });
+
+    it('renders Timeline section with fallback when no phases', () => {
+      mockBrief.mockReturnValue({
+        data: makeBrief({
+          cascade_fields: {
+            ...makeBrief().cascade_fields,
+            timeline_phases: null,
+            start_date: '2026-10-01',
+            decision_deadline: 'Nov 15, 2026',
+          },
+        }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+      expect(screen.getByText('Timeline')).toBeInTheDocument();
+      expect(screen.getByText('Start date')).toBeInTheDocument();
     });
   });
 });

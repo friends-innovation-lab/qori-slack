@@ -107,15 +107,21 @@ export function BriefDocument() {
   const isChangesRequested = brief.brief_status === 'changes_requested';
   const allChecked = Object.values(checklist).every(Boolean);
 
-  // Parse structured data from cascade_fields (stored as JSON strings)
-  const objectives: Objective[] = safeParse(brief.cascade_fields.research_objectives);
-  const questions: Question[] = safeParse(brief.cascade_fields.research_questions);
-  const barriers: Barrier[] = safeParse(brief.cascade_fields.target_barriers);
-  const participantSegments: ParticipantSegment[] = safeParse(brief.cascade_fields.participant_segments);
+  // Use structured_fields from API when available (pre-parsed), fallback to parsing cascade_fields
+  const objectives: Objective[] = brief.structured_fields?.research_objectives ?? safeParse(brief.cascade_fields.research_objectives);
+  const questions: Question[] = brief.structured_fields?.research_questions ?? safeParse(brief.cascade_fields.research_questions);
+  const barriers: Barrier[] = brief.structured_fields?.target_barriers ?? safeParse(brief.cascade_fields.target_barriers);
+  const participantSegments: ParticipantSegment[] = brief.structured_fields?.participant_segments ?? safeParse(brief.cascade_fields.participant_segments);
+  const discoverySources: DiscoverySource[] = brief.structured_fields?.discovery_sources ?? safeParse(brief.cascade_fields.discovery_sources);
   const timelinePhases: TimelinePhase[] = safeParse(brief.cascade_fields.timeline_phases);
-  const discoverySources: DiscoverySource[] = safeParse(brief.cascade_fields.discovery_sources);
 
-  const risks: Risk[] = []; // Risks would be in a prose section if present
+  // Risks from prose_sections.risks (stored as structured JSON)
+  const risks: Risk[] = brief.prose_sections?.risks ? safeParse(brief.prose_sections.risks) : [];
+
+  // Prose sections for fallback rendering
+  const outOfScopeProse = brief.prose_sections?.out_of_scope || null;
+  const participantsProse = brief.prose_sections?.participants_prose || null;
+  const methodProse = brief.prose_sections?.method_prose || null;
 
   const methodology = brief.cascade_fields.methodology_selection?.replace(/_/g, ' ') || null;
   const sessionFormat = brief.cascade_fields.session_format || null;
@@ -401,42 +407,81 @@ export function BriefDocument() {
               )}
 
               {/* Method */}
-              {methodology && (
+              {(methodology || methodProse) && (
                 <section className="doc-sec" data-sec="method">
                   <h2>Method<span className="prov">GENERATED · EDITABLE</span></h2>
                   <div className="blk ro">
                     <span className="lock">READ-ONLY · SYSTEM</span>
-                    <p className="kv"><b>Approach</b> — {methodology}</p>
+                    {methodology && <p className="kv"><b>Approach</b> — {methodology}</p>}
                   </div>
+                  {methodProse && (
+                    <div className="blk ed">
+                      <span className="grip" aria-hidden="true">⋮⋮</span>
+                      <div dangerouslySetInnerHTML={{ __html: methodProse }} />
+                    </div>
+                  )}
                 </section>
               )}
 
-              {/* Participants */}
-              {participantSegments.length > 0 && (
+              {/* Participants — render segments table if available, else prose fallback */}
+              {(participantSegments.length > 0 || participantsProse || brief.cascade_fields.participant_approach) && (
                 <section className="doc-sec" data-sec="participants">
                   <h2>Participants<span className="prov">GENERATED + CANONICAL</span></h2>
+                  {participantSegments.length > 0 ? (
+                    <div className="blk ed">
+                      <span className="grip" aria-hidden="true">⋮⋮</span>
+                      <div>
+                        <table className="doc-table">
+                          <thead>
+                            <tr>
+                              <th>Segment</th>
+                              <th>Count</th>
+                              <th>Rationale</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {participantSegments.map((s, i) => (
+                              <tr key={i}>
+                                <td>{s.segment}</td>
+                                <td><b>{s.count}</b></td>
+                                <td>{s.rationale}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : participantsProse ? (
+                    <div className="blk ed">
+                      <span className="grip" aria-hidden="true">⋮⋮</span>
+                      <div dangerouslySetInnerHTML={{ __html: participantsProse }} />
+                    </div>
+                  ) : (
+                    <div className="blk ro">
+                      <span className="lock">READ-ONLY · SYSTEM</span>
+                      <p>{brief.cascade_fields.participant_approach}</p>
+                    </div>
+                  )}
+                  {/* Recruitment subsection */}
+                  {brief.cascade_fields.recruitment_sources && (
+                    <>
+                      <h3>Recruitment</h3>
+                      <div className="blk ro">
+                        <span className="lock">READ-ONLY · SYSTEM</span>
+                        <p>{brief.cascade_fields.recruitment_sources}</p>
+                      </div>
+                    </>
+                  )}
+                </section>
+              )}
+
+              {/* Out of scope */}
+              {outOfScopeProse && (
+                <section className="doc-sec" data-sec="out-of-scope">
+                  <h2>Out of scope<span className="prov">GENERATED · EDITABLE</span></h2>
                   <div className="blk ed">
                     <span className="grip" aria-hidden="true">⋮⋮</span>
-                    <div>
-                      <table className="doc-table">
-                        <thead>
-                          <tr>
-                            <th>Segment</th>
-                            <th>Count</th>
-                            <th>Rationale</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {participantSegments.map((s, i) => (
-                            <tr key={i}>
-                              <td>{s.segment}</td>
-                              <td><b>{s.count}</b></td>
-                              <td>{s.rationale}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    <div dangerouslySetInnerHTML={{ __html: outOfScopeProse }} />
                   </div>
                 </section>
               )}
@@ -471,29 +516,47 @@ export function BriefDocument() {
                 </section>
               )}
 
-              {/* Timeline */}
-              {timelinePhases.length > 0 && (
+              {/* Timeline — render phases table if available, else fallback to start/deadline */}
+              {(timelinePhases.length > 0 || brief.cascade_fields.start_date || brief.cascade_fields.decision_deadline) && (
                 <section className="doc-sec" data-sec="timeline">
                   <h2>Timeline<span className="prov system">SYSTEM · READ-ONLY</span></h2>
                   <div className="blk ro">
                     <span className="lock">READ-ONLY · SYSTEM</span>
-                    <table className="doc-table">
-                      <thead>
-                        <tr>
-                          <th>Phase</th>
-                          <th>Dates</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {timelinePhases.map((p, i) => (
-                          <tr key={i}>
-                            <td>{p.phase}</td>
-                            <td>{p.dates}</td>
+                    {timelinePhases.length > 0 ? (
+                      <table className="doc-table">
+                        <thead>
+                          <tr>
+                            <th>Phase</th>
+                            <th>Dates</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {brief.cascade_fields.decision_deadline && (
+                        </thead>
+                        <tbody>
+                          {timelinePhases.map((p, i) => (
+                            <tr key={i}>
+                              <td>{p.phase}</td>
+                              <td>{p.dates}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="facts" style={{ marginTop: 0 }}>
+                        {brief.cascade_fields.start_date && (
+                          <div>
+                            <div className="k">Start date</div>
+                            <div className="v">{formatDate(brief.cascade_fields.start_date)}</div>
+                          </div>
+                        )}
+                        {brief.cascade_fields.decision_deadline && (
+                          <div>
+                            <div className="k">Decision deadline</div>
+                            <div className="v">{brief.cascade_fields.decision_deadline}</div>
+                            {brief.cascade_fields.decision_deadline_context && <div className="s">{brief.cascade_fields.decision_deadline_context}</div>}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {timelinePhases.length > 0 && brief.cascade_fields.decision_deadline && (
                       <p className="kv"><b>Hard deadline</b> — {brief.cascade_fields.decision_deadline}{brief.cascade_fields.decision_deadline_context && ` (${brief.cascade_fields.decision_deadline_context})`}</p>
                     )}
                   </div>

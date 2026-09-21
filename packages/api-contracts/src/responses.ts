@@ -100,6 +100,48 @@ export interface StudyResource {
   created_at: string;
 }
 
+/** Structured objective with stable ID */
+export interface BriefObjective {
+  id: string;
+  objective: string;
+}
+
+/** Structured research question with stable ID and priority */
+export interface BriefQuestion {
+  id: string;
+  question: string;
+  priority?: string | null;
+}
+
+/** Structured barrier with stable ID and source */
+export interface BriefBarrier {
+  id: string;
+  barrier: string;
+  source?: string | null;
+}
+
+/** Participant segment for the Participants table */
+export interface ParticipantSegment {
+  segment: string;
+  count: number | string;
+  rationale: string;
+}
+
+/** Discovery source for provenance */
+export interface DiscoverySource {
+  prefix: string;
+  source: string;
+  type: string;
+  findings: string;
+}
+
+/** Risk for the Risks table */
+export interface BriefRisk {
+  risk: string;
+  source: string;
+  mitigation: string;
+}
+
 export interface StudyBriefResource {
   study: StudyResource;
   brief_status: BriefStatus | null;
@@ -108,7 +150,18 @@ export interface StudyBriefResource {
   brief_change_feedback: string | null;
   brief_reviewer_display_name: string | null;
   brief_url: string | null;
-  /** Cascade variables available from the brief */
+  /** Artifact version for optimistic concurrency */
+  artifact_version?: number;
+  /** Artifact public ID for linking */
+  artifact_public_id?: string | null;
+  /** Artifact metadata for Document Information section */
+  artifact_metadata?: {
+    created_at: string | null;
+    template_id: string | null;
+    template_version: string | null;
+    path: string | null;
+  };
+  /** Cascade variables available from the brief (raw JSON strings) */
   cascade_fields: {
     research_objectives: string | null;
     research_questions: string | null;
@@ -128,6 +181,25 @@ export interface StudyBriefResource {
     budget_purpose: string | null;
     requestor_name: string | null;
     discovery_sources: string | null;
+  };
+  /** Structured arrays parsed from cascade_fields */
+  structured_fields?: {
+    research_objectives: BriefObjective[];
+    research_questions: BriefQuestion[];
+    target_barriers: BriefBarrier[];
+    participant_segments: ParticipantSegment[];
+    discovery_sources: DiscoverySource[];
+  };
+  /** AI-generated prose sections from artifact_sections table */
+  prose_sections?: Record<string, string | null>;
+  /** Study metadata for masthead */
+  study_metadata?: {
+    study_name: string;
+    researcher_name: string | null;
+    requestor_name: string | null;
+    created_by_name: string | null;
+    study_path: string | null;
+    created_at: string | null;
   };
 }
 
