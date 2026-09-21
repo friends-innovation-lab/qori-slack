@@ -121,19 +121,23 @@
   font-weight: 700;
 }
 
-.brief-doc .doc-sec ul.prose-list {
+.brief-doc .doc-sec ul.prose-list,
+.brief-doc .doc-sec .blk ul {
   margin: 0 0 14px;
   padding-left: 24px;
+  list-style-type: disc;
 }
 
-.brief-doc .doc-sec ul.prose-list li {
+.brief-doc .doc-sec ul.prose-list li,
+.brief-doc .doc-sec .blk ul li {
   font-family: var(--serif);
   font-size: 16px;
   line-height: 1.58;
   margin-bottom: 8px;
 }
 
-.brief-doc .doc-sec ul.prose-list li b {
+.brief-doc .doc-sec ul.prose-list li b,
+.brief-doc .doc-sec .blk ul li b {
   font-family: var(--font);
   font-size: 14px;
 }
