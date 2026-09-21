@@ -469,28 +469,29 @@ export function BriefDocument() {
                             ))}
                           </tbody>
                         </table>
+                        {/* Prose paragraph after table, then inline Recruitment */}
+                        {participantsProse && <MarkdownDisplay markdown={participantsProse} />}
+                        {brief.cascade_fields.recruitment_sources && (
+                          <p className="kv"><b>Recruitment</b> — {brief.cascade_fields.recruitment_sources}</p>
+                        )}
                       </div>
                     </div>
                   ) : participantsProse ? (
                     <div className="blk ed">
                       <span className="grip" aria-hidden="true">⋮⋮</span>
                       <MarkdownDisplay markdown={participantsProse} />
+                      {brief.cascade_fields.recruitment_sources && (
+                        <p className="kv"><b>Recruitment</b> — {brief.cascade_fields.recruitment_sources}</p>
+                      )}
                     </div>
                   ) : (
                     <div className="blk ro">
                       <span className="lock">READ-ONLY · SYSTEM</span>
                       <p>{brief.cascade_fields.participant_approach}</p>
+                      {brief.cascade_fields.recruitment_sources && (
+                        <p className="kv"><b>Recruitment</b> — {brief.cascade_fields.recruitment_sources}</p>
+                      )}
                     </div>
-                  )}
-                  {/* Recruitment subsection */}
-                  {brief.cascade_fields.recruitment_sources && (
-                    <>
-                      <h3>Recruitment</h3>
-                      <div className="blk ro">
-                        <span className="lock">READ-ONLY · SYSTEM</span>
-                        <p>{brief.cascade_fields.recruitment_sources}</p>
-                      </div>
-                    </>
                   )}
                 </section>
               )}
