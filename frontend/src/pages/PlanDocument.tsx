@@ -27,7 +27,7 @@ import { MarkdownDisplay } from '@/components/study/editor/MarkdownDisplay';
 import { useSavePipeline } from '@/components/study/editor/useSavePipeline';
 import {
   ArtifactTabs, DocumentSection, Masthead, FactsGrid,
-  StructuredItemRow, DocumentTable, CollapsibleSection,
+  StructuredItemRow, StructuredItemRows, DocumentTable, CollapsibleSection,
   SaveStateIndicator,
 } from '@/components/study/document';
 import docStyles from '@/components/study/document/document.module.css';
@@ -278,6 +278,8 @@ export function PlanDocument() {
             ) : (
               <p className={docStyles.block}>Plan generated. See sections below.</p>
             )}
+            {/* Quick facts in separate system block per design reference */}
+            {/* FactsGrid renders its own systemBlock with READ-ONLY · SYSTEM label */}
             {facts.length > 0 && <FactsGrid facts={facts} />}
           </DocumentSection>
 
@@ -290,67 +292,82 @@ export function PlanDocument() {
 
           {/* Objectives (inherited from Brief — read-only) */}
           {objectives.length > 0 && (
-            <DocumentSection sectionId="objectives" title="Objectives" provenance="inherited" editable={false}>
-              {objectives.map((o) => (
-                <StructuredItemRow key={o.id} id={o.id} text={o.objective} />
-              ))}
+            <DocumentSection sectionId="objectives" title="Objectives" provenance="system" editable={false}>
+              <div className={docStyles.systemBlock}>
+                <span className={docStyles.systemLabel}>READ-ONLY · SYSTEM</span>
+                <p style={{ fontSize: 'var(--text-secondary-size)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-3)' }}>
+                  What we aim to learn — inherited from the approved brief:
+                </p>
+                <StructuredItemRows>
+                  {objectives.map((o) => (
+                    <StructuredItemRow key={o.id} id={o.id} text={o.objective} />
+                  ))}
+                </StructuredItemRows>
+              </div>
             </DocumentSection>
           )}
 
           {/* Research questions (inherited from Brief — read-only) */}
           {questions.length > 0 && (
-            <DocumentSection sectionId="questions" title="Research questions" provenance="inherited" editable={false}>
-              {questions.map((q) => (
-                <StructuredItemRow key={q.id} id={q.id} text={q.question} priority={q.priority} />
-              ))}
+            <DocumentSection sectionId="questions" title="Research questions" provenance="system" editable={false}>
+              <div className={docStyles.systemBlock}>
+                <span className={docStyles.systemLabel}>READ-ONLY · SYSTEM</span>
+                <StructuredItemRows>
+                  {questions.map((q) => (
+                    <StructuredItemRow key={q.id} id={q.id} text={q.question} priority={q.priority} />
+                  ))}
+                </StructuredItemRows>
+              </div>
             </DocumentSection>
           )}
 
-          {/* Method (generated) */}
+          {/* Method (generated) — kv pattern per design reference */}
           <DocumentSection sectionId="method" title="Method" provenance="generated" editable>
             {methodology && (
-              <div className={docStyles.systemBlock}>
-                <p><strong>Approach</strong> &mdash; {methodology}</p>
-              </div>
+              <p className={docStyles.kvParagraph}>
+                <b>Approach</b> &mdash; {methodology}
+              </p>
             )}
             {prose.plan_method_approach && (
               <MarkdownDisplay markdown={prose.plan_method_approach} className={docStyles.blockProse} />
             )}
             {prose.plan_session_format && (
-              <>
-                <h3 className={docStyles.secSubheading}>Session format</h3>
-                <MarkdownDisplay markdown={prose.plan_session_format} className={docStyles.blockProse} />
-              </>
+              <p className={docStyles.kvParagraph}>
+                <b>Session format</b> &mdash; {prose.plan_session_format}
+              </p>
             )}
             {prose.plan_data_collection && (
-              <>
-                <h3 className={docStyles.secSubheading}>Data collection</h3>
-                <MarkdownDisplay markdown={prose.plan_data_collection} className={docStyles.blockProse} />
-              </>
+              <p className={docStyles.kvParagraph}>
+                <b>Data collection</b> &mdash; {prose.plan_data_collection}
+              </p>
             )}
           </DocumentSection>
 
-          {/* Participants (generated) */}
+          {/* Participants (generated + canonical) */}
           <DocumentSection sectionId="participants" title="Participants" provenance="generated" editable>
             {prose.plan_participants_prose ? (
               <MarkdownDisplay markdown={prose.plan_participants_prose} className={docStyles.blockProse} />
             ) : plan.inherited_context.participant_approach ? (
               <p className={docStyles.block}>{plan.inherited_context.participant_approach}</p>
             ) : null}
+            {/* NOTE: Recruitment source not yet available - no separate recruitment data in cascade */}
+            {/* Compensation — read-only system block with kv pattern */}
             {plan.inherited_context.compensation && (
               <div className={docStyles.systemBlock}>
-                <span className={docStyles.systemLabel}>Computed</span>
-                <p><strong>Compensation</strong> &mdash; {plan.inherited_context.compensation}</p>
+                <span className={docStyles.systemLabel}>READ-ONLY · SYSTEM</span>
+                <p className={docStyles.kvParagraph}>
+                  <b>Compensation</b> &mdash; {plan.inherited_context.compensation}
+                </p>
               </div>
             )}
           </DocumentSection>
 
-          {/* Timeline (system — derived) */}
+          {/* Timeline (system — derived, read-only) */}
           {(timelinePhases.length > 0 || researchPeriod) && (
             <DocumentSection sectionId="timeline" title="Timeline" provenance="system" editable={false}>
               <div className={docStyles.systemBlock}>
-                <span className={docStyles.systemLabel}>System</span>
-                {/* Research period header — per approved design */}
+                <span className={docStyles.systemLabel}>READ-ONLY · SYSTEM</span>
+                {/* Research period header — outside table per design reference */}
                 {researchPeriod && (
                   <div className={docStyles.researchPeriod}>
                     <span className={docStyles.periodLabel}>Research period</span>
@@ -364,17 +381,28 @@ export function PlanDocument() {
                     )}
                   </div>
                 )}
-                {/* Phase table */}
+                {/* Phase table — Duration center-aligned per design */}
                 {timelinePhases.length > 0 && (
                   <DocumentTable
                     columns={[
                       { key: 'phase', label: 'Phase' },
                       { key: 'dates', label: 'Dates' },
-                      { key: 'duration', label: 'Duration', align: 'right' },
+                      { key: 'duration', label: 'Duration', align: 'center' },
                     ]}
                     rows={timelinePhases}
                   />
                 )}
+                {/* Footer note per design reference */}
+                <p style={{
+                  fontSize: 'var(--text-secondary-size)',
+                  color: 'var(--color-text-muted)',
+                  borderLeft: '3px solid var(--color-border-secondary)',
+                  paddingLeft: 'var(--space-3)',
+                  marginTop: 'var(--space-3)',
+                  marginBottom: 0,
+                }}>
+                  Timeline begins after stakeholder approval of this plan.
+                </p>
               </div>
             </DocumentSection>
           )}
@@ -410,16 +438,19 @@ export function PlanDocument() {
             </DocumentSection>
           )}
 
-          {/* Brief commitments operationalized (generated) */}
+          {/* Brief commitments operationalized (system — read-only) */}
           {commitments.length > 0 && (
-            <DocumentSection sectionId="commitments" title="Brief commitments operationalized" provenance="generated" editable>
-              <DocumentTable
-                columns={[
-                  { key: 'commitment', label: 'Brief commitment' },
-                  { key: 'address', label: 'How this plan addresses it' },
-                ]}
-                rows={commitments}
-              />
+            <DocumentSection sectionId="commitments" title="Brief commitments operationalized" provenance="system" editable={false}>
+              <div className={docStyles.systemBlock}>
+                <span className={docStyles.systemLabel}>READ-ONLY · SYSTEM</span>
+                <DocumentTable
+                  columns={[
+                    { key: 'commitment', label: 'Brief commitment' },
+                    { key: 'address', label: 'How this plan addresses it' },
+                  ]}
+                  rows={commitments}
+                />
+              </div>
             </DocumentSection>
           )}
 
@@ -449,22 +480,42 @@ export function PlanDocument() {
               rows={[
                 { commitment: 'Research objectives', count: objectives.length },
                 { commitment: 'Research questions', count: questions.length },
+                { commitment: 'Target barriers', count: (plan as any).structured_fields?.target_barriers?.length || 0 },
                 { commitment: 'Methodology', count: methodology || 'N/A' },
+                { commitment: 'Budget', count: plan.inherited_context.budget || 'N/A' },
               ]}
             />
+            {/* Source table: only rendered when explicit source data is available */}
+            {/* NOTE: No explicit source/artifact references currently stored in Plan cascade */}
+            {/* This gap should be addressed when provenance tracking is implemented */}
+            <p style={{ fontSize: 'var(--text-caption-size)', color: 'var(--color-text-muted)', marginTop: 'var(--space-3)' }}>
+              Citation markers throughout: [RQ-XXX] = research question this element addresses · [TB-XXX] = target barrier this task tests · [OBJ-XXX] = objective this deliverable serves.
+            </p>
           </CollapsibleSection>
 
-          {/* Document information (collapsed) */}
+          {/* Document information (collapsed) — using real artifact_metadata */}
           <CollapsibleSection title="Document information">
             <DocumentTable
               columns={[{ key: 'field', label: '' }, { key: 'value', label: '' }]}
               rows={[
+                { field: 'Generated', value: (plan as any).artifact_metadata?.created_at
+                  ? new Date((plan as any).artifact_metadata.created_at).toLocaleString('en-US', {
+                      year: 'numeric', month: 'long', day: 'numeric',
+                      hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+                    })
+                  : plan.plan_created_at
+                    ? new Date(plan.plan_created_at).toLocaleString()
+                    : '' },
+                { field: 'Model', value: (plan as any).artifact_metadata?.model || '' },
+                { field: 'Template', value: (plan as any).artifact_metadata?.template_id && (plan as any).artifact_metadata?.template_version
+                  ? `${(plan as any).artifact_metadata.template_id} ${(plan as any).artifact_metadata.template_version}`
+                  : '' },
                 { field: 'Study', value: plan.study.name },
-                { field: 'Created', value: plan.plan_created_at ? new Date(plan.plan_created_at).toLocaleDateString() : '' },
-              ]}
+                { field: 'GitHub path', value: (plan as any).artifact_metadata?.path || (plan as any).study_metadata?.study_path || '' },
+              ].filter(row => row.value)} // Filter out empty rows
             />
             <p style={{ fontSize: 'var(--text-caption-size)', color: 'var(--color-text-muted)', marginTop: 'var(--space-3)' }}>
-              Generated by Qori. The Workspace is the editing surface; GitHub holds the durable rendered projection.
+              Generated by Qori. The Workspace is the editing surface; GitHub holds the durable rendered projection of the same canonical state.
             </p>
           </CollapsibleSection>
           </>

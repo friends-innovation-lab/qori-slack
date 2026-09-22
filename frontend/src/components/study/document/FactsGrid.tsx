@@ -18,7 +18,7 @@ export function FactsGrid({ facts }: FactsGridProps) {
   if (facts.length === 0) return null;
   return (
     <div className={styles.systemBlock}>
-      <span className={styles.systemLabel}>System</span>
+      <span className={styles.systemLabel}>READ-ONLY · SYSTEM</span>
       <div className={styles.factsGrid}>
         {facts.map((fact) => (
           <div key={fact.label} className={styles.factItem}>

@@ -44,6 +44,7 @@ function makePlan(overrides: Partial<StudyPlanResource> = {}): StudyPlanResource
       session_duration: null,
       compensation: '$50 per session',
       deliverables: null,
+      budget: null,
     },
     ...overrides,
   };

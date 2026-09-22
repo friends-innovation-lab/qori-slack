@@ -336,6 +336,7 @@ export async function getStudyPlan(ctx: ApplicationContext, studyPublicId: strin
     'research_objectives', 'research_questions', 'target_barriers',
     'methodology_selection', 'timeline_phases', 'participant_approach',
     'session_format', 'session_duration', 'compensation', 'deliverables',
+    'budget',
   ];
   const inherited: Record<string, string | null> = {};
   for (const k of inheritedKeys) inherited[k] = null;
@@ -351,23 +352,43 @@ export async function getStudyPlan(ctx: ApplicationContext, studyPublicId: strin
     }
   }
 
-  // Load artifact sections (editable prose) and artifact version
+  // Load artifact sections (editable prose), artifact version, and metadata
   const ArtifactModel = sequelize.models.ResearchArtifact;
   const ArtifactSectionModel = sequelize.models.ArtifactSection;
   const planProseSections: Record<string, string | null> = {};
   let planArtifactVersion = 1;
   let planArtifactPublicId: string | null = null;
+  let planArtifactMetadata: {
+    created_at: string | null;
+    template_id: string | null;
+    template_version: string | null;
+    path: string | null;
+    model: string | null;
+  } = {
+    created_at: null,
+    template_id: null,
+    template_version: null,
+    path: null,
+    model: process.env.ANTHROPIC_MODEL_NAME || 'claude-sonnet-4-6',
+  };
 
   if (ArtifactModel) {
     const artifact = await ArtifactModel.findOne({
       where: { study_id: study.id, artifact_type: 'plan' },
-      attributes: ['id', 'public_id', 'content_version'],
+      attributes: ['id', 'public_id', 'content_version', 'template_id', 'template_version', 'path', 'created_at'],
       order: [['created_at', 'DESC']],
     }) as any;
 
     if (artifact) {
       planArtifactVersion = artifact.content_version || 1;
       planArtifactPublicId = artifact.public_id || null;
+      planArtifactMetadata = {
+        created_at: artifact.created_at?.toISOString() || null,
+        template_id: artifact.template_id || null,
+        template_version: artifact.template_version || null,
+        path: artifact.path || null,
+        model: process.env.ANTHROPIC_MODEL_NAME || 'claude-sonnet-4-6',
+      };
 
       if (ArtifactSectionModel) {
         const sections = await ArtifactSectionModel.findAll({
@@ -400,6 +421,7 @@ export async function getStudyPlan(ctx: ApplicationContext, studyPublicId: strin
     plan_created_at: planCreatedAt,
     artifact_version: planArtifactVersion,
     artifact_public_id: planArtifactPublicId,
+    artifact_metadata: planArtifactMetadata,
     inherited_context: inherited,
     structured_fields: {
       research_objectives: safeParsePlan(inherited.research_objectives),

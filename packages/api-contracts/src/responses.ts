@@ -207,6 +207,19 @@ export interface StudyPlanResource {
   study: StudyResource;
   plan_url: string | null;
   plan_created_at: string | null;
+  /** Artifact version for optimistic concurrency */
+  artifact_version?: number;
+  /** Artifact public ID for linking */
+  artifact_public_id?: string | null;
+  /** Artifact metadata for Document Information section */
+  artifact_metadata?: {
+    created_at: string | null;
+    template_id: string | null;
+    template_version: string | null;
+    path: string | null;
+    model: string | null;
+  };
+  /** Cascade variables inherited from Brief (raw JSON strings) */
   inherited_context: {
     research_objectives: string | null;
     research_questions: string | null;
@@ -218,6 +231,22 @@ export interface StudyPlanResource {
     session_duration: string | null;
     compensation: string | null;
     deliverables: string | null;
+    budget: string | null;
+  };
+  /** Structured arrays parsed from inherited_context */
+  structured_fields?: {
+    research_objectives: BriefObjective[];
+    research_questions: BriefQuestion[];
+    target_barriers: BriefBarrier[];
+  };
+  /** AI-generated prose sections from artifact_sections table */
+  prose_sections?: Record<string, string | null>;
+  /** Study metadata for masthead */
+  study_metadata?: {
+    study_name: string;
+    researcher_name: string | null;
+    study_path: string | null;
+    created_at: string | null;
   };
 }
 
