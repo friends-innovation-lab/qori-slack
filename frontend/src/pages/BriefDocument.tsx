@@ -3,7 +3,7 @@
  * HTML structure and class names match brief-view.html reference.
  */
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router';
 import type { JSONContent, Editor } from '@tiptap/react';
 import { useStudyBrief } from '@/api/queries/useStudy';
@@ -20,38 +20,11 @@ import { buildEditorDocument, type SectionProvenance } from '@/components/study/
 import { useSavePipeline } from '@/components/study/editor/useSavePipeline';
 import { MarkdownDisplay } from '@/components/study/editor/MarkdownDisplay';
 import { ApprovalSection } from '@/components/study/document/ApprovalSection';
+import {
+  projectBriefToWorkspace,
+  type BriefProjectionInput,
+} from '@qori/artifact-contracts';
 import '@/styles/brief-document.css';
-
-interface Objective { id: string; objective: string }
-interface Question { id: string; question: string; priority?: string | null }
-interface Barrier { id: string; barrier: string; source?: string | null }
-interface ParticipantSegment {
-  segment: string;
-  count: number | string;
-  rationale: string;
-}
-interface TimelinePhase {
-  phase: string;
-  dates: string;
-  duration?: string;
-}
-interface Risk {
-  risk: string;
-  source: string;
-  mitigation: string;
-}
-interface DiscoverySource {
-  prefix: string;
-  source: string;
-  type: string;
-  findings: string;
-}
-
-function safeParse<T>(raw: string | null | undefined): T[] {
-  if (!raw) return [];
-  try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; }
-  catch { return []; }
-}
 
 function buildBriefEditorContent(cascade: {
   research_objectives?: string | null;
@@ -101,48 +74,58 @@ export function BriefDocument() {
     }
   }, [pipeline, brief, saveBriefContent]);
 
-  if (isLoading) return <div className="brief-doc"><Skeleton height="400px" /></div>;
-  if (error || !brief) return <ErrorState message={error?.message || 'Could not load brief'} />;
+  // Project raw API response to view model (centralized derivation)
+  const vm = useMemo(() => {
+    if (!brief) return null;
+    const input: BriefProjectionInput = {
+      study: {
+        public_id: studyPublicId,
+        name: brief.study?.name || '',
+        created_at: brief.study?.created_at,
+      },
+      brief_status: brief.brief_status,
+      brief_reviewer_id: brief.brief_approved_by,
+      brief_reviewer_display_name: brief.brief_reviewer_display_name,
+      brief_change_feedback: brief.brief_change_feedback,
+      brief_approved_at: brief.brief_approved_at,
+      brief_url: brief.brief_url,
+      prose_sections: brief.prose_sections,
+      cascade_fields: brief.cascade_fields || {},
+      structured_fields: brief.structured_fields,
+      artifact_metadata: (brief as any).artifact_metadata,
+    };
+    return projectBriefToWorkspace(input);
+  }, [brief, studyPublicId]);
 
-  const isPendingApproval = brief.brief_status === 'pending_approval';
-  const isApproved = brief.brief_status === 'approved';
-  const isChangesRequested = brief.brief_status === 'changes_requested';
+  if (isLoading) return <div className="brief-doc"><Skeleton height="400px" /></div>;
+  if (error || !brief || !vm) return <ErrorState message={error?.message || 'Could not load brief'} />;
+
+  // Approval state from view model
+  const isPendingApproval = vm.approval.status === 'pending_approval';
+  const isApproved = vm.approval.status === 'approved';
+  const isChangesRequested = vm.approval.status === 'changes_requested';
   const allChecked = Object.values(checklist).every(Boolean);
 
-  // Use structured_fields from API when available (pre-parsed), fallback to parsing cascade_fields
-  const objectives: Objective[] = brief.structured_fields?.research_objectives ?? safeParse(brief.cascade_fields.research_objectives);
-  const questions: Question[] = brief.structured_fields?.research_questions ?? safeParse(brief.cascade_fields.research_questions);
-  const barriers: Barrier[] = brief.structured_fields?.target_barriers ?? safeParse(brief.cascade_fields.target_barriers);
-  const participantSegments: ParticipantSegment[] = brief.structured_fields?.participant_segments ?? safeParse(brief.cascade_fields.participant_segments);
-  const discoverySources: DiscoverySource[] = brief.structured_fields?.discovery_sources ?? safeParse(brief.cascade_fields.discovery_sources);
-  const timelinePhases: TimelinePhase[] = safeParse(brief.cascade_fields.timeline_phases);
+  // Structured data from view model (already parsed/validated)
+  const objectives = vm.objectives.items;
+  const questions = vm.questions.items;
+  const barriers = vm.barriers.items;
+  const participantSegments = vm.participantSegments.items;
+  const discoverySources = vm.discoverySources?.items ?? [];
+  const timelinePhases = vm.timeline.phases;
+  const risks = vm.risks.items;
 
-  // Risks from prose_sections.risks (stored as structured JSON)
-  const risks: Risk[] = brief.prose_sections?.risks ? safeParse(brief.prose_sections.risks) : [];
+  // Prose sections from view model
+  const summaryProse = vm.sections.summary?.content || null;
+  const problemProse = vm.sections.problemNarrative?.content || null;
+  const outOfScopeProse = vm.sections.outOfScope?.content || null;
+  const participantsProse = vm.sections.participantsProse?.content || null;
+  const methodProse = vm.sections.methodProse?.content || null;
 
-  // Prose sections from artifact_sections table
-  const summaryProse = brief.prose_sections?.summary || null;
-  const problemProse = brief.prose_sections?.problem_narrative || null;
-  const outOfScopeProse = brief.prose_sections?.out_of_scope || null;
-  const participantsProse = brief.prose_sections?.participants_prose || null;
-  const methodProse = brief.prose_sections?.method_prose || null;
+  // Quick facts helper - methodology for display in sections
+  const methodology = vm.quickFacts.method.exists ? vm.quickFacts.method.value : null;
 
-  const methodology = brief.cascade_fields.methodology_selection?.replace(/_/g, ' ') || null;
-  const sessionFormat = brief.cascade_fields.session_format || null;
-  const sessionDuration = brief.cascade_fields.session_duration || null;
-  const methodSub = [sessionFormat, sessionDuration].filter(Boolean).join(' · ') || null;
-
-  const participantCount = participantSegments.reduce((sum, s) => {
-    const n = typeof s.count === 'number' ? s.count : parseInt(String(s.count), 10);
-    return sum + (isNaN(n) ? 0 : n);
-  }, 0);
-
-  const timelineDuration = timelinePhases.length > 0 ? `${timelinePhases.length * 2} weeks` : null;
-  const timelineDateRange = timelinePhases.length > 0
-    ? `${timelinePhases[0]?.dates?.split(' – ')[0] || ''} – ${timelinePhases[timelinePhases.length - 1]?.dates?.split(' – ')[1] || ''}`
-    : null;
-
-  const formatDate = (d: string | null) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+  const formatDate = (d: string | null | undefined) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
 
   async function handleApprove() {
     await approveBrief.mutateAsync({ checklist_confirmed: true });
@@ -167,7 +150,7 @@ export function BriefDocument() {
       <nav className="crumbs" aria-label="Breadcrumb" style={{ fontSize: '13.5px', color: '#565c65', marginBottom: '14px', display: 'flex', gap: '8px' }}>
         <Link to="/" style={{ color: '#005ea2' }}>Home</Link>
         <span style={{ color: '#71767a' }}>›</span>
-        <Link to={`/studies/${studyPublicId}`} style={{ color: '#005ea2' }}>{brief.study.name}</Link>
+        <Link to={`/studies/${studyPublicId}`} style={{ color: '#005ea2' }}>{vm.study.name}</Link>
         <span style={{ color: '#71767a' }}>›</span>
         <span style={{ color: '#3d4551' }}>Brief</span>
       </nav>
@@ -180,8 +163,8 @@ export function BriefDocument() {
             {isApproved && <span className="pill success">✓ Approved</span>}
             {isPendingApproval && <span className="pill warn">Pending approval</span>}
             {isChangesRequested && <span className="pill error">Changes requested</span>}
-            {brief.brief_url && (
-              <a href={brief.brief_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13.5px' }}>
+            {vm.githubUrl && (
+              <a href={vm.githubUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13.5px' }}>
                 View on GitHub ↗
               </a>
             )}
@@ -241,8 +224,8 @@ export function BriefDocument() {
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '2px' }}>Brief approved</div>
             <div style={{ fontSize: '14px', lineHeight: 1.55, color: '#3d4551' }}>
-              {brief.brief_reviewer_display_name && <>Approved by {brief.brief_reviewer_display_name} · </>}
-              {formatDate(brief.brief_approved_at)}.{' '}
+              {vm.approval.reviewerDisplayName && <>Approved by {vm.approval.reviewerDisplayName} · </>}
+              {formatDate(vm.approval.approvedAt)}.{' '}
               <Link to={`/studies/${studyPublicId}/plan`}>Open the research plan →</Link>
             </div>
           </div>
@@ -257,7 +240,7 @@ export function BriefDocument() {
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '2px' }}>Pending approval</div>
             <div style={{ fontSize: '14px', lineHeight: 1.55, color: '#3d4551' }}>
-              {brief.brief_reviewer_display_name && <>Sent to <b>{brief.brief_reviewer_display_name}</b> for approval. </>}
+              {vm.approval.reviewerDisplayName && <>Sent to <b>{vm.approval.reviewerDisplayName}</b> for approval. </>}
               Use the Review panel to approve or request changes.
             </div>
           </div>
@@ -272,7 +255,7 @@ export function BriefDocument() {
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '2px' }}>Changes requested</div>
             <div style={{ fontSize: '14px', lineHeight: 1.55, color: '#3d4551' }}>
-              {brief.brief_change_feedback && <div style={{ borderLeft: '3px solid #b50909', paddingLeft: '10px', fontStyle: 'italic', marginTop: '8px' }}>{brief.brief_change_feedback}</div>}
+              {vm.approval.changeFeedback && <div style={{ borderLeft: '3px solid #b50909', paddingLeft: '10px', fontStyle: 'italic', marginTop: '8px' }}>{vm.approval.changeFeedback}</div>}
             </div>
           </div>
           <Button variant="secondary" onClick={() => setIsEditing(true)}>Revise</Button>
@@ -298,9 +281,9 @@ export function BriefDocument() {
               <div className="blk ro">
                 <span className="lock">READ-ONLY · SYSTEM</span>
                 <div className="masthead">
-                  <span><span className="k">Study</span>{brief.study.name}</span>
-                  {brief.cascade_fields.requestor_name && <span><span className="k">Requested by</span>{brief.cascade_fields.requestor_name}</span>}
-                  <span><span className="k">Date</span>{formatDate(brief.study.created_at)}</span>
+                  <span><span className="k">Study</span>{vm.masthead.studyName}</span>
+                  {vm.masthead.requestorName && <span><span className="k">Requested by</span>{vm.masthead.requestorName}</span>}
+                  <span><span className="k">Date</span>{vm.masthead.dateFormatted || formatDate(vm.masthead.date)}</span>
                 </div>
               </div>
 
@@ -317,39 +300,39 @@ export function BriefDocument() {
                 <div className="blk ro">
                   <span className="lock">READ-ONLY · SYSTEM</span>
                   <div className="facts">
-                    {methodology && (
+                    {vm.quickFacts.method.exists && (
                       <div>
                         <div className="k">Method</div>
-                        <div className="v">{methodology}</div>
-                        {methodSub && <div className="s">{methodSub}</div>}
+                        <div className="v">{vm.quickFacts.method.value}</div>
+                        {vm.quickFacts.method.sub && <div className="s">{vm.quickFacts.method.sub}</div>}
                       </div>
                     )}
-                    {participantCount > 0 && (
+                    {vm.quickFacts.participants.exists && (
                       <div>
                         <div className="k">Participants</div>
-                        <div className="v">{participantCount} residents</div>
-                        {participantSegments.length > 0 && <div className="s">{participantSegments.length} segments</div>}
+                        <div className="v">{vm.quickFacts.participants.value}</div>
+                        {vm.quickFacts.participants.sub && <div className="s">{vm.quickFacts.participants.sub}</div>}
                       </div>
                     )}
-                    {timelineDuration && (
+                    {vm.quickFacts.timeline.exists && (
                       <div>
                         <div className="k">Timeline</div>
-                        <div className="v">{timelineDuration}</div>
-                        {timelineDateRange && <div className="s">{timelineDateRange}</div>}
+                        <div className="v">{vm.quickFacts.timeline.value}</div>
+                        {vm.quickFacts.timeline.sub && <div className="s">{vm.quickFacts.timeline.sub}</div>}
                       </div>
                     )}
-                    {brief.cascade_fields.decision_deadline && (
+                    {vm.quickFacts.decisionDeadline.exists && (
                       <div>
                         <div className="k">Decision deadline</div>
-                        <div className="v">{brief.cascade_fields.decision_deadline}</div>
-                        {brief.cascade_fields.decision_deadline_context && <div className="s">{brief.cascade_fields.decision_deadline_context}</div>}
+                        <div className="v">{vm.quickFacts.decisionDeadline.value}</div>
+                        {vm.quickFacts.decisionDeadline.sub && <div className="s">{vm.quickFacts.decisionDeadline.sub}</div>}
                       </div>
                     )}
-                    {brief.cascade_fields.budget && (
+                    {vm.quickFacts.budget.exists && (
                       <div>
                         <div className="k">Budget</div>
-                        <div className="v">{brief.cascade_fields.budget}</div>
-                        {brief.cascade_fields.budget_purpose && <div className="s">{brief.cascade_fields.budget_purpose}</div>}
+                        <div className="v">{vm.quickFacts.budget.value}</div>
+                        {vm.quickFacts.budget.sub && <div className="s">{vm.quickFacts.budget.sub}</div>}
                       </div>
                     )}
                   </div>
@@ -444,7 +427,7 @@ export function BriefDocument() {
               )}
 
               {/* Participants — render segments table if available, else prose fallback */}
-              {(participantSegments.length > 0 || participantsProse || brief.cascade_fields.participant_approach) && (
+              {(vm.participantSegments.exists || participantsProse || brief.cascade_fields.participant_approach) && (
                 <section className="doc-sec" data-sec="participants">
                   <h2>Participants<span className="prov">GENERATED + CANONICAL</span></h2>
                   {participantSegments.length > 0 ? (
@@ -460,7 +443,7 @@ export function BriefDocument() {
                             </tr>
                           </thead>
                           <tbody>
-                            {participantSegments.map((s, i) => (
+                            {participantSegments.map((s: { segment: string; count: number | string; rationale: string }, i: number) => (
                               <tr key={i}>
                                 <td>{s.segment}</td>
                                 <td><b>{s.count}</b></td>
@@ -471,8 +454,8 @@ export function BriefDocument() {
                         </table>
                         {/* Prose paragraph after table, then inline Recruitment */}
                         {participantsProse && <MarkdownDisplay markdown={participantsProse} />}
-                        {brief.cascade_fields.recruitment_sources && (
-                          <p className="kv"><b>Recruitment</b> — {brief.cascade_fields.recruitment_sources}</p>
+                        {vm.recruitmentSources && (
+                          <p className="kv"><b>Recruitment</b> — {vm.recruitmentSources}</p>
                         )}
                       </div>
                     </div>
@@ -480,16 +463,16 @@ export function BriefDocument() {
                     <div className="blk ed">
                       <span className="grip" aria-hidden="true">⋮⋮</span>
                       <MarkdownDisplay markdown={participantsProse} />
-                      {brief.cascade_fields.recruitment_sources && (
-                        <p className="kv"><b>Recruitment</b> — {brief.cascade_fields.recruitment_sources}</p>
+                      {vm.recruitmentSources && (
+                        <p className="kv"><b>Recruitment</b> — {vm.recruitmentSources}</p>
                       )}
                     </div>
                   ) : (
                     <div className="blk ro">
                       <span className="lock">READ-ONLY · SYSTEM</span>
                       <p>{brief.cascade_fields.participant_approach}</p>
-                      {brief.cascade_fields.recruitment_sources && (
-                        <p className="kv"><b>Recruitment</b> — {brief.cascade_fields.recruitment_sources}</p>
+                      {vm.recruitmentSources && (
+                        <p className="kv"><b>Recruitment</b> — {vm.recruitmentSources}</p>
                       )}
                     </div>
                   )}
@@ -538,7 +521,8 @@ export function BriefDocument() {
               )}
 
               {/* Timeline — render phases table if available, else fallback to start/deadline */}
-              {(timelinePhases.length > 0 || brief.cascade_fields.start_date || brief.cascade_fields.decision_deadline) && (
+              {/* NOTE: vm.timeline.summary.startDate is only derived from phases; raw start_date falls back to cascade */}
+              {(vm.timeline.exists || brief.cascade_fields.start_date || vm.quickFacts.decisionDeadline.exists) && (
                 <section className="doc-sec" data-sec="timeline">
                   <h2>Timeline<span className="prov system">SYSTEM · READ-ONLY</span></h2>
                   <div className="blk ro">
@@ -562,30 +546,31 @@ export function BriefDocument() {
                       </table>
                     ) : (
                       <div className="facts" style={{ marginTop: 0 }}>
-                        {brief.cascade_fields.start_date && (
+                        {/* Fallback to raw cascade start_date when no timeline phases */}
+                        {(vm.timeline.summary.startDate || brief.cascade_fields.start_date) && (
                           <div>
                             <div className="k">Start date</div>
-                            <div className="v">{formatDate(brief.cascade_fields.start_date)}</div>
+                            <div className="v">{formatDate(vm.timeline.summary.startDate || brief.cascade_fields.start_date)}</div>
                           </div>
                         )}
-                        {brief.cascade_fields.decision_deadline && (
+                        {vm.quickFacts.decisionDeadline.exists && (
                           <div>
                             <div className="k">Decision deadline</div>
-                            <div className="v">{brief.cascade_fields.decision_deadline}</div>
-                            {brief.cascade_fields.decision_deadline_context && <div className="s">{brief.cascade_fields.decision_deadline_context}</div>}
+                            <div className="v">{vm.quickFacts.decisionDeadline.value}</div>
+                            {vm.quickFacts.decisionDeadline.sub && <div className="s">{vm.quickFacts.decisionDeadline.sub}</div>}
                           </div>
                         )}
                       </div>
                     )}
-                    {timelinePhases.length > 0 && brief.cascade_fields.decision_deadline && (
-                      <p className="kv"><b>Hard deadline</b> — {brief.cascade_fields.decision_deadline}{brief.cascade_fields.decision_deadline_context && ` (${brief.cascade_fields.decision_deadline_context})`}</p>
+                    {timelinePhases.length > 0 && vm.quickFacts.decisionDeadline.exists && (
+                      <p className="kv"><b>Hard deadline</b> — {vm.quickFacts.decisionDeadline.value}{vm.quickFacts.decisionDeadline.sub && ` (${vm.quickFacts.decisionDeadline.sub})`}</p>
                     )}
                   </div>
                 </section>
               )}
 
               {/* Approval — uses ApprovalSection component (single source of truth) */}
-              <ApprovalSection budget={brief.cascade_fields.budget} isApproved={isApproved} />
+              <ApprovalSection budget={vm.quickFacts.budget.exists ? vm.quickFacts.budget.value : null} isApproved={isApproved} />
 
               {/* Collapsible sections */}
               <details className="sys">
@@ -612,11 +597,11 @@ export function BriefDocument() {
                   <table className="doc-table">
                     <thead><tr><th>Commitment</th><th>Count</th></tr></thead>
                     <tbody>
-                      <tr><td>Research objectives</td><td>{objectives.length}</td></tr>
-                      <tr><td>Research questions</td><td>{questions.length}</td></tr>
-                      <tr><td>Target barriers</td><td>{barriers.length}</td></tr>
-                      <tr><td>Methodology</td><td>{methodology || '—'}</td></tr>
-                      <tr><td>Budget</td><td>{brief.cascade_fields.budget || '—'}</td></tr>
+                      <tr><td>Research objectives</td><td>{vm.objectives.count}</td></tr>
+                      <tr><td>Research questions</td><td>{vm.questions.count}</td></tr>
+                      <tr><td>Target barriers</td><td>{vm.barriers.count}</td></tr>
+                      <tr><td>Methodology</td><td>{vm.quickFacts.method.exists ? vm.quickFacts.method.value : '—'}</td></tr>
+                      <tr><td>Budget</td><td>{vm.quickFacts.budget.exists ? vm.quickFacts.budget.value : '—'}</td></tr>
                     </tbody>
                   </table>
                   {discoverySources.length > 0 && (
@@ -625,7 +610,7 @@ export function BriefDocument() {
                       <table className="doc-table">
                         <thead><tr><th>Prefix</th><th>Source</th><th>Type</th><th>Findings used</th></tr></thead>
                         <tbody>
-                          {discoverySources.map((d, i) => (
+                          {discoverySources.map((d: { prefix: string; source: string; type: string; findings: string }, i: number) => (
                             <tr key={i}><td>{d.prefix}</td><td>{d.source}</td><td>{d.type}</td><td>{d.findings}</td></tr>
                           ))}
                         </tbody>
@@ -640,11 +625,11 @@ export function BriefDocument() {
                 <div className="inner">
                   <table className="doc-table">
                     <tbody>
-                      <tr><td>Generated</td><td>{formatDate(brief.study.created_at)}</td></tr>
-                      <tr><td>Model</td><td>claude-sonnet-4-6</td></tr>
-                      <tr><td>Template</td><td>research_brief v7.1</td></tr>
-                      <tr><td>Study</td><td>{brief.study.name}</td></tr>
-                      {brief.brief_url && <tr><td>GitHub path</td><td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{brief.brief_url.split('/').slice(-1)[0]}</td></tr>}
+                      <tr><td>Generated</td><td>{formatDate(vm.artifact.createdAt)}</td></tr>
+                      <tr><td>Model</td><td>{vm.artifact.model || 'claude-sonnet-4-6'}</td></tr>
+                      <tr><td>Template</td><td>{vm.artifact.templateId && vm.artifact.templateVersion ? `${vm.artifact.templateId} ${vm.artifact.templateVersion}` : 'research_brief v7.1'}</td></tr>
+                      <tr><td>Study</td><td>{vm.study.name}</td></tr>
+                      {vm.artifact.path && <tr><td>GitHub path</td><td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{vm.artifact.path.split('/').slice(-1)[0]}</td></tr>}
                     </tbody>
                   </table>
                   <p>Generated by Qori. The Workspace is the editing surface; GitHub holds the durable rendered projection of the same canonical state.</p>
@@ -667,8 +652,8 @@ export function BriefDocument() {
                   {isApproved && (
                     <>
                       <b style={{ color: '#446443' }}>Approved</b>
-                      {brief.brief_reviewer_display_name && <> by {brief.brief_reviewer_display_name}</>}
-                      {brief.brief_approved_at && <> · {formatDate(brief.brief_approved_at)}</>}
+                      {vm.approval.reviewerDisplayName && <> by {vm.approval.reviewerDisplayName}</>}
+                      {vm.approval.approvedAt && <> · {formatDate(vm.approval.approvedAt)}</>}
                       . The brief is now the citation source for downstream artifacts; edits after approval flag them stale.
                     </>
                   )}
@@ -717,9 +702,9 @@ export function BriefDocument() {
                   {isChangesRequested && (
                     <>
                       <b style={{ color: '#b50909' }}>Changes requested</b>
-                      {brief.brief_reviewer_display_name && <> by {brief.brief_reviewer_display_name}</>}.
-                      {brief.brief_change_feedback && (
-                        <div style={{ borderLeft: '3px solid #b50909', paddingLeft: '10px', fontStyle: 'italic', marginTop: '8px' }}>{brief.brief_change_feedback}</div>
+                      {vm.approval.reviewerDisplayName && <> by {vm.approval.reviewerDisplayName}</>}.
+                      {vm.approval.changeFeedback && (
+                        <div style={{ borderLeft: '3px solid #b50909', paddingLeft: '10px', fontStyle: 'italic', marginTop: '8px' }}>{vm.approval.changeFeedback}</div>
                       )}
                     </>
                   )}

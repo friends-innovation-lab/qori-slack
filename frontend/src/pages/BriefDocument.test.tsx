@@ -196,8 +196,8 @@ describe('BriefDocument', () => {
         isLoading: false, error: null,
       });
       renderWithProviders(<BriefDocument />);
-      // Should show concise participant count in Quick Facts (reference uses "residents")
-      expect(screen.getByText('8 residents')).toBeInTheDocument();
+      // Should show concise participant count in Quick Facts (view model normalizes to "participants")
+      expect(screen.getByText('8 participants')).toBeInTheDocument();
       expect(screen.getByText('3 segments')).toBeInTheDocument();
       // Quick Facts Participants label should exist
       const participantsLabels = screen.getAllByText('Participants');
@@ -309,7 +309,9 @@ describe('BriefDocument', () => {
         isLoading: false, error: null,
       });
       renderWithProviders(<BriefDocument />);
-      expect(screen.getByText('Participants')).toBeInTheDocument();
+      // Multiple Participants labels exist (Quick Facts + section heading)
+      const participantsLabels = screen.getAllByText('Participants');
+      expect(participantsLabels.length).toBeGreaterThanOrEqual(1);
       // Table cells should render
       expect(screen.getByText('Veterans')).toBeInTheDocument();
       expect(screen.getByText('Caregivers')).toBeInTheDocument();

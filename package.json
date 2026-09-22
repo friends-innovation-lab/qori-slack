@@ -3,6 +3,7 @@
   "workspaces": [
     "backend",
     "frontend",
-    "packages/api-contracts"
+    "packages/api-contracts",
+    "packages/artifact-contracts"
   ]
 }
