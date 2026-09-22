@@ -301,6 +301,8 @@ export interface BriefViewModel {
   participantSegments: {
     items: ParticipantSegment[];
     totalCount: number;
+    /** Raw approach text for fallback display when no segments/prose */
+    approach?: string | null;
     provenance: FieldProvenance;
     exists: boolean;
   };
@@ -419,6 +421,8 @@ export interface PlanViewModel {
   };
 
   // ─── Optional Fields ────────────────────────────────────────────
+  /** Raw participant approach text for fallback display */
+  participantApproach?: string | null;
   /** Compensation — only if canonical data exists (#377 unsupported) */
   compensation?: string | null;
   /** Budget inherited from Brief */
@@ -550,11 +554,20 @@ function formatMethodology(raw: string | null | undefined): string | null {
 }
 
 /**
- * Derive timeline summary from phases.
+ * Derive timeline summary from phases, with optional fallback start date.
+ * When no phases exist, uses fallbackStartDate from cascade_fields.start_date.
  */
-function deriveTimelineSummary(phases: TimelinePhase[]): TimelineSummary {
+function deriveTimelineSummary(
+  phases: TimelinePhase[],
+  fallbackStartDate?: string | null,
+): TimelineSummary {
   if (phases.length === 0) {
-    return { duration: null, dateRange: null, startDate: null, endDate: null };
+    return {
+      duration: null,
+      dateRange: null,
+      startDate: fallbackStartDate || null,
+      endDate: null,
+    };
   }
 
   const firstPhase = phases[0];
@@ -677,8 +690,8 @@ export function projectBriefToWorkspace(input: BriefProjectionInput): BriefViewM
   const timelinePhases: TimelinePhase[] = safeParse(cascade.timeline_phases);
   const risks: BriefRisk[] = prose.risks ? safeParse(prose.risks) : [];
 
-  // Derive timeline summary
-  const timelineSummary = deriveTimelineSummary(timelinePhases);
+  // Derive timeline summary with fallback to raw start_date
+  const timelineSummary = deriveTimelineSummary(timelinePhases, cascade.start_date);
 
   // Derive participant fact
   const participantFact = deriveParticipantFact(cascade.participant_approach, participantSegments);
@@ -813,12 +826,13 @@ export function projectBriefToWorkspace(input: BriefProjectionInput): BriefViewM
     participantSegments: {
       items: participantSegments,
       totalCount: participantTotalCount,
+      approach: cascade.participant_approach || null,
       provenance: {
         authority: 'generated',
         editable: true,
         label: 'GENERATED · EDITABLE',
       },
-      exists: participantSegments.length > 0,
+      exists: participantSegments.length > 0 || !!cascade.participant_approach,
     },
     timeline: {
       phases: timelinePhases,
@@ -869,8 +883,8 @@ export function projectPlanToWorkspace(input: PlanProjectionInput): PlanViewMode
   const commitments: BriefCommitment[] = prose.plan_commitments ? safeParse(prose.plan_commitments) : [];
   const deliverables: DeliverableItem[] = inherited.deliverables ? safeParse(inherited.deliverables) : [];
 
-  // Derive timeline summary
-  const timelineSummary = deriveTimelineSummary(timelinePhases);
+  // Derive timeline summary with fallback to inherited start_date
+  const timelineSummary = deriveTimelineSummary(timelinePhases, inherited.start_date);
 
   // Derive concise participant fact
   const participantApproach = inherited.participant_approach || '';
@@ -1016,6 +1030,8 @@ export function projectPlanToWorkspace(input: PlanProjectionInput): PlanViewMode
       },
       exists: true,
     } : undefined,
+    // Raw participant approach for fallback display
+    participantApproach: participantApproach || null,
     // Compensation unsupported per #377
     compensation: inherited.compensation || null,
     budget: inherited.budget || null,

@@ -9,7 +9,7 @@
  * Plan has NO approval gate. Inherited Brief commitments are read-only.
  */
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router';
 import type { JSONContent } from '@tiptap/react';
 import { useStudyPlan } from '@/api/queries/useStudy';
@@ -30,17 +30,12 @@ import {
   StructuredItemRow, StructuredItemRows, DocumentTable, CollapsibleSection,
   SaveStateIndicator,
 } from '@/components/study/document';
+import {
+  projectPlanToWorkspace,
+  type PlanProjectionInput,
+} from '@qori/artifact-contracts';
 import docStyles from '@/components/study/document/document.module.css';
 import styles from './PlanDocument.module.css';
-
-interface Objective { id: string; objective: string }
-interface Question { id: string; question: string; priority?: string | null }
-
-function safeParse<T>(raw: string | null): T[] {
-  if (!raw) return [];
-  try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; }
-  catch { return []; }
-}
 
 export function PlanDocument() {
   const { studyPublicId } = useParams<{ studyPublicId: string }>();
@@ -110,87 +105,51 @@ export function PlanDocument() {
     );
   }
 
-  // Structured arrays — prefer parsed, fall back to inherited_context
-  const objectives: Objective[] = (plan as any).structured_fields?.research_objectives
-    || safeParse<Objective>(plan.inherited_context.research_objectives);
-  const questions: Question[] = (plan as any).structured_fields?.research_questions
-    || safeParse<Question>(plan.inherited_context.research_questions);
-
-  const prose = (plan as any).prose_sections || {};
-  const meta = (plan as any).study_metadata || {};
-  const methodology = plan.inherited_context.methodology_selection?.replace(/_/g, ' ') || null;
-
-  // Parse structured JSON sections
-  let risks: Array<{ risk: string; likelihood: string; mitigation: string }> = [];
-  if (prose.plan_risks) {
-    try { risks = JSON.parse(prose.plan_risks); } catch { /* ignore */ }
-  }
-
-  let commitments: Array<{ commitment: string; address: string }> = [];
-  if (prose.plan_commitments) {
-    try { commitments = JSON.parse(prose.plan_commitments); } catch { /* ignore */ }
-  }
-
-  // Timeline phases from cascade
-  let timelinePhases: Array<{ phase: string; dates: string; duration?: string }> = [];
-  if (plan.inherited_context.timeline_phases) {
-    try { timelinePhases = JSON.parse(plan.inherited_context.timeline_phases); } catch { /* ignore */ }
-  }
-
-  // Deliverables from cascade
-  let deliverables: Array<{ id?: string; deliverable_name: string; format?: string; addresses_objective?: string }> = [];
-  if (plan.inherited_context.deliverables) {
-    try { deliverables = JSON.parse(plan.inherited_context.deliverables); } catch { /* ignore */ }
-  }
-
-  // Derive research period from timeline phases if available
-  let researchPeriod: { start: string; end: string; duration: string } | null = null;
-  if (timelinePhases.length > 0) {
-    // Get first phase start and last phase end from the dates field
-    const firstPhase = timelinePhases[0];
-    const lastPhase = timelinePhases[timelinePhases.length - 1];
-    // Dates are typically formatted as "Sep 14 – Sep 25, 2026"
-    const firstDates = firstPhase.dates?.split('–').map(s => s.trim()) || [];
-    const lastDates = lastPhase.dates?.split('–').map(s => s.trim()) || [];
-    const startDate = firstDates[0] || '';
-    const endDate = lastDates[1] || lastDates[0] || '';
-    // Calculate total duration from individual phase durations if available
-    const totalWeeks = timelinePhases.reduce((sum, p) => {
-      const match = p.duration?.match(/(\d+)\s*week/i);
-      return sum + (match ? parseInt(match[1], 10) : 0);
-    }, 0);
-    researchPeriod = {
-      start: startDate,
-      end: endDate,
-      duration: totalWeeks > 0 ? `${totalWeeks} weeks` : '',
+  // Project raw API response to view model (centralized derivation)
+  const vm = useMemo(() => {
+    const input: PlanProjectionInput = {
+      study: {
+        public_id: studyPublicId || '',
+        name: plan.study?.name || '',
+        created_at: plan.study?.created_at,
+      },
+      plan_url: plan.plan_url,
+      plan_created_at: plan.plan_created_at,
+      prose_sections: (plan as any).prose_sections,
+      inherited_context: plan.inherited_context || {},
+      structured_fields: (plan as any).structured_fields,
+      study_metadata: (plan as any).study_metadata,
+      artifact_metadata: (plan as any).artifact_metadata,
+      artifact_version: (plan as any).artifact_version,
     };
-  }
+    return projectPlanToWorkspace(input);
+  }, [plan, studyPublicId]);
 
-  // Session info from prose or cascade (if structured source exists)
-  const sessionFormat = plan.inherited_context.session_format || null;
-  const sessionDuration = plan.inherited_context.session_duration || null;
+  // Structured data from view model (already parsed/validated)
+  const objectives = vm.objectives.items;
+  const questions = vm.questions.items;
+  const risks = vm.risks.items;
+  const commitments = vm.commitments.items;
+  const timelinePhases = vm.timeline.phases;
+  const deliverables = vm.deliverablesTable?.items || [];
 
-  // Derive concise participant summary for Quick Facts
-  // Extract numeric count from participant_approach prose (e.g., "8 Veterans" → "8 participants")
-  const participantApproach = plan.inherited_context.participant_approach || '';
-  const participantMatch = participantApproach.match(/^(\d+)\s+/);
-  const participantsFact = participantMatch
-    ? `${participantMatch[1]} participants`
-    : participantApproach.split(/[,;.]/).at(0)?.trim() || null;
+  // Prose sections from view model (for editor input, keep raw access)
+  const prose = (plan as any).prose_sections || {};
+  const methodology = vm.quickFacts.method.exists ? vm.quickFacts.method.value : null;
 
-  // Quick facts — matches design: Method, Participants, Sessions, Timeline
+  // Quick facts from view model (already derived)
   const facts = [
-    methodology ? { label: 'Method', value: methodology } : null,
-    participantsFact ? { label: 'Participants', value: participantsFact } : null,
-    (sessionDuration || sessionFormat) ? {
+    vm.quickFacts.method.exists ? { label: 'Method', value: vm.quickFacts.method.value } : null,
+    vm.quickFacts.participants.exists ? { label: 'Participants', value: vm.quickFacts.participants.value } : null,
+    vm.quickFacts.sessions.exists ? {
       label: 'Sessions',
-      value: sessionDuration || '',
-      sub: sessionFormat || undefined,
+      value: vm.quickFacts.sessions.value,
+      sub: vm.quickFacts.sessions.sub || undefined,
     } : null,
-    researchPeriod ? {
+    vm.quickFacts.timeline.exists ? {
       label: 'Timeline',
-      value: researchPeriod.duration || 'See timeline',
-      sub: researchPeriod.start && researchPeriod.end ? `${researchPeriod.start} – ${researchPeriod.end}` : undefined,
+      value: vm.quickFacts.timeline.value,
+      sub: vm.quickFacts.timeline.sub || undefined,
     } : null,
   ].filter(Boolean) as { label: string; value: string; sub?: string }[];
 
@@ -274,18 +233,16 @@ export function PlanDocument() {
           <>
           {/* Masthead (system) */}
           <Masthead
-            studyName={plan.study.name}
-            researcherName={meta.researcher_name}
-            date={meta.created_at || plan.study.created_at}
-            status={(plan as any).artifact_metadata?.content_version
-              ? `Current · v${(plan as any).artifact_metadata.content_version}`
-              : null}
+            studyName={vm.masthead.studyName}
+            researcherName={vm.masthead.researcherName ?? null}
+            date={vm.masthead.date ?? null}
+            status={vm.masthead.versionDisplay}
           />
 
           {/* Summary (generated) */}
           <DocumentSection sectionId="summary" title="Summary" provenance="generated" editable>
-            {prose.plan_summary ? (
-              <MarkdownDisplay markdown={prose.plan_summary} className={docStyles.blockProse} />
+            {vm.sections.summary.exists ? (
+              <MarkdownDisplay markdown={vm.sections.summary.content || ''} className={docStyles.blockProse} />
             ) : (
               <p className={docStyles.block}>Plan generated. See sections below.</p>
             )}
@@ -295,9 +252,9 @@ export function PlanDocument() {
           </DocumentSection>
 
           {/* Background (generated) */}
-          {prose.plan_background && (
+          {vm.sections.background.exists && (
             <DocumentSection sectionId="background" title="Background" provenance="generated" editable>
-              <MarkdownDisplay markdown={prose.plan_background} className={docStyles.blockProse} />
+              <MarkdownDisplay markdown={vm.sections.background.content || ''} className={docStyles.blockProse} />
             </DocumentSection>
           )}
 
@@ -339,56 +296,54 @@ export function PlanDocument() {
                 <b>Approach</b> &mdash; {methodology}
               </p>
             )}
-            {prose.plan_method_approach && (
-              <MarkdownDisplay markdown={prose.plan_method_approach} className={docStyles.blockProse} />
+            {vm.sections.methodApproach.exists && (
+              <MarkdownDisplay markdown={vm.sections.methodApproach.content || ''} className={docStyles.blockProse} />
             )}
-            {prose.plan_session_format && (
+            {vm.sections.sessionFormat.exists && (
               <p className={docStyles.kvParagraph}>
-                <b>Session format</b> &mdash; {prose.plan_session_format}
+                <b>Session format</b> &mdash; {vm.sections.sessionFormat.content}
               </p>
             )}
-            {prose.plan_data_collection && (
+            {vm.sections.dataCollection.exists && (
               <p className={docStyles.kvParagraph}>
-                <b>Data collection</b> &mdash; {prose.plan_data_collection}
+                <b>Data collection</b> &mdash; {vm.sections.dataCollection.content}
               </p>
             )}
           </DocumentSection>
 
           {/* Participants (generated + canonical) */}
           <DocumentSection sectionId="participants" title="Participants" provenance="generated" editable>
-            {prose.plan_participants_prose ? (
-              <MarkdownDisplay markdown={prose.plan_participants_prose} className={docStyles.blockProse} />
-            ) : plan.inherited_context.participant_approach ? (
-              <p className={docStyles.block}>{plan.inherited_context.participant_approach}</p>
+            {vm.sections.participantsProse.exists ? (
+              <MarkdownDisplay markdown={vm.sections.participantsProse.content || ''} className={docStyles.blockProse} />
+            ) : vm.participantApproach ? (
+              <p className={docStyles.block}>{vm.participantApproach}</p>
             ) : null}
             {/* NOTE: Recruitment source not yet available - no separate recruitment data in cascade */}
             {/* Compensation — read-only system block with kv pattern */}
-            {plan.inherited_context.compensation && (
+            {vm.compensation && (
               <div className={docStyles.systemBlock}>
                 <span className={docStyles.systemLabel}>READ-ONLY · SYSTEM</span>
                 <p className={docStyles.kvParagraph}>
-                  <b>Compensation</b> &mdash; {plan.inherited_context.compensation}
+                  <b>Compensation</b> &mdash; {vm.compensation}
                 </p>
               </div>
             )}
           </DocumentSection>
 
           {/* Timeline (system — derived, read-only) */}
-          {(timelinePhases.length > 0 || researchPeriod) && (
+          {vm.timeline.exists && (
             <DocumentSection sectionId="timeline" title="Timeline" provenance="system" editable={false}>
               <div className={docStyles.systemBlock}>
                 <span className={docStyles.systemLabel}>READ-ONLY · SYSTEM</span>
                 {/* Research period header — outside table per design reference */}
-                {researchPeriod && (
+                {(vm.timeline.summary.startDate || vm.timeline.summary.dateRange) && (
                   <div className={docStyles.researchPeriod}>
                     <span className={docStyles.periodLabel}>Research period</span>
                     <span className={docStyles.periodValue}>
-                      {researchPeriod.start && researchPeriod.end
-                        ? `${researchPeriod.start} – ${researchPeriod.end}`
-                        : 'See phases below'}
+                      {vm.timeline.summary.dateRange || 'See phases below'}
                     </span>
-                    {researchPeriod.duration && (
-                      <span className={docStyles.periodDuration}>{researchPeriod.duration}</span>
+                    {vm.timeline.summary.duration && (
+                      <span className={docStyles.periodDuration}>{vm.timeline.summary.duration}</span>
                     )}
                   </div>
                 )}
@@ -400,7 +355,7 @@ export function PlanDocument() {
                       { key: 'dates', label: 'Dates' },
                       { key: 'duration', label: 'Duration', align: 'center' },
                     ]}
-                    rows={timelinePhases}
+                    rows={timelinePhases as any}
                   />
                 )}
                 {/* Footer note per design reference */}
@@ -419,17 +374,17 @@ export function PlanDocument() {
           )}
 
           {/* Deliverables (generated) */}
-          {(prose.plan_deliverables || deliverables.length > 0) && (
+          {(vm.sections.deliverables.exists || vm.deliverablesTable?.exists) && (
             <DocumentSection sectionId="deliverables" title="Deliverables" provenance="generated" editable>
-              {prose.plan_deliverables ? (
-                <MarkdownDisplay markdown={prose.plan_deliverables} className={docStyles.blockProse} />
-              ) : deliverables.length > 0 ? (
+              {vm.sections.deliverables.exists ? (
+                <MarkdownDisplay markdown={vm.sections.deliverables.content || ''} className={docStyles.blockProse} />
+              ) : vm.deliverablesTable?.exists ? (
                 <DocumentTable
                   columns={[
                     { key: 'deliverable_name', label: 'Deliverable' },
                     { key: 'format', label: 'Format' },
                   ]}
-                  rows={deliverables}
+                  rows={deliverables as any}
                 />
               ) : null}
             </DocumentSection>
@@ -444,7 +399,7 @@ export function PlanDocument() {
                   { key: 'likelihood', label: 'Likelihood', align: 'center' },
                   { key: 'mitigation', label: 'Mitigation' },
                 ]}
-                rows={risks}
+                rows={risks as any}
               />
             </DocumentSection>
           )}
@@ -459,7 +414,7 @@ export function PlanDocument() {
                     { key: 'commitment', label: 'Brief commitment' },
                     { key: 'address', label: 'How this plan addresses it' },
                   ]}
-                  rows={commitments}
+                  rows={commitments as any}
                 />
               </div>
             </DocumentSection>
@@ -489,11 +444,11 @@ export function PlanDocument() {
             <DocumentTable
               columns={[{ key: 'commitment', label: 'Brief commitment' }, { key: 'count', label: 'Count' }]}
               rows={[
-                { commitment: 'Research objectives', count: objectives.length },
-                { commitment: 'Research questions', count: questions.length },
-                { commitment: 'Target barriers', count: (plan as any).structured_fields?.target_barriers?.length || 0 },
+                { commitment: 'Research objectives', count: vm.objectives.count },
+                { commitment: 'Research questions', count: vm.questions.count },
+                { commitment: 'Target barriers', count: vm.barriers.count },
                 { commitment: 'Methodology', count: methodology || 'N/A' },
-                { commitment: 'Budget', count: plan.inherited_context.budget || 'N/A' },
+                { commitment: 'Budget', count: vm.budget || 'N/A' },
               ]}
             />
             {/* Source table: only rendered when explicit source data is available */}
@@ -504,25 +459,23 @@ export function PlanDocument() {
             </p>
           </CollapsibleSection>
 
-          {/* Document information (collapsed) — using real artifact_metadata */}
+          {/* Document information (collapsed) — using view model's artifact metadata */}
           <CollapsibleSection title="Document information">
             <DocumentTable
               columns={[{ key: 'field', label: '' }, { key: 'value', label: '' }]}
               rows={[
-                { field: 'Generated', value: (plan as any).artifact_metadata?.created_at
-                  ? new Date((plan as any).artifact_metadata.created_at).toLocaleString('en-US', {
+                { field: 'Generated', value: vm.artifact.createdAt
+                  ? new Date(vm.artifact.createdAt).toLocaleString('en-US', {
                       year: 'numeric', month: 'long', day: 'numeric',
                       hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
                     })
-                  : plan.plan_created_at
-                    ? new Date(plan.plan_created_at).toLocaleString()
-                    : '' },
-                { field: 'Model', value: (plan as any).artifact_metadata?.model || '' },
-                { field: 'Template', value: (plan as any).artifact_metadata?.template_id && (plan as any).artifact_metadata?.template_version
-                  ? `${(plan as any).artifact_metadata.template_id} ${(plan as any).artifact_metadata.template_version}`
                   : '' },
-                { field: 'Study', value: plan.study.name },
-                { field: 'GitHub path', value: (plan as any).artifact_metadata?.path || (plan as any).study_metadata?.study_path || '' },
+                { field: 'Model', value: vm.artifact.model || '' },
+                { field: 'Template', value: vm.artifact.templateId && vm.artifact.templateVersion
+                  ? `${vm.artifact.templateId} ${vm.artifact.templateVersion}`
+                  : '' },
+                { field: 'Study', value: vm.study.name },
+                { field: 'GitHub path', value: vm.artifact.path || '' },
               ].filter(row => row.value)} // Filter out empty rows
             />
             <p style={{ fontSize: 'var(--text-caption-size)', color: 'var(--color-text-muted)', marginTop: 'var(--space-3)' }}>

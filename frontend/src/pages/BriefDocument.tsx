@@ -427,7 +427,7 @@ export function BriefDocument() {
               )}
 
               {/* Participants — render segments table if available, else prose fallback */}
-              {(vm.participantSegments.exists || participantsProse || brief.cascade_fields.participant_approach) && (
+              {(vm.participantSegments.exists || participantsProse) && (
                 <section className="doc-sec" data-sec="participants">
                   <h2>Participants<span className="prov">GENERATED + CANONICAL</span></h2>
                   {participantSegments.length > 0 ? (
@@ -470,7 +470,7 @@ export function BriefDocument() {
                   ) : (
                     <div className="blk ro">
                       <span className="lock">READ-ONLY · SYSTEM</span>
-                      <p>{brief.cascade_fields.participant_approach}</p>
+                      <p>{vm.participantSegments.approach}</p>
                       {vm.recruitmentSources && (
                         <p className="kv"><b>Recruitment</b> — {vm.recruitmentSources}</p>
                       )}
@@ -521,8 +521,8 @@ export function BriefDocument() {
               )}
 
               {/* Timeline — render phases table if available, else fallback to start/deadline */}
-              {/* NOTE: vm.timeline.summary.startDate is only derived from phases; raw start_date falls back to cascade */}
-              {(vm.timeline.exists || brief.cascade_fields.start_date || vm.quickFacts.decisionDeadline.exists) && (
+              {/* vm.timeline.summary.startDate includes fallback from cascade.start_date via projection */}
+              {(vm.timeline.exists || vm.timeline.summary.startDate || vm.quickFacts.decisionDeadline.exists) && (
                 <section className="doc-sec" data-sec="timeline">
                   <h2>Timeline<span className="prov system">SYSTEM · READ-ONLY</span></h2>
                   <div className="blk ro">
@@ -546,11 +546,10 @@ export function BriefDocument() {
                       </table>
                     ) : (
                       <div className="facts" style={{ marginTop: 0 }}>
-                        {/* Fallback to raw cascade start_date when no timeline phases */}
-                        {(vm.timeline.summary.startDate || brief.cascade_fields.start_date) && (
+                        {vm.timeline.summary.startDate && (
                           <div>
                             <div className="k">Start date</div>
-                            <div className="v">{formatDate(vm.timeline.summary.startDate || brief.cascade_fields.start_date)}</div>
+                            <div className="v">{formatDate(vm.timeline.summary.startDate)}</div>
                           </div>
                         )}
                         {vm.quickFacts.decisionDeadline.exists && (
