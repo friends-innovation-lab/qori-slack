@@ -357,3 +357,21 @@ describe('@qori/api-contracts', () => {
     expect(pkg.name).toBe('@qori/api-contracts');
   });
 });
+
+describe('plan.app-service section key mapping (regression)', () => {
+  it('uses correct YAML task_id "risks" not legacy "risks_raw"', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../application/plan.app-service.ts'),
+      'utf8',
+    );
+    // YAML template uses task_id: "risks", not "risks_raw"
+    // Bug fix: changed ['risks_raw', 'brief_operationalization'] to ['risks', 'brief_operationalization']
+    expect(source).toContain("['risks', 'brief_operationalization']");
+    expect(source).not.toContain("['risks_raw'");
+    // Key mapping must use 'risks' not 'risks_raw'
+    expect(source).toContain("jsonKey === 'risks' ? 'plan_risks'");
+    expect(source).not.toContain("jsonKey === 'risks_raw'");
+  });
+});

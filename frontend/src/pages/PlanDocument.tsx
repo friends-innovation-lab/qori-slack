@@ -170,10 +170,18 @@ export function PlanDocument() {
   const sessionFormat = plan.inherited_context.session_format || null;
   const sessionDuration = plan.inherited_context.session_duration || null;
 
+  // Derive concise participant summary for Quick Facts
+  // Extract numeric count from participant_approach prose (e.g., "8 Veterans" → "8 participants")
+  const participantApproach = plan.inherited_context.participant_approach || '';
+  const participantMatch = participantApproach.match(/^(\d+)\s+/);
+  const participantsFact = participantMatch
+    ? `${participantMatch[1]} participants`
+    : participantApproach.split(/[,;.]/).at(0)?.trim() || null;
+
   // Quick facts — matches design: Method, Participants, Sessions, Timeline
   const facts = [
     methodology ? { label: 'Method', value: methodology } : null,
-    plan.inherited_context.participant_approach ? { label: 'Participants', value: plan.inherited_context.participant_approach } : null,
+    participantsFact ? { label: 'Participants', value: participantsFact } : null,
     (sessionDuration || sessionFormat) ? {
       label: 'Sessions',
       value: sessionDuration || '',
@@ -269,6 +277,9 @@ export function PlanDocument() {
             studyName={plan.study.name}
             researcherName={meta.researcher_name}
             date={meta.created_at || plan.study.created_at}
+            status={(plan as any).artifact_metadata?.content_version
+              ? `Current · v${(plan as any).artifact_metadata.content_version}`
+              : null}
           />
 
           {/* Summary (generated) */}

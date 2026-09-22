@@ -10,9 +10,11 @@ interface MastheadProps {
   researcherName: string | null;
   requestedBy?: string | null;
   date: string | null;
+  /** Artifact status with optional version (e.g., "Current · v1") */
+  status?: string | null;
 }
 
-export function Masthead({ studyName, researcherName, requestedBy, date }: MastheadProps) {
+export function Masthead({ studyName, researcherName, requestedBy, date, status }: MastheadProps) {
   const formattedDate = date
     ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
@@ -41,6 +43,12 @@ export function Masthead({ studyName, researcherName, requestedBy, date }: Masth
           <span className={styles.mastheadItem}>
             <span className={styles.mastheadKey}>Date</span>
             <span className={styles.mastheadValue}>{formattedDate}</span>
+          </span>
+        )}
+        {status && (
+          <span className={styles.mastheadItem}>
+            <span className={styles.mastheadKey}>Status</span>
+            <span className={styles.mastheadValue}>{status}</span>
           </span>
         )}
       </div>

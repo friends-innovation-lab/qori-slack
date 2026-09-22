@@ -239,10 +239,10 @@ export async function executePlan(
             }
           }
           // Persist structured JSON sections
-          for (const jsonKey of ['risks_raw', 'brief_operationalization']) {
+          for (const jsonKey of ['risks', 'brief_operationalization']) {
             const jsonContent = renderedYaml.aiResponses[jsonKey];
             if (jsonContent) {
-              const sectionKey = jsonKey === 'risks_raw' ? 'plan_risks' : 'plan_commitments';
+              const sectionKey = jsonKey === 'risks' ? 'plan_risks' : 'plan_commitments';
               await ArtifactSectionModel.findOrCreate({
                 where: { artifact_id: artifact.id, section_key: sectionKey },
                 defaults: {

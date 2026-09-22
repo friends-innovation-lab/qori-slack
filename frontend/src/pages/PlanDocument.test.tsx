@@ -61,6 +61,7 @@ function makePlan(overrides: Record<string, unknown> = {}) {
       created_at: '2026-09-10T10:00:00.000Z',
       template_id: 'research_plan',
       template_version: 'v7.2',
+      content_version: 1,
       path: 'test-study/02-plan/research-plan.md',
       model: 'claude-sonnet-4-6',
     },
@@ -142,6 +143,24 @@ describe('PlanDocument', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Research Plan' })).toBeInTheDocument();
     expect(screen.getByText('OBJ-001')).toBeInTheDocument();
     expect(screen.getByText('RQ-001')).toBeInTheDocument();
+  });
+
+  it('renders Masthead with status from artifact_metadata.content_version', () => {
+    mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
+    renderWithProviders(<PlanDocument />);
+    // Status should show "Current · v1" based on content_version
+    expect(screen.getByText('Current · v1')).toBeInTheDocument();
+  });
+
+  it('does not render status when artifact_metadata missing', () => {
+    mockPlan.mockReturnValue({
+      data: makePlan({ artifact_metadata: undefined }),
+      isLoading: false,
+      error: null,
+    });
+    renderWithProviders(<PlanDocument />);
+    // Status should not appear
+    expect(screen.queryByText(/Current · v/)).not.toBeInTheDocument();
   });
 
   it('has Edit button', () => {
@@ -269,6 +288,42 @@ describe('PlanDocument', () => {
       // Should contain system block with facts
       const systemBlocks = summarySection?.querySelectorAll('[class*="systemBlock"]');
       expect(systemBlocks?.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('derives concise participant count from prose (regression: no prose dump)', () => {
+      // Test with "8 Veterans across segments" → "8 participants"
+      mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
+      const { container } = renderWithProviders(<PlanDocument />);
+
+      const summarySection = container.querySelector('[data-sec="summary"]');
+      expect(summarySection).toBeInTheDocument();
+
+      // Quick Fact should show concise "8 participants", not full prose
+      expect(within(summarySection as HTMLElement).getByText('8 participants')).toBeInTheDocument();
+      // The full prose should NOT appear in the Quick Facts area (it may appear elsewhere)
+      const factGrid = summarySection?.querySelector('[class*="factsGrid"]');
+      expect(factGrid).not.toHaveTextContent('across segments');
+    });
+
+    it('falls back to first clause when no numeric prefix', () => {
+      // Test with "Veterans aged 25-45, from urban areas" → "Veterans aged 25-45"
+      mockPlan.mockReturnValue({
+        data: makePlan({
+          inherited_context: {
+            ...makePlan().inherited_context,
+            participant_approach: 'Veterans aged 25-45, from urban areas',
+          },
+        }),
+        isLoading: false,
+        error: null,
+      });
+      const { container } = renderWithProviders(<PlanDocument />);
+
+      const summarySection = container.querySelector('[data-sec="summary"]');
+      expect(summarySection).toBeInTheDocument();
+
+      // Should show first clause only
+      expect(within(summarySection as HTMLElement).getByText('Veterans aged 25-45')).toBeInTheDocument();
     });
   });
 
