@@ -504,45 +504,30 @@ export async function executeBrief(
     }
   }
 
-  // Save computed cascade variables directly (not AI-extracted)
+  // Save deterministic computed cascade variables (not AI-extracted)
+  // timeline_phases: derived from canonical start_date + timeline_preference
+  // No LLM inference — same inputs always produce same phases
   const StudyVariableModel = sequelize.models.StudyVariable;
-  if (StudyVariableModel) {
+  if (StudyVariableModel && timelinePhases && timelinePhases.length > 0) {
     try {
-      // timeline_phases — computed by buildTimelinePhases, save as JSON array
-      if (timelinePhases && timelinePhases.length > 0) {
-        await StudyVariableModel.upsert({
-          project_id: input.projectId,
-          study_id: studyId,
-          variable_key: 'timeline_phases',
-          value: timelinePhases,
-          source_template: 'research_brief',
-          source_version: 'v7.1',
-          is_pool: false,
-        });
-      }
-      // participant_segments — computed from input if structured segments provided
-      // For now, extract count/approach as a single-segment fallback
-      const participantCount = parseParticipantTarget(input.participantApproach);
-      if (participantCount && participantCount > 0) {
-        const segments = [{
-          segment: input.participantApproach?.split(',')[0]?.trim() || 'Participants',
-          count: participantCount,
-          rationale: 'Participant approach as defined in brief',
-        }];
-        await StudyVariableModel.upsert({
-          project_id: input.projectId,
-          study_id: studyId,
-          variable_key: 'participant_segments',
-          value: segments,
-          source_template: 'research_brief',
-          source_version: 'v7.1',
-          is_pool: false,
-        });
-      }
+      await StudyVariableModel.upsert({
+        project_id: input.projectId,
+        study_id: studyId,
+        variable_key: 'timeline_phases',
+        value: timelinePhases,
+        source_template: 'research_brief',
+        source_version: 'v7.1',
+        is_pool: false,
+      });
     } catch (err) {
-      console.warn('[BRIEF] Computed variable save failed (non-blocking):', err instanceof Error ? err.message : err);
+      console.warn('[BRIEF] timeline_phases save failed (non-blocking):', err instanceof Error ? err.message : err);
     }
   }
+  // NOTE: participant_segments is NOT persisted here.
+  // If real structured segments are needed, they must come from:
+  // - Explicit modal input (future capability)
+  // - AI generation task with emit spec (future capability)
+  // The UI falls back to participants_prose or participant_approach text.
 
   await addStudyStatus({
     study_id: studyId,
