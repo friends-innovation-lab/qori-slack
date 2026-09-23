@@ -21,6 +21,7 @@
   },
   "include": ["src", "vite-env.d.ts"],
   "references": [
-    { "path": "../packages/api-contracts" }
+    { "path": "../packages/api-contracts" },
+    { "path": "../packages/artifact-contracts" }
   ]
 }

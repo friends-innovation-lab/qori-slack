@@ -9,7 +9,8 @@
  */
 
 import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { load as parseYaml } from 'js-yaml';
 
 import {
@@ -24,7 +25,9 @@ import {
 } from '../index';
 
 // ─── Path Resolution ───────────────────────────────────────────────
-// __dirname is available natively in CommonJS
+// ESM equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /**
  * Find the config/prompts directory relative to various possible working directories.

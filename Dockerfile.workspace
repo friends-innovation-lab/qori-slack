@@ -16,6 +16,9 @@ COPY package.json package-lock.json ./
 # Copy api-contracts (build dependency)
 COPY packages/api-contracts/ ./packages/api-contracts/
 
+# Copy artifact-contracts (build dependency)
+COPY packages/artifact-contracts/ ./packages/artifact-contracts/
+
 # Copy frontend
 COPY frontend/package.json ./frontend/
 
@@ -27,6 +30,9 @@ COPY frontend/ ./frontend/
 
 # Build api-contracts
 RUN npm run build --workspace=packages/api-contracts 2>/dev/null || true
+
+# Build artifact-contracts
+RUN npm run build --workspace=packages/artifact-contracts 2>/dev/null || true
 
 # Build frontend (Vite production build)
 ARG VITE_API_BASE_URL
