@@ -68,7 +68,7 @@ a:hover {
   position: absolute;
   top: -100%;
   left: var(--space-4);
-  z-index: 9999;
+  z-index: var(--z-skip); /* 9999 — same value as before, now via token */
   padding: var(--space-2) var(--space-4);
   background: var(--color-surface);
   color: var(--color-text);

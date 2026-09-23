@@ -3,6 +3,9 @@
  *
  * Agency-themable tokens are marked. State/custody/dependency tokens are fixed.
  * Scale discipline: every spacing value must be a space-scale step.
+ *
+ * DDR-04 = B (workspace-scoped first): Workspace v2 overrides are scoped to
+ * :root[data-qori-surface="workspace"]. All other routes use these production values.
  */
 
 :root {
@@ -139,6 +142,103 @@
   --color-dep-suggested: var(--color-success);
   --color-dep-free: var(--color-text-muted);
   --color-dep-current: var(--color-brand);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * BLOCK 1 — CC-1 additions (globally safe; no existing surface reads these)
+   * Per DDR-04 = B, these are new token NAMES only.
+   * ═══════════════════════════════════════════════════════════════════════════ */
+
+  --space-hair: 2px;
+
+  /* PF-02 aliases: names referenced by document.module.css but previously undefined.
+   * At :root each resolves to the fallback literal that renders today, so no visual change.
+   * Values copied from document.module.css var(--x, <fallback>) or semantic equivalents. */
+  --font-serif: 'Public Sans', system-ui, sans-serif; /* No serif fallback in document.module.css; use --font-ui value */
+  --font-sans: var(--font-ui);
+  --color-bg: var(--color-paper);
+  --color-text-secondary: var(--color-text-meta);
+  --color-border-secondary: #c9c9c9; /* Fallback from document.module.css:515 */
+  --color-success-ink: #446443; /* Fallback from document.module.css:501 */
+  --color-success-dark: #4d8055; /* Fallback from document.module.css:503 */
+  --color-info-ink: #2e6276; /* Fallback from document.module.css:507,509 */
+
+  /* Workspace type roles */
+  --type-masthead-size: 44px;  --type-masthead-line: 46px;  --type-masthead-track: -0.015em;
+  --type-masthead-size-md: 36px; --type-masthead-line-md: 40px;
+  --type-masthead-size-sm: 32px; --type-masthead-line-sm: 36px;
+  --type-section-size: 27px;   --type-section-line: 31px;   --type-section-track: -0.005em;
+  --type-section-size-sm: 24px; --type-section-line-sm: 28px;
+  --type-rail-status-size: 21px; --type-rail-status-line: 25px;
+  --type-study-name-size: 19px;  --type-study-name-line: 24px;
+  --type-doc-body-size: 16px;  --type-doc-body-line: 28px;
+  --type-doc-list-size: 15.5px; --type-doc-list-line: 26px;
+  --type-doc-row-size: 15px;   --type-doc-row-line: 24px;
+  --type-doc-table-size: 14px; --type-doc-table-line: 22px;
+  --type-doc-note-size: 13.5px; --type-doc-note-line: 22px;
+  --type-fact-size: 15.5px;    --type-fact-line: 20px;
+  --type-ui-size: 13px;        --type-ui-line: 20px;
+  --type-ui-sm-size: 12px;     --type-ui-sm-line: 16px;
+  --type-label-size: 11px;     --type-label-line: 16px;  --type-label-track: 0.14em;
+  --type-eyebrow-track: 0.2em;
+  --type-h3-track: 0.16em;
+  --type-id-size: 11px;        --type-id-track: 0.05em;
+  --weight-regular: 400; --weight-medium: 500; --weight-semibold: 600; --weight-bold: 700;
+
+  /* New radii */
+  --radius-xs: 3px;
+  --radius-xl: 10px;
+
+  /* Workspace-specific elevation */
+  --elevation-overlay-end: -16px 0 40px rgba(28, 27, 25, 0.14);
+  --elevation-overlay-start: 16px 0 40px rgba(0, 0, 0, 0.25);
+  --color-scrim: rgba(13, 13, 12, 0.4);
+
+  /* Workspace layout tokens */
+  --layout-app-rail: var(--layout-sidenav-collapsed);
+  --layout-lifecycle: 224px;
+  --layout-nav-drawer: 288px;
+  --layout-artifact-header: 52px;
+  --layout-context-rail: 344px;
+  --layout-context-strip: 48px;
+  --layout-rail-tabs: 48px;
+  --layout-doc-measure: 640px;
+  --layout-prose-measure: 66ch;
+  --layout-id-col: 56px;
+  --layout-toolbar-h: 40px;
+
+  /* Z-index layers */
+  --z-sticky: 10;
+  --z-popover: 30;
+  --z-nav: 50;
+  --z-rail-overlay: 60;
+  --z-topbar: 100;
+  --z-drawer-scrim: 190;
+  --z-drawer: 200;
+  --z-toast: 1000;
+  --z-skip: 9999;
+
+  /* New color names (unused by existing surfaces) */
+  --color-surface-inverse: #0D0D0C;
+  --color-surface-inverse-2: #1C1B19;
+  --color-rule-inverse: rgba(255, 255, 255, 0.07);
+  --color-hover-inverse: rgba(255, 255, 255, 0.05);
+  --color-text-strong: #000000;
+  --color-text-quiet: #9A9288;
+  --color-text-disabled: #C4BCB0;
+  --color-text-inverse: #F2EDE2;
+  --color-text-inverse-muted: #A8A295;
+  --color-text-inverse-quiet: #8F8A80;
+  --color-border-control: #8F887E;
+  --color-brand-text: #8A6B32;
+  --color-brand-deep: #7C6130;
+  --color-brand-tint: rgba(184, 150, 90, 0.10);
+  --color-brand-wash: rgba(184, 150, 90, 0.05);
+  --color-brand-soft: #EFE6CE;
+  --color-indicator: var(--color-brand-deep);
+  --color-indicator-inverse: #B8965A;
+  --color-link-hover: var(--color-link); /* Same as --color-link at :root for no visual change */
+  --color-focus-inverse: #E5C989;
+  --focus-ring-inverse: 2px solid var(--color-focus-inverse);
 }
 
 /* ─── Reduced motion ─── */
@@ -147,5 +247,93 @@
     --motion-fast: 0ms;
     --motion-base: 100ms;
     --motion-slow: 100ms;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * BLOCK 2 — Workspace v2 scope: overrides of EXISTING names
+ * Active only when <html data-qori-surface="workspace"> (set by AppShell in CC-3).
+ * DDR-04 = B: Home, Projects, forms and not-yet-migrated pages are unaffected.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+:root[data-qori-surface="workspace"] {
+  /* Fonts */
+  --font-ui: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Source Serif 4', 'Source Serif Pro', Georgia, 'Times New Roman', serif;
+  --font-display: 'Cormorant Garamond', 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Radii */
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* Elevation (warm ink) */
+  --elevation-sm: 0 1px 2px rgba(28, 27, 25, 0.06);
+  --elevation-md: 0 6px 20px rgba(28, 27, 25, 0.09);
+  --elevation-lg: 0 10px 30px rgba(13, 13, 12, 0.28);
+
+  /* Surfaces */
+  --color-paper: #FAFAF7;
+  --color-surface-muted: #F4F1EA;
+  --color-surface-hover: #F4F1EA;
+  --color-surface-selected: rgba(184, 150, 90, 0.10);
+
+  /* Text */
+  --color-text: #1C1B19;
+  --color-text-meta: #3A3733;
+  --color-text-muted: #6B6460;
+  --color-text-on-brand: #161410;
+
+  /* Borders */
+  --color-border: #E8E3D8;
+  --color-border-emphasis: #D7D1C2;
+
+  /* Brand (brass) */
+  --color-brand: #B8965A;
+  --color-brand-ink: #161410;
+
+  /* Interactive */
+  --color-link: #8A6B32;
+  --color-link-hover: #7C6130;
+  --color-focus: #7C6130;
+
+  /* Semantic */
+  --color-success: #3F6B3A;
+  --color-success-surface: #EDF2E9;
+  --color-warning: #8A6B32;
+  --color-warning-surface: #EFE6CE;
+  --color-error: #9C2A1F;
+  --color-error-surface: #F7ECEA;
+  --color-info: #2A4A6B;
+  --color-info-surface: #EBF0F4;
+
+  /* PF-02 aliases take v2 values inside the scope */
+  --font-sans: var(--font-ui);
+  --color-bg: var(--color-paper);
+  --color-text-secondary: var(--color-text-meta);
+  --color-border-secondary: var(--color-border-emphasis);
+  --color-success-ink: var(--color-success);
+  --color-success-dark: var(--color-success);
+  --color-info-ink: var(--color-info);
+
+  /* State / AI / dependency grammar resolved through v2 values */
+  --color-state-proposed-border: var(--color-border-emphasis);
+  --color-state-accepted-border: var(--color-text);
+  --color-state-rejected-border: var(--color-border-emphasis);
+  --color-state-rejected-text: var(--color-text-muted);
+  --color-ai-suggested-border: var(--color-border-emphasis);
+  --color-ai-suggested-surface: var(--color-surface-muted);
+  --color-dep-locked: var(--color-error);
+  --color-dep-readiness-warn: var(--color-warning);
+  --color-dep-suggested: var(--color-success);
+  --color-dep-free: var(--color-text-muted);
+  --color-dep-current: var(--color-brand);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-qori-surface="workspace"] {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
   }
 }
