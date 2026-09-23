@@ -1,0 +1,205 @@
+/**
+ * DESIGN REFERENCE — NOT PRODUCTION
+ * Proposed full replacement for frontend/src/styles/tokens.css (Qori Workspace Design System v1).
+ * Apply in CC-1. Every existing token name is preserved (values may change) so no CSS Module breaks.
+ * Legend in trailing comments:  [KEEP] unchanged · [CHANGE] same name, new value · [NEW] · [ALIAS] points at another token
+ * Source of values: approved Workspace v2 (workspace2.css) reconciled with production rules in design/workspace/design-system.md.
+ */
+
+:root {
+  /* ─── Space scale (fixed) ─── */
+  --space-1: 4px;   /* [KEEP] */
+  --space-2: 8px;   /* [KEEP] */
+  --space-3: 12px;  /* [KEEP] */
+  --space-4: 16px;  /* [KEEP] */
+  --space-5: 24px;  /* [KEEP] */
+  --space-6: 32px;  /* [KEEP] */
+  --space-7: 48px;  /* [KEEP] */
+  --space-8: 64px;  /* [KEEP] */
+  --space-hair: 2px; /* [NEW] optical offsets only (ID tag inner padding, underline offsets). Never for layout gaps. */
+
+  /* ─── Font families ─── */
+  --font-ui: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;            /* [CHANGE] was Public Sans */
+  --font-serif: 'Source Serif 4', 'Source Serif Pro', Georgia, 'Times New Roman', serif;             /* [NEW] already referenced by document.module.css but undefined */
+  --font-display: 'Cormorant Garamond', 'Source Serif 4', Georgia, 'Times New Roman', serif;         /* [CHANGE] was Public Sans */
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;               /* [CHANGE] adds JetBrains Mono */
+  --font-sans: var(--font-ui);                                                                       /* [ALIAS] referenced by document.module.css, undefined today */
+
+  /* ─── Legacy type scale (kept for non-workspace pages: Home, Projects, forms) ─── */
+  --text-h1-size: 28px; --text-h1-line: 34px; --text-h1-weight: 700;   /* [KEEP] */
+  --text-h2-size: 22px; --text-h2-line: 28px; --text-h2-weight: 700;   /* [KEEP] */
+  --text-h3-size: 18px; --text-h3-line: 24px; --text-h3-weight: 700;   /* [KEEP] */
+  --text-h4-size: 15px; --text-h4-line: 20px; --text-h4-weight: 600;   /* [KEEP] */
+  --text-body-size: 15px; --text-body-line: 24px; --text-body-weight: 400; --text-body-strong-weight: 600; /* [KEEP] */
+  --text-secondary-size: 13px; --text-secondary-line: 20px;           /* [KEEP] */
+  --text-caption-size: 12px; --text-caption-line: 16px; --text-caption-weight: 500; /* [KEEP] */
+  --text-mono-size: 13px; --text-mono-line: 20px;                     /* [KEEP] */
+
+  /* ─── Workspace type roles [NEW] — see TOKENS.md §Typography for the role table ─── */
+  --type-masthead-size: 44px;  --type-masthead-line: 46px;  --type-masthead-track: -0.015em;
+  --type-masthead-size-md: 36px; --type-masthead-line-md: 40px;
+  --type-masthead-size-sm: 32px; --type-masthead-line-sm: 36px;
+  --type-section-size: 27px;   --type-section-line: 31px;   --type-section-track: -0.005em;
+  --type-section-size-sm: 24px; --type-section-line-sm: 28px;
+  --type-rail-status-size: 21px; --type-rail-status-line: 25px;
+  --type-study-name-size: 19px;  --type-study-name-line: 24px;
+  --type-doc-body-size: 16px;  --type-doc-body-line: 28px;
+  --type-doc-list-size: 15.5px; --type-doc-list-line: 26px;
+  --type-doc-row-size: 15px;   --type-doc-row-line: 24px;
+  --type-doc-table-size: 14px; --type-doc-table-line: 22px;
+  --type-doc-note-size: 13.5px; --type-doc-note-line: 22px;
+  --type-fact-size: 15.5px;    --type-fact-line: 20px;
+  --type-ui-size: 13px;        --type-ui-line: 20px;
+  --type-ui-sm-size: 12px;     --type-ui-sm-line: 16px;
+  --type-label-size: 11px;     --type-label-line: 16px;  --type-label-track: 0.14em;
+  --type-eyebrow-track: 0.2em;
+  --type-h3-track: 0.16em;
+  --type-id-size: 11px;        --type-id-track: 0.05em;
+  --weight-regular: 400; --weight-medium: 500; --weight-semibold: 600; --weight-bold: 700;
+
+  /* ─── Radius ─── */
+  --radius-xs: 3px;    /* [NEW] ID/citation hover chips */
+  --radius-sm: 4px;    /* [KEEP] inputs, chips, tags */
+  --radius-md: 6px;    /* [CHANGE] was 8px — buttons, icon buttons, facts, cards */
+  --radius-lg: 8px;    /* [CHANGE] was 12px — overlays, popovers, dialogs */
+  --radius-xl: 10px;   /* [NEW] floating editor toolbar, icon-rail items */
+  --radius-full: 999px;/* [KEEP] */
+
+  /* ─── Elevation (warm ink) ─── */
+  --elevation-0: none;                                        /* [KEEP] */
+  --elevation-sm: 0 1px 2px rgba(28, 27, 25, 0.06);           /* [CHANGE] tint only */
+  --elevation-md: 0 6px 20px rgba(28, 27, 25, 0.09);          /* [CHANGE] menus, floating toolbar */
+  --elevation-lg: 0 10px 30px rgba(13, 13, 12, 0.28);         /* [CHANGE] dark popovers, dialogs */
+  --elevation-overlay-end: -16px 0 40px rgba(28, 27, 25, 0.14);  /* [NEW] context rail overlay (right edge) */
+  --elevation-overlay-start: 16px 0 40px rgba(0, 0, 0, 0.25);    /* [NEW] nav drawer (left edge) */
+  --color-scrim: rgba(13, 13, 12, 0.4);                        /* [NEW] replaces SideNav rgba(26,25,21,.4) */
+
+  /* ─── Border ─── */
+  --border-width: 1px;           /* [KEEP] */
+  --border-width-emphasis: 2px;  /* [KEEP] */
+
+  /* ─── Layout ─── */
+  --layout-content-max: 1440px;       /* [KEEP] non-workspace pages */
+  --layout-sidenav: 264px;            /* [KEEP] non-workspace pages */
+  --layout-sidenav-collapsed: 64px;   /* [KEEP] */
+  --layout-topbar: 56px;              /* [KEEP] */
+  --layout-drawer: 480px;             /* [KEEP] */
+  --layout-trace-panel: 384px;        /* [KEEP] Ask/trace panel — NOT the context rail (DDR-02) */
+  --layout-grid-columns: 12; --layout-gutter: 24px; --layout-gutter-narrow: 16px; /* [KEEP] */
+  --layout-page-pad-xl: 32px; --layout-page-pad-md: 24px; --layout-page-pad-sm: 16px; /* [KEEP] */
+  --layout-app-rail: var(--layout-sidenav-collapsed); /* [ALIAS] 64px dark icon rail */
+  --layout-lifecycle: 224px;          /* [NEW] dark study lifecycle panel */
+  --layout-nav-drawer: 288px;         /* [NEW] app rail + lifecycle as one drawer (≤980px) */
+  --layout-artifact-header: 52px;     /* [NEW] sticky artifact header inside workspace main */
+  --layout-context-rail: 344px;       /* [NEW] contextual rail, open (DDR-02) */
+  --layout-context-strip: 48px;       /* [NEW] contextual rail, collapsed strip (prototype 46 → scale) */
+  --layout-rail-tabs: 48px;           /* [NEW] rail tab row height (prototype 46 → scale) */
+  --layout-doc-measure: 640px;        /* [NEW] document content column (excl. padding) */
+  --layout-prose-measure: 66ch;       /* [NEW] paragraph measure inside the column */
+  --layout-id-col: 56px;              /* [NEW] fixed ID column in structured rows */
+  --layout-toolbar-h: 40px;           /* [NEW] editor toolbar outer height */
+
+  /* ─── Breakpoints (reference only; var() is not usable in @media) ───
+     xl ≥1181 · lg 981–1180 · md 768–980 · sm ≤767
+     Workspace routes use these. Non-workspace routes keep 767/1023 until migrated. */
+
+  /* ─── Motion ─── */
+  --motion-fast: 100ms;  /* [KEEP] hover, provenance reveal, chevrons */
+  --motion-base: 180ms;  /* [KEEP] drawers, rail overlay */
+  --motion-slow: 240ms;  /* [KEEP] full-screen sheets */
+  --motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1); /* [KEEP] */
+
+  /* ─── Z-index layers [NEW] — replace every literal z-index in shell + document CSS ─── */
+  --z-sticky: 10;         /* editor toolbar, sticky table headers */
+  --z-popover: 30;        /* tooltips, trace cards, user menu */
+  --z-nav: 50;            /* fixed SideNav (non-workspace) */
+  --z-rail-overlay: 60;   /* context rail as overlay (≤1180) */
+  --z-topbar: 100;        /* TopBar (non-workspace) */
+  --z-drawer-scrim: 190;  /* scrim behind nav drawer / modal sheet */
+  --z-drawer: 200;        /* nav drawer, full-screen rail sheet (≤767) */
+  --z-toast: 1000;        /* toast region */
+  --z-skip: 9999;         /* skip link */
+
+  /* ─── Color: surfaces ─── */
+  --color-paper: #FAFAF7;                 /* [CHANGE] was #FAF9F7 */
+  --color-surface: #FFFFFF;               /* [KEEP] inputs, menus, form cards */
+  --color-surface-muted: #F4F1EA;         /* [CHANGE] was #F3F1ED — "paper subtle" */
+  --color-surface-hover: #F4F1EA;         /* [CHANGE] was #F6F4F0 */
+  --color-surface-selected: rgba(184, 150, 90, 0.10); /* [CHANGE] agency-themable; was #FBF4DC */
+  --color-bg: var(--color-paper);         /* [ALIAS] referenced by document.module.css, undefined today */
+  --color-surface-inverse: #0D0D0C;       /* [NEW] app icon rail */
+  --color-surface-inverse-2: #1C1B19;     /* [NEW] lifecycle panel, dark popovers */
+  --color-rule-inverse: rgba(255, 255, 255, 0.07); /* [NEW] hairlines on dark */
+  --color-hover-inverse: rgba(255, 255, 255, 0.05); /* [NEW] */
+
+  /* ─── Color: text ─── */
+  --color-text: #1C1B19;             /* [CHANGE] was #1A1915 — ink, 16.5:1 on paper */
+  --color-text-strong: #000000;      /* [NEW] primary button hover only */
+  --color-text-meta: #3A3733;        /* [CHANGE] was #44423C — ink-2, 11.4:1 */
+  --color-text-secondary: var(--color-text-meta); /* [ALIAS] referenced, undefined today */
+  --color-text-muted: #6B6460;       /* [CHANGE] was #5C594F — ink-3, 5.6:1 on paper, 5.0:1 on surface-muted */
+  --color-text-quiet: #9A9288;       /* [NEW] ink-4, 2.9:1 — NON-TEXT ONLY (list markers, disabled glyphs, chevrons ≥ decorative) */
+  --color-text-disabled: #C4BCB0;    /* [NEW] ink-5 — decorative dots only */
+  --color-text-on-brand: #161410;    /* [CHANGE] */
+  --color-text-inverse: #F2EDE2;     /* [NEW] 15:1 on inverse-2 */
+  --color-text-inverse-muted: #A8A295; /* [NEW] 6.8:1 on inverse-2 */
+  --color-text-inverse-quiet: #8F8A80; /* [NEW] 5.0:1 on inverse-2, 5.7:1 on inverse — replaces prototype rgba(255,255,255,.3–.42) which failed */
+
+  /* ─── Color: borders ─── */
+  --color-border: #E8E3D8;           /* [CHANGE] hairline (decorative separators) */
+  --color-border-emphasis: #D7D1C2;  /* [CHANGE] hairline-2 (table header rule, secondary button) */
+  --color-border-secondary: var(--color-border-emphasis); /* [ALIAS] referenced, undefined today */
+  --color-border-control: #8F887E;   /* [NEW] 3.3:1 — form control boundaries (Textarea, checkbox) */
+
+  /* ─── Color: brand (agency-themable) ─── */
+  --color-brand: #B8965A;            /* [CHANGE] was #FFD43B — brass. Indicator on DARK surfaces only (6.2:1) */
+  --color-brand-ink: #161410;        /* [CHANGE] */
+  --color-brand-text: #8A6B32;       /* [NEW] brass text on light, 4.8:1 */
+  --color-brand-deep: #7C6130;       /* [NEW] IDs, eyebrows, light-surface indicators, 5.5:1 */
+  --color-brand-tint: rgba(184, 150, 90, 0.10); /* [NEW] hover chips, active tool */
+  --color-brand-wash: rgba(184, 150, 90, 0.05); /* [NEW] editable-block hover in editor */
+  --color-brand-soft: #EFE6CE;       /* [NEW] */
+  --color-indicator: var(--color-brand-deep);        /* [NEW] active tab underline / markers on light (≥3:1) */
+  --color-indicator-inverse: var(--color-brand);     /* [NEW] active markers on dark */
+
+  /* ─── Color: interactive (agency-themable) ─── */
+  --color-link: #8A6B32;             /* [CHANGE] was #3D5A99 */
+  --color-link-hover: #7C6130;       /* [NEW] */
+  --color-focus: #7C6130;            /* [CHANGE] was #3D5A99 — 5.5:1 on paper */
+  --color-focus-inverse: #E5C989;    /* [NEW] focus on dark nav */
+
+  /* ─── Color: semantic (fixed) ─── */
+  --color-success: #3F6B3A;          /* [CHANGE] 5.9:1 */
+  --color-success-surface: #EDF2E9;  /* [CHANGE] */
+  --color-success-ink: var(--color-success);  /* [ALIAS] referenced, undefined today */
+  --color-success-dark: var(--color-success); /* [ALIAS] referenced, undefined today */
+  --color-warning: #8A6B32;          /* [CHANGE] prototype uses brass for pending/warn */
+  --color-warning-surface: #EFE6CE;  /* [CHANGE] */
+  --color-error: #9C2A1F;            /* [CHANGE] 7.4:1 — "critical" */
+  --color-error-surface: #F7ECEA;    /* [CHANGE] */
+  --color-info: #2A4A6B;             /* [CHANGE] 8.7:1 */
+  --color-info-surface: #EBF0F4;     /* [CHANGE] */
+  --color-info-ink: var(--color-info); /* [ALIAS] referenced, undefined today */
+
+  /* ─── Color: state grammar / AI / dependency (fixed; names KEEP, resolve through new values) ─── */
+  --color-state-proposed-border: var(--color-border-emphasis);
+  --color-state-accepted-border: var(--color-text);
+  --color-state-rejected-border: var(--color-border-emphasis);
+  --color-state-rejected-text: var(--color-text-muted);
+  --color-ai-suggested-border: var(--color-border-emphasis);
+  --color-ai-suggested-surface: var(--color-surface-muted);
+  --color-dep-locked: var(--color-error);
+  --color-dep-readiness-warn: var(--color-warning);
+  --color-dep-suggested: var(--color-success);
+  --color-dep-free: var(--color-text-muted);
+  --color-dep-current: var(--color-brand);
+
+  /* ─── Focus ─── */
+  --focus-ring: 2px solid var(--color-focus);                 /* [KEEP name] */
+  --focus-ring-inverse: 2px solid var(--color-focus-inverse); /* [NEW] */
+  --focus-offset: 2px;                                        /* [KEEP] */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --motion-fast: 0ms; --motion-base: 0ms; --motion-slow: 0ms; } /* [CHANGE] was 0/100/100 — drawers appear without slide */
+}
