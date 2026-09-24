@@ -102,29 +102,34 @@
 
 .current .icon { color: var(--color-dep-current); }
 
-/* Responsive: horizontal strip on tablet */
+/* Responsive: horizontal strip on tablet — NON-INVERSE ONLY */
+/* VC-1: Scope to :not(.railInverse) to prevent leak into workspace routes */
 @media (max-width: 1023px) {
-  .rail {
+  .rail:not(.railInverse) {
     width: 100%;
     padding: 0;
     overflow-x: auto;
   }
 
-  .list {
+  .rail:not(.railInverse) .list {
     flex-direction: row;
     gap: 0;
   }
 
-  .list::before { display: none; }
+  .rail:not(.railInverse) .list::before {
+    display: none;
+  }
 
-  .node {
+  .rail:not(.railInverse) .node {
     white-space: nowrap;
     padding: var(--space-2) var(--space-3);
   }
 
-  .hint { display: none; }
+  .rail:not(.railInverse) .hint {
+    display: none;
+  }
 
-  .currentMarker {
+  .rail:not(.railInverse) .currentMarker {
     left: var(--space-2);
     right: var(--space-2);
     top: auto;
@@ -147,7 +152,9 @@
   scrollbar-width: thin;
   background: var(--color-surface-inverse-2);
   color: var(--color-text-inverse-muted);
+  /* VC-1: Explicit padding to prevent base .rail padding leak */
   padding: 0 0 var(--space-5);
+  padding-top: 0;
 }
 
 .studyHead {
