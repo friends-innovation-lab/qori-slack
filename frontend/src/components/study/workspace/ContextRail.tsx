@@ -179,29 +179,31 @@ export function ContextRail({
         aria-label="Document panel"
         {...dialogProps}
       >
-        <div className={styles.railTabs} role="tablist" aria-label="Panel mode">
-          {modes.map((mode, index) => (
-            <button
-              key={mode.id}
-              ref={(el) => {
-                tabRefs.current[mode.id] = el;
-              }}
-              type="button"
-              role="tab"
-              id={`rail-tab-${mode.id}`}
-              aria-selected={mode.id === activeMode}
-              aria-controls={`rail-panel-${mode.id}`}
-              tabIndex={mode.id === activeMode ? 0 : -1}
-              className={styles.railTab}
-              onClick={() => onModeChange(mode.id)}
-              onKeyDown={(e) => handleTabKeyDown(e, index)}
-            >
-              {mode.label}
-              {mode.count != null && (
-                <span className={styles.railTabCount}>{mode.count}</span>
-              )}
-            </button>
-          ))}
+        <div className={styles.railTabs}>
+          <div role="tablist" aria-label="Panel mode" className={styles.railTabList}>
+            {modes.map((mode, index) => (
+              <button
+                key={mode.id}
+                ref={(el) => {
+                  tabRefs.current[mode.id] = el;
+                }}
+                type="button"
+                role="tab"
+                id={`rail-tab-${mode.id}`}
+                aria-selected={mode.id === activeMode}
+                aria-controls={`rail-panel-${mode.id}`}
+                tabIndex={mode.id === activeMode ? 0 : -1}
+                className={styles.railTab}
+                onClick={() => onModeChange(mode.id)}
+                onKeyDown={(e) => handleTabKeyDown(e, index)}
+              >
+                {mode.label}
+                {mode.count != null && (
+                  <span className={styles.railTabCount}>{mode.count}</span>
+                )}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             className={`${styles.iconButton} ${styles.railClose}`}

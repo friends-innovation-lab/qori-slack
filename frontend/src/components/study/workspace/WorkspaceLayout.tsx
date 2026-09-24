@@ -4,6 +4,8 @@
  *
  * At ≤980px, the nav region becomes a drawer with scrim, focus trap, and Escape handling.
  * The SideNav inverse variant is rendered inside the drawer alongside the lifecycle panel.
+ *
+ * CC-8: Added inert handling for modal drawer per SPEC §12.6.
  */
 
 import { useEffect, useRef, type ReactNode } from 'react';
@@ -94,7 +96,11 @@ export function WorkspaceLayout({
         aria-hidden="true"
       />
 
-      <div className={styles.column}>
+      {/* CC-8: inert when drawer is open (SPEC §12.6) */}
+      <div
+        className={styles.column}
+        {...(isDrawerViewport && navOpen ? { inert: true } : {})}
+      >
         {header}
         <div className={styles.body}>
           <div className={styles.canvas}>{children}</div>

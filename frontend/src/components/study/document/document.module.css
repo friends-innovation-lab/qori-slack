@@ -478,6 +478,12 @@
   color: var(--color-text);
 }
 
+/* CC-8: focus-visible per SPEC §12.4 */
+.artifactTab:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
 .artifactTabActive {
   color: var(--color-text);
   border-bottom-color: var(--color-text);
@@ -518,6 +524,13 @@
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
+}
+
+/* CC-8: Reduced motion per SPEC §12.10 — save pulse is static */
+@media (prefers-reduced-motion: reduce) {
+  .saveDotSaving {
+    animation: none;
+  }
 }
 
 /* ─── Page head ─── */
