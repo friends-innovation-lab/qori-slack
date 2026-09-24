@@ -7,6 +7,10 @@
  * The Markdown extension enables bidirectional conversion:
  * - Hydration: markdown → TipTap nodes (via markdownBridge)
  * - Serialization: TipTap nodes → markdown (via serializeBrief)
+ *
+ * CC-6: Visual integration per WORKSPACE_V2_SPEC §8.
+ * - Focus extension (DDR-09) adds .has-focus class to the focused section
+ * - editorContext line explains what's hidden while editing
  */
 
 import { useEditor, EditorContent, type JSONContent } from '@tiptap/react';
@@ -21,6 +25,7 @@ import { TaskItem } from '@tiptap/extension-task-item';
 import { Link } from '@tiptap/extension-link';
 import { Superscript } from '@tiptap/extension-superscript';
 import { Placeholder } from '@tiptap/extension-placeholder';
+import { Focus } from '@tiptap/extension-focus';
 import { QoriSection } from './extensions/QoriSection';
 import { QoriStructuredItem } from './extensions/QoriStructuredItem';
 import { QoriSystemBlock } from './extensions/QoriSystemBlock';
@@ -59,6 +64,11 @@ export function ArtifactEditor({ initialContent, onDirtyChange, editorRef }: Art
       QoriSection,
       QoriStructuredItem,
       QoriSystemBlock,
+      // CC-6 (DDR-09): Focus extension for per-section focus indication
+      Focus.configure({
+        className: 'has-focus',
+        mode: 'shallowest', // Only highlight the innermost focused node
+      }),
     ],
     content: initialContent,
     onUpdate: ({ editor: e }) => {
@@ -81,7 +91,11 @@ export function ArtifactEditor({ initialContent, onDirtyChange, editorRef }: Art
   }
 
   return (
-    <div>
+    <div className={styles.editorWrapper}>
+      {/* CC-6 (DDR-15): Context line explaining what's hidden while editing */}
+      <p className={styles.editorContext}>
+        Read-only sections — masthead, quick facts, inherited and system sections, timeline and approval — aren't shown while editing.
+      </p>
       <EditToolbar editor={editor} />
       <div className={styles.editorContent}>
         <EditorContent editor={editor} />

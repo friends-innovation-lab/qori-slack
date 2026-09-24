@@ -18,6 +18,7 @@
     "@qori/artifact-contracts": "*",
     "@tanstack/react-query": "^5.62.0",
     "@tiptap/core": "^3.31.3",
+    "@tiptap/extension-focus": "^3.31.3",
     "@tiptap/extension-link": "^3.31.3",
     "@tiptap/extension-placeholder": "^3.31.3",
     "@tiptap/extension-superscript": "^3.31.3",

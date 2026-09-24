@@ -1,153 +1,325 @@
-/* ─── Toolbar ─── */
+/**
+ * Editor styles — CC-6 visual integration per WORKSPACE_V2_SPEC §8.
+ *
+ * Typography and spacing align with document view mode for minimal reflow.
+ * Workspace-scoped tokens are used throughout.
+ */
+
+/* ─── Editor wrapper ─── */
+
+.editorWrapper {
+  /* Container for context line + toolbar + editor */
+}
+
+/* ─── Context line (DDR-15) ─── */
+
+.editorContext {
+  margin: 0 0 var(--space-5);
+  font: 12px/18px var(--font-ui);
+  color: var(--color-text-muted);
+}
+
+/* ─── Toolbar (§8.6) ─── */
 
 .toolbar {
   position: sticky;
-  top: var(--layout-topbar);
-  z-index: 10;
+  top: var(--space-3);
+  z-index: var(--z-sticky, 10);
   display: flex;
   align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-2) var(--space-3);
+  gap: var(--space-hair, 2px);
+  width: max-content;
+  max-width: 100%;
+  height: var(--layout-toolbar-h, 40px);
+  margin: 0 auto var(--space-6);
+  padding: var(--space-1) var(--space-2);
   background-color: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-4);
+  border: 1px solid var(--color-border-emphasis);
+  border-radius: var(--radius-xl, 10px);
+  box-shadow: var(--elevation-md);
 }
 
 .tool {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   min-width: 32px;
   height: 32px;
   padding: 0 var(--space-2);
-  border: var(--border-width) solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
   border-radius: var(--radius-sm);
   background: none;
   cursor: pointer;
-  font-size: var(--text-secondary-size);
-  color: var(--color-text);
+  font-size: 13px;
+  line-height: 16px;
+  font-family: var(--font-ui);
+  color: var(--color-text-meta);
   transition: background-color var(--motion-fast);
 }
 
-.tool:hover {
+.tool:hover:not(:disabled) {
   background-color: var(--color-surface-hover);
 }
 
+.tool:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
 .toolActive {
-  background-color: var(--color-surface-selected);
-  border-color: var(--color-border);
+  background-color: var(--color-brand-tint);
+  color: var(--color-brand-deep);
+  font-weight: var(--weight-semibold, 600);
+}
+
+.tool:disabled {
+  color: var(--color-text-quiet, var(--color-text-muted));
+  cursor: not-allowed;
+  background: none;
 }
 
 .toolSep {
   width: 1px;
-  height: 20px;
+  height: 16px;
   background-color: var(--color-border);
-  margin: 0 var(--space-1);
+  margin: 0 var(--space-2);
 }
 
 .toolHint {
-  margin-left: auto;
-  font-size: var(--text-caption-size);
+  margin-left: var(--space-2);
+  padding-right: var(--space-1);
+  font: 12px/16px var(--font-ui);
   color: var(--color-text-muted);
   white-space: nowrap;
 }
 
-/* ─── Editor content area ─── */
+/* ─── Editor content area (§8.1-8.4) ─── */
 
 .editorContent {
   min-height: 200px;
 }
 
+/* ProseMirror base styling */
 .editorContent :global(.ProseMirror) {
   outline: none;
-  font-size: var(--text-body-size);
-  line-height: 1.7;
+  font: var(--type-doc-body-size, 16px)/var(--type-doc-body-line, 28px) var(--font-serif);
+  color: var(--color-text);
+  caret-color: var(--color-brand-deep);
 }
 
+/* Focus visible fallback (if Focus extension not working) */
+.editorContent :global(.ProseMirror):focus-visible {
+  outline: none;
+}
+
+/* Paragraphs */
 .editorContent :global(.ProseMirror) p {
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-4);
+  max-width: var(--layout-prose-measure, 65ch);
 }
 
+/* Headings */
 .editorContent :global(.ProseMirror) h2 {
-  font-size: var(--text-h2-size);
-  font-weight: var(--text-h2-weight);
-  margin: var(--space-5) 0 var(--space-3);
+  margin: var(--space-7, 48px) 0 var(--space-4);
+  font: var(--weight-medium, 500) var(--type-section-size, 27px)/var(--type-section-line, 31px) var(--font-display);
+  letter-spacing: var(--type-section-track, -0.005em);
 }
 
 .editorContent :global(.ProseMirror) h3 {
-  font-size: var(--text-h3-size);
-  font-weight: var(--text-h3-weight);
-  margin: var(--space-4) 0 var(--space-3);
+  margin: var(--space-5) 0 var(--space-3);
+  font: var(--weight-semibold, 600) var(--type-label-size, 11px)/var(--type-label-line, 16px) var(--font-mono);
+  letter-spacing: var(--type-h3-track, 0.16em);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
 }
 
+/* Lists */
 .editorContent :global(.ProseMirror) ul,
 .editorContent :global(.ProseMirror) ol {
+  margin: 0 0 var(--space-4);
   padding-left: var(--space-5);
-  margin: 0 0 var(--space-3);
 }
 
 .editorContent :global(.ProseMirror) li {
-  margin-bottom: var(--space-1);
-}
-
-.editorContent :global(.ProseMirror) strong {
-  font-weight: 600;
-}
-
-.editorContent :global(.ProseMirror) table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: var(--space-3) 0;
-}
-
-.editorContent :global(.ProseMirror) th,
-.editorContent :global(.ProseMirror) td {
-  border: var(--border-width) solid var(--color-border);
-  padding: var(--space-2) var(--space-3);
-  text-align: left;
-}
-
-.editorContent :global(.ProseMirror) th {
-  font-weight: 600;
-  background-color: var(--color-surface-muted);
-}
-
-/* Structured items in edit mode */
-.editorContent :global(.qori-structured-item) {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-md);
+  font-size: var(--type-doc-list-size, 15.5px);
+  line-height: var(--type-doc-list-line, 26px);
   margin-bottom: var(--space-2);
 }
 
-/* System blocks in edit mode */
-.editorContent :global(.qori-system-block) {
-  padding: var(--space-3);
-  background-color: var(--color-surface-muted);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  opacity: 0.7;
+.editorContent :global(.ProseMirror) li::marker {
+  color: var(--color-text-quiet, var(--color-text-muted));
+}
+
+/* Inline formatting */
+.editorContent :global(.ProseMirror) strong {
+  font-weight: var(--weight-semibold, 600);
+}
+
+.editorContent :global(.ProseMirror) sup {
+  font: var(--weight-semibold, 600) var(--type-label-size, 11px)/0 var(--font-mono);
+  color: var(--color-brand-deep);
+}
+
+/* Tables */
+.editorContent :global(.ProseMirror) table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-1) 0 var(--space-4);
+}
+
+.editorContent :global(.ProseMirror) th {
+  text-align: left;
+  padding: 0 var(--space-3) var(--space-2) var(--space-hair, 2px);
+  border: 0;
+  border-bottom: 1px solid var(--color-border-emphasis);
+  background: none;
+  font: var(--weight-semibold, 600) var(--type-label-size, 11px)/var(--type-label-line, 16px) var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.editorContent :global(.ProseMirror) td {
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-hair, 2px);
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  font: var(--type-doc-table-size, 14px)/var(--type-doc-table-line, 22px) var(--font-serif);
+  color: var(--color-text-meta);
+}
+
+/* Placeholder */
+.editorContent :global(.ProseMirror) :global(p.is-editor-empty:first-child::before) {
+  content: attr(data-placeholder);
+  color: var(--color-text-muted);
+  float: left;
+  height: 0;
   pointer-events: none;
 }
 
-/* Focus styles for accessibility */
-.editorContent :global(.ProseMirror):focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
+/* ─── QoriSection (§8.1-8.2) ─── */
+
+.editorContent :global(section[data-qori-section]) {
+  position: relative;
+  margin: 0 calc(-1 * var(--space-4));
+  padding: var(--space-1) var(--space-4);
+  border-left: 2px solid transparent;
   border-radius: var(--radius-sm);
+  transition: background-color var(--motion-fast), border-color var(--motion-fast);
 }
+
+/* Editable section hover */
+.editorContent :global(section[data-qori-section]:not([contenteditable="false"]):hover) {
+  background: var(--color-brand-wash);
+  cursor: text;
+}
+
+/* Focused section (requires Focus extension, DDR-09) */
+.editorContent :global(section[data-qori-section].has-focus) {
+  border-left-color: var(--color-brand);
+  background: var(--color-brand-wash);
+}
+
+/* Provenance label via ::before */
+.editorContent :global(section[data-qori-section])::before {
+  content: attr(data-provenance);
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-4);
+  font: var(--weight-semibold, 600) var(--type-label-size, 11px)/var(--type-label-line, 16px) var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* Read-only section (§8.2) */
+.editorContent :global(section[data-qori-section][contenteditable="false"]) {
+  background: var(--color-surface-muted);
+  cursor: default;
+}
+
+.editorContent :global(section[data-qori-section][contenteditable="false"])::before {
+  content: attr(data-provenance) " · read-only";
+}
+
+/* ─── QoriStructuredItem (§8.4) ─── */
+
+.editorContent :global(.qori-structured-item) {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  margin: 0;
+  padding: var(--space-3) var(--space-hair, 2px);
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  border-radius: 0;
+  font: 15px/24px var(--font-serif);
+  color: var(--color-text);
+}
+
+/* ID rendered via CSS only — not selectable, not in text content */
+.editorContent :global(.qori-structured-item)::before {
+  content: attr(data-qori-item);
+  flex: 0 0 var(--layout-id-col, 56px);
+  font: var(--weight-semibold, 600) var(--type-id-size, 11px)/var(--type-doc-row-line, 24px) var(--font-mono);
+  letter-spacing: var(--type-id-track, 0.05em);
+  color: var(--color-brand-deep);
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Bottom border for last structured item followed by non-structured content */
+.editorContent :global(.qori-structured-item + :not(.qori-structured-item)) {
+  margin-top: 0;
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-4);
+}
+
+/* ─── QoriSystemBlock (§8.2) ─── */
+
+.editorContent :global(.qori-system-block) {
+  position: relative;
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-muted);
+  border: 0;
+  border-radius: var(--radius-sm);
+  /* CC-6: No opacity reduction (fixes PF-13) */
+  opacity: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.editorContent :global(.qori-system-block)::before {
+  content: "System · read-only";
+  display: block;
+  margin-bottom: var(--space-2);
+  font: var(--weight-semibold, 600) var(--type-label-size, 11px)/var(--type-label-line, 16px) var(--font-mono);
+  letter-spacing: var(--type-label-track, 0.14em);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* ─── Responsive (§8.6) ─── */
 
 @media (max-width: 767px) {
   .toolbar {
-    flex-wrap: wrap;
-    position: static;
+    position: sticky;
+    top: 0;
+    width: calc(100% + 2 * var(--space-4));
+    margin: 0 calc(-1 * var(--space-4)) var(--space-5);
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    overflow-x: auto;
+    justify-content: flex-start;
   }
 
   .toolHint {
     display: none;
+  }
+
+  .tool {
+    min-width: 40px;
+    height: 40px;
   }
 }
