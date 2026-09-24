@@ -373,6 +373,7 @@ export function BriefDocument() {
           />
         ) : undefined
       }
+      railOpen={showRail && railMode !== null}
       navOpen={navOpen}
       onNavClose={() => setNavOpen(false)}
     >

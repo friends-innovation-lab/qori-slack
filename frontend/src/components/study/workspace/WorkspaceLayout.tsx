@@ -5,7 +5,9 @@
  * At ≤980px, the nav region becomes a drawer with scrim, focus trap, and Escape handling.
  * The SideNav inverse variant is rendered inside the drawer alongside the lifecycle panel.
  *
- * CC-8: Added inert handling for modal drawer per SPEC §12.6.
+ * CC-8: Added inert handling for modal drawer and sheet per SPEC §12.6.
+ * - Nav drawer (≤980px): inert on column when navOpen
+ * - ContextRail sheet (≤767px): inert on column when railOpen, rail rendered outside column
  */
 
 import { useEffect, useRef, type ReactNode } from 'react';
@@ -20,6 +22,8 @@ interface WorkspaceLayoutProps {
   header: ReactNode;
   /** ContextRail (optional) */
   rail?: ReactNode;
+  /** Whether the ContextRail is open (for sheet modal inert handling) */
+  railOpen?: boolean;
   /** Whether the nav drawer is open (state owned by page) */
   navOpen: boolean;
   /** Close the nav drawer */
@@ -32,12 +36,18 @@ export function WorkspaceLayout({
   nav,
   header,
   rail,
+  railOpen = false,
   navOpen,
   onNavClose,
   children,
 }: WorkspaceLayoutProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const isDrawerViewport = useMediaQuery(WORKSPACE_BREAKPOINTS.isMdOrBelow);
+  const isSheetViewport = useMediaQuery(WORKSPACE_BREAKPOINTS.isSmOrBelow);
+
+  // CC-8: Determine if any modal surface is open (drawer or sheet)
+  const isDrawerModal = isDrawerViewport && navOpen;
+  const isSheetModal = isSheetViewport && railOpen;
 
   // Focus management and Escape handling for drawer
   useEffect(() => {
@@ -96,17 +106,21 @@ export function WorkspaceLayout({
         aria-hidden="true"
       />
 
-      {/* CC-8: inert when drawer is open (SPEC §12.6) */}
+      {/* CC-8: inert when drawer OR sheet modal is open (SPEC §12.6) */}
       <div
         className={styles.column}
-        {...(isDrawerViewport && navOpen ? { inert: true } : {})}
+        {...((isDrawerModal || isSheetModal) ? { inert: true } : {})}
       >
         {header}
         <div className={styles.body}>
           <div className={styles.canvas}>{children}</div>
-          {rail}
+          {/* Rail inside body when NOT sheet viewport (for flex layout) */}
+          {!isSheetViewport && rail}
         </div>
       </div>
+
+      {/* CC-8: Rail outside column when sheet viewport (to avoid inert) */}
+      {isSheetViewport && rail}
     </div>
   );
 }
