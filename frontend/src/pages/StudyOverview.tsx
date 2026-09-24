@@ -13,78 +13,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { LifecycleRail } from '@/components/study/LifecycleRail';
-import type { LifecycleNode } from '@qori/api-contracts';
+import { computeLifecycleNodes } from '@/components/study/lifecycle';
 import styles from './StudyOverview.module.css';
-
-/**
- * Compute lifecycle nodes from study + brief state.
- * This is a simplified version — backend should provide this eventually.
- */
-function computeLifecycleNodes(
-  briefStatus: string | null,
-): LifecycleNode[] {
-  const hasBrief = !!briefStatus;
-  const briefApproved = briefStatus === 'approved';
-
-  return [
-    {
-      stage: 'overview',
-      label: 'Overview',
-      state: 'current',
-      unlock_hint: null,
-      count: 0,
-      is_current: true,
-    },
-    {
-      stage: 'brief',
-      label: 'Brief',
-      state: hasBrief ? (briefApproved ? 'free' : 'suggested') : 'suggested',
-      unlock_hint: null,
-      count: hasBrief ? 1 : 0,
-      is_current: false,
-    },
-    {
-      stage: 'plan',
-      label: 'Plan',
-      state: briefApproved ? 'suggested' : 'locked',
-      unlock_hint: briefApproved ? null : 'Brief must be approved first',
-      count: 0,
-      is_current: false,
-    },
-    {
-      stage: 'sources',
-      label: 'Sources',
-      state: 'locked',
-      unlock_hint: 'Add sources after plan',
-      count: 0,
-      is_current: false,
-    },
-    {
-      stage: 'evidence',
-      label: 'Evidence',
-      state: 'locked',
-      unlock_hint: 'Analyze sessions first',
-      count: 0,
-      is_current: false,
-    },
-    {
-      stage: 'findings',
-      label: 'Findings',
-      state: 'locked',
-      unlock_hint: 'Run synthesis first',
-      count: 0,
-      is_current: false,
-    },
-    {
-      stage: 'outputs',
-      label: 'Outputs',
-      state: 'locked',
-      unlock_hint: 'Generate readout first',
-      count: 0,
-      is_current: false,
-    },
-  ];
-}
 
 export function StudyOverview() {
   const { studyPublicId } = useParams<{ studyPublicId: string }>();

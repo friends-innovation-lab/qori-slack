@@ -1,0 +1,165 @@
+/**
+ * ContextRail — Tabbed panel shell for document-related tools.
+ * Spec: WORKSPACE_V2_SPEC.md §10, RESPONSIVE.md.
+ */
+
+/* Docked rail (≥1181) */
+.rail {
+  width: var(--layout-context-rail);
+  flex: 0 0 var(--layout-context-rail);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--color-border);
+  background: var(--color-paper);
+}
+
+.railTabs {
+  flex-shrink: 0;
+  height: var(--layout-rail-tabs);
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-hair);
+  padding: 0 var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.railTab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  margin-bottom: -1px;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font: var(--weight-regular) var(--type-ui-size)/var(--type-ui-line) var(--font-ui);
+  color: var(--color-text-muted);
+  transition: color var(--motion-fast) var(--motion-ease);
+}
+
+.railTab:hover {
+  color: var(--color-text);
+}
+
+.railTab[aria-selected='true'] {
+  color: var(--color-text);
+  font-weight: var(--weight-semibold);
+  border-bottom-color: var(--color-indicator);
+}
+
+.railTabCount {
+  font: var(--weight-medium) var(--type-label-size)/var(--type-label-line) var(--font-mono);
+  color: var(--color-text-muted);
+}
+
+.railClose {
+  margin-left: auto;
+  align-self: center;
+}
+
+.railBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-4) var(--space-7);
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+
+/* Collapsed strip (vertical icon buttons) */
+.strip {
+  width: var(--layout-context-strip);
+  flex: 0 0 var(--layout-context-strip);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-left: 1px solid var(--color-border);
+  background: var(--color-paper);
+}
+
+/* Icon button (used in strip and close) */
+.iconButton {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.iconButton:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.iconButton[aria-pressed='true'] {
+  background: var(--color-brand-tint);
+  color: var(--color-brand-deep);
+}
+
+/* Overlay capable class for position adjustments */
+.railOverlayCapable {
+  /* Base styles for when rail can be an overlay */
+}
+
+/* ─── Responsive: 768–1180px — overlay ─── */
+
+@media (max-width: 1180px) {
+  .rail.railOverlayCapable {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-rail-overlay);
+    width: min(var(--layout-context-rail), 92vw);
+    box-shadow: var(--elevation-overlay-end);
+  }
+}
+
+.railOverlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-rail-overlay);
+  width: min(var(--layout-context-rail), 92vw);
+  box-shadow: var(--elevation-overlay-end);
+}
+
+/* ─── Responsive: ≤767px — full-screen sheet ─── */
+
+.railSheet {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-drawer);
+  width: 100%;
+  border-left: 0;
+}
+
+@media (max-width: 767px) {
+  .strip {
+    display: none;
+  }
+
+  .rail.railOverlayCapable {
+    inset: 0;
+    width: 100%;
+    box-shadow: none;
+    z-index: var(--z-drawer);
+    border-left: 0;
+  }
+
+  .iconButton {
+    width: 40px;
+    height: 40px;
+  }
+}

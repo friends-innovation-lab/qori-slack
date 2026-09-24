@@ -5,6 +5,22 @@
   background-color: var(--color-paper);
 }
 
+/* Workspace v2 variant — full-height flex, no TopBar, no page padding */
+.shellWorkspace {
+  display: flex;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--color-paper);
+}
+
+.shellWorkspace .main {
+  flex: 1;
+  min-width: 0;
+  max-width: none;
+  padding: 0;
+  display: flex;
+}
+
 .body {
   display: flex;
   flex: 1;
