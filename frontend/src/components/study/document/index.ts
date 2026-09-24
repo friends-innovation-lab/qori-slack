@@ -9,6 +9,7 @@ export { IdTag } from './IdTag';
 export { Masthead } from './Masthead';
 export { ProvenanceTag } from './ProvenanceTag';
 export { ReviewRail } from './ReviewRail';
+export type { ChecklistState } from './ReviewRail';
 export { SaveStateIndicator } from './SaveStateIndicator';
 export { StructuredItemRow } from './StructuredItemRow';
 export { StructuredItemRows } from './StructuredItemRows';
