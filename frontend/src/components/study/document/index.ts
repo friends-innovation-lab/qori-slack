@@ -1,4 +1,5 @@
 export { ApprovalSection } from './ApprovalSection';
+export { ArtifactHeader } from './ArtifactHeader';
 export { ArtifactTabs } from './ArtifactTabs';
 export { CollapsibleSection } from './CollapsibleSection';
 export { DocumentSection } from './DocumentSection';

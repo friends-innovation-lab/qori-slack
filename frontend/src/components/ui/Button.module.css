@@ -22,6 +22,13 @@
   cursor: not-allowed;
 }
 
+/* Small size (32px) for headers and rails */
+.sm {
+  height: 32px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-secondary-size);
+}
+
 .icon {
   display: flex;
   align-items: center;

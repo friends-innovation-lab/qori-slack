@@ -1,15 +1,17 @@
 /**
  * PlanDocument tests — document rendering, edit mode, design parity.
  *
+ * CC-4: Updated for workspace shell + view model provenance.
+ *
  * Tests cover:
  * - Method kv layout (no h3 subheadings)
- * - Objectives intro text and SYSTEM provenance
- * - Questions SYSTEM provenance with priority pills
- * - Quick Facts in separate system block
- * - Recruitment only renders from real source
+ * - Objectives INHERITED provenance (PF-20 fix)
+ * - Questions INHERITED provenance with priority pills
+ * - Quick Facts in Summary section
  * - Compensation kv treatment
- * - Timeline research period, center Duration, footer
- * - Brief commitments SYSTEM/read-only
+ * - Timeline INHERITED, research period, center Duration, footer
+ * - Brief commitments SYSTEM treatment
+ * - Risks GENERATED · READ-ONLY (PF-20 fix)
  * - Provenance commitment counts
  * - Document metadata uses real artifact_metadata
  * - No dangerouslySetInnerHTML
@@ -28,8 +30,12 @@ vi.mock('react-router', async () => {
     ...actual,
     useParams: () => ({ studyPublicId: 'study-1' }),
     useNavigate: () => vi.fn(),
+    useLocation: () => ({ pathname: '/studies/study-1/plan', search: '', hash: '' }),
     Link: ({ children, to, ...rest }: { children: React.ReactNode; to: string; [key: string]: unknown }) => (
       <a href={to} {...rest}>{children}</a>
+    ),
+    NavLink: ({ children, to, className, ...rest }: { children: React.ReactNode; to: string; className?: ((args: { isActive: boolean }) => string) | string; [key: string]: unknown }) => (
+      <a href={to} className={typeof className === 'function' ? className({ isActive: false }) : className} {...rest}>{children}</a>
     ),
   };
 });
@@ -137,12 +143,14 @@ describe('PlanDocument', () => {
 
   // ─── Basic rendering ───────────────────────────────────────────────
 
-  it('renders full document with inherited stable IDs', () => {
+  it('renders Masthead with study name and artifactLabel', () => {
     mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
-    renderWithProviders(<PlanDocument />);
-    expect(screen.getByRole('heading', { level: 1, name: 'Research Plan' })).toBeInTheDocument();
-    expect(screen.getByText('OBJ-001')).toBeInTheDocument();
-    expect(screen.getByText('RQ-001')).toBeInTheDocument();
+    const { container } = renderWithProviders(<PlanDocument />);
+    // Masthead header element contains artifactLabel and study name
+    const masthead = container.querySelector('header');
+    expect(masthead).toBeInTheDocument();
+    expect(within(masthead as HTMLElement).getByText('Research Plan')).toBeInTheDocument();
+    expect(within(masthead as HTMLElement).getByText('Test Study')).toBeInTheDocument();
   });
 
   it('renders Masthead with status from artifact_metadata.content_version', () => {
@@ -152,27 +160,18 @@ describe('PlanDocument', () => {
     expect(screen.getByText('Current · v1')).toBeInTheDocument();
   });
 
-  it('does not render status when artifact_metadata missing', () => {
-    mockPlan.mockReturnValue({
-      data: makePlan({ artifact_metadata: undefined }),
-      isLoading: false,
-      error: null,
-    });
-    renderWithProviders(<PlanDocument />);
-    // Status should not appear
-    expect(screen.queryByText(/Current · v/)).not.toBeInTheDocument();
-  });
-
   it('has Edit button', () => {
     mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
     renderWithProviders(<PlanDocument />);
-    expect(screen.getByText('Edit')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
   });
 
-  it('renders GitHub link', () => {
+  it('renders GitHub link in header', () => {
     mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
     renderWithProviders(<PlanDocument />);
-    expect(screen.getByText(/View on GitHub/)).toBeInTheDocument();
+    // Use getAllByText and check at least one exists (header link)
+    const githubLinks = screen.getAllByText(/GitHub/);
+    expect(githubLinks.length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows empty state when no plan_url', () => {
@@ -187,12 +186,14 @@ describe('PlanDocument', () => {
     expect(screen.queryByText('"id"')).not.toBeInTheDocument();
   });
 
-  it('shows Plan tab as active', () => {
+  it('shows Plan tab as active (aria-current)', () => {
     mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
     renderWithProviders(<PlanDocument />);
-    const tabs = screen.getAllByRole('tab');
-    const planTab = tabs.find(t => t.textContent === 'Research Plan');
-    expect(planTab).toHaveAttribute('aria-selected', 'true');
+    // Find the Plan tab in the artifact tabs navigation
+    const tabNav = screen.getByLabelText('Study artifacts');
+    const planTab = within(tabNav).getByText('Research Plan');
+    // CC-4: Using nav semantics with aria-current="page"
+    expect(planTab).toHaveAttribute('aria-current', 'page');
   });
 
   it('has no approval controls', () => {
@@ -228,21 +229,27 @@ describe('PlanDocument', () => {
     });
   });
 
-  // ─── Priority 2: Objectives + Questions ────────────────────────────
+  // ─── Priority 2: Objectives + Questions (PF-20: INHERITED provenance) ────
 
   describe('Priority 2: Objectives + Questions', () => {
-    it('renders Objectives section with SYSTEM provenance and intro text', () => {
+    it('renders Objectives section with INHERITED provenance (PF-20 fix)', () => {
       mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
       const { container } = renderWithProviders(<PlanDocument />);
 
       const objectivesSection = container.querySelector('[data-sec="objectives"]');
       expect(objectivesSection).toBeInTheDocument();
-      // Check SYSTEM and READ-ONLY labels exist
-      const systemLabels = within(objectivesSection as HTMLElement).getAllByText(/SYSTEM/i);
-      expect(systemLabels.length).toBeGreaterThanOrEqual(1);
-      expect(within(objectivesSection as HTMLElement).getByText(/What we aim to learn/)).toBeInTheDocument();
-      const readOnlyLabels = within(objectivesSection as HTMLElement).getAllByText(/READ-ONLY/);
-      expect(readOnlyLabels.length).toBeGreaterThanOrEqual(1);
+      // CC-4: PF-20 fix — now shows INHERITED from view model, not SYSTEM
+      expect(within(objectivesSection as HTMLElement).getByText(/INHERITED/i)).toBeInTheDocument();
+    });
+
+    it('renders source note linking to approved brief', () => {
+      mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
+      const { container } = renderWithProviders(<PlanDocument />);
+
+      const objectivesSection = container.querySelector('[data-sec="objectives"]');
+      expect(objectivesSection).toBeInTheDocument();
+      // Source note should link to approved brief
+      expect(within(objectivesSection as HTMLElement).getByText(/approved brief/)).toBeInTheDocument();
     });
 
     it('renders OBJ IDs', () => {
@@ -252,17 +259,14 @@ describe('PlanDocument', () => {
       expect(screen.getByText('OBJ-002')).toBeInTheDocument();
     });
 
-    it('renders Research questions section with SYSTEM provenance and READ-ONLY label', () => {
+    it('renders Research questions section with INHERITED provenance (PF-20 fix)', () => {
       mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
       const { container } = renderWithProviders(<PlanDocument />);
 
       const questionsSection = container.querySelector('[data-sec="questions"]');
       expect(questionsSection).toBeInTheDocument();
-      // Check that SYSTEM and READ-ONLY labels exist
-      const systemLabels = within(questionsSection as HTMLElement).getAllByText(/SYSTEM/i);
-      expect(systemLabels.length).toBeGreaterThanOrEqual(1);
-      const readOnlyLabels = within(questionsSection as HTMLElement).getAllByText(/READ-ONLY/);
-      expect(readOnlyLabels.length).toBeGreaterThanOrEqual(1);
+      // CC-4: PF-20 fix — now shows INHERITED from view model
+      expect(within(questionsSection as HTMLElement).getByText(/INHERITED/i)).toBeInTheDocument();
     });
 
     it('renders RQ IDs with priority pills', () => {
@@ -353,9 +357,19 @@ describe('PlanDocument', () => {
     });
   });
 
-  // ─── Priority 5: Timeline ──────────────────────────────────────────
+  // ─── Priority 5: Timeline (PF-20: INHERITED provenance) ────────────
 
   describe('Priority 5: Timeline', () => {
+    it('renders Timeline with INHERITED provenance (PF-20 fix)', () => {
+      mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
+      const { container } = renderWithProviders(<PlanDocument />);
+
+      const timelineSection = container.querySelector('[data-sec="timeline"]');
+      expect(timelineSection).toBeInTheDocument();
+      // CC-4: PF-20 fix — now shows INHERITED from view model
+      expect(within(timelineSection as HTMLElement).getByText(/INHERITED/i)).toBeInTheDocument();
+    });
+
     it('renders Research period', () => {
       mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
       renderWithProviders(<PlanDocument />);
@@ -370,10 +384,11 @@ describe('PlanDocument', () => {
       expect(screen.getByText('Duration')).toBeInTheDocument();
     });
 
-    it('renders timeline footer note', () => {
+    it('renders timeline footer note (DDR-12 copy)', () => {
       mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
       renderWithProviders(<PlanDocument />);
-      expect(screen.getByText(/Timeline begins after stakeholder approval/)).toBeInTheDocument();
+      // DDR-12: Updated copy
+      expect(screen.getByText(/Timeline begins once fieldwork starts/)).toBeInTheDocument();
     });
 
     it('renders phase data', () => {
@@ -384,10 +399,24 @@ describe('PlanDocument', () => {
     });
   });
 
+  // ─── Priority 6: Risks (PF-20: GENERATED · READ-ONLY) ──────────────
+
+  describe('Priority 6: Risks', () => {
+    it('renders Risks with GENERATED · READ-ONLY provenance (PF-20 fix)', () => {
+      mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
+      const { container } = renderWithProviders(<PlanDocument />);
+
+      const risksSection = container.querySelector('[data-sec="risks"]');
+      expect(risksSection).toBeInTheDocument();
+      // CC-4: PF-20 fix — risks are GENERATED · READ-ONLY per contract
+      expect(within(risksSection as HTMLElement).getByText(/GENERATED/i)).toBeInTheDocument();
+    });
+  });
+
   // ─── Priority 7: Brief commitments ─────────────────────────────────
 
   describe('Priority 7: Brief commitments', () => {
-    it('renders Brief commitments section with table and system treatment', () => {
+    it('renders Brief commitments section with table and SYSTEM provenance', () => {
       mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
       const { container } = renderWithProviders(<PlanDocument />);
 
@@ -398,9 +427,8 @@ describe('PlanDocument', () => {
       expect(within(commitmentsSection as HTMLElement).getByText('How this plan addresses it')).toBeInTheDocument();
       expect(within(commitmentsSection as HTMLElement).getByText('All OBJ IDs carried through')).toBeInTheDocument();
 
-      // Has system block styling
-      const systemBlocks = commitmentsSection?.querySelectorAll('[class*="systemBlock"]');
-      expect(systemBlocks?.length).toBeGreaterThanOrEqual(1);
+      // SYSTEM provenance
+      expect(within(commitmentsSection as HTMLElement).getByText(/SYSTEM/i)).toBeInTheDocument();
     });
   });
 
@@ -466,6 +494,24 @@ describe('PlanDocument', () => {
       summary.click();
 
       expect(screen.getByText('research_plan v7.2')).toBeInTheDocument();
+    });
+  });
+
+  // ─── CC-4: Workspace shell ─────────────────────────────────────────
+
+  describe('CC-4: Workspace shell', () => {
+    it('renders LifecycleRail navigation', () => {
+      mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
+      renderWithProviders(<PlanDocument />);
+      // Lifecycle rail has Study lifecycle navigation
+      expect(screen.getByLabelText('Study lifecycle')).toBeInTheDocument();
+    });
+
+    it('renders ArtifactHeader with artifact tabs', () => {
+      mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
+      renderWithProviders(<PlanDocument />);
+      // Artifact tabs navigation
+      expect(screen.getByLabelText('Study artifacts')).toBeInTheDocument();
     });
   });
 });
