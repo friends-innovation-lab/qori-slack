@@ -21,6 +21,7 @@ import styles from './AppShell.module.css';
  */
 export const WORKSPACE_ROUTE_PATTERNS: readonly string[] = [
   '/studies/:studyPublicId/plan',
+  '/studies/:studyPublicId/brief',
 ] as const;
 
 interface AppShellProps {

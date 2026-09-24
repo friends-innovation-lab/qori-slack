@@ -120,8 +120,8 @@ describe('AppShell workspace variant (CC-3)', () => {
     expect(WORKSPACE_ROUTE_PATTERNS).toContain('/studies/:studyPublicId/plan');
   });
 
-  it('WORKSPACE_ROUTE_PATTERNS does not contain Brief pattern yet (CC-4)', () => {
-    expect(WORKSPACE_ROUTE_PATTERNS).not.toContain('/studies/:studyPublicId/brief');
+  it('WORKSPACE_ROUTE_PATTERNS contains Brief pattern (CC-5)', () => {
+    expect(WORKSPACE_ROUTE_PATTERNS).toContain('/studies/:studyPublicId/brief');
   });
 
   it('renders workspace variant for a matched pattern (injected via _testPatterns)', () => {
