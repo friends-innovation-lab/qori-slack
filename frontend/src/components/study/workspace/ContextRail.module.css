@@ -19,9 +19,15 @@
   height: var(--layout-rail-tabs);
   display: flex;
   align-items: stretch;
-  gap: var(--space-hair);
   padding: 0 var(--space-2);
   border-bottom: 1px solid var(--color-border);
+}
+
+/* CC-8: Inner tablist container for ARIA compliance (SPEC §12.3) */
+.railTabList {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-hair);
 }
 
 .railTab {
@@ -41,6 +47,12 @@
 
 .railTab:hover {
   color: var(--color-text);
+}
+
+/* CC-8: focus-visible per SPEC §12.4 */
+.railTab:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
 .railTab[aria-selected='true'] {
@@ -99,6 +111,12 @@
 .iconButton:hover {
   background: var(--color-surface-hover);
   color: var(--color-text);
+}
+
+/* CC-8: focus-visible per SPEC §12.4 */
+.iconButton:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
 .iconButton[aria-pressed='true'] {
@@ -161,5 +179,12 @@
   .iconButton {
     width: 40px;
     height: 40px;
+  }
+}
+
+/* CC-8: Reduced motion per SPEC §12.10 */
+@media (prefers-reduced-motion: reduce) {
+  .railTab {
+    transition: none;
   }
 }
