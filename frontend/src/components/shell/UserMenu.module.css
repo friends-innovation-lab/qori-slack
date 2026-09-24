@@ -1,0 +1,114 @@
+/* UserMenu — Default variant (TopBar) */
+.container {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: var(--text-secondary-size);
+}
+
+.trigger:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.userName {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  min-width: 160px;
+  padding: var(--space-1);
+  background-color: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-md);
+  z-index: var(--z-popover);
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: none;
+  color: var(--color-text);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body-size);
+  text-align: left;
+}
+
+.menuItem:hover {
+  background-color: var(--color-surface-hover);
+}
+
+/* ─── Inverse variant (SideNav dark rail) ─── */
+
+.containerInverse {
+  position: relative;
+}
+
+.avatarInverse {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--color-brand);
+  color: var(--color-brand-ink);
+  font: var(--weight-semibold) 11px/1 var(--font-ui);
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: transform var(--motion-fast) var(--motion-ease);
+}
+
+.avatarInverse:hover {
+  transform: scale(1.05);
+}
+
+.avatarInverse:focus-visible {
+  outline: var(--focus-ring-inverse);
+  outline-offset: var(--focus-offset);
+}
+
+.menuInverse {
+  position: absolute;
+  left: calc(100% + var(--space-2));
+  bottom: 0;
+  min-width: 160px;
+  padding: var(--space-1);
+  background-color: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-lg);
+  z-index: var(--z-popover);
+}
+
+/* ─── Responsive ─── */
+
+@media (max-width: 767px) {
+  .userName {
+    display: none;
+  }
+}

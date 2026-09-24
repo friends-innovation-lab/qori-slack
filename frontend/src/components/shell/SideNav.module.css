@@ -207,3 +207,123 @@
     display: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Inverse variant — 64px dark icon rail for workspace routes
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.navInverse {
+  position: static;
+  width: var(--layout-app-rail);
+  flex: 0 0 var(--layout-app-rail);
+  height: 100%;
+  background: var(--color-surface-inverse);
+  border-right: 0;
+  padding: var(--space-3) 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.mark {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-3);
+}
+
+.navInverse .list {
+  padding: 0;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.itemWrapper {
+  position: relative;
+}
+
+.itemInverse {
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xl);
+  color: var(--color-text-inverse-quiet);
+  background: none;
+  font-weight: 400;
+  text-decoration: none;
+  transition: color var(--motion-fast) var(--motion-ease),
+              background-color var(--motion-fast) var(--motion-ease);
+}
+
+.itemInverse:hover {
+  color: var(--color-text-inverse);
+  background: var(--color-hover-inverse);
+  text-decoration: none;
+}
+
+.activeInverse {
+  color: var(--color-indicator-inverse);
+  background: var(--color-brand-tint);
+}
+
+.activeInverse::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--space-3));
+  top: var(--space-2);
+  bottom: var(--space-2);
+  width: 2px;
+  background: var(--color-indicator-inverse);
+  border-radius: 0 2px 2px 0;
+}
+
+/* Labels are visually hidden but remain in DOM for accessibility */
+.labelHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Tooltip shown on hover/focus */
+.navTooltip {
+  position: absolute;
+  left: calc(100% + var(--space-2));
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: var(--z-popover);
+  background: var(--color-surface-inverse-2);
+  color: var(--color-text-inverse);
+  font: 12px/16px var(--font-ui);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  box-shadow: var(--elevation-lg);
+  pointer-events: none;
+}
+
+.dividerInverse {
+  width: 24px;
+  margin: var(--space-2) 0;
+  border: 0;
+  border-top: var(--border-width) solid var(--color-rule-inverse);
+}
+
+.footerInverse {
+  margin-top: auto;
+  padding: 0;
+}
+
+.navInverse :focus-visible {
+  outline: var(--focus-ring-inverse);
+  outline-offset: var(--focus-offset);
+}

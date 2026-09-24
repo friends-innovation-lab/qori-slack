@@ -3,10 +3,10 @@
  * Height: 56px (--layout-topbar). Sticky at top.
  */
 
-import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { Search, Menu, LogOut, User } from 'lucide-react';
+import { Search, Menu } from 'lucide-react';
 import { useAuth } from '@/auth/AuthProvider';
+import { UserMenu } from './UserMenu';
 import styles from './TopBar.module.css';
 
 interface TopBarProps {
@@ -15,38 +15,8 @@ interface TopBarProps {
 }
 
 export function TopBar({ onMenuToggle }: TopBarProps) {
-  const { me, logout } = useAuth();
+  const { me } = useAuth();
   const navigate = useNavigate();
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Close user menu on outside click
-  useEffect(() => {
-    if (!userMenuOpen) return;
-
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setUserMenuOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [userMenuOpen]);
-
-  // Close on Escape
-  useEffect(() => {
-    if (!userMenuOpen) return;
-
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        setUserMenuOpen(false);
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [userMenuOpen]);
 
   const orgName = me?.organization.name || 'Qori';
 
@@ -83,38 +53,8 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
         </button>
       </div>
 
-      <div className={styles.end} ref={menuRef}>
-        <button
-          className={styles.userButton}
-          onClick={() => setUserMenuOpen((prev) => !prev)}
-          aria-expanded={userMenuOpen}
-          aria-haspopup="menu"
-          aria-label={`User menu for ${me?.actor.display_name || 'User'}`}
-          type="button"
-        >
-          <User size={16} aria-hidden="true" />
-          <span className={styles.userName}>
-            {me?.actor.display_name || 'User'}
-          </span>
-        </button>
-
-        {userMenuOpen && (
-          <div className={styles.userMenu} role="menu">
-            <button
-              className={styles.menuItem}
-              role="menuitem"
-              onClick={async () => {
-                setUserMenuOpen(false);
-                await logout();
-                navigate('/login');
-              }}
-              type="button"
-            >
-              <LogOut size={16} aria-hidden="true" />
-              Sign out
-            </button>
-          </div>
-        )}
+      <div className={styles.end}>
+        <UserMenu />
       </div>
     </header>
   );

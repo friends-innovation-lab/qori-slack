@@ -1,0 +1,83 @@
+/**
+ * WorkspaceLayout — Three-region layout for workspace routes.
+ * Spec: WORKSPACE_V2_SPEC.md §3, RESPONSIVE.md §3.
+ */
+
+.workspace {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.navRegion {
+  display: flex;
+  flex: 0 0 auto;
+}
+
+.column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+/* The document scroller */
+.canvas {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas {
+    scroll-behavior: auto;
+  }
+}
+
+.scrim {
+  display: none;
+}
+
+/* ─── Responsive: ≤980px — nav becomes drawer ─── */
+
+@media (max-width: 980px) {
+  .navRegion {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: var(--z-drawer);
+    width: min(var(--layout-nav-drawer), 88vw);
+    transform: translateX(-100%);
+    transition: transform var(--motion-base) var(--motion-ease);
+    visibility: hidden;
+  }
+
+  .navRegionOpen {
+    transform: none;
+    visibility: visible;
+    box-shadow: var(--elevation-overlay-start);
+  }
+
+  .scrimOpen {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-drawer-scrim);
+    background: var(--color-scrim);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navRegion {
+    transition: none;
+  }
+}

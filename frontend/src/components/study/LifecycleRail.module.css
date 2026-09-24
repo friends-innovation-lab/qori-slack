@@ -134,3 +134,134 @@
     border-radius: 2px 2px 0 0;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Inverse variant — 224px dark panel for workspace routes
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.railInverse {
+  width: var(--layout-lifecycle);
+  flex: 0 0 var(--layout-lifecycle);
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  background: var(--color-surface-inverse-2);
+  color: var(--color-text-inverse-muted);
+  padding: 0 0 var(--space-5);
+}
+
+.studyHead {
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border-bottom: 1px solid var(--color-rule-inverse);
+  margin-bottom: var(--space-2);
+}
+
+.studyEyebrow {
+  font: var(--weight-semibold) var(--type-label-size)/var(--type-label-line) var(--font-mono);
+  letter-spacing: var(--type-eyebrow-track);
+  text-transform: uppercase;
+  color: var(--color-text-inverse-quiet);
+  margin: 0 0 var(--space-2);
+}
+
+.studyName {
+  font: var(--weight-medium) var(--type-study-name-size)/var(--type-study-name-line) var(--font-display);
+  color: var(--color-text-inverse);
+  margin: 0;
+}
+
+.studyBack {
+  display: inline-block;
+  margin-top: var(--space-2);
+  font: 12px/16px var(--font-ui);
+  color: var(--color-text-inverse-quiet);
+  text-decoration: none;
+}
+
+.studyBack:hover {
+  color: var(--color-text-inverse);
+  text-decoration: underline;
+}
+
+.railInverse .list {
+  gap: 0;
+}
+
+/* Spine line retired in inverse variant */
+.railInverse .list::before {
+  display: none;
+}
+
+.railInverse .node {
+  border-radius: 0;
+  padding: var(--space-2) var(--space-5) var(--space-2) calc(var(--space-5) - 2px);
+  border-left: 2px solid transparent;
+  font: var(--weight-regular) var(--type-ui-size)/18px var(--font-ui);
+  color: var(--color-text-inverse-muted);
+  gap: var(--space-2);
+  min-height: 36px;
+}
+
+.railInverse .node:hover {
+  background: var(--color-hover-inverse);
+  color: var(--color-text-inverse);
+}
+
+.railInverse .active {
+  background: var(--color-brand-tint);
+  border-left-color: var(--color-indicator-inverse);
+  color: var(--color-text-inverse);
+  font-weight: var(--weight-semibold);
+}
+
+/* currentMarker replaced by active left border; is_current announced via aria-current="step" */
+.railInverse .currentMarker {
+  display: none;
+}
+
+.railInverse .icon {
+  background: none;
+}
+
+.railInverse .count {
+  color: var(--color-text-inverse-quiet);
+  font: var(--weight-medium) var(--type-label-size)/var(--type-label-line) var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.railInverse .hint {
+  padding: 0 var(--space-5) var(--space-2) calc(var(--space-5) + 16px + var(--space-2));
+  font: italic 12px/16px var(--font-ui);
+  color: var(--color-text-inverse-quiet);
+}
+
+/* State colors for inverse variant */
+.railInverse .locked {
+  color: var(--color-text-inverse-quiet);
+}
+
+.railInverse .locked .icon {
+  color: var(--color-text-inverse-quiet); /* lock glyph on dark: quiet, not error red */
+}
+
+.railInverse .readiness_warning .icon {
+  color: var(--color-brand);
+}
+
+.railInverse .suggested .icon {
+  color: var(--color-text-inverse);
+}
+
+.railInverse .free .icon {
+  color: var(--color-text-inverse-quiet);
+}
+
+.railInverse .current .icon,
+.railInverse .active .icon {
+  color: var(--color-indicator-inverse);
+}
+
+.railInverse :focus-visible {
+  outline: var(--focus-ring-inverse);
+  outline-offset: -2px;
+}

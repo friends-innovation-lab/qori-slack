@@ -99,64 +99,7 @@
 }
 
 .end {
-  position: relative;
   flex-shrink: 0;
-}
-
-.userButton {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  height: 36px;
-  padding: 0 var(--space-3);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: none;
-  color: var(--color-text);
-  cursor: pointer;
-  font-size: var(--text-secondary-size);
-}
-
-.userButton:hover {
-  background-color: var(--color-surface-hover);
-}
-
-.userName {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.userMenu {
-  position: absolute;
-  top: calc(100% + var(--space-2));
-  right: 0;
-  min-width: 160px;
-  padding: var(--space-1);
-  background-color: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--elevation-md);
-}
-
-.menuItem {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: none;
-  background: none;
-  color: var(--color-text);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  font-size: var(--text-body-size);
-  text-align: left;
-}
-
-.menuItem:hover {
-  background-color: var(--color-surface-hover);
 }
 
 /* ─── Responsive ─── */
@@ -167,10 +110,6 @@
   }
 
   .center {
-    display: none;
-  }
-
-  .userName {
     display: none;
   }
 
