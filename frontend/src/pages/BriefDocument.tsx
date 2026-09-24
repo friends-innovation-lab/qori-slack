@@ -26,16 +26,101 @@ import {
 } from '@qori/artifact-contracts';
 import '@/styles/brief-document.css';
 
-function buildBriefEditorContent(cascade: {
-  research_objectives?: string | null;
-  research_questions?: string | null;
-  target_barriers?: string | null;
-}): JSONContent {
-  const sections: Array<{ sectionId: string; markdown: string; provenance?: SectionProvenance; title?: string }> = [];
-  // Build basic sections from cascade fields - these are the editable prose sections
-  if (cascade.research_objectives) {
-    sections.push({ sectionId: 'objectives', markdown: cascade.research_objectives, provenance: 'canonical', title: "What we'll learn" });
+/**
+ * Build TipTap editor document from Brief API data.
+ *
+ * Hydrates only the EDITABLE prose sections from the contract:
+ * - summary (GENERATED · EDITABLE)
+ * - problem_narrative (GENERATED · EDITABLE)
+ * - method_prose (GENERATED · EDITABLE)
+ * - participants_prose (GENERATED · EDITABLE)
+ * - out_of_scope (GENERATED · EDITABLE)
+ *
+ * Does NOT hydrate:
+ * - objectives, questions, barriers (CANONICAL · READ-ONLY)
+ * - quick facts, timeline (SYSTEM / COMPUTED · READ-ONLY)
+ *
+ * Follows the same pattern as buildPlanEditorContent in PlanDocument.tsx.
+ *
+ * CC-4.5 (DDR-11): Fixes PF-04 — previously only loaded objectives,
+ * which are READ-ONLY per the artifact contract.
+ */
+function buildBriefEditorContent(
+  prose: Record<string, string | null>,
+): JSONContent {
+  const sections: Array<{
+    sectionId: string;
+    markdown: string;
+    provenance?: SectionProvenance;
+    title?: string;
+  }> = [];
+
+  // Summary (GENERATED · EDITABLE)
+  if (prose.summary) {
+    sections.push({
+      sectionId: 'summary',
+      markdown: prose.summary,
+      provenance: 'generated',
+      title: 'Summary',
+    });
   }
+
+  // Problem narrative (GENERATED · EDITABLE)
+  if (prose.problem_narrative) {
+    sections.push({
+      sectionId: 'problem_narrative',
+      markdown: prose.problem_narrative,
+      provenance: 'generated',
+      title: 'Problem',
+    });
+  }
+
+  // Method prose (GENERATED · EDITABLE)
+  // NOTE: methodology (Approach) is READ-ONLY · SYSTEM and displayed separately
+  // in view mode (lines 509-512). It is NOT part of the editable content.
+  // Only hydrate the actual method_prose to avoid duplication on save/reload.
+  if (prose.method_prose) {
+    sections.push({
+      sectionId: 'method_prose',
+      markdown: prose.method_prose,
+      provenance: 'generated',
+      title: 'Method',
+    });
+  }
+
+  // Participants prose (GENERATED · EDITABLE)
+  if (prose.participants_prose) {
+    sections.push({
+      sectionId: 'participants_prose',
+      markdown: prose.participants_prose,
+      provenance: 'generated',
+      title: 'Participants',
+    });
+  }
+
+  // Out of scope (GENERATED · EDITABLE)
+  if (prose.out_of_scope) {
+    sections.push({
+      sectionId: 'out_of_scope',
+      markdown: prose.out_of_scope,
+      provenance: 'generated',
+      title: 'Out of scope',
+    });
+  }
+
+  // Empty state fallback
+  if (sections.length === 0) {
+    return {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text: 'No editable content available. Generate a brief first.' }],
+        },
+      ],
+    };
+  }
+
   return buildEditorDocument(sections);
 }
 
@@ -265,10 +350,10 @@ export function BriefDocument() {
       {/* Document body */}
       <div className="doc-wrap">
         <div className="doc-col">
-          {/* Edit mode */}
+          {/* Edit mode: hydrates editable prose sections (CC-4.5 fix for PF-04/DDR-11) */}
           {isEditing && (
             <ArtifactEditor
-              initialContent={buildBriefEditorContent(brief.cascade_fields)}
+              initialContent={buildBriefEditorContent(brief.prose_sections || {})}
               onDirtyChange={setIsDirty}
               editorRef={editorRef}
             />

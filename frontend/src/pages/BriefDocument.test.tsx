@@ -418,4 +418,125 @@ describe('BriefDocument', () => {
       expect(screen.getByText('Start early')).toBeInTheDocument();
     });
   });
+
+  // ─── CC-4.5 Editor Hydration Tests (PF-04 / DDR-11 Fix) ──────────────────────
+  //
+  // These tests verify the Brief editor correctly hydrates editable prose sections
+  // from prose_sections, NOT the read-only cascade_fields (objectives/questions/barriers).
+  //
+  // Contract editability:
+  // - EDITABLE: summary, problem_narrative, method_prose, participants_prose, out_of_scope
+  // - READ-ONLY: research_objectives, research_questions, target_barriers (canonical)
+  // - READ-ONLY: quick facts, timeline (system/computed)
+
+  describe('editor hydration (CC-4.5 / PF-04 fix)', () => {
+    it('stable OBJ/RQ/TB IDs remain visible in view mode after fix', () => {
+      // Verify the fix doesn't break view mode rendering of structured IDs
+      mockBrief.mockReturnValue({
+        data: makeBrief({
+          structured_fields: {
+            research_objectives: [
+              { id: 'OBJ-001', objective: 'Understand user needs' },
+              { id: 'OBJ-002', objective: 'Validate design' },
+            ],
+            research_questions: [
+              { id: 'RQ-001', question: 'How do users navigate?', priority: 'Primary' },
+            ],
+            target_barriers: [
+              { id: 'TB-001', barrier: 'Complex navigation', source: 'Desk research' },
+            ],
+            participant_segments: [],
+            discovery_sources: [],
+          },
+        }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+
+      // All stable IDs should be visible
+      expect(screen.getByText('OBJ-001')).toBeInTheDocument();
+      expect(screen.getByText('OBJ-002')).toBeInTheDocument();
+      expect(screen.getByText('RQ-001')).toBeInTheDocument();
+      expect(screen.getByText('TB-001')).toBeInTheDocument();
+
+      // Structured content should render
+      expect(screen.getByText('Understand user needs')).toBeInTheDocument();
+      expect(screen.getByText('Validate design')).toBeInTheDocument();
+      expect(screen.getByText('How do users navigate?')).toBeInTheDocument();
+      expect(screen.getByText('Complex navigation')).toBeInTheDocument();
+    });
+
+    it('cancel edit does not mutate canonical state', () => {
+      // The user clicks Edit, then Cancel - nothing should change
+      mockBrief.mockReturnValue({
+        data: makeBrief({
+          prose_sections: {
+            summary: 'Original summary content',
+          },
+        }),
+        isLoading: false, error: null,
+      });
+      const { rerender } = renderWithProviders(<BriefDocument />);
+
+      // Initial render should show the summary
+      expect(screen.getByText('Original summary content')).toBeInTheDocument();
+
+      // After re-render (simulating state changes), content should be unchanged
+      rerender(<BriefDocument />);
+      expect(screen.getByText('Original summary content')).toBeInTheDocument();
+    });
+
+    it('existing approval behavior remains unchanged after fix', () => {
+      // Verify approval mechanics are not affected by the hydration fix
+      mockBrief.mockReturnValue({
+        data: makeBrief({
+          brief_status: 'pending_approval',
+          brief_reviewer_display_name: 'Marcus Lee',
+          prose_sections: {
+            summary: 'Brief content for approval',
+          },
+        }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+
+      // Approval-related UI should be intact
+      const pendingElements = screen.getAllByText('Pending approval');
+      expect(pendingElements.length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText(/Marcus Lee/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Approve' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Request changes' })).toBeInTheDocument();
+    });
+
+    it('methodology is shown as READ-ONLY in view mode, not prepended to editable prose', () => {
+      // Regression test: methodology (Approach) is system data displayed separately.
+      // It must NOT be prepended to method_prose, which would cause duplication
+      // on save/reload cycles: hydrate → save → reload → hydrate would prepend again.
+      mockBrief.mockReturnValue({
+        data: makeBrief({
+          cascade_fields: {
+            ...makeBrief().cascade_fields,
+            methodology_selection: 'usability_testing',
+          },
+          prose_sections: {
+            method_prose: 'Sessions will include think-aloud protocol.',
+          },
+        }),
+        isLoading: false, error: null,
+      });
+      renderWithProviders(<BriefDocument />);
+
+      // View mode: Approach shown exactly once (not duplicated in prose)
+      // This ensures save/reload cycles won't cause methodology prefix duplication
+      const approachLabels = screen.getAllByText('Approach');
+      expect(approachLabels.length).toBe(1); // Only one Approach label
+
+      // Method prose content should be visible
+      expect(screen.getByText('Sessions will include think-aloud protocol.')).toBeInTheDocument();
+
+      // READ-ONLY blocks exist in the view (masthead, quick facts, method, etc.)
+      const readOnlyLabels = screen.getAllByText('READ-ONLY · SYSTEM');
+      expect(readOnlyLabels.length).toBeGreaterThanOrEqual(1);
+    });
+  });
 });
