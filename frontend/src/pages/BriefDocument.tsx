@@ -13,6 +13,8 @@
  * - artifact_version fix: uses typed brief.artifact_version ?? 1
  *
  * CC-4.5 editor hydration fix preserved: five editable prose sections hydrate.
+ *
+ * CC-7: Review rail convergence — inline rail JSX replaced with ReviewRail component.
  */
 
 import { useState, useRef, useCallback } from 'react';
@@ -27,7 +29,6 @@ import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { Textarea } from '@/components/ui/Textarea';
 import { ArtifactEditor } from '@/components/study/editor/ArtifactEditor';
 import { serializeBrief } from '@/components/study/editor/serializer';
 import { buildEditorDocument, type SectionProvenance } from '@/components/study/editor/markdownBridge';
@@ -47,6 +48,8 @@ import {
   DocumentTable,
   CollapsibleSection,
   SaveStateIndicator,
+  ReviewRail,
+  type ChecklistState,
 } from '@/components/study/document';
 import docStyles from '@/components/study/document/document.module.css';
 import styles from './BriefDocument.module.css';
@@ -170,9 +173,7 @@ export function BriefDocument() {
   const [isEditing, setIsEditing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
-  const [showChangesForm, setShowChangesForm] = useState(false);
-  const [changeFeedback, setChangeFeedback] = useState('');
-  const [checklist, setChecklist] = useState({
+  const [checklist, setChecklist] = useState<ChecklistState>({
     scope: false,
     timeline: false,
     participants: false,
@@ -223,11 +224,9 @@ export function BriefDocument() {
     await approveBrief.mutateAsync({ checklist_confirmed: true });
   }
 
-  async function handleRequestChanges() {
-    if (!changeFeedback.trim()) return;
-    await requestChanges.mutateAsync({ comment: changeFeedback.trim() });
-    setShowChangesForm(false);
-    setChangeFeedback('');
+  async function handleRequestChanges(comment: string) {
+    if (!comment.trim()) return;
+    await requestChanges.mutateAsync({ comment: comment.trim() });
   }
 
   // Loading state
@@ -252,7 +251,6 @@ export function BriefDocument() {
   const isPendingApproval = vm.approval.status === 'pending_approval';
   const isApproved = vm.approval.status === 'approved';
   const isChangesRequested = vm.approval.status === 'changes_requested';
-  const allChecked = Object.values(checklist).every(Boolean);
 
   // Structured data from view model
   const objectives = vm.objectives.items;
@@ -321,115 +319,23 @@ export function BriefDocument() {
     </>
   );
 
-  // Review rail content (moved from inline JSX per CC-5)
-  const reviewContent = (
-    <div className={styles.reviewContent}>
-      {isApproved && (
-        <>
-          <h2 className={styles.reviewStatusApproved}>Approved</h2>
-          <p className={styles.reviewBody}>
-            {vm.approval.reviewerDisplayName && <>Approved by {vm.approval.reviewerDisplayName}</>}
-            {vm.approval.approvedAt && <> · {formatDate(vm.approval.approvedAt)}</>}
-            . The brief is now the citation source for downstream artifacts.
-          </p>
-        </>
-      )}
-
-      {isPendingApproval && !showChangesForm && (
-        <>
-          <h2 className={styles.reviewStatusPending}>Pending approval</h2>
-          <p className={styles.reviewBody}>
-            A stakeholder review is required before proceeding to the research plan.
-          </p>
-          <fieldset className={styles.reviewChecklist}>
-            <legend className={styles.srOnly}>Approval checklist</legend>
-            {Object.entries(checklist).map(([key, checked]) => (
-              <label key={key} className={styles.checklistItem}>
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={(e) =>
-                    setChecklist((prev) => ({ ...prev, [key]: e.target.checked }))
-                  }
-                />
-                <span>
-                  {key === 'scope' && 'Scope and method are appropriate'}
-                  {key === 'timeline' && 'Timeline and deadline are feasible'}
-                  {key === 'participants' && 'Participant approach is sound'}
-                  {key === 'budget' && 'Budget is reasonable'}
-                </span>
-              </label>
-            ))}
-          </fieldset>
-          {!allChecked && (
-            <p className={styles.checklistHint} id="checklist-hint">
-              Confirm all four checks to approve.
-            </p>
-          )}
-          <div className={styles.reviewActions}>
-            <Button
-              onClick={handleApprove}
-              disabled={!allChecked || approveBrief.isPending}
-              loading={approveBrief.isPending}
-              aria-describedby={!allChecked ? 'checklist-hint' : undefined}
-            >
-              {approveBrief.isPending ? 'Approving...' : 'Approve'}
-            </Button>
-            <Button variant="secondary" size="sm" onClick={() => setShowChangesForm(true)}>
-              Request changes
-            </Button>
-          </div>
-        </>
-      )}
-
-      {isPendingApproval && showChangesForm && (
-        <>
-          <h2 className={styles.reviewStatusPending}>Request changes</h2>
-          <Textarea
-            label="Feedback"
-            value={changeFeedback}
-            onChange={(e) => setChangeFeedback(e.target.value)}
-            placeholder="Describe the changes needed..."
-            className={styles.feedbackTextarea}
-          />
-          <div className={styles.reviewActions}>
-            <Button variant="secondary" size="sm" onClick={() => setShowChangesForm(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleRequestChanges}
-              disabled={!changeFeedback.trim() || requestChanges.isPending}
-              loading={requestChanges.isPending}
-            >
-              {requestChanges.isPending ? 'Submitting...' : 'Submit'}
-            </Button>
-          </div>
-        </>
-      )}
-
-      {isChangesRequested && (
-        <>
-          <h2 className={styles.reviewStatusError}>Changes requested</h2>
-          <p className={styles.reviewBody}>
-            {vm.approval.reviewerDisplayName && <>by {vm.approval.reviewerDisplayName}</>}
-          </p>
-          {vm.approval.changeFeedback && (
-            <blockquote className={styles.feedbackQuote}>
-              {vm.approval.changeFeedback}
-            </blockquote>
-          )}
-        </>
-      )}
-    </div>
-  );
-
-  // Context rail modes (only review for UX-3A)
+  // Context rail modes (only review for UX-3A) — CC-7: uses ReviewRail component
   const railModes: RailMode[] = [
     {
       id: 'review',
       label: 'Review',
       icon: ClipboardCheck,
-      content: reviewContent,
+      content: (
+        <ReviewRail
+          approval={vm.approval}
+          checklist={checklist}
+          onChecklistChange={setChecklist}
+          onApprove={handleApprove}
+          approving={approveBrief.isPending}
+          onRequestChanges={handleRequestChanges}
+          requesting={requestChanges.isPending}
+        />
+      ),
     },
   ];
 
