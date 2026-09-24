@@ -1,15 +1,32 @@
 /* Document column layout — continuous research document, not dashboard cards */
+/* VC-1: Document geometry per GEOMETRY.md §2 */
 
 .docWrap {
-  display: flex;
-  gap: var(--space-6);
-  margin-top: var(--space-4);
+  /* VC-1: Remove legacy flex layout that reserved inline rail space */
+  display: block;
+  margin: 0;
 }
 
 .docCol {
-  flex: 1;
-  min-width: 0;
-  max-width: 840px;
+  /* VC-1: Centered narrow measure per approved CD */
+  /* 640px content + 48px padding each side = 736px outer */
+  max-width: 736px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 48px 48px 128px;
+}
+
+/* VC-1: Responsive document geometry */
+@media (max-width: 980px) {
+  .docCol {
+    padding: 32px 24px 96px;
+  }
+}
+
+@media (max-width: 767px) {
+  .docCol {
+    padding: 24px 16px 96px;
+  }
 }
 
 /* ─── Document section ─── */
@@ -444,9 +461,11 @@
 }
 
 /* ─── Artifact tabs ─── */
+/* VC-1: Tabs stretch to full 52px header height */
 
 .artifactTabs {
   display: flex;
+  align-self: stretch;
 }
 
 .artifactTabs ul {
@@ -464,13 +483,14 @@
 .artifactTab {
   display: flex;
   align-items: center;
-  padding: var(--space-2) var(--space-3);
-  font-weight: 500;
+  height: 100%;
+  padding: 0 var(--space-3);
+  font-weight: 400;
   font-size: var(--text-secondary-size);
   color: var(--color-text-muted);
   text-decoration: none;
   border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
+  margin-bottom: -1px;
   transition: color var(--motion-fast), border-color var(--motion-fast);
 }
 
@@ -486,7 +506,7 @@
 
 .artifactTabActive {
   color: var(--color-text);
-  border-bottom-color: var(--color-text);
+  border-bottom-color: var(--color-indicator);
   font-weight: 600;
 }
 
