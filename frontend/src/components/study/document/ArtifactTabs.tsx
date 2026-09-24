@@ -1,5 +1,8 @@
 /**
  * ArtifactTabs — Brief / Research Plan tab strip.
+ *
+ * CC-4: Fixed PF-06 - use nav semantics instead of tab semantics.
+ * These are navigation links, not an ARIA tab widget.
  */
 
 import { Link } from 'react-router';
@@ -12,23 +15,27 @@ interface ArtifactTabsProps {
 
 export function ArtifactTabs({ active, studyPublicId }: ArtifactTabsProps) {
   return (
-    <div className={styles.artifactTabs} role="tablist" aria-label="Study artifacts">
-      <Link
-        to={`/studies/${studyPublicId}/brief`}
-        className={`${styles.artifactTab} ${active === 'brief' ? styles.artifactTabActive : ''}`}
-        role="tab"
-        aria-selected={active === 'brief'}
-      >
-        Brief
-      </Link>
-      <Link
-        to={`/studies/${studyPublicId}/plan`}
-        className={`${styles.artifactTab} ${active === 'plan' ? styles.artifactTabActive : ''}`}
-        role="tab"
-        aria-selected={active === 'plan'}
-      >
-        Research Plan
-      </Link>
-    </div>
+    <nav className={styles.artifactTabs} aria-label="Study artifacts">
+      <ul>
+        <li>
+          <Link
+            to={`/studies/${studyPublicId}/brief`}
+            className={`${styles.artifactTab} ${active === 'brief' ? styles.artifactTabActive : ''}`}
+            aria-current={active === 'brief' ? 'page' : undefined}
+          >
+            Brief
+          </Link>
+        </li>
+        <li>
+          <Link
+            to={`/studies/${studyPublicId}/plan`}
+            className={`${styles.artifactTab} ${active === 'plan' ? styles.artifactTabActive : ''}`}
+            aria-current={active === 'plan' ? 'page' : undefined}
+          >
+            Research Plan
+          </Link>
+        </li>
+      </ul>
+    </nav>
   );
 }

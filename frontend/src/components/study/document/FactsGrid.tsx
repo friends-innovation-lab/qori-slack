@@ -1,33 +1,54 @@
 /**
  * FactsGrid — Quick facts system block (method, participants, timeline, etc.)
+ *
+ * CC-4: Extended to accept QuickFact[] from view model (§3.8).
+ * - Filters out items with exists:false
+ * - Returns null when no items remain
  */
 
+import type { QuickFact } from '@qori/artifact-contracts';
 import styles from './document.module.css';
 
-interface Fact {
+/** Legacy fact shape (for backward compatibility) */
+interface LegacyFact {
   label: string;
   value: string;
   sub?: string;
 }
 
 interface FactsGridProps {
-  facts: Fact[];
+  /** QuickFact[] from view model or legacy shape */
+  facts: (QuickFact | LegacyFact)[];
+}
+
+/** Type guard to check if fact is QuickFact (has exists property) */
+function isQuickFact(fact: QuickFact | LegacyFact): fact is QuickFact {
+  return 'exists' in fact;
 }
 
 export function FactsGrid({ facts }: FactsGridProps) {
-  if (facts.length === 0) return null;
+  // Filter out items with exists:false (for QuickFact) or empty values (legacy)
+  const shown = facts.filter((f) => {
+    if (isQuickFact(f)) {
+      return f.exists;
+    }
+    return !!f.value;
+  });
+
+  if (shown.length === 0) return null;
+
   return (
     <div className={styles.systemBlock}>
       <span className={styles.systemLabel}>READ-ONLY · SYSTEM</span>
-      <div className={styles.factsGrid}>
-        {facts.map((fact) => (
+      <dl className={styles.factsGrid}>
+        {shown.map((fact) => (
           <div key={fact.label} className={styles.factItem}>
-            <span className={styles.factKey}>{fact.label}</span>
-            <span className={styles.factValue}>{fact.value}</span>
-            {fact.sub && <span className={styles.factSub}>{fact.sub}</span>}
+            <dt className={styles.factKey}>{fact.label}</dt>
+            <dd className={styles.factValue}>{fact.value}</dd>
+            {fact.sub && <dd className={styles.factSub}>{fact.sub}</dd>}
           </div>
         ))}
-      </div>
+      </dl>
     </div>
   );
 }

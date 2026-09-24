@@ -116,8 +116,12 @@ describe('AppShell workspace variant (CC-3)', () => {
     document.documentElement.removeAttribute('data-qori-surface');
   });
 
-  it('WORKSPACE_ROUTE_PATTERNS is empty in CC-3', () => {
-    expect(WORKSPACE_ROUTE_PATTERNS).toEqual([]);
+  it('WORKSPACE_ROUTE_PATTERNS contains Plan pattern (CC-4)', () => {
+    expect(WORKSPACE_ROUTE_PATTERNS).toContain('/studies/:studyPublicId/plan');
+  });
+
+  it('WORKSPACE_ROUTE_PATTERNS does not contain Brief pattern yet (CC-4)', () => {
+    expect(WORKSPACE_ROUTE_PATTERNS).not.toContain('/studies/:studyPublicId/brief');
   });
 
   it('renders workspace variant for a matched pattern (injected via _testPatterns)', () => {

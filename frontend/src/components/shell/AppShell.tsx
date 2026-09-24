@@ -20,7 +20,7 @@ import styles from './AppShell.module.css';
  * CC-5: adds '/studies/:studyPublicId/brief'.
  */
 export const WORKSPACE_ROUTE_PATTERNS: readonly string[] = [
-  // Patterns added by subsequent CC phases
+  '/studies/:studyPublicId/plan',
 ] as const;
 
 interface AppShellProps {

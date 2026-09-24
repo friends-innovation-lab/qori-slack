@@ -58,3 +58,55 @@
 }
 
 .error .icon { color: var(--color-error); }
+
+/* ─── Rule appearance (workspace notices) ─── */
+
+.notice {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  margin-bottom: var(--space-5);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.noticeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  position: relative;
+  top: 2px;
+}
+
+.noticeBody {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-secondary-size);
+  line-height: 1.5;
+}
+
+.noticeTitle {
+  font-weight: 600;
+  margin-right: var(--space-1);
+}
+
+.noticeText {
+  color: var(--color-text-muted);
+}
+
+.noticeAction {
+  flex-shrink: 0;
+}
+
+.noticeSuccess .noticeDot { background-color: var(--color-success); }
+.noticeSuccess .noticeTitle { color: var(--color-success); }
+
+.noticeWarning .noticeDot { background-color: var(--color-warning); }
+.noticeWarning .noticeTitle { color: var(--color-warning); }
+
+.noticeError .noticeDot { background-color: var(--color-error); }
+.noticeError .noticeTitle { color: var(--color-error); }
+
+.noticeInfo .noticeDot { background-color: var(--color-info); }
+.noticeInfo .noticeTitle { color: var(--color-info); }

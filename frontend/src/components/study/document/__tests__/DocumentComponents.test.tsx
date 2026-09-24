@@ -154,14 +154,15 @@ describe('ArtifactTabs', () => {
     expect(screen.getByText('Research Plan')).toBeInTheDocument();
   });
 
-  it('marks active tab', () => {
+  it('marks active tab with aria-current (PF-06 fix)', () => {
     render(
       <MemoryRouter>
         <ArtifactTabs active="plan" studyPublicId="s1" />
       </MemoryRouter>,
     );
     const planTab = screen.getByText('Research Plan');
-    expect(planTab).toHaveAttribute('aria-selected', 'true');
+    // CC-4: Using nav semantics with aria-current="page" (not ARIA tab widget)
+    expect(planTab).toHaveAttribute('aria-current', 'page');
   });
 });
 
