@@ -65,7 +65,7 @@ export function Masthead({
         {artifactLabel && <span className={styles.mastEyebrow}>{artifactLabel}</span>}
         <span className={styles.mastName}>{studyName}</span>
       </h1>
-      <span className={styles.systemLabel}>READ-ONLY · SYSTEM</span>
+      <span className={styles.srOnly}>READ-ONLY · SYSTEM</span>
       <dl className={styles.mastMeta}>
         {meta.filter(([, v]) => !!v).map(([k, v]) => (
           <div key={k} className={styles.mastheadItem}>

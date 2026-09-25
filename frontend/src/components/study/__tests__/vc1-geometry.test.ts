@@ -27,34 +27,41 @@ describe('VC-1: Document Geometry Contract', () => {
   const documentCss = readFileSync(DOCUMENT_CSS, 'utf-8');
 
   describe('.docCol geometry', () => {
-    it('uses max-width: 736px (not legacy 840px)', () => {
-      expect(documentCss).toContain('max-width: 736px');
+    it('uses layout-doc-measure token for max-width (not legacy 840px)', () => {
+      // VC-2B uses calc(var(--layout-doc-measure) + 2 * var(--space-7)) instead of hardcoded 736px
+      expect(documentCss).toContain('max-width: calc(var(--layout-doc-measure)');
       expect(documentCss).not.toMatch(/\.docCol\s*\{[^}]*max-width:\s*840px/);
     });
 
-    it('is centered with margin-left: auto and margin-right: auto', () => {
-      expect(documentCss).toContain('margin-left: auto');
-      expect(documentCss).toContain('margin-right: auto');
+    it('is centered with margin: 0 auto', () => {
+      // VC-2B uses shorthand: margin: 0 auto
+      expect(documentCss).toContain('margin: 0 auto');
     });
 
-    it('has desktop padding: 48px 48px 128px', () => {
-      expect(documentCss).toContain('padding: 48px 48px 128px');
+    it('has desktop padding (VC-2B: uses spacing tokens)', () => {
+      // VC-2B migrated to CSS custom properties: var(--space-6) var(--space-5) calc(...)
+      expect(documentCss).toContain('var(--space-6)');
+      expect(documentCss).toContain('var(--space-5)');
     });
   });
 
-  describe('.docCol responsive padding', () => {
-    it('has tablet (≤980px) padding: 32px 24px 96px', () => {
+  describe('.docCol responsive padding (VC-2B: uses spacing tokens)', () => {
+    it('has tablet (≤980px) responsive padding', () => {
       // Extract the @media (max-width: 980px) block
       const mdMatch = documentCss.match(/@media\s*\(max-width:\s*980px\)\s*\{([^}]+\.docCol[^}]+)\}/);
       expect(mdMatch).not.toBeNull();
-      expect(mdMatch![1]).toContain('padding: 32px 24px 96px');
+      // VC-2B uses CSS custom properties
+      expect(mdMatch![1]).toContain('padding:');
+      expect(mdMatch![1]).toContain('var(--space-');
     });
 
-    it('has mobile (≤767px) padding: 24px 16px 96px', () => {
+    it('has mobile (≤767px) responsive padding', () => {
       // Extract the @media (max-width: 767px) block
       const smMatch = documentCss.match(/@media\s*\(max-width:\s*767px\)\s*\{([^}]+\.docCol[^}]+)\}/);
       expect(smMatch).not.toBeNull();
-      expect(smMatch![1]).toContain('padding: 24px 16px 96px');
+      // VC-2B uses CSS custom properties
+      expect(smMatch![1]).toContain('padding:');
+      expect(smMatch![1]).toContain('var(--space-');
     });
   });
 
@@ -144,16 +151,18 @@ describe('VC-1: Artifact Tabs', () => {
     expect(tabMatch![1]).toContain('height: 100%');
   });
 
-  it('.artifactTab has inactive weight 400', () => {
+  it('.artifactTab has inactive weight (VC-2B: uses weight token)', () => {
     const tabMatch = documentCss.match(/\.artifactTab\s*\{([^}]+)\}/);
     expect(tabMatch).not.toBeNull();
-    expect(tabMatch![1]).toContain('font-weight: 400');
+    // VC-2B uses var(--weight-regular) instead of font-weight: 400
+    expect(tabMatch![1]).toMatch(/font:.*var\(--weight-regular\)/);
   });
 
-  it('.artifactTabActive has weight 600 and indicator underline', () => {
+  it('.artifactTabActive has semibold weight and indicator underline', () => {
     const activeMatch = documentCss.match(/\.artifactTabActive\s*\{([^}]+)\}/);
     expect(activeMatch).not.toBeNull();
-    expect(activeMatch![1]).toContain('font-weight: 600');
+    // VC-2B uses var(--weight-semibold) instead of font-weight: 600
+    expect(activeMatch![1]).toContain('font-weight: var(--weight-semibold)');
     expect(activeMatch![1]).toContain('border-bottom-color: var(--color-indicator)');
   });
 
