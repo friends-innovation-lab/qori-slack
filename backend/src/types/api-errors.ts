@@ -34,6 +34,8 @@ export enum ApiErrorCode {
   PUBLICATION_NOT_RETRYABLE = 'PUBLICATION_NOT_RETRYABLE',
   /** Resource already exists (e.g., duplicate slug) */
   RESOURCE_CONFLICT = 'RESOURCE_CONFLICT',
+  /** Comment message edit failed due to stale expected_updated_at (CMT-1) */
+  COMMENT_EDIT_CONFLICT = 'COMMENT_EDIT_CONFLICT',
   /** Unexpected server error — details intentionally omitted */
   INTERNAL_ERROR = 'INTERNAL_ERROR',
 }
@@ -117,4 +119,13 @@ export function publicationNotRetryable(message = 'Publication is not in a retry
 
 export function resourceConflict(message: string): AppError {
   return new AppError(ApiErrorCode.RESOURCE_CONFLICT, message, 409);
+}
+
+/**
+ * Comment message edit conflict (CMT-1).
+ * Returned when expected_updated_at does not match the stored updated_at.
+ * HTTP 409 allows frontend to show conflict UI and retry.
+ */
+export function commentEditConflict(message = 'Comment was modified by another edit'): AppError {
+  return new AppError(ApiErrorCode.COMMENT_EDIT_CONFLICT, message, 409);
 }

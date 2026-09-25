@@ -376,15 +376,17 @@ describe('YAML processor regression', () => {
 // ═══════════════════════════════════════════════════════════
 
 describe('Migration order', () => {
-  it('artifact_sections migration is sequentially after the last existing migration', () => {
+  it('artifact_sections migration exists and is after ws1-study-public-id', () => {
     const migrationsDir = path.resolve(SRC_ROOT, 'database/migrations');
     const migrations = fs.readdirSync(migrationsDir).sort();
-    const lastMigration = migrations[migrations.length - 1];
-    expect(lastMigration).toBe('20260911000000-ws2-artifact-sections.js');
 
-    // The previous migration should be an earlier timestamp
-    const prevMigration = migrations[migrations.length - 2];
-    expect(prevMigration).toBe('20260909000000-ws1-study-public-id.js');
+    // Verify artifact_sections migration exists
+    expect(migrations).toContain('20260911000000-ws2-artifact-sections.js');
+
+    // Verify it's after ws1-study-public-id
+    const ws2Index = migrations.indexOf('20260911000000-ws2-artifact-sections.js');
+    const ws1Index = migrations.indexOf('20260909000000-ws1-study-public-id.js');
+    expect(ws2Index).toBeGreaterThan(ws1Index);
   });
 
   it('artifact_sections migration creates the table and adds content_version', () => {

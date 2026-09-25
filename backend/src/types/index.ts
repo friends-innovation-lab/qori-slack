@@ -10,3 +10,4 @@ export * from './common';
 export * from './models';
 export * from './handlers';
 export * from './template-processor';
+export * from './comments';

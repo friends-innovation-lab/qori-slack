@@ -39,6 +39,10 @@ jobs:
         working-directory: backend
         run: npm ci --legacy-peer-deps
 
+      - name: Build workspace packages
+        run: |
+          cd packages/api-contracts && npm run build
+
       - name: Type check
         working-directory: backend
         run: npm run typecheck

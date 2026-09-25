@@ -54,6 +54,10 @@ import OrganizationMembership from './models/organization_membership';
 import IdentityProviderBinding from './models/identity_provider_binding';
 // WS-2: Artifact sections (editable prose content)
 import ArtifactSection from './models/artifact_section';
+// CMT-1: Workspace comments
+import CommentThread from './models/comment_thread';
+import CommentMessage from './models/comment_message';
+import CommentThreadEvent from './models/comment_thread_event';
 
 
 // Set environment and configuration
@@ -115,6 +119,10 @@ const modelDefiners = [
   OrganizationMembership,
   IdentityProviderBinding,
   ArtifactSection,
+  // CMT-1: Workspace comments (must be after Actor and ResearchArtifact due to FK deps)
+  CommentThread,
+  CommentMessage,
+  CommentThreadEvent,
 ];
 
 // Register all models with Sequelize
