@@ -26,6 +26,12 @@ Canvas width = viewport − docked regions. Column = `min(736px, canvas)` center
 | Collapsibles | ruled rows | same | same | summary text wraps under title |
 | Notice action | right-aligned | same | same | own line, left-aligned |
 
+## Frame composition at every width
+- **≥981:** the app rail (4 + Admin + avatar) and the grouped lifecycle (5 groups, 15 items) are docked.
+- **≤980:** the drawer holds the same two columns, the same grouped list, and the same placeholders.
+- The composition never collapses into a horizontal strip or an ungrouped list.
+- The header status indicator is shown at every width. At ≤767 the label truncates at 96px after the dot, and the Review toggle stays visible.
+
 ## Rules
 - The 1280 rail-open case is the tightest desktop layout. The measure shrinks to 552px with 48px padding kept. Don't reduce padding at `xl`.
 - The lifecycle list is vertical at every width (fix the leak, COMPONENT_DELTAS §2).
