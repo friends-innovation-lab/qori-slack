@@ -38,8 +38,8 @@ export function FactsGrid({ facts }: FactsGridProps) {
   if (shown.length === 0) return null;
 
   return (
-    <div className={styles.systemBlock}>
-      <span className={styles.systemLabel}>READ-ONLY · SYSTEM</span>
+    <>
+      <span className={styles.srOnly}>READ-ONLY · SYSTEM</span>
       <dl className={styles.factsGrid}>
         {shown.map((fact) => (
           <div key={fact.label} className={styles.factItem}>
@@ -49,6 +49,6 @@ export function FactsGrid({ facts }: FactsGridProps) {
           </div>
         ))}
       </dl>
-    </div>
+    </>
   );
 }

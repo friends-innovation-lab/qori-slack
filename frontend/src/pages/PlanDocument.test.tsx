@@ -292,9 +292,9 @@ describe('PlanDocument', () => {
       const summarySection = container.querySelector('[data-sec="summary"]');
       expect(summarySection).toBeInTheDocument();
 
-      // Should contain system block with facts
-      const systemBlocks = summarySection?.querySelectorAll('[class*="systemBlock"]');
-      expect(systemBlocks?.length).toBeGreaterThanOrEqual(1);
+      // Should contain facts grid (VC-2B: systemBlock wrapper removed)
+      const factsGrids = summarySection?.querySelectorAll('[class*="factsGrid"]');
+      expect(factsGrids?.length).toBeGreaterThanOrEqual(1);
     });
 
     it('derives concise participant count from prose (regression: no prose dump)', () => {

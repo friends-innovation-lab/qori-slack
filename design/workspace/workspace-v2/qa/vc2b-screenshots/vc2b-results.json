@@ -1,0 +1,109 @@
+{
+  "screenshots": [
+    {
+      "viewport": "1440",
+      "artifact": "Brief",
+      "state": "view",
+      "path": "brief-view-1440.png"
+    },
+    {
+      "viewport": "1440",
+      "artifact": "Brief",
+      "state": "edit",
+      "path": "brief-edit-1440.png"
+    },
+    {
+      "viewport": "1440",
+      "artifact": "Plan",
+      "state": "view",
+      "path": "plan-view-1440.png"
+    },
+    {
+      "viewport": "1440",
+      "artifact": "Plan",
+      "state": "edit",
+      "path": "plan-edit-1440.png"
+    },
+    {
+      "viewport": "1100",
+      "artifact": "Brief",
+      "state": "view",
+      "path": "brief-view-1100.png"
+    },
+    {
+      "viewport": "1100",
+      "artifact": "Plan",
+      "state": "view",
+      "path": "plan-view-1100.png"
+    },
+    {
+      "viewport": "900",
+      "artifact": "Brief",
+      "state": "view",
+      "path": "brief-view-900.png"
+    },
+    {
+      "viewport": "900",
+      "artifact": "Plan",
+      "state": "view",
+      "path": "plan-view-900.png"
+    },
+    {
+      "viewport": "390",
+      "artifact": "Brief",
+      "state": "view",
+      "path": "brief-view-390.png"
+    },
+    {
+      "viewport": "390",
+      "artifact": "Plan",
+      "state": "view",
+      "path": "plan-view-390.png"
+    }
+  ],
+  "computedStyles": {
+    "mastheadH1": {
+      "font-family": "\"Cormorant Garamond\", \"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+      "font-size": "44px",
+      "font-weight": "500"
+    },
+    "sectionH2": {
+      "font-family": "\"Cormorant Garamond\", \"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+      "font-size": "27px",
+      "font-weight": "500"
+    },
+    "blockProse": {
+      "font-family": "\"Source Serif 4\", \"Source Serif Pro\", Georgia, \"Times New Roman\", serif",
+      "font-size": "16px",
+      "line-height": "28px"
+    },
+    "docTableTd": {
+      "font-family": "\"Source Serif 4\", \"Source Serif Pro\", Georgia, \"Times New Roman\", serif",
+      "font-size": "14px"
+    },
+    "idTag": {
+      "font-family": "\"JetBrains Mono\", ui-monospace, \"SF Mono\", Menlo, Consolas, monospace",
+      "font-size": "11px"
+    },
+    "provTag": {
+      "opacity": "0"
+    }
+  },
+  "responsive": {
+    "mobileOverflow": false,
+    "mobilePadding": {
+      "padding-left": "16px",
+      "padding-right": "16px"
+    },
+    "mobileMasthead": {
+      "font-size": "32px",
+      "line-height": "36px"
+    }
+  },
+  "editMode": {},
+  "regression": {
+    "appRail": false,
+    "lifecycleRail": false,
+    "artifactHeader": false
+  }
+}
