@@ -1,0 +1,78 @@
+{
+  "screenshots": [
+    {
+      "viewport": "1440",
+      "state": "Brief edit",
+      "path": "brief-edit-1440.png"
+    },
+    {
+      "viewport": "1440",
+      "state": "Brief Review pending",
+      "path": "brief-review-pending-1440.png"
+    },
+    {
+      "viewport": "1440",
+      "state": "Brief Review checklist",
+      "path": "brief-review-checklist-1440.png"
+    },
+    {
+      "viewport": "1440",
+      "state": "Brief Review approved",
+      "path": "brief-review-approved-1440.png"
+    },
+    {
+      "viewport": "1440",
+      "state": "Plan edit",
+      "path": "plan-edit-1440.png"
+    },
+    {
+      "viewport": "1100",
+      "state": "Brief Review open",
+      "path": "brief-review-1100.png"
+    },
+    {
+      "viewport": "1100",
+      "state": "Brief edit",
+      "path": "brief-edit-1100.png"
+    },
+    {
+      "viewport": "900",
+      "state": "Brief Review overlay",
+      "path": "brief-review-overlay-900.png"
+    },
+    {
+      "viewport": "900",
+      "state": "Brief edit",
+      "path": "brief-edit-900.png"
+    },
+    {
+      "viewport": "390",
+      "state": "Brief Review sheet",
+      "path": "brief-review-sheet-390.png"
+    },
+    {
+      "viewport": "390",
+      "state": "Brief edit",
+      "path": "brief-edit-390.png"
+    },
+    {
+      "viewport": "390",
+      "state": "Plan edit",
+      "path": "plan-edit-390.png"
+    }
+  ],
+  "computedStyles": {
+    "toolbar": null,
+    "reviewRail": null,
+    "reviewStatus": null,
+    "reviewEyebrow": null
+  },
+  "geometry": {
+    "reviewRailWidth": 224,
+    "documentMeasure": 736,
+    "mobileOverflow": false
+  },
+  "planSafety": {
+    "noReviewToggle": true
+  }
+}
