@@ -9,8 +9,12 @@ Values come from the approved reference (`workspace2.css`), snapped to the produ
 | App rail tile | 40×40, radius 10 | 38–40, r 9–10 | `--radius-xl` |
 | App rail active marker | 2px, 12px outside tile, inset 8 top/bottom | 12–13 / 8–9 | — |
 | Lifecycle panel | 224px | exact | `--layout-lifecycle` |
-| Lifecycle study head padding | 24 / 24 / 16 (top / x / bottom) | 20–24 / 20–24 / 16 | — |
-| Lifecycle row | min 36px, padding 8 24 8 22, 2px left rule | — | — |
+| Lifecycle panel padding | 0 (no top/bottom padding; flex column + bottom spacer min 24) | — | — |
+| Lifecycle study head padding | 24 / 24 / 16 (top / x / bottom), margin-bottom 8 | 20–24 / 20–24 / 16 | — |
+| Lifecycle group heading | padding 12 / 24 / 4 (top / x / bottom) | top 12–14 | — |
+| Lifecycle row | height 34, padding 8 24 8 22, gap 8, 2px left rule, no leading icon | height 32–34 | — |
+| Lifecycle total (15 items + 5 groups + head) | ≈ 800px; panel scrolls when viewport height < content | — | — |
+| App rail items | 4 top (Home, Projects, Studies, Ask Qori) · spacer · Admin · avatar 32 | avatar 30–32 | — |
 | Nav drawer (≤980) | min(288px, 88vw) | exact | `--layout-nav-drawer` |
 | Artifact header | 52px, x-pad 24 (≤767: 12), gap 12 (≤767: 8) | x 20–24, gap 12–14 | `--layout-artifact-header` |
 | Context rail (open) | 344px | exact | `--layout-context-rail` |

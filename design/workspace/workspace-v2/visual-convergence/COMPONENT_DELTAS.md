@@ -1,40 +1,50 @@
 # Component Deltas
 
-Action types: **KEEP · RESTYLE · REPOSITION · RECOMPOSE · REPLACE · REMOVE**.
+> **MATCH THE APPROVED CD COMPOSITION. DO NOT MATCH THE CURRENT PRODUCTION COMPOSITION.**
+> **KEEP means visually equivalent already, not merely architecturally reusable.** A component can be reused in implementation while its rendered composition is RECOMPOSE/REPLACE. Every matrix in this package lists **Implementation reuse** and **Visual action** as separate columns.
+> **Correction (2026-09-24, post-VC-1):** the first version of this handover marked the SideNav and lifecycle panel KEEP. That was wrong for the lifecycle panel and incomplete for the app rail and header. See §0 and LIFECYCLE_NAV_CONVERGENCE.md.
+
+Action types: **KEEP · RESTYLE · REPOSITION · RECOMPOSE · REPLACE · ADD · REMOVE**.
 The target CSS for `document.module.css` is the complete file `reference/document.module.target.css`. Replace the production file wholesale; don't merge.
 
-## 1. Composition matrix
+## 1. Composition matrix (revised)
 
-| Surface | Current production | Target | Action |
-|---|---|---|---|
-| Workspace shell | 64 + 224 dark rails, flex main | same | KEEP |
-| SideNav inverse | 64px icon rail | same | KEEP |
-| Lifecycle panel | dark 224px; turns horizontal ≤1023 | vertical at all widths | REMOVE leak + RESTYLE padding |
-| Artifact header | white bar, ink tab underline | paper bar, brass-deep underline, stretched tabs | RESTYLE |
-| Document width | 840px, left-aligned, flex wrapper | 640px measure, centered, 48px pad | REPLACE |
-| Status notice | `Alert rule` | same, spacing 32 below | KEEP (+ verify spacing) |
-| Masthead | sans 28/700 title, visible system chip, 3 rules | editorial eyebrow + 44px display title, meta between 2 hairlines | RECOMPOSE |
-| Metadata row | sans keys 700 | mono caps keys, muted values | RESTYLE |
-| Quick Facts | tinted box + bordered cards | open `<dl>` row between hairlines | REPLACE |
-| Section header | sans 22/700 | Cormorant 27/500 + lock + right-aligned provenance | REPLACE (type) + RESTYLE |
-| Section separation | bottom rule + padding | 48px whitespace, no rule | REPLACE |
-| Prose | 15px sans | Source Serif 4 16/28, 66ch | REPLACE |
-| Subheading (h3) | 18px sans 700 | mono 11 caps 0.16em muted | REPLACE |
-| kv paragraph | serif + sans bold key | same family pair, sizes per TYPOGRAPHY | RESTYLE |
-| Structured rows | hairlines, grey 13px IDs | 56px brass-deep mono ID column | RESTYLE |
-| Priority | colored pill | mono caps text tag | REPLACE |
-| Provenance | colored chips, always on | quiet mono, hover/focus reveal | RESTYLE + REPOSITION |
-| System block (view) | tinted rounded box + visible label | no box; label visually hidden | REMOVE |
-| Tables | sans 13, 2px header rule | serif cells, mono header, 1px emphasis rule | RESTYLE |
-| Collapsibles | bordered rounded boxes | grouped hairline rows + chevron | REPLACE |
-| Approval checklist (doc) | serif list, no rules | hairline list, ○/✓ mono glyphs | RESTYLE |
-| Save state | 8px dot, 12px | 7–8px dot, 12px | KEEP |
-| Editor content | CC-6 styles | same | KEEP |
-| Editor toolbar | white pill | paper pill | RESTYLE |
-| Context rail shell | 344 docked / strip / overlay / sheet | same | KEEP |
-| Review panel | stacked form, full-width md Approve | status hierarchy, ruled checklist, inline sm action row | RECOMPOSE |
-| `BriefDocument.module.css` review copy | dead duplicate styles | — | REMOVE |
-| `.pageHead`, `.reviewRail/.reviewCard*`, `.railToggle`, `.editableBlock` in document.module.css | legacy, unused on workspace routes | — | REMOVE (confirm with `grep` first; see §4) |
+| Surface | Current production | Approved CD target | Implementation reuse | Visual action | Phase |
+|---|---|---|---|---|---|
+| Workspace shell | 64 + 224 dark rails, flex main | same | AppShell workspace variant | KEEP | — |
+| App rail: items | Home, Projects, Studies, Search, Ask Qori, Work Queue | Home, Projects, Studies, Ask Qori | SideNav `navItems` (filtered in inverse variant) | RECOMPOSE (remove Search, Work Queue) | VC-2A |
+| App rail: bottom | divider, Admin, avatar | spacer, (Learn), Admin, avatar | SideNav footer | REPOSITION (Admin to the bottom; Learn omitted) | VC-2A |
+| App rail: tiles/marker | 40px tiles, brass marker | same | — | KEEP | — |
+| Lifecycle: structure | flat 7 stages from `computeLifecycleNodes` | 5 groups, 15 items | LifecycleRail + new `workspaceLifecycle.ts` config; `computeLifecycleNodes` still supplies the Plan lock | **RECOMPOSE** | VC-2A |
+| Lifecycle: group headings | none | mono caps headings | new `.grp` | ADD | VC-2A |
+| Lifecycle: Overview row | row 1, `aria-current="step"` | none (study name links to overview) | LifecycleRail study head | REMOVE row, REPOSITION to name link | VC-2A |
+| Lifecycle: Sources/Evidence/Findings/Outputs | locked rows, no routes | not present | — | REMOVE | VC-2A |
+| Lifecycle: unimplemented CD items | — | 13 dimmed placeholders | config `kind:'placeholder'` | ADD (non-interactive) | VC-2A |
+| Lifecycle: leading icons, hint lines | present | none | — | REMOVE | VC-2A |
+| Lifecycle: active | brand-tint fill + left rule | left rule + brass gradient, label 600 | `.nvOn` | RESTYLE | VC-2A |
+| Lifecycle: ≤1023 horizontal leak | fixed | vertical | — | (landed VC-1) | VC-1 ✓ |
+| Header: status indicator | save state only during activity | persistent dot + status label | SaveStateIndicator (new `status` usage) | ADD | VC-2A |
+| Header: Review toggle | absent on Brief | icon toggle after actions | ArtifactHeader `railToggles` | ADD | VC-2A |
+| Header: bar + tabs | paper, stretched tabs | same | ArtifactHeader | KEEP (VC-1 landed) | VC-1 ✓ |
+| Document width | centered 640 | same | document.module.css | KEEP (VC-1 landed) | VC-1 ✓ |
+| Status notice | `Alert rule` | same | Alert | KEEP | — |
+| Masthead | sans title, visible system chip, 3 rules | editorial block | Masthead | RECOMPOSE | VC-2B |
+| Metadata row | sans keys | mono caps keys | Masthead | RESTYLE | VC-2B |
+| Quick Facts | boxed cards | open `<dl>` row | FactsGrid | REPLACE | VC-2B |
+| Section header / separation | sans 22/700, ruled | display 27/500, whitespace | DocumentSection | REPLACE | VC-2B |
+| Prose / h3 / kv | sans | serif / mono label | blockProse | REPLACE | VC-2B |
+| Structured rows / IDs | grey 13px IDs | 56px brass-deep ID column | StructuredItemRow(s), IdTag | RESTYLE | VC-2B |
+| Priority | pill | mono text tag | StructuredItemRow | REPLACE | VC-2B |
+| Provenance | loud chips | quiet, hover reveal | ProvenanceTag | RESTYLE + REPOSITION | VC-2B |
+| System block (view) | tinted box + label | none | FactsGrid, Masthead | REMOVE | VC-2B |
+| Tables | sans, 2px rule | serif, mono header, 1px | DocumentTable | RESTYLE | VC-2B |
+| Collapsibles | bordered boxes | ruled rows + chevron | CollapsibleSection | REPLACE | VC-2B |
+| Approval checklist (doc) | unruled | ruled, mono glyphs | ApprovalSection | RESTYLE | VC-2B |
+| Editor content | CC-6 | same | ArtifactEditor | KEEP | — |
+| Editor toolbar | paper (VC-1) | same | EditToolbar | KEEP | VC-1 ✓ |
+| Context rail shell | 344 / strip / overlay / sheet | same (Review tab only; DDR-05) | ContextRail | KEEP | — |
+| Review panel | stacked form | status hierarchy, ruled checklist, sm action row | ReviewRail | RECOMPOSE | VC-3 |
+| Dead styles | BriefDocument.module.css review copy; legacy doc classes | — | — | REMOVE | VC-2B |
 
 ## 2. Per-file deltas
 
@@ -70,12 +80,28 @@ Replace it with `reference/document.module.target.css`. Class names are unchange
 - `align:'center'` → `className={styles.cellCenter}`.
 - Empty-label header rows (Document information) → `<thead className={styles.srOnly}>`.
 
-### `LifecycleRail.module.css`: REMOVE leak + RESTYLE
+### `LifecycleRail.tsx` / `LifecycleRail.module.css`: RECOMPOSE (VC-2A). The full spec is in LIFECYCLE_NAV_CONVERGENCE.md §1 and §4. The leak fix below landed in VC-1.
 - Wrap the entire legacy `@media (max-width:1023px)` block's selectors with `:not(.railInverse)`. Concretely: `.rail:not(.railInverse)`, `.rail:not(.railInverse) .list`, `.rail:not(.railInverse) .list::before`, `.rail:not(.railInverse) .node`, `.rail:not(.railInverse) .hint`, `.rail:not(.railInverse) .currentMarker`.
 - `.railInverse { padding: 0 0 var(--space-5) }` already exists; add `padding-top: 0` explicitly, because the base `.rail` padding (16px 0) currently wins for `padding-top`.
 - In the ≤980 drawer, `.railInverse` stays 224px and the drawer is 288px (64 + 224).
 
-### `ArtifactHeader.module.css`: RESTYLE
+### `SideNav.tsx` (inverse variant): RECOMPOSE (VC-2A)
+- The inverse variant renders `navItems.filter(i => ['/', '/projects', '/studies', '/ask'].includes(i.to))`, in that order. The default (non-workspace) variant is unchanged.
+- Footer: `<span class="spacer"/>` (flex 1), then Admin (owners only, same tile), then the avatar/UserMenu. Remove `.dividerInverse` from the inverse render.
+
+### `ArtifactHeader.tsx`: ADD status + Review toggle (VC-2A)
+- New optional prop `status?: { tone: 'neutral'|'warning'|'success'|'error'; label: string }`.
+- Render rule: if the `saveState` node is non-null, render `saveState`; otherwise render `<span class="saveState"><span class="saveDot saveDot{Tone}"/>{label}</span>` in the same slot. Same classes, so no new CSS.
+- Brief passes it from `vm.approval`:
+  - pending: warning "Pending approval"
+  - changes requested: error "Changes requested"
+  - approved: success "Approved"
+- Plan passes `{ tone: 'neutral', label: vm.masthead.versionDisplay }` when present.
+- Order after the GitHub link and rule: actions first, then `railToggles` (CD order).
+- BriefDocument passes `railToggles={<button class="iconButton" aria-label="Review panel" aria-pressed={railMode==='review'} aria-controls="context-rail" onClick={toggle}><ShieldCheck size={16} aria-hidden/></button>}` whenever `showRail` is true. This makes the rail sheet reachable at ≤767.
+- `.saveDotNeutral { background: var(--color-text-disabled) }` is the only CSS addition.
+
+### `ArtifactHeader.module.css`: RESTYLE (VC-1 landed)
 - `.header { background-color: var(--color-paper); gap: var(--space-3); padding: 0 var(--space-5); }`
 - ≤767: `.header { padding: 0 var(--space-3); gap: var(--space-2) }`, and hide `.githubLink` and `.rule`.
 

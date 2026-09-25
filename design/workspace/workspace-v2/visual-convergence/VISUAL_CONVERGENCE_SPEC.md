@@ -1,9 +1,35 @@
 # UX-3A.1: Workspace Visual Convergence Spec
 
 **Compared:** `qori-slack@dev` (15 commits past `7f0366d8`, read 2026-09-24T21:05Z) vs the approved Workspace v2 design (Claude Design project "Qori": `workspace2.css`, `workspace2-*.jsx`, `workspace2-states/01–08`) and `design/workspace/workspace-v2/reference/`.
+> **MATCH THE APPROVED CD COMPOSITION. DO NOT MATCH THE CURRENT PRODUCTION COMPOSITION.**
+> **KEEP means visually equivalent already, not merely architecturally reusable.** A component can be reused in implementation while its rendered composition is RECOMPOSE/REPLACE. Every matrix in this package lists **Implementation reuse** and **Visual action** as separate columns.
+> **Correction (2026-09-24, post-VC-1):** the first version of this handover marked the SideNav and lifecycle panel KEEP. That was wrong for the lifecycle panel and incomplete for the app rail and header. See §0 and LIFECYCLE_NAV_CONVERGENCE.md.
+
 **Rule:** visual source of truth = approved v2. Functional source of truth = production. This spec changes **composition, CSS and layout only**.
 
 ---
+
+## 0. Frame re-audit (supersedes the A–C and D rows below)
+
+**Screenshot-level acceptance rule:** at the same viewport width, the persistent frame (app rail, lifecycle grouping, labels and hierarchy, header, document placement, context rail state) must be recognizable as the **same composition** as the approved CD screenshot **before** document details are evaluated. A dark sidebar with the old menu doesn't pass just because its width and color match.
+
+| Region | CD element | Current production | Match | Implementation reuse | Visual action |
+|---|---|---|---|---|---|
+| A · App rail | Mark "q" (display 25px) | 24px logo image | ~ | SideNav inverse | KEEP (brand asset stays; DDR-18 if the "q" glyph is preferred) |
+| A | Items: Home · Projects · Studies (active) · Ask Qori | Home · Projects · Studies · Search · Ask Qori · Work Queue | **MISMATCH** | SideNav `navItems` | RECOMPOSE: render Home, Projects, Studies, Ask Qori; REMOVE Search and Work Queue from the inverse variant (neither has a route on dev) |
+| A | Bottom group: spacer · Learn · Admin · avatar | divider · Admin · avatar | **MISMATCH** | SideNav footer | REPOSITION Admin to the bottom group above the avatar (flex spacer, no divider). Learn is **omitted** (no capability or route) |
+| A | Tile 38–40, radius 9–10, active marker | same | MATCH | — | KEEP |
+| B · Lifecycle | Grouped 5-phase list, 15 items | Flat 7-stage list (Overview…Outputs) | **MISMATCH** | LifecycleRail + new presentation config | **RECOMPOSE** (LIFECYCLE_NAV_CONVERGENCE.md) |
+| B | Study head: eyebrow · name · back link | same | MATCH | LifecycleRail | KEEP (name becomes a link to StudyOverview) |
+| B | No leading icons, no hint lines, mono counts | leading state icons, italic hint lines | **MISMATCH** | — | REMOVE icons and hints |
+| C · Header | crumb · tabs · grow · **status/save** · GitHub · rule · actions · **rail toggle(s)** | crumb · tabs · grow · save (only when saving/dirty) · GitHub · rule · actions | **MISMATCH** | ArtifactHeader | ADD a persistent status indicator (dot + label) when no save activity: Brief = approval status, Plan = `vm.masthead.versionDisplay`. ADD the Review toggle after actions (Brief only; CD order). REMOVE nothing |
+| C | Persona toggle (Researcher/Reviewer) | none | n/a | — | Not built. Prototype-only control (production has no role gating, DDR-06) |
+| C | Tabs "Brief" / "Research Plan" | same labels | MATCH | ArtifactTabs | RESTYLE (VC-1 landed) |
+| D · Canvas | Centered 640 measure | VC-1 landed | MATCH | — | KEEP. Document internals → VC-2B |
+| E · Context rail | Tabs Coaching · Comments · Review; strip with 3 icons | Review only; strip with 1 icon | Partial | ContextRail | KEEP (functional limit, DDR-05). The composition of the one tab matches |
+| E | Rail header toggles in page header | Brief passes no `railToggles` → no way to open the rail sheet ≤767 | **MISMATCH** (functional bug) | ArtifactHeader `railToggles` | ADD (see C) |
+| F · Drawer ≤980 | App rail + grouped lifecycle side by side | App rail + flat list | **MISMATCH** | WorkspaceLayout drawer | Follows B automatically |
+| F · Sheet ≤767 | Full-screen rail | same | MATCH | — | KEEP |
 
 ## 1. Overall diagnosis
 
@@ -17,7 +43,15 @@ The architecture migration (CC-1…CC-8) landed. The visual migration mostly did
 
 So production reads as "the old Qori app with a dark sidebar." The target reads as "an editorial research document in a research workspace."
 
-## 2. Largest structural mismatches (top 10)
+**Root cause of the lifecycle miss:** the original UX-3A handover (COMPONENT_MAPPING §3.3, written by design) instructed: *"The prototype's grouped Discovery/Planning/Fieldwork list is not used; production LifecycleNode stages are the contract."* That conflated **functional** authority (which routes exist) with **visual** authority (composition). CC-3 followed that instruction exactly, and the first UX-3A.1 audit then graded the frame by width and color and marked it KEEP. This correction reverses §3.3: composition comes from CD, availability from production.
+
+## 2. Largest structural mismatches (top 10, revised)
+Frame mismatches F1–F3 rank **above** the document list below:
+- **F1:** lifecycle panel composition (flat 7-stage vs grouped 5-phase, 15 items).
+- **F2:** app rail item set and bottom group.
+- **F3:** header status indicator and Review toggle missing (the toggle's absence also blocks the rail sheet at ≤767).
+
+Document mismatches:
 
 | # | Mismatch | Evidence (dev) | Action |
 |---|---|---|---|
@@ -36,6 +70,8 @@ So production reads as "the old Qori app with a dark sidebar." The target reads 
 
 Each area gives **Current → Target → Delta → Action → Files → Acceptance**. Exact values are in GEOMETRY.md and TYPOGRAPHY.md.
 
+> Areas A–C below are **superseded by §0** where they conflict.
+
 ### A. Workspace shell
 - **Current:** `shellWorkspace` flex with 64 + 224 dark rails, main is `display:flex`. Matches the target structure.
 - **Target:** same.
@@ -48,15 +84,15 @@ Each area gives **Current → Target → Delta → Action → Files → Acceptan
 - **Current:** 64px, 40×40 tiles `--radius-xl` 10, active 2px brass marker.
 - **Target:** 64px, 38–40px tiles, radius 9–10, 25px Cormorant "Q" mark or logo, 30–32px avatar.
 - **Delta:** the `.mark` holds the logo image. Tile and marker geometry are within tolerance.
-- **Action:** KEEP.
-- **Files:** —
+- **Action:** ~~KEEP~~ **RECOMPOSE the item set and bottom group** (§0 row A).
+- **Files:** `SideNav.tsx`, `SideNav.module.css`.
 - **Acceptance:** the active marker sits 12–13px outside the tile, and tooltips appear on hover/focus.
 
 ### C. Lifecycle panel
 - **Current:** 224px dark with study head and rows. The legacy ≤1023 block makes the list horizontal (mismatch #8). `.rail` base `padding: 16px 0` stacks with the `.railInverse` padding. The back link reads "All studies" pointing to `/`.
 - **Target:** vertical at every width (docked or drawer). The study head is 20/20/16 padding, a mono eyebrow, a 19px display name and a back link. Rows are 36px min with a 2px left rule and a mono count.
 - **Delta:** responsive leak and a double top padding.
-- **Action:** REMOVE the leak. RESTYLE padding.
+- **Action:** REMOVE the leak (landed in VC-1). **RECOMPOSE the list** (§0 row B, LIFECYCLE_NAV_CONVERGENCE.md).
 - **Files:** `LifecycleRail.module.css`.
 - **Acceptance:** at 1000px and inside the drawer at 900/390 the list is vertical, and the first row sits 8px under the head rule.
 
