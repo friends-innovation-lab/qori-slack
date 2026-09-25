@@ -35,6 +35,8 @@ export type {
   CommentThreadEventResource,
   CommentThreadResource,
   CommentThreadDetailResource,
+  // Query Inputs
+  CommentThreadListQuery,
   // Request Inputs
   CreateCommentThreadInput,
   CreateCommentMessageInput,
@@ -209,6 +211,15 @@ export interface InternalCreateMessageRequest {
 export interface InternalUpdateMessageRequest {
   readonly body: string;
   readonly expected_updated_at: string;
+}
+
+/**
+ * Internal query parameters for listing threads.
+ * CMT-3 controller maps from public CommentThreadListQuery.
+ */
+export interface InternalThreadListQuery {
+  readonly status?: 'open' | 'resolved';
+  readonly section_key?: string;
 }
 
 /**

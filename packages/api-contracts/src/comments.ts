@@ -107,6 +107,23 @@ export interface CommentThreadDetailResource extends CommentThreadResource {
   readonly events: CommentThreadEventResource[];
 }
 
+// ─── Query Inputs ───────────────────────────────────────────────────
+
+/**
+ * Query parameters for listing comment threads.
+ * Used by GET /api/v1/artifacts/:id/comments
+ */
+export interface CommentThreadListQuery {
+  /**
+   * Filter by thread status. Defaults to 'open' if not specified.
+   */
+  readonly status?: CommentThreadStatus;
+  /**
+   * Filter by section key (must be valid for the artifact type).
+   */
+  readonly section_key?: string;
+}
+
 // ─── Request Inputs ─────────────────────────────────────────────────
 
 /**
