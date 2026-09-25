@@ -21,6 +21,10 @@ export interface CommentListFilters {
  * - ['comments', 'artifact', artifactPublicId] — all data for an artifact
  * - ['comments', 'artifact', artifactPublicId, 'list', { status, sectionKey }] — filtered list
  * - ['comments', 'thread', threadId] — single thread detail
+ *
+ * NORMALIZATION: status defaults to 'open' to match backend behavior.
+ * This ensures useCommentThreads({ artifactPublicId }) and
+ * useCommentThreads({ artifactPublicId, status: 'open' }) share the same cache.
  */
 export const commentsKeys = {
   /** Root key for all comments queries */
@@ -30,14 +34,14 @@ export const commentsKeys = {
   artifact: (artifactPublicId: string) =>
     ['comments', 'artifact', artifactPublicId] as const,
 
-  /** Filtered list for an artifact */
+  /** Filtered list for an artifact. Status normalized to 'open' when undefined. */
   list: (filters: CommentListFilters) =>
     [
       'comments',
       'artifact',
       filters.artifactPublicId,
       'list',
-      { status: filters.status, sectionKey: filters.sectionKey },
+      { status: filters.status ?? 'open', sectionKey: filters.sectionKey },
     ] as const,
 
   /** Single thread detail */

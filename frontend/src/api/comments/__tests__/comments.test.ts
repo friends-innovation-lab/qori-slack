@@ -55,6 +55,7 @@ describe('commentsKeys', () => {
     expect(key1).not.toEqual(key3);
     expect(key2).not.toEqual(key3);
 
+    // Status is normalized to 'open' (default) when not specified
     expect(key1).toEqual([
       'comments',
       'artifact',
@@ -69,16 +70,23 @@ describe('commentsKeys', () => {
     expect(key).toEqual(['comments', 'thread', 'thread-456']);
   });
 
-  it('list with undefined status creates distinct key from explicit open', () => {
+  it('list normalizes undefined status to open (same cache entry)', () => {
     const implicitOpen = commentsKeys.list({ artifactPublicId: 'art-123' });
     const explicitOpen = commentsKeys.list({
       artifactPublicId: 'art-123',
       status: 'open',
     });
 
-    // These should be different keys since undefined !== 'open'
-    // Backend defaults to open, but keys should be explicit
-    expect(implicitOpen).not.toEqual(explicitOpen);
+    // These MUST be the same key — undefined normalizes to 'open'
+    // Prevents duplicate cache entries for semantically identical queries
+    expect(implicitOpen).toEqual(explicitOpen);
+    expect(implicitOpen).toEqual([
+      'comments',
+      'artifact',
+      'art-123',
+      'list',
+      { status: 'open', sectionKey: undefined },
+    ]);
   });
 });
 
