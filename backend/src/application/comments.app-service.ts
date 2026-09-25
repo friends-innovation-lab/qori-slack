@@ -23,17 +23,17 @@ import type { CommentThreadEvent } from '../database/models/comment_thread_event
 import type { Actor } from '../database/models/actor';
 import type { ResearchArtifact } from '../database/models/research_artifact';
 import type {
-  CommentThreadDTO,
-  CommentThreadWithMessagesDTO,
-  CommentMessageDTO,
-  CommentThreadEventDTO,
-  CommentActorSummary,
-  CommentThreadPermissions,
-  CommentMessagePermissions,
-  CommentThreadListResponse,
-  CreateCommentThreadRequest,
-  CreateCommentMessageRequest,
-  UpdateCommentMessageRequest,
+  InternalCommentThreadDTO,
+  InternalCommentThreadWithMessagesDTO,
+  InternalCommentMessageDTO,
+  InternalCommentThreadEventDTO,
+  InternalActorSummary,
+  InternalThreadPermissions,
+  InternalMessagePermissions,
+  InternalThreadListResponse,
+  InternalCreateThreadRequest,
+  InternalCreateMessageRequest,
+  InternalUpdateMessageRequest,
 } from '../types/comments';
 import { isValidSectionKey } from '../types/comments';
 import {
@@ -57,9 +57,9 @@ const ArtifactModel = sequelize.models.ResearchArtifact as typeof ResearchArtifa
 // ─── Helper Functions ──────────────────────────────────────────────────
 
 /**
- * Build actor summary for API response.
+ * Build actor summary for internal response.
  */
-function toActorSummary(actor: Actor): CommentActorSummary {
+function toActorSummary(actor: Actor): InternalActorSummary {
   return {
     id: actor.id,
     public_id: actor.public_id,
@@ -74,7 +74,7 @@ async function computeThreadPermissions(
   thread: CommentThread,
   actorId: number,
   studyOwnerId: number | null,
-): Promise<CommentThreadPermissions> {
+): Promise<InternalThreadPermissions> {
   const isAuthor = thread.created_by === actorId;
   const isOwner = studyOwnerId === actorId;
 
@@ -91,7 +91,7 @@ async function computeThreadPermissions(
 function computeMessagePermissions(
   message: CommentMessage,
   actorId: number,
-): CommentMessagePermissions {
+): InternalMessagePermissions {
   return {
     can_edit: message.author_id === actorId,
   };
@@ -143,18 +143,18 @@ async function getStudyOwnerActorId(studyId: number): Promise<number | null> {
 }
 
 /**
- * Transform thread to DTO with permissions.
+ * Transform thread to internal DTO with permissions.
  */
 async function toThreadDTO(
   thread: CommentThread,
   actorId: number,
   studyOwnerId: number | null,
   messageCount: number,
-): Promise<CommentThreadDTO> {
+): Promise<InternalCommentThreadDTO> {
   const creator = await ActorModel.findByPk(thread.created_by);
   if (!creator) throw resourceNotFound('Thread creator');
 
-  let resolvedByActor: CommentActorSummary | null = null;
+  let resolvedByActor: InternalActorSummary | null = null;
   if (thread.resolved_by) {
     const resolver = await ActorModel.findByPk(thread.resolved_by);
     if (resolver) resolvedByActor = toActorSummary(resolver);
@@ -178,12 +178,12 @@ async function toThreadDTO(
 }
 
 /**
- * Transform message to DTO with permissions.
+ * Transform message to internal DTO with permissions.
  */
 async function toMessageDTO(
   message: CommentMessage,
   actorId: number,
-): Promise<CommentMessageDTO> {
+): Promise<InternalCommentMessageDTO> {
   const author = await ActorModel.findByPk(message.author_id);
   if (!author) throw resourceNotFound('Message author');
 
@@ -201,9 +201,9 @@ async function toMessageDTO(
 }
 
 /**
- * Transform event to DTO.
+ * Transform event to internal DTO.
  */
-async function toEventDTO(event: CommentThreadEvent): Promise<CommentThreadEventDTO> {
+async function toEventDTO(event: CommentThreadEvent): Promise<InternalCommentThreadEventDTO> {
   const actor = await ActorModel.findByPk(event.actor_id);
   if (!actor) throw resourceNotFound('Event actor');
 
@@ -225,7 +225,7 @@ async function toEventDTO(event: CommentThreadEvent): Promise<CommentThreadEvent
 export async function listArtifactCommentThreads(
   ctx: ApplicationContext,
   artifactId: number,
-): Promise<CommentThreadListResponse> {
+): Promise<InternalThreadListResponse> {
   // Load artifact and verify access
   const artifact = await ArtifactModel.findByPk(artifactId) as ResearchArtifact | null;
   if (!artifact) throw resourceNotFound('Artifact');
@@ -247,7 +247,7 @@ export async function listArtifactCommentThreads(
   }) as CommentThread[];
 
   // Get message counts for all threads
-  const threadDTOs: CommentThreadDTO[] = [];
+  const threadDTOs: InternalCommentThreadDTO[] = [];
   for (const thread of threads) {
     const messageCount = await CommentMessageModel.count({
       where: { thread_id: thread.id },
@@ -269,7 +269,7 @@ export async function listArtifactCommentThreads(
 export async function getCommentThread(
   ctx: ApplicationContext,
   threadId: string,
-): Promise<CommentThreadWithMessagesDTO> {
+): Promise<InternalCommentThreadWithMessagesDTO> {
   const thread = await CommentThreadModel.findByPk(threadId) as CommentThread | null;
   if (!thread) throw resourceNotFound('Thread');
 
@@ -318,8 +318,8 @@ export async function getCommentThread(
  */
 export async function createCommentThreadWithInitialMessage(
   ctx: ApplicationContext,
-  input: CreateCommentThreadRequest,
-): Promise<CommentThreadWithMessagesDTO> {
+  input: InternalCreateThreadRequest,
+): Promise<InternalCommentThreadWithMessagesDTO> {
   // Validate input
   if (!input.body || input.body.trim().length === 0) {
     throw validationError('Message body is required');
@@ -403,8 +403,8 @@ export async function createCommentThreadWithInitialMessage(
  */
 export async function replyToCommentThread(
   ctx: ApplicationContext,
-  input: CreateCommentMessageRequest,
-): Promise<CommentMessageDTO> {
+  input: InternalCreateMessageRequest,
+): Promise<InternalCommentMessageDTO> {
   // Validate input
   if (!input.body || input.body.trim().length === 0) {
     throw validationError('Message body is required');
@@ -438,8 +438,8 @@ export async function replyToCommentThread(
 export async function editCommentMessage(
   ctx: ApplicationContext,
   messageId: string,
-  input: UpdateCommentMessageRequest,
-): Promise<CommentMessageDTO> {
+  input: InternalUpdateMessageRequest,
+): Promise<InternalCommentMessageDTO> {
   // Validate input
   if (!input.body || input.body.trim().length === 0) {
     throw validationError('Message body is required');
@@ -481,7 +481,7 @@ export async function editCommentMessage(
 export async function resolveCommentThread(
   ctx: ApplicationContext,
   threadId: string,
-): Promise<{ thread: CommentThreadDTO; event: CommentThreadEventDTO }> {
+): Promise<{ thread: InternalCommentThreadDTO; event: InternalCommentThreadEventDTO }> {
   const thread = await CommentThreadModel.findByPk(threadId) as CommentThread | null;
   if (!thread) throw resourceNotFound('Thread');
 
@@ -550,7 +550,7 @@ export async function resolveCommentThread(
 export async function reopenCommentThread(
   ctx: ApplicationContext,
   threadId: string,
-): Promise<{ thread: CommentThreadDTO; event: CommentThreadEventDTO }> {
+): Promise<{ thread: InternalCommentThreadDTO; event: InternalCommentThreadEventDTO }> {
   const thread = await CommentThreadModel.findByPk(threadId) as CommentThread | null;
   if (!thread) throw resourceNotFound('Thread');
 

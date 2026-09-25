@@ -1,195 +1,142 @@
 /**
- * Comment Contract Types — CMT-1
+ * Comments Types — CMT-1
  *
- * Types for Workspace Comments. These contracts define:
- * - Thread and message shapes
- * - Permission flags computed by the backend
- * - Request/response schemas
+ * This module re-exports the PUBLIC contract from @qori/api-contracts and
+ * defines BACKEND-INTERNAL types for service layer operations.
  *
- * Comments anchor to artifact_id + section_key (stable identifiers from
- * @qori/artifact-contracts). Authorization is based on project membership,
- * thread authorship, and study ownership.
+ * PUBLIC TYPES (from @qori/api-contracts):
+ * - CommentThreadResource, CommentMessageResource, CommentThreadEventResource
+ * - CommentThreadPermissions, CommentMessagePermissions, CommentAuthorSummary
+ * - CommentThreadStatus, CommentEventType
+ * - Request/Response types
+ *
+ * BACKEND-INTERNAL TYPES (this file):
+ * - InternalCommentThreadDTO, InternalCommentMessageDTO (include raw integer IDs)
+ * - Section key validation (VALID_SECTION_KEYS, isValidSectionKey)
+ *
+ * CMT-3 REST controllers will map internal DTOs → public Resources.
  */
 
-import type { CommentThreadStatus } from '../database/models/comment_thread';
+// ═══════════════════════════════════════════════════════════════════════════
+// PUBLIC CONTRACT — Re-export from @qori/api-contracts
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type {
+  // Enums
+  CommentThreadStatus,
+  CommentEventType,
+  // Permissions
+  CommentThreadPermissions,
+  CommentMessagePermissions,
+  // Identity
+  CommentAuthorSummary,
+  // Resources
+  CommentMessageResource,
+  CommentThreadEventResource,
+  CommentThreadResource,
+  CommentThreadDetailResource,
+  // Request Inputs
+  CreateCommentThreadInput,
+  CreateCommentMessageInput,
+  UpdateCommentMessageInput,
+  // Response Envelopes
+  CommentThreadListResponse,
+  CommentThreadDetailResponse,
+  CreateCommentThreadResponse,
+  CreateCommentMessageResponse,
+  UpdateCommentMessageResponse,
+  UpdateCommentThreadStatusResponse,
+} from '@qori/api-contracts';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BACKEND-INTERNAL TYPES — Service layer DTOs with raw integer IDs
+// ═══════════════════════════════════════════════════════════════════════════
+
+import type { CommentThreadStatus as ThreadStatus } from '@qori/api-contracts';
 import type { CommentThreadEventType } from '../database/models/comment_thread_event';
 
-// Re-export for convenience
-export type { CommentThreadStatus, CommentThreadEventType };
-
-// ─── Permission Flags ──────────────────────────────────────────────────
+// Re-export model enum for internal use
+export type { CommentThreadEventType };
 
 /**
- * Permission flags computed by the backend for a comment thread.
- * Never expose raw authorization logic to the frontend.
+ * Internal actor summary with both IDs.
+ * Used by app service; CMT-3 controller maps to CommentAuthorSummary (public_id only).
  */
-export interface CommentThreadPermissions {
-  /** Actor can add replies to this thread */
-  readonly can_reply: boolean;
-  /** Actor can resolve this thread (author or study owner) */
-  readonly can_resolve: boolean;
-  /** Actor can reopen this thread (author or study owner) */
-  readonly can_reopen: boolean;
-}
-
-/**
- * Permission flags computed by the backend for a comment message.
- */
-export interface CommentMessagePermissions {
-  /** Actor can edit this message (message author only) */
-  readonly can_edit: boolean;
-}
-
-// ─── Actor Summary ─────────────────────────────────────────────────────
-
-/**
- * Minimal actor info for display in comments.
- * Never include sensitive identity provider details.
- */
-export interface CommentActorSummary {
+export interface InternalActorSummary {
   readonly id: number;
   readonly public_id: string;
   readonly display_name: string | null;
 }
 
-// ─── Message ───────────────────────────────────────────────────────────
-
 /**
- * Comment message as returned by the API.
+ * Internal permission flags — identical to public contract.
+ * Defined here to avoid import complexity in app service.
  */
-export interface CommentMessageDTO {
-  readonly id: string;
-  readonly thread_id: string;
-  readonly author: CommentActorSummary;
-  readonly body: string;
-  readonly created_at: string; // ISO 8601
-  readonly updated_at: string; // ISO 8601 (for optimistic locking)
-  readonly permissions: CommentMessagePermissions;
+export interface InternalThreadPermissions {
+  readonly can_reply: boolean;
+  readonly can_resolve: boolean;
+  readonly can_reopen: boolean;
 }
 
-// ─── Thread Event ──────────────────────────────────────────────────────
+export interface InternalMessagePermissions {
+  readonly can_edit: boolean;
+}
 
 /**
- * Thread event as returned by the API.
+ * Internal message DTO with raw thread_id UUID.
+ * CMT-3 controller maps to CommentMessageResource.
  */
-export interface CommentThreadEventDTO {
+export interface InternalCommentMessageDTO {
+  readonly id: string;
+  readonly thread_id: string;
+  readonly author: InternalActorSummary;
+  readonly body: string;
+  readonly created_at: string;
+  readonly updated_at: string;
+  readonly permissions: InternalMessagePermissions;
+}
+
+/**
+ * Internal thread event DTO.
+ * CMT-3 controller maps to CommentThreadEventResource.
+ */
+export interface InternalCommentThreadEventDTO {
   readonly id: string;
   readonly thread_id: string;
   readonly event_type: CommentThreadEventType;
-  readonly actor: CommentActorSummary;
-  readonly created_at: string; // ISO 8601
+  readonly actor: InternalActorSummary;
+  readonly created_at: string;
 }
 
-// ─── Thread ────────────────────────────────────────────────────────────
-
 /**
- * Comment thread as returned by the API.
- * Includes computed permissions.
+ * Internal thread DTO with raw integer IDs.
+ * CMT-3 controller maps to CommentThreadResource (public_ids).
  */
-export interface CommentThreadDTO {
+export interface InternalCommentThreadDTO {
   readonly id: string;
   readonly study_id: number;
   readonly artifact_id: number;
   readonly section_key: string;
-  readonly status: CommentThreadStatus;
-  readonly creator: CommentActorSummary;
-  readonly created_at: string; // ISO 8601
-  readonly resolved_by: CommentActorSummary | null;
-  readonly resolved_at: string | null; // ISO 8601
-  readonly permissions: CommentThreadPermissions;
+  readonly status: ThreadStatus;
+  readonly creator: InternalActorSummary;
+  readonly created_at: string;
+  readonly resolved_by: InternalActorSummary | null;
+  readonly resolved_at: string | null;
+  readonly permissions: InternalThreadPermissions;
   readonly message_count: number;
 }
 
 /**
- * Thread with messages and events expanded.
+ * Internal thread with messages expanded.
  */
-export interface CommentThreadWithMessagesDTO extends CommentThreadDTO {
-  readonly messages: CommentMessageDTO[];
-  readonly events: CommentThreadEventDTO[];
+export interface InternalCommentThreadWithMessagesDTO extends InternalCommentThreadDTO {
+  readonly messages: InternalCommentMessageDTO[];
+  readonly events: InternalCommentThreadEventDTO[];
 }
 
-// ─── Requests ──────────────────────────────────────────────────────────
-
-/**
- * Create a new comment thread with its initial message.
- * Threads cannot exist without at least one message.
- */
-export interface CreateCommentThreadRequest {
-  readonly artifact_id: number;
-  readonly section_key: string;
-  readonly body: string; // Initial message body
-}
-
-/**
- * Add a reply to an existing thread.
- */
-export interface CreateCommentMessageRequest {
-  readonly thread_id: string;
-  readonly body: string;
-}
-
-/**
- * Edit an existing message.
- * Requires expected_updated_at for optimistic concurrency.
- */
-export interface UpdateCommentMessageRequest {
-  readonly body: string;
-  /**
-   * The updated_at timestamp from the message when the user started editing.
-   * If this doesn't match the current stored value, the edit is rejected
-   * with COMMENT_EDIT_CONFLICT to prevent lost updates.
-   */
-  readonly expected_updated_at: string; // ISO 8601
-}
-
-// ─── Responses ─────────────────────────────────────────────────────────
-
-/**
- * List threads for an artifact.
- */
-export interface CommentThreadListResponse {
-  readonly artifact_id: number;
-  readonly threads: CommentThreadDTO[];
-  readonly total_count: number;
-}
-
-/**
- * Thread detail with messages.
- */
-export interface CommentThreadDetailResponse {
-  readonly thread: CommentThreadWithMessagesDTO;
-}
-
-/**
- * Created thread response.
- */
-export interface CreateCommentThreadResponse {
-  readonly thread: CommentThreadWithMessagesDTO;
-}
-
-/**
- * Created message response.
- */
-export interface CreateCommentMessageResponse {
-  readonly message: CommentMessageDTO;
-}
-
-/**
- * Updated message response.
- */
-export interface UpdateCommentMessageResponse {
-  readonly message: CommentMessageDTO;
-}
-
-/**
- * Resolve/reopen thread response.
- */
-export interface UpdateCommentThreadStatusResponse {
-  readonly thread: CommentThreadDTO;
-  readonly event: CommentThreadEventDTO;
-}
-
-// ─── Section Key Validation ────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// BACKEND-INTERNAL — Section Key Validation
+// ═══════════════════════════════════════════════════════════════════════════
 
 /**
  * Valid section keys by artifact type.
@@ -231,5 +178,44 @@ export type CommentableSectionKey = BriefSectionKey | PlanSectionKey;
 export function isValidSectionKey(artifactType: string, sectionKey: string): boolean {
   const validKeys = VALID_SECTION_KEYS[artifactType];
   if (!validKeys) return false;
-  return validKeys.includes(sectionKey as any);
+  return validKeys.includes(sectionKey as BriefSectionKey | PlanSectionKey);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BACKEND-INTERNAL — Request/Response types with internal IDs
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Internal request to create a thread (uses artifact_id integer).
+ * CMT-3 controller maps from public CreateCommentThreadInput.
+ */
+export interface InternalCreateThreadRequest {
+  readonly artifact_id: number;
+  readonly section_key: string;
+  readonly body: string;
+}
+
+/**
+ * Internal request to create a message.
+ */
+export interface InternalCreateMessageRequest {
+  readonly thread_id: string;
+  readonly body: string;
+}
+
+/**
+ * Internal request to update a message.
+ */
+export interface InternalUpdateMessageRequest {
+  readonly body: string;
+  readonly expected_updated_at: string;
+}
+
+/**
+ * Internal response for thread list (uses artifact_id integer).
+ */
+export interface InternalThreadListResponse {
+  readonly artifact_id: number;
+  readonly threads: InternalCommentThreadDTO[];
+  readonly total_count: number;
 }

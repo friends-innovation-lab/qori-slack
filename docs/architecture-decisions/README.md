@@ -131,6 +131,12 @@ Start with `0001` and read forward. The history is itself useful — it shows ho
 
 The L-prefix distinguishes "lessons" from active design decisions. Lessons capture failure patterns to avoid; decisions document architectural commitments. Both are useful; they serve different purposes.
 
+### Technical Debt
+
+Documented gaps accepted for MVP that require future attention.
+
+- **CMT-1: Actor FK cascade vs audit retention (2026-09-25)** — Comment messages and thread events use `ON DELETE CASCADE` for actor FKs. If an actor is hard-deleted, their authored messages and audit events are also deleted. Current MVP accepts this because actor deletion follows the existing soft-delete operational model (actors are deactivated, not deleted). Future compliance/audit hardening should reconsider actor FK behavior to preserve records while nulling/anonymizing actor identity.
+
 ### Related documents
 
 - [Quarterly architecture audit](../audits/quarterly-architecture-audit.md) — The recurring discipline that surfaces drift

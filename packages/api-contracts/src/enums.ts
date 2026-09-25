@@ -38,3 +38,11 @@ export type ResearchMethodology =
   | 'card_sorting'
   | 'tree_testing'
   | 'mixed_methods';
+
+// ─── Comments ────────────────────────────────────────────────────────
+
+/** Thread lifecycle status */
+export type CommentThreadStatus = 'open' | 'resolved';
+
+/** Thread event types for audit trail */
+export type CommentEventType = 'created' | 'resolved' | 'reopened';
