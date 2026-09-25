@@ -1,31 +1,32 @@
 /**
  * ReviewRail styles — CC-7 Brief approval panel.
  *
- * Rendered inside ContextRail's tabpanel.
- * Spec: TOKENS.md §5, COMPONENT_MAPPING.md §3.16
+ * VC-3: Converged to approved CD composition per COMPONENT_DELTAS §3.
+ * - Mono eyebrow typography
+ * - Display serif status heading with state colors
+ * - Ruled checklist with hairlines
+ * - Horizontal action row (sm buttons)
+ * - Max-width body copy
  */
 
 .reviewRail {
-  padding: var(--space-2) 0;
+  padding: var(--space-1) var(--space-1) 0;
 }
 
-/* Eyebrow label */
+/* Eyebrow label — mono caps */
 .reviewEyebrow {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  margin: 0;
+  font: var(--weight-semibold) var(--type-label-size)/var(--type-label-line) var(--font-mono);
+  letter-spacing: var(--type-label-track);
   text-transform: uppercase;
   color: var(--color-text-muted);
-  margin: 0 0 var(--space-2);
 }
 
-/* Status heading (display style per TOKENS §5) */
+/* Status heading — display serif */
 .reviewStatus {
-  font-family: var(--font-display, var(--font-sans));
-  font-size: 21px;
-  line-height: 25px;
-  font-weight: 500;
-  margin: 0 0 var(--space-2);
+  margin: var(--space-1) 0 var(--space-2);
+  font: var(--weight-medium) var(--type-rail-status-size)/var(--type-rail-status-line) var(--font-display);
+  color: var(--color-text);
 }
 
 .reviewStatusSuccess {
@@ -33,86 +34,90 @@
 }
 
 .reviewStatusWarning {
-  color: var(--color-text);
+  color: var(--color-warning);
 }
 
 .reviewStatusError {
   color: var(--color-error);
 }
 
-/* Body text */
+/* Body text — serif, constrained width */
 .reviewBody {
-  font-family: var(--font-serif, var(--font-sans));
-  font-size: 13.5px;
-  line-height: 22px;
-  color: var(--color-text-meta, var(--color-text-muted));
-  margin: 0 0 var(--space-3);
+  margin: 0;
+  max-width: 32ch;
+  font: var(--type-doc-note-size)/var(--type-doc-note-line) var(--font-serif);
+  color: var(--color-text-meta);
 }
 
-/* Feedback blockquote (changes requested) */
-.reviewFeedback {
-  font-family: var(--font-serif, var(--font-sans));
-  font-size: 13.5px;
-  line-height: 22px;
-  font-style: italic;
-  color: var(--color-text-muted);
-  border-left: 2px solid var(--color-error);
-  margin: var(--space-3) 0;
-  padding: var(--space-2) 0 var(--space-2) var(--space-3);
-}
-
-/* Checklist fieldset */
+/* Checklist fieldset — ruled */
 .reviewChecklist {
   border: 0;
   padding: 0;
-  margin: 0 0 var(--space-3);
+  margin: var(--space-4) 0 0;
 }
 
 .checklistList {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  display: block;
+  border-top: 1px solid var(--color-border);
 }
 
 .checklistItem {
   display: flex;
-  align-items: flex-start;
   gap: var(--space-2);
+  align-items: flex-start;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+  font: var(--type-ui-size)/var(--type-ui-line) var(--font-ui);
+  color: var(--color-text);
   cursor: pointer;
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 .checklistItem input[type='checkbox'] {
-  margin-top: 3px;
   width: 16px;
   height: 16px;
+  margin: 2px 0 0;
   accent-color: var(--color-text);
   flex-shrink: 0;
 }
 
-/* Actions row */
+/* Actions row — horizontal, with top rule */
 .reviewActions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: var(--space-2);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--color-border);
 }
 
-/* Hint text (for disabled approve) */
+/* No top rule when directly after checklist (checklist already has bottom hairline) */
+.reviewChecklist + .reviewActions {
+  border-top: 0;
+}
+
+/* Hint text */
 .reviewHint {
-  font-size: 12px;
-  line-height: 18px;
+  margin: 0;
+  font: 12px/18px var(--font-ui);
   color: var(--color-text-muted);
-  margin: var(--space-2) 0 0;
 }
 
 /* Feedback textarea */
 .feedbackTextarea {
   min-height: 100px;
   margin-bottom: var(--space-3);
+}
+
+/* Feedback blockquote (changes requested) */
+.reviewFeedback {
+  margin: var(--space-3) 0 0;
+  padding: 0 0 0 var(--space-3);
+  border-left: 2px solid var(--color-error);
+  font: italic var(--type-doc-note-size)/var(--type-doc-note-line) var(--font-serif);
+  color: var(--color-text-meta);
 }
 
 /* Screen reader only */

@@ -75,7 +75,8 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--space-4) var(--space-4) var(--space-7);
+  /* VC-3: Optical alignment with document's 48px top */
+  padding: var(--space-5) var(--space-5) var(--space-7);
   scrollbar-width: thin;
   overscroll-behavior: contain;
 }

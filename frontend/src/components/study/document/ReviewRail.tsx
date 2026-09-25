@@ -162,6 +162,7 @@ export function ReviewRail({
 
           <div className={styles.reviewActions}>
             <Button
+              size="sm"
               onClick={onApprove}
               disabled={!allChecked || approving}
               loading={approving}
@@ -204,6 +205,7 @@ export function ReviewRail({
               Cancel
             </Button>
             <Button
+              size="sm"
               onClick={handleSubmitChanges}
               disabled={!comment.trim() || requesting}
               loading={requesting}
