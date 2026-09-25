@@ -5,6 +5,7 @@
  * GitHub link, rail toggles, and edit/save actions.
  *
  * CC-4: New component for Plan migration (§3.4).
+ * VC-2A: Added persistent status indicator per COMPONENT_DELTAS §2.
  */
 
 import type { ReactNode } from 'react';
@@ -12,6 +13,16 @@ import { Link } from 'react-router';
 import { Menu } from 'lucide-react';
 import { ArtifactTabs } from './ArtifactTabs';
 import styles from './ArtifactHeader.module.css';
+import docStyles from './document.module.css';
+
+/**
+ * VC-2A: Persistent status indicator.
+ * Shown when no save activity is in progress.
+ */
+interface ArtifactStatus {
+  tone: 'neutral' | 'warning' | 'success' | 'error';
+  label: string;
+}
 
 interface ArtifactHeaderProps {
   /** Study name for breadcrumb */
@@ -20,8 +31,15 @@ interface ArtifactHeaderProps {
   studyPublicId: string;
   /** Which artifact tab is active */
   active: 'brief' | 'plan';
-  /** Save state indicator (rendered in header) */
+  /** Save state indicator (rendered in header during save activity) */
   saveState?: ReactNode;
+  /**
+   * VC-2A: Persistent artifact status.
+   * Displayed when saveState is null/undefined.
+   * Brief: approval status (pending/changes requested/approved)
+   * Plan: version display (e.g., "v1.2")
+   */
+  status?: ArtifactStatus;
   /** GitHub URL for the artifact */
   githubUrl?: string | null;
   /** Rail toggle buttons (e.g., Review panel toggle) */
@@ -34,17 +52,41 @@ interface ArtifactHeaderProps {
   onNavToggle: () => void;
 }
 
+/**
+ * Map status tone to CSS class name suffix.
+ */
+const toneClasses: Record<ArtifactStatus['tone'], string> = {
+  neutral: docStyles.saveDotNeutral,
+  warning: docStyles.saveDotDirty,
+  success: '', // default (green)
+  error: docStyles.saveDotError,
+};
+
 export function ArtifactHeader({
   studyName,
   studyPublicId,
   active,
   saveState,
+  status,
   githubUrl,
   railToggles,
   actions,
   navOpen,
   onNavToggle,
 }: ArtifactHeaderProps) {
+  // VC-2A: Render persistent status when saveState is null
+  const statusIndicator = saveState ?? (
+    status && (
+      <span className={docStyles.saveState}>
+        <span
+          className={`${docStyles.saveDot} ${toneClasses[status.tone] || ''}`}
+          aria-hidden="true"
+        />
+        {status.label}
+      </span>
+    )
+  );
+
   return (
     <header className={styles.header}>
       {/* Nav toggle (visible ≤980px) */}
@@ -74,8 +116,8 @@ export function ArtifactHeader({
       {/* Spacer */}
       <span className={styles.grow} />
 
-      {/* Save state */}
-      {saveState}
+      {/* VC-2A: Status indicator (save state or persistent status) */}
+      {statusIndicator}
 
       {/* GitHub link */}
       {githubUrl && (
@@ -94,11 +136,11 @@ export function ArtifactHeader({
         <span className={styles.rule} aria-hidden="true" />
       )}
 
-      {/* Rail toggles */}
-      {railToggles}
-
       {/* Actions */}
       <div className={styles.actions}>{actions}</div>
+
+      {/* Rail toggles (CD order: after actions) */}
+      {railToggles}
     </header>
   );
 }

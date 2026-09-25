@@ -128,3 +128,41 @@
   align-items: center;
   gap: var(--space-2);
 }
+
+/* VC-2A: Rail toggle button (e.g., Review panel) */
+.railToggle {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-meta);
+  cursor: pointer;
+  transition: background-color var(--motion-fast), color var(--motion-fast);
+}
+
+.railToggle:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.railToggle:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.railToggle[aria-pressed='true'] {
+  background: var(--color-brand-tint);
+  color: var(--color-brand-deep);
+}
+
+@media (max-width: 767px) {
+  .railToggle {
+    width: 40px;
+    height: 40px;
+  }
+}

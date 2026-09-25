@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { renderWithProviders } from '@/test/utils';
 import { BriefDocument } from './BriefDocument';
 
@@ -81,8 +81,12 @@ describe('BriefDocument', () => {
 
   it('renders full document with stable IDs', () => {
     mockBrief.mockReturnValue({ data: makeBrief(), isLoading: false, error: null });
-    renderWithProviders(<BriefDocument />);
-    expect(screen.getByText('Research Brief')).toBeInTheDocument();
+    const { container } = renderWithProviders(<BriefDocument />);
+    // VC-2A: "Research Brief" exists in both masthead and lifecycle nav
+    // Scope to masthead to test document title
+    const masthead = container.querySelector('[class*="masthead"]');
+    expect(masthead).toBeInTheDocument();
+    expect(within(masthead as HTMLElement).getByText('Research Brief')).toBeInTheDocument();
     expect(screen.getByText('OBJ-001')).toBeInTheDocument();
     expect(screen.getByText('RQ-001')).toBeInTheDocument();
     expect(screen.getByText('TB-001')).toBeInTheDocument();
@@ -571,10 +575,12 @@ describe('BriefDocument', () => {
         prose_sections: { summary: 'Test summary' },
       });
       mockBrief.mockReturnValue({ data: briefWithoutVersion, isLoading: false, error: null });
-      renderWithProviders(<BriefDocument />);
+      const { container } = renderWithProviders(<BriefDocument />);
 
       // Should not crash - the component uses ?? 1 fallback
-      expect(screen.getByText('Research Brief')).toBeInTheDocument();
+      // VC-2A: "Research Brief" exists in both masthead and lifecycle nav
+      const masthead = container.querySelector('[class*="masthead"]');
+      expect(within(masthead as HTMLElement).getByText('Research Brief')).toBeInTheDocument();
     });
 
     it('consecutive saves use refetched artifact_version', () => {

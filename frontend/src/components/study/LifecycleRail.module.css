@@ -272,3 +272,125 @@
   outline: var(--focus-ring-inverse);
   outline-offset: -2px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VC-2A: Grouped lifecycle navigation (inverse variant)
+   Per LIFECYCLE_NAV_CONVERGENCE.md §1 and §4
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* VC-2A: Study name as link (replaces Overview row) */
+.railInverse .studyName {
+  display: block;
+  text-decoration: none;
+}
+
+.railInverse .studyName:hover {
+  text-decoration: underline;
+}
+
+/* VC-2A: Group heading */
+.grp {
+  padding: var(--space-3) var(--space-5) var(--space-1);
+  margin: 0;
+  font: var(--weight-semibold) var(--type-label-size)/var(--type-label-line) var(--font-mono);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-inverse-quiet);
+}
+
+/* VC-2A: Lifecycle list inside groups */
+.railInverse section .list {
+  margin: 0;
+  padding: 0;
+}
+
+/* VC-2A: Nav item (route or placeholder) */
+.nv {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-5) var(--space-2) calc(var(--space-5) - 2px);
+  border-left: 2px solid transparent;
+  font: var(--weight-regular) 13px/18px var(--font-ui);
+  color: var(--color-text-inverse-muted);
+  text-decoration: none;
+  min-height: 34px;
+  cursor: pointer;
+  transition: background-color var(--motion-fast), color var(--motion-fast);
+}
+
+.nv:hover {
+  background: var(--color-hover-inverse);
+  color: var(--color-text-inverse);
+}
+
+/* VC-2A: Active route */
+.nvOn {
+  background: linear-gradient(90deg, var(--color-brand-tint), transparent 75%);
+  border-left-color: var(--color-indicator-inverse);
+  color: var(--color-text-inverse);
+  font-weight: var(--weight-semibold);
+}
+
+.nvOn:hover {
+  background: linear-gradient(90deg, var(--color-brand-tint), transparent 75%);
+}
+
+/* VC-2A: Locked route (Plan when Brief not approved) */
+.nvLocked {
+  color: var(--color-text-inverse-quiet);
+  cursor: not-allowed;
+}
+
+.nvLocked:hover {
+  background: none;
+  color: var(--color-text-inverse-quiet);
+}
+
+.nvLockIcon {
+  flex-shrink: 0;
+  color: var(--color-text-inverse-quiet);
+}
+
+/* VC-2A: Placeholder (non-interactive future items) */
+.nvPlaceholder {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-5) var(--space-2) calc(var(--space-5) - 2px);
+  border-left: 2px solid transparent;
+  font: var(--weight-regular) 13px/18px var(--font-ui);
+  color: var(--color-text-inverse-quiet);
+  min-height: 34px;
+  cursor: default;
+}
+
+/* VC-2A: Text label */
+.nvText {
+  flex: 1;
+}
+
+/* VC-2A: Spacer between lifecycle and footer */
+.spacer {
+  flex: 1;
+  min-height: var(--space-5);
+}
+
+/* VC-2A: Screen reader only text */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* VC-2A: Focus visible on nav items */
+.nv:focus-visible {
+  outline: var(--focus-ring-inverse);
+  outline-offset: -2px;
+}

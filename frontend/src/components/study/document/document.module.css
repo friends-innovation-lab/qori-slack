@@ -541,6 +541,11 @@
   animation: pulse 1s ease-in-out infinite;
 }
 
+/* VC-2A: Neutral status dot (e.g., Plan version display) */
+.saveDotNeutral {
+  background-color: var(--color-text-disabled);
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }

@@ -219,6 +219,11 @@ export function PlanDocument() {
     <>From the <Link to={`/studies/${studyPublicId}/brief`}>approved brief</Link></>
   );
 
+  // VC-2A: Persistent artifact status from version display
+  const artifactStatus = vm.masthead?.versionDisplay
+    ? { tone: 'neutral' as const, label: vm.masthead.versionDisplay }
+    : undefined;
+
   return (
     <WorkspaceLayout
       nav={
@@ -235,6 +240,7 @@ export function PlanDocument() {
           studyPublicId={studyPublicId || ''}
           active="plan"
           saveState={saveState}
+          status={artifactStatus}
           githubUrl={vm.githubUrl}
           navOpen={navOpen}
           onNavToggle={() => setNavOpen(!navOpen)}

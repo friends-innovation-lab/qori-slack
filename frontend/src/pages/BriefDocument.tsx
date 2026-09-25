@@ -20,7 +20,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router';
 import type { JSONContent, Editor } from '@tiptap/react';
-import { ClipboardCheck } from 'lucide-react';
+import { ClipboardCheck, ShieldCheck } from 'lucide-react';
 import { useStudyBrief } from '@/api/queries/useStudy';
 import { useApproveBrief, useRequestChanges } from '@/api/mutations/useApproveBrief';
 import { useSaveBriefContent } from '@/api/mutations/useSaveContent';
@@ -52,6 +52,7 @@ import {
   type ChecklistState,
 } from '@/components/study/document';
 import docStyles from '@/components/study/document/document.module.css';
+import headerStyles from '@/components/study/document/ArtifactHeader.module.css';
 import styles from './BriefDocument.module.css';
 
 /**
@@ -342,6 +343,34 @@ export function BriefDocument() {
   // Show rail when not editing and has approval status
   const showRail = !isEditing && (isPendingApproval || isApproved || isChangesRequested);
 
+  // VC-2A: Persistent artifact status from approval state
+  const artifactStatus = (() => {
+    if (isApproved) {
+      return { tone: 'success' as const, label: 'Approved' };
+    }
+    if (isChangesRequested) {
+      return { tone: 'error' as const, label: 'Changes requested' };
+    }
+    if (isPendingApproval) {
+      return { tone: 'warning' as const, label: 'Pending approval' };
+    }
+    return undefined;
+  })();
+
+  // VC-2A: Review toggle for rail (visible when showRail is true)
+  const railToggles = showRail ? (
+    <button
+      type="button"
+      className={headerStyles.railToggle}
+      aria-label="Review panel"
+      aria-pressed={railMode === 'review'}
+      aria-controls="context-rail"
+      onClick={() => setRailMode(railMode === 'review' ? null : 'review')}
+    >
+      <ShieldCheck size={16} aria-hidden="true" />
+    </button>
+  ) : undefined;
+
   return (
     <WorkspaceLayout
       nav={
@@ -358,7 +387,9 @@ export function BriefDocument() {
           studyPublicId={studyPublicId || ''}
           active="brief"
           saveState={saveState}
+          status={artifactStatus}
           githubUrl={vm.githubUrl}
+          railToggles={railToggles}
           navOpen={navOpen}
           onNavToggle={() => setNavOpen(!navOpen)}
           actions={actions}
