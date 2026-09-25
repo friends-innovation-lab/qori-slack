@@ -37,7 +37,9 @@ import type {
   CommentMessagePermissions,
   CreateCommentThreadInput,
   UpdateCommentMessageInput,
+  InternalThreadListQuery,
 } from '../../../types/comments';
+import type { CommentThreadStatus } from '@qori/api-contracts';
 import type {
   InternalCommentThreadDTO,
   InternalCommentThreadWithMessagesDTO,
@@ -187,18 +189,45 @@ async function toThreadDetailResource(
 
 // ─── Route Handlers ────────────────────────────────────────────────────────
 
+// Valid status values for query validation
+const VALID_STATUS_VALUES: CommentThreadStatus[] = ['open', 'resolved'];
+
 /**
  * GET /api/v1/artifacts/:artifactPublicId/comments
- * List all comment threads for an artifact.
+ * List comment threads for an artifact.
+ *
+ * Query params:
+ * - status: 'open' | 'resolved' (defaults to 'open')
+ * - section_key: string (must be valid for artifact type)
  */
 router.get('/artifacts/:artifactPublicId/comments', requireAuth, async (req, res, next) => {
   try {
     const artifactPublicId = req.params.artifactPublicId as string;
+
+    // Parse and validate query parameters
+    const statusParam = req.query.status as string | undefined;
+    const sectionKeyParam = req.query.section_key as string | undefined;
+
+    // Validate status if provided
+    if (statusParam !== undefined && !VALID_STATUS_VALUES.includes(statusParam as CommentThreadStatus)) {
+      throw validationError(
+        `Invalid status value '${statusParam}'. Must be one of: ${VALID_STATUS_VALUES.join(', ')}`,
+        { status: statusParam, valid_values: VALID_STATUS_VALUES }
+      );
+    }
+
     const artifactId = await resolveArtifactId(artifactPublicId);
+
+    // Build query object
+    const query: InternalThreadListQuery = {
+      ...(statusParam ? { status: statusParam as CommentThreadStatus } : {}),
+      ...(sectionKeyParam ? { section_key: sectionKeyParam } : {}),
+    };
 
     const internalResult = await commentsAppService.listArtifactCommentThreads(
       req.ctx!,
       artifactId,
+      query,
     );
 
     // Map all threads to public resources

@@ -31,6 +31,7 @@ import type {
   InternalThreadPermissions,
   InternalMessagePermissions,
   InternalThreadListResponse,
+  InternalThreadListQuery,
   InternalCreateThreadRequest,
   InternalCreateMessageRequest,
   InternalUpdateMessageRequest,
@@ -219,12 +220,17 @@ async function toEventDTO(event: CommentThreadEvent): Promise<InternalCommentThr
 // ─── Service Functions ─────────────────────────────────────────────────
 
 /**
- * List all comment threads for an artifact.
+ * List comment threads for an artifact with optional filtering.
  * Returns threads with message count and computed permissions.
+ *
+ * Filtering:
+ * - status: defaults to 'open' if not specified
+ * - section_key: if provided, must be valid for the artifact type
  */
 export async function listArtifactCommentThreads(
   ctx: ApplicationContext,
   artifactId: number,
+  query?: InternalThreadListQuery,
 ): Promise<InternalThreadListResponse> {
   // Load artifact and verify access
   const artifact = await ArtifactModel.findByPk(artifactId) as ResearchArtifact | null;
@@ -237,12 +243,33 @@ export async function listArtifactCommentThreads(
   // Authorization: actor must have project access
   await assertProjectAccessByActor(ctx.actor.id, artifact.project_id, ctx.organization.id);
 
+  // Validate section_key if provided
+  if (query?.section_key) {
+    if (!isValidSectionKey(artifact.artifact_type, query.section_key)) {
+      throw validationError(
+        `Invalid section key '${query.section_key}' for artifact type '${artifact.artifact_type}'`,
+        { artifact_type: artifact.artifact_type, section_key: query.section_key }
+      );
+    }
+  }
+
   // Get study owner for permission computation
   const studyOwnerId = await getStudyOwnerActorId(artifact.study_id);
 
-  // Fetch all threads for the artifact
+  // Build where clause with filters
+  // Default to 'open' if status not specified
+  const status = query?.status ?? 'open';
+  const whereClause: Record<string, unknown> = {
+    artifact_id: artifactId,
+    status,
+  };
+  if (query?.section_key) {
+    whereClause.section_key = query.section_key;
+  }
+
+  // Fetch filtered threads for the artifact
   const threads = await CommentThreadModel.findAll({
-    where: { artifact_id: artifactId },
+    where: whereClause,
     order: [['created_at', 'ASC']],
   }) as CommentThread[];
 
