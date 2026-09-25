@@ -294,7 +294,7 @@ describe('BriefDocument', () => {
       expect(screen.getByText('Scope creep')).toBeInTheDocument();
     });
 
-    it('renders Participants GFM table from prose fallback', () => {
+    it('renders Participants GFM table from prose fallback with Qori table styling', () => {
       mockBrief.mockReturnValue({
         data: makeBrief({
           cascade_fields: {
@@ -313,14 +313,33 @@ describe('BriefDocument', () => {
         }),
         isLoading: false, error: null,
       });
-      renderWithProviders(<BriefDocument />);
+      const { container } = renderWithProviders(<BriefDocument />);
+
       // Multiple Participants labels exist (Quick Facts + section heading)
       const participantsLabels = screen.getAllByText('Participants');
       expect(participantsLabels.length).toBeGreaterThanOrEqual(1);
+
       // Table cells should render
       expect(screen.getByText('Veterans')).toBeInTheDocument();
       expect(screen.getByText('Caregivers')).toBeInTheDocument();
       expect(screen.getByText('Primary group')).toBeInTheDocument();
+
+      // Verify table has Qori editorial styling (docTable class)
+      const table = container.querySelector('table[class*="docTable"]');
+      expect(table).toBeInTheDocument();
+
+      // Verify table has responsive stacking (stackedTable class)
+      expect(table?.className).toMatch(/stackedTable/);
+
+      // Verify proper thead/tbody structure
+      expect(table?.querySelector('thead')).toBeInTheDocument();
+      expect(table?.querySelector('tbody')).toBeInTheDocument();
+
+      // Verify data-label attributes for responsive behavior
+      const cells = table?.querySelectorAll('tbody td');
+      expect(cells?.[0]?.getAttribute('data-label')).toBe('Segment');
+      expect(cells?.[1]?.getAttribute('data-label')).toBe('Count');
+      expect(cells?.[2]?.getAttribute('data-label')).toBe('Rationale');
     });
 
     it('renders Timeline section with fallback when no phases', () => {

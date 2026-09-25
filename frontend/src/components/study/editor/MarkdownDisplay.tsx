@@ -8,17 +8,107 @@
  * - View mode prose sections
  * - System content (approval_items)
  * - Any read-only markdown display
+ *
+ * GFM tables receive Qori editorial table styling (docTable) with responsive
+ * stacking behavior matching DocumentTable.
  */
 
 import { useMemo, type ReactNode } from 'react';
 import type { JSONContent } from '@tiptap/react';
 import { parseMarkdownForDisplay } from './markdownBridge';
+import docStyles from '@/components/study/document/document.module.css';
 
 interface MarkdownDisplayProps {
   /** Markdown content to render */
   markdown: string | null;
   /** Additional CSS class */
   className?: string;
+}
+
+/**
+ * Extract text content from a TipTap node (for header labels).
+ */
+function extractTextContent(node: JSONContent): string {
+  if (node.type === 'text') return node.text || '';
+  if (!node.content) return '';
+  return node.content.map(extractTextContent).join('');
+}
+
+/**
+ * Check if a row contains only header cells.
+ */
+function isHeaderRow(row: JSONContent): boolean {
+  if (row.type !== 'tableRow' || !row.content) return false;
+  return row.content.every((cell) => cell.type === 'tableHeader');
+}
+
+/**
+ * Extract header labels from the first row of a table (if it's a header row).
+ */
+function extractHeaderLabels(tableNode: JSONContent): string[] {
+  if (!tableNode.content || tableNode.content.length === 0) return [];
+  const firstRow = tableNode.content[0];
+  if (!isHeaderRow(firstRow)) return [];
+  return (firstRow.content || []).map(extractTextContent);
+}
+
+/**
+ * Render a GFM table with Qori editorial styling.
+ * Properly structures thead/tbody and adds data-label for responsive stacking.
+ */
+function renderTable(tableNode: JSONContent, key: string | number): ReactNode {
+  if (!tableNode.content || tableNode.content.length === 0) return null;
+
+  const headerLabels = extractHeaderLabels(tableNode);
+  const hasHeaderRow = headerLabels.length > 0;
+  const headerRow = hasHeaderRow ? tableNode.content[0] : null;
+  const bodyRows = hasHeaderRow ? tableNode.content.slice(1) : tableNode.content;
+
+  // Render header row
+  const renderHeaderRow = () => {
+    if (!headerRow?.content) return null;
+    return (
+      <tr key={`${key}-header`}>
+        {headerRow.content.map((cell, cellIndex) => (
+          <th key={`${key}-th-${cellIndex}`}>
+            {cell.content?.map((child, i) => renderNode(child, `${key}-th-${cellIndex}-${i}`))}
+          </th>
+        ))}
+      </tr>
+    );
+  };
+
+  // Render body rows with data-label for responsive
+  const renderBodyRows = () => {
+    return bodyRows.map((row, rowIndex) => {
+      if (row.type !== 'tableRow' || !row.content) return null;
+      return (
+        <tr key={`${key}-row-${rowIndex}`}>
+          {row.content.map((cell, cellIndex) => {
+            const label = headerLabels[cellIndex] || '';
+            return (
+              <td key={`${key}-td-${rowIndex}-${cellIndex}`} data-label={label}>
+                {cell.content?.map((child, i) =>
+                  renderNode(child, `${key}-td-${rowIndex}-${cellIndex}-${i}`)
+                )}
+              </td>
+            );
+          })}
+        </tr>
+      );
+    });
+  };
+
+  const tableClass = `${docStyles.docTable} ${docStyles.stackedTable}`;
+
+  return (
+    <div key={key} className={docStyles.tableScroll}>
+      <table className={tableClass}>
+        {hasHeaderRow && <thead>{renderHeaderRow()}</thead>}
+        <tbody>{renderBodyRows()}</tbody>
+      </table>
+    </div>
+  );
 }
 
 /**
@@ -94,12 +184,16 @@ function renderNode(node: JSONContent, key: string | number): ReactNode {
       );
     }
     case 'table':
-      return <table key={key}><tbody>{children}</tbody></table>;
+      // Use specialized table renderer for proper styling and responsive behavior
+      return renderTable(node, key);
     case 'tableRow':
+      // Handled by renderTable, but keep fallback for direct calls
       return <tr key={key}>{children}</tr>;
     case 'tableCell':
+      // Handled by renderTable, but keep fallback for direct calls
       return <td key={key}>{children}</td>;
     case 'tableHeader':
+      // Handled by renderTable, but keep fallback for direct calls
       return <th key={key}>{children}</th>;
     case 'blockquote':
       return <blockquote key={key}>{children}</blockquote>;
