@@ -155,9 +155,12 @@ describe('PlanDocument', () => {
 
   it('renders Masthead with status from artifact_metadata.content_version', () => {
     mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
-    renderWithProviders(<PlanDocument />);
+    const { container } = renderWithProviders(<PlanDocument />);
     // Status should show "Current · v1" based on content_version
-    expect(screen.getByText('Current · v1')).toBeInTheDocument();
+    // Use masthead container to scope query (VC-2A: also shown in header status)
+    const masthead = container.querySelector('[class*="masthead"]');
+    expect(masthead).toBeInTheDocument();
+    expect(within(masthead as HTMLElement).getByText('Current · v1')).toBeInTheDocument();
   });
 
   it('has Edit button', () => {
@@ -393,9 +396,13 @@ describe('PlanDocument', () => {
 
     it('renders phase data', () => {
       mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
-      renderWithProviders(<PlanDocument />);
-      expect(screen.getByText('Planning')).toBeInTheDocument();
-      expect(screen.getByText('Fieldwork')).toBeInTheDocument();
+      const { container } = renderWithProviders(<PlanDocument />);
+      // VC-2A: "Planning" and "Fieldwork" also exist in lifecycle nav headings
+      // Scope to the timeline section to test the table content
+      const timelineSection = container.querySelector('[data-sec="timeline"]');
+      expect(timelineSection).toBeInTheDocument();
+      expect(within(timelineSection as HTMLElement).getByText('Planning')).toBeInTheDocument();
+      expect(within(timelineSection as HTMLElement).getByText('Fieldwork')).toBeInTheDocument();
     });
   });
 

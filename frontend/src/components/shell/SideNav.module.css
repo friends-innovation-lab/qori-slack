@@ -318,8 +318,12 @@
   border-top: var(--border-width) solid var(--color-rule-inverse);
 }
 
+/* VC-2A: Spacer pushes Admin and avatar to bottom of rail */
+.spacerInverse {
+  flex: 1;
+}
+
 .footerInverse {
-  margin-top: auto;
   padding: 0;
 }
 

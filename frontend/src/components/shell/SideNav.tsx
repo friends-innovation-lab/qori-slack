@@ -40,6 +40,17 @@ const navItems = [
   { to: '/queue', icon: ListChecks, label: 'Work Queue', hasBadge: true },
 ];
 
+/**
+ * VC-2A: Workspace inverse variant uses filtered items.
+ * Removes Search and Work Queue per COMPONENT_DELTAS §1.
+ */
+const workspaceNavItems = [
+  { to: '/', icon: Home, label: 'Home' },
+  { to: '/projects', icon: FolderOpen, label: 'Projects' },
+  { to: '/studies', icon: BookOpen, label: 'Studies' },
+  { to: '/ask', icon: MessageSquare, label: 'Ask Qori' },
+];
+
 export function SideNav({
   variant = 'default',
   collapsed,
@@ -79,6 +90,7 @@ export function SideNav({
   const isAdmin = me?.memberships.some((m) => m.role === 'owner');
 
   // Inverse variant — 64px dark rail
+  // VC-2A: Uses filtered workspaceNavItems, spacer before Admin, no divider
   if (isInverse) {
     return (
       <nav
@@ -91,7 +103,7 @@ export function SideNav({
         </div>
 
         <ul className={styles.list} role="list">
-          {navItems.map((item) => (
+          {workspaceNavItems.map((item) => (
             <li key={item.to} className={styles.itemWrapper}>
               <NavLink
                 to={item.to}
@@ -116,32 +128,32 @@ export function SideNav({
           ))}
         </ul>
 
+        {/* VC-2A: Spacer pushes Admin and avatar to bottom */}
+        <div className={styles.spacerInverse} aria-hidden="true" />
+
         {isAdmin && (
-          <>
-            <div className={styles.dividerInverse} role="separator" />
-            <ul className={styles.list} role="list">
-              <li className={styles.itemWrapper}>
-                <NavLink
-                  to="/admin"
-                  className={({ isActive }) =>
-                    `${styles.itemInverse} ${isActive ? styles.activeInverse : ''}`
-                  }
-                  onMouseEnter={() => setTooltipItem('/admin')}
-                  onMouseLeave={() => setTooltipItem(null)}
-                  onFocus={() => setTooltipItem('/admin')}
-                  onBlur={() => setTooltipItem(null)}
-                >
-                  <Settings size={20} aria-hidden="true" />
-                  <span className={styles.labelHidden}>Admin</span>
-                </NavLink>
-                {tooltipItem === '/admin' && (
-                  <span className={styles.navTooltip} aria-hidden="true">
-                    Admin
-                  </span>
-                )}
-              </li>
-            </ul>
-          </>
+          <ul className={styles.list} role="list">
+            <li className={styles.itemWrapper}>
+              <NavLink
+                to="/admin"
+                className={({ isActive }) =>
+                  `${styles.itemInverse} ${isActive ? styles.activeInverse : ''}`
+                }
+                onMouseEnter={() => setTooltipItem('/admin')}
+                onMouseLeave={() => setTooltipItem(null)}
+                onFocus={() => setTooltipItem('/admin')}
+                onBlur={() => setTooltipItem(null)}
+              >
+                <Settings size={20} aria-hidden="true" />
+                <span className={styles.labelHidden}>Admin</span>
+              </NavLink>
+              {tooltipItem === '/admin' && (
+                <span className={styles.navTooltip} aria-hidden="true">
+                  Admin
+                </span>
+              )}
+            </li>
+          </ul>
         )}
 
         <div className={styles.footerInverse}>
