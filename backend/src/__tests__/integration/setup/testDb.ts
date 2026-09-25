@@ -63,6 +63,10 @@ import IdentityProviderBinding from '../../../database/models/identity_provider_
 import OrganizationBranding from '../../../database/models/organization_branding';
 import IntegrationCredential from '../../../database/models/integration_credential';
 import OrganizationMembership from '../../../database/models/organization_membership';
+// CMT-1: Workspace comments
+import CommentThread from '../../../database/models/comment_thread';
+import CommentMessage from '../../../database/models/comment_message';
+import CommentThreadEvent from '../../../database/models/comment_thread_event';
 
 let instance: Sequelize | null = null;
 
@@ -99,6 +103,8 @@ export function getTestDb(): Sequelize {
     RecordsHold, RecordsHoldTarget, RecordsDispositionEvent,
     RepositoryBinding, ProjectMembership, IdentityProviderBinding,
     OrganizationBranding, IntegrationCredential, OrganizationMembership,
+    // CMT-1: Workspace comments
+    CommentThread, CommentMessage, CommentThreadEvent,
   ];
 
   for (const defineModel of modelDefiners) {

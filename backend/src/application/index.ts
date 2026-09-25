@@ -19,3 +19,6 @@ export * as synthesisService from './synthesis.app-service';
 export * as discoveryService from './discovery.app-service';
 export * as readoutService from './readout.app-service';
 export * as approvalService from './approval.app-service';
+
+// CMT-1: Workspace Comments
+export * as commentsService from './comments.app-service';
