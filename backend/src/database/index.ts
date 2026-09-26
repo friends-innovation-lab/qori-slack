@@ -58,6 +58,11 @@ import ArtifactSection from './models/artifact_section';
 import CommentThread from './models/comment_thread';
 import CommentMessage from './models/comment_message';
 import CommentThreadEvent from './models/comment_thread_event';
+// Coach M1: AI Coach advisory runs
+import CoachingRun from './models/coaching_run';
+import CoachingRunItem from './models/coaching_run_item';
+import CoachingRunReference from './models/coaching_run_reference';
+import CoachingRunContext from './models/coaching_run_context';
 
 
 // Set environment and configuration
@@ -123,6 +128,11 @@ const modelDefiners = [
   CommentThread,
   CommentMessage,
   CommentThreadEvent,
+  // Coach M1: AI Coach advisory runs (must be after Actor and ResearchArtifact due to FK deps)
+  CoachingRun,
+  CoachingRunItem,
+  CoachingRunReference,
+  CoachingRunContext,
 ];
 
 // Register all models with Sequelize

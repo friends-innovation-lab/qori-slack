@@ -67,6 +67,11 @@ import OrganizationMembership from '../../../database/models/organization_member
 import CommentThread from '../../../database/models/comment_thread';
 import CommentMessage from '../../../database/models/comment_message';
 import CommentThreadEvent from '../../../database/models/comment_thread_event';
+// Coach M1: AI Coach advisory runs
+import CoachingRun from '../../../database/models/coaching_run';
+import CoachingRunItem from '../../../database/models/coaching_run_item';
+import CoachingRunReference from '../../../database/models/coaching_run_reference';
+import CoachingRunContext from '../../../database/models/coaching_run_context';
 
 let instance: Sequelize | null = null;
 
@@ -105,6 +110,8 @@ export function getTestDb(): Sequelize {
     OrganizationBranding, IntegrationCredential, OrganizationMembership,
     // CMT-1: Workspace comments
     CommentThread, CommentMessage, CommentThreadEvent,
+    // Coach M1: AI Coach advisory runs
+    CoachingRun, CoachingRunItem, CoachingRunReference, CoachingRunContext,
   ];
 
   for (const defineModel of modelDefiners) {

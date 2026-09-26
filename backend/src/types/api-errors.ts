@@ -36,6 +36,10 @@ export enum ApiErrorCode {
   RESOURCE_CONFLICT = 'RESOURCE_CONFLICT',
   /** Comment message edit failed due to stale expected_updated_at (CMT-1) */
   COMMENT_EDIT_CONFLICT = 'COMMENT_EDIT_CONFLICT',
+  /** A coaching run is already active for this artifact/version/scope (Coach M1) */
+  COACH_RUN_ALREADY_ACTIVE = 'COACH_RUN_ALREADY_ACTIVE',
+  /** Coaching run is not in a valid state for this operation (Coach M1) */
+  COACH_RUN_INVALID_STATE = 'COACH_RUN_INVALID_STATE',
   /** Unexpected server error — details intentionally omitted */
   INTERNAL_ERROR = 'INTERNAL_ERROR',
 }
@@ -128,4 +132,21 @@ export function resourceConflict(message: string): AppError {
  */
 export function commentEditConflict(message = 'Comment was modified by another edit'): AppError {
   return new AppError(ApiErrorCode.COMMENT_EDIT_CONFLICT, message, 409);
+}
+
+/**
+ * Coaching run already active (Coach M1).
+ * Returned when attempting to create a run when one is already pending/running
+ * for the same artifact/version/scope/section/requester.
+ */
+export function coachRunAlreadyActive(message = 'A coaching run is already active for this artifact'): AppError {
+  return new AppError(ApiErrorCode.COACH_RUN_ALREADY_ACTIVE, message, 409);
+}
+
+/**
+ * Coaching run invalid state (Coach M1).
+ * Returned when attempting an operation that is not valid for the current run status.
+ */
+export function coachRunInvalidState(message: string): AppError {
+  return new AppError(ApiErrorCode.COACH_RUN_INVALID_STATE, message, 409);
 }
