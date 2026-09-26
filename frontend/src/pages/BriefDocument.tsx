@@ -564,7 +564,7 @@ export function BriefDocument() {
               {/* Masthead with artifactLabel */}
               <Masthead masthead={vm.masthead} artifactLabel="Research Brief" />
 
-              {/* Summary (generated, editable) */}
+              {/* Summary (generated, editable) — backend key: summary */}
               <DocumentSection
                 sectionId="summary"
                 title="Summary"
@@ -579,7 +579,7 @@ export function BriefDocument() {
                 <FactsGrid facts={facts} />
               </DocumentSection>
 
-              {/* Problem (generated + canonical) */}
+              {/* Problem (generated + canonical) — backend key: problem_narrative */}
               {(vm.sections.problemNarrative.exists || vm.barriers.exists) && (
                 <DocumentSection
                   sectionId="problem"
@@ -590,7 +590,7 @@ export function BriefDocument() {
                       : []),
                     ...(vm.barriers.exists ? [vm.barriers.provenance] : []),
                   ].filter(Boolean)}
-                  comment={getSectionComment('problem', 'Problem')}
+                  comment={getSectionComment('problem_narrative', 'Problem')}
                 >
                   {problemProse && (
                     <MarkdownDisplay markdown={problemProse} className={docStyles.blockProse} />
@@ -608,7 +608,7 @@ export function BriefDocument() {
                 </DocumentSection>
               )}
 
-              {/* What we'll learn (canonical, read-only) */}
+              {/* What we'll learn (canonical, read-only) — NO backend comment key (inherited) */}
               {(vm.objectives.exists || vm.questions.exists) && (
                 <DocumentSection
                   sectionId="objectives"
@@ -617,7 +617,6 @@ export function BriefDocument() {
                     ...(vm.objectives.exists ? [vm.objectives.provenance] : []),
                     ...(vm.questions.exists ? [vm.questions.provenance] : []),
                   ].filter(Boolean)}
-                  comment={getSectionComment('objectives', "What we'll learn")}
                 >
                   {objectives.length > 0 && (
                     <StructuredItemRows>
@@ -639,13 +638,13 @@ export function BriefDocument() {
                 </DocumentSection>
               )}
 
-              {/* Method (generated, editable) */}
+              {/* Method (generated, editable) — backend key: method_prose */}
               {(vm.quickFacts.method.exists || vm.sections.methodProse.exists) && (
                 <DocumentSection
                   sectionId="method"
                   title="Method"
                   provenance={vm.sections.methodProse.provenance}
-                  comment={getSectionComment('method', 'Method')}
+                  comment={getSectionComment('method_prose', 'Method')}
                 >
                   {methodology && (
                     <p className={docStyles.kvParagraph}>
@@ -658,7 +657,7 @@ export function BriefDocument() {
                 </DocumentSection>
               )}
 
-              {/* Participants (generated + canonical) */}
+              {/* Participants (generated + canonical) — backend key: participants_prose */}
               {(vm.participantSegments.exists || vm.sections.participantsProse.exists) && (
                 <DocumentSection
                   sectionId="participants"
@@ -669,7 +668,7 @@ export function BriefDocument() {
                       ? [vm.sections.participantsProse.provenance]
                       : []),
                   ].filter(Boolean)}
-                  comment={getSectionComment('participants', 'Participants')}
+                  comment={getSectionComment('participants_prose', 'Participants')}
                 >
                   {participantSegments.length > 0 ? (
                     <>
@@ -712,19 +711,19 @@ export function BriefDocument() {
                 </DocumentSection>
               )}
 
-              {/* Out of scope (generated, editable) */}
+              {/* Out of scope (generated, editable) — backend key: out_of_scope */}
               {vm.sections.outOfScope.exists && (
                 <DocumentSection
                   sectionId="out-of-scope"
                   title="Out of scope"
                   provenance={vm.sections.outOfScope.provenance}
-                  comment={getSectionComment('out-of-scope', 'Out of scope')}
+                  comment={getSectionComment('out_of_scope', 'Out of scope')}
                 >
                   <MarkdownDisplay markdown={outOfScopeProse || ''} className={docStyles.blockProse} />
                 </DocumentSection>
               )}
 
-              {/* Risks (generated, read-only) */}
+              {/* Risks (generated, read-only) — backend key: risks */}
               {vm.risks.exists && (
                 <DocumentSection
                   sectionId="risks"
@@ -743,7 +742,7 @@ export function BriefDocument() {
                 </DocumentSection>
               )}
 
-              {/* Timeline (computed, read-only) */}
+              {/* Timeline (computed, read-only) — NO backend comment key (computed) */}
               {(vm.timeline.exists ||
                 vm.timeline.summary.startDate ||
                 vm.quickFacts.decisionDeadline.exists) && (
@@ -751,7 +750,6 @@ export function BriefDocument() {
                   sectionId="timeline"
                   title="Timeline"
                   provenance={vm.timeline.provenance}
-                  comment={getSectionComment('timeline', 'Timeline')}
                 >
                   {timelinePhases.length > 0 ? (
                     <>

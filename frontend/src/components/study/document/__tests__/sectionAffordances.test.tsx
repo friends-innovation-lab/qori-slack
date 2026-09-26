@@ -2,11 +2,14 @@
  * CMT-7: Section Comment Affordances Tests
  *
  * Tests for:
- * - Section key mapping (Brief and Plan)
+ * - Section key mapping (Brief and Plan) — MUST use backend contract keys
  * - DocumentSection comment affordance rendering
  * - Section count derivation from artifact threads
  * - Opening Comments rail scoped to section
  * - Scope switching behavior
+ *
+ * CRITICAL: All section keys must match backend VALID_SECTION_KEYS exactly.
+ * See: backend/src/types/comments.ts
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -23,97 +26,154 @@ import {
 import { groupThreadsBySection, deriveSectionOpenThreadCount } from '@/api/comments/queries';
 import type { CommentThreadResource } from '@qori/api-contracts';
 
+// ─── Backend Contract Keys ─────────────────────────────────────────────────
+// These MUST match backend/src/types/comments.ts VALID_SECTION_KEYS exactly
+
+const BACKEND_BRIEF_KEYS = [
+  'descriptive_title',
+  'summary',
+  'problem_narrative',
+  'method_prose',
+  'participants_prose',
+  'out_of_scope',
+  'risks',
+  'approval_items',
+] as const;
+
+const BACKEND_PLAN_KEYS = [
+  'plan_summary',
+  'plan_background',
+  'plan_method_approach',
+  'plan_session_format',
+  'plan_data_collection',
+  'plan_participant_glance',
+  'plan_participants_prose',
+  'plan_deliverables',
+  'plan_risks',
+  'plan_commitments',
+] as const;
+
 // ─── Section Mapping Tests ────────────────────────────────────────────────
 
 describe('Section Mapping', () => {
   describe('Brief sections', () => {
-    it('has expected section keys', () => {
+    it('uses backend contract keys only', () => {
+      const keys = BRIEF_SECTIONS.map((s) => s.key);
+      // Every key in BRIEF_SECTIONS must be a valid backend key
+      keys.forEach((key) => {
+        expect(BACKEND_BRIEF_KEYS).toContain(key);
+      });
+    });
+
+    it('has expected commentable section keys', () => {
       const keys = BRIEF_SECTIONS.map((s) => s.key);
       expect(keys).toContain('summary');
-      expect(keys).toContain('problem');
-      expect(keys).toContain('objectives');
-      expect(keys).toContain('method');
-      expect(keys).toContain('participants');
-      expect(keys).toContain('out-of-scope');
+      expect(keys).toContain('problem_narrative');
+      expect(keys).toContain('method_prose');
+      expect(keys).toContain('participants_prose');
+      expect(keys).toContain('out_of_scope');
       expect(keys).toContain('risks');
-      expect(keys).toContain('timeline');
     });
 
-    it('maps visible section to stable key correctly', () => {
+    it('maps backend key to display label correctly', () => {
       expect(getSectionLabel('brief', 'summary')).toBe('Summary');
-      expect(getSectionLabel('brief', 'problem')).toBe('Problem');
-      expect(getSectionLabel('brief', 'objectives')).toBe("What we'll learn");
-      expect(getSectionLabel('brief', 'method')).toBe('Method');
-      expect(getSectionLabel('brief', 'participants')).toBe('Participants');
-      expect(getSectionLabel('brief', 'out-of-scope')).toBe('Out of scope');
+      expect(getSectionLabel('brief', 'problem_narrative')).toBe('Problem');
+      expect(getSectionLabel('brief', 'method_prose')).toBe('Method');
+      expect(getSectionLabel('brief', 'participants_prose')).toBe('Participants');
+      expect(getSectionLabel('brief', 'out_of_scope')).toBe('Out of scope');
       expect(getSectionLabel('brief', 'risks')).toBe('Risks');
-      expect(getSectionLabel('brief', 'timeline')).toBe('Timeline');
     });
 
-    it('validates section keys', () => {
+    it('validates backend contract keys', () => {
       expect(isValidSection('brief', 'summary')).toBe(true);
-      expect(isValidSection('brief', 'problem')).toBe(true);
+      expect(isValidSection('brief', 'problem_narrative')).toBe(true);
       expect(isValidSection('brief', 'unknown-key')).toBe(false);
     });
 
+    it('does not accept UI presentation keys', () => {
+      // These are UI IDs, not backend keys - they should be invalid
+      expect(isValidSection('brief', 'problem')).toBe(false);
+      expect(isValidSection('brief', 'method')).toBe(false);
+      expect(isValidSection('brief', 'participants')).toBe(false);
+      expect(isValidSection('brief', 'out-of-scope')).toBe(false); // hyphen, not underscore
+    });
+
     it('does not expose Plan keys on Brief', () => {
-      expect(isValidSection('brief', 'background')).toBe(false);
-      expect(isValidSection('brief', 'questions')).toBe(false);
-      expect(isValidSection('brief', 'deliverables')).toBe(false);
-      expect(isValidSection('brief', 'commitments')).toBe(false);
+      expect(isValidSection('brief', 'plan_background')).toBe(false);
+      expect(isValidSection('brief', 'plan_deliverables')).toBe(false);
+      expect(isValidSection('brief', 'plan_commitments')).toBe(false);
     });
   });
 
   describe('Plan sections', () => {
-    it('has expected section keys', () => {
+    it('uses backend contract keys only', () => {
       const keys = PLAN_SECTIONS.map((s) => s.key);
-      expect(keys).toContain('summary');
-      expect(keys).toContain('background');
-      expect(keys).toContain('objectives');
-      expect(keys).toContain('questions');
-      expect(keys).toContain('method');
-      expect(keys).toContain('participants');
-      expect(keys).toContain('timeline');
-      expect(keys).toContain('deliverables');
-      expect(keys).toContain('risks');
-      expect(keys).toContain('commitments');
+      // Every key in PLAN_SECTIONS must be a valid backend key
+      keys.forEach((key) => {
+        expect(BACKEND_PLAN_KEYS).toContain(key);
+      });
     });
 
-    it('maps visible section to stable key correctly', () => {
-      expect(getSectionLabel('plan', 'summary')).toBe('Summary');
-      expect(getSectionLabel('plan', 'background')).toBe('Background');
-      expect(getSectionLabel('plan', 'objectives')).toBe('Objectives');
-      expect(getSectionLabel('plan', 'questions')).toBe('Research questions');
-      expect(getSectionLabel('plan', 'method')).toBe('Method');
-      expect(getSectionLabel('plan', 'participants')).toBe('Participants');
-      expect(getSectionLabel('plan', 'timeline')).toBe('Timeline');
-      expect(getSectionLabel('plan', 'deliverables')).toBe('Deliverables');
-      expect(getSectionLabel('plan', 'risks')).toBe('Risks and mitigations');
-      expect(getSectionLabel('plan', 'commitments')).toBe('Brief commitments');
+    it('has expected commentable section keys', () => {
+      const keys = PLAN_SECTIONS.map((s) => s.key);
+      expect(keys).toContain('plan_summary');
+      expect(keys).toContain('plan_background');
+      expect(keys).toContain('plan_method_approach');
+      expect(keys).toContain('plan_participants_prose');
+      expect(keys).toContain('plan_deliverables');
+      expect(keys).toContain('plan_risks');
+      expect(keys).toContain('plan_commitments');
     });
 
-    it('validates section keys', () => {
-      expect(isValidSection('plan', 'summary')).toBe(true);
-      expect(isValidSection('plan', 'questions')).toBe(true);
+    it('maps backend key to display label correctly', () => {
+      expect(getSectionLabel('plan', 'plan_summary')).toBe('Summary');
+      expect(getSectionLabel('plan', 'plan_background')).toBe('Background');
+      expect(getSectionLabel('plan', 'plan_method_approach')).toBe('Method');
+      expect(getSectionLabel('plan', 'plan_participants_prose')).toBe('Participants');
+      expect(getSectionLabel('plan', 'plan_deliverables')).toBe('Deliverables');
+      expect(getSectionLabel('plan', 'plan_risks')).toBe('Risks and mitigations');
+      expect(getSectionLabel('plan', 'plan_commitments')).toBe('Brief commitments');
+    });
+
+    it('validates backend contract keys', () => {
+      expect(isValidSection('plan', 'plan_summary')).toBe(true);
+      expect(isValidSection('plan', 'plan_risks')).toBe(true);
       expect(isValidSection('plan', 'unknown-key')).toBe(false);
     });
 
+    it('does not accept UI presentation keys', () => {
+      // These are UI IDs, not backend keys - they should be invalid
+      expect(isValidSection('plan', 'summary')).toBe(false);
+      expect(isValidSection('plan', 'background')).toBe(false);
+      expect(isValidSection('plan', 'method')).toBe(false);
+      expect(isValidSection('plan', 'participants')).toBe(false);
+      expect(isValidSection('plan', 'deliverables')).toBe(false);
+      expect(isValidSection('plan', 'risks')).toBe(false);
+      expect(isValidSection('plan', 'commitments')).toBe(false);
+    });
+
     it('does not expose Brief-only keys on Plan', () => {
-      // 'out-of-scope' is Brief-only
-      expect(isValidSection('plan', 'out-of-scope')).toBe(false);
+      expect(isValidSection('plan', 'out_of_scope')).toBe(false);
+      expect(isValidSection('plan', 'problem_narrative')).toBe(false);
     });
   });
 
   describe('isCommentableSection', () => {
-    it('returns true for known sections by default', () => {
+    it('returns true for valid backend keys', () => {
       expect(isCommentableSection('brief', 'summary')).toBe(true);
-      expect(isCommentableSection('brief', 'participants')).toBe(true);
-      expect(isCommentableSection('plan', 'method')).toBe(true);
+      expect(isCommentableSection('brief', 'participants_prose')).toBe(true);
+      expect(isCommentableSection('plan', 'plan_method_approach')).toBe(true);
     });
 
     it('returns false for unknown sections', () => {
       expect(isCommentableSection('brief', 'unknown')).toBe(false);
       expect(isCommentableSection('plan', 'does-not-exist')).toBe(false);
+    });
+
+    it('returns false for UI presentation keys', () => {
+      // These are not valid backend keys
+      expect(isCommentableSection('brief', 'participants')).toBe(false);
+      expect(isCommentableSection('plan', 'method')).toBe(false);
     });
   });
 
@@ -126,6 +186,8 @@ describe('Section Mapping', () => {
 });
 
 // ─── Section Count Tests ──────────────────────────────────────────────────
+// Note: These tests use backend contract keys (e.g., participants_prose, method_prose)
+// since that's what the Comments API returns in section_key field.
 
 describe('Section Count Derivation', () => {
   const createMockThread = (id: string, sectionKey: string, status: 'open' | 'resolved' = 'open'): CommentThreadResource => ({
@@ -150,20 +212,21 @@ describe('Section Count Derivation', () => {
   });
 
   describe('groupThreadsBySection', () => {
-    it('groups threads by section_key', () => {
+    it('groups threads by backend section_key', () => {
+      // Use backend contract keys
       const threads = [
-        createMockThread('1', 'participants'),
-        createMockThread('2', 'participants'),
-        createMockThread('3', 'method'),
+        createMockThread('1', 'participants_prose'),
+        createMockThread('2', 'participants_prose'),
+        createMockThread('3', 'method_prose'),
         createMockThread('4', 'summary'),
       ];
 
       const counts = groupThreadsBySection(threads);
 
-      expect(counts.get('participants')).toBe(2);
-      expect(counts.get('method')).toBe(1);
+      expect(counts.get('participants_prose')).toBe(2);
+      expect(counts.get('method_prose')).toBe(1);
       expect(counts.get('summary')).toBe(1);
-      expect(counts.get('timeline')).toBeUndefined();
+      expect(counts.get('risks')).toBeUndefined();
     });
 
     it('handles empty thread array', () => {
@@ -188,24 +251,25 @@ describe('Section Count Derivation', () => {
   });
 
   describe('deriveSectionOpenThreadCount', () => {
-    it('counts threads for specific section', () => {
+    it('counts threads for specific backend section key', () => {
+      // Use backend contract keys
       const threads = [
-        createMockThread('1', 'participants'),
-        createMockThread('2', 'participants'),
-        createMockThread('3', 'method'),
+        createMockThread('1', 'participants_prose'),
+        createMockThread('2', 'participants_prose'),
+        createMockThread('3', 'method_prose'),
       ];
 
-      expect(deriveSectionOpenThreadCount(threads, 'participants')).toBe(2);
-      expect(deriveSectionOpenThreadCount(threads, 'method')).toBe(1);
+      expect(deriveSectionOpenThreadCount(threads, 'participants_prose')).toBe(2);
+      expect(deriveSectionOpenThreadCount(threads, 'method_prose')).toBe(1);
       expect(deriveSectionOpenThreadCount(threads, 'summary')).toBe(0);
     });
 
     it('returns 0 for empty array', () => {
-      expect(deriveSectionOpenThreadCount([], 'participants')).toBe(0);
+      expect(deriveSectionOpenThreadCount([], 'participants_prose')).toBe(0);
     });
 
     it('returns 0 for undefined', () => {
-      expect(deriveSectionOpenThreadCount(undefined, 'participants')).toBe(0);
+      expect(deriveSectionOpenThreadCount(undefined, 'participants_prose')).toBe(0);
     });
   });
 
@@ -215,30 +279,30 @@ describe('Section Count Derivation', () => {
       // The actual open vs resolved filtering happens server-side.
       // groupThreadsBySection only sees what useCommentThreads returns.
       const openThreads = [
-        createMockThread('1', 'participants', 'open'),
-        createMockThread('2', 'participants', 'open'),
+        createMockThread('1', 'participants_prose', 'open'),
+        createMockThread('2', 'participants_prose', 'open'),
       ];
 
       // Resolved threads should be in a separate query
       const resolvedThreads = [
-        createMockThread('3', 'participants', 'resolved'),
-        createMockThread('4', 'participants', 'resolved'),
-        createMockThread('5', 'participants', 'resolved'),
+        createMockThread('3', 'participants_prose', 'resolved'),
+        createMockThread('4', 'participants_prose', 'resolved'),
+        createMockThread('5', 'participants_prose', 'resolved'),
       ];
 
-      // Section A visible count should be from open threads only
-      expect(groupThreadsBySection(openThreads).get('participants')).toBe(2);
-      expect(groupThreadsBySection(resolvedThreads).get('participants')).toBe(3);
+      // Section visible count should be from open threads only
+      expect(groupThreadsBySection(openThreads).get('participants_prose')).toBe(2);
+      expect(groupThreadsBySection(resolvedThreads).get('participants_prose')).toBe(3);
     });
 
     it('counts threads not messages', () => {
       // Each thread with any message_count is counted as 1
       const threads = [
-        { ...createMockThread('1', 'method'), message_count: 5 },
-        { ...createMockThread('2', 'method'), message_count: 10 },
+        { ...createMockThread('1', 'method_prose'), message_count: 5 },
+        { ...createMockThread('2', 'method_prose'), message_count: 10 },
       ];
 
-      expect(groupThreadsBySection(threads).get('method')).toBe(2);
+      expect(groupThreadsBySection(threads).get('method_prose')).toBe(2);
     });
   });
 });

@@ -379,12 +379,12 @@ export function PlanDocument() {
                 showStatus
               />
 
-              {/* Summary (generated, editable) */}
+              {/* Summary (generated, editable) — backend key: plan_summary */}
               <DocumentSection
                 sectionId="summary"
                 title="Summary"
                 provenance={vm.sections.summary.provenance}
-                comment={getSectionComment('summary', 'Summary')}
+                comment={getSectionComment('plan_summary', 'Summary')}
               >
                 {vm.sections.summary.exists ? (
                   <MarkdownDisplay markdown={vm.sections.summary.content || ''} className={docStyles.blockProse} />
@@ -394,26 +394,25 @@ export function PlanDocument() {
                 <FactsGrid facts={facts} />
               </DocumentSection>
 
-              {/* Background (generated, editable) */}
+              {/* Background (generated, editable) — backend key: plan_background */}
               {vm.sections.background.exists && (
                 <DocumentSection
                   sectionId="background"
                   title="Background"
                   provenance={vm.sections.background.provenance}
-                  comment={getSectionComment('background', 'Background')}
+                  comment={getSectionComment('plan_background', 'Background')}
                 >
                   <MarkdownDisplay markdown={vm.sections.background.content || ''} className={docStyles.blockProse} />
                 </DocumentSection>
               )}
 
-              {/* Objectives (inherited from Brief — read-only) */}
+              {/* Objectives (inherited from Brief — read-only) — NO backend comment key */}
               {vm.objectives.exists && (
                 <DocumentSection
                   sectionId="objectives"
                   title="Objectives"
                   provenance={vm.objectives.provenance}
                   sourceNote={isInherited(vm.objectives.provenance) ? briefSourceNote : undefined}
-                  comment={getSectionComment('objectives', 'Objectives')}
                 >
                   <StructuredItemRows>
                     {objectives.map((o) => (
@@ -423,14 +422,13 @@ export function PlanDocument() {
                 </DocumentSection>
               )}
 
-              {/* Research questions (inherited from Brief — read-only) */}
+              {/* Research questions (inherited from Brief — read-only) — NO backend comment key */}
               {vm.questions.exists && (
                 <DocumentSection
                   sectionId="questions"
                   title="Research questions"
                   provenance={vm.questions.provenance}
                   sourceNote={isInherited(vm.questions.provenance) ? briefSourceNote : undefined}
-                  comment={getSectionComment('questions', 'Research questions')}
                 >
                   <StructuredItemRows>
                     {questions.map((q) => (
@@ -440,7 +438,7 @@ export function PlanDocument() {
                 </DocumentSection>
               )}
 
-              {/* Method (generated, editable) */}
+              {/* Method (generated, editable) — backend key: plan_method_approach */}
               <DocumentSection
                 sectionId="method"
                 title="Method"
@@ -449,7 +447,7 @@ export function PlanDocument() {
                   ...(vm.sections.sessionFormat.exists ? [vm.sections.sessionFormat.provenance] : []),
                   ...(vm.sections.dataCollection.exists ? [vm.sections.dataCollection.provenance] : []),
                 ].filter(Boolean)}
-                comment={getSectionComment('method', 'Method')}
+                comment={getSectionComment('plan_method_approach', 'Method')}
               >
                 {methodology && (
                   <p className={docStyles.kvParagraph}>
@@ -471,12 +469,12 @@ export function PlanDocument() {
                 )}
               </DocumentSection>
 
-              {/* Participants (generated, editable) */}
+              {/* Participants (generated, editable) — backend key: plan_participants_prose */}
               <DocumentSection
                 sectionId="participants"
                 title="Participants"
                 provenance={vm.sections.participantsProse.provenance}
-                comment={getSectionComment('participants', 'Participants')}
+                comment={getSectionComment('plan_participants_prose', 'Participants')}
               >
                 {vm.sections.participantsProse.exists ? (
                   <MarkdownDisplay markdown={vm.sections.participantsProse.content || ''} className={docStyles.blockProse} />
@@ -493,14 +491,13 @@ export function PlanDocument() {
                 )}
               </DocumentSection>
 
-              {/* Timeline (inherited — read-only) */}
+              {/* Timeline (inherited — read-only) — NO backend comment key */}
               {vm.timeline.exists && (
                 <DocumentSection
                   sectionId="timeline"
                   title="Timeline"
                   provenance={vm.timeline.provenance}
                   sourceNote={isInherited(vm.timeline.provenance) ? briefSourceNote : undefined}
-                  comment={getSectionComment('timeline', 'Timeline')}
                 >
                   {(vm.timeline.summary.startDate || vm.timeline.summary.dateRange) && (
                     <div className={docStyles.researchPeriod}>
@@ -530,7 +527,7 @@ export function PlanDocument() {
                 </DocumentSection>
               )}
 
-              {/* Deliverables (generated, editable) */}
+              {/* Deliverables (generated, editable) — backend key: plan_deliverables */}
               {(vm.sections.deliverables.exists || vm.deliverablesTable?.exists) && (
                 <DocumentSection
                   sectionId="deliverables"
@@ -538,7 +535,7 @@ export function PlanDocument() {
                   provenance={vm.sections.deliverables.exists
                     ? vm.sections.deliverables.provenance
                     : vm.deliverablesTable?.provenance}
-                  comment={getSectionComment('deliverables', 'Deliverables')}
+                  comment={getSectionComment('plan_deliverables', 'Deliverables')}
                 >
                   {vm.sections.deliverables.exists ? (
                     <MarkdownDisplay markdown={vm.sections.deliverables.content || ''} className={docStyles.blockProse} />
@@ -554,13 +551,13 @@ export function PlanDocument() {
                 </DocumentSection>
               )}
 
-              {/* Risks (generated, read-only per contract) */}
+              {/* Risks (generated, read-only per contract) — backend key: plan_risks */}
               {vm.risks.exists && (
                 <DocumentSection
                   sectionId="risks"
                   title="Risks and mitigations"
                   provenance={vm.risks.provenance}
-                  comment={getSectionComment('risks', 'Risks and mitigations')}
+                  comment={getSectionComment('plan_risks', 'Risks and mitigations')}
                 >
                   <DocumentTable
                     columns={[
@@ -573,13 +570,13 @@ export function PlanDocument() {
                 </DocumentSection>
               )}
 
-              {/* Brief commitments operationalized (system, read-only) */}
+              {/* Brief commitments operationalized (system, read-only) — backend key: plan_commitments */}
               {vm.commitments.exists && (
                 <DocumentSection
                   sectionId="commitments"
                   title="Brief commitments operationalized"
                   provenance={vm.commitments.provenance}
-                  comment={getSectionComment('commitments', 'Brief commitments')}
+                  comment={getSectionComment('plan_commitments', 'Brief commitments')}
                 >
                   <DocumentTable
                     columns={[

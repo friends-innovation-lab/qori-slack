@@ -155,11 +155,12 @@ describe('CommentsRail', () => {
 
   describe('thread list', () => {
     it('renders threads with author and section', () => {
+      // CMT-7: Use backend contract keys (problem_narrative, not 'problem')
       mockUseCommentThreads.mockReturnValue({
         data: {
           threads: [
             makeDetailThread({ section_key: 'summary' }),
-            makeDetailThread({ id: 'thread-2', section_key: 'problem' }),
+            makeDetailThread({ id: 'thread-2', section_key: 'problem_narrative' }),
           ],
         },
         isLoading: false,
@@ -169,7 +170,7 @@ describe('CommentsRail', () => {
         <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
       );
       expect(screen.getByText('Summary')).toBeInTheDocument();
-      expect(screen.getByText('Problem')).toBeInTheDocument();
+      expect(screen.getByText('Problem')).toBeInTheDocument(); // Display label for problem_narrative
       expect(screen.getAllByText('Alice').length).toBeGreaterThanOrEqual(1);
     });
 
