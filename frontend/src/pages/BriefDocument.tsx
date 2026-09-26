@@ -17,13 +17,14 @@
  * CC-7: Review rail convergence — inline rail JSX replaced with ReviewRail component.
  */
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
 import type { JSONContent, Editor } from '@tiptap/react';
-import { ClipboardCheck, ShieldCheck } from 'lucide-react';
+import { ClipboardCheck, ShieldCheck, MessageSquare } from 'lucide-react';
 import { useStudyBrief } from '@/api/queries/useStudy';
 import { useApproveBrief, useRequestChanges } from '@/api/mutations/useApproveBrief';
 import { useSaveBriefContent } from '@/api/mutations/useSaveContent';
+import { useCommentThreads, deriveOpenThreadCount } from '@/api/comments';
 import { useBriefViewModel } from '@/hooks/useBriefViewModel';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
@@ -40,6 +41,7 @@ import { computeLifecycleNodes } from '@/components/study/lifecycle';
 import {
   ArtifactHeader,
   ApprovalSection,
+  CommentsRail,
   DocumentSection,
   Masthead,
   FactsGrid,
@@ -180,7 +182,16 @@ export function BriefDocument() {
     participants: false,
     budget: false,
   });
-  const [railMode, setRailMode] = useState<'review' | null>('review');
+  const [railMode, setRailMode] = useState<'review' | 'comments' | null>(null);
+
+  // CMT-6: Fetch open comment threads for count display
+  const artifactPublicId = brief?.artifact_public_id || '';
+  const commentsQuery = useCommentThreads({
+    artifactPublicId,
+    status: 'open',
+    enabled: !!artifactPublicId,
+  });
+  const openThreadCount = deriveOpenThreadCount(commentsQuery.data?.threads);
 
   const handleEdit = useCallback(() => {
     setIsEditing(true);
@@ -193,7 +204,7 @@ export function BriefDocument() {
     setIsEditing(false);
     setIsDirty(false);
     pipeline.reset();
-    setRailMode('review'); // Show rail when returning to view
+    // CMT-6: Don't force 'review' — let rail stay closed or user can reopen
   }, [pipeline]);
 
   const handleSave = useCallback(async () => {
@@ -215,7 +226,7 @@ export function BriefDocument() {
       pipeline.completeSave(result);
       setIsEditing(false);
       setIsDirty(false);
-      setRailMode('review');
+      // CMT-6: Don't force 'review' — let rail stay closed or user can reopen
     } catch (err) {
       pipeline.failSave(err instanceof Error ? err.message : 'Save failed');
     }
@@ -252,6 +263,14 @@ export function BriefDocument() {
   const isPendingApproval = vm.approval.status === 'pending_approval';
   const isApproved = vm.approval.status === 'approved';
   const isChangesRequested = vm.approval.status === 'changes_requested';
+
+  // CMT-6: Auto-open Review rail when approval status exists (initial load only)
+  const hasApprovalStatus = isPendingApproval || isApproved || isChangesRequested;
+  useEffect(() => {
+    if (hasApprovalStatus && railMode === null && !isEditing) {
+      setRailMode('review');
+    }
+  }, [hasApprovalStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Structured data from view model
   const objectives = vm.objectives.items;
@@ -320,8 +339,20 @@ export function BriefDocument() {
     </>
   );
 
-  // Context rail modes (only review for UX-3A) — CC-7: uses ReviewRail component
+  // CMT-6: Context rail modes — Comments + Review
   const railModes: RailMode[] = [
+    {
+      id: 'comments',
+      label: 'Comments',
+      count: openThreadCount > 0 ? openThreadCount : undefined,
+      icon: MessageSquare,
+      content: (
+        <CommentsRail
+          artifactPublicId={artifactPublicId}
+          artifactType="brief"
+        />
+      ),
+    },
     {
       id: 'review',
       label: 'Review',
@@ -340,8 +371,9 @@ export function BriefDocument() {
     },
   ];
 
-  // Show rail when not editing and has approval status
-  const showRail = !isEditing && (isPendingApproval || isApproved || isChangesRequested);
+  // Show rail when not editing. Review requires approval status, Comments always available.
+  const showReviewRail = !isEditing && (isPendingApproval || isApproved || isChangesRequested);
+  const showRail = !isEditing;
 
   // VC-2A: Persistent artifact status from approval state
   const artifactStatus = (() => {
@@ -357,18 +389,36 @@ export function BriefDocument() {
     return undefined;
   })();
 
-  // VC-2A: Review toggle for rail (visible when showRail is true)
+  // CMT-6: Rail toggles — Comments (always) + Review (when approval status)
+  // Only set aria-controls when rail is open (element exists)
   const railToggles = showRail ? (
-    <button
-      type="button"
-      className={headerStyles.railToggle}
-      aria-label="Review panel"
-      aria-pressed={railMode === 'review'}
-      aria-controls="context-rail"
-      onClick={() => setRailMode(railMode === 'review' ? null : 'review')}
-    >
-      <ShieldCheck size={16} aria-hidden="true" />
-    </button>
+    <>
+      <button
+        type="button"
+        className={headerStyles.railToggle}
+        aria-label={`Comments${openThreadCount > 0 ? ` (${openThreadCount} open)` : ''}`}
+        aria-pressed={railMode === 'comments'}
+        aria-controls={railMode !== null ? 'context-rail' : undefined}
+        onClick={() => setRailMode(railMode === 'comments' ? null : 'comments')}
+      >
+        <MessageSquare size={16} aria-hidden="true" />
+        {openThreadCount > 0 && (
+          <span className={headerStyles.railToggleCount}>{openThreadCount}</span>
+        )}
+      </button>
+      {showReviewRail && (
+        <button
+          type="button"
+          className={headerStyles.railToggle}
+          aria-label="Review panel"
+          aria-pressed={railMode === 'review'}
+          aria-controls={railMode !== null ? 'context-rail' : undefined}
+          onClick={() => setRailMode(railMode === 'review' ? null : 'review')}
+        >
+          <ShieldCheck size={16} aria-hidden="true" />
+        </button>
+      )}
+    </>
   ) : undefined;
 
   return (
@@ -398,9 +448,9 @@ export function BriefDocument() {
       rail={
         showRail ? (
           <ContextRail
-            modes={railModes}
+            modes={showReviewRail ? railModes : railModes.filter((m) => m.id !== 'review')}
             activeMode={railMode}
-            onModeChange={(mode) => setRailMode(mode as 'review' | null)}
+            onModeChange={(mode) => setRailMode(mode as 'review' | 'comments' | null)}
           />
         ) : undefined
       }

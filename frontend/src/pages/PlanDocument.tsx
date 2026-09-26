@@ -14,8 +14,10 @@
 import { useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router';
 import type { JSONContent } from '@tiptap/react';
+import { MessageSquare } from 'lucide-react';
 import { useStudyPlan } from '@/api/queries/useStudy';
 import { useSavePlanContent } from '@/api/mutations/useSaveContent';
+import { useCommentThreads, deriveOpenThreadCount } from '@/api/comments';
 import { usePlanViewModel } from '@/hooks/usePlanViewModel';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
@@ -27,11 +29,12 @@ import { serializePlan } from '@/components/study/editor/serializer';
 import { buildEditorDocument } from '@/components/study/editor/markdownBridge';
 import { MarkdownDisplay } from '@/components/study/editor/MarkdownDisplay';
 import { useSavePipeline } from '@/components/study/editor/useSavePipeline';
-import { WorkspaceLayout } from '@/components/study/workspace';
+import { WorkspaceLayout, ContextRail, type RailMode } from '@/components/study/workspace';
 import { LifecycleRail } from '@/components/study/LifecycleRail';
 import { computeLifecycleNodes } from '@/components/study/lifecycle';
 import {
   ArtifactHeader,
+  CommentsRail,
   DocumentSection,
   Masthead,
   FactsGrid,
@@ -43,6 +46,7 @@ import {
 } from '@/components/study/document';
 import type { FieldProvenance } from '@qori/artifact-contracts';
 import docStyles from '@/components/study/document/document.module.css';
+import headerStyles from '@/components/study/document/ArtifactHeader.module.css';
 import styles from './PlanDocument.module.css';
 
 /** Helper to check if provenance is inherited */
@@ -65,11 +69,22 @@ export function PlanDocument() {
   const [isEditing, setIsEditing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
+  const [railMode, setRailMode] = useState<'comments' | null>(null);
+
+  // CMT-6: Fetch open comment threads for count display
+  const artifactPublicId = (plan as any)?.artifact_public_id || '';
+  const commentsQuery = useCommentThreads({
+    artifactPublicId,
+    status: 'open',
+    enabled: !!artifactPublicId,
+  });
+  const openThreadCount = deriveOpenThreadCount(commentsQuery.data?.threads);
 
   const handleEdit = useCallback(() => {
     setIsEditing(true);
     setIsDirty(false);
     pipeline.reset();
+    setRailMode(null); // Hide rail while editing
   }, [pipeline]);
 
   const handleCancel = useCallback(() => {
@@ -224,6 +239,41 @@ export function PlanDocument() {
     ? { tone: 'neutral' as const, label: vm.masthead.versionDisplay }
     : undefined;
 
+  // CMT-6: Context rail modes — Comments only (Plan has no Review)
+  const showRail = !isEditing;
+  const railModes: RailMode[] = [
+    {
+      id: 'comments',
+      label: 'Comments',
+      count: openThreadCount > 0 ? openThreadCount : undefined,
+      icon: MessageSquare,
+      content: (
+        <CommentsRail
+          artifactPublicId={artifactPublicId}
+          artifactType="plan"
+        />
+      ),
+    },
+  ];
+
+  // CMT-6: Rail toggle for Comments
+  // Only set aria-controls when rail is open (element exists)
+  const railToggles = showRail ? (
+    <button
+      type="button"
+      className={headerStyles.railToggle}
+      aria-label={`Comments${openThreadCount > 0 ? ` (${openThreadCount} open)` : ''}`}
+      aria-pressed={railMode === 'comments'}
+      aria-controls={railMode !== null ? 'context-rail' : undefined}
+      onClick={() => setRailMode(railMode === 'comments' ? null : 'comments')}
+    >
+      <MessageSquare size={16} aria-hidden="true" />
+      {openThreadCount > 0 && (
+        <span className={headerStyles.railToggleCount}>{openThreadCount}</span>
+      )}
+    </button>
+  ) : undefined;
+
   return (
     <WorkspaceLayout
       nav={
@@ -242,11 +292,22 @@ export function PlanDocument() {
           saveState={saveState}
           status={artifactStatus}
           githubUrl={vm.githubUrl}
+          railToggles={railToggles}
           navOpen={navOpen}
           onNavToggle={() => setNavOpen(!navOpen)}
           actions={actions}
         />
       }
+      rail={
+        showRail ? (
+          <ContextRail
+            modes={railModes}
+            activeMode={railMode}
+            onModeChange={(mode) => setRailMode(mode as 'comments' | null)}
+          />
+        ) : undefined
+      }
+      railOpen={showRail && railMode !== null}
       navOpen={navOpen}
       onNavClose={() => setNavOpen(false)}
     >

@@ -160,9 +160,29 @@
   color: var(--color-brand-deep);
 }
 
+/* CMT-6: Count badge on rail toggle */
+.railToggleCount {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: var(--color-brand);
+  font: var(--weight-semibold) 9px/14px var(--font-mono);
+  color: var(--color-paper);
+  text-align: center;
+}
+
 @media (max-width: 767px) {
   .railToggle {
     width: 40px;
     height: 40px;
+  }
+
+  .railToggleCount {
+    top: 4px;
+    right: 4px;
   }
 }
