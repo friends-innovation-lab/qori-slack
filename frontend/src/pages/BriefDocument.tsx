@@ -193,6 +193,19 @@ export function BriefDocument() {
   });
   const openThreadCount = deriveOpenThreadCount(commentsQuery.data?.threads);
 
+  // CMT-6: Auto-open Review rail when approval status exists (initial load only)
+  // Must be called BEFORE any early returns to comply with Rules of Hooks
+  const briefStatus = brief?.brief_status;
+  const hasApprovalStatus =
+    briefStatus === 'pending_approval' ||
+    briefStatus === 'approved' ||
+    briefStatus === 'changes_requested';
+  useEffect(() => {
+    if (hasApprovalStatus && railMode === null && !isEditing) {
+      setRailMode('review');
+    }
+  }, [hasApprovalStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleEdit = useCallback(() => {
     setIsEditing(true);
     setIsDirty(false);
@@ -263,14 +276,6 @@ export function BriefDocument() {
   const isPendingApproval = vm.approval.status === 'pending_approval';
   const isApproved = vm.approval.status === 'approved';
   const isChangesRequested = vm.approval.status === 'changes_requested';
-
-  // CMT-6: Auto-open Review rail when approval status exists (initial load only)
-  const hasApprovalStatus = isPendingApproval || isApproved || isChangesRequested;
-  useEffect(() => {
-    if (hasApprovalStatus && railMode === null && !isEditing) {
-      setRailMode('review');
-    }
-  }, [hasApprovalStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Structured data from view model
   const objectives = vm.objectives.items;
