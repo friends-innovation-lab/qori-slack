@@ -34,6 +34,12 @@ vi.mock('@/api/mutations/useSaveContent', () => ({
   useSavePlanContent: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
+// CMT-6: Mock comments API
+vi.mock('@/api/comments', () => ({
+  useCommentThreads: () => ({ data: { threads: [] }, isLoading: false, isError: false }),
+  deriveOpenThreadCount: () => 0,
+}));
+
 function makePlan(overrides: Record<string, unknown> = {}) {
   return {
     study: {

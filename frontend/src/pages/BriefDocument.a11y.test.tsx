@@ -33,6 +33,12 @@ vi.mock('@/api/mutations/useSaveContent', () => ({
   useSaveBriefContent: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
+// CMT-6: Mock comments API
+vi.mock('@/api/comments', () => ({
+  useCommentThreads: () => ({ data: { threads: [] }, isLoading: false, isError: false }),
+  deriveOpenThreadCount: () => 0,
+}));
+
 function makeBrief(overrides: any = {}) {
   return {
     study: { public_id: 'study-1', name: 'Test Study', status: 'active', brief_status: 'approved', project_public_id: 'p1', created_at: '2026-09-01' },

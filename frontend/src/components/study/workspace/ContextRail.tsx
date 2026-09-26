@@ -136,7 +136,6 @@ export function ContextRail({
             className={styles.iconButton}
             aria-label={`${mode.label} panel`}
             aria-pressed={false}
-            aria-controls="context-rail"
             onClick={() => onModeChange(mode.id)}
           >
             <mode.icon size={16} aria-hidden={true} />
