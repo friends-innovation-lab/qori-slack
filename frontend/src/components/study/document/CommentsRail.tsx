@@ -13,7 +13,7 @@
  * Uses CMT-5 data layer hooks.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { MessageSquare, Check, RotateCcw, Pencil, AlertCircle } from 'lucide-react';
 import {
   useCommentThreads,
@@ -546,6 +546,18 @@ export function CommentsRail({
   const [showResolved, setShowResolved] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [expandedThreadId, setExpandedThreadId] = useState<string | null>(null);
+  // CMT-7: Remember originating section key when switching to All
+  const [originatingSectionKey, setOriginatingSectionKey] = useState<string | null>(null);
+
+  // Track the current section key (from scope or remembered)
+  const currentSectionKey = scope.mode === 'section' ? scope.sectionKey : null;
+
+  // Update originating section when entering section mode
+  useEffect(() => {
+    if (scope.mode === 'section' && scope.sectionKey) {
+      setOriginatingSectionKey(scope.sectionKey);
+    }
+  }, [scope]);
 
   // Query for open threads
   const sectionKey = scope.mode === 'section' ? scope.sectionKey : undefined;
@@ -575,22 +587,31 @@ export function CommentsRail({
     setShowCreateForm(false);
   }, []);
 
+  // CMT-7: Handle scope switching with section key preservation
   const handleScopeChange = (mode: 'all' | 'section') => {
     if (mode === 'all') {
       onScopeChange?.({ mode: 'all' });
+    } else if (originatingSectionKey) {
+      // Restore to the originating section
+      onScopeChange?.({ mode: 'section', sectionKey: originatingSectionKey });
     }
-    // Section mode requires sectionKey from CMT-7
   };
 
-  // Section mode availability (CMT-7 will provide sectionKey)
-  const sectionModeAvailable = scope.mode === 'section';
+  // Section mode availability: has originating section OR currently in section mode
+  const sectionModeAvailable = originatingSectionKey !== null || scope.mode === 'section';
+  // Current section label for display
+  const currentSectionLabel = currentSectionKey
+    ? getSectionLabel(artifactType, currentSectionKey)
+    : originatingSectionKey
+      ? getSectionLabel(artifactType, originatingSectionKey)
+      : null;
 
   return (
     <div className={styles.commentsRail}>
       {/* Header */}
       <p className={styles.commentsEyebrow}>Comments</p>
 
-      {/* Scope toggle (disabled for CMT-6 artifact-level opening) */}
+      {/* CMT-7: Scope toggle with section label */}
       <div className={styles.scopeToggle} role="group" aria-label="Comment scope">
         <button
           type="button"
@@ -599,7 +620,7 @@ export function CommentsRail({
           aria-pressed={scope.mode === 'section'}
           onClick={() => handleScopeChange('section')}
         >
-          This section
+          {currentSectionLabel || 'This section'}
         </button>
         <button
           type="button"

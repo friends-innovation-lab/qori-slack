@@ -24,7 +24,7 @@ import { ClipboardCheck, ShieldCheck, MessageSquare } from 'lucide-react';
 import { useStudyBrief } from '@/api/queries/useStudy';
 import { useApproveBrief, useRequestChanges } from '@/api/mutations/useApproveBrief';
 import { useSaveBriefContent } from '@/api/mutations/useSaveContent';
-import { useCommentThreads, deriveOpenThreadCount } from '@/api/comments';
+import { useCommentThreads, deriveOpenThreadCount, groupThreadsBySection } from '@/api/comments';
 import { useBriefViewModel } from '@/hooks/useBriefViewModel';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
@@ -52,6 +52,8 @@ import {
   SaveStateIndicator,
   ReviewRail,
   type ChecklistState,
+  type CommentsRailScope,
+  type SectionCommentProps,
 } from '@/components/study/document';
 import docStyles from '@/components/study/document/document.module.css';
 import headerStyles from '@/components/study/document/ArtifactHeader.module.css';
@@ -183,6 +185,8 @@ export function BriefDocument() {
     budget: false,
   });
   const [railMode, setRailMode] = useState<'review' | 'comments' | null>(null);
+  // CMT-7: Track comments scope (section-scoped or all)
+  const [commentsScope, setCommentsScope] = useState<CommentsRailScope>({ mode: 'all' });
 
   // CMT-6: Fetch open comment threads for count display
   const artifactPublicId = brief?.artifact_public_id || '';
@@ -192,6 +196,8 @@ export function BriefDocument() {
     enabled: !!artifactPublicId,
   });
   const openThreadCount = deriveOpenThreadCount(commentsQuery.data?.threads);
+  // CMT-7: Derive per-section counts for section affordances
+  const sectionCounts = groupThreadsBySection(commentsQuery.data?.threads);
 
   // CMT-6: Auto-open Review rail when approval status exists (initial load only)
   // Must be called BEFORE any early returns to comply with Rules of Hooks
@@ -205,6 +211,33 @@ export function BriefDocument() {
       setRailMode('review');
     }
   }, [hasApprovalStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // CMT-7: Handler to open Comments rail scoped to a section
+  const openSectionComments = useCallback((sectionKey: string) => {
+    setCommentsScope({ mode: 'section', sectionKey });
+    setRailMode('comments');
+  }, []);
+
+  // CMT-7: Create comment props for a section
+  const getSectionComment = useCallback(
+    (sectionKey: string, label?: string): SectionCommentProps => ({
+      count: sectionCounts.get(sectionKey) ?? 0,
+      onOpen: () => openSectionComments(sectionKey),
+      label,
+    }),
+    [sectionCounts, openSectionComments],
+  );
+
+  // CMT-6/7: Handler to toggle Comments rail from header
+  const handleCommentsToggle = useCallback(() => {
+    if (railMode === 'comments') {
+      setRailMode(null);
+    } else {
+      // CMT-7: Opening from header = All comments scope
+      setCommentsScope({ mode: 'all' });
+      setRailMode('comments');
+    }
+  }, [railMode]);
 
   const handleEdit = useCallback(() => {
     setIsEditing(true);
@@ -344,7 +377,7 @@ export function BriefDocument() {
     </>
   );
 
-  // CMT-6: Context rail modes — Comments + Review
+  // CMT-6/7: Context rail modes — Comments + Review
   const railModes: RailMode[] = [
     {
       id: 'comments',
@@ -355,6 +388,8 @@ export function BriefDocument() {
         <CommentsRail
           artifactPublicId={artifactPublicId}
           artifactType="brief"
+          scope={commentsScope}
+          onScopeChange={setCommentsScope}
         />
       ),
     },
@@ -394,7 +429,7 @@ export function BriefDocument() {
     return undefined;
   })();
 
-  // CMT-6: Rail toggles — Comments (always) + Review (when approval status)
+  // CMT-6/7: Rail toggles — Comments (always) + Review (when approval status)
   // Only set aria-controls when rail is open (element exists)
   const railToggles = showRail ? (
     <>
@@ -404,7 +439,7 @@ export function BriefDocument() {
         aria-label={`Comments${openThreadCount > 0 ? ` (${openThreadCount} open)` : ''}`}
         aria-pressed={railMode === 'comments'}
         aria-controls={railMode !== null ? 'context-rail' : undefined}
-        onClick={() => setRailMode(railMode === 'comments' ? null : 'comments')}
+        onClick={handleCommentsToggle}
       >
         <MessageSquare size={16} aria-hidden="true" />
         {openThreadCount > 0 && (
@@ -529,11 +564,12 @@ export function BriefDocument() {
               {/* Masthead with artifactLabel */}
               <Masthead masthead={vm.masthead} artifactLabel="Research Brief" />
 
-              {/* Summary (generated, editable) */}
+              {/* Summary (generated, editable) — backend key: summary */}
               <DocumentSection
                 sectionId="summary"
                 title="Summary"
                 provenance={vm.sections.summary.provenance}
+                comment={getSectionComment('summary', 'Summary')}
               >
                 {summaryProse ? (
                   <MarkdownDisplay markdown={summaryProse} className={docStyles.blockProse} />
@@ -543,7 +579,7 @@ export function BriefDocument() {
                 <FactsGrid facts={facts} />
               </DocumentSection>
 
-              {/* Problem (generated + canonical) */}
+              {/* Problem (generated + canonical) — backend key: problem_narrative */}
               {(vm.sections.problemNarrative.exists || vm.barriers.exists) && (
                 <DocumentSection
                   sectionId="problem"
@@ -554,6 +590,7 @@ export function BriefDocument() {
                       : []),
                     ...(vm.barriers.exists ? [vm.barriers.provenance] : []),
                   ].filter(Boolean)}
+                  comment={getSectionComment('problem_narrative', 'Problem')}
                 >
                   {problemProse && (
                     <MarkdownDisplay markdown={problemProse} className={docStyles.blockProse} />
@@ -571,7 +608,7 @@ export function BriefDocument() {
                 </DocumentSection>
               )}
 
-              {/* What we'll learn (canonical, read-only) */}
+              {/* What we'll learn (canonical, read-only) — NO backend comment key (inherited) */}
               {(vm.objectives.exists || vm.questions.exists) && (
                 <DocumentSection
                   sectionId="objectives"
@@ -601,12 +638,13 @@ export function BriefDocument() {
                 </DocumentSection>
               )}
 
-              {/* Method (generated, editable) */}
+              {/* Method (generated, editable) — backend key: method_prose */}
               {(vm.quickFacts.method.exists || vm.sections.methodProse.exists) && (
                 <DocumentSection
                   sectionId="method"
                   title="Method"
                   provenance={vm.sections.methodProse.provenance}
+                  comment={getSectionComment('method_prose', 'Method')}
                 >
                   {methodology && (
                     <p className={docStyles.kvParagraph}>
@@ -619,7 +657,7 @@ export function BriefDocument() {
                 </DocumentSection>
               )}
 
-              {/* Participants (generated + canonical) */}
+              {/* Participants (generated + canonical) — backend key: participants_prose */}
               {(vm.participantSegments.exists || vm.sections.participantsProse.exists) && (
                 <DocumentSection
                   sectionId="participants"
@@ -630,6 +668,7 @@ export function BriefDocument() {
                       ? [vm.sections.participantsProse.provenance]
                       : []),
                   ].filter(Boolean)}
+                  comment={getSectionComment('participants_prose', 'Participants')}
                 >
                   {participantSegments.length > 0 ? (
                     <>
@@ -672,23 +711,25 @@ export function BriefDocument() {
                 </DocumentSection>
               )}
 
-              {/* Out of scope (generated, editable) */}
+              {/* Out of scope (generated, editable) — backend key: out_of_scope */}
               {vm.sections.outOfScope.exists && (
                 <DocumentSection
                   sectionId="out-of-scope"
                   title="Out of scope"
                   provenance={vm.sections.outOfScope.provenance}
+                  comment={getSectionComment('out_of_scope', 'Out of scope')}
                 >
                   <MarkdownDisplay markdown={outOfScopeProse || ''} className={docStyles.blockProse} />
                 </DocumentSection>
               )}
 
-              {/* Risks (generated, read-only) */}
+              {/* Risks (generated, read-only) — backend key: risks */}
               {vm.risks.exists && (
                 <DocumentSection
                   sectionId="risks"
                   title="Risks"
                   provenance={vm.risks.provenance}
+                  comment={getSectionComment('risks', 'Risks')}
                 >
                   <DocumentTable
                     columns={[
@@ -701,7 +742,7 @@ export function BriefDocument() {
                 </DocumentSection>
               )}
 
-              {/* Timeline (computed, read-only) */}
+              {/* Timeline (computed, read-only) — NO backend comment key (computed) */}
               {(vm.timeline.exists ||
                 vm.timeline.summary.startDate ||
                 vm.quickFacts.decisionDeadline.exists) && (
