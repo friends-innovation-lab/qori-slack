@@ -52,6 +52,36 @@
 .provTag { margin-left: auto; align-self: center; white-space: nowrap; font: var(--weight-semibold) var(--type-label-size)/var(--type-label-line) var(--font-mono); letter-spacing: var(--type-label-track); text-transform: uppercase; color: var(--color-text-muted); opacity: 0; transition: opacity var(--motion-fast) var(--motion-ease); }
 .docSec:hover .provTag, .docSec:focus-within .provTag { opacity: 1; }
 
+/* ─── CMT-7: Section comment affordance ─── */
+.secComment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-quiet);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--motion-ease), background var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease);
+}
+/* Show on section hover/focus-within */
+.docSec:hover .secComment,
+.docSec:focus-within .secComment { opacity: 1; }
+/* Always show when there are comments */
+.secComment.secCommentActive { opacity: 1; color: var(--color-text-muted); }
+/* Hover state */
+.secComment:hover { background: var(--color-surface-hover); color: var(--color-text); }
+/* Focus state */
+.secComment:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); opacity: 1; }
+/* Count badge */
+.secCommentCount {
+  font: var(--weight-semibold) var(--type-label-size)/1 var(--font-mono);
+  color: inherit;
+}
+
 /* ─── Prose ─── */
 .block { margin: 0 0 var(--space-4); max-width: var(--layout-prose-measure); font: var(--type-doc-body-size)/var(--type-doc-body-line) var(--font-serif); color: var(--color-text); }
 .blockProse { font: var(--type-doc-body-size)/var(--type-doc-body-line) var(--font-serif); color: var(--color-text); }

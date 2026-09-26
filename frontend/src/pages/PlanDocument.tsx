@@ -17,7 +17,7 @@ import type { JSONContent } from '@tiptap/react';
 import { MessageSquare } from 'lucide-react';
 import { useStudyPlan } from '@/api/queries/useStudy';
 import { useSavePlanContent } from '@/api/mutations/useSaveContent';
-import { useCommentThreads, deriveOpenThreadCount } from '@/api/comments';
+import { useCommentThreads, deriveOpenThreadCount, groupThreadsBySection } from '@/api/comments';
 import { usePlanViewModel } from '@/hooks/usePlanViewModel';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
@@ -43,6 +43,8 @@ import {
   DocumentTable,
   CollapsibleSection,
   SaveStateIndicator,
+  type CommentsRailScope,
+  type SectionCommentProps,
 } from '@/components/study/document';
 import type { FieldProvenance } from '@qori/artifact-contracts';
 import docStyles from '@/components/study/document/document.module.css';
@@ -70,6 +72,8 @@ export function PlanDocument() {
   const [isDirty, setIsDirty] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [railMode, setRailMode] = useState<'comments' | null>(null);
+  // CMT-7: Track comments scope (section-scoped or all)
+  const [commentsScope, setCommentsScope] = useState<CommentsRailScope>({ mode: 'all' });
 
   // CMT-6: Fetch open comment threads for count display
   const artifactPublicId = (plan as any)?.artifact_public_id || '';
@@ -79,6 +83,24 @@ export function PlanDocument() {
     enabled: !!artifactPublicId,
   });
   const openThreadCount = deriveOpenThreadCount(commentsQuery.data?.threads);
+  // CMT-7: Derive per-section counts for section affordances
+  const sectionCounts = groupThreadsBySection(commentsQuery.data?.threads);
+
+  // CMT-7: Handler to open Comments rail scoped to a section
+  const openSectionComments = useCallback((sectionKey: string) => {
+    setCommentsScope({ mode: 'section', sectionKey });
+    setRailMode('comments');
+  }, []);
+
+  // CMT-7: Create comment props for a section
+  const getSectionComment = useCallback(
+    (sectionKey: string, label?: string): SectionCommentProps => ({
+      count: sectionCounts.get(sectionKey) ?? 0,
+      onOpen: () => openSectionComments(sectionKey),
+      label,
+    }),
+    [sectionCounts, openSectionComments],
+  );
 
   const handleEdit = useCallback(() => {
     setIsEditing(true);
@@ -239,7 +261,7 @@ export function PlanDocument() {
     ? { tone: 'neutral' as const, label: vm.masthead.versionDisplay }
     : undefined;
 
-  // CMT-6: Context rail modes — Comments only (Plan has no Review)
+  // CMT-6/7: Context rail modes — Comments only (Plan has no Review)
   const showRail = !isEditing;
   const railModes: RailMode[] = [
     {
@@ -251,13 +273,25 @@ export function PlanDocument() {
         <CommentsRail
           artifactPublicId={artifactPublicId}
           artifactType="plan"
+          scope={commentsScope}
+          onScopeChange={setCommentsScope}
         />
       ),
     },
   ];
 
-  // CMT-6: Rail toggle for Comments
+  // CMT-6/7: Rail toggle for Comments
   // Only set aria-controls when rail is open (element exists)
+  const handleCommentsToggle = useCallback(() => {
+    if (railMode === 'comments') {
+      setRailMode(null);
+    } else {
+      // CMT-7: Opening from header = All comments scope
+      setCommentsScope({ mode: 'all' });
+      setRailMode('comments');
+    }
+  }, [railMode]);
+
   const railToggles = showRail ? (
     <button
       type="button"
@@ -265,7 +299,7 @@ export function PlanDocument() {
       aria-label={`Comments${openThreadCount > 0 ? ` (${openThreadCount} open)` : ''}`}
       aria-pressed={railMode === 'comments'}
       aria-controls={railMode !== null ? 'context-rail' : undefined}
-      onClick={() => setRailMode(railMode === 'comments' ? null : 'comments')}
+      onClick={handleCommentsToggle}
     >
       <MessageSquare size={16} aria-hidden="true" />
       {openThreadCount > 0 && (
@@ -349,6 +383,7 @@ export function PlanDocument() {
                 sectionId="summary"
                 title="Summary"
                 provenance={vm.sections.summary.provenance}
+                comment={getSectionComment('summary', 'Summary')}
               >
                 {vm.sections.summary.exists ? (
                   <MarkdownDisplay markdown={vm.sections.summary.content || ''} className={docStyles.blockProse} />
@@ -364,6 +399,7 @@ export function PlanDocument() {
                   sectionId="background"
                   title="Background"
                   provenance={vm.sections.background.provenance}
+                  comment={getSectionComment('background', 'Background')}
                 >
                   <MarkdownDisplay markdown={vm.sections.background.content || ''} className={docStyles.blockProse} />
                 </DocumentSection>
@@ -376,6 +412,7 @@ export function PlanDocument() {
                   title="Objectives"
                   provenance={vm.objectives.provenance}
                   sourceNote={isInherited(vm.objectives.provenance) ? briefSourceNote : undefined}
+                  comment={getSectionComment('objectives', 'Objectives')}
                 >
                   <StructuredItemRows>
                     {objectives.map((o) => (
@@ -392,6 +429,7 @@ export function PlanDocument() {
                   title="Research questions"
                   provenance={vm.questions.provenance}
                   sourceNote={isInherited(vm.questions.provenance) ? briefSourceNote : undefined}
+                  comment={getSectionComment('questions', 'Research questions')}
                 >
                   <StructuredItemRows>
                     {questions.map((q) => (
@@ -410,6 +448,7 @@ export function PlanDocument() {
                   ...(vm.sections.sessionFormat.exists ? [vm.sections.sessionFormat.provenance] : []),
                   ...(vm.sections.dataCollection.exists ? [vm.sections.dataCollection.provenance] : []),
                 ].filter(Boolean)}
+                comment={getSectionComment('method', 'Method')}
               >
                 {methodology && (
                   <p className={docStyles.kvParagraph}>
@@ -436,6 +475,7 @@ export function PlanDocument() {
                 sectionId="participants"
                 title="Participants"
                 provenance={vm.sections.participantsProse.provenance}
+                comment={getSectionComment('participants', 'Participants')}
               >
                 {vm.sections.participantsProse.exists ? (
                   <MarkdownDisplay markdown={vm.sections.participantsProse.content || ''} className={docStyles.blockProse} />
@@ -459,6 +499,7 @@ export function PlanDocument() {
                   title="Timeline"
                   provenance={vm.timeline.provenance}
                   sourceNote={isInherited(vm.timeline.provenance) ? briefSourceNote : undefined}
+                  comment={getSectionComment('timeline', 'Timeline')}
                 >
                   {(vm.timeline.summary.startDate || vm.timeline.summary.dateRange) && (
                     <div className={docStyles.researchPeriod}>
@@ -496,6 +537,7 @@ export function PlanDocument() {
                   provenance={vm.sections.deliverables.exists
                     ? vm.sections.deliverables.provenance
                     : vm.deliverablesTable?.provenance}
+                  comment={getSectionComment('deliverables', 'Deliverables')}
                 >
                   {vm.sections.deliverables.exists ? (
                     <MarkdownDisplay markdown={vm.sections.deliverables.content || ''} className={docStyles.blockProse} />
@@ -517,6 +559,7 @@ export function PlanDocument() {
                   sectionId="risks"
                   title="Risks and mitigations"
                   provenance={vm.risks.provenance}
+                  comment={getSectionComment('risks', 'Risks and mitigations')}
                 >
                   <DocumentTable
                     columns={[
@@ -535,6 +578,7 @@ export function PlanDocument() {
                   sectionId="commitments"
                   title="Brief commitments operationalized"
                   provenance={vm.commitments.provenance}
+                  comment={getSectionComment('commitments', 'Brief commitments')}
                 >
                   <DocumentTable
                     columns={[

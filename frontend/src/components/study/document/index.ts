@@ -5,6 +5,7 @@ export { CollapsibleSection } from './CollapsibleSection';
 export { CommentsRail } from './CommentsRail';
 export type { CommentsRailScope } from './CommentsRail';
 export { DocumentSection } from './DocumentSection';
+export type { SectionCommentProps } from './DocumentSection';
 export { DocumentTable } from './DocumentTable';
 export { FactsGrid } from './FactsGrid';
 export { IdTag } from './IdTag';
@@ -19,6 +20,7 @@ export {
   getSectionsForArtifact,
   getSectionLabel,
   isValidSection,
+  isCommentableSection,
   BRIEF_SECTIONS,
   PLAN_SECTIONS,
   type ArtifactType,

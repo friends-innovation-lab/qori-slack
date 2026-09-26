@@ -5,6 +5,7 @@
  * Used by Comments UI for section selector and thread display.
  *
  * CMT-6: Initial mapping based on BriefDocument and PlanDocument sections.
+ * CMT-7: Added commentable flag for section affordance rendering.
  */
 
 /**
@@ -18,6 +19,8 @@ export type ArtifactType = 'brief' | 'plan';
 export interface SectionDefinition {
   readonly key: string;
   readonly label: string;
+  /** Whether this section supports comments (CMT-7). Defaults to true. */
+  readonly commentable?: boolean;
 }
 
 /**
@@ -83,4 +86,18 @@ export function isValidSection(
 ): boolean {
   const sections = getSectionsForArtifact(artifactType);
   return sections.some((s) => s.key === sectionKey);
+}
+
+/**
+ * Check if a section is commentable.
+ * Returns true if section exists and commentable !== false.
+ */
+export function isCommentableSection(
+  artifactType: ArtifactType,
+  sectionKey: string,
+): boolean {
+  const sections = getSectionsForArtifact(artifactType);
+  const section = sections.find((s) => s.key === sectionKey);
+  // Default to true if commentable is not explicitly false
+  return section ? section.commentable !== false : false;
 }

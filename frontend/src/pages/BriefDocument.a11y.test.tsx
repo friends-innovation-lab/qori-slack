@@ -33,10 +33,11 @@ vi.mock('@/api/mutations/useSaveContent', () => ({
   useSaveBriefContent: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
-// CMT-6: Mock comments API
+// CMT-6/7: Mock comments API
 vi.mock('@/api/comments', () => ({
   useCommentThreads: () => ({ data: { threads: [] }, isLoading: false, isError: false }),
   deriveOpenThreadCount: () => 0,
+  groupThreadsBySection: () => new Map(),
 }));
 
 function makeBrief(overrides: any = {}) {
