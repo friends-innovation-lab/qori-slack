@@ -102,6 +102,17 @@ export function PlanDocument() {
     [sectionCounts, openSectionComments],
   );
 
+  // CMT-6/7: Handler to toggle Comments rail from header
+  const handleCommentsToggle = useCallback(() => {
+    if (railMode === 'comments') {
+      setRailMode(null);
+    } else {
+      // CMT-7: Opening from header = All comments scope
+      setCommentsScope({ mode: 'all' });
+      setRailMode('comments');
+    }
+  }, [railMode]);
+
   const handleEdit = useCallback(() => {
     setIsEditing(true);
     setIsDirty(false);
@@ -282,16 +293,6 @@ export function PlanDocument() {
 
   // CMT-6/7: Rail toggle for Comments
   // Only set aria-controls when rail is open (element exists)
-  const handleCommentsToggle = useCallback(() => {
-    if (railMode === 'comments') {
-      setRailMode(null);
-    } else {
-      // CMT-7: Opening from header = All comments scope
-      setCommentsScope({ mode: 'all' });
-      setRailMode('comments');
-    }
-  }, [railMode]);
-
   const railToggles = showRail ? (
     <button
       type="button"
