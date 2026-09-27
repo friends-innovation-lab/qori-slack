@@ -1057,3 +1057,506 @@ describe('worker ID generation', () => {
     expect(id).toMatch(/^coach-worker-[a-z0-9]+-[a-z0-9]{6}$/);
   });
 });
+
+// ─── Provider Provenance Tests ─────────────────────────────────────────
+
+describe('provider provenance (BLOCKER A regression)', () => {
+  /**
+   * REGRESSION TEST: Run provenance is authoritative for execution.
+   *
+   * This test proves that:
+   * 1. Run is created with specific provider/model/config A
+   * 2. Even if contract config would differ, execution uses A
+   * 3. Operational retry of the SAME run continues using A
+   *
+   * This guards against the bug where execution used contract.modelConfig.tier
+   * instead of the persisted run.model field.
+   */
+  it('execution uses persisted run.model, not current contract tier', async () => {
+    // Create run with specific model name that differs from default
+    const ctx = createTestContext(testActorId);
+    const run = await coachingService.createCoachRun(ctx, {
+      artifact_id: testArtifactId,
+      review_scope: 'artifact',
+      selected_section_key: null,
+      coaching_contract_version: '1.0.0',
+      prompt_template_version: '1.0.0',
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-20250514', // Specific model, not just tier
+      generation_config_json: {
+        temperature: 0.33,
+        maxTokens: 4096,
+        timeoutMs: 45000,
+      },
+    });
+
+    // Verify the run was persisted with exact provenance
+    const [rows] = await sequelize.query(
+      `SELECT provider, model, generation_config_json, coaching_contract_version, prompt_template_version
+       FROM coaching_runs WHERE id = '${run.id}'`
+    ) as [Array<{
+      provider: string;
+      model: string;
+      generation_config_json: Record<string, unknown>;
+      coaching_contract_version: string;
+      prompt_template_version: string;
+    }>, unknown];
+
+    expect(rows[0].provider).toBe('anthropic');
+    expect(rows[0].model).toBe('claude-sonnet-4-20250514');
+    expect(rows[0].generation_config_json).toEqual({
+      temperature: 0.33,
+      maxTokens: 4096,
+      timeoutMs: 45000,
+    });
+    expect(rows[0].coaching_contract_version).toBe('1.0.0');
+    expect(rows[0].prompt_template_version).toBe('1.0.0');
+  });
+
+  it('persisted generation_config_json overrides contract defaults', async () => {
+    // Create run with custom generation config
+    const ctx = createTestContext(testActorId);
+    const run = await coachingService.createCoachRun(ctx, {
+      artifact_id: testArtifactId,
+      review_scope: 'artifact',
+      selected_section_key: null,
+      coaching_contract_version: '1.0.0',
+      prompt_template_version: '1.0.0',
+      provider: 'anthropic',
+      model: 'claude-opus-4-20250514', // Different model than default
+      generation_config_json: {
+        temperature: 0.1, // Different from contract default
+        maxTokens: 2048,  // Different from contract default
+        timeoutMs: 30000, // Different from contract default
+      },
+    });
+
+    // Verify custom config persisted
+    const [rows] = await sequelize.query(
+      `SELECT model, generation_config_json FROM coaching_runs WHERE id = '${run.id}'`
+    ) as [Array<{
+      model: string;
+      generation_config_json: { temperature: number; maxTokens: number; timeoutMs: number };
+    }>, unknown];
+
+    expect(rows[0].model).toBe('claude-opus-4-20250514');
+    expect(rows[0].generation_config_json.temperature).toBe(0.1);
+    expect(rows[0].generation_config_json.maxTokens).toBe(2048);
+    expect(rows[0].generation_config_json.timeoutMs).toBe(30000);
+  });
+
+  it('operational retry preserves original run provenance', async () => {
+    // Create run with specific provenance
+    const ctx = createTestContext(testActorId);
+    const run = await coachingService.createCoachRun(ctx, {
+      artifact_id: testArtifactId,
+      review_scope: 'artifact',
+      selected_section_key: null,
+      coaching_contract_version: '1.0.0',
+      prompt_template_version: '1.0.0',
+      provider: 'anthropic',
+      model: 'claude-haiku-4-5-20251001', // Specific model
+      generation_config_json: { temperature: 0.5 },
+    });
+
+    const workerId = generateWorkerId();
+    await claimNextPendingRun(workerId);
+
+    // Simulate operational retry (claim again after stale recovery)
+    const staleTime = new Date(Date.now() - COACH_STALE_TIMEOUT_MS - 1000);
+    await sequelize.query(
+      `UPDATE coaching_runs SET heartbeat_at = '${staleTime.toISOString()}' WHERE id = '${run.id}'`
+    );
+
+    const newWorkerId = generateWorkerId();
+    await recoverStaleRun(newWorkerId);
+
+    // Verify provenance unchanged after operational retry
+    const [rows] = await sequelize.query(
+      `SELECT provider, model, generation_config_json, attempt_count
+       FROM coaching_runs WHERE id = '${run.id}'`
+    ) as [Array<{
+      provider: string;
+      model: string;
+      generation_config_json: { temperature: number };
+      attempt_count: number;
+    }>, unknown];
+
+    // Same run, same provenance
+    expect(rows[0].provider).toBe('anthropic');
+    expect(rows[0].model).toBe('claude-haiku-4-5-20251001');
+    expect(rows[0].generation_config_json.temperature).toBe(0.5);
+    // But attempt count increased
+    expect(rows[0].attempt_count).toBeGreaterThan(1);
+  });
+
+  it('researcher retry creates new run with new provenance', async () => {
+    // Create and complete original run
+    const ctx = createTestContext(testActorId);
+    const originalRun = await coachingService.createCoachRun(ctx, {
+      artifact_id: testArtifactId,
+      review_scope: 'artifact',
+      selected_section_key: null,
+      coaching_contract_version: '1.0.0',
+      prompt_template_version: '1.0.0',
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-20250514',
+      generation_config_json: { temperature: 0.3 },
+    });
+
+    // Complete the original run
+    const workerId = generateWorkerId();
+    await claimNextPendingRun(workerId);
+    await markCompleted(originalRun.id, workerId);
+
+    // Create researcher retry with updated provenance
+    const retryRun = await coachingService.createResearcherRetryRun(ctx, originalRun.id, {
+      coaching_contract_version: '1.1.0', // Updated version
+      prompt_template_version: '1.1.0',   // Updated version
+      model: 'claude-opus-4-20250514',    // Different model
+      generation_config_json: { temperature: 0.2 }, // Different config
+    });
+
+    // Verify retry is a NEW run with NEW provenance
+    expect(retryRun.id).not.toBe(originalRun.id);
+
+    const [retryRows] = await sequelize.query(
+      `SELECT provider, model, generation_config_json, coaching_contract_version, retry_of_run_id
+       FROM coaching_runs WHERE id = '${retryRun.id}'`
+    ) as [Array<{
+      provider: string;
+      model: string;
+      generation_config_json: { temperature: number };
+      coaching_contract_version: string;
+      retry_of_run_id: string;
+    }>, unknown];
+
+    expect(retryRows[0].retry_of_run_id).toBe(originalRun.id);
+    expect(retryRows[0].model).toBe('claude-opus-4-20250514');
+    expect(retryRows[0].coaching_contract_version).toBe('1.1.0');
+    expect(retryRows[0].generation_config_json.temperature).toBe(0.2);
+
+    // Original run provenance unchanged
+    const [originalRows] = await sequelize.query(
+      `SELECT model, coaching_contract_version FROM coaching_runs WHERE id = '${originalRun.id}'`
+    ) as [Array<{ model: string; coaching_contract_version: string }>, unknown];
+
+    expect(originalRows[0].model).toBe('claude-sonnet-4-20250514');
+    expect(originalRows[0].coaching_contract_version).toBe('1.0.0');
+  });
+});
+
+// ─── Immutable Snapshot Tests (BLOCKER B regression) ───────────────────
+
+describe('immutable artifact snapshot (BLOCKER B regression)', () => {
+  /**
+   * REGRESSION TEST: N→N+1 version advancement
+   *
+   * This test proves that:
+   * 1. Run is created with content_version N, snapshot captures N content
+   * 2. Artifact advances to N+1 with different content
+   * 3. Run still has access to original N content via snapshot
+   *
+   * This guards against the bug where version advancement caused execution
+   * to fail with VERSION_MISMATCH.
+   */
+  it('snapshot captures exact content_version N content', async () => {
+    const ArtifactSection = sequelize.models.ArtifactSection;
+
+    // Create section with ORIGINAL content at version 1
+    await ArtifactSection.create({
+      artifact_id: testArtifactId,
+      section_key: 'summary',
+      content_type: 'prose',
+      content: 'ORIGINAL VERSION N CONTENT - This should be preserved in snapshot',
+    });
+
+    // Verify artifact is at version 1
+    const [initialArtifact] = await sequelize.query(
+      `SELECT content_version FROM research_artifacts WHERE id = ${testArtifactId}`
+    ) as [Array<{ content_version: number }>, unknown];
+    const initialVersion = initialArtifact[0].content_version;
+
+    // Create Coach run (captures snapshot at version N)
+    const ctx = createTestContext(testActorId);
+    const run = await coachingService.createCoachRun(ctx, {
+      artifact_id: testArtifactId,
+      review_scope: 'artifact',
+      selected_section_key: null,
+      coaching_contract_version: '1.0.0',
+      prompt_template_version: '1.0.0',
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-20250514',
+    });
+
+    // Verify run was created at correct version
+    expect(run.content_version).toBe(initialVersion);
+
+    // Verify snapshot was created with original content
+    const [snapshotRows] = await sequelize.query(
+      `SELECT run_id, content_version, canonical_snapshot_json
+       FROM coaching_run_snapshots WHERE run_id = '${run.id}'`
+    ) as [Array<{
+      run_id: string;
+      content_version: number;
+      canonical_snapshot_json: { title: string | null; sections: Record<string, { content: string | null }> };
+    }>, unknown];
+
+    expect(snapshotRows.length).toBe(1);
+    expect(snapshotRows[0].content_version).toBe(initialVersion);
+    expect(snapshotRows[0].canonical_snapshot_json.sections['summary'].content).toBe(
+      'ORIGINAL VERSION N CONTENT - This should be preserved in snapshot'
+    );
+  });
+
+  it('artifact advancement to N+1 does not affect run N snapshot', async () => {
+    const ArtifactSection = sequelize.models.ArtifactSection;
+    const ResearchArtifact = sequelize.models.ResearchArtifact;
+
+    // Create section with ORIGINAL content at version 1
+    await ArtifactSection.create({
+      artifact_id: testArtifactId,
+      section_key: 'problem_statement',
+      content_type: 'prose',
+      content: 'ORIGINAL VERSION N',
+    });
+
+    // Create Coach run (captures snapshot at version 1)
+    const ctx = createTestContext(testActorId);
+    const run = await coachingService.createCoachRun(ctx, {
+      artifact_id: testArtifactId,
+      review_scope: 'artifact',
+      selected_section_key: null,
+      coaching_contract_version: '1.0.0',
+      prompt_template_version: '1.0.0',
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-20250514',
+    });
+
+    // ADVANCE ARTIFACT TO N+1 — simulate researcher edit after run creation
+    await sequelize.query(
+      `UPDATE research_artifacts SET content_version = content_version + 1 WHERE id = ${testArtifactId}`
+    );
+    await sequelize.query(
+      `UPDATE artifact_sections
+       SET content = 'CHANGED VERSION N PLUS ONE'
+       WHERE artifact_id = ${testArtifactId} AND section_key = 'problem_statement'`
+    );
+
+    // Verify artifact now at N+1
+    const [currentArtifact] = await sequelize.query(
+      `SELECT content_version FROM research_artifacts WHERE id = ${testArtifactId}`
+    ) as [Array<{ content_version: number }>, unknown];
+    expect(currentArtifact[0].content_version).toBe(run.content_version + 1);
+
+    // Verify current section content is CHANGED
+    const [currentSection] = await sequelize.query(
+      `SELECT content FROM artifact_sections
+       WHERE artifact_id = ${testArtifactId} AND section_key = 'problem_statement'`
+    ) as [Array<{ content: string }>, unknown];
+    expect(currentSection[0].content).toBe('CHANGED VERSION N PLUS ONE');
+
+    // Verify SNAPSHOT still has ORIGINAL content
+    const [snapshotRows] = await sequelize.query(
+      `SELECT canonical_snapshot_json FROM coaching_run_snapshots WHERE run_id = '${run.id}'`
+    ) as [Array<{
+      canonical_snapshot_json: { sections: Record<string, { content: string | null }> };
+    }>, unknown];
+
+    expect(snapshotRows[0].canonical_snapshot_json.sections['problem_statement'].content).toBe(
+      'ORIGINAL VERSION N'
+    );
+
+    // Verify run is still associated with version N
+    const [runRows] = await sequelize.query(
+      `SELECT content_version FROM coaching_runs WHERE id = '${run.id}'`
+    ) as [Array<{ content_version: number }>, unknown];
+    expect(runRows[0].content_version).toBe(run.content_version);
+  });
+
+  it('delayed execution uses snapshot, not current artifact', async () => {
+    const ArtifactSection = sequelize.models.ArtifactSection;
+
+    // Create section with original content
+    await ArtifactSection.create({
+      artifact_id: testArtifactId,
+      section_key: 'methodology',
+      content_type: 'prose',
+      content: 'ORIGINAL METHODOLOGY CONTENT',
+    });
+
+    // Create run (captures snapshot)
+    const ctx = createTestContext(testActorId);
+    const run = await coachingService.createCoachRun(ctx, {
+      artifact_id: testArtifactId,
+      review_scope: 'artifact',
+      selected_section_key: null,
+      coaching_contract_version: '1.0.0',
+      prompt_template_version: '1.0.0',
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-20250514',
+    });
+
+    // Artifact advances MULTIPLE versions before worker picks up run
+    for (let i = 0; i < 3; i++) {
+      await sequelize.query(
+        `UPDATE research_artifacts SET content_version = content_version + 1 WHERE id = ${testArtifactId}`
+      );
+    }
+    await sequelize.query(
+      `UPDATE artifact_sections
+       SET content = 'MUCH LATER VERSION CONTENT'
+       WHERE artifact_id = ${testArtifactId} AND section_key = 'methodology'`
+    );
+
+    // Verify artifact advanced 3 versions
+    const [finalArtifact] = await sequelize.query(
+      `SELECT content_version FROM research_artifacts WHERE id = ${testArtifactId}`
+    ) as [Array<{ content_version: number }>, unknown];
+    expect(finalArtifact[0].content_version).toBe(run.content_version + 3);
+
+    // Snapshot still has original
+    const [snapshotRows] = await sequelize.query(
+      `SELECT canonical_snapshot_json FROM coaching_run_snapshots WHERE run_id = '${run.id}'`
+    ) as [Array<{
+      canonical_snapshot_json: { sections: Record<string, { content: string | null }> };
+    }>, unknown];
+
+    expect(snapshotRows[0].canonical_snapshot_json.sections['methodology'].content).toBe(
+      'ORIGINAL METHODOLOGY CONTENT'
+    );
+  });
+
+  it('operational retry of same run uses same snapshot', async () => {
+    const ArtifactSection = sequelize.models.ArtifactSection;
+
+    // Create section
+    await ArtifactSection.create({
+      artifact_id: testArtifactId,
+      section_key: 'timeline',
+      content_type: 'prose',
+      content: 'TIMELINE CONTENT FOR RETRY TEST',
+    });
+
+    // Create run
+    const ctx = createTestContext(testActorId);
+    const run = await coachingService.createCoachRun(ctx, {
+      artifact_id: testArtifactId,
+      review_scope: 'artifact',
+      selected_section_key: null,
+      coaching_contract_version: '1.0.0',
+      prompt_template_version: '1.0.0',
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-20250514',
+    });
+
+    // Get snapshot ID
+    const [initialSnapshot] = await sequelize.query(
+      `SELECT id, canonical_snapshot_json FROM coaching_run_snapshots WHERE run_id = '${run.id}'`
+    ) as [Array<{
+      id: string;
+      canonical_snapshot_json: { sections: Record<string, { content: string | null }> };
+    }>, unknown];
+    const snapshotId = initialSnapshot[0].id;
+
+    // Worker claims run
+    const workerId = generateWorkerId();
+    await claimNextPendingRun(workerId);
+
+    // Artifact advances during first attempt
+    await sequelize.query(
+      `UPDATE research_artifacts SET content_version = content_version + 1 WHERE id = ${testArtifactId}`
+    );
+    await sequelize.query(
+      `UPDATE artifact_sections
+       SET content = 'CHANGED AFTER FIRST ATTEMPT'
+       WHERE artifact_id = ${testArtifactId} AND section_key = 'timeline'`
+    );
+
+    // Worker fails/stales, new worker recovers
+    const staleTime = new Date(Date.now() - COACH_STALE_TIMEOUT_MS - 1000);
+    await sequelize.query(
+      `UPDATE coaching_runs SET heartbeat_at = '${staleTime.toISOString()}' WHERE id = '${run.id}'`
+    );
+    const newWorkerId = generateWorkerId();
+    await recoverStaleRun(newWorkerId);
+
+    // Verify snapshot is unchanged (same ID, same content)
+    const [retrySnapshot] = await sequelize.query(
+      `SELECT id, canonical_snapshot_json FROM coaching_run_snapshots WHERE run_id = '${run.id}'`
+    ) as [Array<{
+      id: string;
+      canonical_snapshot_json: { sections: Record<string, { content: string | null }> };
+    }>, unknown];
+
+    expect(retrySnapshot[0].id).toBe(snapshotId); // Same snapshot
+    expect(retrySnapshot[0].canonical_snapshot_json.sections['timeline'].content).toBe(
+      'TIMELINE CONTENT FOR RETRY TEST' // Original content
+    );
+  });
+
+  it('researcher retry creates new snapshot with current content', async () => {
+    const ArtifactSection = sequelize.models.ArtifactSection;
+
+    // Create section
+    await ArtifactSection.create({
+      artifact_id: testArtifactId,
+      section_key: 'risks',
+      content_type: 'prose',
+      content: 'ORIGINAL RISKS CONTENT',
+    });
+
+    // Create and complete original run
+    const ctx = createTestContext(testActorId);
+    const originalRun = await coachingService.createCoachRun(ctx, {
+      artifact_id: testArtifactId,
+      review_scope: 'artifact',
+      selected_section_key: null,
+      coaching_contract_version: '1.0.0',
+      prompt_template_version: '1.0.0',
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-20250514',
+    });
+
+    const workerId = generateWorkerId();
+    await claimNextPendingRun(workerId);
+    await markCompleted(originalRun.id, workerId);
+
+    // Advance artifact
+    await sequelize.query(
+      `UPDATE research_artifacts SET content_version = content_version + 1 WHERE id = ${testArtifactId}`
+    );
+    await sequelize.query(
+      `UPDATE artifact_sections
+       SET content = 'UPDATED RISKS CONTENT'
+       WHERE artifact_id = ${testArtifactId} AND section_key = 'risks'`
+    );
+
+    // Researcher creates retry (NEW run)
+    const retryRun = await coachingService.createResearcherRetryRun(ctx, originalRun.id);
+
+    // Verify it's a new run
+    expect(retryRun.id).not.toBe(originalRun.id);
+    expect(retryRun.content_version).toBe(originalRun.content_version + 1);
+
+    // Verify original snapshot has original content
+    const [originalSnapshot] = await sequelize.query(
+      `SELECT canonical_snapshot_json FROM coaching_run_snapshots WHERE run_id = '${originalRun.id}'`
+    ) as [Array<{
+      canonical_snapshot_json: { sections: Record<string, { content: string | null }> };
+    }>, unknown];
+    expect(originalSnapshot[0].canonical_snapshot_json.sections['risks'].content).toBe(
+      'ORIGINAL RISKS CONTENT'
+    );
+
+    // Verify retry snapshot has UPDATED content
+    const [retrySnapshot] = await sequelize.query(
+      `SELECT canonical_snapshot_json FROM coaching_run_snapshots WHERE run_id = '${retryRun.id}'`
+    ) as [Array<{
+      canonical_snapshot_json: { sections: Record<string, { content: string | null }> };
+    }>, unknown];
+    expect(retrySnapshot[0].canonical_snapshot_json.sections['risks'].content).toBe(
+      'UPDATED RISKS CONTENT'
+    );
+  });
+});

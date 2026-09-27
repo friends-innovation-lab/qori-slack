@@ -28,6 +28,7 @@ import { getActiveContract } from './contracts/registry';
 import { resolveContext, ContextResolutionError } from './context-resolver';
 import { validateCoachOutput, formatValidationErrors } from './output-validator';
 import { createAnthropicProvider } from './providers/anthropic-adapter';
+import { resolveModelTier } from '../helpers/modelProvider';
 import {
   validateClaimOwnership,
   markCompleted,
@@ -37,6 +38,44 @@ import {
 } from './claim-service';
 import { recordCoachRunItems, recordCoachRunReferences, recordCoachRunContext } from '../application/coaching.app-service';
 import { COACH_HEARTBEAT_INTERVAL_MS } from './config';
+
+// ─── Generation Config Resolution ────────────────────────────────────────
+
+/**
+ * Generation configuration resolved from run provenance with contract fallbacks.
+ */
+interface ResolvedGenerationConfig {
+  temperature: number;
+  maxTokens: number;
+  timeoutMs: number;
+}
+
+/**
+ * Resolve generation config from run provenance.
+ *
+ * Run's generation_config_json is authoritative if present.
+ * Falls back to contract defaults for missing values.
+ *
+ * @param runConfig - Persisted generation_config_json from run
+ * @param contractConfig - Contract's model configuration (fallback)
+ * @returns Resolved generation configuration
+ */
+function resolveGenerationConfig(
+  runConfig: Record<string, unknown> | null,
+  contractConfig: { temperature: number; maxOutputTokens: number; timeoutMs: number },
+): ResolvedGenerationConfig {
+  return {
+    temperature: typeof runConfig?.temperature === 'number'
+      ? runConfig.temperature
+      : contractConfig.temperature,
+    maxTokens: typeof runConfig?.maxTokens === 'number'
+      ? runConfig.maxTokens
+      : contractConfig.maxOutputTokens,
+    timeoutMs: typeof runConfig?.timeoutMs === 'number'
+      ? runConfig.timeoutMs
+      : contractConfig.timeoutMs,
+  };
+}
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -110,10 +149,11 @@ export async function executeCoachRun(
       return await failRun(run.id, workerId, 'CONTEXT_BUILD_FAILED', `No contract for artifact type: ${run.artifact_type}`);
     }
 
-    // 2. Resolve context
+    // 2. Resolve context from immutable snapshot
     let context;
     try {
       context = await resolveContext(
+        run.id,
         run.artifact_id,
         run.content_version,
         run.review_scope,
@@ -135,8 +175,20 @@ export async function executeCoachRun(
       .replace('{{ref_handles}}', context.refHandlesText)
       .replace('{{section_content}}', context.sectionContent || '');
 
-    // 4. Create provider
-    const provider = createAnthropicProvider({ tier: contract.modelConfig.tier });
+    // 4. Create provider using RUN PROVENANCE (not contract config)
+    // run.provider determines vendor, run.model is the exact model name
+    // This ensures historical/retried runs use the same config they were created with
+    if (run.provider !== 'anthropic') {
+      return await failRun(run.id, workerId, 'CONTEXT_BUILD_FAILED', `Unsupported provider: ${run.provider}`);
+    }
+    const tier = resolveModelTier(run.model);
+    const provider = createAnthropicProvider({
+      tier,
+      modelOverride: run.model,
+    });
+
+    // Resolve generation config from run provenance with contract fallbacks
+    const genConfig = resolveGenerationConfig(run.generation_config_json, contract.modelConfig);
 
     // 5. Generate with repair loop
     const maxAttempts = 1 + contract.maxRepairAttempts;
@@ -162,7 +214,7 @@ export async function executeCoachRun(
         ? `coach:${run.id}:attempt:${run.attempt_count}:gen:${attempt}`
         : undefined;
 
-      // Generate
+      // Generate using run's persisted provenance
       const currentPrompt = attempt === 0
         ? userPrompt
         : `${contract.getRepairPrompt(lastValidationErrors)}\n\n---\n\nOriginal request:\n\n${userPrompt}`;
@@ -170,10 +222,10 @@ export async function executeCoachRun(
       generationResult = await provider.generateReview({
         systemPrompt,
         userPrompt: currentPrompt,
-        model: contract.modelConfig.tier,
-        temperature: contract.modelConfig.temperature,
-        maxTokens: contract.modelConfig.maxOutputTokens,
-        timeoutMs: contract.modelConfig.timeoutMs,
+        model: run.model, // Run's persisted model, not contract's current tier
+        temperature: genConfig.temperature,
+        maxTokens: genConfig.maxTokens,
+        timeoutMs: genConfig.timeoutMs,
         idempotencyKey,
       });
 

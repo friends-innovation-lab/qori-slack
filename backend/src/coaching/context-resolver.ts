@@ -5,19 +5,25 @@
  * and assigns citation handles (REF-001, REF-002, etc.) to eligible entries.
  *
  * Key responsibilities:
- * - Load artifact at exact content_version (not latest)
+ * - Load immutable snapshot content (not current artifact)
  * - Apply context policy (required vs supporting)
  * - Deterministic selection and ordering
  * - Token budget management
  * - Citation handle assignment
  * - Context manifest preparation for persistence
+ *
+ * Coach M2 Architecture:
+ * Context is resolved from the immutable snapshot captured at run creation,
+ * NOT from current artifact content. This ensures the Coach reviews exactly
+ * what the researcher requested, even if the artifact was edited before
+ * execution.
  */
 
 import type { CoachingContract, CitationHandle, ContextPolicy } from './contracts/types';
 import type { CoachingReviewScope } from '../database/models/coaching_run';
 import type { RecordCoachingContextInput } from '../application/coaching.app-service';
+import type { CoachingRunSnapshot, CanonicalSnapshotContent } from '../database/models/coaching_run_snapshot';
 import type { ResearchArtifact } from '../database/models/research_artifact';
-import type { ArtifactSection } from '../database/models/artifact_section';
 import sequelize from '../database';
 
 // ─── Types ──────────────────────────────────────────────────────────────
@@ -52,8 +58,8 @@ export class ContextResolutionError extends Error {
 
 // ─── Model References ───────────────────────────────────────────────────
 
+const SnapshotModel = sequelize.models.CoachingRunSnapshot as typeof CoachingRunSnapshot;
 const ArtifactModel = sequelize.models.ResearchArtifact as typeof ResearchArtifact;
-const SectionModel = sequelize.models.ArtifactSection as typeof ArtifactSection;
 
 // ─── Token Estimation ───────────────────────────────────────────────────
 
@@ -68,24 +74,42 @@ function estimateTokens(text: string): number {
 // ─── Context Resolution ─────────────────────────────────────────────────
 
 /**
- * Resolve context for a coaching run.
+ * Resolve context for a coaching run using immutable snapshot.
  *
- * @param artifactId - Artifact internal ID
- * @param contentVersion - Exact content version to resolve (from run creation)
+ * Coach M2: Uses the immutable snapshot captured at run creation time,
+ * NOT current artifact content. This ensures execution is deterministic
+ * regardless of when the worker processes the run.
+ *
+ * @param runId - Run ID to resolve context for
+ * @param artifactId - Artifact internal ID (for manifest metadata)
+ * @param contentVersion - Content version from run (for manifest metadata)
  * @param scope - Review scope (artifact or section)
  * @param selectedSectionKey - Section key for section-scoped reviews
  * @param contract - Coaching contract with context policy
  * @returns Resolved context with citation handles and manifest
- * @throws ContextResolutionError if artifact/version not found
+ * @throws ContextResolutionError if snapshot not found
  */
 export async function resolveContext(
+  runId: string,
   artifactId: number,
   contentVersion: number,
   scope: CoachingReviewScope,
   selectedSectionKey: string | null,
   contract: CoachingContract,
 ): Promise<ResolvedContext> {
-  // 1. Load artifact
+  // 1. Load immutable snapshot (authoritative for execution)
+  const snapshot = await SnapshotModel.findOne({
+    where: { run_id: runId },
+  }) as CoachingRunSnapshot | null;
+
+  if (!snapshot) {
+    throw new ContextResolutionError(
+      `Snapshot not found for run ${runId}. This run may have been created before M2 snapshot support.`,
+      'SNAPSHOT_NOT_FOUND'
+    );
+  }
+
+  // 2. Load artifact for identity metadata (public_id, title fallback)
   const artifact = await ArtifactModel.findByPk(artifactId) as ResearchArtifact | null;
   if (!artifact) {
     throw new ContextResolutionError(
@@ -94,23 +118,8 @@ export async function resolveContext(
     );
   }
 
-  // 2. Verify content version matches
-  // NOTE: Current architecture stores only current version in artifact_sections.
-  // If artifact has advanced beyond run's content_version, we cannot retrieve historical.
-  // This is an architecture gap that should be reported.
-  if (artifact.content_version !== contentVersion) {
-    throw new ContextResolutionError(
-      `Artifact version mismatch: run expects v${contentVersion}, artifact is at v${artifact.content_version}. ` +
-      `Historical version retrieval is not supported — artifact content may have changed since run creation.`,
-      'VERSION_MISMATCH'
-    );
-  }
-
-  // 3. Load artifact sections
-  const sections = await SectionModel.findAll({
-    where: { artifact_id: artifactId },
-    order: [['section_key', 'ASC']], // Deterministic ordering
-  }) as ArtifactSection[];
+  // 3. Extract snapshot content
+  const snapshotContent = snapshot.canonical_snapshot_json as CanonicalSnapshotContent;
 
   // 4. Build context entries with citation handles
   const citationHandles = new Map<string, CitationHandle>();
@@ -140,36 +149,46 @@ export async function resolveContext(
     return handle;
   };
 
-  // 5. Build artifact context
+  // 5. Build artifact context from snapshot
   const contextParts: string[] = [];
   const policy = contract.contextPolicy;
   let totalTokens = 0;
 
+  // Use snapshot title, fallback to current artifact title or type
+  const artifactTitle = snapshotContent.title || artifact.title || `${snapshot.artifact_type} artifact`;
+
   // Add artifact-level context
   const artifactHandle = assignHandle(
     'artifact',
-    artifact.public_id,
-    contentVersion,
+    snapshot.artifact_public_id,
+    snapshot.content_version,
     null,
-    artifact.title || `${artifact.artifact_type} artifact`,
+    artifactTitle,
   );
 
   manifestEntries.push({
     object_type: 'artifact',
-    object_id: artifact.public_id,
-    object_version: contentVersion,
+    object_id: snapshot.artifact_public_id,
+    object_version: snapshot.content_version,
     section_key: null,
     context_role: 'primary',
     position: 0,
   });
 
   // Build artifact header
-  contextParts.push(`# ${artifact.title || `${artifact.artifact_type.charAt(0).toUpperCase()}${artifact.artifact_type.slice(1)}`}`);
-  contextParts.push(`[${artifactHandle}] Artifact: ${artifact.artifact_type}, Version: ${contentVersion}`);
+  contextParts.push(`# ${artifactTitle}`);
+  contextParts.push(`[${artifactHandle}] Artifact: ${snapshot.artifact_type}, Version: ${snapshot.content_version}`);
   contextParts.push('');
 
-  // 6. Add sections with deterministic ordering
-  const sortedSections = [...sections].sort((a, b) => {
+  // 6. Add sections from snapshot with deterministic ordering
+  // Convert snapshot sections object to array for sorting
+  const sectionEntries = Object.entries(snapshotContent.sections).map(([key, data]) => ({
+    section_key: key,
+    content: data.content,
+    content_type: data.content_type,
+  }));
+
+  const sortedSections = sectionEntries.sort((a, b) => {
     // Use contract section order if available
     const aIdx = contract.sections.findIndex(s => s.key === a.section_key);
     const bIdx = contract.sections.findIndex(s => s.key === b.section_key);
@@ -201,8 +220,8 @@ export async function resolveContext(
         // Still add with truncation
         const sectionHandle = assignHandle(
           'artifact_section',
-          `${artifact.public_id}:${section.section_key}`,
-          contentVersion,
+          `${snapshot.artifact_public_id}:${section.section_key}`,
+          snapshot.content_version,
           section.section_key,
           displayName,
         );
@@ -214,8 +233,8 @@ export async function resolveContext(
 
         manifestEntries.push({
           object_type: 'artifact_section',
-          object_id: `${artifact.public_id}:${section.section_key}`,
-          object_version: contentVersion,
+          object_id: `${snapshot.artifact_public_id}:${section.section_key}`,
+          object_version: snapshot.content_version,
           section_key: section.section_key,
           context_role: selectedSectionKey === section.section_key ? 'primary' : 'supporting',
           position: position++,
@@ -232,8 +251,8 @@ export async function resolveContext(
     // Add full section
     const sectionHandle = assignHandle(
       'artifact_section',
-      `${artifact.public_id}:${section.section_key}`,
-      contentVersion,
+      `${snapshot.artifact_public_id}:${section.section_key}`,
+      snapshot.content_version,
       section.section_key,
       displayName,
     );
@@ -245,8 +264,8 @@ export async function resolveContext(
 
     manifestEntries.push({
       object_type: 'artifact_section',
-      object_id: `${artifact.public_id}:${section.section_key}`,
-      object_version: contentVersion,
+      object_id: `${snapshot.artifact_public_id}:${section.section_key}`,
+      object_version: snapshot.content_version,
       section_key: section.section_key,
       context_role: selectedSectionKey === section.section_key ? 'primary' : 'supporting',
       position: position++,
@@ -270,7 +289,7 @@ export async function resolveContext(
   // 8. Validate section-scoped review has selected section
   if (scope === 'section' && selectedSectionKey && !selectedSectionContent) {
     throw new ContextResolutionError(
-      `Selected section '${selectedSectionKey}' not found in artifact`,
+      `Selected section '${selectedSectionKey}' not found in snapshot`,
       'SECTION_NOT_FOUND'
     );
   }
@@ -281,7 +300,7 @@ export async function resolveContext(
     refHandlesText,
     citationHandles,
     manifestEntries,
-    contentVersion,
+    contentVersion: snapshot.content_version,
   };
 }
 

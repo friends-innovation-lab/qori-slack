@@ -72,6 +72,8 @@ import CoachingRun from '../../../database/models/coaching_run';
 import CoachingRunItem from '../../../database/models/coaching_run_item';
 import CoachingRunReference from '../../../database/models/coaching_run_reference';
 import CoachingRunContext from '../../../database/models/coaching_run_context';
+// Coach M2: Immutable artifact snapshots
+import CoachingRunSnapshot from '../../../database/models/coaching_run_snapshot';
 
 let instance: Sequelize | null = null;
 
@@ -112,6 +114,8 @@ export function getTestDb(): Sequelize {
     CommentThread, CommentMessage, CommentThreadEvent,
     // Coach M1: AI Coach advisory runs
     CoachingRun, CoachingRunItem, CoachingRunReference, CoachingRunContext,
+    // Coach M2: Immutable artifact snapshots
+    CoachingRunSnapshot,
   ];
 
   for (const defineModel of modelDefiners) {

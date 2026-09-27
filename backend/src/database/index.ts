@@ -63,6 +63,8 @@ import CoachingRun from './models/coaching_run';
 import CoachingRunItem from './models/coaching_run_item';
 import CoachingRunReference from './models/coaching_run_reference';
 import CoachingRunContext from './models/coaching_run_context';
+// Coach M2: Immutable artifact snapshots
+import CoachingRunSnapshot from './models/coaching_run_snapshot';
 
 
 // Set environment and configuration
@@ -133,6 +135,8 @@ const modelDefiners = [
   CoachingRunItem,
   CoachingRunReference,
   CoachingRunContext,
+  // Coach M2: Immutable artifact snapshots (must be after CoachingRun due to FK dep)
+  CoachingRunSnapshot,
 ];
 
 // Register all models with Sequelize
