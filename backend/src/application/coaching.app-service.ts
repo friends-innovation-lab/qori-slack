@@ -27,9 +27,11 @@ import type { CoachingRun, CoachingRunStatus, CoachingReviewScope, CoachingFailu
 import type { CoachingRunItem, CoachingItemCategory } from '../database/models/coaching_run_item';
 import type { CoachingRunReference } from '../database/models/coaching_run_reference';
 import type { CoachingRunContext, CoachingContextRole } from '../database/models/coaching_run_context';
+import type { CoachingRunSnapshot, CanonicalSnapshotContent } from '../database/models/coaching_run_snapshot';
 import type { Actor } from '../database/models/actor';
 import type { ResearchArtifact } from '../database/models/research_artifact';
 import type { ResearchStudy } from '../database/models/research_study';
+import type { ArtifactSection } from '../database/models/artifact_section';
 import {
   authorizationDenied,
   resourceNotFound,
@@ -46,9 +48,11 @@ const CoachingRunModel = sequelize.models.CoachingRun as typeof CoachingRun;
 const CoachingRunItemModel = sequelize.models.CoachingRunItem as typeof CoachingRunItem;
 const CoachingRunReferenceModel = sequelize.models.CoachingRunReference as typeof CoachingRunReference;
 const CoachingRunContextModel = sequelize.models.CoachingRunContext as typeof CoachingRunContext;
+const CoachingRunSnapshotModel = sequelize.models.CoachingRunSnapshot as typeof CoachingRunSnapshot;
 const ActorModel = sequelize.models.Actor as typeof Actor;
 const ArtifactModel = sequelize.models.ResearchArtifact as typeof ResearchArtifact;
 const StudyModel = sequelize.models.ResearchStudy as typeof ResearchStudy;
+const ArtifactSectionModel = sequelize.models.ArtifactSection as typeof ArtifactSection;
 
 // ─── Internal Types ────────────────────────────────────────────────────
 
@@ -339,6 +343,10 @@ function isValidSectionKey(artifactType: string, sectionKey: string): boolean {
  * - No active run exists for the same requester+artifact+version+scope+section
  *
  * Captures artifact content_version at creation (immutable provenance).
+ * Creates immutable content snapshot transactionally with run.
+ *
+ * Coach M2: Snapshot ensures execution uses exact content at request time,
+ * even if artifact is later edited before worker processes the run.
  */
 export async function createCoachRun(
   ctx: ApplicationContext,
@@ -397,24 +405,74 @@ export async function createCoachRun(
     );
   }
 
-  // 6. Create the run
-  const run = await CoachingRunModel.create({
-    study_id: artifact.study_id,
-    artifact_id: input.artifact_id,
-    artifact_type: artifact.artifact_type,
-    content_version: artifact.content_version,
-    selected_section_key: input.selected_section_key,
-    review_scope: input.review_scope,
-    status: 'pending',
-    requested_by: ctx.actor.id,
-    coaching_contract_version: input.coaching_contract_version,
-    prompt_template_version: input.prompt_template_version,
-    provider: input.provider,
-    model: input.model,
-    generation_config_json: input.generation_config_json ?? null,
-  }) as CoachingRun;
+  // 6. Load artifact sections for snapshot (before transaction to avoid races)
+  const sections = await ArtifactSectionModel.findAll({
+    where: { artifact_id: input.artifact_id },
+    order: [['section_key', 'ASC']],
+  }) as ArtifactSection[];
 
-  return toRunDTO(run, artifact.public_id);
+  // Build snapshot content
+  const snapshotContent: CanonicalSnapshotContent = {
+    title: artifact.title,
+    sections: {},
+  };
+  for (const section of sections) {
+    snapshotContent.sections[section.section_key] = {
+      content_type: section.content_type as 'prose' | 'structured_json',
+      content: section.content,
+    };
+  }
+
+  // 7. Create run and snapshot in transaction (atomic)
+  // This ensures run.content_version == snapshot.content_version
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Re-verify content_version hasn't changed during our setup
+    const currentArtifact = await ArtifactModel.findByPk(input.artifact_id, { transaction, lock: true }) as ResearchArtifact | null;
+    if (!currentArtifact || currentArtifact.content_version !== artifact.content_version) {
+      await transaction.rollback();
+      throw validationError(
+        'Artifact was modified while creating Coach run. Please retry.',
+        { original_version: artifact.content_version, current_version: currentArtifact?.content_version }
+      );
+    }
+
+    // Create the run
+    const run = await CoachingRunModel.create({
+      study_id: artifact.study_id,
+      artifact_id: input.artifact_id,
+      artifact_type: artifact.artifact_type,
+      content_version: artifact.content_version,
+      selected_section_key: input.selected_section_key,
+      review_scope: input.review_scope,
+      status: 'pending',
+      requested_by: ctx.actor.id,
+      coaching_contract_version: input.coaching_contract_version,
+      prompt_template_version: input.prompt_template_version,
+      provider: input.provider,
+      model: input.model,
+      generation_config_json: input.generation_config_json ?? null,
+    }, { transaction }) as CoachingRun;
+
+    // Create immutable snapshot
+    await CoachingRunSnapshotModel.create({
+      run_id: run.id,
+      snapshot_schema_version: '1.0.0',
+      artifact_type: artifact.artifact_type,
+      artifact_id: artifact.id,
+      artifact_public_id: artifact.public_id,
+      content_version: artifact.content_version,
+      canonical_snapshot_json: snapshotContent,
+    }, { transaction });
+
+    await transaction.commit();
+
+    return toRunDTO(run, artifact.public_id);
+  } catch (err) {
+    await transaction.rollback();
+    throw err;
+  }
 }
 
 /**
@@ -685,6 +743,9 @@ export async function recordCoachUsage(
  * Create a researcher retry run.
  * Creates a NEW run linked to the original via retry_of_run_id.
  * The original run is not modified.
+ *
+ * Coach M2: Researcher retry captures the CURRENT artifact version and content,
+ * not the original run's snapshot. This is a new run with new provenance.
  */
 export async function createResearcherRetryRun(
   ctx: ApplicationContext,
@@ -731,27 +792,75 @@ export async function createResearcherRetryRun(
     );
   }
 
-  // 6. Create the retry run with current artifact version and optionally updated provenance
-  const run = await CoachingRunModel.create({
-    study_id: originalRun.study_id,
-    artifact_id: originalRun.artifact_id,
-    artifact_type: artifact.artifact_type,
-    content_version: artifact.content_version, // Current version, not original
-    selected_section_key: originalRun.selected_section_key,
-    review_scope: originalRun.review_scope,
-    status: 'pending',
-    requested_by: ctx.actor.id,
-    retry_of_run_id: originalRunId,
-    coaching_contract_version: provenanceOverrides?.coaching_contract_version ?? originalRun.coaching_contract_version,
-    prompt_template_version: provenanceOverrides?.prompt_template_version ?? originalRun.prompt_template_version,
-    provider: provenanceOverrides?.provider ?? originalRun.provider,
-    model: provenanceOverrides?.model ?? originalRun.model,
-    generation_config_json: provenanceOverrides?.generation_config_json !== undefined
-      ? provenanceOverrides.generation_config_json
-      : originalRun.generation_config_json,
-  }) as CoachingRun;
+  // 6. Load artifact sections for snapshot
+  const sections = await ArtifactSectionModel.findAll({
+    where: { artifact_id: originalRun.artifact_id },
+    order: [['section_key', 'ASC']],
+  }) as ArtifactSection[];
 
-  return toRunDTO(run, artifact.public_id);
+  // Build snapshot content
+  const snapshotContent: CanonicalSnapshotContent = {
+    title: artifact.title,
+    sections: {},
+  };
+  for (const section of sections) {
+    snapshotContent.sections[section.section_key] = {
+      content_type: section.content_type as 'prose' | 'structured_json',
+      content: section.content,
+    };
+  }
+
+  // 7. Create run and snapshot in transaction
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Re-verify content_version hasn't changed
+    const currentArtifact = await ArtifactModel.findByPk(originalRun.artifact_id, { transaction, lock: true }) as ResearchArtifact | null;
+    if (!currentArtifact || currentArtifact.content_version !== artifact.content_version) {
+      await transaction.rollback();
+      throw validationError(
+        'Artifact was modified while creating Coach retry. Please retry.',
+        { original_version: artifact.content_version, current_version: currentArtifact?.content_version }
+      );
+    }
+
+    const run = await CoachingRunModel.create({
+      study_id: originalRun.study_id,
+      artifact_id: originalRun.artifact_id,
+      artifact_type: artifact.artifact_type,
+      content_version: artifact.content_version, // Current version, not original
+      selected_section_key: originalRun.selected_section_key,
+      review_scope: originalRun.review_scope,
+      status: 'pending',
+      requested_by: ctx.actor.id,
+      retry_of_run_id: originalRunId,
+      coaching_contract_version: provenanceOverrides?.coaching_contract_version ?? originalRun.coaching_contract_version,
+      prompt_template_version: provenanceOverrides?.prompt_template_version ?? originalRun.prompt_template_version,
+      provider: provenanceOverrides?.provider ?? originalRun.provider,
+      model: provenanceOverrides?.model ?? originalRun.model,
+      generation_config_json: provenanceOverrides?.generation_config_json !== undefined
+        ? provenanceOverrides.generation_config_json
+        : originalRun.generation_config_json,
+    }, { transaction }) as CoachingRun;
+
+    // Create immutable snapshot for the NEW run
+    await CoachingRunSnapshotModel.create({
+      run_id: run.id,
+      snapshot_schema_version: '1.0.0',
+      artifact_type: artifact.artifact_type,
+      artifact_id: artifact.id,
+      artifact_public_id: artifact.public_id,
+      content_version: artifact.content_version,
+      canonical_snapshot_json: snapshotContent,
+    }, { transaction });
+
+    await transaction.commit();
+
+    return toRunDTO(run, artifact.public_id);
+  } catch (err) {
+    await transaction.rollback();
+    throw err;
+  }
 }
 
 /**
@@ -781,4 +890,21 @@ export async function updateHeartbeat(runId: string): Promise<void> {
   if (!run) throw resourceNotFound('Coaching run');
 
   await run.update({ heartbeat_at: new Date() });
+}
+
+/**
+ * Get the immutable snapshot for a coaching run.
+ * Returns the exact artifact content captured at run creation time.
+ *
+ * Coach M2: This is the authoritative source for execution context.
+ * The current artifact content may have changed since run creation.
+ */
+export async function getCoachRunSnapshot(
+  runId: string,
+): Promise<CoachingRunSnapshot | null> {
+  const snapshot = await CoachingRunSnapshotModel.findOne({
+    where: { run_id: runId },
+  }) as CoachingRunSnapshot | null;
+
+  return snapshot;
 }

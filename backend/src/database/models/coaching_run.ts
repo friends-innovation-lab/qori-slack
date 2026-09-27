@@ -34,7 +34,8 @@ export type CoachingFailureCode =
   | 'INVALID_MODEL_RESPONSE'
   | 'OUTPUT_VALIDATION_FAILED'
   | 'CONTEXT_BUILD_FAILED'
-  | 'GENERATION_FAILED';
+  | 'GENERATION_FAILED'
+  | 'MAX_ATTEMPTS_EXCEEDED';
 
 class CoachingRun extends Model<
   InferAttributes<CoachingRun>,
@@ -239,6 +240,7 @@ export default (sequelize: Sequelize) => {
             'OUTPUT_VALIDATION_FAILED',
             'CONTEXT_BUILD_FAILED',
             'GENERATION_FAILED',
+            'MAX_ATTEMPTS_EXCEEDED',
           ]],
         },
       },

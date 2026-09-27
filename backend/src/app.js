@@ -164,10 +164,41 @@ let server;
   await slackApp.start();
   console.log('⚡️ Bolt app started');
 
-  // 3. Then finally spin up Express
+  // 3. Start Coach poller (if enabled)
+  const { startCoachPoller, stopCoachPoller } = require('./coaching');
+  startCoachPoller();
+
+  // 4. Then finally spin up Express
   server = app.listen(PORT || 3000, () => {
     console.log(`Server is running on port ${PORT || 3000}`);
   });
+
+  // 5. Graceful shutdown handling
+  const shutdown = async (signal) => {
+    console.log(`\n${signal} received. Starting graceful shutdown...`);
+
+    // Stop Coach poller first (allows current work to finish)
+    stopCoachPoller();
+
+    // Close HTTP server
+    if (server) {
+      server.close(() => {
+        console.log('HTTP server closed');
+        process.exit(0);
+      });
+
+      // Force exit after 10 seconds
+      setTimeout(() => {
+        console.error('Forced shutdown after timeout');
+        process.exit(1);
+      }, 10000);
+    } else {
+      process.exit(0);
+    }
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 })();
 
 

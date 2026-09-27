@@ -40,6 +40,10 @@ export enum ApiErrorCode {
   COACH_RUN_ALREADY_ACTIVE = 'COACH_RUN_ALREADY_ACTIVE',
   /** Coaching run is not in a valid state for this operation (Coach M1) */
   COACH_RUN_INVALID_STATE = 'COACH_RUN_INVALID_STATE',
+  /** User or study has reached Coach request rate limit (Coach M2) */
+  COACH_RATE_LIMITED = 'COACH_RATE_LIMITED',
+  /** User or study has reached max concurrent Coach runs (Coach M2) */
+  COACH_CONCURRENCY_LIMIT = 'COACH_CONCURRENCY_LIMIT',
   /** Unexpected server error — details intentionally omitted */
   INTERNAL_ERROR = 'INTERNAL_ERROR',
 }
@@ -149,4 +153,20 @@ export function coachRunAlreadyActive(message = 'A coaching run is already activ
  */
 export function coachRunInvalidState(message: string): AppError {
   return new AppError(ApiErrorCode.COACH_RUN_INVALID_STATE, message, 409);
+}
+
+/**
+ * Coach rate limited (Coach M2).
+ * Returned when user or study has reached the request rate limit.
+ */
+export function coachRateLimited(message = 'Coach request rate limit exceeded'): AppError {
+  return new AppError(ApiErrorCode.COACH_RATE_LIMITED, message, 429);
+}
+
+/**
+ * Coach concurrency limit (Coach M2).
+ * Returned when user or study has reached maximum concurrent coaching runs.
+ */
+export function coachConcurrencyLimit(message: string): AppError {
+  return new AppError(ApiErrorCode.COACH_CONCURRENCY_LIMIT, message, 429);
 }
