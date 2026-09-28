@@ -100,6 +100,16 @@ function getSectionDisplayName(
   return labels[sectionKey] ?? 'Section';
 }
 
+// ─── Artifact Display Names ──────────────────────────────────────────────────
+
+/**
+ * Get user-friendly display name for artifact type.
+ * Never expose internal "artifact" terminology to users.
+ */
+function getArtifactDisplayName(artifactType: ArtifactType): string {
+  return artifactType === 'brief' ? 'Research Brief' : 'Research Plan';
+}
+
 // ─── Category Labels ────────────────────────────────────────────────────────
 
 const CATEGORY_LABELS: Record<CoachItemCategory, string> = {
@@ -488,17 +498,20 @@ export function CoachingRail({
   );
 
   // M3B: Determine action button label
+  // CRITICAL: Never expose "artifact" to users — use "Research Brief"/"Research Plan"
   const actionButtonLabel = useMemo(() => {
+    const displayName = getArtifactDisplayName(artifactType);
     if (isInSectionContext) {
-      return hasCurrentVersionTerminalRun ? 'Review again' : 'Review this section';
+      return hasCurrentVersionTerminalRun ? 'Review section again' : 'Review this section';
     }
-    return hasCurrentVersionTerminalRun ? 'Review again' : 'Review artifact';
-  }, [isInSectionContext, hasCurrentVersionTerminalRun]);
+    return hasCurrentVersionTerminalRun ? `Review ${displayName} again` : `Review ${displayName}`;
+  }, [isInSectionContext, hasCurrentVersionTerminalRun, artifactType]);
 
   // M3B: Context label for status heading
+  // CRITICAL: Never expose "artifact" to users — use "Research Brief"/"Research Plan"
   const contextLabel = isInSectionContext && sectionContext
     ? sectionContext.label
-    : artifactType === 'brief' ? 'brief' : 'plan';
+    : getArtifactDisplayName(artifactType);
 
   // Loading state
   if (historyQuery.isLoading) {
@@ -546,7 +559,7 @@ export function CoachingRail({
           </div>
         )}
 
-        {/* M3B: Back to artifact coaching (in section context) */}
+        {/* M3B: Back to full document coaching (in section context) */}
         {isInSectionContext && (
           <button
             type="button"
@@ -554,7 +567,7 @@ export function CoachingRail({
             onClick={handleBackToArtifact}
           >
             <ArrowLeft size={14} aria-hidden="true" />
-            Back to artifact coaching
+            Back to {getArtifactDisplayName(artifactType)} coaching
           </button>
         )}
 
@@ -596,7 +609,7 @@ export function CoachingRail({
         </div>
       )}
 
-      {/* M3B: Back to artifact coaching (in section context) */}
+      {/* M3B: Back to full document coaching (in section context) */}
       {isInSectionContext && (
         <button
           type="button"
@@ -604,7 +617,7 @@ export function CoachingRail({
           onClick={handleBackToArtifact}
         >
           <ArrowLeft size={14} aria-hidden="true" />
-          Back to artifact coaching
+          Back to {getArtifactDisplayName(artifactType)} coaching
         </button>
       )}
 
@@ -622,17 +635,28 @@ export function CoachingRail({
       {/* Primary run display */}
       {primaryRun && (
         <>
-          {/* Status heading */}
+          {/* Status heading with user-friendly copy */}
           {primaryRun.status === 'pending' && (
-            <h2 className={`${styles.status} ${styles.statusPending}`}>
-              Queued for review
-            </h2>
+            <>
+              <h2 className={`${styles.status} ${styles.statusPending}`}>
+                <span className={styles.spinner} aria-hidden="true" />{' '}
+                Preparing your {isInSectionContext ? sectionContext?.label : contextLabel} review…
+              </h2>
+              <p className={styles.workingCopy}>
+                You can keep working while Coach prepares your review.
+              </p>
+            </>
           )}
           {primaryRun.status === 'running' && (
-            <h2 className={`${styles.status} ${styles.statusRunning}`}>
-              <span className={styles.spinner} aria-hidden="true" />{' '}
-              Reviewing {isInSectionContext ? 'section' : 'artifact'}
-            </h2>
+            <>
+              <h2 className={`${styles.status} ${styles.statusRunning}`}>
+                <span className={styles.spinner} aria-hidden="true" />{' '}
+                Reviewing your {isInSectionContext ? sectionContext?.label : contextLabel}…
+              </h2>
+              <p className={styles.workingCopy}>
+                You can keep working while Coach reviews your {isInSectionContext ? 'section' : artifactType}.
+              </p>
+            </>
           )}
           {primaryRun.status === 'completed' && (
             <h2 className={`${styles.status} ${styles.statusCompleted}`}>
@@ -641,7 +665,7 @@ export function CoachingRail({
           )}
           {primaryRun.status === 'failed' && (
             <h2 className={`${styles.status} ${styles.statusFailed}`}>
-              Review failed
+              Review couldn't be completed
             </h2>
           )}
 
@@ -661,23 +685,13 @@ export function CoachingRail({
             <StructuredResult run={displayedRun} />
           )}
 
-          {/* Failed run - show error */}
-          {primaryRun.status === 'failed' && displayedRun?.failure && (
-            <div className={styles.failureMessage}>
-              {displayedRun.failure.message}
-            </div>
-          )}
-
-          {/* Failed state - retry placeholder (not functional in M3A/M3B) */}
+          {/* Failed run - show error with safety copy */}
           {primaryRun.status === 'failed' && (
-            <div style={{ marginTop: 'var(--space-3)' }}>
-              <span
-                className={styles.retryPlaceholder}
-                aria-disabled="true"
-                title="Retry will be available in a future release"
-              >
-                Retry
-              </span>
+            <div className={styles.failureMessage}>
+              {displayedRun?.failure?.message ?? 'Coach couldn\'t complete this review.'}
+              <p className={styles.failureSafetyCopy}>
+                Your {isInSectionContext ? sectionContext?.label : contextLabel} wasn't changed. You can try again.
+              </p>
             </div>
           )}
         </>
@@ -730,7 +744,7 @@ export function CoachingRail({
                   <span className={styles.historyRowLabel}>
                     {run.review_scope === 'section'
                       ? `${getSectionLabelFromCapabilities(run.selected_section_key!)} review`
-                      : 'Artifact review'}
+                      : `${getArtifactDisplayName(artifactType)} review`}
                   </span>
                   <StatusBadge status={run.status} />
                 </div>

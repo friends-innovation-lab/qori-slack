@@ -292,6 +292,14 @@
   }
 }
 
+/* ─── Working copy (shown during pending/running) ──────────────────────── */
+
+.workingCopy {
+  margin: var(--space-1) 0 0;
+  font: var(--type-doc-note-size)/var(--type-doc-note-line) var(--font-serif);
+  color: var(--color-text-meta);
+}
+
 /* ─── Failure display ───────────────────────────────────────────────────── */
 
 .failureMessage {
@@ -301,6 +309,12 @@
   border-radius: 4px;
   font: var(--type-ui-size)/var(--type-ui-line) var(--font-ui);
   color: var(--color-error);
+}
+
+.failureSafetyCopy {
+  margin: var(--space-1) 0 0;
+  font: var(--type-doc-note-size)/var(--type-doc-note-line) var(--font-ui);
+  color: var(--color-text);
 }
 
 /* ─── Retry placeholder ─────────────────────────────────────────────────── */

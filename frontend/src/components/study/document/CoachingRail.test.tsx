@@ -336,7 +336,7 @@ describe('CoachingRail Component', () => {
       expect(screen.getByText(/Get AI-powered feedback/)).toBeInTheDocument();
     });
 
-    it('shows Review artifact button in empty state', () => {
+    it('shows Review Research Brief button in empty state', () => {
       vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
         data: { artifact_public_id: 'art-123', runs: [], cursor: null, has_more: false },
         isLoading: false,
@@ -346,7 +346,7 @@ describe('CoachingRail Component', () => {
 
       renderWithProviders(<CoachingRail {...defaultProps} />);
 
-      expect(screen.getByRole('button', { name: /review artifact/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /review research brief/i })).toBeInTheDocument();
     });
   });
 
@@ -394,7 +394,7 @@ describe('CoachingRail Component', () => {
       renderWithProviders(<CoachingRail {...defaultProps} />);
 
       expect(screen.getByText('History')).toBeInTheDocument();
-      expect(screen.getByText('Artifact review')).toBeInTheDocument();
+      expect(screen.getByText('Research Brief review')).toBeInTheDocument();
     });
 
     it('shows requester name in history', () => {
@@ -414,7 +414,7 @@ describe('CoachingRail Component', () => {
   });
 
   describe('action button state', () => {
-    it('disables Review artifact when user has active run', () => {
+    it('disables Review Research Brief when user has active run', () => {
       const activeRun = createRunSummary({
         status: 'pending',
         content_version: 1,
@@ -431,7 +431,7 @@ describe('CoachingRail Component', () => {
 
       renderWithProviders(<CoachingRail {...defaultProps} />);
 
-      const button = screen.getByRole('button', { name: /review artifact/i });
+      const button = screen.getByRole('button', { name: /review research brief/i });
       expect(button).toBeDisabled();
       expect(screen.getByText('A review is already in progress.')).toBeInTheDocument();
     });
@@ -453,8 +453,8 @@ describe('CoachingRail Component', () => {
 
       renderWithProviders(<CoachingRail {...defaultProps} />);
 
-      // M3B: When there's a completed run for current version, button says "Review again"
-      const button = screen.getByRole('button', { name: /review again/i });
+      // M3B: When there's a completed run for current version, button says "Review Research Brief again"
+      const button = screen.getByRole('button', { name: /review research brief again/i });
       expect(button).not.toBeDisabled();
     });
   });
@@ -531,7 +531,7 @@ describe('CoachingRail Component', () => {
       const { rerender } = renderWithProviders(<CoachingRail {...defaultProps} />);
 
       // Browse history — verify history row is visible
-      expect(screen.getByText('Artifact review')).toBeInTheDocument();
+      expect(screen.getByText('Research Brief review')).toBeInTheDocument();
 
       // Rerender (simulates switching tabs and returning)
       rerender(<CoachingRail {...defaultProps} />);
@@ -688,7 +688,7 @@ describe('M3B section context', () => {
     expect(screen.getByText('Section review')).toBeInTheDocument();
   });
 
-  it('shows "Back to artifact coaching" link in section context', () => {
+  it('shows "Back to Research Brief coaching" link in section context', () => {
     renderWithProviders(
       <CoachingRail
         {...defaultProps}
@@ -696,7 +696,7 @@ describe('M3B section context', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: /back to artifact coaching/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /back to research brief coaching/i })).toBeInTheDocument();
   });
 
   it('shows "Review this section" button for new section', () => {

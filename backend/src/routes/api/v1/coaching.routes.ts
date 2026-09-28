@@ -47,6 +47,7 @@ import type {
 } from '../../../application/coaching.app-service';
 import { resourceNotFound, validationError } from '../../../types/api-errors';
 import { getActiveContract } from '../../../coaching/contracts/registry';
+import { getModelName } from '../../../helpers/modelProvider';
 import sequelize from '../../../database';
 import type { ResearchArtifact } from '../../../database/models/research_artifact';
 
@@ -435,7 +436,7 @@ router.post('/artifacts/:artifactPublicId/coaching', requireAuth, async (req, re
       coaching_contract_version: contract.contractVersion,
       prompt_template_version: contract.promptTemplateVersion,
       provider: 'anthropic',
-      model: `claude-${contract.modelConfig.tier}-4-20250514`,
+      model: getModelName(contract.modelConfig.tier),
     });
 
     const run = toRunSummaryResource(internalRun, artifact.content_version);
