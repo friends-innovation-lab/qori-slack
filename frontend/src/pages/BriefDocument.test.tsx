@@ -32,6 +32,27 @@ vi.mock('@/api/mutations/useSaveContent', () => ({
   useSaveBriefContent: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
+// Coach M3A: Mock comments API (used by Comments rail)
+vi.mock('@/api/comments', () => ({
+  useCommentThreads: () => ({ data: { threads: [] }, isLoading: false }),
+  deriveOpenThreadCount: () => 0,
+  groupThreadsBySection: () => new Map(),
+}));
+
+// Coach M3B: Mock coaching API (used by Coaching rail)
+// CRITICAL: Brief document MUST render regardless of coaching API state.
+const mockCoachHistory = vi.fn();
+const mockCoachRun = vi.fn();
+const mockCreateCoachRun = vi.fn();
+vi.mock('@/api/coaching', () => ({
+  useCoachHistory: () => mockCoachHistory(),
+  useCoachRun: () => mockCoachRun(),
+  useActiveCoachRun: () => ({ data: null, isLoading: false }),
+  useCreateCoachRun: () => ({ mutateAsync: mockCreateCoachRun, isPending: false }),
+  isActiveRun: (r: { status: string }) => r.status === 'pending' || r.status === 'running',
+  isTerminalRun: (r: { status: string }) => r.status === 'completed' || r.status === 'failed',
+}));
+
 function makeBrief(overrides: any = {}) {
   return {
     study: { public_id: 'study-1', name: 'Test Study', status: 'active', brief_status: 'approved', project_public_id: 'p1', created_at: '2026-09-01' },
@@ -77,7 +98,23 @@ function makeBrief(overrides: any = {}) {
 }
 
 describe('BriefDocument', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: coaching API returns empty history (no runs)
+    mockCoachHistory.mockReturnValue({
+      data: {
+        artifact_public_id: 'art-123',
+        runs: [],
+        capabilities: { artifact_review: true, coachable_sections: [] },
+        cursor: null,
+        has_more: false,
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    mockCoachRun.mockReturnValue({ data: null, isLoading: false });
+  });
 
   it('renders full document with stable IDs', () => {
     mockBrief.mockReturnValue({ data: makeBrief(), isLoading: false, error: null });
@@ -635,6 +672,106 @@ describe('BriefDocument', () => {
 
       // Verify UI reflects the update
       expect(screen.getByText('Updated')).toBeInTheDocument();
+    });
+  });
+
+  // ─── Rules of Hooks regression (M3B blank screen fix) ────────────
+  // CRITICAL: All useCallback/useState/useRef calls MUST come BEFORE any
+  // early return statements. React error #310 occurs when hooks are called
+  // conditionally based on loading state.
+
+  describe('Rules of Hooks regression', () => {
+    it('survives loading → loaded state transition without crash (hook order invariant)', async () => {
+      // Step 1: Start with loading state (triggers early return at line 313)
+      mockBrief.mockReturnValue({ data: undefined, isLoading: true, error: null });
+
+      const { rerender } = renderWithProviders(<BriefDocument />);
+
+      // Loading state: document content should NOT be present
+      expect(screen.queryByRole('heading', { name: 'Summary' })).not.toBeInTheDocument();
+
+      // Step 2: Transition to loaded state (no early return, all hooks called)
+      mockBrief.mockReturnValue({ data: makeBrief(), isLoading: false, error: null });
+
+      // This rerender of the SAME component instance is what triggers React error #310
+      // if hooks are placed after early returns. The hook count changes between renders.
+      rerender(<BriefDocument />);
+
+      // If we get here without crashing, the Rules of Hooks fix is working.
+      // Verify document content renders.
+      expect(screen.getByRole('heading', { name: 'Summary' })).toBeInTheDocument();
+    });
+
+    it('survives error → loaded state transition without crash', async () => {
+      // Start with error state (triggers early return at line 316-317)
+      mockBrief.mockReturnValue({ data: null, isLoading: false, error: new Error('Network error') });
+
+      const { rerender } = renderWithProviders(<BriefDocument />);
+
+      // Verify error state renders (error.message is used if present)
+      expect(screen.getByText(/Network error/)).toBeInTheDocument();
+
+      // Transition to loaded state
+      mockBrief.mockReturnValue({ data: makeBrief(), isLoading: false, error: null });
+      rerender(<BriefDocument />);
+
+      // Document should render without crash
+      expect(screen.getByRole('heading', { name: 'Summary' })).toBeInTheDocument();
+    });
+  });
+
+  // ─── Coach Failure Isolation (M3B regression gate) ────────────────
+  // CRITICAL: Coaching is OPTIONAL advisory. Coach API state MUST NOT
+  // affect canonical Brief document rendering.
+
+  describe('Coach Failure Isolation', () => {
+    it('renders Brief document when coaching history is loading', () => {
+      mockBrief.mockReturnValue({ data: makeBrief(), isLoading: false, error: null });
+      mockCoachHistory.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isError: false,
+        refetch: vi.fn(),
+      });
+
+      const { container } = renderWithProviders(<BriefDocument />);
+
+      // Brief canonical content MUST render regardless of coaching loading state
+      expect(container.querySelector('[id="sec-summary"]')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Summary' })).toBeInTheDocument();
+    });
+
+    it('renders Brief document when coaching history fails', () => {
+      mockBrief.mockReturnValue({ data: makeBrief(), isLoading: false, error: null });
+      mockCoachHistory.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+        error: new Error('Coaching API unavailable'),
+        refetch: vi.fn(),
+      });
+
+      const { container } = renderWithProviders(<BriefDocument />);
+
+      // Brief canonical content MUST render even when coaching API fails
+      expect(container.querySelector('[id="sec-summary"]')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Summary' })).toBeInTheDocument();
+    });
+
+    it('Comments still available when coaching fails', () => {
+      mockBrief.mockReturnValue({ data: makeBrief(), isLoading: false, error: null });
+      mockCoachHistory.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+        error: new Error('Coaching API unavailable'),
+        refetch: vi.fn(),
+      });
+
+      renderWithProviders(<BriefDocument />);
+
+      // Comments toggle should still be accessible
+      expect(screen.getByLabelText('Comments')).toBeInTheDocument();
     });
   });
 });
