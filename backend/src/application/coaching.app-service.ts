@@ -663,7 +663,8 @@ export async function recordCoachRunReferences(
   references: RecordCoachingReferenceInput[],
   transaction?: Transaction,
 ): Promise<CoachingRunReference[]> {
-  const item = await CoachingRunItemModel.findByPk(itemId) as CoachingRunItem | null;
+  // CRITICAL: Use transaction for lookup — item may not be committed yet
+  const item = await CoachingRunItemModel.findByPk(itemId, { transaction }) as CoachingRunItem | null;
   if (!item) throw resourceNotFound('Coaching run item');
 
   const createdRefs: CoachingRunReference[] = [];
@@ -692,7 +693,8 @@ export async function recordCoachRunContext(
   entries: RecordCoachingContextInput[],
   transaction?: Transaction,
 ): Promise<CoachingRunContext[]> {
-  const run = await CoachingRunModel.findByPk(runId) as CoachingRun | null;
+  // Use transaction for consistency (run exists but use same isolation level)
+  const run = await CoachingRunModel.findByPk(runId, { transaction }) as CoachingRun | null;
   if (!run) throw resourceNotFound('Coaching run');
 
   const createdEntries: CoachingRunContext[] = [];
