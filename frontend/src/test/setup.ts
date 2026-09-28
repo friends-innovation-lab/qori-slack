@@ -1,7 +1,14 @@
-import '@testing-library/jest-dom/vitest';
-import { vi } from 'vitest';
+/**
+ * Vitest Test Setup
+ *
+ * Configures testing environment with jsdom and testing-library matchers.
+ */
 
-// Mock window.matchMedia for tests using useMediaQuery
+import '@testing-library/jest-dom';
+import { afterEach, vi } from 'vitest';
+import { cleanup } from '@testing-library/react';
+
+// Mock window.matchMedia for jsdom (used by useMediaQuery)
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation((query: string) => ({
@@ -14,4 +21,9 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
+});
+
+// Cleanup after each test
+afterEach(() => {
+  cleanup();
 });

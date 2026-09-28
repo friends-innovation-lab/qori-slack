@@ -14,7 +14,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router';
 import type { JSONContent } from '@tiptap/react';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Sparkles } from 'lucide-react';
 import { useStudyPlan } from '@/api/queries/useStudy';
 import { useSavePlanContent } from '@/api/mutations/useSaveContent';
 import { useCommentThreads, deriveOpenThreadCount, groupThreadsBySection } from '@/api/comments';
@@ -34,6 +34,7 @@ import { LifecycleRail } from '@/components/study/LifecycleRail';
 import { computeLifecycleNodes } from '@/components/study/lifecycle';
 import {
   ArtifactHeader,
+  CoachingRail,
   CommentsRail,
   DocumentSection,
   Masthead,
@@ -46,6 +47,7 @@ import {
   type CommentsRailScope,
   type SectionCommentProps,
 } from '@/components/study/document';
+import { useAuth } from '@/auth/AuthProvider';
 import type { FieldProvenance } from '@qori/artifact-contracts';
 import docStyles from '@/components/study/document/document.module.css';
 import headerStyles from '@/components/study/document/ArtifactHeader.module.css';
@@ -66,12 +68,13 @@ export function PlanDocument() {
   const { viewModel: vm, exists: planExists } = usePlanViewModel(studyPublicId || '');
   const savePlan = useSavePlanContent(studyPublicId || '');
   const pipeline = useSavePipeline();
+  const { me } = useAuth();
 
   const editorRef = useRef<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
-  const [railMode, setRailMode] = useState<'comments' | null>(null);
+  const [railMode, setRailMode] = useState<'coaching' | 'comments' | null>(null);
   // CMT-7: Track comments scope (section-scoped or all)
   const [commentsScope, setCommentsScope] = useState<CommentsRailScope>({ mode: 'all' });
 
@@ -272,9 +275,25 @@ export function PlanDocument() {
     ? { tone: 'neutral' as const, label: vm.masthead.versionDisplay }
     : undefined;
 
-  // CMT-6/7: Context rail modes — Comments only (Plan has no Review)
+  // Coach M3A: Context rail modes — Coaching + Comments (Plan has no Review)
   const showRail = !isEditing;
+  const currentContentVersion = (plan as any)?.artifact_version ?? 1;
+  const currentUserPublicId = me?.actor.public_id ?? '';
+
   const railModes: RailMode[] = [
+    {
+      id: 'coaching',
+      label: 'Coaching',
+      icon: Sparkles,
+      content: (
+        <CoachingRail
+          artifactPublicId={artifactPublicId}
+          artifactType="plan"
+          currentContentVersion={currentContentVersion}
+          currentUserPublicId={currentUserPublicId}
+        />
+      ),
+    },
     {
       id: 'comments',
       label: 'Comments',
@@ -291,22 +310,34 @@ export function PlanDocument() {
     },
   ];
 
-  // CMT-6/7: Rail toggle for Comments
+  // Coach M3A: Rail toggles — Coaching + Comments
   // Only set aria-controls when rail is open (element exists)
   const railToggles = showRail ? (
-    <button
-      type="button"
-      className={headerStyles.railToggle}
-      aria-label={`Comments${openThreadCount > 0 ? ` (${openThreadCount} open)` : ''}`}
-      aria-pressed={railMode === 'comments'}
-      aria-controls={railMode !== null ? 'context-rail' : undefined}
-      onClick={handleCommentsToggle}
-    >
-      <MessageSquare size={16} aria-hidden="true" />
-      {openThreadCount > 0 && (
-        <span className={headerStyles.railToggleCount}>{openThreadCount}</span>
-      )}
-    </button>
+    <>
+      <button
+        type="button"
+        className={headerStyles.railToggle}
+        aria-label="AI Coach"
+        aria-pressed={railMode === 'coaching'}
+        aria-controls={railMode !== null ? 'context-rail' : undefined}
+        onClick={() => setRailMode(railMode === 'coaching' ? null : 'coaching')}
+      >
+        <Sparkles size={16} aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        className={headerStyles.railToggle}
+        aria-label={`Comments${openThreadCount > 0 ? ` (${openThreadCount} open)` : ''}`}
+        aria-pressed={railMode === 'comments'}
+        aria-controls={railMode !== null ? 'context-rail' : undefined}
+        onClick={handleCommentsToggle}
+      >
+        <MessageSquare size={16} aria-hidden="true" />
+        {openThreadCount > 0 && (
+          <span className={headerStyles.railToggleCount}>{openThreadCount}</span>
+        )}
+      </button>
+    </>
   ) : undefined;
 
   return (
@@ -338,7 +369,7 @@ export function PlanDocument() {
           <ContextRail
             modes={railModes}
             activeMode={railMode}
-            onModeChange={(mode) => setRailMode(mode as 'comments' | null)}
+            onModeChange={(mode) => setRailMode(mode as 'coaching' | 'comments' | null)}
           />
         ) : undefined
       }

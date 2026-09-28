@@ -20,12 +20,13 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
 import type { JSONContent, Editor } from '@tiptap/react';
-import { ClipboardCheck, ShieldCheck, MessageSquare } from 'lucide-react';
+import { ClipboardCheck, ShieldCheck, MessageSquare, Sparkles } from 'lucide-react';
 import { useStudyBrief } from '@/api/queries/useStudy';
 import { useApproveBrief, useRequestChanges } from '@/api/mutations/useApproveBrief';
 import { useSaveBriefContent } from '@/api/mutations/useSaveContent';
 import { useCommentThreads, deriveOpenThreadCount, groupThreadsBySection } from '@/api/comments';
 import { useBriefViewModel } from '@/hooks/useBriefViewModel';
+import { useAuth } from '@/auth/AuthProvider';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -41,6 +42,7 @@ import { computeLifecycleNodes } from '@/components/study/lifecycle';
 import {
   ArtifactHeader,
   ApprovalSection,
+  CoachingRail,
   CommentsRail,
   DocumentSection,
   Masthead,
@@ -173,6 +175,7 @@ export function BriefDocument() {
   const requestChanges = useRequestChanges(studyPublicId || '');
   const saveBriefContent = useSaveBriefContent(studyPublicId || '');
   const pipeline = useSavePipeline();
+  const { me } = useAuth();
 
   const editorRef = useRef<Editor | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -184,7 +187,7 @@ export function BriefDocument() {
     participants: false,
     budget: false,
   });
-  const [railMode, setRailMode] = useState<'review' | 'comments' | null>(null);
+  const [railMode, setRailMode] = useState<'coaching' | 'review' | 'comments' | null>(null);
   // CMT-7: Track comments scope (section-scoped or all)
   const [commentsScope, setCommentsScope] = useState<CommentsRailScope>({ mode: 'all' });
 
@@ -377,8 +380,25 @@ export function BriefDocument() {
     </>
   );
 
-  // CMT-6/7: Context rail modes — Comments + Review
+  // Coach M3A: Get content version and user ID for CoachingRail
+  const currentContentVersion = brief?.artifact_version ?? 1;
+  const currentUserPublicId = me?.actor.public_id ?? '';
+
+  // Context rail modes — Coaching + Comments + Review (M3A order per spec §1)
   const railModes: RailMode[] = [
+    {
+      id: 'coaching',
+      label: 'Coaching',
+      icon: Sparkles,
+      content: (
+        <CoachingRail
+          artifactPublicId={artifactPublicId}
+          artifactType="brief"
+          currentContentVersion={currentContentVersion}
+          currentUserPublicId={currentUserPublicId}
+        />
+      ),
+    },
     {
       id: 'comments',
       label: 'Comments',
@@ -429,10 +449,20 @@ export function BriefDocument() {
     return undefined;
   })();
 
-  // CMT-6/7: Rail toggles — Comments (always) + Review (when approval status)
+  // Coach M3A: Rail toggles — Coaching + Comments + Review
   // Only set aria-controls when rail is open (element exists)
   const railToggles = showRail ? (
     <>
+      <button
+        type="button"
+        className={headerStyles.railToggle}
+        aria-label="AI Coach"
+        aria-pressed={railMode === 'coaching'}
+        aria-controls={railMode !== null ? 'context-rail' : undefined}
+        onClick={() => setRailMode(railMode === 'coaching' ? null : 'coaching')}
+      >
+        <Sparkles size={16} aria-hidden="true" />
+      </button>
       <button
         type="button"
         className={headerStyles.railToggle}
@@ -490,7 +520,7 @@ export function BriefDocument() {
           <ContextRail
             modes={showReviewRail ? railModes : railModes.filter((m) => m.id !== 'review')}
             activeMode={railMode}
-            onModeChange={(mode) => setRailMode(mode as 'review' | 'comments' | null)}
+            onModeChange={(mode) => setRailMode(mode as 'coaching' | 'review' | 'comments' | null)}
           />
         ) : undefined
       }

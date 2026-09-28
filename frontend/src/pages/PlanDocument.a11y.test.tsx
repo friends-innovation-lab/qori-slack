@@ -41,6 +41,13 @@ vi.mock('@/api/comments', () => ({
   groupThreadsBySection: () => new Map(),
 }));
 
+// Coach M3A: PlanDocument now uses useAuth for coaching rail
+vi.mock('@/auth/AuthProvider', () => ({
+  useAuth: () => ({
+    me: { actor: { display_name: 'Test Researcher', public_id: 'actor-123' }, organization: { name: 'Test Org', public_id: 'org-1' }, memberships: [] },
+  }),
+}));
+
 function makePlan(overrides: Record<string, unknown> = {}) {
   return {
     study: {
