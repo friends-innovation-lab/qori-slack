@@ -124,6 +124,15 @@ export function PlanDocument() {
     [openSectionCoaching],
   );
 
+  // M3B: Handler for section context changes (from CoachingRail "Back to artifact coaching")
+  // CRITICAL: Must be called BEFORE any early returns to comply with Rules of Hooks
+  const handleCoachingSectionContextChange = useCallback(
+    (context: CoachingSectionContext | null) => {
+      setCoachingSectionContext(context);
+    },
+    [],
+  );
+
   // CMT-6/7: Handler to toggle Comments rail from header
   const handleCommentsToggle = useCallback(() => {
     if (railMode === 'comments') {
@@ -298,14 +307,6 @@ export function PlanDocument() {
   const showRail = !isEditing;
   const currentContentVersion = (plan as any)?.artifact_version ?? 1;
   const currentUserPublicId = me?.actor.public_id ?? '';
-
-  // M3B: Handler for section context changes (from CoachingRail "Back to artifact coaching")
-  const handleCoachingSectionContextChange = useCallback(
-    (context: CoachingSectionContext | null) => {
-      setCoachingSectionContext(context);
-    },
-    [],
-  );
 
   const railModes: RailMode[] = [
     {

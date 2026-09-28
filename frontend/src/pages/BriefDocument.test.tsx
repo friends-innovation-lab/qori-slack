@@ -675,6 +675,51 @@ describe('BriefDocument', () => {
     });
   });
 
+  // ─── Rules of Hooks regression (M3B blank screen fix) ────────────
+  // CRITICAL: All useCallback/useState/useRef calls MUST come BEFORE any
+  // early return statements. React error #310 occurs when hooks are called
+  // conditionally based on loading state.
+
+  describe('Rules of Hooks regression', () => {
+    it('survives loading → loaded state transition without crash (hook order invariant)', async () => {
+      // Step 1: Start with loading state (triggers early return at line 313)
+      mockBrief.mockReturnValue({ data: undefined, isLoading: true, error: null });
+
+      const { rerender } = renderWithProviders(<BriefDocument />);
+
+      // Loading state: document content should NOT be present
+      expect(screen.queryByRole('heading', { name: 'Summary' })).not.toBeInTheDocument();
+
+      // Step 2: Transition to loaded state (no early return, all hooks called)
+      mockBrief.mockReturnValue({ data: makeBrief(), isLoading: false, error: null });
+
+      // This rerender of the SAME component instance is what triggers React error #310
+      // if hooks are placed after early returns. The hook count changes between renders.
+      rerender(<BriefDocument />);
+
+      // If we get here without crashing, the Rules of Hooks fix is working.
+      // Verify document content renders.
+      expect(screen.getByRole('heading', { name: 'Summary' })).toBeInTheDocument();
+    });
+
+    it('survives error → loaded state transition without crash', async () => {
+      // Start with error state (triggers early return at line 316-317)
+      mockBrief.mockReturnValue({ data: null, isLoading: false, error: new Error('Network error') });
+
+      const { rerender } = renderWithProviders(<BriefDocument />);
+
+      // Verify error state renders (error.message is used if present)
+      expect(screen.getByText(/Network error/)).toBeInTheDocument();
+
+      // Transition to loaded state
+      mockBrief.mockReturnValue({ data: makeBrief(), isLoading: false, error: null });
+      rerender(<BriefDocument />);
+
+      // Document should render without crash
+      expect(screen.getByRole('heading', { name: 'Summary' })).toBeInTheDocument();
+    });
+  });
+
   // ─── Coach Failure Isolation (M3B regression gate) ────────────────
   // CRITICAL: Coaching is OPTIONAL advisory. Coach API state MUST NOT
   // affect canonical Brief document rendering.

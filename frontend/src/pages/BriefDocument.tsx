@@ -250,6 +250,15 @@ export function BriefDocument() {
     [openSectionCoaching],
   );
 
+  // M3B: Handler for section context changes (from CoachingRail "Back to artifact coaching")
+  // CRITICAL: Must be called BEFORE any early returns to comply with Rules of Hooks
+  const handleCoachingSectionContextChange = useCallback(
+    (context: CoachingSectionContext | null) => {
+      setCoachingSectionContext(context);
+    },
+    [],
+  );
+
   // CMT-6/7: Handler to toggle Comments rail from header
   const handleCommentsToggle = useCallback(() => {
     if (railMode === 'comments') {
@@ -402,14 +411,6 @@ export function BriefDocument() {
   // Coach M3A: Get content version and user ID for CoachingRail
   const currentContentVersion = brief?.artifact_version ?? 1;
   const currentUserPublicId = me?.actor.public_id ?? '';
-
-  // M3B: Handler for section context changes (from CoachingRail "Back to artifact coaching")
-  const handleCoachingSectionContextChange = useCallback(
-    (context: CoachingSectionContext | null) => {
-      setCoachingSectionContext(context);
-    },
-    [],
-  );
 
   // Context rail modes — Coaching + Comments + Review (M3A order per spec §1)
   const railModes: RailMode[] = [
