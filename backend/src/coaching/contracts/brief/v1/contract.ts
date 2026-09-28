@@ -40,6 +40,7 @@ const BRIEF_SECTIONS: SectionMetadata[] = [
   { key: 'target_barriers', displayName: 'Target Barriers', coachable: true },
   { key: 'participant_approach', displayName: 'Participant Approach', coachable: true },
   { key: 'methodology', displayName: 'Methodology', coachable: true },
+  { key: 'out_of_scope', displayName: 'Out of Scope', coachable: true },
   { key: 'timeline', displayName: 'Timeline', coachable: true },
   { key: 'risks', displayName: 'Risks', coachable: true },
   { key: 'discovery_sources', displayName: 'Discovery Sources', coachable: true },

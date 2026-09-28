@@ -56,6 +56,8 @@ import {
   type ChecklistState,
   type CommentsRailScope,
   type SectionCommentProps,
+  type SectionCoachProps,
+  type CoachingSectionContext,
 } from '@/components/study/document';
 import docStyles from '@/components/study/document/document.module.css';
 import headerStyles from '@/components/study/document/ArtifactHeader.module.css';
@@ -190,6 +192,8 @@ export function BriefDocument() {
   const [railMode, setRailMode] = useState<'coaching' | 'review' | 'comments' | null>(null);
   // CMT-7: Track comments scope (section-scoped or all)
   const [commentsScope, setCommentsScope] = useState<CommentsRailScope>({ mode: 'all' });
+  // M3B: Track section context for coaching (null = artifact context)
+  const [coachingSectionContext, setCoachingSectionContext] = useState<CoachingSectionContext | null>(null);
 
   // CMT-6: Fetch open comment threads for count display
   const artifactPublicId = brief?.artifact_public_id || '';
@@ -221,6 +225,12 @@ export function BriefDocument() {
     setRailMode('comments');
   }, []);
 
+  // M3B: Handler to open Coaching rail scoped to a section (navigation only, NO generation)
+  const openSectionCoaching = useCallback((sectionKey: string, label: string) => {
+    setCoachingSectionContext({ sectionKey, label });
+    setRailMode('coaching');
+  }, []);
+
   // CMT-7: Create comment props for a section
   const getSectionComment = useCallback(
     (sectionKey: string, label?: string): SectionCommentProps => ({
@@ -229,6 +239,15 @@ export function BriefDocument() {
       label,
     }),
     [sectionCounts, openSectionComments],
+  );
+
+  // M3B: Create coach props for a coachable section
+  const getSectionCoach = useCallback(
+    (sectionKey: string, label: string): SectionCoachProps => ({
+      onOpen: () => openSectionCoaching(sectionKey, label),
+      label,
+    }),
+    [openSectionCoaching],
   );
 
   // CMT-6/7: Handler to toggle Comments rail from header
@@ -384,6 +403,14 @@ export function BriefDocument() {
   const currentContentVersion = brief?.artifact_version ?? 1;
   const currentUserPublicId = me?.actor.public_id ?? '';
 
+  // M3B: Handler for section context changes (from CoachingRail "Back to artifact coaching")
+  const handleCoachingSectionContextChange = useCallback(
+    (context: CoachingSectionContext | null) => {
+      setCoachingSectionContext(context);
+    },
+    [],
+  );
+
   // Context rail modes — Coaching + Comments + Review (M3A order per spec §1)
   const railModes: RailMode[] = [
     {
@@ -396,6 +423,8 @@ export function BriefDocument() {
           artifactType="brief"
           currentContentVersion={currentContentVersion}
           currentUserPublicId={currentUserPublicId}
+          sectionContext={coachingSectionContext}
+          onSectionContextChange={handleCoachingSectionContextChange}
         />
       ),
     },
@@ -600,6 +629,7 @@ export function BriefDocument() {
                 title="Summary"
                 provenance={vm.sections.summary.provenance}
                 comment={getSectionComment('summary', 'Summary')}
+                coach={getSectionCoach('summary', 'Summary')}
               >
                 {summaryProse ? (
                   <MarkdownDisplay markdown={summaryProse} className={docStyles.blockProse} />
@@ -621,6 +651,7 @@ export function BriefDocument() {
                     ...(vm.barriers.exists ? [vm.barriers.provenance] : []),
                   ].filter(Boolean)}
                   comment={getSectionComment('problem_narrative', 'Problem')}
+                  coach={getSectionCoach('problem_statement', 'Problem')}
                 >
                   {problemProse && (
                     <MarkdownDisplay markdown={problemProse} className={docStyles.blockProse} />
@@ -675,6 +706,7 @@ export function BriefDocument() {
                   title="Method"
                   provenance={vm.sections.methodProse.provenance}
                   comment={getSectionComment('method_prose', 'Method')}
+                  coach={getSectionCoach('methodology', 'Method')}
                 >
                   {methodology && (
                     <p className={docStyles.kvParagraph}>
@@ -699,6 +731,7 @@ export function BriefDocument() {
                       : []),
                   ].filter(Boolean)}
                   comment={getSectionComment('participants_prose', 'Participants')}
+                  coach={getSectionCoach('participant_approach', 'Participants')}
                 >
                   {participantSegments.length > 0 ? (
                     <>
@@ -748,6 +781,7 @@ export function BriefDocument() {
                   title="Out of scope"
                   provenance={vm.sections.outOfScope.provenance}
                   comment={getSectionComment('out_of_scope', 'Out of scope')}
+                  coach={getSectionCoach('out_of_scope', 'Out of scope')}
                 >
                   <MarkdownDisplay markdown={outOfScopeProse || ''} className={docStyles.blockProse} />
                 </DocumentSection>
@@ -760,6 +794,7 @@ export function BriefDocument() {
                   title="Risks"
                   provenance={vm.risks.provenance}
                   comment={getSectionComment('risks', 'Risks')}
+                  coach={getSectionCoach('risks', 'Risks')}
                 >
                   <DocumentTable
                     columns={[

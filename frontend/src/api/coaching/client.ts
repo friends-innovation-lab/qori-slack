@@ -59,22 +59,31 @@ export async function listCoachRuns(
 export interface CreateCoachRunParams {
   artifactPublicId: string;
   reviewScope: CoachReviewScope;
+  /** M3B: Required when reviewScope === 'section' */
+  sectionKey?: string;
 }
 
 /**
  * POST /api/v1/artifacts/:artifactPublicId/coaching
  *
- * Creates a new coaching run. Returns immediately with pending run
- * (does NOT wait for AI generation).
+ * Creates a new coaching run (artifact-level or section-level).
+ * Returns immediately with pending run (does NOT wait for AI generation).
  */
 export async function createCoachRun(
   params: CreateCoachRunParams,
 ): Promise<CreateCoachRunResponse> {
+  const body: { review_scope: CoachReviewScope; section_key?: string } = {
+    review_scope: params.reviewScope,
+  };
+
+  // M3B: Include section_key for section-scoped reviews
+  if (params.reviewScope === 'section' && params.sectionKey) {
+    body.section_key = params.sectionKey;
+  }
+
   const res = await api
     .post(`artifacts/${params.artifactPublicId}/coaching`, {
-      json: {
-        review_scope: params.reviewScope,
-      },
+      json: body,
     })
     .json<{ data: CreateCoachRunResponse }>();
   return res.data;

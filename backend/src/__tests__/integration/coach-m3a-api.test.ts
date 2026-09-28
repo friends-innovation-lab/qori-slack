@@ -520,7 +520,7 @@ describe('Coach M3A Workspace Coaching Rail API', () => {
         .expect(201);
     });
 
-    it('rejects section-scope in M3A (not implemented)', async () => {
+    it('M3B: rejects section-scope without section_key', async () => {
       const res = await request(app)
         .post(`/api/v1/artifacts/${artifactPublicId}/coaching`)
         .set('X-Test-Actor-PublicId', actorPublicId)
@@ -528,7 +528,7 @@ describe('Coach M3A Workspace Coaching Rail API', () => {
         .expect(400);
 
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
-      expect(res.body.error.message).toContain('artifact-level');
+      expect(res.body.error.message).toContain('section_key is required');
     });
 
     it('returns 404 for non-existent artifact', async () => {

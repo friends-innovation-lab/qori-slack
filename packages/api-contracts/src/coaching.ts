@@ -177,13 +177,40 @@ export interface CoachRunListQuery {
   readonly limit?: number;
 }
 
+// ─── Capability Metadata ──────────────────────────────────────────────
+
+/**
+ * M3B: Coachable section metadata from Coaching Contract.
+ * Backend is authoritative — frontend MUST NOT maintain a hard-coded registry.
+ */
+export interface CoachableSectionMetadata {
+  /** Stable section key (identity) */
+  readonly section_key: string;
+  /** Human-readable label for UI */
+  readonly label: string;
+}
+
+/**
+ * M3B: Coaching capability metadata for an artifact.
+ * Derived from the active Coaching Contract for this artifact type.
+ */
+export interface CoachingCapabilities {
+  /** Whether artifact-level review is available */
+  readonly artifact_review: boolean;
+  /** Sections that can be individually reviewed */
+  readonly coachable_sections: readonly CoachableSectionMetadata[];
+}
+
 // ─── Response Envelopes ───────────────────────────────────────────────
 
 /**
  * List coaching runs response.
+ * M3B: Includes capability metadata for rendering section affordances.
  */
 export interface CoachRunListResponse {
   readonly artifact_public_id: string;
+  /** M3B: Coaching capabilities from active contract */
+  readonly capabilities: CoachingCapabilities;
   readonly runs: CoachRunSummaryResource[];
   readonly cursor: string | null;
   readonly has_more: boolean;

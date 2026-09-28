@@ -1,12 +1,13 @@
 export { ApprovalSection } from './ApprovalSection';
 export { ArtifactHeader } from './ArtifactHeader';
 export { ArtifactTabs } from './ArtifactTabs';
-export { CoachingRail, selectPrimaryArtifactRun } from './CoachingRail';
+export { CoachingRail, selectPrimaryArtifactRun, selectPrimarySectionRun } from './CoachingRail';
+export type { CoachingSectionContext } from './CoachingRail';
 export { CollapsibleSection } from './CollapsibleSection';
 export { CommentsRail } from './CommentsRail';
 export type { CommentsRailScope } from './CommentsRail';
 export { DocumentSection } from './DocumentSection';
-export type { SectionCommentProps } from './DocumentSection';
+export type { SectionCommentProps, SectionCoachProps } from './DocumentSection';
 export { DocumentTable } from './DocumentTable';
 export { FactsGrid } from './FactsGrid';
 export { IdTag } from './IdTag';
