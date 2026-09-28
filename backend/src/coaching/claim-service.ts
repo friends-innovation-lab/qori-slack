@@ -20,6 +20,18 @@ import {
   COACH_MAX_ACTIVE_PER_USER,
   COACH_MAX_ACTIVE_PER_STUDY,
 } from './config';
+import {
+  logClaimAcquired,
+  logHeartbeatUpdated,
+  logHeartbeatRejected,
+  logClaimValidationSucceeded,
+  logClaimValidationFailed,
+  logStaleRecoveryCandidate,
+  logStaleRecoveryAcquired,
+  logStaleRecoveryRejected,
+  logStaleFailureRecorded,
+  queryStaleCandidate,
+} from './ownership-diagnostics';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -92,7 +104,11 @@ export async function claimNextPendingRun(workerId: string): Promise<ClaimResult
     return { claimed: false, reason: 'No pending runs available' };
   }
 
-  return { claimed: true, run: result[0] };
+  // Diagnostic: Log successful claim
+  const claimedRun = result[0];
+  logClaimAcquired(claimedRun.id, workerId, claimedRun.attempt_count);
+
+  return { claimed: true, run: claimedRun };
 }
 
 /**
@@ -111,7 +127,40 @@ export async function claimNextPendingRun(workerId: string): Promise<ClaimResult
 export async function recoverStaleRun(workerId: string): Promise<ClaimResult> {
   const staleTimeoutSeconds = COACH_STALE_TIMEOUT_MS / 1000;
 
+  // Diagnostic: Query stale candidates BEFORE modification for logging
+  const staleCandidates = await queryStaleCandidate(staleTimeoutSeconds, COACH_MAX_ATTEMPTS);
+  for (const candidate of staleCandidates) {
+    logStaleRecoveryCandidate(
+      candidate.id,
+      candidate.worker_id,
+      candidate.attempt_count,
+      candidate.heartbeat_at?.toISOString() ?? null,
+      candidate.age_seconds,
+      staleTimeoutSeconds,
+    );
+  }
+
   // First, check for runs that would exceed max attempts
+  // Query which runs will be failed for diagnostic logging
+  const toFailResult = await sequelize.query<{ id: string; attempt_count: number }>(
+    `
+    SELECT id, attempt_count
+    FROM coaching_runs
+    WHERE status = 'running'
+      AND heartbeat_at < NOW() - INTERVAL '${staleTimeoutSeconds} seconds'
+      AND attempt_count >= :maxAttempts
+    FOR UPDATE SKIP LOCKED
+    `,
+    {
+      replacements: { maxAttempts: COACH_MAX_ATTEMPTS },
+      type: QueryTypes.SELECT,
+    },
+  );
+  for (const row of toFailResult) {
+    logStaleFailureRecorded(row.id, row.attempt_count, COACH_MAX_ATTEMPTS);
+  }
+
+  // Now actually fail them
   await sequelize.query(
     `
     UPDATE coaching_runs
@@ -167,10 +216,22 @@ export async function recoverStaleRun(workerId: string): Promise<ClaimResult> {
   );
 
   if (result.length === 0) {
+    logStaleRecoveryRejected(workerId);
     return { claimed: false, reason: 'No stale runs to recover' };
   }
 
-  return { claimed: true, run: result[0] };
+  // Diagnostic: Log successful recovery
+  const recoveredRun = result[0];
+  // Note: The previous worker_id is now overwritten, so we can't capture it here.
+  // The stale candidate log above has the previous worker_id.
+  logStaleRecoveryAcquired(
+    recoveredRun.id,
+    null, // Previous worker_id not available after UPDATE
+    workerId,
+    recoveredRun.attempt_count,
+  );
+
+  return { claimed: true, run: recoveredRun };
 }
 
 /**
@@ -197,7 +258,19 @@ export async function updateHeartbeat(runId: string, workerId: string): Promise<
     }
   ) as [unknown, number];
 
-  return affectedCount > 0;
+  const updated = affectedCount > 0;
+
+  if (updated) {
+    logHeartbeatUpdated(runId, workerId);
+  } else {
+    // CRITICAL DIAGNOSTIC: Heartbeat rejected means ownership lost
+    // Query actual state asynchronously (don't block heartbeat interval)
+    logHeartbeatRejected(runId, workerId).catch(err => {
+      console.error('[Coach Ownership] Failed to log heartbeat rejection:', err);
+    });
+  }
+
+  return updated;
 }
 
 /**
@@ -224,7 +297,17 @@ export async function validateClaimOwnership(runId: string, workerId: string): P
     }
   );
 
-  return parseInt(result[0]?.count ?? '0', 10) > 0;
+  const isValid = parseInt(result[0]?.count ?? '0', 10) > 0;
+
+  if (isValid) {
+    logClaimValidationSucceeded(runId, workerId);
+  } else {
+    // CRITICAL DIAGNOSTIC: Claim validation failed
+    // This is the key evidence we need - query actual DB state
+    await logClaimValidationFailed(runId, workerId);
+  }
+
+  return isValid;
 }
 
 /**

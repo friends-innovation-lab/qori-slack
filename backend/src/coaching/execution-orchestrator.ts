@@ -38,6 +38,11 @@ import {
 } from './claim-service';
 import { recordCoachRunItems, recordCoachRunReferences, recordCoachRunContext } from '../application/coaching.app-service';
 import { COACH_HEARTBEAT_INTERVAL_MS } from './config';
+import {
+  logExecutionStarted,
+  logExecutionCompleted,
+  logExecutionFailed,
+} from './ownership-diagnostics';
 
 // ─── Generation Config Resolution ────────────────────────────────────────
 
@@ -132,6 +137,9 @@ export async function executeCoachRun(
 
   let heartbeatInterval: NodeJS.Timeout | null = null;
   let heartbeatActive = true;
+
+  // Diagnostic: Log execution start with attempt_count
+  logExecutionStarted(run.id, workerId, run.attempt_count);
 
   try {
     // Start heartbeat
@@ -456,6 +464,10 @@ async function persistResults(
     }
 
     await transaction.commit();
+
+    // Diagnostic: Log successful completion
+    logExecutionCompleted(runId, workerId);
+
     return { success: true };
 
   } catch (err) {
@@ -510,6 +522,9 @@ async function failRun(
       diagnostic: 'Claim lost while trying to mark failed',
     };
   }
+
+  // Diagnostic: Log execution failure
+  logExecutionFailed(runId, workerId, failureCode);
 
   return {
     success: false,
