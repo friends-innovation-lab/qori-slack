@@ -1,6 +1,7 @@
 export { ApprovalSection } from './ApprovalSection';
 export { ArtifactHeader } from './ArtifactHeader';
 export { ArtifactTabs } from './ArtifactTabs';
+export { CoachingRail, selectPrimaryArtifactRun } from './CoachingRail';
 export { CollapsibleSection } from './CollapsibleSection';
 export { CommentsRail } from './CommentsRail';
 export type { CommentsRailScope } from './CommentsRail';

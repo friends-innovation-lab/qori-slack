@@ -18,6 +18,7 @@ import authRoutes from './auth.routes';
 import adminRoutes from './admin.routes';
 import brandingRoutes from './branding.routes';
 import commentsRoutes from './comments.routes';
+import coachingRoutes from './coaching.routes';
 
 const v1Router = Router();
 
@@ -37,5 +38,7 @@ v1Router.use('/admin', adminRoutes);
 v1Router.use('/branding', brandingRoutes);
 // Comments routes span /artifacts/.../comments and /comments/... paths
 v1Router.use('/', commentsRoutes);
+// Coaching routes span /artifacts/.../coaching and /coaching/... paths
+v1Router.use('/', coachingRoutes);
 
 export default v1Router;

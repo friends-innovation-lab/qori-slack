@@ -1,0 +1,542 @@
+/**
+ * CoachingRail Tests — Coach M3A
+ *
+ * Tests for the workspace coaching rail component.
+ *
+ * Coverage:
+ * - selectPrimaryArtifactRun pure function (M3A precedence rules)
+ * - Component rendering states (loading, error, empty, with runs)
+ * - History display
+ * - Action button states
+ */
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { selectPrimaryArtifactRun, CoachingRail } from './CoachingRail';
+import type { CoachRunSummaryResource } from '@qori/api-contracts';
+
+// ─── Test Data Factories ─────────────────────────────────────────────────────
+
+function createRunSummary(
+  overrides: Partial<CoachRunSummaryResource> = {},
+): CoachRunSummaryResource {
+  return {
+    id: crypto.randomUUID(),
+    artifact_public_id: 'art-123',
+    artifact_type: 'brief',
+    content_version: 1,
+    selected_section_key: null,
+    review_scope: 'artifact',
+    status: 'completed',
+    requested_by: {
+      public_id: 'user-123',
+      display_name: 'Test Researcher',
+    },
+    requested_at: new Date().toISOString(),
+    completed_at: new Date().toISOString(),
+    failed_at: null,
+    is_current_version: true,
+    retry_of_run_id: null,
+    ...overrides,
+  };
+}
+
+// ─── selectPrimaryArtifactRun Unit Tests ─────────────────────────────────────
+
+describe('selectPrimaryArtifactRun', () => {
+  const currentVersion = 2;
+  const currentUserId = 'user-current';
+  const otherUserId = 'user-other';
+
+  it('returns null when no runs exist', () => {
+    const result = selectPrimaryArtifactRun([], currentVersion, currentUserId);
+    expect(result).toBeNull();
+  });
+
+  it('excludes section-scope runs from primary selection', () => {
+    const sectionRun = createRunSummary({
+      review_scope: 'section',
+      selected_section_key: 'summary',
+      content_version: currentVersion,
+    });
+
+    const result = selectPrimaryArtifactRun([sectionRun], currentVersion, currentUserId);
+    expect(result).toBeNull();
+  });
+
+  describe('precedence rules', () => {
+    it('prefers current user active run over collaborator active run', () => {
+      const ownActive = createRunSummary({
+        status: 'pending',
+        content_version: currentVersion,
+        requested_by: { public_id: currentUserId, display_name: 'Current User' },
+      });
+      const otherActive = createRunSummary({
+        status: 'running',
+        content_version: currentVersion,
+        requested_by: { public_id: otherUserId, display_name: 'Other User' },
+      });
+
+      const result = selectPrimaryArtifactRun(
+        [otherActive, ownActive],
+        currentVersion,
+        currentUserId,
+      );
+
+      expect(result?.id).toBe(ownActive.id);
+    });
+
+    it('prefers collaborator active run over completed run', () => {
+      const otherActive = createRunSummary({
+        status: 'running',
+        content_version: currentVersion,
+        requested_by: { public_id: otherUserId, display_name: 'Other User' },
+      });
+      const completed = createRunSummary({
+        status: 'completed',
+        content_version: currentVersion,
+        requested_by: { public_id: currentUserId, display_name: 'Current User' },
+      });
+
+      const result = selectPrimaryArtifactRun(
+        [completed, otherActive],
+        currentVersion,
+        currentUserId,
+      );
+
+      expect(result?.id).toBe(otherActive.id);
+    });
+
+    it('prefers current version completed over earlier version run', () => {
+      const currentCompleted = createRunSummary({
+        status: 'completed',
+        content_version: currentVersion,
+        is_current_version: true,
+      });
+      const earlierCompleted = createRunSummary({
+        status: 'completed',
+        content_version: 1,
+        is_current_version: false,
+      });
+
+      const result = selectPrimaryArtifactRun(
+        [earlierCompleted, currentCompleted],
+        currentVersion,
+        currentUserId,
+      );
+
+      expect(result?.id).toBe(currentCompleted.id);
+    });
+
+    it('returns earlier version run when no current version runs exist', () => {
+      const earlierCompleted = createRunSummary({
+        status: 'completed',
+        content_version: 1,
+        is_current_version: false,
+      });
+
+      const result = selectPrimaryArtifactRun(
+        [earlierCompleted],
+        currentVersion,
+        currentUserId,
+      );
+
+      expect(result?.id).toBe(earlierCompleted.id);
+    });
+
+    it('prefers latest terminal run for current version', () => {
+      const older = createRunSummary({
+        status: 'completed',
+        content_version: currentVersion,
+        requested_at: '2024-01-01T10:00:00Z',
+      });
+      const newer = createRunSummary({
+        status: 'completed',
+        content_version: currentVersion,
+        requested_at: '2024-01-02T10:00:00Z',
+      });
+
+      // Runs are newest-first in the array (API contract)
+      const result = selectPrimaryArtifactRun(
+        [newer, older],
+        currentVersion,
+        currentUserId,
+      );
+
+      expect(result?.id).toBe(newer.id);
+    });
+  });
+
+  describe('active run detection', () => {
+    it('treats pending as active', () => {
+      const pendingRun = createRunSummary({
+        status: 'pending',
+        content_version: currentVersion,
+        requested_by: { public_id: currentUserId, display_name: 'Current User' },
+      });
+
+      const result = selectPrimaryArtifactRun(
+        [pendingRun],
+        currentVersion,
+        currentUserId,
+      );
+
+      expect(result?.id).toBe(pendingRun.id);
+    });
+
+    it('treats running as active', () => {
+      const runningRun = createRunSummary({
+        status: 'running',
+        content_version: currentVersion,
+        requested_by: { public_id: currentUserId, display_name: 'Current User' },
+      });
+
+      const result = selectPrimaryArtifactRun(
+        [runningRun],
+        currentVersion,
+        currentUserId,
+      );
+
+      expect(result?.id).toBe(runningRun.id);
+    });
+
+    it('treats completed as terminal (not active)', () => {
+      const completedRun = createRunSummary({
+        status: 'completed',
+        content_version: currentVersion,
+        requested_by: { public_id: currentUserId, display_name: 'Current User' },
+      });
+      const otherActive = createRunSummary({
+        status: 'running',
+        content_version: currentVersion,
+        requested_by: { public_id: otherUserId, display_name: 'Other User' },
+      });
+
+      // otherActive should win over completedRun because active > terminal
+      const result = selectPrimaryArtifactRun(
+        [completedRun, otherActive],
+        currentVersion,
+        currentUserId,
+      );
+
+      expect(result?.id).toBe(otherActive.id);
+    });
+
+    it('treats failed as terminal (not active)', () => {
+      const failedRun = createRunSummary({
+        status: 'failed',
+        content_version: currentVersion,
+        requested_by: { public_id: currentUserId, display_name: 'Current User' },
+      });
+      const otherActive = createRunSummary({
+        status: 'pending',
+        content_version: currentVersion,
+        requested_by: { public_id: otherUserId, display_name: 'Other User' },
+      });
+
+      // otherActive should win over failedRun because active > terminal
+      const result = selectPrimaryArtifactRun(
+        [failedRun, otherActive],
+        currentVersion,
+        currentUserId,
+      );
+
+      expect(result?.id).toBe(otherActive.id);
+    });
+  });
+});
+
+// ─── CoachingRail Component Tests ────────────────────────────────────────────
+
+// Mock the coaching API hooks
+vi.mock('@/api/coaching', () => ({
+  useCoachHistory: vi.fn(),
+  useActiveCoachRun: vi.fn(() => ({ data: null })),
+  useCreateCoachRun: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
+  isActiveRun: vi.fn((run) => run.status === 'pending' || run.status === 'running'),
+}));
+
+import * as coachingApi from '@/api/coaching';
+
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
+
+const renderWithProviders = (ui: React.ReactElement) => {
+  const queryClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={queryClient}>
+      {ui}
+    </QueryClientProvider>,
+  );
+};
+
+describe('CoachingRail Component', () => {
+  const defaultProps = {
+    artifactPublicId: 'art-123',
+    artifactType: 'brief' as const,
+    currentContentVersion: 1,
+    currentUserPublicId: 'user-123',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('loading state', () => {
+    it('shows loading indicator while fetching history', () => {
+      vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isError: false,
+        refetch: vi.fn(),
+      } as any);
+
+      renderWithProviders(<CoachingRail {...defaultProps} />);
+
+      expect(screen.getByText('Loading...')).toBeInTheDocument();
+    });
+  });
+
+  describe('error state', () => {
+    it('shows error message when history fetch fails', () => {
+      vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+        refetch: vi.fn(),
+      } as any);
+
+      renderWithProviders(<CoachingRail {...defaultProps} />);
+
+      expect(screen.getByText('Could not load coaching history.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('empty state', () => {
+    it('shows empty state when no runs exist', () => {
+      vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+        data: { artifact_public_id: 'art-123', runs: [], cursor: null, has_more: false },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as any);
+
+      renderWithProviders(<CoachingRail {...defaultProps} />);
+
+      expect(screen.getByText('No coaching reviews yet')).toBeInTheDocument();
+      expect(screen.getByText(/Get AI-powered feedback/)).toBeInTheDocument();
+    });
+
+    it('shows Review artifact button in empty state', () => {
+      vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+        data: { artifact_public_id: 'art-123', runs: [], cursor: null, has_more: false },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as any);
+
+      renderWithProviders(<CoachingRail {...defaultProps} />);
+
+      expect(screen.getByRole('button', { name: /review artifact/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('with runs', () => {
+    const completedRun = createRunSummary({
+      status: 'completed',
+      content_version: 1,
+      requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+    });
+
+    it('shows AI Coach heading', () => {
+      vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+        data: { artifact_public_id: 'art-123', runs: [completedRun], cursor: null, has_more: false },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as any);
+
+      renderWithProviders(<CoachingRail {...defaultProps} />);
+
+      expect(screen.getByText('AI Coach')).toBeInTheDocument();
+    });
+
+    it('shows primary run status', () => {
+      vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+        data: { artifact_public_id: 'art-123', runs: [completedRun], cursor: null, has_more: false },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as any);
+
+      renderWithProviders(<CoachingRail {...defaultProps} />);
+
+      expect(screen.getByText('Review complete')).toBeInTheDocument();
+    });
+
+    it('shows history section with runs', () => {
+      vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+        data: { artifact_public_id: 'art-123', runs: [completedRun], cursor: null, has_more: false },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as any);
+
+      renderWithProviders(<CoachingRail {...defaultProps} />);
+
+      expect(screen.getByText('History')).toBeInTheDocument();
+      expect(screen.getByText('Artifact review')).toBeInTheDocument();
+    });
+
+    it('shows requester name in history', () => {
+      vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+        data: { artifact_public_id: 'art-123', runs: [completedRun], cursor: null, has_more: false },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as any);
+
+      renderWithProviders(<CoachingRail {...defaultProps} />);
+
+      // Name appears in both primary meta and history row
+      const nameElements = screen.getAllByText(/Test Researcher/);
+      expect(nameElements.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('action button state', () => {
+    it('disables Review artifact when user has active run', () => {
+      const activeRun = createRunSummary({
+        status: 'pending',
+        content_version: 1,
+        requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+      });
+
+      vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+        data: { artifact_public_id: 'art-123', runs: [activeRun], cursor: null, has_more: false },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as any);
+      vi.mocked(coachingApi.isActiveRun).mockReturnValue(true);
+
+      renderWithProviders(<CoachingRail {...defaultProps} />);
+
+      const button = screen.getByRole('button', { name: /review artifact/i });
+      expect(button).toBeDisabled();
+      expect(screen.getByText('A review is already in progress.')).toBeInTheDocument();
+    });
+
+    it('enables Review artifact when no active run exists', () => {
+      const completedRun = createRunSummary({
+        status: 'completed',
+        content_version: 1,
+        requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+      });
+
+      vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+        data: { artifact_public_id: 'art-123', runs: [completedRun], cursor: null, has_more: false },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as any);
+      vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+      renderWithProviders(<CoachingRail {...defaultProps} />);
+
+      const button = screen.getByRole('button', { name: /review artifact/i });
+      expect(button).not.toBeDisabled();
+    });
+  });
+
+  describe('version badge', () => {
+    it('shows Current version badge for current version run', () => {
+      const currentVersionRun = createRunSummary({
+        status: 'completed',
+        content_version: 1,
+        is_current_version: true,
+      });
+
+      vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+        data: { artifact_public_id: 'art-123', runs: [currentVersionRun], cursor: null, has_more: false },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as any);
+
+      renderWithProviders(<CoachingRail {...defaultProps} />);
+
+      expect(screen.getByText('Current version')).toBeInTheDocument();
+    });
+
+    it('shows Earlier version badge for earlier version run', () => {
+      const earlierVersionRun = createRunSummary({
+        status: 'completed',
+        content_version: 0,
+        is_current_version: false,
+      });
+
+      vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+        data: { artifact_public_id: 'art-123', runs: [earlierVersionRun], cursor: null, has_more: false },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as any);
+
+      renderWithProviders(<CoachingRail {...defaultProps} />);
+
+      expect(screen.getByText('Earlier version')).toBeInTheDocument();
+    });
+  });
+
+  /**
+   * M3A Merge Gate — §40: No automatic AI invocation.
+   *
+   * This test proves that rendering the rail, browsing history,
+   * and switching tabs creates ZERO Coach runs.
+   * Only explicit "Review artifact" may create a run.
+   */
+  describe('M3A merge gate: no automatic AI invocation', () => {
+    it('opening rail, browsing history, and switching modes does NOT invoke createCoachRun', () => {
+      const mockMutate = vi.fn();
+      vi.mocked(coachingApi.useCreateCoachRun).mockReturnValue({
+        mutate: mockMutate,
+        isPending: false,
+      } as any);
+
+      const completedRun = createRunSummary({
+        status: 'completed',
+        content_version: 1,
+        requested_by: { public_id: 'other-user', display_name: 'Another Researcher' },
+      });
+
+      vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+        data: { artifact_public_id: 'art-123', runs: [completedRun], cursor: null, has_more: false },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as any);
+
+      // Render the rail (simulates opening Coaching tab)
+      const { rerender } = renderWithProviders(<CoachingRail {...defaultProps} />);
+
+      // Browse history — verify history row is visible
+      expect(screen.getByText('Artifact review')).toBeInTheDocument();
+
+      // Rerender (simulates switching tabs and returning)
+      rerender(<CoachingRail {...defaultProps} />);
+
+      // MERGE GATE: createCoachRun must NOT have been called
+      expect(mockMutate).not.toHaveBeenCalled();
+    });
+  });
+});

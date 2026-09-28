@@ -1,0 +1,336 @@
+/**
+ * CoachingRail styles — Coach M3A Workspace rail.
+ *
+ * Follows ReviewRail conventions:
+ * - Mono eyebrow typography
+ * - Structured result display
+ * - Compact history rows
+ * - Action buttons
+ */
+
+.coachingRail {
+  padding: var(--space-1) var(--space-1) 0;
+}
+
+/* ─── Eyebrow ───────────────────────────────────────────────────────────── */
+
+.eyebrow {
+  margin: 0;
+  font: var(--weight-semibold) var(--type-label-size)/var(--type-label-line) var(--font-mono);
+  letter-spacing: var(--type-label-track);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* ─── Status heading ────────────────────────────────────────────────────── */
+
+.status {
+  margin: var(--space-1) 0 var(--space-2);
+  font: var(--weight-medium) var(--type-rail-status-size)/var(--type-rail-status-line) var(--font-display);
+  color: var(--color-text);
+}
+
+.statusPending {
+  color: var(--color-warning);
+}
+
+.statusRunning {
+  color: var(--color-link);
+}
+
+.statusCompleted {
+  color: var(--color-success);
+}
+
+.statusFailed {
+  color: var(--color-error);
+}
+
+/* ─── Body/meta text ────────────────────────────────────────────────────── */
+
+.body {
+  margin: 0;
+  max-width: 32ch;
+  font: var(--type-doc-note-size)/var(--type-doc-note-line) var(--font-serif);
+  color: var(--color-text-meta);
+}
+
+.meta {
+  margin: 0;
+  font: 12px/18px var(--font-ui);
+  color: var(--color-text-muted);
+}
+
+/* ─── Version badge ─────────────────────────────────────────────────────── */
+
+.versionBadge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font: var(--weight-semibold) 10px/12px var(--font-mono);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.versionCurrent {
+  background: var(--color-success-surface);
+  color: var(--color-success);
+}
+
+.versionEarlier {
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+}
+
+/* ─── Actions ───────────────────────────────────────────────────────────── */
+
+.actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ─── Empty state ───────────────────────────────────────────────────────── */
+
+.emptyState {
+  padding: var(--space-4) 0;
+  text-align: center;
+}
+
+.emptyIcon {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.emptyTitle {
+  margin: 0 0 var(--space-1);
+  font: var(--weight-medium) var(--type-ui-size)/var(--type-ui-line) var(--font-ui);
+  color: var(--color-text);
+}
+
+.emptyBody {
+  margin: 0;
+  font: var(--type-doc-note-size)/var(--type-doc-note-line) var(--font-serif);
+  color: var(--color-text-meta);
+}
+
+/* ─── Section divider ───────────────────────────────────────────────────── */
+
+.divider {
+  margin: var(--space-4) 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ─── History ───────────────────────────────────────────────────────────── */
+
+.historySection {
+  margin-top: var(--space-4);
+}
+
+.historyLabel {
+  margin: 0 0 var(--space-2);
+  font: var(--weight-semibold) var(--type-label-size)/var(--type-label-line) var(--font-mono);
+  letter-spacing: var(--type-label-track);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.historyList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.historyRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: background 100ms;
+}
+
+.historyRow:hover {
+  background: var(--color-surface-hover);
+}
+
+.historyRow:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+.historyRowSelected {
+  background: var(--color-surface-selected);
+}
+
+.historyRowHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.historyRowLabel {
+  flex: 1;
+  font: var(--weight-medium) var(--type-ui-size)/var(--type-ui-line) var(--font-ui);
+  color: var(--color-text);
+}
+
+.historyRowMeta {
+  font: 11px/14px var(--font-ui);
+  color: var(--color-text-muted);
+}
+
+/* ─── Status badge ──────────────────────────────────────────────────────── */
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font: var(--weight-semibold) 10px/12px var(--font-mono);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.statusBadgePending {
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+}
+
+.statusBadgeRunning {
+  background: var(--color-info-surface);
+  color: var(--color-info);
+}
+
+.statusBadgeCompleted {
+  background: var(--color-success-surface);
+  color: var(--color-success);
+}
+
+.statusBadgeFailed {
+  background: var(--color-error-surface);
+  color: var(--color-error);
+}
+
+/* ─── Structured result ─────────────────────────────────────────────────── */
+
+.resultSection {
+  margin-top: var(--space-3);
+}
+
+.resultCategory {
+  margin-bottom: var(--space-3);
+}
+
+.resultCategoryLabel {
+  margin: 0 0 var(--space-1);
+  font: var(--weight-semibold) var(--type-label-size)/var(--type-label-line) var(--font-mono);
+  letter-spacing: var(--type-label-track);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.resultList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.resultItem {
+  padding: var(--space-1) 0;
+  font: var(--type-ui-size)/var(--type-ui-line) var(--font-ui);
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.resultItem:last-child {
+  border-bottom: 0;
+}
+
+.resultItemText {
+  margin: 0;
+}
+
+.resultItemRefs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.resultRef {
+  display: inline-block;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font: 10px/12px var(--font-mono);
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+}
+
+/* ─── Loading spinner ───────────────────────────────────────────────────── */
+
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─── Failure display ───────────────────────────────────────────────────── */
+
+.failureMessage {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2);
+  background: var(--color-error-surface);
+  border-radius: 4px;
+  font: var(--type-ui-size)/var(--type-ui-line) var(--font-ui);
+  color: var(--color-error);
+}
+
+/* ─── Retry placeholder ─────────────────────────────────────────────────── */
+
+.retryPlaceholder {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font: var(--type-ui-size)/var(--type-ui-line) var(--font-ui);
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+  cursor: not-allowed;
+}
+
+.retryPlaceholder[aria-disabled='true'] {
+  opacity: 0.6;
+}
+
+/* ─── Screen reader only ────────────────────────────────────────────────── */
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -49,6 +49,20 @@ vi.mock('@/api/mutations/useSaveContent', () => ({
   useSavePlanContent: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
+// Coach M3A: PlanDocument now uses useAuth for coaching rail
+vi.mock('@/auth/AuthProvider', () => ({
+  useAuth: () => ({
+    me: { actor: { display_name: 'Test Researcher', public_id: 'actor-123' }, organization: { name: 'Test Org', public_id: 'org-1' }, memberships: [] },
+  }),
+}));
+
+// Coach M3A: Mock comments API (used by Comments rail)
+vi.mock('@/api/comments', () => ({
+  useCommentThreads: () => ({ data: { threads: [] }, isLoading: false }),
+  deriveOpenThreadCount: () => 0,
+  groupThreadsBySection: () => new Map(),
+}));
+
 function makePlan(overrides: Record<string, unknown> = {}) {
   return {
     study: {
