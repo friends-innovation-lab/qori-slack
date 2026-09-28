@@ -46,6 +46,8 @@ import {
   SaveStateIndicator,
   type CommentsRailScope,
   type SectionCommentProps,
+  type SectionCoachProps,
+  type CoachingSectionContext,
 } from '@/components/study/document';
 import { useAuth } from '@/auth/AuthProvider';
 import type { FieldProvenance } from '@qori/artifact-contracts';
@@ -77,6 +79,8 @@ export function PlanDocument() {
   const [railMode, setRailMode] = useState<'coaching' | 'comments' | null>(null);
   // CMT-7: Track comments scope (section-scoped or all)
   const [commentsScope, setCommentsScope] = useState<CommentsRailScope>({ mode: 'all' });
+  // M3B: Track section context for coaching (null = artifact context)
+  const [coachingSectionContext, setCoachingSectionContext] = useState<CoachingSectionContext | null>(null);
 
   // CMT-6: Fetch open comment threads for count display
   const artifactPublicId = (plan as any)?.artifact_public_id || '';
@@ -95,6 +99,12 @@ export function PlanDocument() {
     setRailMode('comments');
   }, []);
 
+  // M3B: Handler to open Coaching rail scoped to a section (navigation only, NO generation)
+  const openSectionCoaching = useCallback((sectionKey: string, label: string) => {
+    setCoachingSectionContext({ sectionKey, label });
+    setRailMode('coaching');
+  }, []);
+
   // CMT-7: Create comment props for a section
   const getSectionComment = useCallback(
     (sectionKey: string, label?: string): SectionCommentProps => ({
@@ -103,6 +113,15 @@ export function PlanDocument() {
       label,
     }),
     [sectionCounts, openSectionComments],
+  );
+
+  // M3B: Create coach props for a coachable section
+  const getSectionCoach = useCallback(
+    (sectionKey: string, label: string): SectionCoachProps => ({
+      onOpen: () => openSectionCoaching(sectionKey, label),
+      label,
+    }),
+    [openSectionCoaching],
   );
 
   // CMT-6/7: Handler to toggle Comments rail from header
@@ -280,6 +299,14 @@ export function PlanDocument() {
   const currentContentVersion = (plan as any)?.artifact_version ?? 1;
   const currentUserPublicId = me?.actor.public_id ?? '';
 
+  // M3B: Handler for section context changes (from CoachingRail "Back to artifact coaching")
+  const handleCoachingSectionContextChange = useCallback(
+    (context: CoachingSectionContext | null) => {
+      setCoachingSectionContext(context);
+    },
+    [],
+  );
+
   const railModes: RailMode[] = [
     {
       id: 'coaching',
@@ -291,6 +318,8 @@ export function PlanDocument() {
           artifactType="plan"
           currentContentVersion={currentContentVersion}
           currentUserPublicId={currentUserPublicId}
+          sectionContext={coachingSectionContext}
+          onSectionContextChange={handleCoachingSectionContextChange}
         />
       ),
     },
@@ -416,6 +445,7 @@ export function PlanDocument() {
                 title="Summary"
                 provenance={vm.sections.summary.provenance}
                 comment={getSectionComment('plan_summary', 'Summary')}
+                coach={getSectionCoach('research_summary', 'Summary')}
               >
                 {vm.sections.summary.exists ? (
                   <MarkdownDisplay markdown={vm.sections.summary.content || ''} className={docStyles.blockProse} />
@@ -432,6 +462,7 @@ export function PlanDocument() {
                   title="Background"
                   provenance={vm.sections.background.provenance}
                   comment={getSectionComment('plan_background', 'Background')}
+                  coach={getSectionCoach('research_summary', 'Background')}
                 >
                   <MarkdownDisplay markdown={vm.sections.background.content || ''} className={docStyles.blockProse} />
                 </DocumentSection>
@@ -479,6 +510,7 @@ export function PlanDocument() {
                   ...(vm.sections.dataCollection.exists ? [vm.sections.dataCollection.provenance] : []),
                 ].filter(Boolean)}
                 comment={getSectionComment('plan_method_approach', 'Method')}
+                coach={getSectionCoach('methodology_approach', 'Method')}
               >
                 {methodology && (
                   <p className={docStyles.kvParagraph}>
@@ -506,6 +538,7 @@ export function PlanDocument() {
                 title="Participants"
                 provenance={vm.sections.participantsProse.provenance}
                 comment={getSectionComment('plan_participants_prose', 'Participants')}
+                coach={getSectionCoach('participant_criteria', 'Participants')}
               >
                 {vm.sections.participantsProse.exists ? (
                   <MarkdownDisplay markdown={vm.sections.participantsProse.content || ''} className={docStyles.blockProse} />
@@ -567,6 +600,7 @@ export function PlanDocument() {
                     ? vm.sections.deliverables.provenance
                     : vm.deliverablesTable?.provenance}
                   comment={getSectionComment('plan_deliverables', 'Deliverables')}
+                  coach={getSectionCoach('deliverables', 'Deliverables')}
                 >
                   {vm.sections.deliverables.exists ? (
                     <MarkdownDisplay markdown={vm.sections.deliverables.content || ''} className={docStyles.blockProse} />
@@ -589,6 +623,7 @@ export function PlanDocument() {
                   title="Risks and mitigations"
                   provenance={vm.risks.provenance}
                   comment={getSectionComment('plan_risks', 'Risks and mitigations')}
+                  coach={getSectionCoach('plan_risks', 'Risks and mitigations')}
                 >
                   <DocumentTable
                     columns={[

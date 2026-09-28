@@ -1,7 +1,8 @@
 /**
- * Coaching Mutation Hooks — Coach M3A
+ * Coaching Mutation Hooks — Coach M3A/M3B
  *
  * React Query mutations for Coaching operations.
+ * M3B: Extended to support section-scoped reviews.
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -19,19 +20,32 @@ export interface UseCreateCoachRunOptions {
   onError?: (error: Error) => void;
 }
 
+/** M3B: Parameters for creating a coaching run */
+export interface CreateCoachRunMutationParams {
+  reviewScope: CoachReviewScope;
+  /** Required when reviewScope === 'section' */
+  sectionKey?: string;
+}
+
 /**
  * Create a new coaching run.
  *
  * Returns immediately with pending run (does NOT wait for AI generation).
  * Invalidates the history cache so the new run appears.
+ *
+ * M3B: Supports both artifact-level and section-level reviews.
  */
 export function useCreateCoachRun(options: UseCreateCoachRunOptions) {
   const { artifactPublicId, onSuccess, onError } = options;
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (reviewScope: CoachReviewScope) =>
-      createCoachRun({ artifactPublicId, reviewScope }),
+    mutationFn: (params: CreateCoachRunMutationParams) =>
+      createCoachRun({
+        artifactPublicId,
+        reviewScope: params.reviewScope,
+        sectionKey: params.sectionKey,
+      }),
     onSuccess: (data) => {
       // Invalidate history so new run appears
       queryClient.invalidateQueries({

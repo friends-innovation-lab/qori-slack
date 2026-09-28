@@ -20,4 +20,4 @@ export {
 export type { UseCoachHistoryOptions, UseCoachRunOptions } from './queries';
 
 export { useCreateCoachRun, isCoachRunAlreadyActiveError } from './mutations';
-export type { UseCreateCoachRunOptions } from './mutations';
+export type { UseCreateCoachRunOptions, CreateCoachRunMutationParams } from './mutations';

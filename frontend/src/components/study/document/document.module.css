@@ -82,6 +82,38 @@
   color: inherit;
 }
 
+/* ─── M3B: Section coach Review affordance ─── */
+.secCoach {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: var(--space-2);
+  padding: 2px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font: var(--weight-medium) 11px/1 var(--font-ui);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--motion-ease), background var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease);
+}
+/* Show on section hover/focus-within */
+.docSec:hover .secCoach,
+.docSec:focus-within .secCoach { opacity: 1; }
+/* Hover state */
+.secCoach:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-emphasis);
+  color: var(--color-text);
+}
+/* Focus state */
+.secCoach:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+  opacity: 1;
+}
+
 /* ─── Prose ─── */
 .block { margin: 0 0 var(--space-4); max-width: var(--layout-prose-measure); font: var(--type-doc-body-size)/var(--type-doc-body-line) var(--font-serif); color: var(--color-text); }
 .blockProse { font: var(--type-doc-body-size)/var(--type-doc-body-line) var(--font-serif); color: var(--color-text); }

@@ -2,6 +2,7 @@
  * CoachingRail — AI Coach advisory panel for Brief and Plan workspaces.
  *
  * Coach M3A: Workspace Coaching rail with artifact-level invocation.
+ * Coach M3B: Extended with section-level coaching.
  *
  * Features:
  * - Shared coaching history (artifact + section reviews)
@@ -9,16 +10,18 @@
  * - Current vs earlier version indicators
  * - Lazy-loaded run detail
  * - Polling for active runs
- * - Explicit "Review artifact" invocation
+ * - Explicit "Review artifact" invocation (M3A)
+ * - Section context with "Review this section" (M3B)
+ * - Back to artifact coaching navigation (M3B)
  *
  * CRITICAL: Opening Coaching MUST NOT invoke AI automatically.
- * Only explicit researcher action (Review artifact) creates a run.
+ * Only explicit researcher action (Review artifact / Review this section) creates a run.
  *
- * Spec: M3A sections 1-21
+ * Spec: M3A sections 1-21, M3B sections 13-29
  */
 
-import { useState, useCallback, useMemo } from 'react';
-import { Sparkles, AlertCircle } from 'lucide-react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { Sparkles, AlertCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import {
   useCoachHistory,
@@ -37,6 +40,14 @@ import styles from './CoachingRail.module.css';
 
 export type ArtifactType = 'brief' | 'plan';
 
+/** M3B: Section context state */
+export interface CoachingSectionContext {
+  /** Stable section key from contract */
+  sectionKey: string;
+  /** Human-readable label from contract */
+  label: string;
+}
+
 interface CoachingRailProps {
   /** Artifact public ID */
   artifactPublicId: string;
@@ -46,6 +57,10 @@ interface CoachingRailProps {
   currentContentVersion: number;
   /** Current user's public ID */
   currentUserPublicId: string;
+  /** M3B: Section context (null = artifact context) */
+  sectionContext?: CoachingSectionContext | null;
+  /** M3B: Callback when section context changes (for navigation state) */
+  onSectionContextChange?: (context: CoachingSectionContext | null) => void;
 }
 
 // ─── Section Display Names ──────────────────────────────────────────────────
@@ -58,6 +73,7 @@ const BRIEF_SECTION_LABELS: Record<string, string> = {
   target_barriers: 'Target Barriers',
   participant_approach: 'Participant Approach',
   methodology: 'Methodology',
+  out_of_scope: 'Out of Scope',
   timeline: 'Timeline',
   risks: 'Risks',
   discovery_sources: 'Discovery Sources',
@@ -82,6 +98,16 @@ function getSectionDisplayName(
   if (!sectionKey) return 'Artifact';
   const labels = artifactType === 'brief' ? BRIEF_SECTION_LABELS : PLAN_SECTION_LABELS;
   return labels[sectionKey] ?? 'Section';
+}
+
+// ─── Artifact Display Names ──────────────────────────────────────────────────
+
+/**
+ * Get user-friendly display name for artifact type.
+ * Never expose internal "artifact" terminology to users.
+ */
+function getArtifactDisplayName(artifactType: ArtifactType): string {
+  return artifactType === 'brief' ? 'Research Brief' : 'Research Plan';
 }
 
 // ─── Category Labels ────────────────────────────────────────────────────────
@@ -142,6 +168,61 @@ export function selectPrimaryArtifactRun(
   if (latestCurrentTerminal) return latestCurrentTerminal;
 
   // 4. Latest earlier version artifact review
+  const latestEarlier = earlierVersionRuns[0];
+  if (latestEarlier) return latestEarlier;
+
+  return null;
+}
+
+/**
+ * M3B: Select the primary section-review run using exact precedence:
+ * 1. Current user's active section-review for CURRENT version + exact section
+ * 2. Another collaborator's active section-review for CURRENT version + exact section
+ * 3. Latest completed/failed section-review for CURRENT version + exact section
+ * 4. Latest EARLIER-VERSION review for exact same section
+ * 5. null (no matching runs)
+ *
+ * CRITICAL: Only matches exact selectedSectionKey. Other sections excluded.
+ * CRITICAL: Artifact-scope runs are excluded.
+ */
+export function selectPrimarySectionRun(
+  runs: CoachRunSummaryResource[],
+  currentContentVersion: number,
+  currentUserPublicId: string,
+  selectedSectionKey: string,
+): CoachRunSummaryResource | null {
+  // Filter to section-scope reviews for exact section key only
+  const sectionRuns = runs.filter(
+    (r) => r.review_scope === 'section' && r.selected_section_key === selectedSectionKey,
+  );
+
+  if (sectionRuns.length === 0) return null;
+
+  // Partition by current version
+  const currentVersionRuns = sectionRuns.filter(
+    (r) => r.content_version === currentContentVersion,
+  );
+  const earlierVersionRuns = sectionRuns.filter(
+    (r) => r.content_version !== currentContentVersion,
+  );
+
+  // 1. Current user's active run for current version + exact section
+  const ownActive = currentVersionRuns.find(
+    (r) => r.requested_by.public_id === currentUserPublicId && isActiveRun(r),
+  );
+  if (ownActive) return ownActive;
+
+  // 2. Any active run for current version + exact section (collaborator's)
+  const anyActive = currentVersionRuns.find((r) => isActiveRun(r));
+  if (anyActive) return anyActive;
+
+  // 3. Latest completed/failed for current version + exact section
+  const latestCurrentTerminal = currentVersionRuns.find(
+    (r) => r.status === 'completed' || r.status === 'failed',
+  );
+  if (latestCurrentTerminal) return latestCurrentTerminal;
+
+  // 4. Latest earlier version section review
   const latestEarlier = earlierVersionRuns[0];
   if (latestEarlier) return latestEarlier;
 
@@ -257,21 +338,56 @@ export function CoachingRail({
   artifactType,
   currentContentVersion,
   currentUserPublicId,
+  sectionContext,
+  onSectionContextChange,
 }: CoachingRailProps) {
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  // M3B: Remember last section for "return to section" during rail session
+  const [rememberedSection, setRememberedSection] = useState<CoachingSectionContext | null>(null);
 
-  // Fetch coaching history
+  // Fetch coaching history (includes capabilities from M3B)
   const historyQuery = useCoachHistory({
     artifactPublicId,
     limit: 20,
   });
 
-  // Select primary run
   const runs = historyQuery.data?.runs ?? [];
-  const primaryRun = useMemo(
-    () => selectPrimaryArtifactRun(runs, currentContentVersion, currentUserPublicId),
-    [runs, currentContentVersion, currentUserPublicId],
-  );
+  const capabilities = historyQuery.data?.capabilities;
+
+  // M3B: Determine if we're in section context
+  const isInSectionContext = sectionContext != null;
+
+  // M3B: Track remembered section when entering section context
+  useEffect(() => {
+    if (sectionContext) {
+      setRememberedSection(sectionContext);
+    }
+  }, [sectionContext]);
+
+  // Select primary run based on context
+  const primaryRun = useMemo(() => {
+    if (isInSectionContext && sectionContext) {
+      return selectPrimarySectionRun(
+        runs,
+        currentContentVersion,
+        currentUserPublicId,
+        sectionContext.sectionKey,
+      );
+    }
+    return selectPrimaryArtifactRun(runs, currentContentVersion, currentUserPublicId);
+  }, [runs, currentContentVersion, currentUserPublicId, isInSectionContext, sectionContext]);
+
+  // M3B: Filter history for section context
+  const displayedHistory = useMemo(() => {
+    if (isInSectionContext && sectionContext) {
+      // Section context: show only this exact section's runs
+      return runs.filter(
+        (r) => r.review_scope === 'section' && r.selected_section_key === sectionContext.sectionKey,
+      );
+    }
+    // Artifact context: show all runs (artifact + all sections)
+    return runs;
+  }, [runs, isInSectionContext, sectionContext]);
 
   // Track which run to display in detail
   const displayedRunId = selectedRunId ?? primaryRun?.id ?? null;
@@ -298,22 +414,104 @@ export function CoachingRail({
     },
   });
 
-  // Check if user has an active run for current version
-  const hasActiveRun = runs.some(
-    (r) =>
-      r.requested_by.public_id === currentUserPublicId &&
-      r.content_version === currentContentVersion &&
-      r.review_scope === 'artifact' &&
-      isActiveRun(r),
-  );
+  // M3B: Check for active run based on current context
+  const hasActiveRun = useMemo(() => {
+    if (isInSectionContext && sectionContext) {
+      // Section context: check for active section run
+      return runs.some(
+        (r) =>
+          r.requested_by.public_id === currentUserPublicId &&
+          r.content_version === currentContentVersion &&
+          r.review_scope === 'section' &&
+          r.selected_section_key === sectionContext.sectionKey &&
+          isActiveRun(r),
+      );
+    }
+    // Artifact context: check for active artifact run
+    return runs.some(
+      (r) =>
+        r.requested_by.public_id === currentUserPublicId &&
+        r.content_version === currentContentVersion &&
+        r.review_scope === 'artifact' &&
+        isActiveRun(r),
+    );
+  }, [runs, currentUserPublicId, currentContentVersion, isInSectionContext, sectionContext]);
 
+  // M3B: Check if current version has a completed/failed run (for "Review again" label)
+  const hasCurrentVersionTerminalRun = useMemo(() => {
+    if (isInSectionContext && sectionContext) {
+      return runs.some(
+        (r) =>
+          r.content_version === currentContentVersion &&
+          r.review_scope === 'section' &&
+          r.selected_section_key === sectionContext.sectionKey &&
+          (r.status === 'completed' || r.status === 'failed'),
+      );
+    }
+    return runs.some(
+      (r) =>
+        r.content_version === currentContentVersion &&
+        r.review_scope === 'artifact' &&
+        (r.status === 'completed' || r.status === 'failed'),
+    );
+  }, [runs, currentContentVersion, isInSectionContext, sectionContext]);
+
+  // M3B: Handle create review (artifact or section)
   const handleCreateReview = useCallback(() => {
-    createRun.mutate('artifact');
-  }, [createRun]);
+    if (isInSectionContext && sectionContext) {
+      createRun.mutate({
+        reviewScope: 'section',
+        sectionKey: sectionContext.sectionKey,
+      });
+    } else {
+      createRun.mutate({ reviewScope: 'artifact' });
+    }
+  }, [createRun, isInSectionContext, sectionContext]);
+
+  // M3B: Handle back to artifact coaching
+  const handleBackToArtifact = useCallback(() => {
+    onSectionContextChange?.(null);
+    setSelectedRunId(null);
+  }, [onSectionContextChange]);
+
+  // M3B: Handle return to remembered section
+  const handleReturnToSection = useCallback(() => {
+    if (rememberedSection) {
+      onSectionContextChange?.(rememberedSection);
+      setSelectedRunId(null);
+    }
+  }, [rememberedSection, onSectionContextChange]);
 
   const handleSelectRun = useCallback((runId: string) => {
     setSelectedRunId(runId);
   }, []);
+
+  // M3B: Get section label for display (from capabilities or fallback)
+  const getSectionLabelFromCapabilities = useCallback(
+    (sectionKey: string): string => {
+      const section = capabilities?.coachable_sections?.find(
+        (s) => s.section_key === sectionKey,
+      );
+      return section?.label ?? getSectionDisplayName(artifactType, sectionKey);
+    },
+    [capabilities, artifactType],
+  );
+
+  // M3B: Determine action button label
+  // CRITICAL: Never expose "artifact" to users — use "Research Brief"/"Research Plan"
+  const actionButtonLabel = useMemo(() => {
+    const displayName = getArtifactDisplayName(artifactType);
+    if (isInSectionContext) {
+      return hasCurrentVersionTerminalRun ? 'Review section again' : 'Review this section';
+    }
+    return hasCurrentVersionTerminalRun ? `Review ${displayName} again` : `Review ${displayName}`;
+  }, [isInSectionContext, hasCurrentVersionTerminalRun, artifactType]);
+
+  // M3B: Context label for status heading
+  // CRITICAL: Never expose "artifact" to users — use "Research Brief"/"Research Plan"
+  const contextLabel = isInSectionContext && sectionContext
+    ? sectionContext.label
+    : getArtifactDisplayName(artifactType);
 
   // Loading state
   if (historyQuery.isLoading) {
@@ -347,16 +545,41 @@ export function CoachingRail({
     );
   }
 
-  // Empty state - no coaching history
-  if (runs.length === 0) {
+  // Empty state - no coaching history (context-aware)
+  if (displayedHistory.length === 0 && !primaryRun) {
     return (
       <div className={styles.coachingRail}>
         <p className={styles.eyebrow}>AI Coach</p>
+
+        {/* M3B: Section context header */}
+        {isInSectionContext && sectionContext && (
+          <div className={styles.sectionContextHeader}>
+            <h3 className={styles.sectionContextLabel}>{sectionContext.label}</h3>
+            <span className={styles.sectionContextTag}>Section review</span>
+          </div>
+        )}
+
+        {/* M3B: Back to full document coaching (in section context) */}
+        {isInSectionContext && (
+          <button
+            type="button"
+            className={styles.backLink}
+            onClick={handleBackToArtifact}
+          >
+            <ArrowLeft size={14} aria-hidden="true" />
+            Back to {getArtifactDisplayName(artifactType)} coaching
+          </button>
+        )}
+
         <div className={styles.emptyState}>
           <Sparkles size={24} className={styles.emptyIcon} aria-hidden="true" />
-          <h3 className={styles.emptyTitle}>No coaching reviews yet</h3>
+          <h3 className={styles.emptyTitle}>
+            {isInSectionContext
+              ? 'No section reviews yet'
+              : 'No coaching reviews yet'}
+          </h3>
           <p className={styles.emptyBody}>
-            Get AI-powered feedback on your {artifactType === 'brief' ? 'brief' : 'plan'}.
+            Get AI-powered feedback on {isInSectionContext ? `this section` : `your ${contextLabel}`}.
           </p>
         </div>
         <div className={styles.actions}>
@@ -366,7 +589,7 @@ export function CoachingRail({
             disabled={createRun.isPending}
             loading={createRun.isPending}
           >
-            Review artifact
+            {actionButtonLabel}
           </Button>
         </div>
       </div>
@@ -378,19 +601,62 @@ export function CoachingRail({
     <div className={styles.coachingRail}>
       <p className={styles.eyebrow}>AI Coach</p>
 
+      {/* M3B: Section context header */}
+      {isInSectionContext && sectionContext && (
+        <div className={styles.sectionContextHeader}>
+          <h3 className={styles.sectionContextLabel}>{sectionContext.label}</h3>
+          <span className={styles.sectionContextTag}>Section review</span>
+        </div>
+      )}
+
+      {/* M3B: Back to full document coaching (in section context) */}
+      {isInSectionContext && (
+        <button
+          type="button"
+          className={styles.backLink}
+          onClick={handleBackToArtifact}
+        >
+          <ArrowLeft size={14} aria-hidden="true" />
+          Back to {getArtifactDisplayName(artifactType)} coaching
+        </button>
+      )}
+
+      {/* M3B: Return to section (in artifact context with remembered section) */}
+      {!isInSectionContext && rememberedSection && (
+        <button
+          type="button"
+          className={styles.returnLink}
+          onClick={handleReturnToSection}
+        >
+          Return to {rememberedSection.label}
+        </button>
+      )}
+
       {/* Primary run display */}
       {primaryRun && (
         <>
-          {/* Status heading */}
+          {/* Status heading with user-friendly copy */}
           {primaryRun.status === 'pending' && (
-            <h2 className={`${styles.status} ${styles.statusPending}`}>
-              Queued for review
-            </h2>
+            <>
+              <h2 className={`${styles.status} ${styles.statusPending}`}>
+                <span className={styles.spinner} aria-hidden="true" />{' '}
+                Preparing your {isInSectionContext ? sectionContext?.label : contextLabel} review…
+              </h2>
+              <p className={styles.workingCopy}>
+                You can keep working while Coach prepares your review.
+              </p>
+            </>
           )}
           {primaryRun.status === 'running' && (
-            <h2 className={`${styles.status} ${styles.statusRunning}`}>
-              <span className={styles.spinner} aria-hidden="true" /> Reviewing artifact
-            </h2>
+            <>
+              <h2 className={`${styles.status} ${styles.statusRunning}`}>
+                <span className={styles.spinner} aria-hidden="true" />{' '}
+                Reviewing your {isInSectionContext ? sectionContext?.label : contextLabel}…
+              </h2>
+              <p className={styles.workingCopy}>
+                You can keep working while Coach reviews your {isInSectionContext ? 'section' : artifactType}.
+              </p>
+            </>
           )}
           {primaryRun.status === 'completed' && (
             <h2 className={`${styles.status} ${styles.statusCompleted}`}>
@@ -399,7 +665,7 @@ export function CoachingRail({
           )}
           {primaryRun.status === 'failed' && (
             <h2 className={`${styles.status} ${styles.statusFailed}`}>
-              Review failed
+              Review couldn't be completed
             </h2>
           )}
 
@@ -419,23 +685,13 @@ export function CoachingRail({
             <StructuredResult run={displayedRun} />
           )}
 
-          {/* Failed run - show error */}
-          {primaryRun.status === 'failed' && displayedRun?.failure && (
-            <div className={styles.failureMessage}>
-              {displayedRun.failure.message}
-            </div>
-          )}
-
-          {/* Failed state - retry placeholder (not functional in M3A) */}
+          {/* Failed run - show error with safety copy */}
           {primaryRun.status === 'failed' && (
-            <div style={{ marginTop: 'var(--space-3)' }}>
-              <span
-                className={styles.retryPlaceholder}
-                aria-disabled="true"
-                title="Retry will be available in a future release"
-              >
-                Retry
-              </span>
+            <div className={styles.failureMessage}>
+              {displayedRun?.failure?.message ?? 'Coach couldn\'t complete this review.'}
+              <p className={styles.failureSafetyCopy}>
+                Your {isInSectionContext ? sectionContext?.label : contextLabel} wasn't changed. You can try again.
+              </p>
             </div>
           )}
         </>
@@ -450,7 +706,7 @@ export function CoachingRail({
           loading={createRun.isPending}
           aria-describedby={hasActiveRun ? 'active-run-hint' : undefined}
         >
-          Review artifact
+          {actionButtonLabel}
         </Button>
       </div>
 
@@ -461,11 +717,13 @@ export function CoachingRail({
       )}
 
       {/* History section */}
-      {runs.length > 0 && (
+      {displayedHistory.length > 0 && (
         <div className={styles.historySection}>
-          <h3 className={styles.historyLabel}>History</h3>
+          <h3 className={styles.historyLabel}>
+            {isInSectionContext ? 'Section history' : 'History'}
+          </h3>
           <ul className={styles.historyList} role="listbox" aria-label="Coaching history">
-            {runs.map((run) => (
+            {displayedHistory.map((run) => (
               <li
                 key={run.id}
                 className={`${styles.historyRow} ${
@@ -485,8 +743,8 @@ export function CoachingRail({
                 <div className={styles.historyRowHeader}>
                   <span className={styles.historyRowLabel}>
                     {run.review_scope === 'section'
-                      ? `${getSectionDisplayName(artifactType, run.selected_section_key)} review`
-                      : 'Artifact review'}
+                      ? `${getSectionLabelFromCapabilities(run.selected_section_key!)} review`
+                      : `${getArtifactDisplayName(artifactType)} review`}
                   </span>
                   <StatusBadge status={run.status} />
                 </div>

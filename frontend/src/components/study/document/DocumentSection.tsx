@@ -10,10 +10,15 @@
  * - Shows open thread count when > 0
  * - Shows subtle icon on hover/focus when count = 0
  * - Opens Comments rail scoped to this section
+ *
+ * M3B: Added coaching Review affordance for section-level coaching.
+ * - Shows "Review" action only for coachable sections
+ * - Opens Coaching rail scoped to this section (NO generation)
+ * - Does NOT show status/counts — Coach is optional advisory
  */
 
 import type { ReactNode } from 'react';
-import { Lock, MessageSquare } from 'lucide-react';
+import { Lock, MessageSquare, Sparkles } from 'lucide-react';
 import type { FieldProvenance } from '@qori/artifact-contracts';
 import { ProvenanceTag } from './ProvenanceTag';
 import styles from './document.module.css';
@@ -31,6 +36,14 @@ export interface SectionCommentProps {
   label?: string;
 }
 
+/** M3B: Coach Review affordance props */
+export interface SectionCoachProps {
+  /** Handler to open Coaching rail scoped to this section (NO generation) */
+  onOpen: () => void;
+  /** Section label for accessible naming (falls back to title) */
+  label?: string;
+}
+
 interface DocumentSectionProps {
   sectionId: string;
   title: string;
@@ -42,6 +55,8 @@ interface DocumentSectionProps {
   sourceNote?: ReactNode;
   /** CMT-7: Comment affordance for section-scoped comments */
   comment?: SectionCommentProps;
+  /** M3B: Coach Review affordance for section-scoped coaching */
+  coach?: SectionCoachProps;
   children: ReactNode;
 }
 
@@ -52,6 +67,7 @@ export function DocumentSection({
   editable,
   sourceNote,
   comment,
+  coach,
   children,
 }: DocumentSectionProps) {
   const headingId = `sec-${sectionId}-h`;
@@ -72,6 +88,10 @@ export function DocumentSection({
       ? `Open comments for ${commentLabel}, ${comment.count} open ${comment.count === 1 ? 'thread' : 'threads'}`
       : `No open comments for ${commentLabel}. Add a comment.`;
 
+  // M3B: Build accessible label for coach affordance
+  const coachLabel = coach?.label || title;
+  const coachAriaLabel = `Open coaching review for ${coachLabel}`;
+
   return (
     <section
       className={styles.docSec}
@@ -90,6 +110,18 @@ export function DocumentSection({
         )}
         {provenance && (
           <ProvenanceTag provenance={provenance} editable={editable} />
+        )}
+        {/* M3B: Section coach Review affordance (navigation only, NO generation) */}
+        {coach && (
+          <button
+            type="button"
+            className={styles.secCoach}
+            onClick={coach.onOpen}
+            aria-label={coachAriaLabel}
+          >
+            <Sparkles size={12} aria-hidden="true" />
+            <span>Review</span>
+          </button>
         )}
         {/* CMT-7: Section comment affordance */}
         {comment && (

@@ -13,7 +13,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { selectPrimaryArtifactRun, CoachingRail } from './CoachingRail';
+import { selectPrimaryArtifactRun, selectPrimarySectionRun, CoachingRail } from './CoachingRail';
 import type { CoachRunSummaryResource } from '@qori/api-contracts';
 
 // ─── Test Data Factories ─────────────────────────────────────────────────────
@@ -336,7 +336,7 @@ describe('CoachingRail Component', () => {
       expect(screen.getByText(/Get AI-powered feedback/)).toBeInTheDocument();
     });
 
-    it('shows Review artifact button in empty state', () => {
+    it('shows Review Research Brief button in empty state', () => {
       vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
         data: { artifact_public_id: 'art-123', runs: [], cursor: null, has_more: false },
         isLoading: false,
@@ -346,7 +346,7 @@ describe('CoachingRail Component', () => {
 
       renderWithProviders(<CoachingRail {...defaultProps} />);
 
-      expect(screen.getByRole('button', { name: /review artifact/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /review research brief/i })).toBeInTheDocument();
     });
   });
 
@@ -394,7 +394,7 @@ describe('CoachingRail Component', () => {
       renderWithProviders(<CoachingRail {...defaultProps} />);
 
       expect(screen.getByText('History')).toBeInTheDocument();
-      expect(screen.getByText('Artifact review')).toBeInTheDocument();
+      expect(screen.getByText('Research Brief review')).toBeInTheDocument();
     });
 
     it('shows requester name in history', () => {
@@ -414,7 +414,7 @@ describe('CoachingRail Component', () => {
   });
 
   describe('action button state', () => {
-    it('disables Review artifact when user has active run', () => {
+    it('disables Review Research Brief when user has active run', () => {
       const activeRun = createRunSummary({
         status: 'pending',
         content_version: 1,
@@ -431,7 +431,7 @@ describe('CoachingRail Component', () => {
 
       renderWithProviders(<CoachingRail {...defaultProps} />);
 
-      const button = screen.getByRole('button', { name: /review artifact/i });
+      const button = screen.getByRole('button', { name: /review research brief/i });
       expect(button).toBeDisabled();
       expect(screen.getByText('A review is already in progress.')).toBeInTheDocument();
     });
@@ -453,7 +453,8 @@ describe('CoachingRail Component', () => {
 
       renderWithProviders(<CoachingRail {...defaultProps} />);
 
-      const button = screen.getByRole('button', { name: /review artifact/i });
+      // M3B: When there's a completed run for current version, button says "Review Research Brief again"
+      const button = screen.getByRole('button', { name: /review research brief again/i });
       expect(button).not.toBeDisabled();
     });
   });
@@ -530,7 +531,7 @@ describe('CoachingRail Component', () => {
       const { rerender } = renderWithProviders(<CoachingRail {...defaultProps} />);
 
       // Browse history — verify history row is visible
-      expect(screen.getByText('Artifact review')).toBeInTheDocument();
+      expect(screen.getByText('Research Brief review')).toBeInTheDocument();
 
       // Rerender (simulates switching tabs and returning)
       rerender(<CoachingRail {...defaultProps} />);
@@ -538,5 +539,235 @@ describe('CoachingRail Component', () => {
       // MERGE GATE: createCoachRun must NOT have been called
       expect(mockMutate).not.toHaveBeenCalled();
     });
+  });
+});
+
+// ─── M3B: selectPrimarySectionRun Unit Tests ─────────────────────────────────
+
+describe('selectPrimarySectionRun', () => {
+  const currentVersion = 2;
+  const currentUserId = 'user-current';
+  const otherUserId = 'user-other';
+  const targetSection = 'summary';
+
+  function createSectionRun(
+    overrides: Partial<CoachRunSummaryResource> = {},
+  ): CoachRunSummaryResource {
+    return {
+      id: crypto.randomUUID(),
+      artifact_public_id: 'art-123',
+      artifact_type: 'brief',
+      content_version: currentVersion,
+      selected_section_key: targetSection,
+      review_scope: 'section',
+      status: 'completed',
+      requested_by: {
+        public_id: currentUserId,
+        display_name: 'Test Researcher',
+      },
+      requested_at: new Date().toISOString(),
+      completed_at: new Date().toISOString(),
+      failed_at: null,
+      is_current_version: true,
+      retry_of_run_id: null,
+      ...overrides,
+    };
+  }
+
+  it('returns null when no runs exist', () => {
+    const result = selectPrimarySectionRun([], currentVersion, currentUserId, targetSection);
+    expect(result).toBeNull();
+  });
+
+  it('excludes artifact-scope runs', () => {
+    const artifactRun = createSectionRun({
+      review_scope: 'artifact',
+      selected_section_key: null,
+    });
+
+    const result = selectPrimarySectionRun([artifactRun], currentVersion, currentUserId, targetSection);
+    expect(result).toBeNull();
+  });
+
+  it('excludes runs for different sections', () => {
+    const otherSectionRun = createSectionRun({
+      selected_section_key: 'methodology',
+    });
+
+    const result = selectPrimarySectionRun([otherSectionRun], currentVersion, currentUserId, targetSection);
+    expect(result).toBeNull();
+  });
+
+  it('returns matching section run for exact section key', () => {
+    const sectionRun = createSectionRun();
+
+    const result = selectPrimarySectionRun([sectionRun], currentVersion, currentUserId, targetSection);
+    expect(result).toBe(sectionRun);
+  });
+
+  it('prefers latest completed run when no active runs exist', () => {
+    const newerCompletedId = 'newer-completed-run-id';
+    const newerCompleted = createSectionRun({
+      id: newerCompletedId,
+      status: 'completed',
+      requested_by: { public_id: currentUserId, display_name: 'Current User' },
+    });
+    const olderCompleted = createSectionRun({
+      id: 'older-completed-run-id',
+      status: 'completed',
+      requested_by: { public_id: otherUserId, display_name: 'Other User' },
+    });
+
+    // Runs are sorted newest-first, so newerCompleted comes first
+    const result = selectPrimarySectionRun(
+      [newerCompleted, olderCompleted],
+      currentVersion,
+      currentUserId,
+      targetSection,
+    );
+    // Should return the first terminal run when no active runs
+    expect(result?.id).toBe(newerCompletedId);
+    expect(result?.status).toBe('completed');
+  });
+
+  it('returns earlier version section run as fallback', () => {
+    const earlierVersionRun = createSectionRun({
+      content_version: currentVersion - 1,
+      is_current_version: false,
+    });
+
+    const result = selectPrimarySectionRun(
+      [earlierVersionRun],
+      currentVersion,
+      currentUserId,
+      targetSection,
+    );
+    expect(result).toBe(earlierVersionRun);
+  });
+});
+
+// ─── M3B: Section Context UI Tests ─────────────────────────────────────────────
+
+describe('M3B section context', () => {
+  const defaultProps = {
+    artifactPublicId: 'art-123',
+    artifactType: 'brief' as const,
+    currentContentVersion: 1,
+    currentUserPublicId: 'user-123',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { artifact_public_id: 'art-123', runs: [], cursor: null, has_more: false },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+    vi.mocked(coachingApi.useCreateCoachRun).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    } as any);
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+  });
+
+  it('shows section context header when sectionContext is provided', () => {
+    renderWithProviders(
+      <CoachingRail
+        {...defaultProps}
+        sectionContext={{ sectionKey: 'summary', label: 'Summary' }}
+      />,
+    );
+
+    expect(screen.getByText('Summary')).toBeInTheDocument();
+    expect(screen.getByText('Section review')).toBeInTheDocument();
+  });
+
+  it('shows "Back to Research Brief coaching" link in section context', () => {
+    renderWithProviders(
+      <CoachingRail
+        {...defaultProps}
+        sectionContext={{ sectionKey: 'summary', label: 'Summary' }}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /back to research brief coaching/i })).toBeInTheDocument();
+  });
+
+  it('shows "Review this section" button for new section', () => {
+    renderWithProviders(
+      <CoachingRail
+        {...defaultProps}
+        sectionContext={{ sectionKey: 'summary', label: 'Summary' }}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /review this section/i })).toBeInTheDocument();
+  });
+
+  it('shows section history label in section context', () => {
+    const sectionRun = createRunSummary({
+      review_scope: 'section',
+      selected_section_key: 'summary',
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: {
+        artifact_public_id: 'art-123',
+        runs: [sectionRun],
+        cursor: null,
+        has_more: false,
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    renderWithProviders(
+      <CoachingRail
+        {...defaultProps}
+        sectionContext={{ sectionKey: 'summary', label: 'Summary' }}
+      />,
+    );
+
+    expect(screen.getByText('Section history')).toBeInTheDocument();
+  });
+
+  /**
+   * M3B Merge Gate — §41: Section context does NOT invoke AI automatically.
+   *
+   * This test proves that opening a section context creates ZERO Coach runs.
+   * Only explicit "Review this section" may create a run.
+   */
+  it('M3B merge gate: opening section context does NOT invoke createCoachRun', () => {
+    const mockMutate = vi.fn();
+    vi.mocked(coachingApi.useCreateCoachRun).mockReturnValue({
+      mutate: mockMutate,
+      isPending: false,
+    } as any);
+
+    // Render in section context
+    const { rerender } = renderWithProviders(
+      <CoachingRail
+        {...defaultProps}
+        sectionContext={{ sectionKey: 'summary', label: 'Summary' }}
+      />,
+    );
+
+    // Rerender (simulates navigating away and back)
+    rerender(
+      <CoachingRail
+        {...defaultProps}
+        sectionContext={{ sectionKey: 'methodology', label: 'Methodology' }}
+      />,
+    );
+
+    // MERGE GATE: createCoachRun must NOT have been called
+    expect(mockMutate).not.toHaveBeenCalled();
   });
 });

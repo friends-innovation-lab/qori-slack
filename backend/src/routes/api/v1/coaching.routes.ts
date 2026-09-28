@@ -37,6 +37,8 @@ import type {
   CoachRunStatus,
   CoachReviewScope,
   CoachFailureCode,
+  CoachingCapabilities,
+  CoachableSectionMetadata,
 } from '@qori/api-contracts';
 import type {
   InternalCoachingRunDTO,
@@ -45,6 +47,7 @@ import type {
 } from '../../../application/coaching.app-service';
 import { resourceNotFound, validationError } from '../../../types/api-errors';
 import { getActiveContract } from '../../../coaching/contracts/registry';
+import { getModelName } from '../../../helpers/modelProvider';
 import sequelize from '../../../database';
 import type { ResearchArtifact } from '../../../database/models/research_artifact';
 
@@ -237,6 +240,36 @@ function toRunDetailResource(
   return detail;
 }
 
+// ─── Capability Extraction ─────────────────────────────────────────────────
+
+/**
+ * M3B: Extract coaching capabilities from a Coaching Contract.
+ * Only exposes safe public metadata — no prompts, model config, or internals.
+ */
+function extractCapabilities(artifactType: string): CoachingCapabilities {
+  const contract = getActiveContract(artifactType);
+
+  if (!contract) {
+    return {
+      artifact_review: false,
+      coachable_sections: [],
+    };
+  }
+
+  // Extract coachable sections from contract
+  const coachableSections: CoachableSectionMetadata[] = (contract.sections ?? [])
+    .filter((s) => s.coachable)
+    .map((s) => ({
+      section_key: s.key,
+      label: s.displayName,
+    }));
+
+  return {
+    artifact_review: true,
+    coachable_sections: coachableSections,
+  };
+}
+
 // ─── Route Handlers ────────────────────────────────────────────────────────
 
 // Valid status values for query validation
@@ -315,8 +348,12 @@ router.get('/artifacts/:artifactPublicId/coaching', requireAuth, async (req, res
     // Map to public resources
     const runs = limitedRuns.map((run) => toRunSummaryResource(run, artifact.content_version));
 
+    // M3B: Extract capabilities from active contract
+    const capabilities = extractCapabilities(artifact.artifact_type);
+
     const response: CoachRunListResponse = {
       artifact_public_id: artifactPublicId,
+      capabilities,
       runs,
       cursor: null, // M3A: No pagination cursor yet
       has_more: internalRuns.length > limit,
@@ -330,23 +367,46 @@ router.get('/artifacts/:artifactPublicId/coaching', requireAuth, async (req, res
 
 /**
  * POST /api/v1/artifacts/:artifactPublicId/coaching
- * Create a new artifact-level coaching run.
+ * Create a new coaching run (artifact-level or section-level).
  *
  * Body:
- * - review_scope: 'artifact' (M3A only supports artifact scope)
+ * - review_scope: 'artifact' | 'section'
+ * - section_key: string (required if review_scope === 'section')
  *
  * Returns immediately with pending run (does NOT wait for AI generation).
  */
 router.post('/artifacts/:artifactPublicId/coaching', requireAuth, async (req, res, next) => {
   try {
     const artifactPublicId = req.params.artifactPublicId as string;
-    const { review_scope } = req.body as { review_scope?: CoachReviewScope };
+    const { review_scope, section_key } = req.body as {
+      review_scope?: CoachReviewScope;
+      section_key?: string;
+    };
 
-    // M3A: Only artifact-level review is supported
-    if (review_scope && review_scope !== 'artifact') {
+    // Default to artifact scope
+    const scope: CoachReviewScope = review_scope ?? 'artifact';
+
+    // Validate scope
+    if (!VALID_SCOPE_VALUES.includes(scope)) {
       throw validationError(
-        'Only artifact-level reviews are supported. Section-level reviews will be available in a future release.',
-        { review_scope, supported: ['artifact'] },
+        `Invalid review_scope '${scope}'. Must be one of: ${VALID_SCOPE_VALUES.join(', ')}`,
+        { review_scope: scope, valid_values: VALID_SCOPE_VALUES },
+      );
+    }
+
+    // M3B: Section scope requires section_key
+    if (scope === 'section' && !section_key) {
+      throw validationError(
+        'section_key is required when review_scope is "section"',
+        { review_scope: scope },
+      );
+    }
+
+    // Artifact scope must not have section_key
+    if (scope === 'artifact' && section_key) {
+      throw validationError(
+        'section_key must not be provided when review_scope is "artifact"',
+        { review_scope: scope, section_key },
       );
     }
 
@@ -358,15 +418,25 @@ router.post('/artifacts/:artifactPublicId/coaching', requireAuth, async (req, re
       throw validationError(`Coaching is not available for artifact type '${artifact.artifact_type}'`);
     }
 
+    // M3B: Validate section_key against contract
+    if (scope === 'section' && section_key) {
+      if (!contract.isValidSectionKey(section_key)) {
+        throw validationError(
+          `Section '${section_key}' is not coachable for ${artifact.artifact_type} artifacts`,
+          { section_key, artifact_type: artifact.artifact_type },
+        );
+      }
+    }
+
     // Create the run
     const internalRun = await coachingAppService.createCoachRun(req.ctx!, {
       artifact_id: artifact.id,
-      review_scope: 'artifact',
-      selected_section_key: null,
+      review_scope: scope,
+      selected_section_key: scope === 'section' ? section_key! : null,
       coaching_contract_version: contract.contractVersion,
       prompt_template_version: contract.promptTemplateVersion,
       provider: 'anthropic',
-      model: `claude-${contract.modelConfig.tier}-4-20250514`,
+      model: getModelName(contract.modelConfig.tier),
     });
 
     const run = toRunSummaryResource(internalRun, artifact.content_version);
