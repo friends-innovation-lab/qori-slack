@@ -28,6 +28,7 @@ import {
   COACH_POLLER_ENABLED,
   generateWorkerId,
 } from './config';
+import { logWorkerShutdown } from './ownership-diagnostics';
 
 // ─── State ──────────────────────────────────────────────────────────────
 
@@ -79,6 +80,11 @@ export function stopCoachPoller(): void {
 
   console.log('[Coach Poller] Stopping...');
   isShuttingDown = true;
+
+  // Diagnostic: Log worker shutdown with current run if any
+  if (currentWorkerId) {
+    logWorkerShutdown(currentWorkerId, currentRunId);
+  }
 
   // Cancel pending poll
   if (pollTimeout) {
