@@ -63,6 +63,21 @@ vi.mock('@/api/comments', () => ({
   groupThreadsBySection: () => new Map(),
 }));
 
+// Coach M3B: Mock coaching API (used by Coaching rail)
+// CRITICAL: Plan document MUST render regardless of coaching API state.
+// Coaching is OPTIONAL advisory — it cannot block canonical document rendering.
+const mockCoachHistory = vi.fn();
+const mockCoachRun = vi.fn();
+const mockCreateCoachRun = vi.fn();
+vi.mock('@/api/coaching', () => ({
+  useCoachHistory: () => mockCoachHistory(),
+  useCoachRun: () => mockCoachRun(),
+  useActiveCoachRun: () => ({ data: null, isLoading: false }),
+  useCreateCoachRun: () => ({ mutateAsync: mockCreateCoachRun, isPending: false }),
+  isActiveRun: (r: { status: string }) => r.status === 'pending' || r.status === 'running',
+  isTerminalRun: (r: { status: string }) => r.status === 'completed' || r.status === 'failed',
+}));
+
 function makePlan(overrides: Record<string, unknown> = {}) {
   return {
     study: {
@@ -153,7 +168,23 @@ function makePlan(overrides: Record<string, unknown> = {}) {
 }
 
 describe('PlanDocument', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: coaching API returns empty history (no runs)
+    mockCoachHistory.mockReturnValue({
+      data: {
+        artifact_public_id: 'art-123',
+        runs: [],
+        capabilities: { artifact_review: true, coachable_sections: [] },
+        cursor: null,
+        has_more: false,
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    mockCoachRun.mockReturnValue({ data: null, isLoading: false });
+  });
 
   // ─── Basic rendering ───────────────────────────────────────────────
 
@@ -533,6 +564,119 @@ describe('PlanDocument', () => {
       renderWithProviders(<PlanDocument />);
       // Artifact tabs navigation
       expect(screen.getByLabelText('Study artifacts')).toBeInTheDocument();
+    });
+  });
+
+  // ─── Coach Failure Isolation (M3B regression gate) ────────────────
+  // CRITICAL: Coaching is OPTIONAL advisory. Coach API state MUST NOT
+  // affect canonical Plan document rendering. These tests verify the
+  // isolation invariant.
+
+  describe('Coach Failure Isolation', () => {
+    it('renders Plan document when coaching history is loading', () => {
+      mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
+      mockCoachHistory.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isError: false,
+        refetch: vi.fn(),
+      });
+
+      const { container } = renderWithProviders(<PlanDocument />);
+
+      // Plan canonical content MUST render regardless of coaching loading state
+      // Use section IDs to verify document sections render
+      expect(container.querySelector('[id="sec-summary"]')).toBeInTheDocument();
+      expect(container.querySelector('[id="sec-method"]')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Summary' })).toBeInTheDocument();
+    });
+
+    it('renders Plan document when coaching history fails', () => {
+      mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
+      mockCoachHistory.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+        error: new Error('Coaching API unavailable'),
+        refetch: vi.fn(),
+      });
+
+      const { container } = renderWithProviders(<PlanDocument />);
+
+      // Plan canonical content MUST render even when coaching API fails
+      expect(container.querySelector('[id="sec-summary"]')).toBeInTheDocument();
+      expect(container.querySelector('[id="sec-method"]')).toBeInTheDocument();
+      expect(container.querySelector('[id="sec-participants"]')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Summary' })).toBeInTheDocument();
+    });
+
+    it('renders Plan document when coaching capabilities are missing', () => {
+      mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
+      mockCoachHistory.mockReturnValue({
+        data: {
+          artifact_public_id: 'art-123',
+          runs: [],
+          capabilities: undefined, // No capabilities
+          cursor: null,
+          has_more: false,
+        },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      });
+
+      const { container } = renderWithProviders(<PlanDocument />);
+
+      // Plan canonical content MUST render without coaching capabilities
+      expect(container.querySelector('[id="sec-summary"]')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Summary' })).toBeInTheDocument();
+    });
+
+    it('renders Plan document with section Review affordances when capabilities exist', () => {
+      mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
+      mockCoachHistory.mockReturnValue({
+        data: {
+          artifact_public_id: 'art-123',
+          runs: [],
+          capabilities: {
+            artifact_review: true,
+            coachable_sections: [
+              { section_key: 'research_summary', label: 'Research Summary' },
+              { section_key: 'methodology_approach', label: 'Methodology Approach' },
+            ],
+          },
+          cursor: null,
+          has_more: false,
+        },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      });
+
+      const { container } = renderWithProviders(<PlanDocument />);
+
+      // Plan content renders with section Review affordances
+      expect(container.querySelector('[id="sec-summary"]')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Summary' })).toBeInTheDocument();
+      // Section Review buttons should be present (multiple sections have coach prop)
+      const reviewButtons = screen.getAllByRole('button', { name: /coaching review/i });
+      expect(reviewButtons.length).toBeGreaterThan(0);
+    });
+
+    it('Comments still available when coaching fails', () => {
+      mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
+      mockCoachHistory.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+        error: new Error('Coaching API unavailable'),
+        refetch: vi.fn(),
+      });
+
+      renderWithProviders(<PlanDocument />);
+
+      // Comments toggle should still be accessible
+      expect(screen.getByLabelText('Comments')).toBeInTheDocument();
     });
   });
 });

@@ -32,6 +32,27 @@ vi.mock('@/api/mutations/useSaveContent', () => ({
   useSaveBriefContent: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
+// Coach M3A: Mock comments API (used by Comments rail)
+vi.mock('@/api/comments', () => ({
+  useCommentThreads: () => ({ data: { threads: [] }, isLoading: false }),
+  deriveOpenThreadCount: () => 0,
+  groupThreadsBySection: () => new Map(),
+}));
+
+// Coach M3B: Mock coaching API (used by Coaching rail)
+// CRITICAL: Brief document MUST render regardless of coaching API state.
+const mockCoachHistory = vi.fn();
+const mockCoachRun = vi.fn();
+const mockCreateCoachRun = vi.fn();
+vi.mock('@/api/coaching', () => ({
+  useCoachHistory: () => mockCoachHistory(),
+  useCoachRun: () => mockCoachRun(),
+  useActiveCoachRun: () => ({ data: null, isLoading: false }),
+  useCreateCoachRun: () => ({ mutateAsync: mockCreateCoachRun, isPending: false }),
+  isActiveRun: (r: { status: string }) => r.status === 'pending' || r.status === 'running',
+  isTerminalRun: (r: { status: string }) => r.status === 'completed' || r.status === 'failed',
+}));
+
 function makeBrief(overrides: any = {}) {
   return {
     study: { public_id: 'study-1', name: 'Test Study', status: 'active', brief_status: 'approved', project_public_id: 'p1', created_at: '2026-09-01' },
@@ -77,7 +98,23 @@ function makeBrief(overrides: any = {}) {
 }
 
 describe('BriefDocument', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: coaching API returns empty history (no runs)
+    mockCoachHistory.mockReturnValue({
+      data: {
+        artifact_public_id: 'art-123',
+        runs: [],
+        capabilities: { artifact_review: true, coachable_sections: [] },
+        cursor: null,
+        has_more: false,
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    mockCoachRun.mockReturnValue({ data: null, isLoading: false });
+  });
 
   it('renders full document with stable IDs', () => {
     mockBrief.mockReturnValue({ data: makeBrief(), isLoading: false, error: null });
@@ -635,6 +672,61 @@ describe('BriefDocument', () => {
 
       // Verify UI reflects the update
       expect(screen.getByText('Updated')).toBeInTheDocument();
+    });
+  });
+
+  // ─── Coach Failure Isolation (M3B regression gate) ────────────────
+  // CRITICAL: Coaching is OPTIONAL advisory. Coach API state MUST NOT
+  // affect canonical Brief document rendering.
+
+  describe('Coach Failure Isolation', () => {
+    it('renders Brief document when coaching history is loading', () => {
+      mockBrief.mockReturnValue({ data: makeBrief(), isLoading: false, error: null });
+      mockCoachHistory.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isError: false,
+        refetch: vi.fn(),
+      });
+
+      const { container } = renderWithProviders(<BriefDocument />);
+
+      // Brief canonical content MUST render regardless of coaching loading state
+      expect(container.querySelector('[id="sec-summary"]')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Summary' })).toBeInTheDocument();
+    });
+
+    it('renders Brief document when coaching history fails', () => {
+      mockBrief.mockReturnValue({ data: makeBrief(), isLoading: false, error: null });
+      mockCoachHistory.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+        error: new Error('Coaching API unavailable'),
+        refetch: vi.fn(),
+      });
+
+      const { container } = renderWithProviders(<BriefDocument />);
+
+      // Brief canonical content MUST render even when coaching API fails
+      expect(container.querySelector('[id="sec-summary"]')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Summary' })).toBeInTheDocument();
+    });
+
+    it('Comments still available when coaching fails', () => {
+      mockBrief.mockReturnValue({ data: makeBrief(), isLoading: false, error: null });
+      mockCoachHistory.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+        error: new Error('Coaching API unavailable'),
+        refetch: vi.fn(),
+      });
+
+      renderWithProviders(<BriefDocument />);
+
+      // Comments toggle should still be accessible
+      expect(screen.getByLabelText('Comments')).toBeInTheDocument();
     });
   });
 });
