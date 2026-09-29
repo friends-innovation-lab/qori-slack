@@ -16,6 +16,15 @@ import type { CoachingFailureCode } from '../../database/models/coaching_run';
 // ─── Generation Input ───────────────────────────────────────────────────
 
 /**
+ * Diagnostic context passed to provider for structured logging.
+ * These are optional — providers log with context when available.
+ */
+export interface CoachDiagnosticContext {
+  runId: string;
+  workerId: string;
+}
+
+/**
  * Input for Coach generation request.
  */
 export interface CoachGenerationInput {
@@ -33,6 +42,8 @@ export interface CoachGenerationInput {
   timeoutMs: number;
   /** Idempotency key for retry deduplication (optional) */
   idempotencyKey?: string;
+  /** Diagnostic context for structured logging (optional) */
+  diagnosticContext?: CoachDiagnosticContext;
 }
 
 // ─── Generation Result ──────────────────────────────────────────────────

@@ -17,9 +17,14 @@ import type {
   CoachGenerationInput,
   CoachGenerationResult,
   CoachUsageMetadata,
+  CoachDiagnosticContext,
 } from './types';
 import type { CoachingFailureCode } from '../../database/models/coaching_run';
 import { createModel, getModelName, type ModelTier } from '../../helpers/modelProvider';
+import {
+  logProviderTimeoutArmed,
+  logProviderTimeoutFired,
+} from '../execution-diagnostics';
 
 /**
  * Anthropic provider adapter for Coach.
@@ -60,7 +65,12 @@ export class AnthropicCoachProvider implements CoachModelProvider {
       const fullPrompt = `${input.systemPrompt}\n\n${input.userPrompt}`;
 
       // Execute with timeout
-      const response = await this.invokeWithTimeout(llm, fullPrompt, input.timeoutMs);
+      const response = await this.invokeWithTimeout(
+        llm,
+        fullPrompt,
+        input.timeoutMs,
+        input.diagnosticContext,
+      );
       const latencyMs = Date.now() - startTime;
 
       // Extract usage metadata
@@ -83,28 +93,60 @@ export class AnthropicCoachProvider implements CoachModelProvider {
 
   /**
    * Invoke LLM with timeout.
+   *
+   * TIMEOUT SEMANTICS:
+   * - Qori timeout: Stops awaiting the provider result and moves the run
+   *   lifecycle forward. The Promise.race rejects after timeoutMs.
+   * - Transport cancellation: NOT guaranteed. LangChain's ChatAnthropic does
+   *   not expose AbortSignal support. The underlying HTTP request may continue
+   *   after Qori timeout fires.
+   *
+   * LATE COMPLETION SAFETY:
+   * - Ownership validation before persistence ensures late provider completion
+   *   cannot overwrite a terminal run or a newer operational retry attempt.
    */
   private async invokeWithTimeout(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     llm: any,
     prompt: string,
     timeoutMs: number,
+    diagnosticContext?: CoachDiagnosticContext,
   ): Promise<unknown> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    // Track start time for elapsed calculation if timeout fires
+    const startTime = Date.now();
+
+    // Diagnostic: Log that timeout is armed
+    if (diagnosticContext) {
+      logProviderTimeoutArmed(diagnosticContext.runId, diagnosticContext.workerId, timeoutMs);
+    }
+
+    // Track the timeout timer so we can clear it on success
+    let timeoutTimer: NodeJS.Timeout | undefined;
 
     try {
-      // LangChain's invoke doesn't natively support AbortController,
-      // so we race the promise against a timeout
       const result = await Promise.race([
         llm.invoke(prompt),
         new Promise((_, reject) => {
-          setTimeout(() => reject(new TimeoutError('Provider timeout')), timeoutMs);
+          timeoutTimer = setTimeout(() => {
+            const elapsedMs = Date.now() - startTime;
+            // Diagnostic: Log that timeout fired
+            if (diagnosticContext) {
+              logProviderTimeoutFired(
+                diagnosticContext.runId,
+                diagnosticContext.workerId,
+                timeoutMs,
+                elapsedMs,
+              );
+            }
+            reject(new TimeoutError('Provider timeout'));
+          }, timeoutMs);
         }),
       ]);
       return result;
     } finally {
-      clearTimeout(timeoutId);
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
+      }
     }
   }
 

@@ -648,6 +648,384 @@ describe('selectPrimarySectionRun', () => {
 
 // ─── M3B: Section Context UI Tests ─────────────────────────────────────────────
 
+// ─── Status Transition Regression Tests ────────────────────────────────────
+// These tests verify that when a polled run transitions from active to terminal,
+// the UI updates correctly WITHOUT requiring reload, remount, or navigation.
+
+describe('running → failed status transition (production bug regression)', () => {
+  const defaultProps = {
+    artifactPublicId: 'art-123',
+    artifactType: 'brief' as const,
+    currentContentVersion: 1,
+    currentUserPublicId: 'user-123',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('transitions from "Reviewing..." to failed message when polled run becomes failed', () => {
+    const runId = 'run-transition-test';
+
+    // Initial state: history shows running run
+    const runningRun = createRunSummary({
+      id: runId,
+      status: 'running',
+      content_version: 1,
+      requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { artifact_public_id: 'art-123', runs: [runningRun], cursor: null, has_more: false },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    // Active run query returns the same run as running initially
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: {
+        run: {
+          ...runningRun,
+          items: [],
+          failure: null,
+        },
+      },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockImplementation(
+      (run) => run.status === 'pending' || run.status === 'running',
+    );
+
+    const { rerender } = renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Initial: should show "Reviewing" status
+    expect(screen.getByText(/Reviewing your Research Brief/)).toBeInTheDocument();
+
+    // Now simulate polling returning failed status
+    const failedRun = {
+      ...runningRun,
+      status: 'failed' as const,
+      failed_at: new Date().toISOString(),
+      items: [],
+      failure: { code: 'MAX_ATTEMPTS_EXCEEDED', message: 'Coach couldn\'t complete this review.' },
+    };
+
+    // History cache is still stale (hasn't been invalidated yet)
+    // But active run query now returns the failed status
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: { run: failedRun },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    // Rerender to simulate React Query's refetch completing
+    rerender(<CoachingRail {...defaultProps} />);
+
+    // REGRESSION TEST: UI should show failed state, not "Reviewing..."
+    // This test fails before the fix because primaryRun.status is still 'running' from history
+    expect(screen.queryByText(/Reviewing your Research Brief/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Review couldn't be completed/)).toBeInTheDocument();
+  });
+
+  it('shows failure message when run transitions to failed', () => {
+    const runId = 'run-failure-message-test';
+
+    const runningRun = createRunSummary({
+      id: runId,
+      status: 'running',
+      content_version: 1,
+      requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { artifact_public_id: 'art-123', runs: [runningRun], cursor: null, has_more: false },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    const failedRun = {
+      ...runningRun,
+      status: 'failed' as const,
+      failed_at: new Date().toISOString(),
+      items: [],
+      failure: { code: 'MAX_ATTEMPTS_EXCEEDED', message: 'Coach couldn\'t complete this review.' },
+    };
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: { run: failedRun },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockImplementation(
+      (run) => run.status === 'pending' || run.status === 'running',
+    );
+
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Should show failure message
+    expect(screen.getByText(/Coach couldn't complete this review/)).toBeInTheDocument();
+    // Should show safety copy
+    expect(screen.getByText(/Your Research Brief wasn't changed/)).toBeInTheDocument();
+  });
+
+  it('enables Review button after run fails', () => {
+    const runId = 'run-button-unlock-test';
+
+    const runningRun = createRunSummary({
+      id: runId,
+      status: 'running',
+      content_version: 1,
+      requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { artifact_public_id: 'art-123', runs: [runningRun], cursor: null, has_more: false },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    const failedRun = {
+      ...runningRun,
+      status: 'failed' as const,
+      failed_at: new Date().toISOString(),
+      items: [],
+      failure: { code: 'MAX_ATTEMPTS_EXCEEDED', message: 'Coach couldn\'t complete this review.' },
+    };
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: { run: failedRun },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    // After failure, isActiveRun should return false
+    vi.mocked(coachingApi.isActiveRun).mockImplementation(
+      (run) => run.status === 'pending' || run.status === 'running',
+    );
+
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Button should be enabled (not disabled due to "active" run)
+    const button = screen.getByRole('button', { name: /review research brief/i });
+    expect(button).not.toBeDisabled();
+    expect(screen.queryByText('A review is already in progress.')).not.toBeInTheDocument();
+  });
+
+  it('removes REVIEWING badge from history when run fails', () => {
+    const runId = 'run-history-badge-test';
+
+    const runningRun = createRunSummary({
+      id: runId,
+      status: 'running',
+      content_version: 1,
+      requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { artifact_public_id: 'art-123', runs: [runningRun], cursor: null, has_more: false },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    const failedRun = {
+      ...runningRun,
+      status: 'failed' as const,
+      failed_at: new Date().toISOString(),
+      items: [],
+      failure: { code: 'MAX_ATTEMPTS_EXCEEDED', message: 'Coach couldn\'t complete this review.' },
+    };
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: { run: failedRun },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockImplementation(
+      (run) => run.status === 'pending' || run.status === 'running',
+    );
+
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // History row should show Failed badge, not Reviewing
+    // (This will require history cache invalidation or merged status)
+    expect(screen.queryByText('Reviewing')).not.toBeInTheDocument();
+    // The failed status should be visible somewhere
+    expect(screen.getByText(/Review couldn't be completed/)).toBeInTheDocument();
+  });
+});
+
+describe('running → completed status transition', () => {
+  const defaultProps = {
+    artifactPublicId: 'art-123',
+    artifactType: 'brief' as const,
+    currentContentVersion: 1,
+    currentUserPublicId: 'user-123',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('transitions from "Reviewing..." to "Review complete" when run completes', () => {
+    const runId = 'run-complete-test';
+
+    const runningRun = createRunSummary({
+      id: runId,
+      status: 'running',
+      content_version: 1,
+      requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { artifact_public_id: 'art-123', runs: [runningRun], cursor: null, has_more: false },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    const completedRun = {
+      ...runningRun,
+      status: 'completed' as const,
+      completed_at: new Date().toISOString(),
+      items: [
+        {
+          id: 'item-1',
+          category: 'strength' as const,
+          position: 1,
+          text: 'Clear problem statement',
+          references: [],
+        },
+      ],
+      failure: null,
+    };
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: { run: completedRun },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockImplementation(
+      (run) => run.status === 'pending' || run.status === 'running',
+    );
+
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Should show completed status, not "Reviewing..."
+    expect(screen.queryByText(/Reviewing your Research Brief/)).not.toBeInTheDocument();
+    expect(screen.getByText('Review complete')).toBeInTheDocument();
+  });
+
+  it('shows structured result when run completes', () => {
+    const runId = 'run-result-test';
+
+    const runningRun = createRunSummary({
+      id: runId,
+      status: 'running',
+      content_version: 1,
+      requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { artifact_public_id: 'art-123', runs: [runningRun], cursor: null, has_more: false },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    const completedRun = {
+      ...runningRun,
+      status: 'completed' as const,
+      completed_at: new Date().toISOString(),
+      items: [
+        {
+          id: 'item-1',
+          category: 'strength' as const,
+          position: 1,
+          text: 'Clear problem statement',
+          references: [],
+        },
+        {
+          id: 'item-2',
+          category: 'issue' as const,
+          position: 1,
+          text: 'Missing timeline details',
+          references: [],
+        },
+      ],
+      failure: null,
+    };
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: { run: completedRun },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockImplementation(
+      (run) => run.status === 'pending' || run.status === 'running',
+    );
+
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Should show structured result sections
+    expect(screen.getByText('Strengths')).toBeInTheDocument();
+    expect(screen.getByText('Clear problem statement')).toBeInTheDocument();
+    expect(screen.getByText('Issues')).toBeInTheDocument();
+    expect(screen.getByText('Missing timeline details')).toBeInTheDocument();
+  });
+
+  it('enables Review button after run completes', () => {
+    const runId = 'run-button-after-complete-test';
+
+    const runningRun = createRunSummary({
+      id: runId,
+      status: 'running',
+      content_version: 1,
+      requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { artifact_public_id: 'art-123', runs: [runningRun], cursor: null, has_more: false },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    const completedRun = {
+      ...runningRun,
+      status: 'completed' as const,
+      completed_at: new Date().toISOString(),
+      items: [],
+      failure: null,
+    };
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: { run: completedRun },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockImplementation(
+      (run) => run.status === 'pending' || run.status === 'running',
+    );
+
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Button should be enabled and show "Review again"
+    const button = screen.getByRole('button', { name: /review research brief/i });
+    expect(button).not.toBeDisabled();
+  });
+});
+
 describe('M3B section context', () => {
   const defaultProps = {
     artifactPublicId: 'art-123',
