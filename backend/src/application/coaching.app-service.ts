@@ -294,31 +294,32 @@ function toContextDTO(ctx: CoachingRunContext): InternalCoachingRunContextDTO {
   };
 }
 
-// ─── Valid Section Keys (temporary, will be moved to artifact contracts) ───
+// ─── Valid Section Keys ────────────────────────────────────────────────────
+// CRITICAL: These keys MUST match artifact_sections.section_key exactly.
+// See: packages/artifact-contracts/src/*.contract.ts for authoritative keys.
+// See: frontend/src/components/study/document/sectionLabels.ts for alignment.
+//
+// CANONICAL SECTION IDENTITY RULE:
+// Coach section identity uses the exact canonical artifact_sections.section_key.
+// Do NOT use UI presentation IDs, heading labels, or invented Coach aliases.
 
 const VALID_BRIEF_SECTIONS = [
   'summary',
-  'problem_statement',
-  'learning_objectives',
-  'research_questions',
-  'target_barriers',
-  'participant_approach',
-  'methodology',
-  'timeline',
+  'problem_narrative',
+  'method_prose',
+  'participants_prose',
+  'out_of_scope',
   'risks',
-  'discovery_sources',
 ];
 
 const VALID_PLAN_SECTIONS = [
-  'research_summary',
-  'objectives_questions',
-  'methodology_approach',
-  'participant_criteria',
-  'session_structure',
-  'analysis_approach',
-  'timeline_milestones',
-  'deliverables',
+  'plan_summary',
+  'plan_background',
+  'plan_method_approach',
+  'plan_participants_prose',
+  'plan_deliverables',
   'plan_risks',
+  'plan_commitments',
 ];
 
 function isValidSectionKey(artifactType: string, sectionKey: string): boolean {

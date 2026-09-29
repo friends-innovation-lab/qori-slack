@@ -870,7 +870,7 @@ describe('Coach M3A Workspace Coaching Rail API', () => {
       // Create plan sections
       await ArtifactSectionModel.create({
         artifact_id: planArtifact.id,
-        section_key: 'research_summary',
+        section_key: 'plan_summary',
         content_type: 'prose',
         content: 'Test research summary',
       });

@@ -446,7 +446,7 @@ export function PlanDocument() {
                 title="Summary"
                 provenance={vm.sections.summary.provenance}
                 comment={getSectionComment('plan_summary', 'Summary')}
-                coach={getSectionCoach('research_summary', 'Summary')}
+                coach={getSectionCoach('plan_summary', 'Summary')}
               >
                 {vm.sections.summary.exists ? (
                   <MarkdownDisplay markdown={vm.sections.summary.content || ''} className={docStyles.blockProse} />
@@ -463,7 +463,7 @@ export function PlanDocument() {
                   title="Background"
                   provenance={vm.sections.background.provenance}
                   comment={getSectionComment('plan_background', 'Background')}
-                  coach={getSectionCoach('research_summary', 'Background')}
+                  coach={getSectionCoach('plan_background', 'Background')}
                 >
                   <MarkdownDisplay markdown={vm.sections.background.content || ''} className={docStyles.blockProse} />
                 </DocumentSection>
@@ -511,7 +511,7 @@ export function PlanDocument() {
                   ...(vm.sections.dataCollection.exists ? [vm.sections.dataCollection.provenance] : []),
                 ].filter(Boolean)}
                 comment={getSectionComment('plan_method_approach', 'Method')}
-                coach={getSectionCoach('methodology_approach', 'Method')}
+                coach={getSectionCoach('plan_method_approach', 'Method')}
               >
                 {methodology && (
                   <p className={docStyles.kvParagraph}>
@@ -539,7 +539,7 @@ export function PlanDocument() {
                 title="Participants"
                 provenance={vm.sections.participantsProse.provenance}
                 comment={getSectionComment('plan_participants_prose', 'Participants')}
-                coach={getSectionCoach('participant_criteria', 'Participants')}
+                coach={getSectionCoach('plan_participants_prose', 'Participants')}
               >
                 {vm.sections.participantsProse.exists ? (
                   <MarkdownDisplay markdown={vm.sections.participantsProse.content || ''} className={docStyles.blockProse} />
@@ -601,7 +601,7 @@ export function PlanDocument() {
                     ? vm.sections.deliverables.provenance
                     : vm.deliverablesTable?.provenance}
                   comment={getSectionComment('plan_deliverables', 'Deliverables')}
-                  coach={getSectionCoach('deliverables', 'Deliverables')}
+                  coach={getSectionCoach('plan_deliverables', 'Deliverables')}
                 >
                   {vm.sections.deliverables.exists ? (
                     <MarkdownDisplay markdown={vm.sections.deliverables.content || ''} className={docStyles.blockProse} />

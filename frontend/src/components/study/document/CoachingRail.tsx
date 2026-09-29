@@ -64,31 +64,31 @@ interface CoachingRailProps {
 }
 
 // ─── Section Display Names ──────────────────────────────────────────────────
+// CRITICAL: Keys MUST match artifact_sections.section_key exactly.
+// See: packages/artifact-contracts/src/*.contract.ts for authoritative keys.
+// See: frontend/src/components/study/document/sectionLabels.ts for alignment.
+//
+// CANONICAL SECTION IDENTITY RULE:
+// Coach section identity uses the exact canonical artifact_sections.section_key.
+// Do NOT use UI presentation IDs, heading labels, or invented Coach aliases.
 
 const BRIEF_SECTION_LABELS: Record<string, string> = {
   summary: 'Summary',
-  problem_statement: 'Problem Statement',
-  learning_objectives: 'Learning Objectives',
-  research_questions: 'Research Questions',
-  target_barriers: 'Target Barriers',
-  participant_approach: 'Participant Approach',
-  methodology: 'Methodology',
-  out_of_scope: 'Out of Scope',
-  timeline: 'Timeline',
+  problem_narrative: 'Problem',
+  method_prose: 'Method',
+  participants_prose: 'Participants',
+  out_of_scope: 'Out of scope',
   risks: 'Risks',
-  discovery_sources: 'Discovery Sources',
 };
 
 const PLAN_SECTION_LABELS: Record<string, string> = {
-  research_summary: 'Research Summary',
-  objectives_questions: 'Objectives & Questions',
-  methodology_approach: 'Methodology Approach',
-  participant_criteria: 'Participant Criteria',
-  session_structure: 'Session Structure',
-  analysis_approach: 'Analysis Approach',
-  timeline_milestones: 'Timeline & Milestones',
-  deliverables: 'Deliverables',
-  plan_risks: 'Plan Risks',
+  plan_summary: 'Summary',
+  plan_background: 'Background',
+  plan_method_approach: 'Method',
+  plan_participants_prose: 'Participants',
+  plan_deliverables: 'Deliverables',
+  plan_risks: 'Risks and mitigations',
+  plan_commitments: 'Brief commitments',
 };
 
 function getSectionDisplayName(
