@@ -25,6 +25,7 @@ import { Sparkles, AlertCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import {
   useCoachHistory,
+  useCoachRun,
   useActiveCoachRun,
   useCreateCoachRun,
   isActiveRun,
@@ -398,12 +399,31 @@ export function CoachingRail({
     runId: shouldPoll ? primaryRun.id : null,
   });
 
-  // Get the detailed run for display
-  const displayedRun = displayedRunId
-    ? (activeRunQuery.data?.run?.id === displayedRunId
-        ? activeRunQuery.data.run
-        : null)
-    : null;
+  // M3B FIX: Lazily fetch detail for displayed run when NOT polling (completed/failed runs).
+  // This ensures structured results are available for completed historical runs.
+  // The query key matches useActiveCoachRun, so cache is shared (no duplicate fetches).
+  const detailQuery = useCoachRun({
+    runId: displayedRunId ?? '',
+    enabled: displayedRunId != null && !shouldPoll,
+  });
+
+  // Get the detailed run for display.
+  // Priority: active polling data > lazy-loaded detail data
+  const displayedRun = useMemo(() => {
+    if (!displayedRunId) return null;
+
+    // If we have polled data for this run, use it (most fresh)
+    if (activeRunQuery.data?.run?.id === displayedRunId) {
+      return activeRunQuery.data.run;
+    }
+
+    // Otherwise use lazy-loaded detail (for completed/failed runs)
+    if (detailQuery.data?.run?.id === displayedRunId) {
+      return detailQuery.data.run;
+    }
+
+    return null;
+  }, [displayedRunId, activeRunQuery.data?.run, detailQuery.data?.run]);
 
   // CRITICAL: Derive the effective primary run status from polled data if available.
   // This fixes the stale UI bug where history cache shows 'running' but polled
