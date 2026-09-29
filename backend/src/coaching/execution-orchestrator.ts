@@ -17,6 +17,7 @@
  */
 
 import type { Transaction } from 'sequelize';
+import { QueryTypes } from 'sequelize';
 import type { CoachingRun, CoachingFailureCode } from '../database/models/coaching_run';
 import type { CoachingContract, CitationHandle } from './contracts/types';
 import type { CoachGenerationResult, CoachUsageMetadata } from './providers/types';
@@ -533,6 +534,7 @@ async function markCompletedInTransaction(
     {
       replacements: { runId, workerId },
       transaction,
+      type: QueryTypes.UPDATE,
     }
   ) as [unknown, number];
 
