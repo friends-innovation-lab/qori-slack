@@ -29,6 +29,10 @@ import {
   generateWorkerId,
 } from './config';
 import { logWorkerShutdown } from './ownership-diagnostics';
+import {
+  logWorkerStarted,
+  logWorkerShutdownEvent,
+} from './execution-diagnostics';
 
 // ─── State ──────────────────────────────────────────────────────────────
 
@@ -63,6 +67,9 @@ export function startCoachPoller(): void {
 
   console.log(`[Coach Poller] Starting with worker ID: ${currentWorkerId}`);
 
+  // Diagnostic: Log worker started with process correlation
+  logWorkerStarted(currentWorkerId);
+
   // Start polling
   schedulePoll();
 }
@@ -84,6 +91,8 @@ export function stopCoachPoller(): void {
   // Diagnostic: Log worker shutdown with current run if any
   if (currentWorkerId) {
     logWorkerShutdown(currentWorkerId, currentRunId);
+    // Also log with process lifecycle correlation
+    logWorkerShutdownEvent(currentWorkerId, currentRunId, 'graceful_shutdown');
   }
 
   // Cancel pending poll

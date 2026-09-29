@@ -43,6 +43,17 @@ import {
   logExecutionCompleted,
   logExecutionFailed,
 } from './ownership-diagnostics';
+import {
+  logContextBuildStarted,
+  logContextBuildCompleted,
+  logProviderRequestStarted,
+  logProviderResponseReceived,
+  logProviderRequestFailed,
+  logValidationStarted,
+  logValidationCompleted,
+  logPersistenceStarted,
+  logPersistenceCompleted,
+} from './execution-diagnostics';
 
 // ─── Generation Config Resolution ────────────────────────────────────────
 
@@ -158,6 +169,8 @@ export async function executeCoachRun(
     }
 
     // 2. Resolve context from immutable snapshot
+    logContextBuildStarted(run.id, workerId, run.attempt_count);
+    const contextStartTime = Date.now();
     let context;
     try {
       context = await resolveContext(
@@ -168,6 +181,7 @@ export async function executeCoachRun(
         run.selected_section_key,
         contract,
       );
+      logContextBuildCompleted(run.id, workerId, Date.now() - contextStartTime);
     } catch (err) {
       if (err instanceof ContextResolutionError) {
         return await failRun(run.id, workerId, 'CONTEXT_BUILD_FAILED', err.message);
@@ -227,6 +241,10 @@ export async function executeCoachRun(
         ? userPrompt
         : `${contract.getRepairPrompt(lastValidationErrors)}\n\n---\n\nOriginal request:\n\n${userPrompt}`;
 
+      // Diagnostic: Log provider request start
+      logProviderRequestStarted(run.id, workerId, 'anthropic', run.model, genConfig.timeoutMs);
+      const providerStartTime = Date.now();
+
       generationResult = await provider.generateReview({
         systemPrompt,
         userPrompt: currentPrompt,
@@ -235,7 +253,15 @@ export async function executeCoachRun(
         maxTokens: genConfig.maxTokens,
         timeoutMs: genConfig.timeoutMs,
         idempotencyKey,
+        diagnosticContext: { runId: run.id, workerId },
       });
+
+      // Diagnostic: Log provider response (success or failure)
+      if (generationResult.success) {
+        logProviderResponseReceived(run.id, workerId, Date.now() - providerStartTime);
+      } else {
+        logProviderRequestFailed(run.id, workerId, generationResult.failureCode, Date.now() - providerStartTime);
+      }
 
       // Aggregate usage
       if (generationResult.success) {
@@ -268,6 +294,9 @@ export async function executeCoachRun(
       }
 
       // Validate output
+      logValidationStarted(run.id, workerId);
+      const validationStartTime = Date.now();
+
       const validation = validateCoachOutput(
         generationResult.content,
         contract.outputSchema,
@@ -275,6 +304,8 @@ export async function executeCoachRun(
         run.review_scope,
         run.selected_section_key,
       );
+
+      logValidationCompleted(run.id, workerId, Date.now() - validationStartTime);
 
       if (validation.valid && validation.output) {
         validatedOutput = validation.output;
@@ -304,6 +335,9 @@ export async function executeCoachRun(
     }
 
     // 7. Persist results atomically
+    logPersistenceStarted(run.id, workerId);
+    const persistStartTime = Date.now();
+
     const persistResult = await persistResults(
       run.id,
       workerId,
@@ -322,6 +356,8 @@ export async function executeCoachRun(
         usage: aggregatedUsage,
       };
     }
+
+    logPersistenceCompleted(run.id, workerId, Date.now() - persistStartTime);
 
     return {
       success: true,

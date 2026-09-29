@@ -405,6 +405,26 @@ export function CoachingRail({
         : null)
     : null;
 
+  // CRITICAL: Derive the effective primary run status from polled data if available.
+  // This fixes the stale UI bug where history cache shows 'running' but polled
+  // run has transitioned to 'completed' or 'failed'.
+  const effectivePrimaryRun = useMemo(() => {
+    if (!primaryRun) return null;
+
+    // If we have polled data for the primary run, merge the fresh status
+    const polledRun = activeRunQuery.data?.run;
+    if (polledRun && polledRun.id === primaryRun.id) {
+      return {
+        ...primaryRun,
+        status: polledRun.status,
+        completed_at: polledRun.completed_at ?? primaryRun.completed_at,
+        failed_at: polledRun.failed_at ?? primaryRun.failed_at,
+      };
+    }
+
+    return primaryRun;
+  }, [primaryRun, activeRunQuery.data?.run]);
+
   // Create coach run mutation
   const createRun = useCreateCoachRun({
     artifactPublicId,
@@ -414,12 +434,39 @@ export function CoachingRail({
     },
   });
 
-  // M3B: Check for active run based on current context
+  // M3B: Check for active run based on current context.
+  // CRITICAL: Use effectivePrimaryRun to account for polled status transitions.
+  // When the polled run transitions to terminal, hasActiveRun must become false
+  // to enable the Review button.
   const hasActiveRun = useMemo(() => {
+    // First check: if the effective primary run is still active, return true immediately
+    if (effectivePrimaryRun && isActiveRun(effectivePrimaryRun)) {
+      // Verify it matches our context
+      if (isInSectionContext && sectionContext) {
+        if (
+          effectivePrimaryRun.review_scope === 'section' &&
+          effectivePrimaryRun.selected_section_key === sectionContext.sectionKey &&
+          effectivePrimaryRun.content_version === currentContentVersion &&
+          effectivePrimaryRun.requested_by.public_id === currentUserPublicId
+        ) {
+          return true;
+        }
+      } else {
+        if (
+          effectivePrimaryRun.review_scope === 'artifact' &&
+          effectivePrimaryRun.content_version === currentContentVersion &&
+          effectivePrimaryRun.requested_by.public_id === currentUserPublicId
+        ) {
+          return true;
+        }
+      }
+    }
+
+    // Fallback: check other runs in history (for edge cases like collaborator runs)
     if (isInSectionContext && sectionContext) {
-      // Section context: check for active section run
       return runs.some(
         (r) =>
+          r.id !== effectivePrimaryRun?.id && // Exclude effective primary (already checked)
           r.requested_by.public_id === currentUserPublicId &&
           r.content_version === currentContentVersion &&
           r.review_scope === 'section' &&
@@ -427,21 +474,42 @@ export function CoachingRail({
           isActiveRun(r),
       );
     }
-    // Artifact context: check for active artifact run
     return runs.some(
       (r) =>
+        r.id !== effectivePrimaryRun?.id && // Exclude effective primary (already checked)
         r.requested_by.public_id === currentUserPublicId &&
         r.content_version === currentContentVersion &&
         r.review_scope === 'artifact' &&
         isActiveRun(r),
     );
-  }, [runs, currentUserPublicId, currentContentVersion, isInSectionContext, sectionContext]);
+  }, [runs, currentUserPublicId, currentContentVersion, isInSectionContext, sectionContext, effectivePrimaryRun]);
 
   // M3B: Check if current version has a completed/failed run (for "Review again" label)
+  // Use effectivePrimaryRun to account for polled status transitions.
   const hasCurrentVersionTerminalRun = useMemo(() => {
+    // First check effective primary run
+    if (
+      effectivePrimaryRun &&
+      effectivePrimaryRun.content_version === currentContentVersion &&
+      (effectivePrimaryRun.status === 'completed' || effectivePrimaryRun.status === 'failed')
+    ) {
+      if (isInSectionContext && sectionContext) {
+        if (
+          effectivePrimaryRun.review_scope === 'section' &&
+          effectivePrimaryRun.selected_section_key === sectionContext.sectionKey
+        ) {
+          return true;
+        }
+      } else if (effectivePrimaryRun.review_scope === 'artifact') {
+        return true;
+      }
+    }
+
+    // Fallback: check history
     if (isInSectionContext && sectionContext) {
       return runs.some(
         (r) =>
+          r.id !== effectivePrimaryRun?.id &&
           r.content_version === currentContentVersion &&
           r.review_scope === 'section' &&
           r.selected_section_key === sectionContext.sectionKey &&
@@ -450,11 +518,12 @@ export function CoachingRail({
     }
     return runs.some(
       (r) =>
+        r.id !== effectivePrimaryRun?.id &&
         r.content_version === currentContentVersion &&
         r.review_scope === 'artifact' &&
         (r.status === 'completed' || r.status === 'failed'),
     );
-  }, [runs, currentContentVersion, isInSectionContext, sectionContext]);
+  }, [runs, currentContentVersion, isInSectionContext, sectionContext, effectivePrimaryRun]);
 
   // M3B: Handle create review (artifact or section)
   const handleCreateReview = useCallback(() => {
@@ -546,7 +615,7 @@ export function CoachingRail({
   }
 
   // Empty state - no coaching history (context-aware)
-  if (displayedHistory.length === 0 && !primaryRun) {
+  if (displayedHistory.length === 0 && !effectivePrimaryRun) {
     return (
       <div className={styles.coachingRail}>
         <p className={styles.eyebrow}>AI Coach</p>
@@ -632,11 +701,11 @@ export function CoachingRail({
         </button>
       )}
 
-      {/* Primary run display */}
-      {primaryRun && (
+      {/* Primary run display - uses effectivePrimaryRun for status to handle polled transitions */}
+      {effectivePrimaryRun && (
         <>
           {/* Status heading with user-friendly copy */}
-          {primaryRun.status === 'pending' && (
+          {effectivePrimaryRun.status === 'pending' && (
             <>
               <h2 className={`${styles.status} ${styles.statusPending}`}>
                 <span className={styles.spinner} aria-hidden="true" />{' '}
@@ -647,7 +716,7 @@ export function CoachingRail({
               </p>
             </>
           )}
-          {primaryRun.status === 'running' && (
+          {effectivePrimaryRun.status === 'running' && (
             <>
               <h2 className={`${styles.status} ${styles.statusRunning}`}>
                 <span className={styles.spinner} aria-hidden="true" />{' '}
@@ -658,12 +727,12 @@ export function CoachingRail({
               </p>
             </>
           )}
-          {primaryRun.status === 'completed' && (
+          {effectivePrimaryRun.status === 'completed' && (
             <h2 className={`${styles.status} ${styles.statusCompleted}`}>
               Review complete
             </h2>
           )}
-          {primaryRun.status === 'failed' && (
+          {effectivePrimaryRun.status === 'failed' && (
             <h2 className={`${styles.status} ${styles.statusFailed}`}>
               Review couldn't be completed
             </h2>
@@ -671,22 +740,22 @@ export function CoachingRail({
 
           {/* Meta info */}
           <p className={styles.meta}>
-            {primaryRun.requested_by.display_name ?? 'Researcher'} ·{' '}
-            {formatTimestamp(primaryRun.requested_at)}
+            {effectivePrimaryRun.requested_by.display_name ?? 'Researcher'} ·{' '}
+            {formatTimestamp(effectivePrimaryRun.requested_at)}
           </p>
 
           {/* Version badge */}
           <div style={{ marginTop: 'var(--space-2)' }}>
-            <VersionBadge isCurrent={primaryRun.is_current_version} />
+            <VersionBadge isCurrent={effectivePrimaryRun.is_current_version} />
           </div>
 
           {/* Completed run - show result */}
-          {primaryRun.status === 'completed' && displayedRun && (
+          {effectivePrimaryRun.status === 'completed' && displayedRun && (
             <StructuredResult run={displayedRun} />
           )}
 
           {/* Failed run - show error with safety copy */}
-          {primaryRun.status === 'failed' && (
+          {effectivePrimaryRun.status === 'failed' && (
             <div className={styles.failureMessage}>
               {displayedRun?.failure?.message ?? 'Coach couldn\'t complete this review.'}
               <p className={styles.failureSafetyCopy}>
@@ -723,38 +792,46 @@ export function CoachingRail({
             {isInSectionContext ? 'Section history' : 'History'}
           </h3>
           <ul className={styles.historyList} role="listbox" aria-label="Coaching history">
-            {displayedHistory.map((run) => (
-              <li
-                key={run.id}
-                className={`${styles.historyRow} ${
-                  displayedRunId === run.id ? styles.historyRowSelected : ''
-                }`}
-                role="option"
-                aria-selected={displayedRunId === run.id}
-                tabIndex={0}
-                onClick={() => handleSelectRun(run.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleSelectRun(run.id);
-                  }
-                }}
-              >
-                <div className={styles.historyRowHeader}>
-                  <span className={styles.historyRowLabel}>
-                    {run.review_scope === 'section'
-                      ? `${getSectionLabelFromCapabilities(run.selected_section_key!)} review`
-                      : `${getArtifactDisplayName(artifactType)} review`}
-                  </span>
-                  <StatusBadge status={run.status} />
-                </div>
-                <div className={styles.historyRowMeta}>
-                  {run.requested_by.display_name ?? 'Researcher'} ·{' '}
-                  {formatShortTimestamp(run.requested_at)}
-                  {!run.is_current_version && ' · Earlier version'}
-                </div>
-              </li>
-            ))}
+            {displayedHistory.map((run) => {
+              // Use effective status for the primary run to reflect polled updates
+              const effectiveStatus =
+                effectivePrimaryRun && run.id === effectivePrimaryRun.id
+                  ? effectivePrimaryRun.status
+                  : run.status;
+
+              return (
+                <li
+                  key={run.id}
+                  className={`${styles.historyRow} ${
+                    displayedRunId === run.id ? styles.historyRowSelected : ''
+                  }`}
+                  role="option"
+                  aria-selected={displayedRunId === run.id}
+                  tabIndex={0}
+                  onClick={() => handleSelectRun(run.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleSelectRun(run.id);
+                    }
+                  }}
+                >
+                  <div className={styles.historyRowHeader}>
+                    <span className={styles.historyRowLabel}>
+                      {run.review_scope === 'section'
+                        ? `${getSectionLabelFromCapabilities(run.selected_section_key!)} review`
+                        : `${getArtifactDisplayName(artifactType)} review`}
+                    </span>
+                    <StatusBadge status={effectiveStatus} />
+                  </div>
+                  <div className={styles.historyRowMeta}>
+                    {run.requested_by.display_name ?? 'Researcher'} ·{' '}
+                    {formatShortTimestamp(run.requested_at)}
+                    {!run.is_current_version && ' · Earlier version'}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
