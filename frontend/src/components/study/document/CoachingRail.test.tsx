@@ -252,6 +252,7 @@ describe('selectPrimaryArtifactRun', () => {
 // Mock the coaching API hooks
 vi.mock('@/api/coaching', () => ({
   useCoachHistory: vi.fn(),
+  useCoachRun: vi.fn(() => ({ data: null, isLoading: false, isError: false })),
   useActiveCoachRun: vi.fn(() => ({ data: null })),
   useCreateCoachRun: vi.fn(() => ({
     mutate: vi.fn(),
@@ -1147,5 +1148,310 @@ describe('M3B section context', () => {
 
     // MERGE GATE: createCoachRun must NOT have been called
     expect(mockMutate).not.toHaveBeenCalled();
+  });
+});
+
+// ─── M3B Lazy Detail Loading Tests ────────────────────────────────────────────
+
+describe('M3B lazy detail loading for completed runs', () => {
+  const defaultProps = {
+    artifactPublicId: 'art-123',
+    artifactType: 'brief' as const,
+    currentContentVersion: 1,
+    currentUserPublicId: 'user-123',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('fetches detail for completed primary run and renders structured result', () => {
+    const completedRunId = 'completed-run-123';
+    const completedRun = createRunSummary({
+      id: completedRunId,
+      status: 'completed',
+      content_version: 1,
+      requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { artifact_public_id: 'art-123', runs: [completedRun], cursor: null, has_more: false },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    // Active run query returns null (not polling)
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    // Detail query returns the full run with items
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: {
+        run: {
+          ...completedRun,
+          items: [
+            {
+              id: 'item-1',
+              category: 'strength' as const,
+              position: 1,
+              text: 'Clear problem statement',
+              references: [],
+            },
+            {
+              id: 'item-2',
+              category: 'issue' as const,
+              position: 1,
+              text: 'Missing timeline details',
+              references: [],
+            },
+          ],
+          failure: null,
+        },
+      },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Should show completed status
+    expect(screen.getByText('Review complete')).toBeInTheDocument();
+
+    // Should show structured result sections
+    expect(screen.getByText('Strengths')).toBeInTheDocument();
+    expect(screen.getByText('Clear problem statement')).toBeInTheDocument();
+    expect(screen.getByText('Issues')).toBeInTheDocument();
+    expect(screen.getByText('Missing timeline details')).toBeInTheDocument();
+  });
+
+  it('fetches detail for completed section run and renders structured result', () => {
+    const completedRunId = 'completed-section-run-123';
+    const completedSectionRun = createRunSummary({
+      id: completedRunId,
+      status: 'completed',
+      content_version: 1,
+      review_scope: 'section',
+      selected_section_key: 'summary',
+      requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { artifact_public_id: 'art-123', runs: [completedSectionRun], cursor: null, has_more: false },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    // Detail query returns the full section run with items
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: {
+        run: {
+          ...completedSectionRun,
+          items: [
+            {
+              id: 'item-1',
+              category: 'suggestion' as const,
+              position: 1,
+              text: 'Consider adding more detail to the summary',
+              references: [],
+            },
+          ],
+          failure: null,
+        },
+      },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    renderWithProviders(
+      <CoachingRail
+        {...defaultProps}
+        sectionContext={{ sectionKey: 'summary', label: 'Summary' }}
+      />,
+    );
+
+    // Should show completed status
+    expect(screen.getByText('Review complete')).toBeInTheDocument();
+
+    // Should show structured result
+    expect(screen.getByText('Suggestions')).toBeInTheDocument();
+    expect(screen.getByText('Consider adding more detail to the summary')).toBeInTheDocument();
+  });
+
+  it('does NOT create new run when viewing completed history (no POST)', () => {
+    const completedRun = createRunSummary({
+      id: 'completed-run-123',
+      status: 'completed',
+      content_version: 1,
+      requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+    });
+
+    const mockMutate = vi.fn();
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { artifact_public_id: 'art-123', runs: [completedRun], cursor: null, has_more: false },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: {
+        run: {
+          ...completedRun,
+          items: [],
+          failure: null,
+        },
+      },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useCreateCoachRun).mockReturnValue({
+      mutate: mockMutate,
+      isPending: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    // Render and view completed run
+    const { rerender } = renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Verify history is visible
+    expect(screen.getByText('History')).toBeInTheDocument();
+
+    // Rerender (simulates reopening rail)
+    rerender(<CoachingRail {...defaultProps} />);
+
+    // CRITICAL: createCoachRun must NOT have been called
+    expect(mockMutate).not.toHaveBeenCalled();
+  });
+
+  it('restores section result when reopening section context (no POST)', () => {
+    const completedSectionRun = createRunSummary({
+      id: 'section-run-123',
+      status: 'completed',
+      content_version: 1,
+      review_scope: 'section',
+      selected_section_key: 'problem_narrative',
+      requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+    });
+
+    const mockMutate = vi.fn();
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { artifact_public_id: 'art-123', runs: [completedSectionRun], cursor: null, has_more: false },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: {
+        run: {
+          ...completedSectionRun,
+          items: [
+            {
+              id: 'item-1',
+              category: 'strength' as const,
+              position: 1,
+              text: 'Restored strength item',
+              references: [],
+            },
+          ],
+          failure: null,
+        },
+      },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useCreateCoachRun).mockReturnValue({
+      mutate: mockMutate,
+      isPending: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    // Render in section context
+    renderWithProviders(
+      <CoachingRail
+        {...defaultProps}
+        sectionContext={{ sectionKey: 'problem_narrative', label: 'Problem' }}
+      />,
+    );
+
+    // Should show the restored result
+    expect(screen.getByText('Review complete')).toBeInTheDocument();
+    expect(screen.getByText('Strengths')).toBeInTheDocument();
+    expect(screen.getByText('Restored strength item')).toBeInTheDocument();
+
+    // CRITICAL: no POST occurred
+    expect(mockMutate).not.toHaveBeenCalled();
+  });
+
+  it('useCoachRun is called with correct runId for completed primary run', () => {
+    const completedRunId = 'detail-fetch-test-123';
+    const completedRun = createRunSummary({
+      id: completedRunId,
+      status: 'completed',
+      content_version: 1,
+      requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { artifact_public_id: 'art-123', runs: [completedRun], cursor: null, has_more: false },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Verify useCoachRun was called with the correct runId
+    expect(coachingApi.useCoachRun).toHaveBeenCalledWith({
+      runId: completedRunId,
+      enabled: true,
+    });
   });
 });
