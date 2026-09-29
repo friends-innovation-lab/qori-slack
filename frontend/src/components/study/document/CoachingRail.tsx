@@ -571,10 +571,6 @@ export function CoachingRail({
     }
   }, [rememberedSection, onSectionContextChange]);
 
-  const handleSelectRun = useCallback((runId: string) => {
-    setSelectedRunId(runId);
-  }, []);
-
   // M3B: Get section label for display (from capabilities or fallback)
   const getSectionLabelFromCapabilities = useCallback(
     (sectionKey: string): string => {
@@ -584,6 +580,38 @@ export function CoachingRail({
       return section?.label ?? getSectionDisplayName(artifactType, sectionKey);
     },
     [capabilities, artifactType],
+  );
+
+  /**
+   * M3B FIX: Handle history row selection with automatic context switching.
+   *
+   * When selecting a run from history:
+   * - If run.review_scope === 'section': switch to that section's context
+   * - If run.review_scope === 'artifact': switch to artifact context
+   *
+   * This ensures clicking a section history row from artifact context
+   * navigates into the correct section context automatically.
+   */
+  const handleSelectRun = useCallback(
+    (run: CoachRunSummaryResource) => {
+      setSelectedRunId(run.id);
+
+      // Switch context based on run scope
+      if (run.review_scope === 'section' && run.selected_section_key) {
+        // Navigate to section context
+        const label = getSectionLabelFromCapabilities(run.selected_section_key);
+        onSectionContextChange?.({
+          sectionKey: run.selected_section_key,
+          label,
+        });
+      } else if (run.review_scope === 'artifact') {
+        // Navigate to artifact context (only if currently in section context)
+        if (isInSectionContext) {
+          onSectionContextChange?.(null);
+        }
+      }
+    },
+    [onSectionContextChange, isInSectionContext, getSectionLabelFromCapabilities],
   );
 
   // M3B: Determine action button label
@@ -827,12 +855,17 @@ export function CoachingRail({
                   }`}
                   role="option"
                   aria-selected={displayedRunId === run.id}
+                  aria-label={
+                    run.review_scope === 'section'
+                      ? `Open ${getSectionLabelFromCapabilities(run.selected_section_key!)} coaching review`
+                      : `Open ${getArtifactDisplayName(artifactType)} coaching review`
+                  }
                   tabIndex={0}
-                  onClick={() => handleSelectRun(run.id)}
+                  onClick={() => handleSelectRun(run)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      handleSelectRun(run.id);
+                      handleSelectRun(run);
                     }
                   }}
                 >
