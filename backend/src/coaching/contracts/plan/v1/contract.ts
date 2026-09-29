@@ -33,17 +33,22 @@ const CONTRACT_VERSION = '1.0.0';
 const PROMPT_TEMPLATE_VERSION = '1.0.0';
 
 // ─── Valid Section Keys ─────────────────────────────────────────────────
+// CRITICAL: These keys MUST match artifact_sections.section_key exactly.
+// See: packages/artifact-contracts/src/plan.contract.ts for authoritative keys.
+// See: frontend/src/components/study/document/sectionLabels.ts for Comments alignment.
+//
+// CANONICAL SECTION IDENTITY RULE:
+// Coach section identity uses the exact canonical artifact_sections.section_key.
+// Do NOT use UI presentation IDs, heading labels, or invented Coach aliases.
 
 const PLAN_SECTIONS: SectionMetadata[] = [
-  { key: 'research_summary', displayName: 'Research Summary', coachable: true },
-  { key: 'objectives_questions', displayName: 'Objectives & Questions', coachable: true },
-  { key: 'methodology_approach', displayName: 'Methodology Approach', coachable: true },
-  { key: 'participant_criteria', displayName: 'Participant Criteria', coachable: true },
-  { key: 'session_structure', displayName: 'Session Structure', coachable: true },
-  { key: 'analysis_approach', displayName: 'Analysis Approach', coachable: true },
-  { key: 'timeline_milestones', displayName: 'Timeline & Milestones', coachable: true },
-  { key: 'deliverables', displayName: 'Deliverables', coachable: true },
-  { key: 'plan_risks', displayName: 'Plan Risks', coachable: true },
+  { key: 'plan_summary', displayName: 'Summary', coachable: true },
+  { key: 'plan_background', displayName: 'Background', coachable: true },
+  { key: 'plan_method_approach', displayName: 'Method', coachable: true },
+  { key: 'plan_participants_prose', displayName: 'Participants', coachable: true },
+  { key: 'plan_deliverables', displayName: 'Deliverables', coachable: true },
+  { key: 'plan_risks', displayName: 'Risks and mitigations', coachable: true },
+  { key: 'plan_commitments', displayName: 'Brief commitments', coachable: true },
 ];
 
 // ─── Rubric Criteria ────────────────────────────────────────────────────

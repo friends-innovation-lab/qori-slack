@@ -708,8 +708,8 @@ describe('PlanDocument', () => {
           capabilities: {
             artifact_review: true,
             coachable_sections: [
-              { section_key: 'research_summary', label: 'Research Summary' },
-              { section_key: 'methodology_approach', label: 'Methodology Approach' },
+              { section_key: 'plan_summary', label: 'Summary' },
+              { section_key: 'plan_method_approach', label: 'Method' },
             ],
           },
           cursor: null,

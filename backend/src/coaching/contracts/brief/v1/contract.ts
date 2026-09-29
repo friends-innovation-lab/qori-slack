@@ -31,19 +31,21 @@ const CONTRACT_VERSION = '1.0.0';
 const PROMPT_TEMPLATE_VERSION = '1.0.0';
 
 // ─── Valid Section Keys ─────────────────────────────────────────────────
+// CRITICAL: These keys MUST match artifact_sections.section_key exactly.
+// See: packages/artifact-contracts/src/brief.contract.ts for authoritative keys.
+// See: frontend/src/components/study/document/sectionLabels.ts for Comments alignment.
+//
+// CANONICAL SECTION IDENTITY RULE:
+// Coach section identity uses the exact canonical artifact_sections.section_key.
+// Do NOT use UI presentation IDs, heading labels, or invented Coach aliases.
 
 const BRIEF_SECTIONS: SectionMetadata[] = [
   { key: 'summary', displayName: 'Summary', coachable: true },
-  { key: 'problem_statement', displayName: 'Problem Statement', coachable: true },
-  { key: 'learning_objectives', displayName: 'Learning Objectives', coachable: true },
-  { key: 'research_questions', displayName: 'Research Questions', coachable: true },
-  { key: 'target_barriers', displayName: 'Target Barriers', coachable: true },
-  { key: 'participant_approach', displayName: 'Participant Approach', coachable: true },
-  { key: 'methodology', displayName: 'Methodology', coachable: true },
-  { key: 'out_of_scope', displayName: 'Out of Scope', coachable: true },
-  { key: 'timeline', displayName: 'Timeline', coachable: true },
+  { key: 'problem_narrative', displayName: 'Problem', coachable: true },
+  { key: 'method_prose', displayName: 'Method', coachable: true },
+  { key: 'participants_prose', displayName: 'Participants', coachable: true },
+  { key: 'out_of_scope', displayName: 'Out of scope', coachable: true },
   { key: 'risks', displayName: 'Risks', coachable: true },
-  { key: 'discovery_sources', displayName: 'Discovery Sources', coachable: true },
 ];
 
 // ─── Rubric Criteria ────────────────────────────────────────────────────

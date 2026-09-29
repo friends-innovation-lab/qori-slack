@@ -591,7 +591,7 @@ describe('selectPrimarySectionRun', () => {
 
   it('excludes runs for different sections', () => {
     const otherSectionRun = createSectionRun({
-      selected_section_key: 'methodology',
+      selected_section_key: 'method_prose',
     });
 
     const result = selectPrimarySectionRun([otherSectionRun], currentVersion, currentUserId, targetSection);
@@ -1141,7 +1141,7 @@ describe('M3B section context', () => {
     rerender(
       <CoachingRail
         {...defaultProps}
-        sectionContext={{ sectionKey: 'methodology', label: 'Methodology' }}
+        sectionContext={{ sectionKey: 'method_prose', label: 'Method' }}
       />,
     );
 
