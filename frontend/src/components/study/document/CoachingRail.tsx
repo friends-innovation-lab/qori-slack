@@ -474,6 +474,7 @@ export function CoachingRail({
         status: polledRun.status,
         completed_at: polledRun.completed_at ?? primaryRun.completed_at,
         failed_at: polledRun.failed_at ?? primaryRun.failed_at,
+        retryable: polledRun.retryable, // M3C-A: Merge retryability from polled data
       };
     }
 
@@ -517,6 +518,7 @@ export function CoachingRail({
             status: polledRun.status,
             completed_at: polledRun.completed_at ?? selectedFromHistory.completed_at,
             failed_at: polledRun.failed_at ?? selectedFromHistory.failed_at,
+            retryable: polledRun.retryable, // M3C-A: Merge retryability from polled data
           };
         }
         return selectedFromHistory;
@@ -673,11 +675,18 @@ export function CoachingRail({
    * M3B FINAL: Get the scope title for a run.
    * Returns "{Section Label} review" or "{Artifact Type} review".
    * Used for explicit scope identification in result display.
+   *
+   * M3C-A MALFORMED SAFETY: For non-retryable failed section runs,
+   * show "Older section review" since the section is unidentifiable.
    */
   const getRunScopeTitle = useCallback(
     (run: CoachRunSummaryResource | null): string => {
       if (!run) return '';
       if (run.review_scope === 'section' && run.selected_section_key) {
+        // M3C-A: Malformed historical section runs get a generic title
+        if (run.status === 'failed' && !run.retryable) {
+          return 'Older section review';
+        }
         return `${getSectionLabelFromCapabilities(run.selected_section_key)} review`;
       }
       return `${getArtifactDisplayName(artifactType)} review`;
@@ -711,12 +720,20 @@ export function CoachingRail({
 
       // Switch context based on run scope
       if (run.review_scope === 'section' && run.selected_section_key) {
-        // Navigate to section context
-        const label = getSectionLabelFromCapabilities(run.selected_section_key);
-        onSectionContextChange?.({
-          sectionKey: run.selected_section_key,
-          label,
-        });
+        // M3C-A MALFORMED SAFETY: Do NOT navigate to section context for non-retryable
+        // failed section runs — their section key is malformed/unknown.
+        // Stay in current context and just display the historical run.
+        if (run.status === 'failed' && !run.retryable) {
+          // Malformed historical section run — do not change context
+          // (stay in artifact context, or stay in current valid section context)
+        } else {
+          // Navigate to section context (valid section key)
+          const label = getSectionLabelFromCapabilities(run.selected_section_key);
+          onSectionContextChange?.({
+            sectionKey: run.selected_section_key,
+            label,
+          });
+        }
       } else if (run.review_scope === 'artifact') {
         // Navigate to artifact context (only if currently in section context)
         if (isInSectionContext) {
@@ -932,35 +949,50 @@ export function CoachingRail({
               failureDetailRun for failure message (if detail loaded) */}
           {runForDisplay.status === 'failed' && (
             <div className={styles.failureMessage}>
-              {failureDetailRun?.failure?.message ?? 'Coach couldn\'t complete this review.'}
-              <p className={styles.failureSafetyCopy}>
-                {/* M3C FIX: Use display name from the failed run's scope.
-                    For section-scoped runs, use the run's section key to get the trusted label.
-                    For artifact-scoped runs, use the artifact display name. */}
-                Your {runForDisplay.review_scope === 'section' && runForDisplay.selected_section_key
-                  ? getSectionLabelFromCapabilities(runForDisplay.selected_section_key)
-                  : getArtifactDisplayName(artifactType)} wasn't changed.
-              </p>
+              {/* M3C-A MALFORMED SAFETY: Non-retryable runs get special handling */}
+              {runForDisplay.retryable ? (
+                <>
+                  {failureDetailRun?.failure?.message ?? 'Coach couldn\'t complete this review.'}
+                  <p className={styles.failureSafetyCopy}>
+                    {/* M3C FIX: Use display name from the failed run's scope.
+                        For section-scoped runs, use the run's section key to get the trusted label.
+                        For artifact-scoped runs, use the artifact display name. */}
+                    Your {runForDisplay.review_scope === 'section' && runForDisplay.selected_section_key
+                      ? getSectionLabelFromCapabilities(runForDisplay.selected_section_key)
+                      : getArtifactDisplayName(artifactType)} wasn't changed.
+                  </p>
 
-              {/* M3C: Earlier-version explanation for retry */}
-              {!runForDisplay.is_current_version && (
-                <p className={styles.earlierVersionHint}>
-                  Reviews the current version. The original failed attempt reviewed an earlier version.
-                </p>
+                  {/* M3C: Earlier-version explanation for retry */}
+                  {!runForDisplay.is_current_version && (
+                    <p className={styles.earlierVersionHint}>
+                      Reviews the current version. The original failed attempt reviewed an earlier version.
+                    </p>
+                  )}
+
+                  {/* M3C: Retry button for retryable failed runs */}
+                  <div className={styles.retryActions}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleRetryReview}
+                      disabled={hasActiveRun || retryRun.isPending}
+                      loading={retryRun.isPending}
+                    >
+                      Retry review
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* M3C-A MALFORMED HISTORY: Non-retryable section runs */}
+                  <p className={styles.failureSafetyCopy}>
+                    This older section review can't be retried because its section is no longer identifiable.
+                  </p>
+                  <p className={styles.failureSafetyCopy}>
+                    Start a new review from the current section.
+                  </p>
+                </>
               )}
-
-              {/* M3C: Retry button for failed runs */}
-              <div className={styles.retryActions}>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleRetryReview}
-                  disabled={hasActiveRun || retryRun.isPending}
-                  loading={retryRun.isPending}
-                >
-                  Retry review
-                </Button>
-              </div>
             </div>
           )}
         </>

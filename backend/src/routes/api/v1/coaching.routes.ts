@@ -136,6 +136,7 @@ function toRunSummaryResource(
     failed_at: internal.failed_at,
     is_current_version: internal.content_version === currentContentVersion,
     retry_of_run_id: internal.retry_of_run_id,
+    retryable: internal.retryable,
   };
 }
 

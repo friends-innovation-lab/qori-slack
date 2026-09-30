@@ -94,6 +94,8 @@ export interface InternalCoachingRunDTO {
   generation_config_json: Record<string, unknown> | null;
   failure_code: CoachingFailureCode | null;
   failure_diagnostic: string | null;
+  /** Server-derived: true if this run can be retried by the researcher */
+  retryable: boolean;
 }
 
 /**
@@ -245,6 +247,7 @@ async function toRunDTO(
     generation_config_json: run.generation_config_json,
     failure_code: run.failure_code,
     failure_diagnostic: run.failure_diagnostic,
+    retryable: isRunRetryable(run.status, run.review_scope, run.artifact_type, run.selected_section_key),
   };
 }
 
@@ -368,6 +371,49 @@ const LEGACY_PLAN_KEY_MAP: Record<string, string> = {
 function resolveLegacySectionKey(artifactType: string, legacyKey: string): string | null {
   const keyMap = artifactType === 'brief' ? LEGACY_BRIEF_KEY_MAP : LEGACY_PLAN_KEY_MAP;
   return keyMap[legacyKey] ?? null;
+}
+
+/**
+ * Determine if a coaching run is retryable by the researcher.
+ *
+ * A run is retryable when:
+ * - status === 'failed'
+ * - AND (review_scope === 'artifact' OR section key resolves to canonical)
+ *
+ * This is the SERVER-AUTHORITATIVE determination of retryability.
+ * Frontend uses this to show/hide Retry UI; backend still enforces on actual retry attempt.
+ */
+export function isRunRetryable(
+  status: string,
+  reviewScope: string,
+  artifactType: string,
+  selectedSectionKey: string | null
+): boolean {
+  // Only failed runs are retryable
+  if (status !== 'failed') {
+    return false;
+  }
+
+  // Artifact-scoped runs are always retryable (if failed)
+  if (reviewScope === 'artifact') {
+    return true;
+  }
+
+  // Section-scoped runs need a valid/resolvable section key
+  if (reviewScope === 'section' && selectedSectionKey) {
+    // Check if already canonical
+    if (isValidSectionKey(artifactType, selectedSectionKey)) {
+      return true;
+    }
+    // Check if resolvable legacy key
+    const canonical = resolveLegacySectionKey(artifactType, selectedSectionKey);
+    if (canonical && isValidSectionKey(artifactType, canonical)) {
+      return true;
+    }
+  }
+
+  // Malformed/unknown section key or missing key for section scope
+  return false;
 }
 
 // ─── Service Functions ─────────────────────────────────────────────────
