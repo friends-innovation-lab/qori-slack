@@ -335,6 +335,41 @@ function isValidSectionKey(artifactType: string, sectionKey: string): boolean {
   return false;
 }
 
+// ─── Legacy Section Key Resolution ─────────────────────────────────────────
+// M3C FIX: Some older failed runs may have non-canonical section keys from before
+// the M3B canonical key standardization. This provides a deterministic server-side
+// mapping from legacy keys to current canonical keys.
+//
+// IMPORTANT: This is ONLY for researcher retry of historical failed runs.
+// New runs MUST use canonical keys from the start (enforced by isValidSectionKey).
+
+const LEGACY_BRIEF_KEY_MAP: Record<string, string> = {
+  // No known legacy brief keys currently
+};
+
+const LEGACY_PLAN_KEY_MAP: Record<string, string> = {
+  // Legacy keys that may exist in older failed runs
+  'background': 'plan_background',
+  'summary': 'plan_summary',
+  'method': 'plan_method_approach',
+  'method_approach': 'plan_method_approach',
+  'participants': 'plan_participants_prose',
+  'participants_prose': 'plan_participants_prose',
+  'deliverables': 'plan_deliverables',
+  'risks': 'plan_risks',
+  'commitments': 'plan_commitments',
+};
+
+/**
+ * Attempt to resolve a legacy section key to its canonical form.
+ *
+ * @returns The canonical key if a deterministic mapping exists, or null if not resolvable
+ */
+function resolveLegacySectionKey(artifactType: string, legacyKey: string): string | null {
+  const keyMap = artifactType === 'brief' ? LEGACY_BRIEF_KEY_MAP : LEGACY_PLAN_KEY_MAP;
+  return keyMap[legacyKey] ?? null;
+}
+
 // ─── Service Functions ─────────────────────────────────────────────────
 
 /**
@@ -792,24 +827,46 @@ export async function createResearcherRetryRun(
     );
   }
 
-  // 6. For section-scoped retries, validate section is still coachable
+  // 6. M3C FIX: For section-scoped retries, resolve legacy keys and validate
+  let resolvedSectionKey: string | null = originalRun.selected_section_key;
+
   if (originalRun.review_scope === 'section' && originalRun.selected_section_key) {
+    // First check if the key is already canonical
     if (!contract.isValidSectionKey(originalRun.selected_section_key)) {
-      throw validationError(
-        `Section '${originalRun.selected_section_key}' is no longer coachable. The coaching contract may have changed since the original run.`,
-        { section_key: originalRun.selected_section_key, artifact_type: artifact.artifact_type }
+      // Attempt legacy key resolution
+      const canonicalKey = resolveLegacySectionKey(
+        artifact.artifact_type,
+        originalRun.selected_section_key
       );
+
+      if (canonicalKey && contract.isValidSectionKey(canonicalKey)) {
+        // Successfully resolved legacy key to canonical
+        resolvedSectionKey = canonicalKey;
+      } else {
+        // No valid mapping exists — reject retry with clear error
+        const sectionLabel = contract.getSectionDisplayName(originalRun.selected_section_key)
+          ?? originalRun.selected_section_key;
+        throw validationError(
+          `This older ${sectionLabel} review cannot be retried because the section identifier has changed. Please start a new review from the current section.`,
+          {
+            legacy_key: originalRun.selected_section_key,
+            artifact_type: artifact.artifact_type,
+            hint: 'Use "Review this section" to start a fresh review with the current section structure.',
+          }
+        );
+      }
     }
   }
 
   // 7. Check for existing active run (concurrency enforcement)
+  // M3C FIX: Use resolved section key for concurrency check
   const existingActive = await CoachingRunModel.findOne({
     where: {
       requested_by: ctx.actor.id,
       artifact_id: artifact.id,
       content_version: artifact.content_version,
       review_scope: originalRun.review_scope,
-      selected_section_key: originalRun.selected_section_key,
+      selected_section_key: resolvedSectionKey,
       status: ['pending', 'running'],
     },
   }) as CoachingRun | null;
@@ -853,12 +910,13 @@ export async function createResearcherRetryRun(
     }
 
     // Create retry run with CURRENT approved contract/model configuration
+    // M3C FIX: Use resolved section key (may differ from original if legacy key was migrated)
     const run = await CoachingRunModel.create({
       study_id: originalRun.study_id,
       artifact_id: originalRun.artifact_id,
       artifact_type: artifact.artifact_type,
       content_version: artifact.content_version, // Current version, not original
-      selected_section_key: originalRun.selected_section_key,
+      selected_section_key: resolvedSectionKey, // M3C FIX: Use resolved canonical key
       review_scope: originalRun.review_scope,
       status: 'pending',
       requested_by: ctx.actor.id,
