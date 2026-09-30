@@ -498,26 +498,48 @@ export function CoachingRail({
     },
   });
 
-  // M3C FIX: Determine which run to show in failure state.
-  // When user explicitly selects a run (selectedRunId set), use displayedRun.
-  // Otherwise fall back to effectivePrimaryRun.
-  // This ensures clicking a historical failed run shows its failure state.
-  const failedRunForDisplay = useMemo(() => {
-    // If user selected a specific run and we have its detail loaded
+  // M3C EXACT-PATH FIX: Compute the run to display in the main section.
+  // When user explicitly selects a run from history, use that run's SUMMARY data
+  // immediately (don't wait for detail to load). This ensures clicking a historical
+  // failed run shows that run's status/scope immediately.
+  //
+  // Priority: explicitly selected run (from summary) > auto-selected primary
+  const runForDisplay = useMemo(() => {
+    // If user explicitly selected a run from history, find it in runs array
+    if (selectedRunId) {
+      const selectedFromHistory = runs.find((r) => r.id === selectedRunId);
+      if (selectedFromHistory) {
+        // Merge with polled data if this run was being polled
+        const polledRun = activeRunQuery.data?.run;
+        if (polledRun && polledRun.id === selectedRunId) {
+          return {
+            ...selectedFromHistory,
+            status: polledRun.status,
+            completed_at: polledRun.completed_at ?? selectedFromHistory.completed_at,
+            failed_at: polledRun.failed_at ?? selectedFromHistory.failed_at,
+          };
+        }
+        return selectedFromHistory;
+      }
+    }
+    // Fall back to auto-selected primary
+    return effectivePrimaryRun;
+  }, [selectedRunId, runs, effectivePrimaryRun, activeRunQuery.data?.run]);
+
+  // M3C: For failure MESSAGE (not status), prefer detail if loaded (has full failure object)
+  const failureDetailRun = useMemo(() => {
     if (selectedRunId && displayedRun && displayedRun.id === selectedRunId) {
       return displayedRun;
     }
-    // Fall back to effective primary (for auto-selected primary)
-    return effectivePrimaryRun;
-  }, [selectedRunId, displayedRun, effectivePrimaryRun]);
+    return null;
+  }, [selectedRunId, displayedRun]);
 
-  // M3C: Handle retry for failed run — uses the DISPLAYED failed run, not just primary
+  // M3C EXACT-PATH FIX: Handle retry for failed run — uses runForDisplay (explicitly selected or primary)
   const handleRetryReview = useCallback(() => {
-    const runToRetry = failedRunForDisplay;
-    if (runToRetry?.status === 'failed') {
-      retryRun.mutate(runToRetry.id);
+    if (runForDisplay?.status === 'failed') {
+      retryRun.mutate(runForDisplay.id);
     }
-  }, [failedRunForDisplay, retryRun]);
+  }, [runForDisplay, retryRun]);
 
   // M3B: Check for active run based on current context.
   // CRITICAL: Use effectivePrimaryRun to account for polled status transitions.
@@ -666,10 +688,11 @@ export function CoachingRail({
   /**
    * M3B FINAL: Computed scope title for the displayed run.
    * Shows what is being reviewed, separate from status.
+   * M3C EXACT-PATH FIX: Use runForDisplay to respect explicit history selection.
    */
   const displayedRunScopeTitle = useMemo(() => {
-    return getRunScopeTitle(effectivePrimaryRun);
-  }, [effectivePrimaryRun, getRunScopeTitle]);
+    return getRunScopeTitle(runForDisplay);
+  }, [runForDisplay, getRunScopeTitle]);
 
   /**
    * M3B FIX: Handle history row selection with automatic context switching.
@@ -761,7 +784,8 @@ export function CoachingRail({
   }
 
   // Empty state - no coaching history (context-aware)
-  if (displayedHistory.length === 0 && !effectivePrimaryRun) {
+  // M3C EXACT-PATH FIX: Use runForDisplay for empty state check
+  if (displayedHistory.length === 0 && !runForDisplay) {
     // M3B FINAL: Scope title for empty state
     const emptyScopeTitle = isInSectionContext && sectionContext
       ? `${sectionContext.label} review`
@@ -819,7 +843,8 @@ export function CoachingRail({
       <p className={styles.eyebrow}>AI Coach</p>
 
       {/* M3B FINAL: Explicit scope title - identifies WHAT is being reviewed */}
-      {effectivePrimaryRun && (
+      {/* M3C EXACT-PATH FIX: Use runForDisplay to respect explicit history selection */}
+      {runForDisplay && (
         <h3
           ref={scopeTitleRef}
           className={styles.scopeTitle}
@@ -829,11 +854,11 @@ export function CoachingRail({
         </h3>
       )}
 
-      {/* Primary run display - uses effectivePrimaryRun for status to handle polled transitions */}
-      {effectivePrimaryRun && (
+      {/* M3C EXACT-PATH FIX: Run display uses runForDisplay (explicitly selected or auto-primary) */}
+      {runForDisplay && (
         <>
           {/* Status heading - separate from scope */}
-          {effectivePrimaryRun.status === 'pending' && (
+          {runForDisplay.status === 'pending' && (
             <>
               <h2 className={`${styles.status} ${styles.statusPending}`}>
                 <span className={styles.spinner} aria-hidden="true" /> Review queued
@@ -843,7 +868,7 @@ export function CoachingRail({
               </p>
             </>
           )}
-          {effectivePrimaryRun.status === 'running' && (
+          {runForDisplay.status === 'running' && (
             <>
               <h2 className={`${styles.status} ${styles.statusRunning}`}>
                 <span className={styles.spinner} aria-hidden="true" /> Reviewing
@@ -853,12 +878,12 @@ export function CoachingRail({
               </p>
             </>
           )}
-          {effectivePrimaryRun.status === 'completed' && (
+          {runForDisplay.status === 'completed' && (
             <h2 className={`${styles.status} ${styles.statusCompleted}`}>
               Review complete
             </h2>
           )}
-          {effectivePrimaryRun.status === 'failed' && (
+          {runForDisplay.status === 'failed' && (
             <h2 className={`${styles.status} ${styles.statusFailed}`}>
               Review failed
             </h2>
@@ -866,13 +891,13 @@ export function CoachingRail({
 
           {/* Meta info */}
           <p className={styles.meta}>
-            {effectivePrimaryRun.requested_by.display_name ?? 'Researcher'} ·{' '}
-            {formatTimestamp(effectivePrimaryRun.requested_at)}
+            {runForDisplay.requested_by.display_name ?? 'Researcher'} ·{' '}
+            {formatTimestamp(runForDisplay.requested_at)}
           </p>
 
           {/* Version badge */}
           <div style={{ marginTop: 'var(--space-2)' }}>
-            <VersionBadge isCurrent={effectivePrimaryRun.is_current_version} />
+            <VersionBadge isCurrent={runForDisplay.is_current_version} />
           </div>
 
           {/* M3B FINAL: Persistent Back to artifact coaching (in section context) */}
@@ -898,28 +923,27 @@ export function CoachingRail({
             </button>
           )}
 
-          {/* Completed run - show result */}
-          {effectivePrimaryRun.status === 'completed' && displayedRun && (
+          {/* Completed run - show result (needs detail data for items) */}
+          {runForDisplay.status === 'completed' && displayedRun && (
             <StructuredResult run={displayedRun} />
           )}
 
-          {/* M3C FIX: Failed run display — uses failedRunForDisplay to support both
-              primary run AND explicitly selected historical failed runs */}
-          {failedRunForDisplay?.status === 'failed' && (
+          {/* M3C EXACT-PATH FIX: Failed run display — uses runForDisplay for status/scope,
+              failureDetailRun for failure message (if detail loaded) */}
+          {runForDisplay.status === 'failed' && (
             <div className={styles.failureMessage}>
-              {displayedRun?.failure?.message ?? 'Coach couldn\'t complete this review.'}
+              {failureDetailRun?.failure?.message ?? 'Coach couldn\'t complete this review.'}
               <p className={styles.failureSafetyCopy}>
-                {/* M3C FIX: Use display name from the failed run's scope, not context state.
+                {/* M3C FIX: Use display name from the failed run's scope.
                     For section-scoped runs, use the run's section key to get the trusted label.
-                    For artifact-scoped runs, use the artifact display name.
-                    Never show generic "Section" — always resolve to actual label. */}
-                Your {failedRunForDisplay.review_scope === 'section' && failedRunForDisplay.selected_section_key
-                  ? getSectionLabelFromCapabilities(failedRunForDisplay.selected_section_key)
+                    For artifact-scoped runs, use the artifact display name. */}
+                Your {runForDisplay.review_scope === 'section' && runForDisplay.selected_section_key
+                  ? getSectionLabelFromCapabilities(runForDisplay.selected_section_key)
                   : getArtifactDisplayName(artifactType)} wasn't changed.
               </p>
 
               {/* M3C: Earlier-version explanation for retry */}
-              {!failedRunForDisplay.is_current_version && (
+              {!runForDisplay.is_current_version && (
                 <p className={styles.earlierVersionHint}>
                   Reviews the current version. The original failed attempt reviewed an earlier version.
                 </p>
