@@ -476,4 +476,42 @@ router.get('/coaching/runs/:runId', requireAuth, async (req, res, next) => {
   }
 });
 
+/**
+ * POST /api/v1/coaching/runs/:runId/retry
+ * Retry a failed coaching run.
+ *
+ * Coach M3C: Creates a NEW run linked to the original via retry_of_run_id.
+ * - Only failed runs can be retried
+ * - Uses CURRENT artifact version and content
+ * - Uses CURRENT approved Coaching Contract/model configuration
+ * - Preserves original review scope and section key
+ *
+ * Returns immediately with pending run (does NOT wait for AI generation).
+ */
+router.post('/coaching/runs/:runId/retry', requireAuth, async (req, res, next) => {
+  try {
+    const runId = req.params.runId as string;
+
+    // Create the retry run (service handles all validation)
+    const internalRun = await coachingAppService.createResearcherRetryRun(req.ctx!, runId);
+
+    // Get current artifact content_version for is_current_version calculation
+    const artifact = (await ArtifactModel.findByPk(internalRun.artifact_id, {
+      attributes: ['content_version'],
+    })) as { content_version: number } | null;
+
+    if (!artifact) {
+      throw resourceNotFound('Artifact');
+    }
+
+    const run = toRunSummaryResource(internalRun, artifact.content_version);
+
+    // Reuse CreateCoachRunResponse shape for consistency
+    const response: CreateCoachRunResponse = { run };
+    res.status(201).json({ data: response });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

@@ -1190,8 +1190,8 @@ describe('provider provenance (BLOCKER A regression)', () => {
     expect(rows[0].attempt_count).toBeGreaterThan(1);
   });
 
-  it('researcher retry creates new run with new provenance', async () => {
-    // Create and complete original run
+  it('researcher retry creates new run with CURRENT contract provenance (M3C)', async () => {
+    // M3C: Only FAILED runs can be retried, and uses current contract automatically
     const ctx = createTestContext(testActorId);
     const originalRun = await coachingService.createCoachRun(ctx, {
       artifact_id: testArtifactId,
@@ -1204,45 +1204,41 @@ describe('provider provenance (BLOCKER A regression)', () => {
       generation_config_json: { temperature: 0.3 },
     });
 
-    // Complete the original run
+    // FAIL the original run (M3C: only failed runs can be retried)
     const workerId = generateWorkerId();
     await claimNextPendingRun(workerId);
-    await markCompleted(originalRun.id, workerId);
+    await markFailed(originalRun.id, workerId, 'GENERATION_FAILED', 'Test failure');
 
-    // Create researcher retry with updated provenance
-    const retryRun = await coachingService.createResearcherRetryRun(ctx, originalRun.id, {
-      coaching_contract_version: '1.1.0', // Updated version
-      prompt_template_version: '1.1.0',   // Updated version
-      model: 'claude-opus-4-20250514',    // Different model
-      generation_config_json: { temperature: 0.2 }, // Different config
-    });
+    // Create researcher retry - uses CURRENT contract automatically
+    const retryRun = await coachingService.createResearcherRetryRun(ctx, originalRun.id);
 
-    // Verify retry is a NEW run with NEW provenance
+    // Verify retry is a NEW run with CURRENT provenance (from contract registry)
     expect(retryRun.id).not.toBe(originalRun.id);
 
     const [retryRows] = await sequelize.query(
-      `SELECT provider, model, generation_config_json, coaching_contract_version, retry_of_run_id
+      `SELECT provider, model, coaching_contract_version, retry_of_run_id
        FROM coaching_runs WHERE id = '${retryRun.id}'`
     ) as [Array<{
       provider: string;
       model: string;
-      generation_config_json: { temperature: number };
       coaching_contract_version: string;
       retry_of_run_id: string;
     }>, unknown];
 
     expect(retryRows[0].retry_of_run_id).toBe(originalRun.id);
-    expect(retryRows[0].model).toBe('claude-opus-4-20250514');
-    expect(retryRows[0].coaching_contract_version).toBe('1.1.0');
-    expect(retryRows[0].generation_config_json.temperature).toBe(0.2);
+    expect(retryRows[0].provider).toBe('anthropic');
+    // M3C: Uses current contract config, not original run's config
+    expect(retryRows[0].coaching_contract_version).toBeDefined();
+    expect(retryRows[0].model).toBeDefined();
 
     // Original run provenance unchanged
     const [originalRows] = await sequelize.query(
-      `SELECT model, coaching_contract_version FROM coaching_runs WHERE id = '${originalRun.id}'`
-    ) as [Array<{ model: string; coaching_contract_version: string }>, unknown];
+      `SELECT model, coaching_contract_version, status FROM coaching_runs WHERE id = '${originalRun.id}'`
+    ) as [Array<{ model: string; coaching_contract_version: string; status: string }>, unknown];
 
     expect(originalRows[0].model).toBe('claude-sonnet-4-20250514');
     expect(originalRows[0].coaching_contract_version).toBe('1.0.0');
+    expect(originalRows[0].status).toBe('failed');
   });
 });
 
@@ -1495,7 +1491,7 @@ describe('immutable artifact snapshot (BLOCKER B regression)', () => {
     );
   });
 
-  it('researcher retry creates new snapshot with current content', async () => {
+  it('researcher retry creates new snapshot with current content (M3C)', async () => {
     const ArtifactSection = sequelize.models.ArtifactSection;
 
     // Create section
@@ -1506,7 +1502,7 @@ describe('immutable artifact snapshot (BLOCKER B regression)', () => {
       content: 'ORIGINAL RISKS CONTENT',
     });
 
-    // Create and complete original run
+    // Create and FAIL original run (M3C: only failed runs can be retried)
     const ctx = createTestContext(testActorId);
     const originalRun = await coachingService.createCoachRun(ctx, {
       artifact_id: testArtifactId,
@@ -1520,7 +1516,7 @@ describe('immutable artifact snapshot (BLOCKER B regression)', () => {
 
     const workerId = generateWorkerId();
     await claimNextPendingRun(workerId);
-    await markCompleted(originalRun.id, workerId);
+    await markFailed(originalRun.id, workerId, 'GENERATION_FAILED', 'Test failure');
 
     // Advance artifact
     await sequelize.query(

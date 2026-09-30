@@ -694,7 +694,7 @@ describe('researcher retry', () => {
     expect(retry.status).toBe('pending');
   });
 
-  it('cannot retry pending or running runs', async () => {
+  it('cannot retry pending or running runs (M3C: failed-only)', async () => {
     const ctx = createTestContext(testActorId);
 
     const run = await coachingService.createCoachRun(ctx, {
@@ -710,7 +710,7 @@ describe('researcher retry', () => {
     // Can't retry pending
     await expect(
       coachingService.createResearcherRetryRun(ctx, run.id)
-    ).rejects.toThrow(/still pending or running/i);
+    ).rejects.toThrow(/Only failed.*can be retried/i);
 
     // Move to running
     await coachingService.markCoachRunRunning(run.id);
@@ -718,10 +718,10 @@ describe('researcher retry', () => {
     // Can't retry running
     await expect(
       coachingService.createResearcherRetryRun(ctx, run.id)
-    ).rejects.toThrow(/still pending or running/i);
+    ).rejects.toThrow(/Only failed.*can be retried/i);
   });
 
-  it('retry can use newer provenance', async () => {
+  it('cannot retry completed runs (M3C: failed-only)', async () => {
     const ctx = createTestContext(testActorId);
 
     // Create and complete original
@@ -737,16 +737,36 @@ describe('researcher retry', () => {
     await coachingService.markCoachRunRunning(original.id);
     await coachingService.markCoachRunCompleted(original.id);
 
-    // Retry with newer versions
-    const retry = await coachingService.createResearcherRetryRun(ctx, original.id, {
-      coaching_contract_version: '2.0.0',
-      prompt_template_version: '2.0.0',
-      model: 'claude-opus-4-20250514',
-    });
+    // M3C: Cannot retry completed runs — only failed runs can be retried
+    await expect(
+      coachingService.createResearcherRetryRun(ctx, original.id)
+    ).rejects.toThrow(/Only failed.*can be retried/i);
+  });
 
-    expect(retry.coaching_contract_version).toBe('2.0.0');
-    expect(retry.prompt_template_version).toBe('2.0.0');
-    expect(retry.model).toBe('claude-opus-4-20250514');
+  it('retry uses CURRENT contract config (M3C)', async () => {
+    const ctx = createTestContext(testActorId);
+
+    // Create and fail original
+    const original = await coachingService.createCoachRun(ctx, {
+      artifact_id: testArtifactId,
+      review_scope: 'artifact',
+      selected_section_key: null,
+      coaching_contract_version: '1.0.0',
+      prompt_template_version: '1.0.0',
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-20250514',
+    });
+    await coachingService.markCoachRunRunning(original.id);
+    await coachingService.markCoachRunFailed(original.id, 'GENERATION_FAILED');
+
+    // M3C: Retry automatically uses current contract config
+    const retry = await coachingService.createResearcherRetryRun(ctx, original.id);
+
+    // Retry should have valid provenance from current contract
+    expect(retry.coaching_contract_version).toBeDefined();
+    expect(retry.prompt_template_version).toBeDefined();
+    expect(retry.provider).toBe('anthropic');
+    expect(retry.model).toBeDefined();
   });
 });
 

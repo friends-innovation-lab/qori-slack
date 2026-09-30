@@ -100,3 +100,22 @@ export async function getCoachRun(runId: string): Promise<CoachRunDetailResponse
   const res = await api.get(`coaching/runs/${runId}`).json<{ data: CoachRunDetailResponse }>();
   return res.data;
 }
+
+// ─── Retry Coaching Run ─────────────────────────────────────────────────────
+
+/**
+ * POST /api/v1/coaching/runs/:runId/retry
+ *
+ * Retries a failed coaching run.
+ * Creates a NEW run linked to the original via retry_of_run_id.
+ * Uses CURRENT artifact version and CURRENT approved contract/model.
+ * Returns immediately with pending run (does NOT wait for AI generation).
+ *
+ * Coach M3C: Only failed runs can be retried.
+ */
+export async function retryCoachRun(runId: string): Promise<CreateCoachRunResponse> {
+  const res = await api
+    .post(`coaching/runs/${runId}/retry`)
+    .json<{ data: CreateCoachRunResponse }>();
+  return res.data;
+}

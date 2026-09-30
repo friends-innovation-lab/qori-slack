@@ -28,6 +28,7 @@ import {
   useCoachRun,
   useActiveCoachRun,
   useCreateCoachRun,
+  useRetryCoachRun,
   isActiveRun,
 } from '@/api/coaching';
 import type {
@@ -458,6 +459,22 @@ export function CoachingRail({
     },
   });
 
+  // M3C: Retry coach run mutation
+  const retryRun = useRetryCoachRun({
+    artifactPublicId,
+    onSuccess: (run) => {
+      // Automatically show the new retry run
+      setSelectedRunId(run.id);
+    },
+  });
+
+  // M3C: Handle retry for failed run
+  const handleRetryReview = useCallback(() => {
+    if (effectivePrimaryRun?.status === 'failed') {
+      retryRun.mutate(effectivePrimaryRun.id);
+    }
+  }, [effectivePrimaryRun, retryRun]);
+
   // M3B: Check for active run based on current context.
   // CRITICAL: Use effectivePrimaryRun to account for polled status transitions.
   // When the polled run transitions to terminal, hasActiveRun must become false
@@ -842,13 +859,33 @@ export function CoachingRail({
             <StructuredResult run={displayedRun} />
           )}
 
-          {/* Failed run - show error with safety copy */}
+          {/* Failed run - show error with safety copy and retry button (M3C) */}
           {effectivePrimaryRun.status === 'failed' && (
             <div className={styles.failureMessage}>
               {displayedRun?.failure?.message ?? 'Coach couldn\'t complete this review.'}
               <p className={styles.failureSafetyCopy}>
-                Your {isInSectionContext ? sectionContext?.label : contextLabel} wasn't changed. You can try again.
+                Your {isInSectionContext ? sectionContext?.label : contextLabel} wasn't changed.
               </p>
+
+              {/* M3C: Earlier-version explanation for retry */}
+              {!effectivePrimaryRun.is_current_version && (
+                <p className={styles.earlierVersionHint}>
+                  Reviews the current version. The original failed attempt reviewed an earlier version.
+                </p>
+              )}
+
+              {/* M3C: Retry button for failed runs */}
+              <div className={styles.retryActions}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleRetryReview}
+                  disabled={hasActiveRun || retryRun.isPending}
+                  loading={retryRun.isPending}
+                >
+                  Retry review
+                </Button>
+              </div>
             </div>
           )}
         </>

@@ -44,6 +44,8 @@ export enum ApiErrorCode {
   COACH_RATE_LIMITED = 'COACH_RATE_LIMITED',
   /** User or study has reached max concurrent Coach runs (Coach M2) */
   COACH_CONCURRENCY_LIMIT = 'COACH_CONCURRENCY_LIMIT',
+  /** Coaching run is not in a retryable state — only failed runs can be retried (Coach M3C) */
+  COACH_RUN_NOT_RETRYABLE = 'COACH_RUN_NOT_RETRYABLE',
   /** Unexpected server error — details intentionally omitted */
   INTERNAL_ERROR = 'INTERNAL_ERROR',
 }
@@ -169,4 +171,13 @@ export function coachRateLimited(message = 'Coach request rate limit exceeded'):
  */
 export function coachConcurrencyLimit(message: string): AppError {
   return new AppError(ApiErrorCode.COACH_CONCURRENCY_LIMIT, message, 429);
+}
+
+/**
+ * Coach run not retryable (Coach M3C).
+ * Returned when attempting to retry a run that is not in failed status.
+ * Only failed runs can be retried by researchers.
+ */
+export function coachRunNotRetryable(message = 'Only failed coaching runs can be retried'): AppError {
+  return new AppError(ApiErrorCode.COACH_RUN_NOT_RETRYABLE, message, 400);
 }
