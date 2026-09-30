@@ -258,6 +258,10 @@ vi.mock('@/api/coaching', () => ({
     mutate: vi.fn(),
     isPending: false,
   })),
+  useRetryCoachRun: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
   isActiveRun: vi.fn((run) => run.status === 'pending' || run.status === 'running'),
 }));
 
@@ -2322,5 +2326,193 @@ describe('M3B FINAL wayfinding', () => {
     // Back link should be focusable
     const backLink = screen.getByRole('button', { name: /back to research plan coaching/i });
     expect(backLink).toHaveAttribute('type', 'button');
+  });
+});
+
+// ─── M3C-A Retry Tests ─────────────────────────────────────────────────────
+
+describe('M3C-A retry functionality', () => {
+  const defaultProps = {
+    artifactPublicId: 'art-123',
+    artifactType: 'brief' as const,
+    currentContentVersion: 2,
+    currentUserPublicId: 'user-current',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('shows Retry review button only for failed runs', () => {
+    const failedRun = createRunSummary({
+      id: 'run-failed',
+      status: 'failed',
+      failed_at: new Date().toISOString(),
+      completed_at: null,
+      content_version: 2,
+      requested_by: { public_id: 'user-current', display_name: 'Test User' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { runs: [failedRun], capabilities: { coachable_sections: [] } },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Should show failed status
+    expect(screen.getByText(/review failed/i)).toBeInTheDocument();
+
+    // Should show Retry review button
+    expect(screen.getByRole('button', { name: /retry review/i })).toBeInTheDocument();
+  });
+
+  it('does NOT show Retry review button for completed runs', () => {
+    const completedRun = createRunSummary({
+      id: 'run-completed',
+      status: 'completed',
+      completed_at: new Date().toISOString(),
+      content_version: 2,
+      requested_by: { public_id: 'user-current', display_name: 'Test User' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { runs: [completedRun], capabilities: { coachable_sections: [] } },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Should show completed status
+    expect(screen.getByText(/review complete/i)).toBeInTheDocument();
+
+    // Should NOT have Retry review button
+    expect(screen.queryByRole('button', { name: /retry review/i })).not.toBeInTheDocument();
+  });
+
+  it('does NOT show Retry review button for running runs', () => {
+    const runningRun = createRunSummary({
+      id: 'run-running',
+      status: 'running',
+      completed_at: null,
+      content_version: 2,
+      requested_by: { public_id: 'user-current', display_name: 'Test User' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { runs: [runningRun], capabilities: { coachable_sections: [] } },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(true);
+
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Should show running status (heading level)
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(/reviewing/i);
+
+    // Should NOT have Retry review button
+    expect(screen.queryByRole('button', { name: /retry review/i })).not.toBeInTheDocument();
+  });
+
+  it('shows earlier-version explanation when failed run is NOT current version', () => {
+    const earlierVersionFailedRun = createRunSummary({
+      id: 'run-failed-earlier',
+      status: 'failed',
+      failed_at: new Date().toISOString(),
+      completed_at: null,
+      content_version: 1, // Earlier than currentContentVersion (2)
+      is_current_version: false,
+      requested_by: { public_id: 'user-current', display_name: 'Test User' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { runs: [earlierVersionFailedRun], capabilities: { coachable_sections: [] } },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Should show earlier-version explanation
+    expect(
+      screen.getByText(/reviews the current version.*earlier version/i),
+    ).toBeInTheDocument();
+  });
+
+  it('does NOT show earlier-version explanation when failed run IS current version', () => {
+    const currentVersionFailedRun = createRunSummary({
+      id: 'run-failed-current',
+      status: 'failed',
+      failed_at: new Date().toISOString(),
+      completed_at: null,
+      content_version: 2, // Same as currentContentVersion
+      is_current_version: true,
+      requested_by: { public_id: 'user-current', display_name: 'Test User' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: { runs: [currentVersionFailedRun], capabilities: { coachable_sections: [] } },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Should NOT show earlier-version explanation
+    expect(
+      screen.queryByText(/reviews the current version.*earlier version/i),
+    ).not.toBeInTheDocument();
+
+    // But should still show Retry button
+    expect(screen.getByRole('button', { name: /retry review/i })).toBeInTheDocument();
+  });
+
+  it('Retry button shows in section context for failed section run', () => {
+    const failedSectionRun = createRunSummary({
+      id: 'run-section-failed',
+      status: 'failed',
+      failed_at: new Date().toISOString(),
+      completed_at: null,
+      content_version: 2,
+      review_scope: 'section',
+      selected_section_key: 'plan_background',
+      artifact_type: 'plan',
+      requested_by: { public_id: 'user-current', display_name: 'Test User' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: {
+        runs: [failedSectionRun],
+        capabilities: { coachable_sections: [{ section_key: 'plan_background', label: 'Background' }] },
+      },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    renderWithProviders(
+      <CoachingRail
+        {...defaultProps}
+        artifactType="plan"
+        sectionContext={{ sectionKey: 'plan_background', label: 'Background' }}
+        onSectionContextChange={vi.fn()}
+      />,
+    );
+
+    // Should show Retry review button in section context
+    expect(screen.getByRole('button', { name: /retry review/i })).toBeInTheDocument();
   });
 });

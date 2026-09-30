@@ -38,8 +38,11 @@ import {
   validationError,
   coachRunAlreadyActive,
   coachRunInvalidState,
+  coachRunNotRetryable,
 } from '../types/api-errors';
 import { assertProjectAccessByActor } from '../services/authorization.service';
+import { getActiveContract } from '../coaching/contracts/registry';
+import { getModelName } from '../helpers/modelProvider';
 import sequelize from '../database';
 
 // ─── Model References ──────────────────────────────────────────────────
@@ -747,27 +750,30 @@ export async function recordCoachUsage(
  * Creates a NEW run linked to the original via retry_of_run_id.
  * The original run is not modified.
  *
- * Coach M2: Researcher retry captures the CURRENT artifact version and content,
- * not the original run's snapshot. This is a new run with new provenance.
+ * Coach M3C: Researcher retry is ONLY available for failed runs.
+ * Captures CURRENT artifact version/content and CURRENT approved contract/model.
+ * The historical failed run's provenance remains unchanged.
+ *
+ * @param ctx - Application context with authenticated actor
+ * @param originalRunId - ID of the failed run to retry
+ * @returns The newly created retry run
+ * @throws COACH_RUN_NOT_RETRYABLE if source run is not failed
+ * @throws COACH_RUN_ALREADY_ACTIVE if active run exists for same scope
+ * @throws VALIDATION_ERROR if section is no longer coachable
  */
 export async function createResearcherRetryRun(
   ctx: ApplicationContext,
   originalRunId: string,
-  provenanceOverrides?: {
-    coaching_contract_version?: string;
-    prompt_template_version?: string;
-    provider?: string;
-    model?: string;
-    generation_config_json?: Record<string, unknown> | null;
-  },
 ): Promise<InternalCoachingRunDTO> {
   // 1. Load original run
   const originalRun = await CoachingRunModel.findByPk(originalRunId) as CoachingRun | null;
   if (!originalRun) throw resourceNotFound('Original coaching run');
 
-  // 2. Verify original run is completed or failed (can't retry pending/running)
-  if (originalRun.status === 'pending' || originalRun.status === 'running') {
-    throw coachRunInvalidState('Cannot retry a run that is still pending or running');
+  // 2. M3C: Only FAILED runs can be retried (reject pending, running, completed)
+  if (originalRun.status !== 'failed') {
+    throw coachRunNotRetryable(
+      `Cannot retry a run with status '${originalRun.status}'. Only failed runs can be retried.`
+    );
   }
 
   // 3. Load artifact for current content_version
@@ -777,7 +783,26 @@ export async function createResearcherRetryRun(
   // 4. Authorization: actor must have project access
   await assertProjectAccessByActor(ctx.actor.id, artifact.project_id, ctx.organization.id);
 
-  // 5. Check for existing active run (concurrency enforcement)
+  // 5. Get CURRENT approved Coaching Contract (not original run's historical config)
+  const contract = getActiveContract(artifact.artifact_type);
+  if (!contract) {
+    throw validationError(
+      `Coaching is not available for artifact type '${artifact.artifact_type}'`,
+      { artifact_type: artifact.artifact_type }
+    );
+  }
+
+  // 6. For section-scoped retries, validate section is still coachable
+  if (originalRun.review_scope === 'section' && originalRun.selected_section_key) {
+    if (!contract.isValidSectionKey(originalRun.selected_section_key)) {
+      throw validationError(
+        `Section '${originalRun.selected_section_key}' is no longer coachable. The coaching contract may have changed since the original run.`,
+        { section_key: originalRun.selected_section_key, artifact_type: artifact.artifact_type }
+      );
+    }
+  }
+
+  // 7. Check for existing active run (concurrency enforcement)
   const existingActive = await CoachingRunModel.findOne({
     where: {
       requested_by: ctx.actor.id,
@@ -795,7 +820,7 @@ export async function createResearcherRetryRun(
     );
   }
 
-  // 6. Load artifact sections for snapshot
+  // 8. Load artifact sections for snapshot
   const sections = await ArtifactSectionModel.findAll({
     where: { artifact_id: originalRun.artifact_id },
     order: [['section_key', 'ASC']],
@@ -813,7 +838,7 @@ export async function createResearcherRetryRun(
     };
   }
 
-  // 7. Create run and snapshot in transaction
+  // 9. Create run and snapshot in transaction
   const transaction = await sequelize.transaction();
 
   try {
@@ -827,6 +852,7 @@ export async function createResearcherRetryRun(
       );
     }
 
+    // Create retry run with CURRENT approved contract/model configuration
     const run = await CoachingRunModel.create({
       study_id: originalRun.study_id,
       artifact_id: originalRun.artifact_id,
@@ -837,13 +863,15 @@ export async function createResearcherRetryRun(
       status: 'pending',
       requested_by: ctx.actor.id,
       retry_of_run_id: originalRunId,
-      coaching_contract_version: provenanceOverrides?.coaching_contract_version ?? originalRun.coaching_contract_version,
-      prompt_template_version: provenanceOverrides?.prompt_template_version ?? originalRun.prompt_template_version,
-      provider: provenanceOverrides?.provider ?? originalRun.provider,
-      model: provenanceOverrides?.model ?? originalRun.model,
-      generation_config_json: provenanceOverrides?.generation_config_json !== undefined
-        ? provenanceOverrides.generation_config_json
-        : originalRun.generation_config_json,
+      // M3C: Use CURRENT approved contract/model, not original run's historical config
+      coaching_contract_version: contract.contractVersion,
+      prompt_template_version: contract.promptTemplateVersion,
+      provider: 'anthropic',
+      model: getModelName(contract.modelConfig.tier),
+      generation_config_json: {
+        temperature: contract.modelConfig.temperature,
+        max_tokens: contract.modelConfig.maxOutputTokens,
+      },
     }, { transaction }) as CoachingRun;
 
     // Create immutable snapshot for the NEW run
