@@ -93,13 +93,43 @@ const PLAN_SECTION_LABELS: Record<string, string> = {
   plan_commitments: 'Brief commitments',
 };
 
+/**
+ * Get human-readable display name for a section key.
+ *
+ * M3C FIX: Improved fallback handling for legacy/unknown section keys.
+ * Instead of returning generic "Section", attempts to derive a readable name
+ * from the key itself (e.g., 'plan_background' -> 'Background').
+ * Falls back to the artifact display name if section key is truly unknown.
+ */
 function getSectionDisplayName(
   artifactType: ArtifactType,
   sectionKey: string | null,
 ): string {
-  if (!sectionKey) return 'Artifact';
+  if (!sectionKey) return getArtifactDisplayName(artifactType);
   const labels = artifactType === 'brief' ? BRIEF_SECTION_LABELS : PLAN_SECTION_LABELS;
-  return labels[sectionKey] ?? 'Section';
+
+  // Direct lookup
+  const directMatch = labels[sectionKey];
+  if (directMatch) return directMatch;
+
+  // M3C FIX: Handle legacy keys by attempting common transformations
+  // Some older runs may have non-canonical keys like 'background' instead of 'plan_background'
+  // Try prefixed version for plan sections
+  if (artifactType === 'plan' && !sectionKey.startsWith('plan_')) {
+    const prefixedKey = `plan_${sectionKey}`;
+    const prefixedMatch = labels[prefixedKey];
+    if (prefixedMatch) return prefixedMatch;
+  }
+
+  // M3C FIX: Last resort - derive a human-readable name from the key itself
+  // Transform 'plan_background' -> 'Background', 'some_section_name' -> 'Some section name'
+  const humanized = sectionKey
+    .replace(/^(plan_|brief_)/, '') // Remove artifact prefix
+    .replace(/_/g, ' ') // Replace underscores with spaces
+    .replace(/\b\w/g, (c) => c.toUpperCase()); // Capitalize first letter of each word
+
+  // Return humanized version, which is better than generic "Section"
+  return humanized || getArtifactDisplayName(artifactType);
 }
 
 // ─── Artifact Display Names ──────────────────────────────────────────────────
@@ -468,12 +498,26 @@ export function CoachingRail({
     },
   });
 
-  // M3C: Handle retry for failed run
-  const handleRetryReview = useCallback(() => {
-    if (effectivePrimaryRun?.status === 'failed') {
-      retryRun.mutate(effectivePrimaryRun.id);
+  // M3C FIX: Determine which run to show in failure state.
+  // When user explicitly selects a run (selectedRunId set), use displayedRun.
+  // Otherwise fall back to effectivePrimaryRun.
+  // This ensures clicking a historical failed run shows its failure state.
+  const failedRunForDisplay = useMemo(() => {
+    // If user selected a specific run and we have its detail loaded
+    if (selectedRunId && displayedRun && displayedRun.id === selectedRunId) {
+      return displayedRun;
     }
-  }, [effectivePrimaryRun, retryRun]);
+    // Fall back to effective primary (for auto-selected primary)
+    return effectivePrimaryRun;
+  }, [selectedRunId, displayedRun, effectivePrimaryRun]);
+
+  // M3C: Handle retry for failed run — uses the DISPLAYED failed run, not just primary
+  const handleRetryReview = useCallback(() => {
+    const runToRetry = failedRunForDisplay;
+    if (runToRetry?.status === 'failed') {
+      retryRun.mutate(runToRetry.id);
+    }
+  }, [failedRunForDisplay, retryRun]);
 
   // M3B: Check for active run based on current context.
   // CRITICAL: Use effectivePrimaryRun to account for polled status transitions.
@@ -859,16 +903,23 @@ export function CoachingRail({
             <StructuredResult run={displayedRun} />
           )}
 
-          {/* Failed run - show error with safety copy and retry button (M3C) */}
-          {effectivePrimaryRun.status === 'failed' && (
+          {/* M3C FIX: Failed run display — uses failedRunForDisplay to support both
+              primary run AND explicitly selected historical failed runs */}
+          {failedRunForDisplay?.status === 'failed' && (
             <div className={styles.failureMessage}>
               {displayedRun?.failure?.message ?? 'Coach couldn\'t complete this review.'}
               <p className={styles.failureSafetyCopy}>
-                Your {isInSectionContext ? sectionContext?.label : contextLabel} wasn't changed.
+                {/* M3C FIX: Use display name from the failed run's scope, not context state.
+                    For section-scoped runs, use the run's section key to get the trusted label.
+                    For artifact-scoped runs, use the artifact display name.
+                    Never show generic "Section" — always resolve to actual label. */}
+                Your {failedRunForDisplay.review_scope === 'section' && failedRunForDisplay.selected_section_key
+                  ? getSectionLabelFromCapabilities(failedRunForDisplay.selected_section_key)
+                  : getArtifactDisplayName(artifactType)} wasn't changed.
               </p>
 
               {/* M3C: Earlier-version explanation for retry */}
-              {!effectivePrimaryRun.is_current_version && (
+              {!failedRunForDisplay.is_current_version && (
                 <p className={styles.earlierVersionHint}>
                   Reviews the current version. The original failed attempt reviewed an earlier version.
                 </p>

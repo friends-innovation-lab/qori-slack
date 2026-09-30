@@ -608,10 +608,10 @@ describe('M3C-A: invalid section atomicity', () => {
       WHERE id = '${failedRun.id}'
     `);
 
-    // Attempt retry - should be rejected
+    // Attempt retry - should be rejected (error message updated for M3C legacy key handling)
     await expect(
       coachingService.createResearcherRetryRun(ctx, failedRun.id),
-    ).rejects.toThrow(/no longer coachable/i);
+    ).rejects.toThrow(/cannot be retried|start a new review/i);
 
     // Verify NO new runs created
     const [runsAfter] = await sequelize.query(`
@@ -658,5 +658,141 @@ describe('M3C-A: API response shape', () => {
       provider: 'anthropic',
       model: expect.any(String),
     });
+  });
+});
+
+// ─── Legacy Section Key Resolution Tests ─────────────────────────────────────
+
+describe('M3C-A: Legacy section key resolution', () => {
+  it('resolves known legacy key to canonical key', async () => {
+    const ctx = createTestContext(testActorId);
+
+    // Create a failed section run
+    const failedRun = await createAndFailRun(ctx, {
+      reviewScope: 'section',
+      sectionKey: 'plan_background',
+    });
+
+    // Manually set a legacy key to simulate an old run
+    await sequelize.query(`
+      UPDATE coaching_runs SET selected_section_key = 'background'
+      WHERE id = '${failedRun.id}'
+    `);
+
+    // Retry should succeed by resolving 'background' -> 'plan_background'
+    const retryRun = await coachingService.createResearcherRetryRun(ctx, failedRun.id);
+
+    // Verify retry uses CANONICAL key, not legacy key
+    expect(retryRun.selected_section_key).toBe('plan_background');
+    expect(retryRun.status).toBe('pending');
+    expect(retryRun.retry_of_run_id).toBe(failedRun.id);
+  });
+
+  it('resolves multiple known legacy keys', async () => {
+    const ctx = createTestContext(testActorId);
+
+    // Test different legacy key mappings
+    const legacyKeys = [
+      { legacy: 'summary', canonical: 'plan_summary' },
+      { legacy: 'method', canonical: 'plan_method_approach' },
+      { legacy: 'risks', canonical: 'plan_risks' },
+    ];
+
+    for (const { legacy, canonical } of legacyKeys) {
+      // Create a failed section run with canonical key first
+      const failedRun = await createAndFailRun(ctx, {
+        reviewScope: 'section',
+        sectionKey: canonical,
+      });
+
+      // Set legacy key
+      await sequelize.query(`
+        UPDATE coaching_runs SET selected_section_key = '${legacy}'
+        WHERE id = '${failedRun.id}'
+      `);
+
+      // Retry should resolve to canonical
+      const retryRun = await coachingService.createResearcherRetryRun(ctx, failedRun.id);
+      expect(retryRun.selected_section_key).toBe(canonical);
+    }
+  });
+
+  it('rejects unmappable legacy key with clear error message', async () => {
+    const ctx = createTestContext(testActorId);
+
+    // Create a failed section run
+    const failedRun = await createAndFailRun(ctx, {
+      reviewScope: 'section',
+      sectionKey: 'plan_background',
+    });
+
+    // Set a completely unknown legacy key
+    await sequelize.query(`
+      UPDATE coaching_runs SET selected_section_key = 'completely_unknown_section'
+      WHERE id = '${failedRun.id}'
+    `);
+
+    // Count runs before
+    const [runsBefore] = await sequelize.query(`
+      SELECT COUNT(*)::int as count FROM coaching_runs WHERE study_id = ${testStudyId}
+    `) as [Array<{ count: number }>, unknown];
+
+    // Retry should fail with clear error message
+    await expect(
+      coachingService.createResearcherRetryRun(ctx, failedRun.id),
+    ).rejects.toThrow(/cannot be retried|start a new review/i);
+
+    // Verify NO new runs created
+    const [runsAfter] = await sequelize.query(`
+      SELECT COUNT(*)::int as count FROM coaching_runs WHERE study_id = ${testStudyId}
+    `) as [Array<{ count: number }>, unknown];
+    expect(runsAfter[0].count).toBe(runsBefore[0].count);
+  });
+
+  it('canonical key does not require resolution', async () => {
+    const ctx = createTestContext(testActorId);
+
+    // Create a failed section run with canonical key
+    const failedRun = await createAndFailRun(ctx, {
+      reviewScope: 'section',
+      sectionKey: 'plan_background',
+    });
+
+    // Retry should work directly without legacy resolution
+    const retryRun = await coachingService.createResearcherRetryRun(ctx, failedRun.id);
+
+    expect(retryRun.selected_section_key).toBe('plan_background');
+    expect(retryRun.status).toBe('pending');
+  });
+
+  it('uses resolved key for concurrency check', async () => {
+    const ctx = createTestContext(testActorId);
+
+    // Create a failed section run with legacy key
+    const failedRun = await createAndFailRun(ctx, {
+      reviewScope: 'section',
+      sectionKey: 'plan_background',
+    });
+    await sequelize.query(`
+      UPDATE coaching_runs SET selected_section_key = 'background'
+      WHERE id = '${failedRun.id}'
+    `);
+
+    // Create an active run with the CANONICAL key
+    const activeRun = await coachingService.createCoachRun(ctx, {
+      artifact_id: testArtifactId,
+      review_scope: 'section',
+      selected_section_key: 'plan_background',
+      coaching_contract_version: '1.0.0',
+      prompt_template_version: '1.0.0',
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-20250514',
+    });
+    expect(activeRun.status).toBe('pending');
+
+    // Retry of legacy 'background' should conflict with active 'plan_background'
+    await expect(
+      coachingService.createResearcherRetryRun(ctx, failedRun.id),
+    ).rejects.toThrow(/already.*pending.*for this artifact/i);
   });
 });
