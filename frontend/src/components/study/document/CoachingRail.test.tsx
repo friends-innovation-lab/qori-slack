@@ -2603,6 +2603,11 @@ describe('M3C-A FIX: Artifact retry visibility for selected historical run', () 
 
     renderWithProviders(<CoachingRail {...defaultProps} />);
 
+    // BEFORE clicking: Primary (completed) run should be displayed
+    expect(screen.getByText('Review complete')).toBeInTheDocument();
+    expect(screen.queryByText('Review failed')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /retry review/i })).not.toBeInTheDocument();
+
     // Click on the historical failed run in history
     const historyList = screen.getByRole('listbox', { name: /coaching history/i });
     const failedRunRow = within(historyList).getByText(/earlier version/i).closest('[role="option"]');
@@ -2610,7 +2615,11 @@ describe('M3C-A FIX: Artifact retry visibility for selected historical run', () 
 
     await userEvent.click(failedRunRow!);
 
-    // M3C-A FIX: After selecting the failed run, Retry button should be visible
+    // M3C EXACT-PATH FIX: After selecting the failed run:
+    // 1. Status should show "Review failed", NOT "Review complete"
+    expect(screen.getByText('Review failed')).toBeInTheDocument();
+    expect(screen.queryByText('Review complete')).not.toBeInTheDocument();
+    // 2. Retry button should be visible
     expect(screen.getByRole('button', { name: /retry review/i })).toBeInTheDocument();
   });
 
@@ -2760,7 +2769,6 @@ describe('M3C-A FIX: Artifact retry visibility for selected historical run', () 
     const runningRun = createRunSummary({
       id: 'run-running',
       status: 'running',
-      started_at: new Date().toISOString(),
       content_version: 3,
       is_current_version: true,
       review_scope: 'artifact',
