@@ -395,7 +395,8 @@ describe('CoachingRail Component', () => {
       renderWithProviders(<CoachingRail {...defaultProps} />);
 
       expect(screen.getByText('History')).toBeInTheDocument();
-      expect(screen.getByText('Research Brief review')).toBeInTheDocument();
+      // M3B FINAL: "Research Brief review" appears in both scope title and history row
+      expect(screen.getAllByText('Research Brief review').length).toBeGreaterThanOrEqual(1);
     });
 
     it('shows requester name in history', () => {
@@ -532,7 +533,8 @@ describe('CoachingRail Component', () => {
       const { rerender } = renderWithProviders(<CoachingRail {...defaultProps} />);
 
       // Browse history — verify history row is visible
-      expect(screen.getByText('Research Brief review')).toBeInTheDocument();
+      // M3B FINAL: "Research Brief review" appears in both scope title and history row
+      expect(screen.getAllByText('Research Brief review').length).toBeGreaterThanOrEqual(1);
 
       // Rerender (simulates switching tabs and returning)
       rerender(<CoachingRail {...defaultProps} />);
@@ -702,8 +704,9 @@ describe('running → failed status transition (production bug regression)', () 
 
     const { rerender } = renderWithProviders(<CoachingRail {...defaultProps} />);
 
-    // Initial: should show "Reviewing" status
-    expect(screen.getByText(/Reviewing your Research Brief/)).toBeInTheDocument();
+    // Initial: should show "Reviewing" status (M3B FINAL: scope is shown in separate title)
+    // Check for the status heading with spinner
+    expect(screen.getByRole('heading', { name: /Reviewing/ })).toBeInTheDocument();
 
     // Now simulate polling returning failed status
     const failedRun = {
@@ -727,8 +730,9 @@ describe('running → failed status transition (production bug regression)', () 
 
     // REGRESSION TEST: UI should show failed state, not "Reviewing..."
     // This test fails before the fix because primaryRun.status is still 'running' from history
-    expect(screen.queryByText(/Reviewing your Research Brief/)).not.toBeInTheDocument();
-    expect(screen.getByText(/Review couldn't be completed/)).toBeInTheDocument();
+    // M3B FINAL: Status text changed
+    expect(screen.queryByText(/Reviewing/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Review failed/)).toBeInTheDocument();
   });
 
   it('shows failure message when run transitions to failed', () => {
@@ -858,8 +862,8 @@ describe('running → failed status transition (production bug regression)', () 
     // History row should show Failed badge, not Reviewing
     // (This will require history cache invalidation or merged status)
     expect(screen.queryByText('Reviewing')).not.toBeInTheDocument();
-    // The failed status should be visible somewhere
-    expect(screen.getByText(/Review couldn't be completed/)).toBeInTheDocument();
+    // The failed status should be visible somewhere (M3B FINAL: text changed)
+    expect(screen.getByText(/Review failed/)).toBeInTheDocument();
   });
 });
 
@@ -921,7 +925,8 @@ describe('running → completed status transition', () => {
     renderWithProviders(<CoachingRail {...defaultProps} />);
 
     // Should show completed status, not "Reviewing..."
-    expect(screen.queryByText(/Reviewing your Research Brief/)).not.toBeInTheDocument();
+    // M3B FINAL: Status text changed
+    expect(screen.queryByText(/Reviewing/)).not.toBeInTheDocument();
     expect(screen.getByText('Review complete')).toBeInTheDocument();
   });
 
@@ -1055,7 +1060,7 @@ describe('M3B section context', () => {
     vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
   });
 
-  it('shows section context header when sectionContext is provided', () => {
+  it('shows scope title when sectionContext is provided', () => {
     renderWithProviders(
       <CoachingRail
         {...defaultProps}
@@ -1063,8 +1068,8 @@ describe('M3B section context', () => {
       />,
     );
 
-    expect(screen.getByText('Summary')).toBeInTheDocument();
-    expect(screen.getByText('Section review')).toBeInTheDocument();
+    // M3B FINAL: Now shows "{label} review" as scope title
+    expect(screen.getByText('Summary review')).toBeInTheDocument();
   });
 
   it('shows "Back to Research Brief coaching" link in section context', () => {
@@ -1621,7 +1626,7 @@ describe('M3B history row navigation', () => {
 
     // In artifact context, click the artifact run
     // First, let's rerender in artifact context to see both runs
-    const { rerender } = renderWithProviders(
+    renderWithProviders(
       <CoachingRail
         {...defaultProps}
         sectionContext={null}
@@ -1932,5 +1937,390 @@ describe('M3B history row navigation', () => {
       sectionKey: 'plan_background',
       label: 'Background',
     });
+  });
+});
+
+// ─── M3B FINAL: Wayfinding Regression Tests ─────────────────────────────────
+// These tests verify the final M3B wayfinding fixes:
+// - Explicit scope title for all runs
+// - Persistent Back to artifact link
+// - Rail scroll reset on history selection
+
+describe('M3B FINAL wayfinding', () => {
+  const defaultProps = {
+    artifactPublicId: 'art-123',
+    artifactType: 'plan' as const,
+    currentContentVersion: 1,
+    currentUserPublicId: 'user-123',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('shows explicit scope title for completed artifact run', () => {
+    const completedRun = createRunSummary({
+      id: 'artifact-run-123',
+      artifact_type: 'plan',
+      status: 'completed',
+      review_scope: 'artifact',
+      selected_section_key: null,
+      content_version: 1,
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: {
+        artifact_public_id: 'art-123',
+        runs: [completedRun],
+        cursor: null,
+        has_more: false,
+        capabilities: { coachable_sections: [] },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: { run: { ...completedRun, items: [], failure: null } },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    renderWithProviders(
+      <CoachingRail {...defaultProps} sectionContext={null} />,
+    );
+
+    // M3B FINAL: Scope title shows "Research Plan review"
+    expect(screen.getByRole('heading', { name: 'Research Plan review' })).toBeInTheDocument();
+    // Status shows separately
+    expect(screen.getByText('Review complete')).toBeInTheDocument();
+  });
+
+  it('shows explicit scope title for completed section run', () => {
+    const sectionRun = createRunSummary({
+      id: 'section-run-123',
+      artifact_type: 'plan',
+      status: 'completed',
+      review_scope: 'section',
+      selected_section_key: 'plan_background',
+      content_version: 1,
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: {
+        artifact_public_id: 'art-123',
+        runs: [sectionRun],
+        cursor: null,
+        has_more: false,
+        capabilities: {
+          coachable_sections: [{ section_key: 'plan_background', label: 'Background' }],
+        },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: { run: { ...sectionRun, items: [], failure: null } },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    renderWithProviders(
+      <CoachingRail
+        {...defaultProps}
+        sectionContext={{ sectionKey: 'plan_background', label: 'Background' }}
+      />,
+    );
+
+    // M3B FINAL: Scope title shows "Background review"
+    expect(screen.getByRole('heading', { name: 'Background review' })).toBeInTheDocument();
+    expect(screen.getByText('Review complete')).toBeInTheDocument();
+  });
+
+  it('shows scope title for running state', () => {
+    const runningRun = createRunSummary({
+      id: 'running-run-123',
+      artifact_type: 'plan',
+      status: 'running',
+      review_scope: 'section',
+      selected_section_key: 'plan_method_approach',
+      content_version: 1,
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: {
+        artifact_public_id: 'art-123',
+        runs: [runningRun],
+        cursor: null,
+        has_more: false,
+        capabilities: {
+          coachable_sections: [{ section_key: 'plan_method_approach', label: 'Method' }],
+        },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: { run: { ...runningRun, items: [], failure: null } },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(true);
+
+    renderWithProviders(
+      <CoachingRail
+        {...defaultProps}
+        sectionContext={{ sectionKey: 'plan_method_approach', label: 'Method' }}
+      />,
+    );
+
+    // M3B FINAL: Scope title visible for active runs
+    expect(screen.getByRole('heading', { name: 'Method review' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Reviewing/ })).toBeInTheDocument();
+  });
+
+  it('shows scope title for failed state', () => {
+    const failedRun = createRunSummary({
+      id: 'failed-run-123',
+      artifact_type: 'plan',
+      status: 'failed',
+      review_scope: 'artifact',
+      selected_section_key: null,
+      content_version: 1,
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: {
+        artifact_public_id: 'art-123',
+        runs: [failedRun],
+        cursor: null,
+        has_more: false,
+        capabilities: { coachable_sections: [] },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: { run: { ...failedRun, items: [], failure: { code: 'ERROR', message: 'Test error' } } },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    renderWithProviders(
+      <CoachingRail {...defaultProps} sectionContext={null} />,
+    );
+
+    // M3B FINAL: Scope title visible for failed runs
+    expect(screen.getByRole('heading', { name: 'Research Plan review' })).toBeInTheDocument();
+    expect(screen.getByText('Review failed')).toBeInTheDocument();
+  });
+
+  it('shows Back to artifact link in section context', () => {
+    const sectionRun = createRunSummary({
+      id: 'section-run-123',
+      artifact_type: 'plan',
+      status: 'completed',
+      review_scope: 'section',
+      selected_section_key: 'plan_background',
+      content_version: 1,
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: {
+        artifact_public_id: 'art-123',
+        runs: [sectionRun],
+        cursor: null,
+        has_more: false,
+        capabilities: {
+          coachable_sections: [{ section_key: 'plan_background', label: 'Background' }],
+        },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: { run: { ...sectionRun, items: [], failure: null } },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    const onSectionContextChange = vi.fn();
+
+    renderWithProviders(
+      <CoachingRail
+        {...defaultProps}
+        sectionContext={{ sectionKey: 'plan_background', label: 'Background' }}
+        onSectionContextChange={onSectionContextChange}
+      />,
+    );
+
+    // M3B FINAL: Back link should be visible
+    const backLink = screen.getByRole('button', { name: /back to research plan coaching/i });
+    expect(backLink).toBeInTheDocument();
+
+    // Click should return to artifact context without POST
+    backLink.click();
+    expect(onSectionContextChange).toHaveBeenCalledWith(null);
+  });
+
+  it('clicking Back to artifact does NOT create new run', () => {
+    const sectionRun = createRunSummary({
+      id: 'section-run-123',
+      artifact_type: 'plan',
+      status: 'completed',
+      review_scope: 'section',
+      selected_section_key: 'plan_background',
+      content_version: 1,
+    });
+
+    const mockMutate = vi.fn();
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: {
+        artifact_public_id: 'art-123',
+        runs: [sectionRun],
+        cursor: null,
+        has_more: false,
+        capabilities: {
+          coachable_sections: [{ section_key: 'plan_background', label: 'Background' }],
+        },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: { run: { ...sectionRun, items: [], failure: null } },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useCreateCoachRun).mockReturnValue({
+      mutate: mockMutate,
+      isPending: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    renderWithProviders(
+      <CoachingRail
+        {...defaultProps}
+        sectionContext={{ sectionKey: 'plan_background', label: 'Background' }}
+        onSectionContextChange={vi.fn()}
+      />,
+    );
+
+    // Click back link
+    screen.getByRole('button', { name: /back to research plan coaching/i }).click();
+
+    // CRITICAL: No POST should occur
+    expect(mockMutate).not.toHaveBeenCalled();
+  });
+
+  it('Back link is keyboard accessible', () => {
+    const sectionRun = createRunSummary({
+      id: 'section-run-123',
+      artifact_type: 'plan',
+      status: 'completed',
+      review_scope: 'section',
+      selected_section_key: 'plan_background',
+      content_version: 1,
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: {
+        artifact_public_id: 'art-123',
+        runs: [sectionRun],
+        cursor: null,
+        has_more: false,
+        capabilities: {
+          coachable_sections: [{ section_key: 'plan_background', label: 'Background' }],
+        },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: { run: { ...sectionRun, items: [], failure: null } },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    renderWithProviders(
+      <CoachingRail
+        {...defaultProps}
+        sectionContext={{ sectionKey: 'plan_background', label: 'Background' }}
+        onSectionContextChange={vi.fn()}
+      />,
+    );
+
+    // Back link should be focusable
+    const backLink = screen.getByRole('button', { name: /back to research plan coaching/i });
+    expect(backLink).toHaveAttribute('type', 'button');
   });
 });

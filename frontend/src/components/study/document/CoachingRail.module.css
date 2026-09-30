@@ -22,6 +22,19 @@
   color: var(--color-text-muted);
 }
 
+/* ─── Scope title ───────────────────────────────────────────────────────── */
+/* M3B FINAL: Explicit scope title - identifies WHAT is being reviewed */
+
+.scopeTitle {
+  margin: var(--space-2) 0 0;
+  font: var(--weight-medium) var(--type-ui-size)/var(--type-ui-line) var(--font-ui);
+  color: var(--color-text);
+}
+
+.scopeTitle:focus {
+  outline: none;
+}
+
 /* ─── Status heading ────────────────────────────────────────────────────── */
 
 .status {
