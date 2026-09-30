@@ -106,6 +106,12 @@ export interface CoachRunSummaryResource {
   readonly is_current_version: boolean;
   /** ID of the run this was a retry of (null if original) */
   readonly retry_of_run_id: string | null;
+  /**
+   * Server-derived retryability flag.
+   * True if researcher can retry this run (status=failed + resolvable section key).
+   * Frontend uses this to show/hide Retry UI; backend enforces on actual retry.
+   */
+  readonly retryable: boolean;
 }
 
 // ─── Run Detail Resource ──────────────────────────────────────────────

@@ -22,6 +22,10 @@ import type { CoachRunSummaryResource } from '@qori/api-contracts';
 function createRunSummary(
   overrides: Partial<CoachRunSummaryResource> = {},
 ): CoachRunSummaryResource {
+  // Compute default retryable based on status (failed = retryable, others = not)
+  const status = overrides.status ?? 'completed';
+  const defaultRetryable = status === 'failed';
+
   return {
     id: crypto.randomUUID(),
     artifact_public_id: 'art-123',
@@ -39,6 +43,7 @@ function createRunSummary(
     failed_at: null,
     is_current_version: true,
     retry_of_run_id: null,
+    retryable: defaultRetryable,
     ...overrides,
   };
 }
@@ -561,6 +566,10 @@ describe('selectPrimarySectionRun', () => {
   function createSectionRun(
     overrides: Partial<CoachRunSummaryResource> = {},
   ): CoachRunSummaryResource {
+    // Compute default retryable based on status (failed = retryable, others = not)
+    const status = overrides.status ?? 'completed';
+    const defaultRetryable = status === 'failed';
+
     return {
       id: crypto.randomUUID(),
       artifact_public_id: 'art-123',
@@ -578,6 +587,7 @@ describe('selectPrimarySectionRun', () => {
       failed_at: null,
       is_current_version: true,
       retry_of_run_id: null,
+      retryable: defaultRetryable,
       ...overrides,
     };
   }
@@ -761,6 +771,7 @@ describe('running → failed status transition (production bug regression)', () 
       ...runningRun,
       status: 'failed' as const,
       failed_at: new Date().toISOString(),
+      retryable: true, // M3C-A: Failed artifact runs are retryable
       items: [],
       failure: { code: 'MAX_ATTEMPTS_EXCEEDED', message: 'Coach couldn\'t complete this review.' },
     };
@@ -2831,5 +2842,271 @@ describe('M3C-A FIX: Artifact retry visibility for selected historical run', () 
 
     // Retry button should NOT be visible for pending runs
     expect(screen.queryByRole('button', { name: /retry review/i })).not.toBeInTheDocument();
+  });
+});
+
+// ─── M3C-A: Malformed Historical Section Safety ─────────────────────────────
+
+describe('M3C-A malformed historical section safety', () => {
+  const defaultProps = {
+    artifactPublicId: 'art-123',
+    artifactType: 'plan' as const,
+    currentContentVersion: 2,
+    currentUserPublicId: 'user-123',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('shows explanation and hides Retry for non-retryable failed section run', async () => {
+    // Malformed historical section run with selected_section_key = "section"
+    const malformedRun = createRunSummary({
+      id: 'malformed-section-run',
+      status: 'failed',
+      review_scope: 'section',
+      selected_section_key: 'section', // Malformed - not a valid canonical key
+      content_version: 1,
+      is_current_version: false,
+      retryable: false, // Server says not retryable
+      failed_at: new Date().toISOString(),
+      completed_at: null,
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: {
+        artifact_public_id: 'art-123',
+        runs: [malformedRun],
+        capabilities: {
+          artifact_review: true,
+          coachable_sections: [
+            { section_key: 'plan_summary', label: 'Summary' },
+            { section_key: 'plan_background', label: 'Background' },
+          ],
+        },
+        cursor: null,
+        has_more: false,
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    const user = userEvent.setup();
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Click on the malformed section run in history to select it
+    const historyRow = screen.getByRole('option', { name: /Section coaching review/i });
+    await user.click(historyRow);
+
+    // Should show "Older section review" title (scope title for malformed runs)
+    expect(screen.getByRole('heading', { name: 'Older section review' })).toBeInTheDocument();
+
+    // Should show explanation about unidentifiable section
+    expect(screen.getByText(/can't be retried because its section is no longer identifiable/)).toBeInTheDocument();
+    expect(screen.getByText(/Start a new review from the current section/)).toBeInTheDocument();
+
+    // Should NOT show Retry button
+    expect(screen.queryByRole('button', { name: /retry review/i })).not.toBeInTheDocument();
+  });
+
+  it('shows Retry button for retryable failed section run in section context', () => {
+    // Valid canonical section key
+    const retryableRun = createRunSummary({
+      id: 'retryable-section-run',
+      status: 'failed',
+      review_scope: 'section',
+      selected_section_key: 'plan_background', // Valid canonical key
+      content_version: 2, // Current version
+      is_current_version: true,
+      retryable: true, // Server says retryable
+      failed_at: new Date().toISOString(),
+      completed_at: null,
+      requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: {
+        artifact_public_id: 'art-123',
+        runs: [retryableRun],
+        capabilities: {
+          artifact_review: true,
+          coachable_sections: [
+            { section_key: 'plan_summary', label: 'Summary' },
+            { section_key: 'plan_background', label: 'Background' },
+          ],
+        },
+        cursor: null,
+        has_more: false,
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: {
+        ...retryableRun,
+        items: [],
+        context: [],
+        coaching_contract_version: '1.0.0',
+        prompt_template_version: '1.0.0',
+        model: 'claude-sonnet-4-20250514',
+        failure: { code: 'MAX_ATTEMPTS_EXCEEDED', message: 'Coach failed.' },
+      },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    // Render in section context so section run is selected as primary
+    renderWithProviders(
+      <CoachingRail
+        {...defaultProps}
+        sectionContext={{ sectionKey: 'plan_background', label: 'Background' }}
+      />,
+    );
+
+    // Should show section label (scope title - using heading role to be specific)
+    expect(screen.getByRole('heading', { name: 'Background review' })).toBeInTheDocument();
+
+    // Should show Retry button
+    expect(screen.getByRole('button', { name: /retry review/i })).toBeInTheDocument();
+  });
+
+  it('shows Retry button for retryable failed artifact run', () => {
+    const retryableArtifactRun = createRunSummary({
+      id: 'retryable-artifact-run',
+      status: 'failed',
+      review_scope: 'artifact',
+      selected_section_key: null,
+      artifact_type: 'plan',
+      content_version: 2, // Current version so it's selected as primary
+      is_current_version: true,
+      retryable: true, // Artifact runs are always retryable when failed
+      failed_at: new Date().toISOString(),
+      completed_at: null,
+      requested_by: { public_id: 'user-123', display_name: 'Test Researcher' },
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: {
+        artifact_public_id: 'art-123',
+        runs: [retryableArtifactRun],
+        capabilities: {
+          artifact_review: true,
+          coachable_sections: [],
+        },
+        cursor: null,
+        has_more: false,
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: {
+        ...retryableArtifactRun,
+        items: [],
+        context: [],
+        coaching_contract_version: '1.0.0',
+        prompt_template_version: '1.0.0',
+        model: 'claude-sonnet-4-20250514',
+        failure: { code: 'MAX_ATTEMPTS_EXCEEDED', message: 'Coach failed.' },
+      },
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Should show Retry button
+    expect(screen.getByRole('button', { name: /retry review/i })).toBeInTheDocument();
+  });
+
+  it('main action button remains available when viewing malformed section run from artifact context', () => {
+    const malformedRun = createRunSummary({
+      id: 'malformed-section-run',
+      status: 'failed',
+      review_scope: 'section',
+      selected_section_key: 'section', // Malformed
+      content_version: 1,
+      is_current_version: false,
+      retryable: false,
+      failed_at: new Date().toISOString(),
+      completed_at: null,
+    });
+
+    vi.mocked(coachingApi.useCoachHistory).mockReturnValue({
+      data: {
+        artifact_public_id: 'art-123',
+        runs: [malformedRun],
+        capabilities: {
+          artifact_review: true,
+          coachable_sections: [
+            { section_key: 'plan_summary', label: 'Summary' },
+          ],
+        },
+        cursor: null,
+        has_more: false,
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as any);
+
+    vi.mocked(coachingApi.useCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.useActiveCoachRun).mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    vi.mocked(coachingApi.isActiveRun).mockReturnValue(false);
+
+    // Render without section context (artifact context)
+    renderWithProviders(<CoachingRail {...defaultProps} />);
+
+    // Main action button should show "Review Research Plan" (artifact-level, not section)
+    // This is the safe fallback - user can start a new artifact review
+    expect(screen.getByRole('button', { name: /review research plan/i })).toBeInTheDocument();
+
+    // Should NOT show "Review section again" since we're in artifact context
+    expect(screen.queryByRole('button', { name: /review section/i })).not.toBeInTheDocument();
   });
 });
