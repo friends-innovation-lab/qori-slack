@@ -20,7 +20,7 @@
  * Spec: M3A sections 1-21, M3B sections 13-29
  */
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Sparkles, AlertCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import {
@@ -346,6 +346,10 @@ export function CoachingRail({
   // M3B: Remember last section for "return to section" during rail session
   const [rememberedSection, setRememberedSection] = useState<CoachingSectionContext | null>(null);
 
+  // M3B FINAL: Refs for scroll/focus management
+  const railRef = useRef<HTMLDivElement>(null);
+  const scopeTitleRef = useRef<HTMLHeadingElement>(null);
+
   // Fetch coaching history (includes capabilities from M3B)
   const historyQuery = useCoachHistory({
     artifactPublicId,
@@ -583,12 +587,37 @@ export function CoachingRail({
   );
 
   /**
+   * M3B FINAL: Get the scope title for a run.
+   * Returns "{Section Label} review" or "{Artifact Type} review".
+   * Used for explicit scope identification in result display.
+   */
+  const getRunScopeTitle = useCallback(
+    (run: CoachRunSummaryResource | null): string => {
+      if (!run) return '';
+      if (run.review_scope === 'section' && run.selected_section_key) {
+        return `${getSectionLabelFromCapabilities(run.selected_section_key)} review`;
+      }
+      return `${getArtifactDisplayName(artifactType)} review`;
+    },
+    [artifactType, getSectionLabelFromCapabilities],
+  );
+
+  /**
+   * M3B FINAL: Computed scope title for the displayed run.
+   * Shows what is being reviewed, separate from status.
+   */
+  const displayedRunScopeTitle = useMemo(() => {
+    return getRunScopeTitle(effectivePrimaryRun);
+  }, [effectivePrimaryRun, getRunScopeTitle]);
+
+  /**
    * M3B FIX: Handle history row selection with automatic context switching.
    *
    * When selecting a run from history:
    * - If run.review_scope === 'section': switch to that section's context
    * - If run.review_scope === 'artifact': switch to artifact context
    *
+   * M3B FINAL: Also scrolls rail to top and focuses scope title.
    * This ensures clicking a section history row from artifact context
    * navigates into the correct section context automatically.
    */
@@ -610,6 +639,14 @@ export function CoachingRail({
           onSectionContextChange?.(null);
         }
       }
+
+      // M3B FINAL: Scroll rail to top and focus scope title
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        railRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+        // Focus the scope title for screen readers without scrolling document
+        scopeTitleRef.current?.focus({ preventScroll: true });
+      });
     },
     [onSectionContextChange, isInSectionContext, getSectionLabelFromCapabilities],
   );
@@ -664,19 +701,21 @@ export function CoachingRail({
 
   // Empty state - no coaching history (context-aware)
   if (displayedHistory.length === 0 && !effectivePrimaryRun) {
+    // M3B FINAL: Scope title for empty state
+    const emptyScopeTitle = isInSectionContext && sectionContext
+      ? `${sectionContext.label} review`
+      : `${getArtifactDisplayName(artifactType)} review`;
+
     return (
-      <div className={styles.coachingRail}>
+      <div className={styles.coachingRail} ref={railRef}>
         <p className={styles.eyebrow}>AI Coach</p>
 
-        {/* M3B: Section context header */}
-        {isInSectionContext && sectionContext && (
-          <div className={styles.sectionContextHeader}>
-            <h3 className={styles.sectionContextLabel}>{sectionContext.label}</h3>
-            <span className={styles.sectionContextTag}>Section review</span>
-          </div>
-        )}
+        {/* M3B FINAL: Scope title */}
+        <h3 ref={scopeTitleRef} className={styles.scopeTitle} tabIndex={-1}>
+          {emptyScopeTitle}
+        </h3>
 
-        {/* M3B: Back to full document coaching (in section context) */}
+        {/* M3B FINAL: Back to artifact coaching (in section context) */}
         {isInSectionContext && (
           <button
             type="button"
@@ -715,49 +754,28 @@ export function CoachingRail({
 
   // Has runs - show primary run and history
   return (
-    <div className={styles.coachingRail}>
+    <div className={styles.coachingRail} ref={railRef}>
       <p className={styles.eyebrow}>AI Coach</p>
 
-      {/* M3B: Section context header */}
-      {isInSectionContext && sectionContext && (
-        <div className={styles.sectionContextHeader}>
-          <h3 className={styles.sectionContextLabel}>{sectionContext.label}</h3>
-          <span className={styles.sectionContextTag}>Section review</span>
-        </div>
-      )}
-
-      {/* M3B: Back to full document coaching (in section context) */}
-      {isInSectionContext && (
-        <button
-          type="button"
-          className={styles.backLink}
-          onClick={handleBackToArtifact}
+      {/* M3B FINAL: Explicit scope title - identifies WHAT is being reviewed */}
+      {effectivePrimaryRun && (
+        <h3
+          ref={scopeTitleRef}
+          className={styles.scopeTitle}
+          tabIndex={-1}
         >
-          <ArrowLeft size={14} aria-hidden="true" />
-          Back to {getArtifactDisplayName(artifactType)} coaching
-        </button>
-      )}
-
-      {/* M3B: Return to section (in artifact context with remembered section) */}
-      {!isInSectionContext && rememberedSection && (
-        <button
-          type="button"
-          className={styles.returnLink}
-          onClick={handleReturnToSection}
-        >
-          Return to {rememberedSection.label}
-        </button>
+          {displayedRunScopeTitle}
+        </h3>
       )}
 
       {/* Primary run display - uses effectivePrimaryRun for status to handle polled transitions */}
       {effectivePrimaryRun && (
         <>
-          {/* Status heading with user-friendly copy */}
+          {/* Status heading - separate from scope */}
           {effectivePrimaryRun.status === 'pending' && (
             <>
               <h2 className={`${styles.status} ${styles.statusPending}`}>
-                <span className={styles.spinner} aria-hidden="true" />{' '}
-                Preparing your {isInSectionContext ? sectionContext?.label : contextLabel} review…
+                <span className={styles.spinner} aria-hidden="true" /> Review queued
               </h2>
               <p className={styles.workingCopy}>
                 You can keep working while Coach prepares your review.
@@ -767,8 +785,7 @@ export function CoachingRail({
           {effectivePrimaryRun.status === 'running' && (
             <>
               <h2 className={`${styles.status} ${styles.statusRunning}`}>
-                <span className={styles.spinner} aria-hidden="true" />{' '}
-                Reviewing your {isInSectionContext ? sectionContext?.label : contextLabel}…
+                <span className={styles.spinner} aria-hidden="true" /> Reviewing
               </h2>
               <p className={styles.workingCopy}>
                 You can keep working while Coach reviews your {isInSectionContext ? 'section' : artifactType}.
@@ -782,7 +799,7 @@ export function CoachingRail({
           )}
           {effectivePrimaryRun.status === 'failed' && (
             <h2 className={`${styles.status} ${styles.statusFailed}`}>
-              Review couldn't be completed
+              Review failed
             </h2>
           )}
 
@@ -796,6 +813,29 @@ export function CoachingRail({
           <div style={{ marginTop: 'var(--space-2)' }}>
             <VersionBadge isCurrent={effectivePrimaryRun.is_current_version} />
           </div>
+
+          {/* M3B FINAL: Persistent Back to artifact coaching (in section context) */}
+          {isInSectionContext && (
+            <button
+              type="button"
+              className={styles.backLink}
+              onClick={handleBackToArtifact}
+            >
+              <ArrowLeft size={14} aria-hidden="true" />
+              Back to {getArtifactDisplayName(artifactType)} coaching
+            </button>
+          )}
+
+          {/* M3B: Return to section (in artifact context with remembered section) */}
+          {!isInSectionContext && rememberedSection && (
+            <button
+              type="button"
+              className={styles.returnLink}
+              onClick={handleReturnToSection}
+            >
+              Return to {rememberedSection.label}
+            </button>
+          )}
 
           {/* Completed run - show result */}
           {effectivePrimaryRun.status === 'completed' && displayedRun && (
