@@ -287,13 +287,63 @@ function VersionBadge({ isCurrent }: { isCurrent: boolean }) {
 interface StructuredResultProps {
   run: CoachRunDetailResource;
   artifactType: ArtifactType;
+  artifactPublicId: string;
   studyPublicId: string;
   sectionContext: CoachingSectionContext | null;
+}
+
+/**
+ * M3C-B: Filter and deduplicate references for display.
+ *
+ * - Removes self-artifact references (redundant when viewing that artifact)
+ * - Deduplicates by section_key (same section = same chip)
+ * - Preserves clickable (artifact_section) over non-clickable when deduplicating
+ */
+function filterAndDedupeRefs(
+  refs: CoachRunDetailResource['items'][number]['references'],
+  artifactPublicId: string,
+): typeof refs {
+  // Step 1: Filter out self-artifact references
+  // These have object_type 'artifact' and object_id matching current artifact
+  const filtered = refs.filter((ref) => {
+    // Self-artifact reference: object_type is 'artifact' and matches current
+    if (ref.object_type === 'artifact') {
+      // object_id format varies, but if it contains the artifact public_id, it's self
+      if (ref.object_id.includes(artifactPublicId)) {
+        return false; // Hide redundant self-reference
+      }
+    }
+    return true;
+  });
+
+  // Step 2: Deduplicate by resolved display label
+  // Use section_key as primary dedup key (same section = same destination)
+  // For refs without section_key, use label
+  const seen = new Map<string, typeof refs[number]>();
+
+  for (const ref of filtered) {
+    // Dedup key: prefer section_key, fallback to label
+    const dedupeKey = ref.section_key ?? ref.label;
+
+    const existing = seen.get(dedupeKey);
+    if (!existing) {
+      seen.set(dedupeKey, ref);
+    } else {
+      // If both have same key, prefer clickable (artifact_section over other types)
+      // artifact_section refs are potentially clickable
+      if (ref.object_type === 'artifact_section' && existing.object_type !== 'artifact_section') {
+        seen.set(dedupeKey, ref);
+      }
+    }
+  }
+
+  return Array.from(seen.values());
 }
 
 function StructuredResult({
   run,
   artifactType,
+  artifactPublicId,
   studyPublicId,
   sectionContext,
 }: StructuredResultProps) {
@@ -323,22 +373,30 @@ function StructuredResult({
                 .map((item) => (
                   <li key={item.id} className={styles.resultItem}>
                     <p className={styles.resultItemText}>{item.text}</p>
-                    {item.references.length > 0 && (
-                      <div className={styles.resultItemRefs}>
-                        {item.references.map((ref) => (
-                          <ReferenceLink
-                            key={ref.id}
-                            reference={ref}
-                            artifactType={artifactType}
-                            originCoachRunId={run.id}
-                            originStudyPublicId={studyPublicId}
-                            originSection={sectionContext}
-                            runContentVersion={run.content_version}
-                            contextEntries={run.context}
-                          />
-                        ))}
-                      </div>
-                    )}
+                    {(() => {
+                      // M3C-B: Filter and deduplicate references
+                      const displayRefs = filterAndDedupeRefs(
+                        item.references,
+                        artifactPublicId,
+                      );
+                      if (displayRefs.length === 0) return null;
+                      return (
+                        <div className={styles.resultItemRefs}>
+                          {displayRefs.map((ref) => (
+                            <ReferenceLink
+                              key={ref.id}
+                              reference={ref}
+                              artifactType={artifactType}
+                              originCoachRunId={run.id}
+                              originStudyPublicId={studyPublicId}
+                              originSection={sectionContext}
+                              runContentVersion={run.content_version}
+                              contextEntries={run.context}
+                            />
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </li>
                 ))}
             </ul>
@@ -958,6 +1016,7 @@ export function CoachingRail({
             <StructuredResult
               run={displayedRun}
               artifactType={artifactType}
+              artifactPublicId={artifactPublicId}
               studyPublicId={studyPublicId}
               sectionContext={sectionContext ?? null}
             />
