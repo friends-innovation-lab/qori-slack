@@ -3,6 +3,8 @@ export { ArtifactHeader } from './ArtifactHeader';
 export { ArtifactTabs } from './ArtifactTabs';
 export { CoachingRail, selectPrimaryArtifactRun, selectPrimarySectionRun } from './CoachingRail';
 export type { CoachingSectionContext } from './CoachingRail';
+// M3C-B: Clickable reference link
+export { ReferenceLink } from './ReferenceLink';
 export { CollapsibleSection } from './CollapsibleSection';
 export { CommentsRail } from './CommentsRail';
 export type { CommentsRailScope } from './CommentsRail';

@@ -14,7 +14,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router';
 import { selectPrimaryArtifactRun, selectPrimarySectionRun, CoachingRail } from './CoachingRail';
+import { ReferenceNavigationProvider } from '../workspace';
 import type { CoachRunSummaryResource } from '@qori/api-contracts';
 
 // ─── Test Data Factories ─────────────────────────────────────────────────────
@@ -280,13 +282,22 @@ const createTestQueryClient = () =>
     },
   });
 
-const renderWithProviders = (ui: React.ReactElement) => {
-  const queryClient = createTestQueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      {ui}
-    </QueryClientProvider>,
+// M3C-B: Test wrapper that provides all necessary context for CoachingRail
+function TestProviders({ children }: { children: React.ReactNode }) {
+  return (
+    <MemoryRouter initialEntries={['/studies/test-study/brief']}>
+      <QueryClientProvider client={createTestQueryClient()}>
+        <ReferenceNavigationProvider studyPublicId="test-study" currentArtifactType="brief">
+          {children}
+        </ReferenceNavigationProvider>
+      </QueryClientProvider>
+    </MemoryRouter>
   );
+}
+
+const renderWithProviders = (ui: React.ReactElement) => {
+  const result = render(ui, { wrapper: TestProviders });
+  return result;
 };
 
 describe('CoachingRail Component', () => {
@@ -295,6 +306,7 @@ describe('CoachingRail Component', () => {
     artifactType: 'brief' as const,
     currentContentVersion: 1,
     currentUserPublicId: 'user-123',
+    studyPublicId: 'test-study',
   };
 
   beforeEach(() => {
@@ -676,6 +688,7 @@ describe('running → failed status transition (production bug regression)', () 
     artifactType: 'brief' as const,
     currentContentVersion: 1,
     currentUserPublicId: 'user-123',
+    studyPublicId: 'test-study',
   };
 
   beforeEach(() => {
@@ -889,6 +902,7 @@ describe('running → completed status transition', () => {
     artifactType: 'brief' as const,
     currentContentVersion: 1,
     currentUserPublicId: 'user-123',
+    studyPublicId: 'test-study',
   };
 
   beforeEach(() => {
@@ -1054,6 +1068,7 @@ describe('M3B section context', () => {
     artifactType: 'brief' as const,
     currentContentVersion: 1,
     currentUserPublicId: 'user-123',
+    studyPublicId: 'test-study',
   };
 
   beforeEach(() => {
@@ -1180,6 +1195,7 @@ describe('M3B lazy detail loading for completed runs', () => {
     artifactType: 'brief' as const,
     currentContentVersion: 1,
     currentUserPublicId: 'user-123',
+    studyPublicId: 'test-study',
   };
 
   beforeEach(() => {
@@ -1487,6 +1503,7 @@ describe('M3B history row navigation', () => {
     artifactType: 'plan' as const,
     currentContentVersion: 1,
     currentUserPublicId: 'user-123',
+    studyPublicId: 'test-study',
   };
 
   beforeEach(() => {
@@ -1968,6 +1985,7 @@ describe('M3B FINAL wayfinding', () => {
     artifactType: 'plan' as const,
     currentContentVersion: 1,
     currentUserPublicId: 'user-123',
+    studyPublicId: 'test-study',
   };
 
   beforeEach(() => {
@@ -2349,6 +2367,7 @@ describe('M3C-A retry functionality', () => {
     artifactType: 'brief' as const,
     currentContentVersion: 2,
     currentUserPublicId: 'user-current',
+    studyPublicId: 'test-study',
   };
 
   beforeEach(() => {
@@ -2539,6 +2558,7 @@ describe('M3C-A FIX: Artifact retry visibility for selected historical run', () 
     artifactType: 'plan' as const,
     currentContentVersion: 3,
     currentUserPublicId: 'user-123',
+    studyPublicId: 'test-study',
   };
 
   beforeEach(() => {
@@ -2853,6 +2873,7 @@ describe('M3C-A malformed historical section safety', () => {
     artifactType: 'plan' as const,
     currentContentVersion: 2,
     currentUserPublicId: 'user-123',
+    studyPublicId: 'test-study',
   };
 
   beforeEach(() => {

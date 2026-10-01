@@ -197,6 +197,33 @@
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 @media (prefers-reduced-motion: reduce) { .saveDotSaving { animation: none; } .provTag, .collapsibleChevron, .idTag, .artifactTab { transition: none; } }
 
+/* ─── M3C-B: Reference navigation highlight ─── */
+/* Applied via JavaScript when navigating to a section from Coach reference */
+/* Uses global class (not module) since applied dynamically from provider */
+:global(.sectionHighlight) {
+  /* Multi-cue highlight: outline + background (not color-only per WCAG 1.4.1) */
+  outline: 3px solid var(--color-focus);
+  outline-offset: 4px;
+  background: var(--color-surface-hover);
+  animation: sectionHighlightFade 2000ms ease-out forwards;
+}
+@keyframes sectionHighlightFade {
+  0% {
+    outline-color: var(--color-focus);
+    background: var(--color-surface-hover);
+  }
+  100% {
+    outline-color: transparent;
+    background: transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :global(.sectionHighlight) {
+    /* Static highlight for reduced motion, removed after timeout by JS */
+    animation: none;
+  }
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 980px) {
   .docCol { padding: var(--space-6) var(--space-5) calc(var(--space-8) + var(--space-6)); }

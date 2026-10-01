@@ -424,6 +424,7 @@ export function BriefDocument() {
           artifactType="brief"
           currentContentVersion={currentContentVersion}
           currentUserPublicId={currentUserPublicId}
+          studyPublicId={studyPublicId || ''}
           sectionContext={coachingSectionContext}
           onSectionContextChange={handleCoachingSectionContextChange}
         />

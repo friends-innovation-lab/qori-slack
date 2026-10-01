@@ -281,10 +281,25 @@
 .resultRef {
   display: inline-block;
   padding: 1px 4px;
+  border: 0;
   border-radius: 2px;
   font: 10px/12px var(--font-mono);
   background: var(--color-surface-muted);
   color: var(--color-text-muted);
+}
+
+/* M3C-B: Clickable reference link */
+.resultRefClickable {
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease);
+}
+.resultRefClickable:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+.resultRefClickable:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
 }
 
 /* ─── Loading spinner ───────────────────────────────────────────────────── */
@@ -423,6 +438,25 @@
 .returnLink:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+/* ─── M3C-B: Pinned origin notice for cross-artifact reference navigation ─ */
+.pinnedOriginNotice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  margin-top: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+}
+
+.pinnedOriginLabel {
+  margin: 0;
+  font: var(--weight-semibold) var(--type-label-size)/var(--type-label-line) var(--font-mono);
+  letter-spacing: var(--type-label-track);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
 }
 
 /* ─── Screen reader only ────────────────────────────────────────────────── */
