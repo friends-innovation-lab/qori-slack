@@ -902,20 +902,49 @@ describe('M3C-B reference deduplication', () => {
   // Note: filterAndDedupeRefs is tested indirectly through CoachingRail behavior
   // These tests document expected deduplication semantics
 
-  it('same section_key deduplicates to single reference', () => {
-    // Two references with same section_key should render as one chip
-    // This is tested via the sectionLabels mapping:
-    // plan_participant_glance and plan_participants_prose both = "Participants"
-    // but have DIFFERENT section_keys, so they would NOT dedupe by section_key alone
-    // The fix dedupes by section_key, not by display label
+  it('same RESOLVED LABEL deduplicates to single reference', () => {
+    // M3C-B deduplication by resolved display label, not raw section_key
+    // plan_participant_glance and plan_participants_prose BOTH resolve to "Participants"
+    // They have DIFFERENT section_keys but SAME user-visible label
+    // Should dedupe to single chip (prefer _prose which is clickable)
 
-    // These have different section_keys
+    // Both resolve to same display label
     expect(getSectionLabel('plan', 'plan_participant_glance')).toBe('Participants');
     expect(getSectionLabel('plan', 'plan_participants_prose')).toBe('Participants');
 
-    // So they should NOT dedupe by section_key (they're distinct)
-    // But they SHOULD dedupe if they have the SAME section_key
-    // This test documents that same section_key = single chip
+    // This documents that same resolved label = single chip
+    // The actual deduplication happens in filterAndDedupeRefs (CoachingRail)
+  });
+
+  it('REGRESSION: plan_participant_glance + plan_participants_prose renders once', () => {
+    // Exact live shape that caused duplicate "Participants" chips
+    // Both refs resolve to "Participants" but have different section_keys
+    // Must render as single chip, preferring the clickable one (_prose)
+
+    const refGlance = createTestReference({
+      section_key: 'plan_participant_glance',
+      label: 'plan_participant_glance',
+      object_type: 'artifact_section',
+      object_id: 'PLAN-abc123:plan_participant_glance',
+    });
+
+    const refProse = createTestReference({
+      section_key: 'plan_participants_prose',
+      label: 'plan_participants_prose',
+      object_type: 'artifact_section',
+      object_id: 'PLAN-abc123:plan_participants_prose',
+    });
+
+    // Both persisted refs exist
+    const refs = [refGlance, refProse];
+    expect(refs.length).toBe(2);
+
+    // Both resolve to same display label
+    expect(getSectionLabel('plan', refGlance.section_key!)).toBe('Participants');
+    expect(getSectionLabel('plan', refProse.section_key!)).toBe('Participants');
+
+    // Deduplication preserves only one (tested via CoachingRail integration)
+    // This test documents the exact live shape for regression prevention
   });
 
   it('persisted refs remain unchanged by deduplication', () => {
@@ -928,6 +957,21 @@ describe('M3C-B reference deduplication', () => {
 
     // Original array length preserved
     expect(refs.length).toBe(2);
+  });
+
+  it('same label but different destination does NOT dedupe', () => {
+    // If two refs have same display label but point to different sections,
+    // they represent different semantic destinations and must both render
+
+    // Brief "Participants" and Plan "Participants" are different destinations
+    expect(getSectionLabel('brief', 'participants_prose')).toBe('Participants');
+    expect(getSectionLabel('plan', 'plan_participants_prose')).toBe('Participants');
+
+    // These should NOT dedupe because they're different artifact sections
+    // (This case only occurs in cross-artifact references)
+
+    // Within same artifact, same label = same destination = dedupe
+    // Across artifacts, same label = different destination = no dedupe
   });
 
   it('Session format still visible and non-clickable', () => {

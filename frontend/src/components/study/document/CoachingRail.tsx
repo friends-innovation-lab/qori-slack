@@ -296,12 +296,17 @@ interface StructuredResultProps {
  * M3C-B: Filter and deduplicate references for display.
  *
  * - Removes self-artifact references (redundant when viewing that artifact)
- * - Deduplicates by section_key (same section = same chip)
- * - Preserves clickable (artifact_section) over non-clickable when deduplicating
+ * - Deduplicates by RESOLVED DISPLAY LABEL (what user sees)
+ * - Prefers clickable refs (_prose sections have DOM targets)
+ *
+ * Key insight: plan_participant_glance and plan_participants_prose both
+ * resolve to "Participants" label, but only _prose is clickable.
+ * Dedupe by label, keep the clickable one.
  */
 function filterAndDedupeRefs(
   refs: CoachRunDetailResource['items'][number]['references'],
   artifactPublicId: string,
+  artifactType: ArtifactType,
 ): typeof refs {
   // Step 1: Filter out self-artifact references
   // These have object_type 'artifact' and object_id matching current artifact
@@ -316,22 +321,38 @@ function filterAndDedupeRefs(
     return true;
   });
 
-  // Step 2: Deduplicate by resolved display label
-  // Use section_key as primary dedup key (same section = same destination)
-  // For refs without section_key, use label
+  // Step 2: Deduplicate by RESOLVED DISPLAY LABEL
+  // Multiple section_keys can resolve to same user-visible label
+  // (e.g., plan_participant_glance and plan_participants_prose both → "Participants")
   const seen = new Map<string, typeof refs[number]>();
 
   for (const ref of filtered) {
-    // Dedup key: prefer section_key, fallback to label
-    const dedupeKey = ref.section_key ?? ref.label;
+    // Resolve display label using single authority (sectionLabels.ts)
+    const resolvedLabel = ref.section_key
+      ? getSectionLabel(artifactType, ref.section_key)
+      : ref.label;
+
+    // Dedup key is the resolved label (what user sees)
+    const dedupeKey = resolvedLabel;
 
     const existing = seen.get(dedupeKey);
     if (!existing) {
       seen.set(dedupeKey, ref);
     } else {
-      // If both have same key, prefer clickable (artifact_section over other types)
-      // artifact_section refs are potentially clickable
-      if (ref.object_type === 'artifact_section' && existing.object_type !== 'artifact_section') {
+      // When multiple refs have same display label, prefer clickable one
+      // Clickable sections are _prose variants (have DOM targets)
+      // _glance variants are Quick Facts without own DOM target
+      const refIsClickable = ref.section_key?.endsWith('_prose') ?? false;
+      const existingIsClickable = existing.section_key?.endsWith('_prose') ?? false;
+
+      if (refIsClickable && !existingIsClickable) {
+        seen.set(dedupeKey, ref);
+      }
+      // Also prefer artifact_section over other types
+      else if (
+        ref.object_type === 'artifact_section' &&
+        existing.object_type !== 'artifact_section'
+      ) {
         seen.set(dedupeKey, ref);
       }
     }
@@ -378,6 +399,7 @@ function StructuredResult({
                       const displayRefs = filterAndDedupeRefs(
                         item.references,
                         artifactPublicId,
+                        artifactType,
                       );
                       if (displayRefs.length === 0) return null;
                       return (
