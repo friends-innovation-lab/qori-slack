@@ -21,7 +21,7 @@
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { Sparkles, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Sparkles, AlertCircle, ArrowLeft, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import {
   useCoachHistory,
@@ -31,6 +31,8 @@ import {
   useRetryCoachRun,
   isActiveRun,
 } from '@/api/coaching';
+import { useReferenceNavigation } from '../workspace';
+import { ReferenceLink } from './ReferenceLink';
 import type {
   CoachRunSummaryResource,
   CoachRunDetailResource,
@@ -59,6 +61,8 @@ interface CoachingRailProps {
   currentContentVersion: number;
   /** Current user's public ID */
   currentUserPublicId: string;
+  /** M3C-B: Study public ID for reference navigation */
+  studyPublicId: string;
   /** M3B: Section context (null = artifact context) */
   sectionContext?: CoachingSectionContext | null;
   /** M3B: Callback when section context changes (for navigation state) */
@@ -317,7 +321,20 @@ function VersionBadge({ isCurrent }: { isCurrent: boolean }) {
   );
 }
 
-function StructuredResult({ run }: { run: CoachRunDetailResource }) {
+/** M3C-B: Props for StructuredResult to enable clickable references */
+interface StructuredResultProps {
+  run: CoachRunDetailResource;
+  artifactType: ArtifactType;
+  studyPublicId: string;
+  sectionContext: CoachingSectionContext | null;
+}
+
+function StructuredResult({
+  run,
+  artifactType,
+  studyPublicId,
+  sectionContext,
+}: StructuredResultProps) {
   // Group items by category
   const itemsByCategory = useMemo(() => {
     const groups = new Map<CoachItemCategory, typeof run.items>();
@@ -347,9 +364,16 @@ function StructuredResult({ run }: { run: CoachRunDetailResource }) {
                     {item.references.length > 0 && (
                       <div className={styles.resultItemRefs}>
                         {item.references.map((ref) => (
-                          <span key={ref.id} className={styles.resultRef}>
-                            {ref.label}
-                          </span>
+                          <ReferenceLink
+                            key={ref.id}
+                            reference={ref}
+                            artifactType={artifactType}
+                            originCoachRunId={run.id}
+                            originStudyPublicId={studyPublicId}
+                            originSection={sectionContext}
+                            runContentVersion={run.content_version}
+                            contextEntries={run.context}
+                          />
                         ))}
                       </div>
                     )}
@@ -370,6 +394,7 @@ export function CoachingRail({
   artifactType,
   currentContentVersion,
   currentUserPublicId,
+  studyPublicId,
   sectionContext,
   onSectionContextChange,
 }: CoachingRailProps) {
@@ -380,6 +405,14 @@ export function CoachingRail({
   // M3B FINAL: Refs for scroll/focus management
   const railRef = useRef<HTMLDivElement>(null);
   const scopeTitleRef = useRef<HTMLHeadingElement>(null);
+
+  // M3C-B: Reference navigation for cross-artifact pinned run
+  // clearPinnedRun is available for explicit cleanup (e.g., when rail unmounts)
+  const { pinnedRun, returnToOrigin, clearPinnedRun: _clearPinnedRun } = useReferenceNavigation();
+
+  // M3C-B: Check if we're displaying a pinned run from cross-artifact navigation
+  // This happens when user clicks a reference from another artifact's coach run
+  const isPinnedFromOtherArtifact = pinnedRun && pinnedRun.originArtifactType !== artifactType;
 
   // Fetch coaching history (includes capabilities from M3B)
   const historyQuery = useCoachHistory({
@@ -917,8 +950,25 @@ export function CoachingRail({
             <VersionBadge isCurrent={runForDisplay.is_current_version} />
           </div>
 
+          {/* M3C-B: Return to origin artifact after cross-artifact reference navigation */}
+          {isPinnedFromOtherArtifact && pinnedRun && (
+            <div className={styles.pinnedOriginNotice}>
+              <p className={styles.pinnedOriginLabel}>
+                {pinnedRun.originArtifactType === 'brief' ? 'Research Brief' : 'Research Plan'} coaching
+              </p>
+              <button
+                type="button"
+                className={styles.returnLink}
+                onClick={returnToOrigin}
+              >
+                <ExternalLink size={14} aria-hidden="true" />
+                Return to {pinnedRun.originArtifactType === 'brief' ? 'Brief' : 'Plan'}
+              </button>
+            </div>
+          )}
+
           {/* M3B FINAL: Persistent Back to artifact coaching (in section context) */}
-          {isInSectionContext && (
+          {isInSectionContext && !isPinnedFromOtherArtifact && (
             <button
               type="button"
               className={styles.backLink}
@@ -941,8 +991,14 @@ export function CoachingRail({
           )}
 
           {/* Completed run - show result (needs detail data for items) */}
+          {/* M3C-B: Pass artifact context for clickable references */}
           {runForDisplay.status === 'completed' && displayedRun && (
-            <StructuredResult run={displayedRun} />
+            <StructuredResult
+              run={displayedRun}
+              artifactType={artifactType}
+              studyPublicId={studyPublicId}
+              sectionContext={sectionContext ?? null}
+            />
           )}
 
           {/* M3C EXACT-PATH FIX: Failed run display — uses runForDisplay for status/scope,

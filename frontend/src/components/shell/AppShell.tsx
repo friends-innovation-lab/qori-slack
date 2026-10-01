@@ -5,12 +5,16 @@
  * Workspace v2 (CC-3): Routes matching WORKSPACE_ROUTE_PATTERNS render the workspace
  * variant (shellWorkspace class, no TopBar, SideNav variant="inverse"). The
  * data-qori-surface="workspace" attribute on <html> activates scoped design tokens.
+ *
+ * M3C-B: WorkspaceNavigationWrapper provides reference navigation context that
+ * persists across Brief ↔ Plan navigation.
  */
 
 import { useState, useCallback, useLayoutEffect, type ReactNode } from 'react';
 import { useLocation, matchPath } from 'react-router';
 import { TopBar } from './TopBar';
 import { SideNav } from './SideNav';
+import { WorkspaceNavigationWrapper } from '@/components/study/workspace';
 import styles from './AppShell.module.css';
 
 /**
@@ -73,38 +77,41 @@ export function AppShell({ children, _testPatterns }: AppShellProps) {
   }, []);
 
   // Workspace variant: full-height flex, no TopBar, inverse SideNav
+  // M3C-B: WorkspaceNavigationWrapper provides reference navigation context
   if (isWorkspace) {
     return (
-      <div className={styles.shellWorkspace}>
-        <a href="#main-content" className="skip-link">
-          Skip to main content
-        </a>
+      <WorkspaceNavigationWrapper>
+        <div className={styles.shellWorkspace}>
+          <a href="#main-content" className="skip-link">
+            Skip to main content
+          </a>
 
-        <SideNav
-          variant="inverse"
-          collapsed={false}
-          mobileOpen={false}
-          onToggleCollapse={() => {}}
-          onMobileClose={() => {}}
-        />
+          <SideNav
+            variant="inverse"
+            collapsed={false}
+            mobileOpen={false}
+            onToggleCollapse={() => {}}
+            onMobileClose={() => {}}
+          />
 
-        <main
-          id="main-content"
-          className={styles.main}
-          role="main"
-          tabIndex={-1}
-        >
-          {children}
-        </main>
+          <main
+            id="main-content"
+            className={styles.main}
+            role="main"
+            tabIndex={-1}
+          >
+            {children}
+          </main>
 
-        {/* Toast region */}
-        <div
-          className={styles.toastRegion}
-          role="status"
-          aria-live="polite"
-          aria-label="Notifications"
-        />
-      </div>
+          {/* Toast region */}
+          <div
+            className={styles.toastRegion}
+            role="status"
+            aria-live="polite"
+            aria-label="Notifications"
+          />
+        </div>
+      </WorkspaceNavigationWrapper>
     );
   }
 

@@ -319,6 +319,7 @@ export function PlanDocument() {
           artifactType="plan"
           currentContentVersion={currentContentVersion}
           currentUserPublicId={currentUserPublicId}
+          studyPublicId={studyPublicId || ''}
           sectionContext={coachingSectionContext}
           onSectionContextChange={handleCoachingSectionContextChange}
         />
