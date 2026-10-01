@@ -33,6 +33,7 @@ import {
 } from '@/api/coaching';
 import { useReferenceNavigation } from '../workspace';
 import { ReferenceLink } from './ReferenceLink';
+import { getSectionLabel } from './sectionLabels';
 import type {
   CoachRunSummaryResource,
   CoachRunDetailResource,
@@ -70,70 +71,31 @@ interface CoachingRailProps {
 }
 
 // ─── Section Display Names ──────────────────────────────────────────────────
-// CRITICAL: Keys MUST match artifact_sections.section_key exactly.
+// Single authority: sectionLabels.ts
 // See: packages/artifact-contracts/src/*.contract.ts for authoritative keys.
-// See: frontend/src/components/study/document/sectionLabels.ts for alignment.
-//
-// CANONICAL SECTION IDENTITY RULE:
-// Coach section identity uses the exact canonical artifact_sections.section_key.
-// Do NOT use UI presentation IDs, heading labels, or invented Coach aliases.
-
-const BRIEF_SECTION_LABELS: Record<string, string> = {
-  summary: 'Summary',
-  problem_narrative: 'Problem',
-  method_prose: 'Method',
-  participants_prose: 'Participants',
-  out_of_scope: 'Out of scope',
-  risks: 'Risks',
-};
-
-const PLAN_SECTION_LABELS: Record<string, string> = {
-  plan_summary: 'Summary',
-  plan_background: 'Background',
-  plan_method_approach: 'Method',
-  plan_participants_prose: 'Participants',
-  plan_deliverables: 'Deliverables',
-  plan_risks: 'Risks and mitigations',
-  plan_commitments: 'Brief commitments',
-};
 
 /**
  * Get human-readable display name for a section key.
  *
- * M3C FIX: Improved fallback handling for legacy/unknown section keys.
- * Instead of returning generic "Section", attempts to derive a readable name
- * from the key itself (e.g., 'plan_background' -> 'Background').
- * Falls back to the artifact display name if section key is truly unknown.
+ * M3C-B: Uses centralized sectionLabels.ts as single authority.
+ * Returns neutral fallback for unknown keys — never humanizes raw identifiers.
  */
 function getSectionDisplayName(
   artifactType: ArtifactType,
   sectionKey: string | null,
 ): string {
   if (!sectionKey) return getArtifactDisplayName(artifactType);
-  const labels = artifactType === 'brief' ? BRIEF_SECTION_LABELS : PLAN_SECTION_LABELS;
 
-  // Direct lookup
-  const directMatch = labels[sectionKey];
-  if (directMatch) return directMatch;
+  // Use centralized label registry
+  const label = getSectionLabel(artifactType, sectionKey);
 
-  // M3C FIX: Handle legacy keys by attempting common transformations
-  // Some older runs may have non-canonical keys like 'background' instead of 'plan_background'
-  // Try prefixed version for plan sections
-  if (artifactType === 'plan' && !sectionKey.startsWith('plan_')) {
-    const prefixedKey = `plan_${sectionKey}`;
-    const prefixedMatch = labels[prefixedKey];
-    if (prefixedMatch) return prefixedMatch;
+  // getSectionLabel returns 'Older section' for unknown keys
+  // For Coach display, use more appropriate neutral fallback
+  if (label === 'Older section') {
+    return 'Referenced section';
   }
 
-  // M3C FIX: Last resort - derive a human-readable name from the key itself
-  // Transform 'plan_background' -> 'Background', 'some_section_name' -> 'Some section name'
-  const humanized = sectionKey
-    .replace(/^(plan_|brief_)/, '') // Remove artifact prefix
-    .replace(/_/g, ' ') // Replace underscores with spaces
-    .replace(/\b\w/g, (c) => c.toUpperCase()); // Capitalize first letter of each word
-
-  // Return humanized version, which is better than generic "Section"
-  return humanized || getArtifactDisplayName(artifactType);
+  return label;
 }
 
 // ─── Artifact Display Names ──────────────────────────────────────────────────

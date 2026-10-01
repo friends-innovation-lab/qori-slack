@@ -189,12 +189,17 @@ describe('ReferenceLink component', () => {
     const ref = createTestReference({ section_key: 'summary', label: 'Summary' });
     renderWithProviders(<ReferenceLink reference={ref} {...defaultProps} />);
 
-    const button = screen.getByRole('button', { name: /jump to summary/i });
+    const button = screen.getByRole('button', { name: /open summary section/i });
     expect(button).toBeInTheDocument();
   });
 
   it('renders unresolvable reference as non-interactive badge', () => {
-    const ref = createTestReference({ object_type: 'finding', label: 'Finding 1' });
+    // Non-section reference type with null section_key
+    const ref = createTestReference({
+      object_type: 'finding',
+      section_key: null,
+      label: 'Finding 1',
+    });
     renderWithProviders(<ReferenceLink reference={ref} {...defaultProps} />);
 
     // Should render as span, not button
@@ -213,8 +218,8 @@ describe('ReferenceLink component', () => {
       </div>,
     );
 
-    expect(screen.getByRole('button', { name: /jump to summary/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /jump to problem/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /open summary section/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /open problem section/i })).toBeInTheDocument();
   });
 });
 
@@ -465,7 +470,7 @@ describe('M3C-B accessibility', () => {
     renderWithProviders(<ReferenceLink reference={ref} {...defaultProps} />);
 
     const button = screen.getByRole('button');
-    expect(button).toHaveAccessibleName(/jump to summary/i);
+    expect(button).toHaveAccessibleName(/open summary section/i);
   });
 
   it('keyboard activation works (Enter key)', async () => {
@@ -661,5 +666,231 @@ describe('M3C-B no artifact mutation', () => {
     // No approval elements should appear
     expect(screen.queryByText(/approve/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/request changes/i)).not.toBeInTheDocument();
+  });
+});
+
+// ─── Label Humanization Tests (M3C-B Fix) ─────────────────────────────────────
+
+describe('M3C-B reference label humanization', () => {
+  const defaultProps = {
+    artifactType: 'plan' as const,
+    originCoachRunId: 'run-123',
+    originStudyPublicId: 'study-123',
+    originSection: null,
+    runContentVersion: 1,
+    contextEntries: [],
+  };
+
+  it('uses trusted label for known section keys', () => {
+    const ref = createTestReference({
+      section_key: 'plan_summary',
+      label: 'plan_summary', // Raw key in label field
+    });
+    renderWithProviders(<ReferenceLink reference={ref} {...defaultProps} />, {
+      artifactType: 'plan',
+      initialPath: '/studies/test-study/plan',
+    });
+
+    // Should display human-readable "Summary", not raw "plan_summary"
+    expect(screen.getByText('Summary')).toBeInTheDocument();
+    expect(screen.queryByText('plan_summary')).not.toBeInTheDocument();
+  });
+
+  it('raw section_key plan_participant_glance never rendered', () => {
+    const ref = createTestReference({
+      section_key: 'plan_participant_glance',
+      label: 'plan_participant_glance', // Raw key
+    });
+    renderWithProviders(<ReferenceLink reference={ref} {...defaultProps} />, {
+      artifactType: 'plan',
+      initialPath: '/studies/test-study/plan',
+    });
+
+    // Should display trusted label "Participants" (from contract), not raw key
+    expect(screen.getByText('Participants')).toBeInTheDocument();
+    expect(screen.queryByText('plan_participant_glance')).not.toBeInTheDocument();
+  });
+
+  it('raw section_key plan_session_format never rendered', () => {
+    const ref = createTestReference({
+      section_key: 'plan_session_format',
+      label: 'plan_session_format',
+    });
+    renderWithProviders(<ReferenceLink reference={ref} {...defaultProps} />, {
+      artifactType: 'plan',
+      initialPath: '/studies/test-study/plan',
+    });
+
+    expect(screen.getByText('Session format')).toBeInTheDocument();
+    expect(screen.queryByText('plan_session_format')).not.toBeInTheDocument();
+  });
+
+  it('raw section_key plan_data_collection never rendered', () => {
+    const ref = createTestReference({
+      section_key: 'plan_data_collection',
+      label: 'plan_data_collection',
+    });
+    renderWithProviders(<ReferenceLink reference={ref} {...defaultProps} />, {
+      artifactType: 'plan',
+      initialPath: '/studies/test-study/plan',
+    });
+
+    expect(screen.getByText('Data collection')).toBeInTheDocument();
+    expect(screen.queryByText('plan_data_collection')).not.toBeInTheDocument();
+  });
+
+  it('raw object_id never rendered', () => {
+    const ref = createTestReference({
+      section_key: 'summary',
+      object_id: 'BRIEF-abc123:summary',
+      label: 'BRIEF-abc123:summary', // Raw object_id in label
+    });
+    renderWithProviders(<ReferenceLink reference={ref} {...defaultProps} artifactType="brief" />, {
+      artifactType: 'brief',
+      initialPath: '/studies/test-study/brief',
+    });
+
+    // Should display "Summary", not raw object_id
+    expect(screen.getByText('Summary')).toBeInTheDocument();
+    expect(screen.queryByText('BRIEF-abc123:summary')).not.toBeInTheDocument();
+  });
+
+  it('accessible name contains no internal key', () => {
+    const ref = createTestReference({
+      section_key: 'plan_participant_glance',
+      label: 'plan_participant_glance',
+    });
+    renderWithProviders(<ReferenceLink reference={ref} {...defaultProps} />, {
+      artifactType: 'plan',
+      initialPath: '/studies/test-study/plan',
+    });
+
+    const element = screen.getByText('Participants');
+    // Check aria-label doesn't contain raw key
+    expect(element).not.toHaveAccessibleName(/plan_participant_glance/);
+    expect(element).toHaveAccessibleName(/participants/i);
+  });
+
+  it('clickability behavior unchanged for resolvable references', () => {
+    const ref = createTestReference({
+      section_key: 'plan_summary',
+      label: 'plan_summary',
+    });
+    renderWithProviders(<ReferenceLink reference={ref} {...defaultProps} />, {
+      artifactType: 'plan',
+      initialPath: '/studies/test-study/plan',
+    });
+
+    // Should be a clickable button
+    expect(screen.getByRole('button')).toBeInTheDocument();
+  });
+
+  it('non-clickable reference with unknown key uses neutral fallback', () => {
+    // Unresolvable reference type with raw-looking label
+    const ref = createTestReference({
+      object_type: 'finding',
+      section_key: null,
+      label: 'some_internal_finding_key',
+    });
+    renderWithProviders(<ReferenceLink reference={ref} {...defaultProps} />, {
+      artifactType: 'plan',
+      initialPath: '/studies/test-study/plan',
+    });
+
+    // Should use neutral fallback, NOT humanize raw key
+    expect(screen.queryByText('some_internal_finding_key')).not.toBeInTheDocument();
+    expect(screen.queryByText(/some internal/i)).not.toBeInTheDocument();
+    expect(screen.getByText('Source reference')).toBeInTheDocument();
+  });
+
+  it('preserves human-readable labels that do not look like raw keys', () => {
+    const ref = createTestReference({
+      section_key: null,
+      label: 'Finding from user interview',
+    });
+    renderWithProviders(<ReferenceLink reference={ref} {...defaultProps} />, {
+      artifactType: 'plan',
+      initialPath: '/studies/test-study/plan',
+    });
+
+    // Should preserve the human-readable label
+    expect(screen.getByText('Finding from user interview')).toBeInTheDocument();
+  });
+
+  it('unknown raw key does NOT get humanized', () => {
+    // Future internal key that doesn't exist in registry
+    const ref = createTestReference({
+      section_key: 'plan_future_internal_key',
+      label: 'plan_future_internal_key',
+    });
+    renderWithProviders(<ReferenceLink reference={ref} {...defaultProps} />, {
+      artifactType: 'plan',
+      initialPath: '/studies/test-study/plan',
+    });
+
+    // Should NOT humanize to "Future internal key"
+    expect(screen.queryByText('plan_future_internal_key')).not.toBeInTheDocument();
+    expect(screen.queryByText(/future internal/i)).not.toBeInTheDocument();
+    // Should use neutral fallback
+    expect(screen.getByText('Source reference')).toBeInTheDocument();
+  });
+
+  it('unknown raw object_id not visible anywhere', () => {
+    const ref = createTestReference({
+      section_key: null,
+      object_id: 'PLAN-xyz789:unknown_field',
+      label: 'PLAN-xyz789:unknown_field',
+    });
+    renderWithProviders(<ReferenceLink reference={ref} {...defaultProps} />, {
+      artifactType: 'plan',
+      initialPath: '/studies/test-study/plan',
+    });
+
+    // Raw object_id should not be visible
+    expect(screen.queryByText('PLAN-xyz789:unknown_field')).not.toBeInTheDocument();
+    expect(screen.queryByText(/PLAN-xyz789/)).not.toBeInTheDocument();
+    // Should use neutral fallback
+    expect(screen.getByText('Source reference')).toBeInTheDocument();
+  });
+
+  it('accessible text contains no raw key for unknown reference', () => {
+    const ref = createTestReference({
+      section_key: 'plan_unknown_section',
+      label: 'plan_unknown_section',
+    });
+    renderWithProviders(<ReferenceLink reference={ref} {...defaultProps} />, {
+      artifactType: 'plan',
+      initialPath: '/studies/test-study/plan',
+    });
+
+    const element = screen.getByText('Source reference');
+    // Accessible name should not contain raw key
+    expect(element).not.toHaveAccessibleName(/plan_unknown_section/);
+    expect(element).not.toHaveAttribute('title', expect.stringContaining('plan_unknown_section'));
+    // Title should be exactly "Source reference", not "Source reference reference"
+    expect(element).toHaveAttribute('title', 'Source reference');
+  });
+});
+
+// ─── Architecture Tests ─────────────────────────────────────────────────────
+
+describe('M3C-B label architecture', () => {
+  it('sectionLabels.ts is single source of truth for known sections', async () => {
+    // This test verifies that CoachingRail does not maintain its own label registry
+    // by checking that importing getSectionLabel works correctly
+    const { getSectionLabel: importedGetSectionLabel } = await import('./sectionLabels');
+
+    // Verify known Plan sections resolve correctly
+    expect(importedGetSectionLabel('plan', 'plan_summary')).toBe('Summary');
+    expect(importedGetSectionLabel('plan', 'plan_participant_glance')).toBe('Participants');
+    expect(importedGetSectionLabel('plan', 'plan_session_format')).toBe('Session format');
+    expect(importedGetSectionLabel('plan', 'plan_data_collection')).toBe('Data collection');
+
+    // Verify known Brief sections resolve correctly
+    expect(importedGetSectionLabel('brief', 'summary')).toBe('Summary');
+    expect(importedGetSectionLabel('brief', 'problem_narrative')).toBe('Problem');
+
+    // Verify unknown sections get fallback
+    expect(importedGetSectionLabel('plan', 'unknown_key')).toBe('Older section');
   });
 });

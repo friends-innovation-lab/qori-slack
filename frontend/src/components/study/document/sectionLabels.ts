@@ -64,6 +64,11 @@ export const PLAN_SECTIONS: readonly SectionDefinition[] = [
   { key: 'plan_summary', label: 'Summary' },
   { key: 'plan_background', label: 'Background' },
   { key: 'plan_method_approach', label: 'Method' },
+  // Subsections of Method (no own DOM target, not clickable)
+  { key: 'plan_session_format', label: 'Session format' },
+  { key: 'plan_data_collection', label: 'Data collection' },
+  // Quick Facts field (workspace.label: 'Participants' per contract)
+  { key: 'plan_participant_glance', label: 'Participants' },
   { key: 'plan_participants_prose', label: 'Participants' },
   { key: 'plan_deliverables', label: 'Deliverables' },
   { key: 'plan_risks', label: 'Risks and mitigations' },
