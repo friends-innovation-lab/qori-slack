@@ -17,6 +17,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
 import { selectPrimaryArtifactRun, selectPrimarySectionRun, CoachingRail } from './CoachingRail';
 import { ReferenceNavigationProvider } from '../workspace';
+import { CommentDraftProvider } from './CommentDraftContext';
 import type { CoachRunSummaryResource } from '@qori/api-contracts';
 
 // ─── Test Data Factories ─────────────────────────────────────────────────────
@@ -283,13 +284,16 @@ const createTestQueryClient = () =>
   });
 
 // M3C-B: Test wrapper that provides all necessary context for CoachingRail
+// M4B.1: CommentDraftProvider must wrap ReferenceNavigationProvider (guard dependency)
 function TestProviders({ children }: { children: React.ReactNode }) {
   return (
     <MemoryRouter initialEntries={['/studies/test-study/brief']}>
       <QueryClientProvider client={createTestQueryClient()}>
-        <ReferenceNavigationProvider studyPublicId="test-study" currentArtifactType="brief">
-          {children}
-        </ReferenceNavigationProvider>
+        <CommentDraftProvider>
+          <ReferenceNavigationProvider studyPublicId="test-study" currentArtifactType="brief">
+            {children}
+          </ReferenceNavigationProvider>
+        </CommentDraftProvider>
       </QueryClientProvider>
     </MemoryRouter>
   );

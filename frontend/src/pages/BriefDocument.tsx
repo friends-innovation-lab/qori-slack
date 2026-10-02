@@ -524,41 +524,41 @@ export function BriefDocument() {
 
   return (
     <WorkspaceLayout
-      nav={
-        <LifecycleRail
-          variant="inverse"
-          studyPublicId={studyPublicId || ''}
-          nodes={lifecycleNodes}
-          study={study}
-        />
-      }
-      header={
-        <ArtifactHeader
-          studyName={study.name}
-          studyPublicId={studyPublicId || ''}
-          active="brief"
-          saveState={saveState}
-          status={artifactStatus}
-          githubUrl={vm.githubUrl}
-          railToggles={railToggles}
-          navOpen={navOpen}
-          onNavToggle={() => setNavOpen(!navOpen)}
-          actions={actions}
-        />
-      }
-      rail={
-        showRail ? (
-          <ContextRail
-            modes={showReviewRail ? railModes : railModes.filter((m) => m.id !== 'review')}
-            activeMode={railMode}
-            onModeChange={(mode) => setRailMode(mode as 'coaching' | 'review' | 'comments' | null)}
+        nav={
+          <LifecycleRail
+            variant="inverse"
+            studyPublicId={studyPublicId || ''}
+            nodes={lifecycleNodes}
+            study={study}
           />
-        ) : undefined
-      }
-      railOpen={showRail && railMode !== null}
-      navOpen={navOpen}
-      onNavClose={() => setNavOpen(false)}
-    >
+        }
+        header={
+          <ArtifactHeader
+            studyName={study.name}
+            studyPublicId={studyPublicId || ''}
+            active="brief"
+            saveState={saveState}
+            status={artifactStatus}
+            githubUrl={vm.githubUrl}
+            railToggles={railToggles}
+            navOpen={navOpen}
+            onNavToggle={() => setNavOpen(!navOpen)}
+            actions={actions}
+          />
+        }
+        rail={
+          showRail ? (
+            <ContextRail
+              modes={showReviewRail ? railModes : railModes.filter((m) => m.id !== 'review')}
+              activeMode={railMode}
+              onModeChange={(mode) => setRailMode(mode as 'coaching' | 'review' | 'comments' | null)}
+            />
+          ) : undefined
+        }
+        railOpen={showRail && railMode !== null}
+        navOpen={navOpen}
+        onNavClose={() => setNavOpen(false)}
+      >
       <div className={docStyles.docWrap}>
         <div className={docStyles.docCol}>
           {/* Save failure banners */}
@@ -653,7 +653,7 @@ export function BriefDocument() {
                     ...(vm.barriers.exists ? [vm.barriers.provenance] : []),
                   ].filter(Boolean)}
                   comment={getSectionComment('problem_narrative', 'Problem')}
-                  coach={getSectionCoach('problem_statement', 'Problem')}
+                  coach={getSectionCoach('problem_narrative', 'Problem')}
                 >
                   {problemProse && (
                     <MarkdownDisplay markdown={problemProse} className={docStyles.blockProse} />
@@ -708,7 +708,7 @@ export function BriefDocument() {
                   title="Method"
                   provenance={vm.sections.methodProse.provenance}
                   comment={getSectionComment('method_prose', 'Method')}
-                  coach={getSectionCoach('methodology', 'Method')}
+                  coach={getSectionCoach('method_prose', 'Method')}
                 >
                   {methodology && (
                     <p className={docStyles.kvParagraph}>
@@ -733,7 +733,7 @@ export function BriefDocument() {
                       : []),
                   ].filter(Boolean)}
                   comment={getSectionComment('participants_prose', 'Participants')}
-                  coach={getSectionCoach('participant_approach', 'Participants')}
+                  coach={getSectionCoach('participants_prose', 'Participants')}
                 >
                   {participantSegments.length > 0 ? (
                     <>

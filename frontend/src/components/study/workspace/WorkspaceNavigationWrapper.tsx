@@ -6,6 +6,11 @@
  * navigation. It extracts studyPublicId and artifactType from the current route
  * and provides them to the ReferenceNavigationProvider.
  *
+ * M4B.1: CommentDraftProvider also lives here to:
+ * - Provide draft guard to ReferenceNavigationProvider for cross-artifact blocking
+ * - Survive rail mode switching (CommentsRail unmount/remount)
+ * - Clear draft session on different-artifact initialization (handled by initSession)
+ *
  * Architecture:
  * - Wrapper detects workspace routes and extracts context from URL
  * - For non-workspace routes, provides a no-op context (references not clickable)
@@ -18,6 +23,7 @@ import {
   ReferenceNavigationProvider,
   type ArtifactType,
 } from './ReferenceNavigationProvider';
+import { CommentDraftProvider } from '../document/CommentDraftContext';
 
 /** Workspace route patterns */
 const WORKSPACE_PATTERNS = [
@@ -54,12 +60,16 @@ export function WorkspaceNavigationWrapper({ children }: WorkspaceNavigationWrap
     [location.pathname],
   );
 
+  // M4B.1: CommentDraftProvider wraps ReferenceNavigationProvider so the
+  // reference navigation can use useCommentDraftGuard() for cross-artifact blocking
   return (
-    <ReferenceNavigationProvider
-      studyPublicId={studyPublicId}
-      currentArtifactType={artifactType}
-    >
-      {children}
-    </ReferenceNavigationProvider>
+    <CommentDraftProvider>
+      <ReferenceNavigationProvider
+        studyPublicId={studyPublicId}
+        currentArtifactType={artifactType}
+      >
+        {children}
+      </ReferenceNavigationProvider>
+    </CommentDraftProvider>
   );
 }
