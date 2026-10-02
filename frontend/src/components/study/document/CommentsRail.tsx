@@ -11,9 +11,15 @@
  *
  * Rendered inside ContextRail as the Comments mode content.
  * Uses CMT-5 data layer hooks.
+ *
+ * M4B: Draft state lifted to CommentDraftContext.
+ * - Draft state survives rail mode switching
+ * - Draft state survives same-artifact navigation
+ * - Cross-artifact navigation prompts for confirmation if dirty
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCommentDraft } from './CommentDraftContext';
 import { MessageSquare, Check, RotateCcw, Pencil, AlertCircle } from 'lucide-react';
 import {
   useCommentThreads,
@@ -100,12 +106,37 @@ function ThreadItem({
   isExpanded,
   onToggle,
 }: ThreadItemProps) {
-  const [replyBody, setReplyBody] = useState('');
+  // M4B: Use draft context for reply and edit state
+  const {
+    getReplyDraft,
+    setReplyDraft,
+    clearReplyDraft,
+    getEditDraft,
+    startEdit,
+    setEditDraft,
+    clearEditDraft,
+  } = useCommentDraft();
+
+  // Local UI state that doesn't need to survive unmount
   const [showReplyForm, setShowReplyForm] = useState(false);
-  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-  const [editBody, setEditBody] = useState('');
   const [editConflict, setEditConflict] = useState<EditConflictError | null>(null);
   const replyRef = useRef<HTMLTextAreaElement>(null);
+
+  // M4B: Get draft values from context
+  const replyBody = getReplyDraft(thread.id);
+  const editDraft = (() => {
+    // Find which message (if any) in this thread is being edited
+    const hasMessages = (t: CommentThreadResource | CommentThreadDetailResource): t is CommentThreadDetailResource =>
+      'messages' in t && Array.isArray(t.messages);
+    if (!hasMessages(thread)) return null;
+    for (const msg of thread.messages) {
+      const draft = getEditDraft(msg.id);
+      if (draft) return draft;
+    }
+    return null;
+  })();
+  const editingMessageId = editDraft?.messageId ?? null;
+  const editBody = editDraft?.body ?? '';
 
   const replyMutation = useReplyToCommentThread();
   const editMutation = useEditCommentMessage();
@@ -127,7 +158,8 @@ function ThreadItem({
         threadId: thread.id,
         body: replyBody.trim(),
       });
-      setReplyBody('');
+      // M4B: Clear reply draft on successful submit
+      clearReplyDraft(thread.id);
       setShowReplyForm(false);
     } catch {
       // Error handled by mutation state
@@ -135,14 +167,16 @@ function ThreadItem({
   };
 
   const handleStartEdit = (message: CommentMessageResource) => {
-    setEditingMessageId(message.id);
-    setEditBody(message.body);
+    // M4B: Start edit via context
+    startEdit(message.id, thread.id, message.body);
     setEditConflict(null);
   };
 
   const handleCancelEdit = () => {
-    setEditingMessageId(null);
-    setEditBody('');
+    // M4B: Clear edit draft on cancel
+    if (editingMessageId) {
+      clearEditDraft(editingMessageId);
+    }
     setEditConflict(null);
   };
 
@@ -155,8 +189,8 @@ function ThreadItem({
         body: editBody.trim(),
         expectedUpdatedAt: message.updated_at,
       });
-      setEditingMessageId(null);
-      setEditBody('');
+      // M4B: Clear edit draft on successful submit
+      clearEditDraft(message.id);
       setEditConflict(null);
     } catch (err) {
       if (isEditConflictError(err as any)) {
@@ -239,7 +273,7 @@ function ThreadItem({
                         type="button"
                         className={styles.conflictAction}
                         onClick={() => {
-                          setEditBody(editConflict.submittedBody);
+                          setEditDraft(firstMessage.id, editConflict.submittedBody);
                           setEditConflict(null);
                         }}
                       >
@@ -250,7 +284,7 @@ function ThreadItem({
                   <Textarea
                     label="Edit message"
                     value={editBody}
-                    onChange={(e) => setEditBody(e.target.value)}
+                    onChange={(e) => setEditDraft(firstMessage.id, e.target.value)}
                     className={styles.editTextarea}
                   />
                   <div className={styles.editActions}>
@@ -313,7 +347,7 @@ function ThreadItem({
                         type="button"
                         className={styles.conflictAction}
                         onClick={() => {
-                          setEditBody(editConflict.submittedBody);
+                          setEditDraft(msg.id, editConflict.submittedBody);
                           setEditConflict(null);
                         }}
                       >
@@ -324,7 +358,7 @@ function ThreadItem({
                   <Textarea
                     label="Edit reply"
                     value={editBody}
-                    onChange={(e) => setEditBody(e.target.value)}
+                    onChange={(e) => setEditDraft(msg.id, e.target.value)}
                     className={styles.editTextarea}
                   />
                   <div className={styles.editActions}>
@@ -373,7 +407,7 @@ function ThreadItem({
                 ref={replyRef}
                 label="Reply"
                 value={replyBody}
-                onChange={(e) => setReplyBody(e.target.value)}
+                onChange={(e) => setReplyDraft(thread.id, e.target.value)}
                 placeholder="Write a reply..."
                 className={styles.replyTextarea}
               />
@@ -383,7 +417,8 @@ function ThreadItem({
                   size="sm"
                   onClick={() => {
                     setShowReplyForm(false);
-                    setReplyBody('');
+                    // M4B: Clear reply draft on cancel
+                    clearReplyDraft(thread.id);
                   }}
                 >
                   Cancel
@@ -475,11 +510,24 @@ function CreateThreadForm({
   onCancel,
   onSuccess,
 }: CreateThreadFormProps) {
+  // M4B: Use draft context for new thread draft
+  const { session, setNewThreadDraft, clearNewThreadDraft } = useCommentDraft();
+
   const sections = getSectionsForArtifact(artifactType);
-  const [sectionKey, setSectionKey] = useState(defaultSectionKey || '');
-  const [body, setBody] = useState('');
+
+  // M4B: Get draft values from context, fall back to defaults
+  const sectionKey = session?.newThreadDraft?.sectionKey ?? defaultSectionKey ?? '';
+  const body = session?.newThreadDraft?.body ?? '';
 
   const createMutation = useCreateCommentThread();
+
+  const handleSectionChange = (newSectionKey: string) => {
+    setNewThreadDraft(newSectionKey, body);
+  };
+
+  const handleBodyChange = (newBody: string) => {
+    setNewThreadDraft(sectionKey || defaultSectionKey || '', newBody);
+  };
 
   const handleSubmit = async () => {
     if (!sectionKey || !body.trim()) return;
@@ -489,6 +537,8 @@ function CreateThreadForm({
         sectionKey,
         body: body.trim(),
       });
+      // M4B: Clear draft on successful submit
+      clearNewThreadDraft();
       onSuccess();
     } catch {
       // Error handled by mutation state
@@ -502,14 +552,14 @@ function CreateThreadForm({
         label="Section"
         options={sections.map((s) => ({ value: s.key, label: s.label }))}
         value={sectionKey}
-        onChange={(e) => setSectionKey(e.target.value)}
+        onChange={(e) => handleSectionChange(e.target.value)}
         placeholder="Select a section..."
         required
       />
       <Textarea
         label="Message"
         value={body}
-        onChange={(e) => setBody(e.target.value)}
+        onChange={(e) => handleBodyChange(e.target.value)}
         placeholder="Write your comment..."
         required
       />
@@ -543,11 +593,28 @@ export function CommentsRail({
   scope = { mode: 'all' },
   onScopeChange,
 }: CommentsRailProps) {
-  const [showResolved, setShowResolved] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [expandedThreadId, setExpandedThreadId] = useState<string | null>(null);
-  // CMT-7: Remember originating section key when switching to All
-  const [originatingSectionKey, setOriginatingSectionKey] = useState<string | null>(null);
+  // M4B: Use draft context for UI state that should survive mode switching
+  const {
+    session,
+    initSession,
+    setSelectedThread,
+    setScope: setDraftScope,
+    setOriginatingSectionKey: setDraftOriginatingSectionKey,
+    setShowResolved: setDraftShowResolved,
+    setShowCreateForm: setDraftShowCreateForm,
+    clearNewThreadDraft,
+  } = useCommentDraft();
+
+  // M4B: Initialize session on mount/artifact change
+  useEffect(() => {
+    initSession(artifactPublicId);
+  }, [artifactPublicId, initSession]);
+
+  // M4B: Get state from context with defaults
+  const showResolved = session?.showResolved ?? false;
+  const showCreateForm = session?.showCreateForm ?? false;
+  const expandedThreadId = session?.selectedThreadId ?? null;
+  const originatingSectionKey = session?.originatingSectionKey ?? null;
 
   // Track the current section key (from scope or remembered)
   const currentSectionKey = scope.mode === 'section' ? scope.sectionKey : null;
@@ -555,9 +622,14 @@ export function CommentsRail({
   // Update originating section when entering section mode
   useEffect(() => {
     if (scope.mode === 'section' && scope.sectionKey) {
-      setOriginatingSectionKey(scope.sectionKey);
+      setDraftOriginatingSectionKey(scope.sectionKey);
     }
-  }, [scope]);
+  }, [scope, setDraftOriginatingSectionKey]);
+
+  // M4B: Sync scope to draft context
+  useEffect(() => {
+    setDraftScope(scope);
+  }, [scope, setDraftScope]);
 
   // Query for open threads
   const sectionKey = scope.mode === 'section' ? scope.sectionKey : undefined;
@@ -580,12 +652,14 @@ export function CommentsRail({
   const openCount = deriveOpenThreadCount(openThreads);
 
   const handleToggleThread = (threadId: string) => {
-    setExpandedThreadId(expandedThreadId === threadId ? null : threadId);
+    // M4B: Use context for thread selection
+    setSelectedThread(expandedThreadId === threadId ? null : threadId);
   };
 
   const handleCreateSuccess = useCallback(() => {
-    setShowCreateForm(false);
-  }, []);
+    // M4B: Use context for form visibility
+    setDraftShowCreateForm(false);
+  }, [setDraftShowCreateForm]);
 
   // CMT-7: Handle scope switching with section key preservation
   const handleScopeChange = (mode: 'all' | 'section') => {
@@ -690,7 +764,7 @@ export function CommentsRail({
         <input
           type="checkbox"
           checked={showResolved}
-          onChange={(e) => setShowResolved(e.target.checked)}
+          onChange={(e) => setDraftShowResolved(e.target.checked)}
         />
         <span>Show resolved</span>
       </label>
@@ -727,7 +801,7 @@ export function CommentsRail({
           variant="secondary"
           size="sm"
           className={styles.newThreadButton}
-          onClick={() => setShowCreateForm(true)}
+          onClick={() => setDraftShowCreateForm(true)}
         >
           + New comment
         </Button>
@@ -736,7 +810,10 @@ export function CommentsRail({
           artifactPublicId={artifactPublicId}
           artifactType={artifactType}
           defaultSectionKey={scope.mode === 'section' ? scope.sectionKey : undefined}
-          onCancel={() => setShowCreateForm(false)}
+          onCancel={() => {
+            // M4B: Clear draft and hide form on cancel
+            clearNewThreadDraft();
+          }}
           onSuccess={handleCreateSuccess}
         />
       )}

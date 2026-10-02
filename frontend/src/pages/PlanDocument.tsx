@@ -373,41 +373,41 @@ export function PlanDocument() {
 
   return (
     <WorkspaceLayout
-      nav={
-        <LifecycleRail
-          variant="inverse"
-          studyPublicId={studyPublicId || ''}
-          nodes={lifecycleNodes}
-          study={study}
-        />
-      }
-      header={
-        <ArtifactHeader
-          studyName={study.name}
-          studyPublicId={studyPublicId || ''}
-          active="plan"
-          saveState={saveState}
-          status={artifactStatus}
-          githubUrl={vm.githubUrl}
-          railToggles={railToggles}
-          navOpen={navOpen}
-          onNavToggle={() => setNavOpen(!navOpen)}
-          actions={actions}
-        />
-      }
-      rail={
-        showRail ? (
-          <ContextRail
-            modes={railModes}
-            activeMode={railMode}
-            onModeChange={(mode) => setRailMode(mode as 'coaching' | 'comments' | null)}
+        nav={
+          <LifecycleRail
+            variant="inverse"
+            studyPublicId={studyPublicId || ''}
+            nodes={lifecycleNodes}
+            study={study}
           />
-        ) : undefined
-      }
-      railOpen={showRail && railMode !== null}
-      navOpen={navOpen}
-      onNavClose={() => setNavOpen(false)}
-    >
+        }
+        header={
+          <ArtifactHeader
+            studyName={study.name}
+            studyPublicId={studyPublicId || ''}
+            active="plan"
+            saveState={saveState}
+            status={artifactStatus}
+            githubUrl={vm.githubUrl}
+            railToggles={railToggles}
+            navOpen={navOpen}
+            onNavToggle={() => setNavOpen(!navOpen)}
+            actions={actions}
+          />
+        }
+        rail={
+          showRail ? (
+            <ContextRail
+              modes={railModes}
+              activeMode={railMode}
+              onModeChange={(mode) => setRailMode(mode as 'coaching' | 'comments' | null)}
+            />
+          ) : undefined
+        }
+        railOpen={showRail && railMode !== null}
+        navOpen={navOpen}
+        onNavClose={() => setNavOpen(false)}
+      >
       <div className={docStyles.docWrap}>
         <div className={docStyles.docCol}>
           {/* Save failure banners */}

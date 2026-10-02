@@ -6,6 +6,15 @@ export type { CoachingSectionContext } from './CoachingRail';
 // M3C-B: Clickable reference link
 export { ReferenceLink } from './ReferenceLink';
 export { CollapsibleSection } from './CollapsibleSection';
+export {
+  CommentDraftProvider,
+  useCommentDraft,
+  useCommentDraftGuard,
+} from './CommentDraftContext';
+export type {
+  CommentDraftSession,
+  CommentDraftContextValue,
+} from './CommentDraftContext';
 export { CommentsRail } from './CommentsRail';
 export type { CommentsRailScope } from './CommentsRail';
 export { DocumentSection } from './DocumentSection';

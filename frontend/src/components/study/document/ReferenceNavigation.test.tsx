@@ -24,6 +24,7 @@ import {
   useReferenceNavigation,
   type ArtifactType,
 } from '../workspace/ReferenceNavigationProvider';
+import { CommentDraftProvider } from './CommentDraftContext';
 import { ReferenceLink } from './ReferenceLink';
 import { getSectionLabel } from './sectionLabels';
 import type { CoachRunReferenceResource } from '@qori/api-contracts';
@@ -117,13 +118,15 @@ function renderWithProviders(
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <QueryClientProvider client={createTestQueryClient()}>
-        <ReferenceNavigationProvider
-          studyPublicId={studyPublicId}
-          currentArtifactType={artifactType}
-        >
-          <LocationDisplay />
-          {ui}
-        </ReferenceNavigationProvider>
+        <CommentDraftProvider>
+          <ReferenceNavigationProvider
+            studyPublicId={studyPublicId}
+            currentArtifactType={artifactType}
+          >
+            <LocationDisplay />
+            {ui}
+          </ReferenceNavigationProvider>
+        </CommentDraftProvider>
       </QueryClientProvider>
     </MemoryRouter>,
   );

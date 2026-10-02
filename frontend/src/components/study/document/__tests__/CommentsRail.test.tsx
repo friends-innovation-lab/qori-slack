@@ -17,11 +17,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '@/test/utils';
 import { CommentsRail } from '../CommentsRail';
+import { CommentDraftProvider } from '../CommentDraftContext';
+import type { ReactNode } from 'react';
 import type {
   CommentThreadResource,
   CommentThreadDetailResource,
   CommentMessageResource,
 } from '@qori/api-contracts';
+
+// M4B: Wrapper to provide CommentDraftContext
+function WithDraftProvider({ children }: { children: ReactNode }) {
+  return <CommentDraftProvider>{children}</CommentDraftProvider>;
+}
 
 // Mock comments API
 const mockUseCommentThreads = vi.fn();
@@ -119,7 +126,7 @@ describe('CommentsRail', () => {
   describe('empty states', () => {
     it('shows "No open comments" when no threads', () => {
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
       expect(screen.getByText('No open comments.')).toBeInTheDocument();
     });
@@ -131,7 +138,7 @@ describe('CommentsRail', () => {
         isError: false,
       });
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
       expect(screen.getByText('Loading comments...')).toBeInTheDocument();
     });
@@ -145,7 +152,7 @@ describe('CommentsRail', () => {
         refetch: mockRefetch,
       });
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
       expect(screen.getByText('Could not load comments.')).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
@@ -167,7 +174,7 @@ describe('CommentsRail', () => {
         isError: false,
       });
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
       expect(screen.getByText('Summary')).toBeInTheDocument();
       expect(screen.getByText('Problem')).toBeInTheDocument(); // Display label for problem_narrative
@@ -183,7 +190,7 @@ describe('CommentsRail', () => {
         isError: false,
       });
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
       expect(screen.getByText('Older section')).toBeInTheDocument();
     });
@@ -192,7 +199,7 @@ describe('CommentsRail', () => {
   describe('scope toggle', () => {
     it('defaults to All comments selected', () => {
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
       const allButton = screen.getByRole('button', { name: 'All comments' });
       expect(allButton).toHaveAttribute('aria-pressed', 'true');
@@ -200,7 +207,7 @@ describe('CommentsRail', () => {
 
     it('This section is disabled without section context', () => {
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
       const sectionButton = screen.getByRole('button', { name: 'This section' });
       expect(sectionButton).toBeDisabled();
@@ -210,7 +217,7 @@ describe('CommentsRail', () => {
   describe('create thread', () => {
     it('shows create form when New comment clicked', () => {
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
       fireEvent.click(screen.getByRole('button', { name: '+ New comment' }));
       expect(screen.getByText('New comment')).toBeInTheDocument();
@@ -220,7 +227,7 @@ describe('CommentsRail', () => {
 
     it('section selector shows Brief sections for brief artifact', () => {
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
       fireEvent.click(screen.getByRole('button', { name: '+ New comment' }));
       const select = screen.getByRole('combobox', { name: /Section/i });
@@ -233,7 +240,7 @@ describe('CommentsRail', () => {
 
     it('section selector shows Plan sections for plan artifact', () => {
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="plan" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="plan" /></WithDraftProvider>,
       );
       fireEvent.click(screen.getByRole('button', { name: '+ New comment' }));
       const select = screen.getByRole('combobox', { name: /Section/i });
@@ -247,7 +254,7 @@ describe('CommentsRail', () => {
     it('calls createThread mutation with correct params', async () => {
       mockCreateThread.mockResolvedValue({});
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
       fireEvent.click(screen.getByRole('button', { name: '+ New comment' }));
 
@@ -284,7 +291,7 @@ describe('CommentsRail', () => {
         isError: false,
       });
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
 
       // Expand thread
@@ -304,7 +311,7 @@ describe('CommentsRail', () => {
         isError: false,
       });
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
 
       // Expand thread
@@ -328,7 +335,7 @@ describe('CommentsRail', () => {
         isError: false,
       });
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
 
       // Expand thread
@@ -350,7 +357,7 @@ describe('CommentsRail', () => {
         isError: false,
       });
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
 
       // Expand thread
@@ -377,7 +384,7 @@ describe('CommentsRail', () => {
         isError: false,
       });
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
 
       // Expand thread
@@ -399,7 +406,7 @@ describe('CommentsRail', () => {
         isError: false,
       });
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
 
       // Expand thread
@@ -422,7 +429,7 @@ describe('CommentsRail', () => {
         isError: false,
       });
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
 
       // Expand thread
@@ -443,7 +450,7 @@ describe('CommentsRail', () => {
         isError: false,
       });
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
 
       // Expand thread
@@ -468,7 +475,7 @@ describe('CommentsRail', () => {
         isError: false,
       });
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
 
       expect(screen.getByLabelText(/Show resolved/i)).not.toBeChecked();
@@ -488,7 +495,7 @@ describe('CommentsRail', () => {
         });
 
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
 
       fireEvent.click(screen.getByLabelText(/Show resolved/i));
@@ -532,7 +539,7 @@ describe('CommentsRail', () => {
         isError: false,
       });
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
 
       const toggle = screen.getByRole('button', { name: /Summary/i });
@@ -544,7 +551,7 @@ describe('CommentsRail', () => {
 
     it('forms have proper labels', () => {
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
       fireEvent.click(screen.getByRole('button', { name: '+ New comment' }));
 
@@ -554,7 +561,7 @@ describe('CommentsRail', () => {
 
     it('scope toggle has role="group"', () => {
       renderWithProviders(
-        <CommentsRail artifactPublicId="art-1" artifactType="brief" />,
+        <WithDraftProvider><CommentsRail artifactPublicId="art-1" artifactType="brief" /></WithDraftProvider>,
       );
       expect(screen.getByRole('group', { name: 'Comment scope' })).toBeInTheDocument();
     });

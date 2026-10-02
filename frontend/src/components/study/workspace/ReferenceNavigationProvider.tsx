@@ -36,6 +36,7 @@ import {
 } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import type { CoachRunReferenceResource } from '@qori/api-contracts';
+import { useCommentDraftGuard } from '../document/CommentDraftContext';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -206,6 +207,9 @@ export function ReferenceNavigationProvider({
 }: ReferenceNavigationProviderProps) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // M4B.1: Draft guard for cross-artifact navigation blocking
+  const { confirmNavigation } = useCommentDraftGuard();
 
   // Pinned coach run state for cross-artifact navigation
   const [pinnedRun, setPinnedRun] = useState<PinnedCoachRun | null>(null);
@@ -394,6 +398,15 @@ export function ReferenceNavigationProvider({
       setIsNavigationActive(true);
 
       if (destination.isCrossArtifact) {
+        // M4B.1: Check comment draft guard before cross-artifact navigation
+        // If user has dirty draft and chooses "Stay", cancel navigation
+        // Guard will clear draft session if user chooses "Discard and continue"
+        if (!confirmNavigation()) {
+          // User chose to stay — cancel navigation, preserve all state
+          setIsNavigationActive(false);
+          return;
+        }
+
         // Cross-artifact navigation: pin coach run and switch artifact
         setPinnedRun({
           runId: originCoachRunId,
@@ -441,7 +454,7 @@ export function ReferenceNavigationProvider({
         scrollAndHighlight(destination.domElementId, currentGen);
       }
     },
-    [currentArtifactType, studyPublicId, resolveDestination, navigate, scrollAndHighlight],
+    [currentArtifactType, studyPublicId, resolveDestination, navigate, scrollAndHighlight, confirmNavigation],
   );
 
   /**

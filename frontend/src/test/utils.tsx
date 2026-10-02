@@ -6,6 +6,7 @@ import { type ReactNode } from 'react';
 import { render, type RenderOptions } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { CommentDraftProvider } from '@/components/study/document/CommentDraftContext';
 
 function createTestQueryClient() {
   return new QueryClient({
@@ -26,7 +27,9 @@ function TestWrapper({ children, initialEntries = ['/'] }: WrapperProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={initialEntries}>
-        {children}
+        <CommentDraftProvider>
+          {children}
+        </CommentDraftProvider>
       </MemoryRouter>
     </QueryClientProvider>
   );
