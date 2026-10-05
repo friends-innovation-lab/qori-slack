@@ -10,8 +10,8 @@
  * - Action button states
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, within, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
@@ -315,6 +315,19 @@ describe('CoachingRail Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+    // Mock requestAnimationFrame to execute synchronously (prevents act() warnings)
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      cb(0);
+      return 0;
+    });
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    cleanup();
   });
 
   describe('loading state', () => {
@@ -1512,6 +1525,18 @@ describe('M3B history row navigation', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      cb(0);
+      return 0;
+    });
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    cleanup();
   });
 
   it('clicking section history row from artifact context switches to section context', async () => {
@@ -1583,7 +1608,7 @@ describe('M3B history row navigation', () => {
 
     // Click the section history row
     const historyRow = screen.getByRole('option', { name: /open background coaching review/i });
-    historyRow.click();
+    fireEvent.click(historyRow);
 
     // Should call onSectionContextChange with the section context
     expect(onSectionContextChange).toHaveBeenCalledWith({
@@ -1676,7 +1701,7 @@ describe('M3B history row navigation', () => {
 
     // Click the artifact history row
     const historyRow = screen.getByRole('option', { name: /open research plan coaching review/i });
-    historyRow.click();
+    fireEvent.click(historyRow);
 
     // Should NOT call onSectionContextChange when already in artifact context
     // (clicking artifact row while in artifact context is a no-op for context)
@@ -1747,7 +1772,7 @@ describe('M3B history row navigation', () => {
 
     // Click the history row
     const historyRow = screen.getByRole('option', { name: /open background coaching review/i });
-    historyRow.click();
+    fireEvent.click(historyRow);
 
     // CRITICAL: no POST should occur
     expect(mockMutate).not.toHaveBeenCalled();
@@ -1879,7 +1904,7 @@ describe('M3B history row navigation', () => {
 
     // Click Method review
     const methodRow = screen.getByRole('option', { name: /open method coaching review/i });
-    methodRow.click();
+    fireEvent.click(methodRow);
 
     expect(onSectionContextChange).toHaveBeenCalledWith({
       sectionKey: 'plan_method_approach',
@@ -1890,7 +1915,7 @@ describe('M3B history row navigation', () => {
 
     // Click Risks review
     const risksRow = screen.getByRole('option', { name: /open risks and mitigations coaching review/i });
-    risksRow.click();
+    fireEvent.click(risksRow);
 
     expect(onSectionContextChange).toHaveBeenCalledWith({
       sectionKey: 'plan_risks',
@@ -1956,8 +1981,7 @@ describe('M3B history row navigation', () => {
 
     // Test Enter key
     historyRow.focus();
-    const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
-    historyRow.dispatchEvent(enterEvent);
+    fireEvent.keyDown(historyRow, { key: 'Enter' });
 
     expect(onSectionContextChange).toHaveBeenCalledWith({
       sectionKey: 'plan_background',
@@ -1967,8 +1991,7 @@ describe('M3B history row navigation', () => {
     onSectionContextChange.mockClear();
 
     // Test Space key
-    const spaceEvent = new KeyboardEvent('keydown', { key: ' ', bubbles: true });
-    historyRow.dispatchEvent(spaceEvent);
+    fireEvent.keyDown(historyRow, { key: ' ' });
 
     expect(onSectionContextChange).toHaveBeenCalledWith({
       sectionKey: 'plan_background',
@@ -1994,6 +2017,18 @@ describe('M3B FINAL wayfinding', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      cb(0);
+      return 0;
+    });
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    cleanup();
   });
 
   it('shows explicit scope title for completed artifact run', () => {
@@ -2245,7 +2280,7 @@ describe('M3B FINAL wayfinding', () => {
     expect(backLink).toBeInTheDocument();
 
     // Click should return to artifact context without POST
-    backLink.click();
+    fireEvent.click(backLink);
     expect(onSectionContextChange).toHaveBeenCalledWith(null);
   });
 
@@ -2304,7 +2339,7 @@ describe('M3B FINAL wayfinding', () => {
     );
 
     // Click back link
-    screen.getByRole('button', { name: /back to research plan coaching/i }).click();
+    fireEvent.click(screen.getByRole('button', { name: /back to research plan coaching/i }));
 
     // CRITICAL: No POST should occur
     expect(mockMutate).not.toHaveBeenCalled();
