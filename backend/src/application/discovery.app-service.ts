@@ -1,10 +1,16 @@
 /**
- * Discovery Application Service — PLAT-3
+ * Discovery Application Service — PLAT-3 + DISC-1
  *
  * Extracted from discoverHandler.ts
  * Orchestrates discovery research workflows: document processing,
  * privacy gating, YAML template processing, cascade variable extraction,
  * and discovery folder scaffolding.
+ *
+ * DISC-1 integration:
+ * - DiscoveryRun created BEFORE long-running analysis (locked decision A)
+ * - EvidenceSource created for each uploaded document
+ * - DiscoveryArtifact created with canonical content (locked decision D)
+ * - GitHub is projection, not canonical
  */
 
 import type { ApplicationContext } from '../types/application-context';
@@ -13,10 +19,17 @@ import { assertProjectAccessByActor } from '../services/authorization.service';
 import { getProjectById } from '../services/project.service';
 import { loadDiscoveryArtifacts, type DiscoveryArtifact } from '../helpers/discoveryLoader';
 import { getConfigRepo, YAML_TEMPLATE_PATH, fetchFileFromRepo, createOrUpdateFileOnGitHub, fetchFileFromRepoByPath } from '../helpers/github';
-import { processYamlTemplate } from '../helpers/yamlProcessor';
+import { processYamlTemplate, extractAndPersistDiscoveryVariables, type DryRunResult, type ExtractionOutcome } from '../helpers/yamlProcessor';
+import type { EmitSpec } from '../helpers/variableExtractor';
 import { parseDocuments, validateDocuments } from '../helpers/documentParser';
 import type { VariableContext } from '../helpers/studyVariables';
+import yaml from 'js-yaml';
 import { authorizeForModel, scanForPii } from '../services/content-governance.service';
+import * as runService from '../services/discovery-run.service';
+import * as artifactService from '../services/discovery-artifact.service';
+import * as evidenceService from '../services/evidence-source.service';
+import type { DiscoveryType } from '../database/models/discovery_run';
+import sequelize from '../database';
 
 // ─── Input/Output Types ──────────────────────────────────────────
 
@@ -63,6 +76,10 @@ export interface DiscoveryResult {
   /** Cascade extraction outcome */
   extractionSuccess: boolean;
   extractionVariableCount: number;
+  /** DISC-1: DiscoveryRun public ID */
+  runPublicId?: string;
+  /** DISC-1: DiscoveryArtifact public ID */
+  artifactPublicId?: string;
 }
 
 export interface DiscoveryArtifactInfo {
@@ -210,6 +227,43 @@ export async function executeDiscovery(
   const project = await getProjectById(input.projectId);
   const projectProblemStatement = project?.problem_statement || null;
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DISC-1: Create DiscoveryRun BEFORE long-running analysis (locked decision A)
+  // ═══════════════════════════════════════════════════════════════════════════
+  const run = await runService.createDiscoveryRun({
+    projectId: input.projectId,
+    discoveryType: input.discoveryType as DiscoveryType,
+    topic: input.topic,
+    topicSlug,
+    sourceIntent: input.description,
+    actorId: ctx.actor.id,
+    createdByIdentity: `slack:${input.createdByActorId}`,
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DISC-1: Create EvidenceSource for each uploaded document
+  // ═══════════════════════════════════════════════════════════════════════════
+  const sources = await evidenceService.createDocumentSources(
+    input.projectId,
+    input.documents.map(d => ({
+      name: d.name,
+      content: d.content,
+      type: d.type,
+      size: d.size,
+      slackFileId: (d as Record<string, unknown>).slackFileId as string | undefined,
+    })),
+    input.createdByActorId,
+  );
+
+  // Associate sources with run
+  await runService.associateSources({
+    runId: run.id,
+    sourceIds: sources.map(s => s.id),
+  });
+
+  // Mark run as processing
+  await runService.startDiscoveryRun(run.id);
+
   // Scaffold discovery folders
   await scaffoldDiscoveryFolders(input.projectSlug);
 
@@ -237,6 +291,8 @@ export async function executeDiscovery(
 
   if (privacyResult.status === 'pending_review') {
     const piiFindings = scanForPii(formattedDocumentContent);
+    // Mark run as failed before throwing
+    await runService.failDiscoveryRun(run.id, 'PRIVACY_VIOLATION', 'PII detected in documents', 'privacy_scan');
     throw new PrivacyError(
       'Privacy scan detected potential PII in uploaded files',
       piiFindings.map((f: { label: string; snippet: string }) => ({ label: f.label, snippet: f.snippet })),
@@ -244,6 +300,7 @@ export async function executeDiscovery(
   }
 
   if (privacyResult.status === 'denied') {
+    await runService.failDiscoveryRun(run.id, 'CONTENT_DENIED', privacyResult.reason || 'Unknown', 'content_auth');
     throw new Error(`Content authorization failed: ${privacyResult.reason}`);
   }
 
@@ -296,33 +353,141 @@ export async function executeDiscovery(
     createdBy: input.createdByActorId,
   };
 
-  // Process YAML template
-  const file = await fetchFileFromRepo(getConfigRepo(), YAML_TEMPLATE_PATH, typeConfig.yaml);
-  const variableContext: VariableContext = { projectId: input.projectId };
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DISC-1: Structured pipeline with canonical artifact lineage
+  //
+  // Order of operations (per DISC-1 locked decisions):
+  // 1. Fetch YAML template and parse to get emits spec
+  // 2. Call processYamlTemplate with dryRun=true (AI generation, no write/extract)
+  // 3. Create DiscoveryArtifact with canonical content (decision D: Postgres canonical)
+  // 4. Write to GitHub (projection only)
+  // 5. Extract variables with artifact FK (canonical lineage)
+  // 6. Finalize artifact and complete run
+  // ═══════════════════════════════════════════════════════════════════════════
+  let artifact;
+  try {
+    // 1. Fetch and parse YAML template to get emits spec
+    const file = await fetchFileFromRepo(getConfigRepo(), YAML_TEMPLATE_PATH, typeConfig.yaml);
+    const yamlConfig = yaml.load(file.content) as {
+      id?: string;
+      version?: string;
+      emits?: EmitSpec[];
+    } | null;
 
-  const renderedYaml = await processYamlTemplate(
-    file.content, data, '', '', false, variableContext,
-  );
-
-  let extractionSuccess = true;
-  let extractionVariableCount = 0;
-
-  if (renderedYaml.extractionPromise) {
-    const extractResult = await renderedYaml.extractionPromise;
-    extractionSuccess = extractResult.success;
-    extractionVariableCount = extractResult.variableCount || 0;
-    if (!extractResult.success) {
-      throw new Error(`Cascade variable extraction failed: ${extractResult.error}`);
+    if (!yamlConfig) {
+      throw new Error(`Failed to parse YAML template: ${typeConfig.yaml}`);
     }
-  }
 
-  return {
-    url: renderedYaml.result.url,
-    topicSlug,
-    typeLabel: typeConfig.label,
-    extractionSuccess,
-    extractionVariableCount,
-  };
+    const templateVersion = yamlConfig.version || null;
+    const emitsSpec: EmitSpec[] = yamlConfig.emits || [];
+
+    // 2. Process YAML with dryRun=true - AI generation only, no GitHub write or extraction
+    const variableContext: VariableContext = {
+      projectId: input.projectId,
+    };
+
+    const dryRunResult = await processYamlTemplate(
+      file.content, data, '', '', false, variableContext, undefined, true,
+    );
+
+    // 3. Create DiscoveryArtifact with canonical content BEFORE GitHub projection
+    //    Per locked decision D: GitHub is projection, not canonical
+    artifact = await artifactService.createDiscoveryArtifact({
+      projectId: input.projectId,
+      discoveryRunId: run.id,
+      artifactType: input.discoveryType.replace('_synthesis', '_synthesis') as 'desk_research' | 'stakeholder_synthesis' | 'survey_synthesis' | 'cross_source_synthesis',
+      title: `${typeConfig.label}: ${input.topic}`,
+      topicSlug,
+      canonicalContent: dryRunResult.outputTemplate || null,
+      templateName: typeConfig.yaml.replace('.yaml', ''),
+      templateVersion,
+      derivationFingerprint: contentFingerprint,
+      actorId: ctx.actor.id,
+      generatedByIdentity: `slack:${input.createdByActorId}`,
+    });
+
+    // 4. Write to GitHub (projection) - this happens AFTER artifact exists
+    let githubResult: { path: string; sha: string; url: string };
+    try {
+      githubResult = await createOrUpdateFileOnGitHub(dryRunResult.path, dryRunResult.content);
+
+      // Record projection metadata on artifact
+      await artifactService.recordProjection(artifact.id, {
+        githubPath: githubResult.path,
+        githubSha: githubResult.sha,
+      });
+    } catch (githubError) {
+      // GitHub projection failure is non-blocking for canonical pipeline
+      // The artifact and its content are canonical in Postgres
+      const githubMsg = githubError instanceof Error ? githubError.message : String(githubError);
+      console.warn(`⚠️ GitHub projection failed (non-blocking): ${githubMsg}`);
+      // Use synthetic result for return value
+      githubResult = {
+        path: dryRunResult.path,
+        sha: 'projection-failed',
+        url: `https://github.com/${process.env.GITHUB_OWNER}/${process.env.GITHUB_REPO}/blob/main/${dryRunResult.path}`,
+      };
+    }
+
+    // 5. Extract variables with artifact FK for canonical lineage
+    //    This happens AFTER artifact creation so FK is available
+    let extractionSuccess = true;
+    let extractionVariableCount = 0;
+
+    if (emitsSpec.length > 0) {
+      const extractResult = await extractAndPersistDiscoveryVariables({
+        templateId: yamlConfig.id || typeConfig.yaml.replace('.yaml', ''),
+        templateVersion: templateVersion || '',
+        emitsSpec,
+        outputTemplate: dryRunResult.outputTemplate,
+        inputValues: data,
+        variableContext,
+        discoveryArtifactFkId: artifact.id, // DISC-1: Canonical relational FK
+      });
+
+      extractionSuccess = extractResult.success;
+      extractionVariableCount = extractResult.variableCount || 0;
+
+      if (!extractResult.success) {
+        // Don't fail the entire run for extraction failure — artifact is still valid
+        console.warn(`⚠️ Cascade variable extraction failed: ${extractResult.error}`);
+      } else {
+        console.log(`✅ Variables extracted with artifact FK ${artifact.id}: ${extractionVariableCount} items`);
+      }
+    }
+
+    // 6. Finalize artifact (mark as current, supersede previous if any)
+    await artifactService.finalizeArtifactSupersession(artifact.id);
+
+    // Mark run as completed
+    await runService.completeDiscoveryRun(run.id);
+
+    return {
+      url: githubResult.url,
+      topicSlug,
+      typeLabel: typeConfig.label,
+      extractionSuccess,
+      extractionVariableCount,
+      runPublicId: run.public_id,
+      artifactPublicId: artifact.public_id,
+    };
+  } catch (error) {
+    // Mark run as failed
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    await runService.failDiscoveryRun(
+      run.id,
+      'GENERATION_ERROR',
+      errorMessage.substring(0, 500),
+      'yaml_processing',
+    );
+
+    // Mark artifact as failed if it was created
+    if (artifact) {
+      await artifactService.markArtifactFailed(artifact.id);
+    }
+
+    throw error;
+  }
 }
 
 // ─── Privacy Error ──────────────────────────────────────────────
