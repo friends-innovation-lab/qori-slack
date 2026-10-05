@@ -19,6 +19,7 @@ import adminRoutes from './admin.routes';
 import brandingRoutes from './branding.routes';
 import commentsRoutes from './comments.routes';
 import coachingRoutes from './coaching.routes';
+import discoveryRoutes from './discovery.routes';
 
 const v1Router = Router();
 
@@ -40,5 +41,8 @@ v1Router.use('/branding', brandingRoutes);
 v1Router.use('/', commentsRoutes);
 // Coaching routes span /artifacts/.../coaching and /coaching/... paths
 v1Router.use('/', coachingRoutes);
+
+// Discovery routes — project-scoped
+v1Router.use('/projects/:projectId/discovery', discoveryRoutes);
 
 export default v1Router;
