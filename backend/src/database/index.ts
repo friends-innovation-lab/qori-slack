@@ -65,6 +65,10 @@ import CoachingRunReference from './models/coaching_run_reference';
 import CoachingRunContext from './models/coaching_run_context';
 // Coach M2: Immutable artifact snapshots
 import CoachingRunSnapshot from './models/coaching_run_snapshot';
+// DISC-1: Discovery domain foundation
+import DiscoveryRun from './models/discovery_run';
+import DiscoveryRunSource from './models/discovery_run_source';
+import DiscoveryArtifact from './models/discovery_artifact';
 
 
 // Set environment and configuration
@@ -137,6 +141,13 @@ const modelDefiners = [
   CoachingRunContext,
   // Coach M2: Immutable artifact snapshots (must be after CoachingRun due to FK dep)
   CoachingRunSnapshot,
+  // DISC-1: Discovery domain foundation (must be after Actor due to FK dep)
+  // DiscoveryRun references Project and Actor
+  // DiscoveryRunSource references DiscoveryRun and EvidenceSource
+  // DiscoveryArtifact references Project, DiscoveryRun, Actor
+  DiscoveryRun,
+  DiscoveryRunSource,
+  DiscoveryArtifact,
 ];
 
 // Register all models with Sequelize

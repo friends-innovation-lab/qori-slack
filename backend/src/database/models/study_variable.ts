@@ -13,6 +13,7 @@ import {
 } from 'sequelize';
 import type { Project } from './project';
 import type { ResearchStudy } from './research_study';
+import type { DiscoveryArtifact } from './discovery_artifact';
 
 /**
  * Cascade variable scope values.
@@ -43,6 +44,8 @@ class StudyVariable extends Model<
   declare confidence: string | null;
   declare scope: CreationOptional<VariableScope | null>;
   declare discovery_artifact_id: string | null;
+  /** FK to canonical DiscoveryArtifact (DISC-1) — NULL for historical/unresolved */
+  declare discovery_artifact_fk_id: ForeignKey<number> | null;
   declare stale: CreationOptional<boolean>;
   declare extracted_at: CreationOptional<Date>;
   declare created_at: CreationOptional<Date>;
@@ -53,6 +56,8 @@ class StudyVariable extends Model<
   declare project?: NonAttribute<Project>;
   declare getStudy: BelongsToGetAssociationMixin<ResearchStudy>;
   declare study?: NonAttribute<ResearchStudy>;
+  declare getDiscoveryArtifact: BelongsToGetAssociationMixin<DiscoveryArtifact>;
+  declare discoveryArtifact?: NonAttribute<DiscoveryArtifact>;
 
   // — Associations —
   static associate(models: Record<string, any>) {
@@ -67,6 +72,15 @@ class StudyVariable extends Model<
       as: 'study',
       onDelete: 'CASCADE',
     });
+
+    // DISC-1: Canonical artifact lineage
+    if (models.DiscoveryArtifact) {
+      this.belongsTo(models.DiscoveryArtifact, {
+        foreignKey: 'discovery_artifact_fk_id',
+        as: 'discoveryArtifact',
+        onDelete: 'SET NULL',
+      });
+    }
   }
 }
 
@@ -151,6 +165,11 @@ export default (sequelize: Sequelize) => {
       discovery_artifact_id: {
         type: DataTypes.STRING,
         allowNull: true,
+      },
+      discovery_artifact_fk_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: { model: 'discovery_artifacts', key: 'id' },
       },
       stale: {
         type: DataTypes.BOOLEAN,
