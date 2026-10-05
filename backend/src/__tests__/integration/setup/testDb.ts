@@ -74,6 +74,10 @@ import CoachingRunReference from '../../../database/models/coaching_run_referenc
 import CoachingRunContext from '../../../database/models/coaching_run_context';
 // Coach M2: Immutable artifact snapshots
 import CoachingRunSnapshot from '../../../database/models/coaching_run_snapshot';
+// DISC-1/2: Discovery research
+import DiscoveryRun from '../../../database/models/discovery_run';
+import DiscoveryRunSource from '../../../database/models/discovery_run_source';
+import DiscoveryArtifact from '../../../database/models/discovery_artifact';
 
 let instance: Sequelize | null = null;
 
@@ -116,6 +120,8 @@ export function getTestDb(): Sequelize {
     CoachingRun, CoachingRunItem, CoachingRunReference, CoachingRunContext,
     // Coach M2: Immutable artifact snapshots
     CoachingRunSnapshot,
+    // DISC-1/2: Discovery research
+    DiscoveryRun, DiscoveryRunSource, DiscoveryArtifact,
   ];
 
   for (const defineModel of modelDefiners) {

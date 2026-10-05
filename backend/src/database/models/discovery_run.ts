@@ -79,6 +79,11 @@ class DiscoveryRun extends Model<
   declare started_at: Date | null;
   declare completed_at: Date | null;
 
+  // Worker claim (DISC-2)
+  declare worker_id: string | null;
+  declare claimed_at: Date | null;
+  declare heartbeat_at: Date | null;
+
   // Association mixins
   declare getProject: BelongsToGetAssociationMixin<Project>;
   declare project?: NonAttribute<Project>;
@@ -213,6 +218,19 @@ export default (sequelize: Sequelize) => {
         allowNull: true,
       },
       completed_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      // DISC-2: Worker claim columns
+      worker_id: {
+        type: DataTypes.STRING(100), // Format: "discovery-{uuid}" or "sync-{uuid}"
+        allowNull: true,
+      },
+      claimed_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      heartbeat_at: {
         type: DataTypes.DATE,
         allowNull: true,
       },

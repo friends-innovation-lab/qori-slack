@@ -35,6 +35,21 @@ export interface DocumentSourceInput {
   slackFileId?: string;
 }
 
+export interface DiscoverySourceInput {
+  projectId: number;
+  filename: string;
+  extractedText: string;
+  contentHash: string;
+  mimeType: string;
+  sizeBytes: number;
+  sourceMetadata?: {
+    slackFileId?: string;
+    uploadSessionId?: string;
+    source: 'slack' | 'rest' | 'test';
+  };
+  createdBy: string;
+}
+
 // ─── Error Types ─────────────────────────────────────────────────────────────
 
 export class EvidenceSourceNotFoundError extends Error {
@@ -154,6 +169,108 @@ export async function createDocumentSources(
   }
 
   return sources;
+}
+
+/**
+ * Create EvidenceSource for a prepared discovery source (DISC-2).
+ *
+ * Stores extracted text in metadata for worker access.
+ * This is a temporary solution until proper content storage is implemented.
+ */
+export async function createDiscoverySource(
+  input: DiscoverySourceInput,
+  transaction?: Transaction,
+): Promise<EvidenceSource> {
+  // Determine source type based on metadata
+  const sourceType: SourceType = input.sourceMetadata?.source === 'slack'
+    ? 'uploaded_document'
+    : 'uploaded_document';
+
+  const source = await EvidenceSourceModel.create(
+    {
+      project_id: input.projectId,
+      study_id: null, // Discovery is project-scoped
+      source_type: sourceType,
+      label: input.filename,
+      artifact_ref: {
+        filename: input.filename,
+        content_hash: input.contentHash,
+        slack_file_id: input.sourceMetadata?.slackFileId,
+        mime_type: input.mimeType,
+        size_bytes: input.sizeBytes,
+      },
+      metadata: {
+        // DISC-2: Store extracted text for worker access
+        extracted_text: input.extractedText,
+        content_length: input.extractedText.length,
+        upload_source: input.sourceMetadata?.source || 'rest',
+        upload_session_id: input.sourceMetadata?.uploadSessionId,
+      },
+      created_by: input.createdBy,
+    } as CreationAttributes<EvidenceSource>,
+    { transaction },
+  );
+
+  return source;
+}
+
+/**
+ * Create multiple EvidenceSource records for prepared discovery sources (DISC-2).
+ */
+export async function createDiscoverySources(
+  projectId: number,
+  sources: Array<{
+    filename: string;
+    extractedText: string;
+    contentHash: string;
+    mimeType: string;
+    sizeBytes: number;
+    metadata?: {
+      slackFileId?: string;
+      uploadSessionId?: string;
+      source: 'slack' | 'rest' | 'test';
+    };
+  }>,
+  createdBy: string,
+  transaction?: Transaction,
+): Promise<EvidenceSource[]> {
+  const results: EvidenceSource[] = [];
+
+  for (const source of sources) {
+    const created = await createDiscoverySource(
+      {
+        projectId,
+        filename: source.filename,
+        extractedText: source.extractedText,
+        contentHash: source.contentHash,
+        mimeType: source.mimeType,
+        sizeBytes: source.sizeBytes,
+        sourceMetadata: source.metadata,
+        createdBy,
+      },
+      transaction,
+    );
+    results.push(created);
+  }
+
+  return results;
+}
+
+/**
+ * Get extracted text from EvidenceSource metadata (DISC-2).
+ *
+ * Returns null if extracted text is not stored in metadata.
+ */
+export function getExtractedTextFromSource(source: EvidenceSource): string | null {
+  const metadata = source.metadata as Record<string, unknown> | null;
+  if (!metadata) return null;
+
+  const extractedText = metadata.extracted_text;
+  if (typeof extractedText === 'string') {
+    return extractedText;
+  }
+
+  return null;
 }
 
 // ─── Queries ─────────────────────────────────────────────────────────────────

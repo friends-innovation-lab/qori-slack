@@ -1,25 +1,40 @@
 /**
- * Discovery Application Service — PLAT-3 + DISC-1
+ * Discovery Application Service — PLAT-3 + DISC-1 + DISC-2
  *
- * Extracted from discoverHandler.ts
- * Orchestrates discovery research workflows: document processing,
- * privacy gating, YAML template processing, cascade variable extraction,
- * and discovery folder scaffolding.
+ * Orchestrates discovery research workflows with surface-independent execution.
  *
  * DISC-1 integration:
  * - DiscoveryRun created BEFORE long-running analysis (locked decision A)
  * - EvidenceSource created for each uploaded document
  * - DiscoveryArtifact created with canonical content (locked decision D)
  * - GitHub is projection, not canonical
+ *
+ * DISC-2 split:
+ * - createPendingDiscoveryRun: Creates run + sources, returns immediately
+ * - executeDiscoveryRun: Worker execution (claims run, executes, completes)
+ * - executeDiscovery: Legacy sync path for Slack (combines both)
+ *
+ * Slack handler → createPendingDiscoveryRun (or executeDiscovery for sync)
+ * REST API → createPendingDiscoveryRun → worker claims → executeDiscoveryRun
  */
 
 import type { ApplicationContext } from '../types/application-context';
+import type {
+  DiscoveryTypeKey,
+  PreparedDiscoverySource,
+  CreateDiscoveryRunInput,
+  DiscoveryRunSummary,
+  DiscoveryRunDetail,
+  DiscoveryArtifactSummary,
+  DiscoveryArtifactDetail,
+  DiscoveryExecutionResult,
+} from '../types/discovery';
 import { format } from 'date-fns';
 import { assertProjectAccessByActor } from '../services/authorization.service';
 import { getProjectById } from '../services/project.service';
 import { loadDiscoveryArtifacts, type DiscoveryArtifact } from '../helpers/discoveryLoader';
 import { getConfigRepo, YAML_TEMPLATE_PATH, fetchFileFromRepo, createOrUpdateFileOnGitHub, fetchFileFromRepoByPath } from '../helpers/github';
-import { processYamlTemplate, extractAndPersistDiscoveryVariables, type DryRunResult, type ExtractionOutcome } from '../helpers/yamlProcessor';
+import { processYamlTemplate, extractAndPersistDiscoveryVariables, type ExtractionOutcome } from '../helpers/yamlProcessor';
 import type { EmitSpec } from '../helpers/variableExtractor';
 import { parseDocuments, validateDocuments } from '../helpers/documentParser';
 import type { VariableContext } from '../helpers/studyVariables';
@@ -28,12 +43,16 @@ import { authorizeForModel, scanForPii } from '../services/content-governance.se
 import * as runService from '../services/discovery-run.service';
 import * as artifactService from '../services/discovery-artifact.service';
 import * as evidenceService from '../services/evidence-source.service';
-import type { DiscoveryType } from '../database/models/discovery_run';
+import * as claimService from '../services/discovery-claim.service';
+import type { DiscoveryType, DiscoveryRun } from '../database/models/discovery_run';
+import type { EvidenceSource } from '../database/models/evidence_source';
 import sequelize from '../database';
+import { Op } from 'sequelize';
 
-// ─── Input/Output Types ──────────────────────────────────────────
+// Re-export types for external consumers
+export type { DiscoveryTypeKey, PreparedDiscoverySource, CreateDiscoveryRunInput };
 
-export type DiscoveryTypeKey = 'desk_research' | 'stakeholder_synthesis' | 'survey_synthesis';
+// ─── Legacy Types (preserved for backward compatibility) ─────────
 
 export interface DiscoveryInput {
   /** Project context */
@@ -162,7 +181,12 @@ async function scaffoldDiscoveryFolders(projectSlug: string): Promise<void> {
   }
 }
 
-// ─── List Discovery Artifacts ───────────────────────────────────
+function computeContentHash(content: string): string {
+  const { createHash } = require('crypto');
+  return createHash('sha256').update(content).digest('hex').substring(0, 32);
+}
+
+// ─── List Discovery Artifacts (Legacy GitHub-based) ─────────────
 
 export async function listDiscoveryArtifacts(
   ctx: ApplicationContext,
@@ -181,8 +205,430 @@ export async function listDiscoveryArtifacts(
   }));
 }
 
-// ─── Main Orchestration ─────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// DISC-2: SPLIT EXECUTION — CREATE PENDING RUN
+// ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * Create a pending Discovery run with associated sources.
+ *
+ * This is the synchronous creation phase:
+ * 1. Validate input
+ * 2. Create DiscoveryRun (pending)
+ * 3. Create EvidenceSources for each prepared source
+ * 4. Associate sources with run
+ * 5. Return immediately with pending run
+ *
+ * Worker will claim and execute asynchronously.
+ */
+export async function createPendingDiscoveryRun(
+  input: CreateDiscoveryRunInput,
+): Promise<DiscoveryRun> {
+  const typeConfig = DISCOVERY_TYPES[input.discoveryType];
+  if (!typeConfig) {
+    throw new Error(`Unknown discovery type: ${input.discoveryType}`);
+  }
+
+  if (!input.topic || !slugifyTopic(input.topic)) {
+    throw new Error('Topic must contain alphanumeric characters');
+  }
+
+  if (input.sources.length === 0) {
+    throw new Error('At least one source is required');
+  }
+
+  let topicSlug = slugifyTopic(input.topic);
+
+  // Check for duplicate filename
+  const dateIso = format(new Date(), 'yyyy-MM-dd');
+  const expectedFilename = `${topicSlug}-${typeConfig.fileSlug}-${dateIso}.md`;
+  const expectedPath = `${input.projectSlug}/00-discovery/${expectedFilename}`;
+  try {
+    await fetchFileFromRepoByPath(process.env.GITHUB_REPO!, expectedPath);
+    const timeSuffix = format(new Date(), 'HHmm');
+    topicSlug = `${topicSlug}-${timeSuffix}`;
+  } catch {
+    // File doesn't exist — proceed
+  }
+
+  // Create DiscoveryRun (pending)
+  const run = await runService.createDiscoveryRun({
+    projectId: input.projectId,
+    discoveryType: input.discoveryType as DiscoveryType,
+    topic: input.topic,
+    topicSlug,
+    sourceIntent: input.sourceIntent || null,
+    actorId: input.actorId || null,
+    createdByIdentity: input.createdByIdentity,
+  });
+
+  // Create EvidenceSources with extracted text for worker access
+  const sources = await evidenceService.createDiscoverySources(
+    input.projectId,
+    input.sources.map(s => ({
+      filename: s.filename,
+      extractedText: s.extractedText,
+      contentHash: s.contentHash,
+      mimeType: s.mimeType,
+      sizeBytes: s.sizeBytes,
+      metadata: s.metadata,
+    })),
+    input.createdByIdentity,
+  );
+
+  // Associate sources with run
+  await runService.associateSources({
+    runId: run.id,
+    sourceIds: sources.map(s => s.id),
+  });
+
+  console.log(
+    `[DISC-2] Created pending run ${run.public_id} with ${sources.length} sources`,
+  );
+
+  return run;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DISC-2: SPLIT EXECUTION — EXECUTE CLAIMED RUN
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Execute a claimed Discovery run.
+ *
+ * Called by worker after claiming a pending run.
+ * Assumes run is already in 'processing' status with worker ownership.
+ *
+ * Steps:
+ * 1. Load run and sources
+ * 2. Privacy gate
+ * 3. YAML processing
+ * 4. Create DiscoveryArtifact
+ * 5. GitHub projection
+ * 6. Variable extraction with FK
+ * 7. Finalize and complete
+ */
+export async function executeDiscoveryRun(
+  runId: number,
+  workerId: string,
+): Promise<DiscoveryExecutionResult> {
+  // Load run with associations
+  const run = await runService.getDiscoveryRunById(runId);
+  if (!run) {
+    throw new Error(`Discovery run ${runId} not found`);
+  }
+
+  // Validate worker ownership
+  if (run.worker_id !== workerId) {
+    throw new claimService.NotOwnerError(runId, workerId);
+  }
+
+  if (run.status !== 'processing') {
+    throw new Error(`Run ${runId} is not in processing status (is ${run.status})`);
+  }
+
+  const typeConfig = DISCOVERY_TYPES[run.discovery_type as DiscoveryTypeKey];
+  if (!typeConfig) {
+    throw new Error(`Unknown discovery type: ${run.discovery_type}`);
+  }
+
+  // Load associated sources
+  const DiscoveryRunSourceModel = sequelize.models.DiscoveryRunSource;
+  const EvidenceSourceModel = sequelize.models.EvidenceSource;
+
+  const runSources = await DiscoveryRunSourceModel.findAll({
+    where: { discovery_run_id: run.id },
+    order: [['source_order', 'ASC']],
+  });
+
+  const sourceIds = runSources.map((rs: any) => rs.evidence_source_id);
+  const evidenceSources = await EvidenceSourceModel.findAll({
+    where: { id: { [Op.in]: sourceIds } },
+  }) as EvidenceSource[];
+
+  // Order sources by run source order
+  const sourceMap = new Map(evidenceSources.map(s => [s.id, s]));
+  const orderedSources = sourceIds.map(id => sourceMap.get(id)).filter(Boolean) as EvidenceSource[];
+
+  if (orderedSources.length === 0) {
+    throw new Error(`Run ${runId} has no associated sources`);
+  }
+
+  // Load project for context
+  const project = await getProjectById(run.project_id);
+  if (!project) {
+    throw new Error(`Project ${run.project_id} not found`);
+  }
+
+  const projectSlug = project.slug;
+  const projectProblemStatement = project.problem_statement || null;
+
+  // Scaffold discovery folders
+  await scaffoldDiscoveryFolders(projectSlug);
+
+  // Build document content from sources
+  // Note: For DISC-2, sources store content hash but not raw content
+  // We need to re-extract or have content stored somewhere accessible
+  // For now, we'll need the content to be stored in a way the worker can access
+
+  // BLOCKER CHECK: Do sources have accessible content?
+  // Current EvidenceSource stores metadata only, not raw content.
+  // For initial DISC-2, we'll store extracted_text in metadata.content_preview or similar.
+  // This is a limitation documented in DISC-2 spec.
+
+  // For this implementation, we'll read content from a temporary field or require
+  // sources to include content. Let me check the EvidenceSource model...
+
+  // Build documents from sources
+  // We need to retrieve the extracted text - checking artifact_ref for content info
+  const documents: DocumentInput[] = [];
+  for (const source of orderedSources) {
+    const artifactRef = source.artifact_ref as {
+      filename?: string;
+      content_hash?: string;
+      mime_type?: string;
+      size_bytes?: number;
+      extracted_text?: string; // DISC-2: Store during creation
+    } | null;
+
+    const metadata = source.metadata as {
+      content_length?: number;
+      extracted_text?: string; // DISC-2: Store during creation
+    } | null;
+
+    // Try to get extracted text from metadata or artifact_ref
+    const extractedText = metadata?.extracted_text || artifactRef?.extracted_text;
+
+    if (!extractedText) {
+      throw new Error(
+        `Source ${source.id} has no extracted text available. ` +
+        `This indicates a content storage issue - worker cannot access source content.`
+      );
+    }
+
+    documents.push({
+      name: source.label,
+      content: extractedText,
+      type: artifactRef?.mime_type || 'application/octet-stream',
+      size: artifactRef?.size_bytes || 0,
+    });
+  }
+
+  // Parse documents
+  const parsedDocuments = parseDocuments(documents);
+  const formattedDocumentContent: string = parsedDocuments.structured_format;
+
+  const MIME_LABELS: Record<string, string> = {
+    'application/pdf': 'PDF',
+    'text/plain': 'Text',
+    'text/markdown': 'Markdown',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word',
+    'application/msword': 'Word',
+  };
+
+  const documentNames = documents.map(d => d.name);
+  const documentTypes = documents.map(d => MIME_LABELS[d.type] || d.type);
+
+  // Privacy gate
+  const privacyResult = authorizeForModel(
+    formattedDocumentContent,
+    'DISCOVERY_UPLOAD',
+    { projectId: run.project_id, sourceId: `discovery:${run.discovery_type}:${run.topic_slug}` },
+  );
+
+  if (privacyResult.status === 'pending_review') {
+    const piiFindings = scanForPii(formattedDocumentContent);
+    await claimService.failRun(run.id, workerId, 'PRIVACY_VIOLATION', 'PII detected in documents', 'privacy_scan');
+    throw new PrivacyError(
+      'Privacy scan detected potential PII in uploaded files',
+      piiFindings.map((f: { label: string; snippet: string }) => ({ label: f.label, snippet: f.snippet })),
+    );
+  }
+
+  if (privacyResult.status === 'denied') {
+    await claimService.failRun(run.id, workerId, 'CONTENT_DENIED', privacyResult.reason || 'Unknown', 'content_auth');
+    throw new Error(`Content authorization failed: ${privacyResult.reason}`);
+  }
+
+  // Build template data
+  const contentFingerprint = computeContentHash(privacyResult.modelSafeContent!).substring(0, 16);
+
+  const data: Record<string, unknown> = {
+    topic: run.topic,
+    effective_topic: run.topic,
+    topic_slug: run.topic_slug,
+    project_slug: projectSlug,
+    project_problem_statement: projectProblemStatement,
+    source_intent: run.source_intent,
+    description: run.source_intent || run.topic,
+    document_content: privacyResult.modelSafeContent!,
+    combined_file_content: privacyResult.modelSafeContent!,
+    _discovery_type: typeConfig.type,
+    selected_study: `discovery-${run.topic_slug}`,
+    study_name: run.topic,
+    document_count: documents.length,
+    document_names: documentNames,
+    document_types: documentTypes,
+  };
+
+  // Stakeholder-specific fields
+  if (run.discovery_type === 'stakeholder_synthesis') {
+    data.researcher_contact = run.created_by_identity;
+    data.detected_files = documents.map(d => d.name).join('\n- ');
+    data.file_list = documents.map(d => d.name);
+  }
+
+  // Artifact identity context
+  data.__artifactContext = {
+    projectId: run.project_id,
+    studyId: null,
+    artifactType: 'discovery',
+    title: `${run.discovery_type.replace(/_/g, ' ')} — ${run.topic}`,
+    canonicalUpstreamInputs: [`content:${contentFingerprint}`],
+    createdBy: run.created_by_identity,
+  };
+
+  // Execute YAML template processing
+  let artifact;
+  try {
+    // Fetch and parse YAML template
+    const file = await fetchFileFromRepo(getConfigRepo(), YAML_TEMPLATE_PATH, typeConfig.yaml);
+    const yamlConfig = yaml.load(file.content) as {
+      id?: string;
+      version?: string;
+      emits?: EmitSpec[];
+    } | null;
+
+    if (!yamlConfig) {
+      throw new Error(`Failed to parse YAML template: ${typeConfig.yaml}`);
+    }
+
+    const templateVersion = yamlConfig.version || null;
+    const emitsSpec: EmitSpec[] = yamlConfig.emits || [];
+
+    // Process YAML with dryRun=true
+    const variableContext: VariableContext = {
+      projectId: run.project_id,
+    };
+
+    // Update heartbeat before long-running AI call
+    await claimService.updateHeartbeat(run.id, workerId);
+
+    const dryRunResult = await processYamlTemplate(
+      file.content, data, '', '', false, variableContext, undefined, true,
+    );
+
+    // Update heartbeat after AI call
+    await claimService.updateHeartbeat(run.id, workerId);
+
+    // Create DiscoveryArtifact
+    artifact = await artifactService.createDiscoveryArtifact({
+      projectId: run.project_id,
+      discoveryRunId: run.id,
+      artifactType: run.discovery_type as 'desk_research' | 'stakeholder_synthesis' | 'survey_synthesis' | 'cross_source_synthesis',
+      title: `${typeConfig.label}: ${run.topic}`,
+      topicSlug: run.topic_slug,
+      canonicalContent: dryRunResult.outputTemplate || null,
+      templateName: typeConfig.yaml.replace('.yaml', ''),
+      templateVersion,
+      derivationFingerprint: contentFingerprint,
+      actorId: run.actor_id,
+      generatedByIdentity: run.created_by_identity,
+    });
+
+    // GitHub projection
+    let githubResult: { path: string; sha: string; url: string };
+    try {
+      githubResult = await createOrUpdateFileOnGitHub(dryRunResult.path, dryRunResult.content);
+      await artifactService.recordProjection(artifact.id, {
+        githubPath: githubResult.path,
+        githubSha: githubResult.sha,
+      });
+    } catch (githubError) {
+      const githubMsg = githubError instanceof Error ? githubError.message : String(githubError);
+      console.warn(`⚠️ GitHub projection failed (non-blocking): ${githubMsg}`);
+      await artifactService.recordProjectionError(artifact.id, githubMsg);
+      githubResult = {
+        path: dryRunResult.path,
+        sha: 'projection-failed',
+        url: `https://github.com/${process.env.GITHUB_OWNER}/${process.env.GITHUB_REPO}/blob/main/${dryRunResult.path}`,
+      };
+    }
+
+    // Variable extraction with artifact FK
+    let extractionSuccess = true;
+    let extractionVariableCount = 0;
+
+    if (emitsSpec.length > 0) {
+      const extractResult = await extractAndPersistDiscoveryVariables({
+        templateId: yamlConfig.id || typeConfig.yaml.replace('.yaml', ''),
+        templateVersion: templateVersion || '',
+        emitsSpec,
+        outputTemplate: dryRunResult.outputTemplate,
+        inputValues: data,
+        variableContext,
+        discoveryArtifactFkId: artifact.id,
+      });
+
+      extractionSuccess = extractResult.success;
+      extractionVariableCount = extractResult.variableCount || 0;
+
+      if (!extractResult.success) {
+        console.warn(`⚠️ Cascade variable extraction failed: ${extractResult.error}`);
+      }
+    }
+
+    // Finalize artifact
+    await artifactService.finalizeArtifactSupersession(artifact.id);
+
+    // Complete run
+    await claimService.completeRun(run.id, workerId);
+
+    console.log(`[DISC-2] Completed run ${run.public_id} → artifact ${artifact.public_id}`);
+
+    return {
+      runPublicId: run.public_id,
+      artifactPublicId: artifact.public_id,
+      topicSlug: run.topic_slug,
+      typeLabel: typeConfig.label,
+      githubUrl: githubResult.url,
+      extractionSuccess,
+      extractionVariableCount,
+    };
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    // Mark artifact as failed if it was created
+    if (artifact) {
+      await artifactService.markArtifactFailed(artifact.id);
+    }
+
+    // Fail the run
+    await claimService.failRun(
+      run.id,
+      workerId,
+      'GENERATION_ERROR',
+      errorMessage.substring(0, 500),
+      'yaml_processing',
+    );
+
+    throw error;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LEGACY: SYNCHRONOUS EXECUTION (for Slack backward compatibility)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Execute Discovery synchronously (legacy Slack path).
+ *
+ * Creates run + sources, then executes immediately in same request.
+ * Used by Slack handler for backward compatibility.
+ *
+ * For REST API, use createPendingDiscoveryRun + worker execution instead.
+ */
 export async function executeDiscovery(
   ctx: ApplicationContext,
   input: DiscoveryInput,
@@ -203,291 +649,365 @@ export async function executeDiscovery(
     throw new Error('At least one document is required');
   }
 
-  let topicSlug = slugifyTopic(input.topic);
-
   // Validate documents
   const validation = validateDocuments(input.documents);
   if (!validation.isValid) {
     throw new Error(validation.message);
   }
 
-  // Check for duplicate filename
-  const dateIso = format(new Date(), 'yyyy-MM-dd');
-  const expectedFilename = `${topicSlug}-${typeConfig.fileSlug}-${dateIso}.md`;
-  const expectedPath = `${input.projectSlug}/00-discovery/${expectedFilename}`;
-  try {
-    await fetchFileFromRepoByPath(process.env.GITHUB_REPO!, expectedPath);
-    const timeSuffix = format(new Date(), 'HHmm');
-    topicSlug = `${topicSlug}-${timeSuffix}`;
-  } catch {
-    // File doesn't exist — proceed
-  }
-
-  // Load project for problem_statement
-  const project = await getProjectById(input.projectId);
-  const projectProblemStatement = project?.problem_statement || null;
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // DISC-1: Create DiscoveryRun BEFORE long-running analysis (locked decision A)
-  // ═══════════════════════════════════════════════════════════════════════════
-  const run = await runService.createDiscoveryRun({
-    projectId: input.projectId,
-    discoveryType: input.discoveryType as DiscoveryType,
-    topic: input.topic,
-    topicSlug,
-    sourceIntent: input.description,
-    actorId: ctx.actor.id,
-    createdByIdentity: `slack:${input.createdByActorId}`,
-  });
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // DISC-1: Create EvidenceSource for each uploaded document
-  // ═══════════════════════════════════════════════════════════════════════════
-  const sources = await evidenceService.createDocumentSources(
-    input.projectId,
-    input.documents.map(d => ({
-      name: d.name,
-      content: d.content,
-      type: d.type,
-      size: d.size,
+  // Convert legacy DocumentInput to PreparedDiscoverySource
+  const sources: PreparedDiscoverySource[] = input.documents.map(d => ({
+    filename: d.name,
+    extractedText: d.content,
+    contentHash: computeContentHash(d.content),
+    mimeType: d.type,
+    sizeBytes: d.size,
+    metadata: {
       slackFileId: (d as Record<string, unknown>).slackFileId as string | undefined,
-    })),
-    input.createdByActorId,
-  );
+      source: 'slack' as const,
+    },
+  }));
 
-  // Associate sources with run
-  await runService.associateSources({
-    runId: run.id,
-    sourceIds: sources.map(s => s.id),
+  // Create pending run
+  const run = await createPendingDiscoveryRun({
+    projectId: input.projectId,
+    projectSlug: input.projectSlug,
+    discoveryType: input.discoveryType,
+    topic: input.topic,
+    sourceIntent: input.description,
+    sources,
+    createdByIdentity: `slack:${input.createdByActorId}`,
+    actorId: ctx.actor.id,
   });
 
-  // Mark run as processing
-  await runService.startDiscoveryRun(run.id);
+  // NOTE: createPendingDiscoveryRun → createDiscoverySources already stores
+  // extracted_text in EvidenceSource metadata. No manual update needed.
 
-  // Scaffold discovery folders
-  await scaffoldDiscoveryFolders(input.projectSlug);
-
-  // Parse documents
-  const parsedDocuments = parseDocuments(input.documents);
-  const formattedDocumentContent: string = parsedDocuments.structured_format;
-
-  const MIME_LABELS: Record<string, string> = {
-    'application/pdf': 'PDF',
-    'text/plain': 'Text',
-    'text/markdown': 'Markdown',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word',
-    'application/msword': 'Word',
-  };
-
-  const documentNames = input.documents.map(d => d.name);
-  const documentTypes = input.documents.map(d => MIME_LABELS[d.type] || d.type);
-
-  // Privacy gate
-  const privacyResult = authorizeForModel(
-    formattedDocumentContent,
-    'DISCOVERY_UPLOAD',
-    { projectId: input.projectId, sourceId: `discovery:${input.discoveryType}:${topicSlug}` },
+  // Claim the run for sync execution
+  const syncWorkerId = `sync-${run.public_id}`;
+  await sequelize.query(
+    `
+    UPDATE discovery_runs
+    SET
+      status = 'processing',
+      worker_id = :workerId,
+      claimed_at = NOW(),
+      heartbeat_at = NOW(),
+      started_at = COALESCE(started_at, NOW()),
+      updated_at = NOW()
+    WHERE id = :runId
+    `,
+    {
+      replacements: { workerId: syncWorkerId, runId: run.id },
+    },
   );
 
-  if (privacyResult.status === 'pending_review') {
-    const piiFindings = scanForPii(formattedDocumentContent);
-    // Mark run as failed before throwing
-    await runService.failDiscoveryRun(run.id, 'PRIVACY_VIOLATION', 'PII detected in documents', 'privacy_scan');
-    throw new PrivacyError(
-      'Privacy scan detected potential PII in uploaded files',
-      piiFindings.map((f: { label: string; snippet: string }) => ({ label: f.label, snippet: f.snippet })),
-    );
-  }
-
-  if (privacyResult.status === 'denied') {
-    await runService.failDiscoveryRun(run.id, 'CONTENT_DENIED', privacyResult.reason || 'Unknown', 'content_auth');
-    throw new Error(`Content authorization failed: ${privacyResult.reason}`);
-  }
-
-  // Build template data
-  const data: Record<string, unknown> = {
-    topic: input.topic,
-    effective_topic: input.topic,
-    topic_slug: topicSlug,
-    project_slug: input.projectSlug,
-    project_problem_statement: projectProblemStatement,
-    source_intent: input.description,
-    description: input.description || input.topic,
-    document_content: privacyResult.modelSafeContent!,
-    combined_file_content: privacyResult.modelSafeContent!,
-    _discovery_type: typeConfig.type,
-    selected_study: `discovery-${topicSlug}`,
-    study_name: input.topic,
-    document_count: input.documents.length,
-    document_names: documentNames,
-    document_types: documentTypes,
-  };
-
-  // Survey-specific fields
-  if (input.discoveryType === 'survey_synthesis') {
-    data.survey_name = input.surveyName;
-    data.question_focus = input.questionFocus || '';
-  }
-
-  // Stakeholder-specific fields
-  if (input.discoveryType === 'stakeholder_synthesis') {
-    data.researcher_contact = input.createdByActorId;
-    data.detected_files = input.documents.map(d => d.name).join('\n- ');
-    data.file_list = input.documents.map(d => d.name);
-  }
-
-  // Artifact identity context
-  let contentFingerprint = 'unknown';
+  // Execute
   try {
-    const { computeContentHash } = require('../helpers/survey');
-    contentFingerprint = computeContentHash(privacyResult.modelSafeContent!).substring(0, 16);
-  } catch {
-    // Fallback if survey module not available
-  }
-  data.__artifactContext = {
-    projectId: input.projectId,
-    studyId: null,
-    artifactType: 'discovery',
-    title: `${input.discoveryType.replace(/_/g, ' ')} — ${input.topic}`,
-    canonicalUpstreamInputs: [`content:${contentFingerprint}`],
-    createdBy: input.createdByActorId,
-  };
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // DISC-1: Structured pipeline with canonical artifact lineage
-  //
-  // Order of operations (per DISC-1 locked decisions):
-  // 1. Fetch YAML template and parse to get emits spec
-  // 2. Call processYamlTemplate with dryRun=true (AI generation, no write/extract)
-  // 3. Create DiscoveryArtifact with canonical content (decision D: Postgres canonical)
-  // 4. Write to GitHub (projection only)
-  // 5. Extract variables with artifact FK (canonical lineage)
-  // 6. Finalize artifact and complete run
-  // ═══════════════════════════════════════════════════════════════════════════
-  let artifact;
-  try {
-    // 1. Fetch and parse YAML template to get emits spec
-    const file = await fetchFileFromRepo(getConfigRepo(), YAML_TEMPLATE_PATH, typeConfig.yaml);
-    const yamlConfig = yaml.load(file.content) as {
-      id?: string;
-      version?: string;
-      emits?: EmitSpec[];
-    } | null;
-
-    if (!yamlConfig) {
-      throw new Error(`Failed to parse YAML template: ${typeConfig.yaml}`);
-    }
-
-    const templateVersion = yamlConfig.version || null;
-    const emitsSpec: EmitSpec[] = yamlConfig.emits || [];
-
-    // 2. Process YAML with dryRun=true - AI generation only, no GitHub write or extraction
-    const variableContext: VariableContext = {
-      projectId: input.projectId,
-    };
-
-    const dryRunResult = await processYamlTemplate(
-      file.content, data, '', '', false, variableContext, undefined, true,
-    );
-
-    // 3. Create DiscoveryArtifact with canonical content BEFORE GitHub projection
-    //    Per locked decision D: GitHub is projection, not canonical
-    artifact = await artifactService.createDiscoveryArtifact({
-      projectId: input.projectId,
-      discoveryRunId: run.id,
-      artifactType: input.discoveryType.replace('_synthesis', '_synthesis') as 'desk_research' | 'stakeholder_synthesis' | 'survey_synthesis' | 'cross_source_synthesis',
-      title: `${typeConfig.label}: ${input.topic}`,
-      topicSlug,
-      canonicalContent: dryRunResult.outputTemplate || null,
-      templateName: typeConfig.yaml.replace('.yaml', ''),
-      templateVersion,
-      derivationFingerprint: contentFingerprint,
-      actorId: ctx.actor.id,
-      generatedByIdentity: `slack:${input.createdByActorId}`,
-    });
-
-    // 4. Write to GitHub (projection) - this happens AFTER artifact exists
-    let githubResult: { path: string; sha: string; url: string };
-    try {
-      githubResult = await createOrUpdateFileOnGitHub(dryRunResult.path, dryRunResult.content);
-
-      // Record projection metadata on artifact
-      await artifactService.recordProjection(artifact.id, {
-        githubPath: githubResult.path,
-        githubSha: githubResult.sha,
-      });
-    } catch (githubError) {
-      // GitHub projection failure is non-blocking for canonical pipeline
-      // The artifact and its content are canonical in Postgres
-      const githubMsg = githubError instanceof Error ? githubError.message : String(githubError);
-      console.warn(`⚠️ GitHub projection failed (non-blocking): ${githubMsg}`);
-      // Use synthetic result for return value
-      githubResult = {
-        path: dryRunResult.path,
-        sha: 'projection-failed',
-        url: `https://github.com/${process.env.GITHUB_OWNER}/${process.env.GITHUB_REPO}/blob/main/${dryRunResult.path}`,
-      };
-    }
-
-    // 5. Extract variables with artifact FK for canonical lineage
-    //    This happens AFTER artifact creation so FK is available
-    let extractionSuccess = true;
-    let extractionVariableCount = 0;
-
-    if (emitsSpec.length > 0) {
-      const extractResult = await extractAndPersistDiscoveryVariables({
-        templateId: yamlConfig.id || typeConfig.yaml.replace('.yaml', ''),
-        templateVersion: templateVersion || '',
-        emitsSpec,
-        outputTemplate: dryRunResult.outputTemplate,
-        inputValues: data,
-        variableContext,
-        discoveryArtifactFkId: artifact.id, // DISC-1: Canonical relational FK
-      });
-
-      extractionSuccess = extractResult.success;
-      extractionVariableCount = extractResult.variableCount || 0;
-
-      if (!extractResult.success) {
-        // Don't fail the entire run for extraction failure — artifact is still valid
-        console.warn(`⚠️ Cascade variable extraction failed: ${extractResult.error}`);
-      } else {
-        console.log(`✅ Variables extracted with artifact FK ${artifact.id}: ${extractionVariableCount} items`);
-      }
-    }
-
-    // 6. Finalize artifact (mark as current, supersede previous if any)
-    await artifactService.finalizeArtifactSupersession(artifact.id);
-
-    // Mark run as completed
-    await runService.completeDiscoveryRun(run.id);
+    const result = await executeDiscoveryRun(run.id, syncWorkerId);
 
     return {
-      url: githubResult.url,
-      topicSlug,
-      typeLabel: typeConfig.label,
-      extractionSuccess,
-      extractionVariableCount,
-      runPublicId: run.public_id,
-      artifactPublicId: artifact.public_id,
+      url: result.githubUrl,
+      topicSlug: result.topicSlug,
+      typeLabel: result.typeLabel,
+      extractionSuccess: result.extractionSuccess,
+      extractionVariableCount: result.extractionVariableCount,
+      runPublicId: result.runPublicId,
+      artifactPublicId: result.artifactPublicId,
     };
   } catch (error) {
-    // Mark run as failed
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    await runService.failDiscoveryRun(
-      run.id,
-      'GENERATION_ERROR',
-      errorMessage.substring(0, 500),
-      'yaml_processing',
-    );
-
-    // Mark artifact as failed if it was created
-    if (artifact) {
-      await artifactService.markArtifactFailed(artifact.id);
-    }
-
+    // Run is already marked failed by executeDiscoveryRun
     throw error;
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// API QUERY METHODS
+// ═══════════════════════════════════════════════════════════════════════════
+
+const DiscoveryRunModel = sequelize.models.DiscoveryRun as typeof DiscoveryRun;
+const DiscoveryArtifactModel = sequelize.models.DiscoveryArtifact;
+const DiscoveryRunSourceModel = sequelize.models.DiscoveryRunSource;
+const EvidenceSourceModel = sequelize.models.EvidenceSource;
+
+/**
+ * List Discovery runs for a project.
+ */
+export async function listDiscoveryRuns(
+  ctx: ApplicationContext,
+  projectId: number,
+  options?: {
+    discoveryType?: DiscoveryTypeKey;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  },
+): Promise<DiscoveryRunSummary[]> {
+  await assertProjectAccessByActor(ctx.actor.id, projectId, ctx.organization.id);
+
+  const where: Record<string, unknown> = { project_id: projectId };
+
+  if (options?.discoveryType) {
+    where.discovery_type = options.discoveryType;
+  }
+
+  if (options?.status) {
+    where.status = options.status;
+  }
+
+  const runs = await DiscoveryRunModel.findAll({
+    where,
+    order: [['created_at', 'DESC']],
+    limit: options?.limit || 50,
+    offset: options?.offset || 0,
+  });
+
+  // Get source counts
+  const runIds = runs.map(r => r.id);
+  const sourceCounts = await DiscoveryRunSourceModel.findAll({
+    where: { discovery_run_id: { [Op.in]: runIds } },
+    attributes: ['discovery_run_id', [sequelize.fn('COUNT', '*'), 'count']],
+    group: ['discovery_run_id'],
+  }) as unknown as Array<{ discovery_run_id: number; count: string }>;
+
+  const sourceCountMap = new Map(sourceCounts.map(sc => [sc.discovery_run_id, parseInt(sc.count, 10)]));
+
+  // Get current artifacts
+  const artifacts = await DiscoveryArtifactModel.findAll({
+    where: {
+      discovery_run_id: { [Op.in]: runIds },
+      status: 'current',
+    },
+    attributes: ['discovery_run_id', 'public_id'],
+  }) as unknown as Array<{ discovery_run_id: number; public_id: string }>;
+
+  const artifactMap = new Map(artifacts.map(a => [a.discovery_run_id, a.public_id]));
+
+  return runs.map(run => ({
+    publicId: run.public_id,
+    discoveryType: run.discovery_type as DiscoveryTypeKey,
+    topic: run.topic,
+    topicSlug: run.topic_slug,
+    sourceIntent: run.source_intent,
+    status: run.status,
+    stage: run.stage,
+    sourceCount: sourceCountMap.get(run.id) || 0,
+    attemptCount: run.attempt_count,
+    createdAt: run.created_at.toISOString(),
+    startedAt: run.started_at?.toISOString() || null,
+    completedAt: run.completed_at?.toISOString() || null,
+    createdBy: run.created_by_identity,
+    currentArtifactPublicId: artifactMap.get(run.id) || null,
+    failureCode: run.failure_code,
+    failureMessage: run.failure_message,
+  }));
+}
+
+/**
+ * Get Discovery run detail by public ID.
+ */
+export async function getDiscoveryRunByPublicId(
+  ctx: ApplicationContext,
+  projectId: number,
+  runPublicId: string,
+): Promise<DiscoveryRunDetail | null> {
+  await assertProjectAccessByActor(ctx.actor.id, projectId, ctx.organization.id);
+
+  const run = await DiscoveryRunModel.findOne({
+    where: {
+      project_id: projectId,
+      public_id: runPublicId,
+    },
+  });
+
+  if (!run) {
+    return null;
+  }
+
+  // Get sources
+  const runSources = await DiscoveryRunSourceModel.findAll({
+    where: { discovery_run_id: run.id },
+    order: [['source_order', 'ASC']],
+  }) as unknown as Array<{ evidence_source_id: number; source_order: number }>;
+
+  const sourceIds = runSources.map(rs => rs.evidence_source_id);
+  const sources = await EvidenceSourceModel.findAll({
+    where: { id: { [Op.in]: sourceIds } },
+  }) as EvidenceSource[];
+
+  const sourceMap = new Map(sources.map(s => [s.id, s]));
+  const orderedSources = runSources.map(rs => {
+    const source = sourceMap.get(rs.evidence_source_id);
+    return source ? {
+      publicId: source.public_id,
+      label: source.label,
+      sourceType: source.source_type,
+      order: rs.source_order,
+    } : null;
+  }).filter(Boolean) as Array<{ publicId: string; label: string; sourceType: string; order: number }>;
+
+  // Get current artifact
+  const artifact = await DiscoveryArtifactModel.findOne({
+    where: {
+      discovery_run_id: run.id,
+      status: 'current',
+    },
+  }) as any;
+
+  const currentArtifact: DiscoveryArtifactSummary | null = artifact ? {
+    publicId: artifact.public_id,
+    runPublicId: run.public_id,
+    artifactType: artifact.artifact_type,
+    title: artifact.title,
+    topicSlug: artifact.topic_slug,
+    version: artifact.version,
+    status: artifact.status,
+    templateName: artifact.template_name,
+    templateVersion: artifact.template_version,
+    createdAt: artifact.created_at.toISOString(),
+    githubPath: artifact.github_path,
+    projectedAt: artifact.projected_at?.toISOString() || null,
+  } : null;
+
+  return {
+    publicId: run.public_id,
+    discoveryType: run.discovery_type as DiscoveryTypeKey,
+    topic: run.topic,
+    topicSlug: run.topic_slug,
+    sourceIntent: run.source_intent,
+    status: run.status,
+    stage: run.stage,
+    sourceCount: orderedSources.length,
+    attemptCount: run.attempt_count,
+    createdAt: run.created_at.toISOString(),
+    startedAt: run.started_at?.toISOString() || null,
+    completedAt: run.completed_at?.toISOString() || null,
+    createdBy: run.created_by_identity,
+    currentArtifactPublicId: currentArtifact?.publicId || null,
+    failureCode: run.failure_code,
+    failureMessage: run.failure_message,
+    sources: orderedSources,
+    currentArtifact,
+  };
+}
+
+/**
+ * List Discovery artifacts for a project.
+ */
+export async function listCanonicalDiscoveryArtifacts(
+  ctx: ApplicationContext,
+  projectId: number,
+  options?: {
+    artifactType?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  },
+): Promise<DiscoveryArtifactSummary[]> {
+  await assertProjectAccessByActor(ctx.actor.id, projectId, ctx.organization.id);
+
+  const where: Record<string, unknown> = { project_id: projectId };
+
+  if (options?.artifactType) {
+    where.artifact_type = options.artifactType;
+  }
+
+  if (options?.status) {
+    where.status = options.status;
+  } else {
+    // Default to current artifacts only
+    where.status = 'current';
+  }
+
+  const artifacts = await DiscoveryArtifactModel.findAll({
+    where,
+    order: [['created_at', 'DESC']],
+    limit: options?.limit || 50,
+    offset: options?.offset || 0,
+    include: [{
+      model: DiscoveryRunModel,
+      as: 'discoveryRun',
+      attributes: ['public_id'],
+    }],
+  }) as any[];
+
+  return artifacts.map(a => ({
+    publicId: a.public_id,
+    runPublicId: a.discoveryRun?.public_id || '',
+    artifactType: a.artifact_type,
+    title: a.title,
+    topicSlug: a.topic_slug,
+    version: a.version,
+    status: a.status,
+    templateName: a.template_name,
+    templateVersion: a.template_version,
+    createdAt: a.created_at.toISOString(),
+    githubPath: a.github_path,
+    projectedAt: a.projected_at?.toISOString() || null,
+  }));
+}
+
+/**
+ * Get Discovery artifact detail by public ID.
+ */
+export async function getDiscoveryArtifactByPublicId(
+  ctx: ApplicationContext,
+  projectId: number,
+  artifactPublicId: string,
+): Promise<DiscoveryArtifactDetail | null> {
+  await assertProjectAccessByActor(ctx.actor.id, projectId, ctx.organization.id);
+
+  const artifact = await DiscoveryArtifactModel.findOne({
+    where: {
+      project_id: projectId,
+      public_id: artifactPublicId,
+    },
+    include: [{
+      model: DiscoveryRunModel,
+      as: 'discoveryRun',
+      attributes: ['public_id'],
+    }],
+  }) as any;
+
+  if (!artifact) {
+    return null;
+  }
+
+  // Get source count
+  const sourceCount = await DiscoveryRunSourceModel.count({
+    where: { discovery_run_id: artifact.discovery_run_id },
+  });
+
+  // Get supersession info
+  let supersededById: string | null = null;
+  if (artifact.superseded_by_id) {
+    const superseding = await DiscoveryArtifactModel.findByPk(artifact.superseded_by_id, {
+      attributes: ['public_id'],
+    }) as any;
+    supersededById = superseding?.public_id || null;
+  }
+
+  return {
+    publicId: artifact.public_id,
+    runPublicId: artifact.discoveryRun?.public_id || '',
+    artifactType: artifact.artifact_type,
+    title: artifact.title,
+    topicSlug: artifact.topic_slug,
+    version: artifact.version,
+    status: artifact.status,
+    templateName: artifact.template_name,
+    templateVersion: artifact.template_version,
+    createdAt: artifact.created_at.toISOString(),
+    githubPath: artifact.github_path,
+    projectedAt: artifact.projected_at?.toISOString() || null,
+    canonicalContent: artifact.canonical_content,
+    derivationFingerprint: artifact.derivation_fingerprint,
+    githubSha: artifact.github_sha,
+    projectionError: artifact.projection_error,
+    supersededById,
+    supersededAt: artifact.superseded_at?.toISOString() || null,
+    sourceCount,
+  };
 }
 
 // ─── Privacy Error ──────────────────────────────────────────────

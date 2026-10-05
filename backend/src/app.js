@@ -168,17 +168,22 @@ let server;
   const { startCoachPoller, stopCoachPoller } = require('./coaching');
   startCoachPoller();
 
-  // 4. Then finally spin up Express
+  // 4. Start Discovery poller (if enabled)
+  const { startDiscoveryPoller, stopDiscoveryPoller } = require('./discovery/poller');
+  startDiscoveryPoller();
+
+  // 5. Then finally spin up Express
   server = app.listen(PORT || 3000, () => {
     console.log(`Server is running on port ${PORT || 3000}`);
   });
 
-  // 5. Graceful shutdown handling
+  // 6. Graceful shutdown handling
   const shutdown = async (signal) => {
     console.log(`\n${signal} received. Starting graceful shutdown...`);
 
-    // Stop Coach poller first (allows current work to finish)
+    // Stop pollers first (allows current work to finish)
     stopCoachPoller();
+    stopDiscoveryPoller();
 
     // Close HTTP server
     if (server) {
