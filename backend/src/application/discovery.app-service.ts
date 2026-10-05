@@ -19,9 +19,11 @@ import { assertProjectAccessByActor } from '../services/authorization.service';
 import { getProjectById } from '../services/project.service';
 import { loadDiscoveryArtifacts, type DiscoveryArtifact } from '../helpers/discoveryLoader';
 import { getConfigRepo, YAML_TEMPLATE_PATH, fetchFileFromRepo, createOrUpdateFileOnGitHub, fetchFileFromRepoByPath } from '../helpers/github';
-import { processYamlTemplate } from '../helpers/yamlProcessor';
+import { processYamlTemplate, extractAndPersistDiscoveryVariables, type DryRunResult, type ExtractionOutcome } from '../helpers/yamlProcessor';
+import type { EmitSpec } from '../helpers/variableExtractor';
 import { parseDocuments, validateDocuments } from '../helpers/documentParser';
 import type { VariableContext } from '../helpers/studyVariables';
+import yaml from 'js-yaml';
 import { authorizeForModel, scanForPii } from '../services/content-governance.service';
 import * as runService from '../services/discovery-run.service';
 import * as artifactService from '../services/discovery-artifact.service';
@@ -352,70 +354,116 @@ export async function executeDiscovery(
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // DISC-1: Create DiscoveryArtifact in 'generating' state
+  // DISC-1: Structured pipeline with canonical artifact lineage
+  //
+  // Order of operations (per DISC-1 locked decisions):
+  // 1. Fetch YAML template and parse to get emits spec
+  // 2. Call processYamlTemplate with dryRun=true (AI generation, no write/extract)
+  // 3. Create DiscoveryArtifact with canonical content (decision D: Postgres canonical)
+  // 4. Write to GitHub (projection only)
+  // 5. Extract variables with artifact FK (canonical lineage)
+  // 6. Finalize artifact and complete run
   // ═══════════════════════════════════════════════════════════════════════════
   let artifact;
   try {
-    // Process YAML template
+    // 1. Fetch and parse YAML template to get emits spec
     const file = await fetchFileFromRepo(getConfigRepo(), YAML_TEMPLATE_PATH, typeConfig.yaml);
+    const yamlConfig = yaml.load(file.content) as {
+      id?: string;
+      version?: string;
+      emits?: EmitSpec[];
+    } | null;
+
+    if (!yamlConfig) {
+      throw new Error(`Failed to parse YAML template: ${typeConfig.yaml}`);
+    }
+
+    const templateVersion = yamlConfig.version || null;
+    const emitsSpec: EmitSpec[] = yamlConfig.emits || [];
+
+    // 2. Process YAML with dryRun=true - AI generation only, no GitHub write or extraction
     const variableContext: VariableContext = {
       projectId: input.projectId,
-      // DISC-1: Will be set after artifact creation for variable linkage
     };
 
-    const renderedYaml = await processYamlTemplate(
-      file.content, data, '', '', false, variableContext,
+    const dryRunResult = await processYamlTemplate(
+      file.content, data, '', '', false, variableContext, undefined, true,
     );
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // DISC-1: Create artifact with canonical content BEFORE GitHub projection
-    // Per locked decision D: GitHub is projection, not canonical
-    // ═══════════════════════════════════════════════════════════════════════
+    // 3. Create DiscoveryArtifact with canonical content BEFORE GitHub projection
+    //    Per locked decision D: GitHub is projection, not canonical
     artifact = await artifactService.createDiscoveryArtifact({
       projectId: input.projectId,
       discoveryRunId: run.id,
       artifactType: input.discoveryType.replace('_synthesis', '_synthesis') as 'desk_research' | 'stakeholder_synthesis' | 'survey_synthesis' | 'cross_source_synthesis',
       title: `${typeConfig.label}: ${input.topic}`,
       topicSlug,
-      canonicalContent: renderedYaml.outputTemplate || null,
+      canonicalContent: dryRunResult.outputTemplate || null,
       templateName: typeConfig.yaml.replace('.yaml', ''),
-      templateVersion: null, // Could extract from YAML if needed
+      templateVersion,
       derivationFingerprint: contentFingerprint,
       actorId: ctx.actor.id,
       generatedByIdentity: `slack:${input.createdByActorId}`,
     });
 
-    // GitHub projection already happened in processYamlTemplate
-    // Record projection metadata on artifact
-    if (renderedYaml.result?.path && renderedYaml.result?.sha) {
+    // 4. Write to GitHub (projection) - this happens AFTER artifact exists
+    let githubResult: { path: string; sha: string; url: string };
+    try {
+      githubResult = await createOrUpdateFileOnGitHub(dryRunResult.path, dryRunResult.content);
+
+      // Record projection metadata on artifact
       await artifactService.recordProjection(artifact.id, {
-        githubPath: renderedYaml.result.path,
-        githubSha: renderedYaml.result.sha,
+        githubPath: githubResult.path,
+        githubSha: githubResult.sha,
       });
+    } catch (githubError) {
+      // GitHub projection failure is non-blocking for canonical pipeline
+      // The artifact and its content are canonical in Postgres
+      const githubMsg = githubError instanceof Error ? githubError.message : String(githubError);
+      console.warn(`⚠️ GitHub projection failed (non-blocking): ${githubMsg}`);
+      // Use synthetic result for return value
+      githubResult = {
+        path: dryRunResult.path,
+        sha: 'projection-failed',
+        url: `https://github.com/${process.env.GITHUB_OWNER}/${process.env.GITHUB_REPO}/blob/main/${dryRunResult.path}`,
+      };
     }
 
-    // Finalize artifact (mark as current, supersede previous if any)
-    await artifactService.finalizeArtifactSupersession(artifact.id);
-
-    // Variable extraction
+    // 5. Extract variables with artifact FK for canonical lineage
+    //    This happens AFTER artifact creation so FK is available
     let extractionSuccess = true;
     let extractionVariableCount = 0;
 
-    if (renderedYaml.extractionPromise) {
-      const extractResult = await renderedYaml.extractionPromise;
+    if (emitsSpec.length > 0) {
+      const extractResult = await extractAndPersistDiscoveryVariables({
+        templateId: yamlConfig.id || typeConfig.yaml.replace('.yaml', ''),
+        templateVersion: templateVersion || '',
+        emitsSpec,
+        outputTemplate: dryRunResult.outputTemplate,
+        inputValues: data,
+        variableContext,
+        discoveryArtifactFkId: artifact.id, // DISC-1: Canonical relational FK
+      });
+
       extractionSuccess = extractResult.success;
       extractionVariableCount = extractResult.variableCount || 0;
+
       if (!extractResult.success) {
         // Don't fail the entire run for extraction failure — artifact is still valid
         console.warn(`⚠️ Cascade variable extraction failed: ${extractResult.error}`);
+      } else {
+        console.log(`✅ Variables extracted with artifact FK ${artifact.id}: ${extractionVariableCount} items`);
       }
     }
+
+    // 6. Finalize artifact (mark as current, supersede previous if any)
+    await artifactService.finalizeArtifactSupersession(artifact.id);
 
     // Mark run as completed
     await runService.completeDiscoveryRun(run.id);
 
     return {
-      url: renderedYaml.result.url,
+      url: githubResult.url,
       topicSlug,
       typeLabel: typeConfig.label,
       extractionSuccess,

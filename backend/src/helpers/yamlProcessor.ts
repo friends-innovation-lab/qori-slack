@@ -78,7 +78,7 @@ interface AiGenerationTask {
   [key: string]: unknown;
 }
 
-interface ExtractionOutcome {
+export interface ExtractionOutcome {
   success: boolean;
   error?: string;
   variableCount: number;
@@ -910,4 +910,120 @@ export async function processYamlTemplate(
   }
 
   return { result, outputTemplate, aiResponses, extractionPromise, artifactPublicId };
+}
+
+// ---------------------------------------------------------------------------
+// DISC-1: Standalone extraction helper for canonical artifact lineage
+// ---------------------------------------------------------------------------
+
+export interface ExtractionOptions {
+  /** YAML template ID (e.g., 'desk_research') */
+  templateId: string;
+  /** YAML template version */
+  templateVersion: string;
+  /** Emits specification from YAML config */
+  emitsSpec: EmitSpec[];
+  /** Rendered output template (without footer) */
+  outputTemplate: string;
+  /** Input values used during rendering */
+  inputValues: Record<string, unknown>;
+  /** Variable context with project ID */
+  variableContext: VariableContext;
+  /** DISC-1: Canonical DiscoveryArtifact FK for lineage */
+  discoveryArtifactFkId?: number;
+}
+
+/**
+ * DISC-1: Perform extraction and persistence separately from YAML processing.
+ *
+ * This allows the caller to:
+ * 1. Use processYamlTemplate with dryRun=true to get content
+ * 2. Create canonical DiscoveryArtifact with that content
+ * 3. Call this function to extract and persist variables with the artifact FK
+ *
+ * This ensures variables have relational lineage to the canonical artifact.
+ */
+export async function extractAndPersistDiscoveryVariables(
+  options: ExtractionOptions,
+): Promise<ExtractionOutcome> {
+  const {
+    templateId,
+    templateVersion,
+    emitsSpec,
+    outputTemplate,
+    inputValues,
+    variableContext,
+    discoveryArtifactFkId,
+  } = options;
+
+  if (!emitsSpec || emitsSpec.length === 0) {
+    return { success: true, variableCount: 0, keys: [] };
+  }
+
+  const isDiscoveryScope = !!(
+    inputValues.topic_slug &&
+    inputValues._discovery_type &&
+    inputValues.project_slug
+  );
+
+  if (!isDiscoveryScope) {
+    // This helper is for discovery scope only
+    return { success: false, error: 'extractAndPersistDiscoveryVariables requires discovery scope', variableCount: 0 };
+  }
+
+  try {
+    console.log(`Extract: Starting extraction for ${templateId} (${emitsSpec.length} variables)`);
+
+    const extractionResult: ExtractionResult | null = await extractVariables(
+      outputTemplate,
+      emitsSpec,
+      inputValues,
+    );
+
+    if (!extractionResult) {
+      console.warn(`Extract phase returned null for ${templateId}`);
+      return { success: false, error: 'Extraction returned null', variableCount: 0 };
+    }
+
+    console.log(`Extract: Got ${Object.keys(extractionResult).length} variables for ${templateId}`);
+
+    // Read existing, merge, and write with artifact FK
+    const discoveryVars: DiscoveryVariablesStructure = await readDiscoveryVariablesByProject(
+      variableContext.projectId,
+      inputValues._discovery_type as string,
+    );
+
+    const merged = mergeDiscoveryVariables(
+      discoveryVars,
+      extractionResult,
+      inputValues.topic_slug as string,
+      templateId,
+      templateVersion,
+    );
+
+    // DISC-1: Pass artifact FK for canonical lineage
+    await writeDiscoveryVariablesByProject(
+      variableContext.projectId,
+      inputValues._discovery_type as string,
+      merged,
+      inputValues.project_slug as string,
+      discoveryArtifactFkId,
+    );
+
+    const variableCount = Object.values(extractionResult).reduce((sum, v) => {
+      return sum + (Array.isArray(v.value) ? v.value.length : 1);
+    }, 0);
+
+    console.log(`✅ Cascade variables committed with artifact FK ${discoveryArtifactFkId}: ${variableCount} items`);
+
+    return {
+      success: true,
+      variableCount,
+      keys: Object.keys(extractionResult),
+    };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Extract failed for ${templateId}: ${message}`);
+    return { success: false, error: message, variableCount: 0 };
+  }
 }

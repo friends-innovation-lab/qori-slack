@@ -117,6 +117,11 @@ export interface VariableContext {
   studyId?: number | null;
   projectSlug?: string;
   studySlug?: string;
+  /**
+   * DISC-1: Canonical DiscoveryArtifact FK for lineage.
+   * When set, newly persisted discovery variables will have this FK.
+   */
+  discoveryArtifactFkId?: number;
 }
 
 // Sequelize model type alias — we access it dynamically so we use a loose type
@@ -600,12 +605,15 @@ export async function readDiscoveryVariables(_team: string, _discoveryType: stri
  * - GitHub is a readable backup/debugging artifact
  * - Postgres write failure = hard fail (cascade would break invisibly)
  * - GitHub write failure = soft warning (Postgres is authoritative)
+ *
+ * DISC-1: Accepts optional discoveryArtifactFkId to set canonical FK on rows.
  */
 export async function writeDiscoveryVariablesByProject(
   projectId: number,
   discoveryType: string,
   variablesData: DiscoveryVariablesStructure,
-  projectPath?: string
+  projectPath?: string,
+  discoveryArtifactFkId?: number,
 ): Promise<void> {
   const StudyVariable = getStudyVariableModel();
 
@@ -618,8 +626,8 @@ export async function writeDiscoveryVariablesByProject(
   }
 
   // Postgres write — let exceptions propagate (hard-fail)
-  await writeDiscoveryToPostgresByProject(StudyVariable, projectId, variablesData);
-  console.log(`✅ Discovery variables written to Postgres for project:${projectId}`);
+  await writeDiscoveryToPostgresByProject(StudyVariable, projectId, variablesData, discoveryArtifactFkId);
+  console.log(`✅ Discovery variables written to Postgres for project:${projectId}${discoveryArtifactFkId ? ` (artifact FK: ${discoveryArtifactFkId})` : ''}`);
 
   // GitHub .variables write REMOVED (PH-1 / ADR 0033).
   // Postgres study_variables is the sole runtime authority.
@@ -1217,11 +1225,16 @@ async function writeVariablesToPostgresByContext(
  *
  * Bug fix (ADR 0019 era): Scopes delete by source_template to avoid
  * nuking other discovery types when writing one type.
+ *
+ * DISC-1: Accepts optional discoveryArtifactFkId to set canonical FK on rows.
+ * This provides relational lineage to the DiscoveryArtifact table.
+ * Legacy string discovery_artifact_id is preserved for compatibility.
  */
 async function writeDiscoveryToPostgresByProject(
   StudyVariable: StudyVariableModel,
   projectId: number,
   variablesData: DiscoveryVariablesStructure,
+  discoveryArtifactFkId?: number,
 ): Promise<void> {
   const sequelize = getSequelizeInstance();
   const now = new Date().toISOString();
@@ -1265,6 +1278,8 @@ async function writeDiscoveryToPostgresByProject(
             is_pool: isPool,
             scope: 'discovery',
             discovery_artifact_id: artifactId,
+            // DISC-1: Canonical relational FK to DiscoveryArtifact table
+            discovery_artifact_fk_id: discoveryArtifactFkId ?? null,
             stale: false,
             extracted_at: now,
             updated_at: now,

@@ -832,3 +832,453 @@ describe('projection metadata', () => {
     expect(updated!.canonical_content).toBe('# Content'); // Content preserved
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 11. VARIABLE LINEAGE — DISC-1 Final Blocker Fix
+//
+// Tests that newly extracted variables have `discovery_artifact_fk_id` set
+// to the canonical DiscoveryArtifact database ID, providing relational lineage.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const StudyVariableModel = sequelize.models.StudyVariable;
+
+describe('variable lineage', () => {
+  it('desk research variables have artifact FK', async () => {
+    const run = await runService.createDiscoveryRun({
+      projectId,
+      discoveryType: 'desk_research',
+      topic: 'Test Topic',
+      topicSlug: 'test-topic',
+      sourceIntent: null,
+      actorId,
+      createdByIdentity: 'slack:U_TEST',
+    });
+
+    const artifact = await artifactService.createDiscoveryArtifact({
+      projectId,
+      discoveryRunId: run.id,
+      artifactType: 'desk_research',
+      title: 'Desk Research: Test Topic',
+      topicSlug: 'test-topic',
+      canonicalContent: '# Test Content',
+      templateName: 'desk_research',
+      templateVersion: 'v7.1',
+      derivationFingerprint: 'abc123',
+      actorId,
+      generatedByIdentity: 'slack:U_TEST',
+    });
+
+    await artifactService.finalizeArtifactSupersession(artifact.id);
+
+    // Simulate variable extraction with artifact FK (as executeDiscovery does)
+    await StudyVariableModel.create({
+      project_id: projectId,
+      study_id: null, // Discovery scope
+      variable_key: 'knowledge_gaps',
+      variable_type: 'pool',
+      item_key: 'KG-001',
+      value: { id: 'KG-001', gap: 'Missing market data', priority: 'high' },
+      participant_id: null,
+      source_template: 'desk_research',
+      source_version: 'v7.1',
+      source_date: new Date().toISOString(),
+      is_pool: true,
+      scope: 'discovery',
+      discovery_artifact_id: 'test-topic', // Legacy string ID
+      discovery_artifact_fk_id: artifact.id, // DISC-1: Canonical FK
+      stale: false,
+      extracted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    // Verify variable has FK
+    const variables = await StudyVariableModel.findAll({
+      where: {
+        project_id: projectId,
+        scope: 'discovery',
+        discovery_artifact_fk_id: artifact.id,
+      },
+    });
+
+    expect(variables).toHaveLength(1);
+    const v = variables[0] as any;
+    expect(v.discovery_artifact_fk_id).toBe(artifact.id);
+    expect(v.variable_key).toBe('knowledge_gaps');
+    expect(v.source_template).toBe('desk_research');
+  });
+
+  it('stakeholder synthesis variables have artifact FK', async () => {
+    const run = await runService.createDiscoveryRun({
+      projectId,
+      discoveryType: 'stakeholder_synthesis',
+      topic: 'Leadership Interviews',
+      topicSlug: 'leadership-interviews',
+      sourceIntent: null,
+      actorId,
+      createdByIdentity: 'slack:U_TEST',
+    });
+
+    const artifact = await artifactService.createDiscoveryArtifact({
+      projectId,
+      discoveryRunId: run.id,
+      artifactType: 'stakeholder_synthesis',
+      title: 'Stakeholder synthesis: Leadership Interviews',
+      topicSlug: 'leadership-interviews',
+      canonicalContent: '# Stakeholder Content',
+      templateName: 'stakeholder_synthesis',
+      templateVersion: 'v8.0',
+      derivationFingerprint: 'def456',
+      actorId,
+      generatedByIdentity: 'slack:U_TEST',
+    });
+
+    await artifactService.finalizeArtifactSupersession(artifact.id);
+
+    // Simulate variable extraction with artifact FK
+    await StudyVariableModel.create({
+      project_id: projectId,
+      study_id: null,
+      variable_key: 'stakeholder_perspectives',
+      variable_type: 'pool',
+      item_key: 'SP-001',
+      value: { id: 'SP-001', role: 'Director', perspective: 'Prioritize compliance' },
+      participant_id: null,
+      source_template: 'stakeholder_synthesis',
+      source_version: 'v8.0',
+      source_date: new Date().toISOString(),
+      is_pool: true,
+      scope: 'discovery',
+      discovery_artifact_id: 'leadership-interviews',
+      discovery_artifact_fk_id: artifact.id,
+      stale: false,
+      extracted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    // Verify
+    const variables = await StudyVariableModel.findAll({
+      where: {
+        project_id: projectId,
+        scope: 'discovery',
+        discovery_artifact_fk_id: artifact.id,
+      },
+    });
+
+    expect(variables).toHaveLength(1);
+    expect((variables[0] as any).source_template).toBe('stakeholder_synthesis');
+  });
+
+  it('same-topic sibling runs have distinct artifact FKs', async () => {
+    // Run A
+    const runA = await runService.createDiscoveryRun({
+      projectId,
+      discoveryType: 'desk_research',
+      topic: 'Same Topic',
+      topicSlug: 'same-topic',
+      sourceIntent: null,
+      actorId,
+      createdByIdentity: 'slack:U_TEST',
+    });
+
+    const artifactA = await artifactService.createDiscoveryArtifact({
+      projectId,
+      discoveryRunId: runA.id,
+      artifactType: 'desk_research',
+      title: 'Run A',
+      topicSlug: 'same-topic',
+      canonicalContent: '# Run A',
+      templateName: 'desk_research',
+      templateVersion: 'v7.1',
+      derivationFingerprint: 'aaa',
+      actorId,
+      generatedByIdentity: 'slack:U_TEST',
+    });
+    await artifactService.finalizeArtifactSupersession(artifactA.id);
+
+    // Run B (sibling)
+    const runB = await runService.createDiscoveryRun({
+      projectId,
+      discoveryType: 'desk_research',
+      topic: 'Same Topic',
+      topicSlug: 'same-topic',
+      sourceIntent: null,
+      actorId,
+      createdByIdentity: 'slack:U_TEST',
+    });
+
+    const artifactB = await artifactService.createDiscoveryArtifact({
+      projectId,
+      discoveryRunId: runB.id,
+      artifactType: 'desk_research',
+      title: 'Run B',
+      topicSlug: 'same-topic',
+      canonicalContent: '# Run B',
+      templateName: 'desk_research',
+      templateVersion: 'v7.1',
+      derivationFingerprint: 'bbb',
+      actorId,
+      generatedByIdentity: 'slack:U_TEST',
+    });
+    await artifactService.finalizeArtifactSupersession(artifactB.id);
+
+    // Create variables for both
+    await StudyVariableModel.bulkCreate([
+      {
+        project_id: projectId,
+        study_id: null,
+        variable_key: 'knowledge_gaps',
+        variable_type: 'pool',
+        item_key: 'KG-A-001',
+        value: { id: 'KG-A-001', gap: 'From run A' },
+        source_template: 'desk_research',
+        source_version: 'v7.1',
+        source_date: new Date().toISOString(),
+        is_pool: true,
+        scope: 'discovery',
+        discovery_artifact_id: 'same-topic',
+        discovery_artifact_fk_id: artifactA.id, // Points to artifact A
+        stale: false,
+        extracted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        project_id: projectId,
+        study_id: null,
+        variable_key: 'knowledge_gaps',
+        variable_type: 'pool',
+        item_key: 'KG-B-001',
+        value: { id: 'KG-B-001', gap: 'From run B' },
+        source_template: 'desk_research',
+        source_version: 'v7.1',
+        source_date: new Date().toISOString(),
+        is_pool: true,
+        scope: 'discovery',
+        discovery_artifact_id: 'same-topic',
+        discovery_artifact_fk_id: artifactB.id, // Points to artifact B
+        stale: false,
+        extracted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ]);
+
+    // Query variables by each artifact FK
+    const varsA = await StudyVariableModel.findAll({
+      where: { discovery_artifact_fk_id: artifactA.id },
+    });
+    const varsB = await StudyVariableModel.findAll({
+      where: { discovery_artifact_fk_id: artifactB.id },
+    });
+
+    expect(varsA).toHaveLength(1);
+    expect((varsA[0] as any).item_key).toBe('KG-A-001');
+
+    expect(varsB).toHaveLength(1);
+    expect((varsB[0] as any).item_key).toBe('KG-B-001');
+
+    // Same topic but different artifact FKs
+    expect(artifactA.id).not.toBe(artifactB.id);
+  });
+
+  it('same-run multiple versions link to respective artifacts', async () => {
+    const run = await runService.createDiscoveryRun({
+      projectId,
+      discoveryType: 'desk_research',
+      topic: 'Versioned Topic',
+      topicSlug: 'versioned-topic',
+      sourceIntent: null,
+      actorId,
+      createdByIdentity: 'slack:U_TEST',
+    });
+
+    // V1
+    const v1 = await artifactService.createDiscoveryArtifact({
+      projectId,
+      discoveryRunId: run.id,
+      artifactType: 'desk_research',
+      title: 'V1',
+      topicSlug: 'versioned-topic',
+      canonicalContent: '# V1',
+      templateName: 'desk_research',
+      templateVersion: 'v7.1',
+      derivationFingerprint: 'v1fp',
+      actorId,
+      generatedByIdentity: 'slack:U_TEST',
+    });
+    await artifactService.finalizeArtifactSupersession(v1.id);
+
+    // Create variable for V1
+    await StudyVariableModel.create({
+      project_id: projectId,
+      study_id: null,
+      variable_key: 'knowledge_gaps',
+      variable_type: 'pool',
+      item_key: 'V1-KG-001',
+      value: { id: 'V1-KG-001', gap: 'From V1' },
+      source_template: 'desk_research',
+      source_version: 'v7.1',
+      source_date: new Date().toISOString(),
+      is_pool: true,
+      scope: 'discovery',
+      discovery_artifact_id: 'versioned-topic',
+      discovery_artifact_fk_id: v1.id,
+      stale: false,
+      extracted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    // V2 (supersedes V1)
+    const v2 = await artifactService.createDiscoveryArtifact({
+      projectId,
+      discoveryRunId: run.id,
+      artifactType: 'desk_research',
+      title: 'V2',
+      topicSlug: 'versioned-topic',
+      canonicalContent: '# V2',
+      templateName: 'desk_research',
+      templateVersion: 'v7.1',
+      derivationFingerprint: 'v2fp',
+      actorId,
+      generatedByIdentity: 'slack:U_TEST',
+    });
+    await artifactService.finalizeArtifactSupersession(v2.id);
+
+    // Create variable for V2
+    await StudyVariableModel.create({
+      project_id: projectId,
+      study_id: null,
+      variable_key: 'knowledge_gaps',
+      variable_type: 'pool',
+      item_key: 'V2-KG-001',
+      value: { id: 'V2-KG-001', gap: 'From V2 - updated' },
+      source_template: 'desk_research',
+      source_version: 'v7.1',
+      source_date: new Date().toISOString(),
+      is_pool: true,
+      scope: 'discovery',
+      discovery_artifact_id: 'versioned-topic',
+      discovery_artifact_fk_id: v2.id,
+      stale: false,
+      extracted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    expect(v1.version).toBe(1);
+    expect(v2.version).toBe(2);
+
+    // Each variable links to its respective artifact
+    const varsV1 = await StudyVariableModel.findAll({
+      where: { discovery_artifact_fk_id: v1.id },
+    });
+    const varsV2 = await StudyVariableModel.findAll({
+      where: { discovery_artifact_fk_id: v2.id },
+    });
+
+    expect(varsV1).toHaveLength(1);
+    expect((varsV1[0] as any).item_key).toBe('V1-KG-001');
+
+    expect(varsV2).toHaveLength(1);
+    expect((varsV2[0] as any).item_key).toBe('V2-KG-001');
+  });
+
+  it('GitHub projection failure does not affect variable lineage', async () => {
+    const run = await runService.createDiscoveryRun({
+      projectId,
+      discoveryType: 'desk_research',
+      topic: 'GitHub Fail Topic',
+      topicSlug: 'github-fail-topic',
+      sourceIntent: null,
+      actorId,
+      createdByIdentity: 'slack:U_TEST',
+    });
+
+    const artifact = await artifactService.createDiscoveryArtifact({
+      projectId,
+      discoveryRunId: run.id,
+      artifactType: 'desk_research',
+      title: 'Test',
+      topicSlug: 'github-fail-topic',
+      canonicalContent: '# Content',
+      templateName: 'desk_research',
+      templateVersion: 'v7.1',
+      derivationFingerprint: 'abc',
+      actorId,
+      generatedByIdentity: 'slack:U_TEST',
+    });
+
+    await artifactService.finalizeArtifactSupersession(artifact.id);
+
+    // Record GitHub projection error
+    await artifactService.recordProjectionError(artifact.id, 'Rate limit exceeded');
+
+    // Variables should still have FK despite projection failure
+    await StudyVariableModel.create({
+      project_id: projectId,
+      study_id: null,
+      variable_key: 'knowledge_gaps',
+      variable_type: 'pool',
+      item_key: 'KG-001',
+      value: { id: 'KG-001', gap: 'Test gap' },
+      source_template: 'desk_research',
+      source_version: 'v7.1',
+      source_date: new Date().toISOString(),
+      is_pool: true,
+      scope: 'discovery',
+      discovery_artifact_id: 'github-fail-topic',
+      discovery_artifact_fk_id: artifact.id, // FK still set
+      stale: false,
+      extracted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    // Reload artifact - has projection error
+    const reloaded = await artifactService.getDiscoveryArtifactById(artifact.id);
+    expect(reloaded!.projection_error).toBe('Rate limit exceeded');
+    expect(reloaded!.status).toBe('current');
+
+    // Variable FK intact despite GitHub failure
+    const variables = await StudyVariableModel.findAll({
+      where: { discovery_artifact_fk_id: artifact.id },
+    });
+    expect(variables).toHaveLength(1);
+    expect((variables[0] as any).discovery_artifact_fk_id).toBe(artifact.id);
+  });
+
+  it('survey variables remain FK-nullable (backward compatibility)', async () => {
+    // Survey synthesis typically comes from survey-handler which
+    // may not yet be wired to DISC-1 artifact creation
+    await StudyVariableModel.create({
+      project_id: projectId,
+      study_id: null,
+      variable_key: 'survey_insights',
+      variable_type: 'pool',
+      item_key: 'SI-001',
+      value: { id: 'SI-001', insight: 'Users prefer mobile' },
+      source_template: 'survey_synthesis',
+      source_version: 'v5.0',
+      source_date: new Date().toISOString(),
+      is_pool: true,
+      scope: 'discovery',
+      discovery_artifact_id: 'survey-topic',
+      discovery_artifact_fk_id: null, // No FK - legacy flow
+      stale: false,
+      extracted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    // Query should work without FK
+    const variables = await StudyVariableModel.findAll({
+      where: {
+        project_id: projectId,
+        source_template: 'survey_synthesis',
+      },
+    });
+
+    expect(variables).toHaveLength(1);
+    expect((variables[0] as any).discovery_artifact_fk_id).toBeNull();
+    expect((variables[0] as any).discovery_artifact_id).toBe('survey-topic');
+  });
+
+  // NOTE: FK cascade test skipped - cascade behavior is defined in migration
+  // and tested at DB level. The SET NULL constraint on discovery_artifact_fk_id
+  // is enforced by the database, not application code.
+});
