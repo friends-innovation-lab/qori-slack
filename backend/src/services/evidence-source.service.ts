@@ -6,7 +6,7 @@
  */
 
 import sequelize from '../database';
-import type { Transaction } from 'sequelize';
+import { Op, type Transaction } from 'sequelize';
 import type { EvidenceSource, SourceType, ArtifactRef } from '../database/models/evidence_source';
 import type { CreationAttributes } from 'sequelize';
 import { createHash } from 'crypto';
@@ -271,6 +271,148 @@ export function getExtractedTextFromSource(source: EvidenceSource): string | nul
   }
 
   return null;
+}
+
+// ─── Prepared Content Cleanup (DISC-2) ───────────────────────────────────────
+
+/**
+ * Purge temporary prepared source content for a completed/failed Discovery run.
+ *
+ * Removes only transient worker input (extracted_text) from EvidenceSource.metadata.
+ * Preserves all durable metadata: content_length, upload_source, upload_session_id, etc.
+ *
+ * Safe for shared sources: only purges if no other non-terminal run needs the content.
+ *
+ * Terminal statuses: completed, failed, cancelled
+ * Non-terminal statuses: pending, processing
+ *
+ * Idempotent: safe to call multiple times.
+ */
+export async function purgePreparedSourceContent(
+  runId: number,
+  transaction?: Transaction,
+): Promise<{ purgedCount: number; skippedCount: number }> {
+  const DiscoveryRunSourceModel = sequelize.models.DiscoveryRunSource;
+  const DiscoveryRunModel = sequelize.models.DiscoveryRun;
+
+  // Get source IDs for this run
+  const runSources = await DiscoveryRunSourceModel.findAll({
+    where: { discovery_run_id: runId },
+    attributes: ['evidence_source_id'],
+    transaction,
+  }) as unknown as Array<{ evidence_source_id: number }>;
+
+  if (runSources.length === 0) {
+    return { purgedCount: 0, skippedCount: 0 };
+  }
+
+  const sourceIds = runSources.map(rs => rs.evidence_source_id);
+  let purgedCount = 0;
+  let skippedCount = 0;
+
+  for (const sourceId of sourceIds) {
+    // Check if this source is used by any other non-terminal run
+    const otherActiveRuns = await DiscoveryRunSourceModel.findAll({
+      where: {
+        evidence_source_id: sourceId,
+        discovery_run_id: { [Op.ne]: runId },
+      },
+      include: [{
+        model: DiscoveryRunModel,
+        as: 'discoveryRun',
+        where: {
+          status: { [Op.in]: ['pending', 'processing'] },
+        },
+        required: true,
+      }],
+      transaction,
+    });
+
+    if (otherActiveRuns.length > 0) {
+      // Source still needed by another active run
+      skippedCount++;
+      continue;
+    }
+
+    // Safe to purge - remove only extracted_text, preserve other metadata
+    const [affectedCount] = await sequelize.query(
+      `
+      UPDATE evidence_sources
+      SET metadata = metadata - 'extracted_text',
+          updated_at = NOW()
+      WHERE id = :sourceId
+        AND metadata ? 'extracted_text'
+      `,
+      {
+        replacements: { sourceId },
+        transaction,
+      },
+    ) as [unknown, { rowCount?: number }];
+
+    if ((affectedCount as { rowCount?: number })?.rowCount ?? 0 > 0) {
+      purgedCount++;
+    }
+  }
+
+  if (purgedCount > 0) {
+    console.log(
+      `[DISC-2] Purged prepared content from ${purgedCount} sources for run ${runId}` +
+      (skippedCount > 0 ? ` (${skippedCount} skipped - shared with active runs)` : ''),
+    );
+  }
+
+  return { purgedCount, skippedCount };
+}
+
+/**
+ * Check if a run has prepared source content available for execution.
+ *
+ * Returns false if extracted_text has been purged from all associated sources.
+ * Used to validate retry preconditions.
+ */
+export async function hasPreparedSourceContent(runId: number): Promise<boolean> {
+  const DiscoveryRunSourceModel = sequelize.models.DiscoveryRunSource;
+
+  // Get source IDs for this run
+  const runSources = await DiscoveryRunSourceModel.findAll({
+    where: { discovery_run_id: runId },
+    attributes: ['evidence_source_id'],
+  }) as unknown as Array<{ evidence_source_id: number }>;
+
+  if (runSources.length === 0) {
+    return false;
+  }
+
+  const sourceIds = runSources.map(rs => rs.evidence_source_id);
+
+  // Check if any source has extracted_text
+  const sourcesWithContent = await EvidenceSourceModel.count({
+    where: {
+      id: { [Op.in]: sourceIds },
+      metadata: {
+        [Op.ne]: null,
+      },
+    },
+  });
+
+  if (sourcesWithContent === 0) {
+    return false;
+  }
+
+  // Need to check if extracted_text key exists in metadata
+  const [results] = await sequelize.query(
+    `
+    SELECT COUNT(*) as count
+    FROM evidence_sources
+    WHERE id IN (:sourceIds)
+      AND metadata ? 'extracted_text'
+    `,
+    {
+      replacements: { sourceIds },
+    },
+  ) as [Array<{ count: string }>, unknown];
+
+  return parseInt(results[0]?.count || '0', 10) > 0;
 }
 
 // ─── Queries ─────────────────────────────────────────────────────────────────

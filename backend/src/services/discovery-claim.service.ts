@@ -10,6 +10,7 @@
 import { Op } from 'sequelize';
 import sequelize from '../database';
 import type { DiscoveryRun } from '../database/models/discovery_run';
+import { purgePreparedSourceContent } from './evidence-source.service';
 
 const DiscoveryRunModel = sequelize.models.DiscoveryRun as typeof DiscoveryRun;
 
@@ -38,6 +39,13 @@ export class NotOwnerError extends Error {
   constructor(runId: number, expectedWorkerId: string) {
     super(`Worker ${expectedWorkerId} is not the owner of run ${runId}`);
     this.name = 'NotOwnerError';
+  }
+}
+
+export class PreparedContentMissingError extends Error {
+  constructor(runId: number) {
+    super(`Run ${runId} has no prepared source content - cannot be re-executed`);
+    this.name = 'PreparedContentMissingError';
   }
 }
 
@@ -169,12 +177,38 @@ export async function recoverStaleRun(
  * Fail runs that have exceeded max attempts.
  *
  * Called during recovery check to clean up stuck runs.
+ * Purges temporary prepared content for failed runs.
  */
 export async function failExceededAttemptRuns(workerId: string): Promise<number> {
   const now = new Date();
   const staleThreshold = new Date(now.getTime() - DISCOVERY_STALE_TIMEOUT_MS);
 
-  const [, metadata] = await sequelize.query(
+  // First, get the IDs of runs that will be failed
+  const [runResults] = await sequelize.query(
+    `
+    SELECT id FROM discovery_runs
+    WHERE status = 'processing'
+      AND discovery_type IN ('desk_research', 'stakeholder_synthesis')
+      AND heartbeat_at < :staleThreshold
+      AND attempt_count >= :maxAttempts
+    FOR UPDATE SKIP LOCKED
+    `,
+    {
+      replacements: {
+        staleThreshold,
+        maxAttempts: DISCOVERY_MAX_ATTEMPTS,
+      },
+    },
+  ) as [Array<{ id: number }>, unknown];
+
+  if (!runResults || runResults.length === 0) {
+    return 0;
+  }
+
+  const runIds = runResults.map(r => r.id);
+
+  // Update runs to failed status
+  await sequelize.query(
     `
     UPDATE discovery_runs
     SET
@@ -185,27 +219,30 @@ export async function failExceededAttemptRuns(workerId: string): Promise<number>
       worker_id = :workerId,
       completed_at = :now,
       updated_at = :now
-    WHERE status = 'processing'
-      AND discovery_type IN ('desk_research', 'stakeholder_synthesis')
-      AND heartbeat_at < :staleThreshold
-      AND attempt_count >= :maxAttempts
+    WHERE id IN (:runIds)
     `,
     {
       replacements: {
         workerId,
         now,
-        staleThreshold,
-        maxAttempts: DISCOVERY_MAX_ATTEMPTS,
+        runIds,
       },
     },
   );
 
-  const count = (metadata as { rowCount?: number })?.rowCount || 0;
-  if (count > 0) {
-    console.log(`[DISC-2] Failed ${count} runs that exceeded max attempts`);
+  // DISC-2: Purge temporary prepared content for each failed run
+  for (const runId of runIds) {
+    try {
+      await purgePreparedSourceContent(runId);
+    } catch (purgeError) {
+      const msg = purgeError instanceof Error ? purgeError.message : String(purgeError);
+      console.warn(`[DISC-2] Failed to purge prepared content for max-attempts-exceeded run ${runId}: ${msg}`);
+    }
   }
 
-  return count;
+  console.log(`[DISC-2] Failed ${runIds.length} runs that exceeded max attempts`);
+
+  return runIds.length;
 }
 
 /**
@@ -260,6 +297,7 @@ export async function validateClaimOwnership(
 /**
  * Complete a run we own.
  *
+ * Purges temporary prepared source content after completion.
  * Throws NotOwnerError if we don't own the run.
  */
 export async function completeRun(
@@ -288,12 +326,22 @@ export async function completeRun(
     throw new NotOwnerError(runId, workerId);
   }
 
+  // DISC-2: Purge temporary prepared content after terminal completion
+  try {
+    await purgePreparedSourceContent(runId);
+  } catch (purgeError) {
+    // Log but don't fail - completion is more important than cleanup
+    const msg = purgeError instanceof Error ? purgeError.message : String(purgeError);
+    console.warn(`[DISC-2] Failed to purge prepared content for completed run ${runId}: ${msg}`);
+  }
+
   return DiscoveryRunModel.findByPk(runId) as Promise<DiscoveryRun>;
 }
 
 /**
  * Fail a run we own.
  *
+ * Purges temporary prepared source content after failure.
  * Throws NotOwnerError if we don't own the run.
  */
 export async function failRun(
@@ -336,6 +384,15 @@ export async function failRun(
 
   if ((metadata as { rowCount?: number })?.rowCount === 0) {
     throw new NotOwnerError(runId, workerId);
+  }
+
+  // DISC-2: Purge temporary prepared content after terminal failure
+  try {
+    await purgePreparedSourceContent(runId);
+  } catch (purgeError) {
+    // Log but don't fail - failure recording is more important than cleanup
+    const msg = purgeError instanceof Error ? purgeError.message : String(purgeError);
+    console.warn(`[DISC-2] Failed to purge prepared content for failed run ${runId}: ${msg}`);
   }
 
   return DiscoveryRunModel.findByPk(runId) as Promise<DiscoveryRun>;
