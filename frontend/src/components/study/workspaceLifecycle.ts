@@ -6,14 +6,27 @@
  * navigation structure only.
  *
  * Source of truth: LIFECYCLE_NAV_CONVERGENCE.md §4
+ * DISC-3: Discovery group has 5 rows: All evidence, Desk Research,
+ * Stakeholders, Surveys (all routes), and Synthesis (placeholder until DISC-5).
  *
- * - Only Research Brief and Research Plan are real routes
- * - All other items are presentation-only placeholders
+ * - Discovery rows, Brief, and Plan are real routes
  * - Plan lock state comes from computeLifecycleNodes (not from this config)
+ * - Synthesis is a placeholder until DISC-5
  */
+
+/** Discovery type keys matching backend DiscoveryTypeKey */
+export type DiscoveryTypeFilter = 'desk' | 'stakeholder' | 'survey';
 
 export type WorkspaceNavItem =
   | { label: string; kind: 'route'; stage: 'brief' | 'plan' }
+  | {
+      label: string;
+      kind: 'discovery-route';
+      /** Route path relative to /studies/:id/discovery */
+      path: string;
+      /** Filter type for counting artifacts (null = all) */
+      filterType: DiscoveryTypeFilter | null;
+    }
   | { label: string; kind: 'placeholder' };
 
 export interface WorkspaceLifecycleGroup {
@@ -22,16 +35,18 @@ export interface WorkspaceLifecycleGroup {
 }
 
 /**
- * Exact CD composition: 5 groups, 15 items.
- * Labels and ordering are verbatim from the approved design.
+ * DISC-3 CD composition: 5 groups, 16 items.
+ * Discovery group now has 5 rows per DISCOVERY_WORKSPACE_DESIGN_SPEC §3.2.
  */
 export const WORKSPACE_LIFECYCLE: WorkspaceLifecycleGroup[] = [
   {
     group: 'Discovery',
     items: [
-      { label: 'Desk Research', kind: 'placeholder' },
-      { label: 'Stakeholders', kind: 'placeholder' },
-      { label: 'Surveys', kind: 'placeholder' },
+      { label: 'All evidence', kind: 'discovery-route', path: '', filterType: null },
+      { label: 'Desk Research', kind: 'discovery-route', path: '?type=desk', filterType: 'desk' },
+      { label: 'Stakeholders', kind: 'discovery-route', path: '?type=stakeholder', filterType: 'stakeholder' },
+      { label: 'Surveys', kind: 'discovery-route', path: '?type=survey', filterType: 'survey' },
+      { label: 'Synthesis', kind: 'placeholder' }, // DISC-5
     ],
   },
   {

@@ -1,0 +1,100 @@
+/**
+ * HubEmptyExplainer — DISC-3 B27
+ *
+ * Per DISCOVERY_REDLINES.md B27.
+ */
+
+.explainer {
+  max-width: 640px;
+}
+
+.heading {
+  font: var(--weight-semibold) var(--text-h2-size)/var(--text-h2-line) var(--font-display);
+  color: var(--color-text);
+  margin: 0 0 var(--space-3);
+}
+
+.description {
+  font: var(--text-body-size)/var(--text-body-line) var(--font-serif);
+  color: var(--color-text);
+  margin: 0 0 var(--space-5);
+}
+
+.rows {
+  border-top: 2px solid var(--color-border-emphasis);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-4);
+  align-items: center;
+  padding: 20px var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.rowContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.rowTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font: var(--weight-semibold) 17px/24px var(--font-serif);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.rowDescription {
+  font: 13px/20px var(--font-ui);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.rowLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 var(--space-3);
+  font: var(--weight-semibold) 13px/20px var(--font-ui);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: background-color var(--motion-fast), color var(--motion-fast),
+    border-color var(--motion-fast);
+}
+
+.rowLink:hover {
+  color: var(--color-text);
+  border-color: var(--color-border-emphasis);
+}
+
+.skipLine {
+  margin-top: var(--space-5);
+  font: 14px/20px var(--font-ui);
+  color: var(--color-text-meta);
+}
+
+.skipLink {
+  font-weight: var(--weight-semibold);
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+.skipLink:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 767px) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+}

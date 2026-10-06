@@ -91,11 +91,13 @@ describe('LifecycleRail inverse variant (VC-2A)', () => {
   // Expected group headings in order
   const expectedGroups = ['Discovery', 'Planning', 'Fieldwork', 'Analysis', 'Outputs'];
 
-  // Expected labels in order (15 items)
+  // Expected labels in order (17 items — DISC-3 added All evidence + Synthesis)
   const expectedLabels = [
+    'All evidence',
     'Desk Research',
     'Stakeholders',
     'Surveys',
+    'Synthesis',
     'Research Brief',
     'Research Plan',
     'Discussion Guide',
@@ -110,8 +112,15 @@ describe('LifecycleRail inverse variant (VC-2A)', () => {
     'Tickets',
   ];
 
-  // Only these two are real routes
-  const routeLabels = ['Research Brief', 'Research Plan'];
+  // DISC-3: These are real routes (Brief, Plan, and Discovery routes)
+  const routeLabels = [
+    'All evidence',
+    'Desk Research',
+    'Stakeholders',
+    'Surveys',
+    'Research Brief',
+    'Research Plan',
+  ];
 
   it('renders exactly 5 group headings in correct order', () => {
     renderWithProviders(
@@ -130,7 +139,7 @@ describe('LifecycleRail inverse variant (VC-2A)', () => {
     });
   });
 
-  it('renders exactly 15 lifecycle labels in correct order', () => {
+  it('renders exactly 17 lifecycle labels in correct order', () => {
     renderWithProviders(
       <LifecycleRail
         studyPublicId={studyId}
@@ -158,11 +167,11 @@ describe('LifecycleRail inverse variant (VC-2A)', () => {
       });
     });
 
-    expect(allItems).toHaveLength(15);
+    expect(allItems).toHaveLength(17);
     expect(allItems).toEqual(expectedLabels);
   });
 
-  it('only Research Brief and Research Plan are links', () => {
+  it('DISC-3: Brief, Plan, and Discovery routes are links', () => {
     renderWithProviders(
       <LifecycleRail
         studyPublicId={studyId}
@@ -172,19 +181,31 @@ describe('LifecycleRail inverse variant (VC-2A)', () => {
       />,
     );
 
-    // Check that exactly 2 lifecycle links exist (not counting study name link)
+    // Check that lifecycle links exist
     const briefLink = screen.getByRole('link', { name: 'Research Brief' });
     const planLink = screen.getByRole('link', { name: 'Research Plan' });
+    const allEvidenceLink = screen.getByRole('link', { name: /All evidence/ });
+    const deskLink = screen.getByRole('link', { name: /Desk Research/ });
+    const stakeholderLink = screen.getByRole('link', { name: /Stakeholders/ });
+    const surveyLink = screen.getByRole('link', { name: /Surveys/ });
 
     expect(briefLink).toBeInTheDocument();
     expect(planLink).toBeInTheDocument();
+    expect(allEvidenceLink).toBeInTheDocument();
+    expect(deskLink).toBeInTheDocument();
+    expect(stakeholderLink).toBeInTheDocument();
+    expect(surveyLink).toBeInTheDocument();
 
     // Verify links point to correct routes
     expect(briefLink).toHaveAttribute('href', `/studies/${studyId}/brief`);
     expect(planLink).toHaveAttribute('href', `/studies/${studyId}/plan`);
+    expect(allEvidenceLink).toHaveAttribute('href', `/studies/${studyId}/discovery`);
+    expect(deskLink).toHaveAttribute('href', `/studies/${studyId}/discovery?type=desk`);
+    expect(stakeholderLink).toHaveAttribute('href', `/studies/${studyId}/discovery?type=stakeholder`);
+    expect(surveyLink).toHaveAttribute('href', `/studies/${studyId}/discovery?type=survey`);
   });
 
-  it('13 placeholders are non-interactive and expose "not yet available"', () => {
+  it('11 placeholders are non-interactive and expose "not yet available"', () => {
     renderWithProviders(
       <LifecycleRail
         studyPublicId={studyId}
@@ -208,9 +229,9 @@ describe('LifecycleRail inverse variant (VC-2A)', () => {
       expect(text).toBeInTheDocument();
     });
 
-    // Verify "not yet available" text appears for placeholders (13 times)
+    // Verify "not yet available" text appears for placeholders (11 times — DISC-3: 17 total - 6 routes = 11)
     const notYetTexts = screen.getAllByText(/, not yet available/);
-    expect(notYetTexts).toHaveLength(13);
+    expect(notYetTexts).toHaveLength(11);
   });
 
   it('placeholder items are not focusable', () => {
@@ -223,9 +244,9 @@ describe('LifecycleRail inverse variant (VC-2A)', () => {
       />,
     );
 
-    // First placeholder — "Desk Research"
-    const deskResearchText = screen.getByText('Desk Research');
-    const listItem = deskResearchText.closest('li');
+    // DISC-3: "Synthesis" is now the first placeholder (Discovery routes are now links)
+    const synthesisText = screen.getByText('Synthesis');
+    const listItem = synthesisText.closest('li');
 
     // Should not contain any focusable elements (links or buttons)
     const focusables = listItem?.querySelectorAll('a, button, [tabindex="0"]');
