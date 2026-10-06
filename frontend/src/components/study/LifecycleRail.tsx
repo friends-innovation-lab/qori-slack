@@ -92,10 +92,13 @@ export function LifecycleRail({
   const getDiscoveryCount = (filterType: DiscoveryTypeFilter | null): number | null => {
     if (!discoveryCounts) return null;
     if (filterType === null) {
-      // "All evidence" shows sum of all types
-      const desk = discoveryCounts.desk ?? 0;
-      const stakeholder = discoveryCounts.stakeholder ?? 0;
-      const survey = discoveryCounts.survey ?? 0;
+      // "All evidence" shows sum of all types.
+      // DISC-3 exactness: If ANY type count is null (indeterminate), sum is also null.
+      // This prevents displaying a misleading partial sum as definitive.
+      const { desk, stakeholder, survey } = discoveryCounts;
+      if (desk === null || stakeholder === null || survey === null) {
+        return null;
+      }
       return desk + stakeholder + survey;
     }
     return discoveryCounts[filterType];

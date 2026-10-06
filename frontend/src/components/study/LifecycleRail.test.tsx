@@ -339,3 +339,218 @@ describe('LifecycleRail inverse variant (VC-2A)', () => {
     expect(briefLink).not.toHaveAttribute('aria-disabled');
   });
 });
+
+/**
+ * DISC-3: Discovery counts exactness tests.
+ *
+ * The API returns { data: artifacts } with NO total metadata.
+ * Backend limit: default 50, max 100.
+ *
+ * Exactness rule: We can only prove count is exact if returned items < requested limit.
+ * If items === limit, there may be more items, so count should be null (omitted).
+ *
+ * Design fallback: When count exactness cannot be proven, display nothing.
+ * Never display page.length as a definitive project-wide count when API may truncate.
+ */
+describe('LifecycleRail discovery counts exactness (DISC-3)', () => {
+  const minimalNodes: LifecycleNode[] = [
+    { stage: 'brief', label: 'Brief', state: 'free', unlock_hint: null, count: 0, is_current: false },
+    { stage: 'plan', label: 'Plan', state: 'free', unlock_hint: null, count: 0, is_current: false },
+  ];
+
+  const studyHeader = {
+    name: 'Test Study',
+    backTo: '/projects',
+    backLabel: 'All projects',
+  };
+
+  it('displays exact counts when exactness is proven (count < limit)', () => {
+    // When useDiscoveryCounts returns exact counts (less than query limit),
+    // the counts should be displayed
+    const exactCounts = {
+      desk: 3,
+      stakeholder: 2,
+      survey: 1,
+      needsReview: { desk: false, stakeholder: false, survey: false },
+    };
+
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+        discoveryCounts={exactCounts}
+      />,
+    );
+
+    // Individual type counts should be visible
+    const deskLink = screen.getByRole('link', { name: /Desk Research/ });
+    expect(deskLink).toHaveTextContent('3');
+
+    const stakeholderLink = screen.getByRole('link', { name: /Stakeholders/ });
+    expect(stakeholderLink).toHaveTextContent('2');
+
+    const surveyLink = screen.getByRole('link', { name: /Surveys/ });
+    expect(surveyLink).toHaveTextContent('1');
+
+    // "All evidence" should show sum
+    const allEvidenceLink = screen.getByRole('link', { name: /All evidence/ });
+    expect(allEvidenceLink).toHaveTextContent('6');
+  });
+
+  it('hides zero counts (shows nothing, not "0")', () => {
+    const zeroCounts = {
+      desk: 0,
+      stakeholder: 5,
+      survey: 0,
+      needsReview: { desk: false, stakeholder: false, survey: false },
+    };
+
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+        discoveryCounts={zeroCounts}
+      />,
+    );
+
+    // Desk and Survey have 0, should not show count badge
+    const deskLink = screen.getByRole('link', { name: /Desk Research/ });
+    expect(deskLink.querySelector('[class*="nvCount"]')).toBeNull();
+
+    const surveyLink = screen.getByRole('link', { name: /Surveys/ });
+    expect(surveyLink.querySelector('[class*="nvCount"]')).toBeNull();
+
+    // Stakeholder has 5, should show
+    const stakeholderLink = screen.getByRole('link', { name: /Stakeholders/ });
+    expect(stakeholderLink).toHaveTextContent('5');
+  });
+
+  it('omits count when exactness cannot be proven (null count)', () => {
+    // When count is null (API may have truncated), don't display any count
+    const truncatedCounts = {
+      desk: null, // Indeterminate - might be 100+ artifacts
+      stakeholder: 2,
+      survey: 1,
+      needsReview: { desk: false, stakeholder: false, survey: false },
+    };
+
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+        discoveryCounts={truncatedCounts}
+      />,
+    );
+
+    // Desk count is null, should not show count badge
+    const deskLink = screen.getByRole('link', { name: /Desk Research/ });
+    expect(deskLink.querySelector('[class*="nvCount"]')).toBeNull();
+
+    // Stakeholder and Survey have exact counts, should show
+    const stakeholderLink = screen.getByRole('link', { name: /Stakeholders/ });
+    expect(stakeholderLink).toHaveTextContent('2');
+
+    const surveyLink = screen.getByRole('link', { name: /Surveys/ });
+    expect(surveyLink).toHaveTextContent('1');
+  });
+
+  it('omits "All evidence" sum when ANY type count is null', () => {
+    // If we can't prove desk count, we can't prove total either
+    // Don't show a misleading partial sum
+    const truncatedCounts = {
+      desk: null, // Indeterminate
+      stakeholder: 2,
+      survey: 1,
+      needsReview: { desk: false, stakeholder: false, survey: false },
+    };
+
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+        discoveryCounts={truncatedCounts}
+      />,
+    );
+
+    // "All evidence" should NOT show any count badge when sum is indeterminate
+    const allEvidenceLink = screen.getByRole('link', { name: /All evidence/ });
+    expect(allEvidenceLink.querySelector('[class*="nvCount"]')).toBeNull();
+  });
+
+  it('does not show false "100" when there may be more artifacts', () => {
+    // This test verifies the contract: if the API returned exactly 100 items,
+    // useDiscoveryCounts should return null for that type (handled upstream).
+    // Here we just verify null is handled correctly.
+    const atLimitCounts = {
+      desk: null, // API returned 100 desk items — count indeterminate
+      stakeholder: null, // API returned 100 stakeholder items — count indeterminate
+      survey: null, // API returned 100 survey items — count indeterminate
+      needsReview: { desk: false, stakeholder: false, survey: false },
+    };
+
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+        discoveryCounts={atLimitCounts}
+      />,
+    );
+
+    // None of the links should have count badges
+    const allEvidenceLink = screen.getByRole('link', { name: /All evidence/ });
+    const deskLink = screen.getByRole('link', { name: /Desk Research/ });
+    const stakeholderLink = screen.getByRole('link', { name: /Stakeholders/ });
+    const surveyLink = screen.getByRole('link', { name: /Surveys/ });
+
+    expect(allEvidenceLink.querySelector('[class*="nvCount"]')).toBeNull();
+    expect(deskLink.querySelector('[class*="nvCount"]')).toBeNull();
+    expect(stakeholderLink.querySelector('[class*="nvCount"]')).toBeNull();
+    expect(surveyLink.querySelector('[class*="nvCount"]')).toBeNull();
+  });
+
+  it('shows needs-review dot regardless of count exactness', () => {
+    // Needs-review is a boolean signal, not affected by count truncation
+    const countsWithReview = {
+      desk: null, // Count unknown
+      stakeholder: 2,
+      survey: 0,
+      needsReview: {
+        desk: true, // Needs review even though count is unknown
+        stakeholder: false,
+        survey: true,
+      },
+    };
+
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+        discoveryCounts={countsWithReview}
+      />,
+    );
+
+    // Desk needs review — should have dot and sr-only text
+    const deskReviewText = screen.getByRole('link', { name: /Desk Research.*needs your review/ });
+    expect(deskReviewText).toBeInTheDocument();
+
+    // Survey needs review too
+    const surveyReviewText = screen.getByRole('link', { name: /Surveys.*needs your review/ });
+    expect(surveyReviewText).toBeInTheDocument();
+
+    // "All evidence" shows dot if any type needs review
+    const allEvidenceReviewText = screen.getByRole('link', { name: /All evidence.*needs your review/ });
+    expect(allEvidenceReviewText).toBeInTheDocument();
+  });
+});

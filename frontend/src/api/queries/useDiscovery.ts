@@ -211,46 +211,76 @@ export function useKnowledgeGaps(
 // ─── Discovery Counts (for lifecycle nav) ──────────────────────────
 
 /**
- * DISC-3: Compute discovery counts from artifacts list.
- * This derives counts client-side since the backend doesn't have a dedicated counts endpoint yet.
+ * DISC-3: Compute discovery counts from artifacts list with exactness guarantee.
+ *
+ * API contract: GET /discovery/artifacts returns { data: artifacts[] } with no total metadata.
+ * Backend limit: default 50, max 100.
+ *
+ * Exactness rule: We can only prove count is exact if returned items < requested limit.
+ * If items === limit, there may be more items, so count is unknown.
+ *
+ * Design fallback: When count exactness cannot be proven, return null (omit count).
+ * Never display page.length as a definitive project-wide count when API may truncate.
  */
+const ARTIFACTS_QUERY_LIMIT = 100; // Max allowed by backend
+
 export function useDiscoveryCounts(
   projectPublicId: string,
   options?: { enabled?: boolean },
 ) {
   const artifactsQuery = useDiscoveryArtifacts(
     projectPublicId,
-    { status: 'current', limit: 100 },
+    { status: 'current', limit: ARTIFACTS_QUERY_LIMIT },
     { enabled: options?.enabled },
   );
 
   const runsQuery = useDiscoveryRuns(
     projectPublicId,
-    { limit: 100 },
+    { limit: ARTIFACTS_QUERY_LIMIT },
     { enabled: options?.enabled },
   );
 
-  // Derive counts from artifacts
-  const counts = {
-    desk: 0,
-    stakeholder: 0,
-    survey: 0,
+  // DISC-3 exactness: If we received exactly the limit, count may be truncated
+  const artifactsExact = artifactsQuery.data
+    ? artifactsQuery.data.length < ARTIFACTS_QUERY_LIMIT
+    : false;
+
+  // Derive counts from artifacts (only if exactness can be proven)
+  const counts: {
+    desk: number | null;
+    stakeholder: number | null;
+    survey: number | null;
+  } = {
+    desk: null,
+    stakeholder: null,
+    survey: null,
   };
 
-  if (artifactsQuery.data) {
+  if (artifactsQuery.data && artifactsExact) {
+    // Count is exact — safe to display
+    let deskCount = 0;
+    let stakeholderCount = 0;
+    let surveyCount = 0;
+
     for (const artifact of artifactsQuery.data) {
-      // Map artifact type to filter type
       if (artifact.artifactType === 'desk_research') {
-        counts.desk++;
+        deskCount++;
       } else if (artifact.artifactType === 'stakeholder_synthesis') {
-        counts.stakeholder++;
+        stakeholderCount++;
       } else if (artifact.artifactType === 'survey_synthesis') {
-        counts.survey++;
+        surveyCount++;
       }
     }
-  }
 
-  // Derive needs-review from runs (failed or processing states that need attention)
+    counts.desk = deskCount;
+    counts.stakeholder = stakeholderCount;
+    counts.survey = surveyCount;
+  }
+  // If !artifactsExact, counts remain null (omitted per design fallback)
+
+  // Derive needs-review from runs (failed states that need attention)
+  // Note: needs-review is boolean, not a count, so truncation doesn't matter
+  // as long as we see at least one failed run of that type
   const needsReview = {
     desk: false,
     stakeholder: false,
@@ -259,7 +289,6 @@ export function useDiscoveryCounts(
 
   if (runsQuery.data) {
     for (const run of runsQuery.data) {
-      // DISC-3: A run needs review if it failed or is in a state requiring researcher action
       const needsAttention = run.status === 'failed';
       if (needsAttention) {
         if (run.discoveryType === 'desk_research') {
