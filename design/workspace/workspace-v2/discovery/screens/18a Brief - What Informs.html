@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Qori Discovery — 18a Brief — What informs this brief</title><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Cormorant+Garamond:wght@500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="discovery.css"></head>
+<body data-screen="18a" data-nav="brief" data-synth="current"><div class="app"><main class="main">
+<header class="hdr"><button class="navtg" aria-label="Study navigation"><i data-i="menu" data-s="18"></i></button><span class="crumb"><a href="#">Claim Status Experience</a><i data-i="chevron-right" data-s="12"></i>Research Brief<i data-i="chevron-right" data-s="12"></i>New brief</span><span class="grow"></span></header>
+<div class="body"><div class="scroll"><div class="doc">
+<div class="mast"><div class="eyebrow">Research brief · intake</div><h1>Start the brief</h1></div>
+<form onsubmit="return false" style="margin-top:32px">
+<fieldset class="bchoice"><legend>What informs this brief?</legend><p class="lh">Choose once. The brief will state what informed it.</p>
+<div class="bopts">
+<div class="bopt on"><label><input type="radio" name="inf" checked><span><span class="bt">Cross-source synthesis <span class="mk static">X2</span><span class="rec">Recommended</span></span><span class="bm">Compares D1 · S1 · V1 · Oct 3 · reviewed by you</span></span><span></span></label>
+<div class="nest"><p class="nh">Carry these focus items into the brief</p>
+<label class="nrow"><input type="checkbox" class="chk" checked><span><span class="n">1</span>Make claim status legible after submission.</span><span class="mks"><span class="mk static">D1</span><span class="mk static">S1</span><span class="mk static">V1</span></span></label>
+<label class="nrow"><input type="checkbox" class="chk" checked><span><span class="n">2</span>Test status language with Veterans before redesigning labels.</span><span class="mks"><span class="mk static">D1</span><span class="mk static">S1</span></span></label>
+<label class="nrow"><input type="checkbox" class="chk"><span><span class="n">3</span>Understand when Veterans fall back to phone support.</span><span class="mks"><span class="mk static">V1</span></span></label>
+<p class="nh" style="font-weight:400;color:var(--color-text-muted);margin:8px 0 0">1 statement you set aside in X2 isn't offered.</p></div></div>
+<div class="bopt"><label><input type="radio" name="inf"><span><span class="bt">Selected Discovery runs</span><span class="bm">The brief receives each selected run's extracted items · 4 ready</span></span><span></span></label></div>
+<div class="bopt"><label><input type="radio" name="inf"><span><span class="bt">No Discovery</span><span class="bm">Start from the project problem statement</span></span><span></span></label></div>
+</div></fieldset>
+<div class="fld"><label for="ps">Problem statement <span class="req">Required</span></label><textarea class="ta" id="ps" placeholder="In your words: what problem is this study about?"></textarea>
+<div class="sugg"><span><b>Suggestion from X2:</b> Veterans can't tell where their claim is after submission, and status labels are written in internal processing terms.</span><button class="btn qt sm" type="button">Use suggestion</button></div></div>
+<div class="fld"><label for="pop">Who is this study about?</label><input class="in" id="pop" value="Veterans who filed a disability claim in the last 6 months"><span class="pf-tag">From Discovery synthesis X2 · change if needed</span></div>
+<div class="formacts"><button class="btn pri lg">Continue</button><a class="btn qt lg" href="#">Cancel</a></div>
+</form>
+<div class="anote"><b>DISC-6.</b> Screen state: Oct 3, X2 current (before D2 was ready). <b>Defaults</b>: synthesis if a current one exists → else Selected runs with all Ready runs pre-checked → else No Discovery only. <b>Stale synthesis</b>: no RECOMMENDED tag; meta shows <span class="sb rev"><span class="ring"></span>Out of date — doesn't include D2</span>; still selectable. <b>Selected runs</b> expanded: nested checklist of Ready runs (marker · type · name); disabled runs listed with reason; sends <code>discovery_selections: ['type::slug']</code>. Required judgment fields get <i>suggestions</i> only, never silent prefill.</div>
+</div></div></div>
+</main></div><script src="discovery-shell.js"></script></body></html>
