@@ -1,0 +1,201 @@
+/**
+ * RunLedgerTable — DISC-3 B6
+ *
+ * Per DISCOVERY_REDLINES.md B6.
+ */
+
+.ledger {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font: 13px/20px var(--font-ui);
+}
+
+.thead {
+  border-bottom: 1px solid var(--color-border-emphasis);
+}
+
+.thead th {
+  padding: var(--space-2) var(--space-2) var(--space-2) 0;
+  text-align: left;
+  font: var(--weight-medium) 11px/16px var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.thMarker {
+  width: 48px;
+}
+
+.thRun {
+  min-width: 200px;
+}
+
+.thSources {
+  width: 100px;
+}
+
+.thStatus {
+  width: 160px;
+}
+
+.thUpdated {
+  width: 80px;
+}
+
+.thUsedBy {
+  width: 120px;
+}
+
+/* Group header (sticky) */
+.groupHeader {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-paper);
+}
+
+.groupLabel {
+  padding: var(--space-3) 0 var(--space-2);
+  font: var(--weight-semibold) 12px/16px var(--font-ui);
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+/* Row */
+.row {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.row:hover {
+  background: var(--color-surface-hover);
+}
+
+.row td {
+  padding: var(--space-3) var(--space-2) var(--space-3) 0;
+  vertical-align: middle;
+}
+
+.cellMarker {
+  padding-left: var(--space-1);
+}
+
+.cellRun {
+  max-width: 300px;
+}
+
+.runLink {
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: var(--weight-medium);
+}
+
+.runLink:hover {
+  color: var(--color-link);
+  text-decoration: underline;
+}
+
+.cellSources {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.cellStatus {
+  font-size: 12px;
+}
+
+.cellUpdated {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.cellUsedBy {
+  color: var(--color-text-quiet);
+  font-size: 12px;
+}
+
+/* Status variants */
+.statusReady {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-success);
+}
+
+.statusProcessing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-info);
+}
+
+.statusFailed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-error);
+}
+
+.statusMuted {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+}
+
+/* Spinner animation */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}
+
+/* Show all row */
+.showAllRow td {
+  padding: var(--space-2) 0;
+  border-bottom: none;
+}
+
+.showAllBtn {
+  background: none;
+  border: none;
+  padding: var(--space-1) var(--space-2);
+  font: var(--weight-medium) 12px/16px var(--font-ui);
+  color: var(--color-link);
+  cursor: pointer;
+}
+
+.showAllBtn:hover {
+  text-decoration: underline;
+}
+
+/* Responsive: stack on smaller screens */
+@media (max-width: 980px) {
+  .thSources,
+  .thUpdated,
+  .thUsedBy,
+  .cellSources,
+  .cellUpdated,
+  .cellUsedBy {
+    display: none;
+  }
+}

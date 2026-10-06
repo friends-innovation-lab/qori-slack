@@ -1,5 +1,7 @@
 /**
  * App — Router + providers. All authenticated routes wrapped in AppShell.
+ *
+ * DISC-3: Added Discovery routes under /studies/:studyPublicId/discovery/*
  */
 
 import { BrowserRouter, Routes, Route } from 'react-router';
@@ -17,6 +19,8 @@ import { PlanDocument } from '@/pages/PlanDocument';
 import { Projects } from '@/pages/Projects';
 import { ProjectDetail } from '@/pages/ProjectDetail';
 import { Login } from '@/pages/Login';
+// DISC-3: Discovery pages
+import { DiscoveryHub, DeskIntake, StakeholderIntake, DiscoveryRunPage } from '@/pages/discovery';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,6 +53,13 @@ export function App() {
                       <Route path="studies/:studyPublicId" element={<StudyOverview />} />
                       <Route path="studies/:studyPublicId/plan/new" element={<PlanForm />} />
                       <Route path="studies/:studyPublicId/plan" element={<PlanDocument />} />
+                      {/* DISC-3: Discovery routes */}
+                      <Route path="studies/:studyPublicId/discovery" element={<DiscoveryHub />} />
+                      <Route path="studies/:studyPublicId/discovery/new/desk" element={<DeskIntake />} />
+                      <Route path="studies/:studyPublicId/discovery/new/stakeholder" element={<StakeholderIntake />} />
+                      <Route path="studies/:studyPublicId/discovery/runs/:runId" element={<DiscoveryRunPage />} />
+                      <Route path="studies/:studyPublicId/discovery/runs/:runId/sources" element={<DiscoveryRunPage />} />
+                      <Route path="studies/:studyPublicId/discovery/runs/:runId/extracted" element={<DiscoveryRunPage />} />
                       <Route path="*" element={<Home />} />
                     </Routes>
                   </AppShell>

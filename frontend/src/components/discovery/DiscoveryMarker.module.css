@@ -1,0 +1,35 @@
+/**
+ * DiscoveryMarker — DISC-3 B1
+ *
+ * Per DISCOVERY_REDLINES.md B1:
+ * - Type: mono 11/16 600, 0.05em, --color-brand-deep
+ * - Box: none (IdTag style)
+ * - Pre-Ready: --color-text-quiet
+ * - Unavailable: --color-text-muted, strikethrough
+ */
+
+.marker {
+  font: var(--weight-semibold) 11px/16px var(--font-mono);
+  letter-spacing: 0.05em;
+  color: var(--color-brand-deep);
+}
+
+/* Pre-Ready: dash placeholder */
+.marker:not(.unavailable):empty::before,
+.marker[aria-label="No marker yet"] {
+  color: var(--color-text-quiet);
+}
+
+/* Unavailable: muted with strikethrough */
+.unavailable {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--color-text-quiet);
+}
+
+/* Marker group: inline-flex, gap 4, wraps */
+.group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}

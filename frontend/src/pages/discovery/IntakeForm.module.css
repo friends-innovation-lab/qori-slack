@@ -1,0 +1,242 @@
+/**
+ * IntakeForm — DISC-3
+ *
+ * Shared styles for Discovery intake forms (Desk, Stakeholder, Survey).
+ * Per DISCOVERY_REDLINES.md §A.
+ */
+
+.header {
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.eyebrow {
+  display: block;
+  font: var(--weight-semibold) 11px/16px var(--font-mono);
+  letter-spacing: var(--type-eyebrow-track);
+  text-transform: uppercase;
+  color: var(--color-brand-deep);
+  margin-bottom: var(--space-2);
+}
+
+.title {
+  font: var(--weight-medium) 27px/31px var(--font-display);
+  color: var(--color-text);
+  margin: 0 0 var(--space-2);
+}
+
+.description {
+  font: 15px/24px var(--font-serif);
+  color: var(--color-text-meta);
+  margin: 0;
+  max-width: 66ch;
+}
+
+/* Form */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 640px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font: var(--weight-semibold) 14px/20px var(--font-ui);
+  color: var(--color-text);
+}
+
+.optional {
+  font-weight: var(--weight-regular);
+  color: var(--color-text-muted);
+  margin-left: var(--space-1);
+}
+
+.hint {
+  display: block;
+  font-weight: var(--weight-regular);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+/* Drop zone */
+.dropZone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  border: 2px dashed var(--color-border-emphasis);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  transition: border-color var(--motion-fast), background-color var(--motion-fast);
+}
+
+.dropZone:hover,
+.dropZoneActive {
+  border-color: var(--color-brand);
+  background: var(--color-brand-wash);
+}
+
+.dropIcon {
+  color: var(--color-text-muted);
+}
+
+.dropText {
+  font: 14px/20px var(--font-ui);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.browseLabel {
+  color: var(--color-link);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.browseLabel:hover {
+  text-decoration: none;
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* File list */
+.fileList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  font: 13px/20px var(--font-ui);
+}
+
+.fileItemError {
+  background: var(--color-error-surface);
+}
+
+.fileName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileSize {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.fileError {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-error);
+  font-size: 12px;
+}
+
+.removeFile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.removeFile:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Context notes for stakeholder form (per REDLINES B8) */
+.contextNote {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  font: 13px/20px var(--font-ui);
+  color: var(--color-text-meta);
+}
+
+.contextNote svg {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.contextNote strong {
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+}
+
+/* Legacy context line - keep for backwards compatibility */
+.contextLine {
+  font: 14px/20px var(--font-ui);
+  color: var(--color-text-meta);
+  padding: var(--space-3);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-md);
+}
+
+/* Responsive */
+@media (max-width: 767px) {
+  .header {
+    padding: var(--space-4);
+  }
+
+  .title {
+    font-size: 21px;
+    line-height: 25px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions button {
+    width: 100%;
+  }
+}

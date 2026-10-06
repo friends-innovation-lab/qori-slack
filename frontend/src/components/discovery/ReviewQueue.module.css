@@ -1,0 +1,96 @@
+/**
+ * ReviewQueue — DISC-3 B5
+ *
+ * Per DISCOVERY_REDLINES.md B5:
+ * Row: grid minmax(0,1fr) minmax(0,1.15fr) auto, gap 16, min-height 56, padding 12 2
+ */
+
+.queue {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) auto;
+  gap: var(--space-4);
+  align-items: center;
+  min-height: 56px;
+  padding: var(--space-3) var(--space-1);
+  border-top: 1px solid var(--color-border);
+}
+
+.row:last-child {
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Object: type · name */
+.object {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.type {
+  font: var(--weight-semibold) 11px/16px var(--font-mono);
+  letter-spacing: var(--type-eyebrow-track);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.name {
+  font: var(--weight-semibold) 13px/20px var(--font-ui);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Gate: icon + message */
+.gate {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font: 13px/20px var(--font-ui);
+  color: var(--color-text-meta);
+}
+
+.gate.error {
+  color: var(--color-error);
+}
+
+.gate.warning {
+  color: var(--color-brand-text);
+}
+
+/* Action */
+.action {
+  font: var(--weight-semibold) 13px/20px var(--font-ui);
+  color: var(--color-link);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.action:hover {
+  text-decoration: underline;
+}
+
+/* Responsive: ≤980px */
+@media (max-width: 980px) {
+  .row {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+  }
+
+  .gate {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+  }
+
+  .action {
+    grid-column: 2 / 3;
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+}

@@ -53,3 +53,10 @@
   border-style: dashed;
   color: var(--color-text-muted);
 }
+
+/* DISC-3 B2: Brand/brass color for attention states */
+.brand {
+  background-color: var(--color-brand-wash);
+  border-color: var(--color-brand);
+  color: var(--color-brand-text);
+}

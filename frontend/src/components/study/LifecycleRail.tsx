@@ -6,18 +6,20 @@
  * - inverse: Dark panel, 224px, grouped lifecycle per CD (VC-2A)
  *
  * VC-2A: The inverse variant renders the approved CD composition:
- * - 5 groups, 15 items (LIFECYCLE_NAV_CONVERGENCE.md §1)
- * - Only Research Brief and Research Plan are real routes
- * - 13 placeholders are non-interactive
+ * - 5 groups, 16 items (LIFECYCLE_NAV_CONVERGENCE.md §1 + DISC-3)
+ * - Discovery rows, Brief, and Plan are routes
+ * - Synthesis is a placeholder until DISC-5
  * - Study name links to StudyOverview
  * - Plan lock state from computeLifecycleNodes
+ *
+ * DISC-3: Discovery rows show Ready artifact counts and needs-review brass dots.
  */
 
-import { NavLink, Link } from 'react-router';
+import { NavLink, Link, useLocation } from 'react-router';
 import { Lock, AlertTriangle, ArrowRight, Circle } from 'lucide-react';
 import type { LifecycleNode } from '@qori/api-contracts';
 import { stageRoutes } from './lifecycle';
-import { WORKSPACE_LIFECYCLE, type WorkspaceNavItem } from './workspaceLifecycle';
+import { WORKSPACE_LIFECYCLE, type WorkspaceNavItem, type DiscoveryTypeFilter } from './workspaceLifecycle';
 import styles from './LifecycleRail.module.css';
 
 interface StudyHeader {
@@ -31,6 +33,22 @@ interface StudyHeader {
   orgName?: string;
 }
 
+/**
+ * DISC-3: Discovery counts per type.
+ * Count = Ready artifacts of that type. null = loading.
+ */
+export interface DiscoveryCounts {
+  desk: number | null;
+  stakeholder: number | null;
+  survey: number | null;
+  /** Whether any run needs researcher review (gate pending, failed, expiring) */
+  needsReview: {
+    desk: boolean;
+    stakeholder: boolean;
+    survey: boolean;
+  };
+}
+
 interface LifecycleRailProps {
   studyPublicId: string;
   nodes: LifecycleNode[];
@@ -38,6 +56,8 @@ interface LifecycleRailProps {
   variant?: 'default' | 'inverse';
   /** Study header info (required for inverse variant) */
   study?: StudyHeader;
+  /** DISC-3: Discovery counts per type (for inverse variant) */
+  discoveryCounts?: DiscoveryCounts;
 }
 
 const stateIcons = {
@@ -53,8 +73,10 @@ export function LifecycleRail({
   nodes,
   variant = 'default',
   study,
+  discoveryCounts,
 }: LifecycleRailProps) {
   const isInverse = variant === 'inverse';
+  const location = useLocation();
 
   // VC-2A: For inverse variant, get Plan lock state from computeLifecycleNodes
   const planNode = nodes.find((n) => n.stage === 'plan');
@@ -64,6 +86,56 @@ export function LifecycleRail({
   const isLocked = (item: WorkspaceNavItem): boolean => {
     if (item.kind !== 'route') return false;
     return item.stage === 'plan' && isPlanLocked;
+  };
+
+  // DISC-3: Get discovery count for a type
+  const getDiscoveryCount = (filterType: DiscoveryTypeFilter | null): number | null => {
+    if (!discoveryCounts) return null;
+    if (filterType === null) {
+      // "All evidence" shows sum of all types.
+      // DISC-3 exactness: If ANY type count is null (indeterminate), sum is also null.
+      // This prevents displaying a misleading partial sum as definitive.
+      const { desk, stakeholder, survey } = discoveryCounts;
+      if (desk === null || stakeholder === null || survey === null) {
+        return null;
+      }
+      return desk + stakeholder + survey;
+    }
+    return discoveryCounts[filterType];
+  };
+
+  // DISC-3: Check if a type needs review
+  const getNeedsReview = (filterType: DiscoveryTypeFilter | null): boolean => {
+    if (!discoveryCounts?.needsReview) return false;
+    if (filterType === null) {
+      // "All evidence" shows dot if any type needs review
+      return (
+        discoveryCounts.needsReview.desk ||
+        discoveryCounts.needsReview.stakeholder ||
+        discoveryCounts.needsReview.survey
+      );
+    }
+    return discoveryCounts.needsReview[filterType];
+  };
+
+  // DISC-3: Check if discovery route is active (handle query params)
+  const isDiscoveryActive = (item: WorkspaceNavItem): boolean => {
+    if (item.kind !== 'discovery-route') return false;
+    const discoveryBase = `/studies/${studyPublicId}/discovery`;
+    if (!location.pathname.startsWith(discoveryBase)) return false;
+
+    // For hub routes, match query param
+    if (location.pathname === discoveryBase || location.pathname === `${discoveryBase}/`) {
+      const params = new URLSearchParams(location.search);
+      const typeParam = params.get('type');
+      if (item.path === '') {
+        // "All evidence" is active when no type filter
+        return !typeParam;
+      }
+      // Type-filtered routes match their type param
+      return item.path === `?type=${typeParam}`;
+    }
+    return false;
   };
 
   // VC-2A: Inverse variant with grouped lifecycle
@@ -86,7 +158,7 @@ export function LifecycleRail({
           </div>
         )}
 
-        {/* VC-2A: Grouped lifecycle — 5 groups, 15 items */}
+        {/* VC-2A + DISC-3: Grouped lifecycle — 5 groups, 16 items */}
         {WORKSPACE_LIFECYCLE.map(({ group, items }) => (
           <section key={group} aria-labelledby={`lc-${group.toLowerCase()}`}>
             <h2 id={`lc-${group.toLowerCase()}`} className={styles.grp}>
@@ -94,6 +166,34 @@ export function LifecycleRail({
             </h2>
             <ul className={styles.list}>
               {items.map((item) => {
+                // DISC-3: Discovery routes
+                if (item.kind === 'discovery-route') {
+                  const to = `/studies/${studyPublicId}/discovery${item.path}`;
+                  const count = getDiscoveryCount(item.filterType);
+                  const needsReview = getNeedsReview(item.filterType);
+                  const isActive = isDiscoveryActive(item);
+
+                  return (
+                    <li key={item.label}>
+                      <NavLink
+                        to={to}
+                        className={`${styles.nv} ${isActive ? styles.nvOn : ''}`}
+                      >
+                        <span className={styles.nvText}>{item.label}</span>
+                        {count !== null && count > 0 && (
+                          <span className={styles.nvCount}>{count}</span>
+                        )}
+                        {needsReview && (
+                          <>
+                            <span className={styles.nvDot} aria-hidden="true" />
+                            <span className={styles.srOnly}>, needs your review</span>
+                          </>
+                        )}
+                      </NavLink>
+                    </li>
+                  );
+                }
+
                 if (item.kind === 'route') {
                   const route = stageRoutes[item.stage] ?? '';
                   const to = `/studies/${studyPublicId}${route}`;

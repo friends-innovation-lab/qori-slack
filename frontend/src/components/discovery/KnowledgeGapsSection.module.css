@@ -1,0 +1,63 @@
+/**
+ * KnowledgeGapsSection — DISC-3
+ *
+ * Hub §4 knowledge gaps styling.
+ */
+
+.section {
+  padding: var(--space-4) 0;
+}
+
+.header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-3);
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.gap {
+  flex: 1;
+  font: var(--text-body-size)/var(--text-body-line) var(--font-serif);
+  color: var(--color-text);
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: none;
+  border: none;
+  font: var(--weight-medium) 12px/16px var(--font-ui);
+  color: var(--color-link);
+  cursor: pointer;
+}
+
+.toggle:hover {
+  text-decoration: underline;
+}
+
+.footnote {
+  margin-top: var(--space-3);
+  font: 12px/16px var(--font-ui);
+  color: var(--color-text-muted);
+  font-style: italic;
+}

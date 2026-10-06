@@ -394,3 +394,25 @@
   outline: var(--focus-ring-inverse);
   outline-offset: -2px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DISC-3: Discovery count and needs-review dot
+   Per DISCOVERY_REDLINES.md B3
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* DISC-3: Artifact count after label */
+.nvCount {
+  font: var(--weight-medium) 11px/16px var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--color-text-inverse-quiet);
+}
+
+/* DISC-3: Needs-review brass dot */
+.nvDot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--color-indicator-inverse);
+  margin-left: var(--space-2);
+}
