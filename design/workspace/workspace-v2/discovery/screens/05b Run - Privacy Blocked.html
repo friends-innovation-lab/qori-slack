@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Qori Discovery — 05b Run — Privacy blocked</title><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Cormorant+Garamond:wght@500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="discovery.css"></head>
+<body data-screen="05b" data-nav="desk"><div class="app"><main class="main">
+<header class="hdr"><button class="navtg" aria-label="Study navigation"><i data-i="menu" data-s="18"></i></button><span class="crumb"><a href="#">Claim Status Experience</a><i data-i="chevron-right" data-s="12"></i><a href="02 Hub - Populated.html">Discovery</a><i data-i="chevron-right" data-s="12"></i>Appeals correspondence</span><nav class="tabs" aria-label="Run views"><a href="06 Run - Report.html" class="on" aria-current="page">Report</a><a href="07 Run - Sources.html">Sources</a><a aria-disabled="true" title="Available when the run is ready">Extracted</a></nav><span class="grow"></span><span class="sb fail hide-sm"><i data-i="triangle-alert"></i>Failed · privacy</span><span class="vr hide-sm"></span><button class="iconbtn" aria-label="Comments" title="Comments"><i data-i="message-square"></i></button></header>
+<div class="body"><div class="scroll"><div class="doc">
+<div class="mast"><div class="eyebrow">Desk research</div><h1>Appeals correspondence</h1><div class="meta"><span><span class="k">Marker</span>None — not analyzed</span><span><span class="k">Submitted</span>Oct 5 by John Doe</span><span><span class="k">Files</span>2</span></div></div>
+<div class="alert crit" role="alert" style="margin-top:32px"><div class="ah"><i data-i="triangle-alert" data-s="16"></i>Qori found possible personal information and didn't analyze these files</div>
+<table class="pii"><tbody>
+<tr><td class="f">appeal-letter-template-annotated.pdf</td><td class="l">Email address</td><td class="q">"…contact j••••@va.gov for…"</td></tr>
+<tr><td class="f">notes-0912.docx</td><td class="l">Phone number</td><td class="q">"…call (•••) •••-4410…"</td></tr>
+</tbody></table>
+<p>Remove or redact the information in your files, then upload them again. Your topic and intent are kept.</p>
+<div class="acts"><button class="btn qt">Replace files</button><button class="btn qt" disabled aria-describedby="rf-why">Remove flagged files and retry</button><button class="btn crit-o">Delete run</button></div><p id="rf-why" style="margin:8px 0 0;font-size:12px;color:var(--color-text-muted)">Remove flagged files isn't available: all files were flagged.</p></div>
+<section class="sec" aria-labelledby="h-in"><h2 id="h-in">What you submitted</h2>
+<div class="facts" style="border-top:1px solid var(--color-border)"><div><div class="k">Topic</div><div class="v">Appeals correspondence</div></div><div><div class="k">This source contributes</div><div class="v">How decision and appeal letters describe claim status</div></div></div>
+<ul class="files" aria-label="Files, 2">
+<li class="rej"><span class="fi"><i data-i="triangle-alert"></i></span><span class="fn"><span class="a">appeal-letter-template-annotated</span><span class="b">.pdf</span></span><span class="why">Email address detected</span><span></span></li>
+<li class="rej"><span class="fi"><i data-i="triangle-alert"></i></span><span class="fn"><span class="a">notes-0912</span><span class="b">.docx</span></span><span class="why">Phone number detected</span><span></span></li>
+</ul></section>
+<div class="anote"><b>HARD STOP</b> (current backend <code>PrivacyError {label, snippet}</code>). No override, no "analyze anyway". Snippets are masked in the UI (all but last 4 digits / first letter of local part). Buttons ordered least → most destructive. "Remove flagged files and retry" is disabled when every file is flagged (as here it would leave 0) — rendered disabled with its reason as visible text.</div>
+</div></div></div>
+</main></div><script src="discovery-shell.js"></script></body></html>
