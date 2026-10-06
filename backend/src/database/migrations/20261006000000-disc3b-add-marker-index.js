@@ -10,8 +10,11 @@
  * Concurrency protection via unique constraint on (project_id, discovery_type, marker_index).
  * Allocation uses atomic UPDATE ... RETURNING pattern on a counter table.
  *
- * Historical runs: marker_index is nullable for legacy records that predate DISC-3B.
- * New runs receive a marker at creation time.
+ * Historical runs: marker_index is NULL for legacy records that predate DISC-3B.
+ * LOCKED RULE: No backfill — historical D/S/V identity cannot be fabricated from
+ * created_at order, topic slug, or any inferred ordering.
+ *
+ * New runs after this migration receive durable markers starting at 1.
  */
 
 /** @type {import('sequelize-cli').Migration} */
@@ -89,37 +92,18 @@ module.exports = {
         }
       );
 
-      // 5. Backfill marker_index for existing runs (by creation order within project/type)
-      //    This is safe because we're assigning deterministically by created_at order
-      await queryInterface.sequelize.query(
-        `WITH ranked AS (
-          SELECT id, project_id, discovery_type,
-                 ROW_NUMBER() OVER (
-                   PARTITION BY project_id, discovery_type
-                   ORDER BY created_at ASC
-                 ) AS rn
-          FROM discovery_runs
-          WHERE marker_index IS NULL
-        )
-        UPDATE discovery_runs dr
-        SET marker_index = r.rn
-        FROM ranked r
-        WHERE dr.id = r.id`,
-        { transaction }
-      );
-
-      // 6. Initialize counters for existing project/type combinations
-      await queryInterface.sequelize.query(
-        `INSERT INTO discovery_marker_counters (project_id, discovery_type, next_index, created_at, updated_at)
-         SELECT project_id, discovery_type, COALESCE(MAX(marker_index), 0) + 1, NOW(), NOW()
-         FROM discovery_runs
-         WHERE marker_index IS NOT NULL
-         GROUP BY project_id, discovery_type
-         ON CONFLICT (project_id, discovery_type) DO UPDATE
-         SET next_index = EXCLUDED.next_index,
-             updated_at = NOW()`,
-        { transaction }
-      );
+      // 5. Historical runs: marker_index intentionally left NULL
+      //    LOCKED RULE: Do NOT fabricate historical D/S/V identity from:
+      //    - current list position
+      //    - topic slug
+      //    - GitHub filename
+      //    - arbitrary row ordering (including created_at)
+      //
+      //    Historical runs have no pre-existing canonical marker identity.
+      //    New runs after this migration receive durable markers starting at 1.
+      //    Counter table starts empty; first allocation per project/type creates row.
+      //
+      //    NO BACKFILL. Historical marker_index remains NULL.
 
       await transaction.commit();
     } catch (error) {
