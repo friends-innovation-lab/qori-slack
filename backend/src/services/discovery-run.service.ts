@@ -21,6 +21,7 @@ import type {
 import type { DiscoveryRunSource } from '../database/models/discovery_run_source';
 import type { EvidenceSource } from '../database/models/evidence_source';
 import type { CreationAttributes } from 'sequelize';
+import { allocateMarkerIndex, formatMarker } from './discovery-marker.service';
 
 const DiscoveryRunModel = sequelize.models.DiscoveryRun as typeof DiscoveryRun;
 const DiscoveryRunSourceModel = sequelize.models.DiscoveryRunSource as typeof DiscoveryRunSource;
@@ -65,28 +66,62 @@ export class DiscoveryRunStateError extends Error {
 /**
  * Create a new DiscoveryRun in pending state.
  * Per locked decision A: Run identity exists BEFORE execution begins.
+ *
+ * DISC-3B: Allocates a stable marker_index at creation time.
+ * Marker allocation is atomic to prevent duplicate markers under concurrency.
  */
 export async function createDiscoveryRun(
   input: CreateDiscoveryRunInput,
   transaction?: Transaction,
 ): Promise<DiscoveryRun> {
-  const run = await DiscoveryRunModel.create(
-    {
-      project_id: input.projectId,
-      discovery_type: input.discoveryType,
-      topic: input.topic,
-      topic_slug: input.topicSlug,
-      source_intent: input.sourceIntent,
-      actor_id: input.actorId,
-      created_by_identity: input.createdByIdentity,
-      status: 'pending',
-      stage: input.stage ?? null,
-      attempt_count: 1,
-    } as CreationAttributes<DiscoveryRun>,
-    { transaction },
-  );
+  // Use provided transaction or create a new one for atomic marker allocation
+  const t = transaction ?? (await sequelize.transaction());
+  const shouldCommit = !transaction;
 
-  return run;
+  try {
+    // DISC-3B: Allocate marker atomically
+    const markerIndex = await allocateMarkerIndex(
+      input.projectId,
+      input.discoveryType,
+      t,
+    );
+
+    const run = await DiscoveryRunModel.create(
+      {
+        project_id: input.projectId,
+        discovery_type: input.discoveryType,
+        topic: input.topic,
+        topic_slug: input.topicSlug,
+        source_intent: input.sourceIntent,
+        actor_id: input.actorId,
+        created_by_identity: input.createdByIdentity,
+        status: 'pending',
+        stage: input.stage ?? null,
+        attempt_count: 1,
+        marker_index: markerIndex,
+      } as CreationAttributes<DiscoveryRun>,
+      { transaction: t },
+    );
+
+    if (shouldCommit) {
+      await t.commit();
+    }
+
+    return run;
+  } catch (error) {
+    if (shouldCommit) {
+      await t.rollback();
+    }
+    throw error;
+  }
+}
+
+/**
+ * Get the formatted marker for a run (e.g., "D1", "S2").
+ * Returns null for legacy runs without markers.
+ */
+export function getRunMarker(run: DiscoveryRun): string | null {
+  return formatMarker(run.discovery_type, run.marker_index);
 }
 
 /**

@@ -181,7 +181,9 @@ describe('pattern: as-any budget enforcement', () => {
     // Budget raised 325 → 340 by WS-2 content-update service (PATCH endpoint Sequelize model
     // access for artifact_sections upsert, study_variables update, artifact lookup/update,
     // GitHub projection rendering — same bounded Sequelize categories).
-    expect(total).toBeLessThanOrEqual(340);
+    // Budget raised 340 → 345 by DISC-3B (getArtifactVariables/getKnowledgeGaps Sequelize
+    // model findAll with includes — same bounded Sequelize categories).
+    expect(total).toBeLessThanOrEqual(345);
   });
 
   it('events.ts has no more than 1 as-any cast (excluding comments)', () => {

@@ -336,4 +336,75 @@ router.get('/artifacts/:artifactId', requireAuth, async (req, res, next) => {
   }
 });
 
+/**
+ * GET /api/v1/projects/:projectId/discovery/artifacts/:artifactId/variables
+ *
+ * DISC-3B: Get extracted cascade variables for a Discovery artifact.
+ * Queries canonical study_variables via discovery_artifact_fk_id lineage.
+ */
+router.get('/artifacts/:artifactId/variables', requireAuth, async (req, res, next) => {
+  try {
+    const projectId = extractProjectId(req.params);
+    if (projectId === null) {
+      res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid project ID' },
+      });
+      return;
+    }
+
+    const artifactId = req.params.artifactId;
+    if (!artifactId || typeof artifactId !== 'string') {
+      res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid artifact ID' },
+      });
+      return;
+    }
+
+    const variables = await discoveryAppService.getArtifactVariables(
+      req.ctx!,
+      projectId,
+      artifactId,
+    );
+
+    if (!variables) {
+      res.status(404).json({
+        error: { code: 'NOT_FOUND', message: 'Discovery artifact not found' },
+      });
+      return;
+    }
+
+    res.json({ data: variables });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KNOWLEDGE GAPS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/v1/projects/:projectId/discovery/knowledge-gaps
+ *
+ * DISC-3B: Get aggregated knowledge gaps across all current Discovery artifacts.
+ * Preserves provenance for each gap.
+ */
+router.get('/knowledge-gaps', requireAuth, async (req, res, next) => {
+  try {
+    const projectId = extractProjectId(req.params);
+    if (projectId === null) {
+      res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid project ID' },
+      });
+      return;
+    }
+
+    const gaps = await discoveryAppService.getKnowledgeGaps(req.ctx!, projectId);
+
+    res.json({ data: gaps });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
