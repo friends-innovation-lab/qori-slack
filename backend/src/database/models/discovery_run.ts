@@ -84,6 +84,9 @@ class DiscoveryRun extends Model<
   declare claimed_at: Date | null;
   declare heartbeat_at: Date | null;
 
+  // Marker identity (DISC-3B)
+  declare marker_index: number | null;
+
   // Association mixins
   declare getProject: BelongsToGetAssociationMixin<Project>;
   declare project?: NonAttribute<Project>;
@@ -233,6 +236,11 @@ export default (sequelize: Sequelize) => {
       heartbeat_at: {
         type: DataTypes.DATE,
         allowNull: true,
+      },
+      // DISC-3B: Marker identity
+      marker_index: {
+        type: DataTypes.INTEGER,
+        allowNull: true, // Nullable for historical runs
       },
     },
     {

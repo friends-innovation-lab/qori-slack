@@ -28,7 +28,12 @@ import type {
   DiscoveryArtifactSummary,
   DiscoveryArtifactDetail,
   DiscoveryExecutionResult,
+  DiscoveryArtifactVariables,
+  DiscoveryVariableItem,
+  DiscoveryKnowledgeGap,
+  DiscoveryKnowledgeGapsResponse,
 } from '../types/discovery';
+import { VARIABLE_LABELS } from '../types/discovery';
 import { format } from 'date-fns';
 import { assertProjectAccessByActor } from '../services/authorization.service';
 import { getProjectById } from '../services/project.service';
@@ -44,6 +49,7 @@ import * as runService from '../services/discovery-run.service';
 import * as artifactService from '../services/discovery-artifact.service';
 import * as evidenceService from '../services/evidence-source.service';
 import * as claimService from '../services/discovery-claim.service';
+import { formatMarker } from '../services/discovery-marker.service';
 import type { DiscoveryType, DiscoveryRun } from '../database/models/discovery_run';
 import type { EvidenceSource } from '../database/models/evidence_source';
 import sequelize from '../database';
@@ -800,6 +806,7 @@ export async function listDiscoveryRuns(
     currentArtifactPublicId: artifactMap.get(run.id) || null,
     failureCode: run.failure_code,
     failureMessage: run.failure_message,
+    marker: formatMarker(run.discovery_type, run.marker_index),
   }));
 }
 
@@ -854,6 +861,8 @@ export async function getDiscoveryRunByPublicId(
     },
   }) as any;
 
+  const runMarker = formatMarker(run.discovery_type, run.marker_index);
+
   const currentArtifact: DiscoveryArtifactSummary | null = artifact ? {
     publicId: artifact.public_id,
     runPublicId: run.public_id,
@@ -867,6 +876,7 @@ export async function getDiscoveryRunByPublicId(
     createdAt: artifact.created_at.toISOString(),
     githubPath: artifact.github_path,
     projectedAt: artifact.projected_at?.toISOString() || null,
+    marker: runMarker,
   } : null;
 
   return {
@@ -886,6 +896,7 @@ export async function getDiscoveryRunByPublicId(
     currentArtifactPublicId: currentArtifact?.publicId || null,
     failureCode: run.failure_code,
     failureMessage: run.failure_message,
+    marker: runMarker,
     sources: orderedSources,
     currentArtifact,
   };
@@ -927,7 +938,7 @@ export async function listCanonicalDiscoveryArtifacts(
     include: [{
       model: DiscoveryRunModel,
       as: 'discoveryRun',
-      attributes: ['public_id'],
+      attributes: ['public_id', 'discovery_type', 'marker_index'],
     }],
   }) as any[];
 
@@ -944,6 +955,9 @@ export async function listCanonicalDiscoveryArtifacts(
     createdAt: a.created_at.toISOString(),
     githubPath: a.github_path,
     projectedAt: a.projected_at?.toISOString() || null,
+    marker: a.discoveryRun
+      ? formatMarker(a.discoveryRun.discovery_type, a.discoveryRun.marker_index)
+      : null,
   }));
 }
 
@@ -965,7 +979,7 @@ export async function getDiscoveryArtifactByPublicId(
     include: [{
       model: DiscoveryRunModel,
       as: 'discoveryRun',
-      attributes: ['public_id'],
+      attributes: ['public_id', 'discovery_type', 'marker_index'],
     }],
   }) as any;
 
@@ -987,6 +1001,10 @@ export async function getDiscoveryArtifactByPublicId(
     supersededById = superseding?.public_id || null;
   }
 
+  const marker = artifact.discoveryRun
+    ? formatMarker(artifact.discoveryRun.discovery_type, artifact.discoveryRun.marker_index)
+    : null;
+
   return {
     publicId: artifact.public_id,
     runPublicId: artifact.discoveryRun?.public_id || '',
@@ -1007,6 +1025,197 @@ export async function getDiscoveryArtifactByPublicId(
     supersededById,
     supersededAt: artifact.superseded_at?.toISOString() || null,
     sourceCount,
+    marker,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DISC-3B: ARTIFACT VARIABLES
+// ═══════════════════════════════════════════════════════════════════════════
+
+const StudyVariableModel = sequelize.models.StudyVariable;
+
+const DISCOVERY_TYPE_LABELS: Record<string, string> = {
+  desk_research: 'Desk Research',
+  stakeholder_synthesis: 'Stakeholder Synthesis',
+  survey_synthesis: 'Survey Synthesis',
+  cross_source_synthesis: 'Cross-Source Synthesis',
+};
+
+/**
+ * Get extracted variables for a Discovery artifact.
+ *
+ * DISC-3B: Queries canonical study_variables via discovery_artifact_fk_id lineage.
+ * Does NOT query GitHub or regenerate variables.
+ */
+export async function getArtifactVariables(
+  ctx: ApplicationContext,
+  projectId: number,
+  artifactPublicId: string,
+): Promise<DiscoveryArtifactVariables | null> {
+  await assertProjectAccessByActor(ctx.actor.id, projectId, ctx.organization.id);
+
+  // Get artifact with run for marker
+  const artifact = await DiscoveryArtifactModel.findOne({
+    where: {
+      project_id: projectId,
+      public_id: artifactPublicId,
+    },
+    include: [{
+      model: DiscoveryRunModel,
+      as: 'discoveryRun',
+      attributes: ['discovery_type', 'marker_index'],
+    }],
+  }) as any;
+
+  if (!artifact) {
+    return null;
+  }
+
+  // Query variables linked to this artifact
+  const variables = await StudyVariableModel.findAll({
+    where: {
+      discovery_artifact_fk_id: artifact.id,
+    },
+    order: [['variable_key', 'ASC'], ['item_key', 'ASC']],
+  }) as any[];
+
+  // Transform to response format
+  const variableItems: DiscoveryVariableItem[] = variables.map(v => ({
+    key: v.variable_key,
+    label: VARIABLE_LABELS[v.variable_key] || formatVariableLabel(v.variable_key),
+    value: v.value,
+    variableType: v.variable_type,
+    itemId: v.item_key,
+    isPool: v.is_pool || false,
+    confidence: v.confidence,
+  }));
+
+  const marker = artifact.discoveryRun
+    ? formatMarker(artifact.discoveryRun.discovery_type, artifact.discoveryRun.marker_index)
+    : null;
+
+  // Get latest extraction date
+  const latestExtractedAt = variables.length > 0
+    ? variables.reduce((latest, v) =>
+        v.extracted_at > latest ? v.extracted_at : latest,
+        variables[0].extracted_at,
+      )
+    : null;
+
+  return {
+    artifactPublicId: artifact.public_id,
+    marker,
+    artifactType: artifact.artifact_type,
+    typeLabel: DISCOVERY_TYPE_LABELS[artifact.artifact_type] || artifact.artifact_type,
+    variables: variableItems,
+    variableCount: variableItems.length,
+    extractedAt: latestExtractedAt?.toISOString() || null,
+  };
+}
+
+/**
+ * Format a variable key as a human-readable label.
+ * Fallback when no explicit mapping exists.
+ */
+function formatVariableLabel(key: string): string {
+  return key
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DISC-3B: KNOWLEDGE GAPS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get aggregated knowledge gaps across all current Discovery artifacts for a project.
+ *
+ * DISC-3B: Queries canonical study_variables with variable_key='knowledge_gaps'
+ * linked to CURRENT DiscoveryArtifacts. Preserves provenance for each gap.
+ */
+export async function getKnowledgeGaps(
+  ctx: ApplicationContext,
+  projectId: number,
+): Promise<DiscoveryKnowledgeGapsResponse> {
+  await assertProjectAccessByActor(ctx.actor.id, projectId, ctx.organization.id);
+
+  // Get all current artifacts for the project
+  const currentArtifacts = await DiscoveryArtifactModel.findAll({
+    where: {
+      project_id: projectId,
+      status: 'current',
+    },
+    include: [{
+      model: DiscoveryRunModel,
+      as: 'discoveryRun',
+      attributes: ['discovery_type', 'marker_index'],
+    }],
+  }) as any[];
+
+  if (currentArtifacts.length === 0) {
+    return {
+      projectId,
+      count: 0,
+      gaps: [],
+    };
+  }
+
+  const artifactIds = currentArtifacts.map(a => a.id);
+  const artifactMap = new Map(currentArtifacts.map(a => [a.id, a]));
+
+  // Query knowledge_gaps variables for current artifacts
+  const variables = await StudyVariableModel.findAll({
+    where: {
+      discovery_artifact_fk_id: { [Op.in]: artifactIds },
+      variable_key: 'knowledge_gaps',
+    },
+  }) as any[];
+
+  // Transform to response format with provenance
+  const gaps: DiscoveryKnowledgeGap[] = [];
+
+  for (const v of variables) {
+    const artifact = artifactMap.get(v.discovery_artifact_fk_id);
+    if (!artifact) continue;
+
+    const marker = artifact.discoveryRun
+      ? formatMarker(artifact.discoveryRun.discovery_type, artifact.discoveryRun.marker_index)
+      : null;
+
+    // Handle both array and singleton values
+    const gapValues = Array.isArray(v.value) ? v.value : [v.value];
+
+    for (let i = 0; i < gapValues.length; i++) {
+      const gapItem = gapValues[i];
+      if (!gapItem) continue;
+
+      // Extract gap text (handle both string and object shapes)
+      const gapText = typeof gapItem === 'string'
+        ? gapItem
+        : (gapItem.gap || gapItem.description || gapItem.text || JSON.stringify(gapItem));
+
+      // Extract item ID if present
+      const itemId = typeof gapItem === 'object' && gapItem !== null
+        ? (gapItem.id || gapItem.item_id || null)
+        : (v.item_key ? `${v.item_key}-${i}` : null);
+
+      gaps.push({
+        gap: gapText,
+        itemId,
+        sourceArtifactPublicId: artifact.public_id,
+        sourceMarker: marker,
+        discoveryType: artifact.discoveryRun?.discovery_type as DiscoveryTypeKey || 'desk_research',
+        sourceVariableKey: 'knowledge_gaps',
+        extractedAt: v.extracted_at?.toISOString() || null,
+      });
+    }
+  }
+
+  return {
+    projectId,
+    count: gaps.length,
+    gaps,
   };
 }
 
