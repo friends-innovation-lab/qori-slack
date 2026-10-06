@@ -189,7 +189,30 @@
   border-top: 1px solid var(--color-border);
 }
 
-/* Context line for stakeholder form */
+/* Context notes for stakeholder form (per REDLINES B8) */
+.contextNote {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  font: 13px/20px var(--font-ui);
+  color: var(--color-text-meta);
+}
+
+.contextNote svg {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.contextNote strong {
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+}
+
+/* Legacy context line - keep for backwards compatibility */
 .contextLine {
   font: 14px/20px var(--font-ui);
   color: var(--color-text-meta);

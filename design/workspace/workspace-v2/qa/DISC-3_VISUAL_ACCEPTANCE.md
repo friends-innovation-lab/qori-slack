@@ -1,8 +1,8 @@
 # DISC-3 Visual Acceptance Report — PR #428
 
-**Date:** 2026-10-06
+**Date:** 2026-10-06 (Updated)
 **Branch:** `feature/disc-3-workspace-discovery`
-**HEAD SHA:** `b87986313d4b6b8d6a3ff924bd90b226424865a8`
+**HEAD SHA:** See git log for latest
 **CI Status:** SUCCESS
 
 ---
@@ -89,13 +89,14 @@
 |---------|-------------|----------------|--------|
 | Eyebrow | "Add evidence · Stakeholder material" | Implementation: "Stakeholder Synthesis" | MINOR |
 | H1 | "Add stakeholder material" | Exact match | PASS |
-| Context line | "Qori refers to stakeholders by role" | Not implemented | MINOR |
-| Desk context line | "Builds on desk research in this project" | `hasDeskResearch` conditional | PASS |
+| Role-only context | "Qori refers to stakeholders by role (SH-001, SH-002), never by name" | Always shown with Info icon | PASS |
+| Desk context line | "Builds on desk research in this project" | Conditional on `hasDeskResearch` with ListTree icon | PASS |
+| Context note styling | Per REDLINES B8: flex, gap 12, padding 12 16, radius 6 | `.contextNote` CSS class | PASS |
 | Topic field | Same as desk | Implemented | PASS |
 | Source intent | Same as desk | Implemented | PASS |
 | Submit button | "Synthesize stakeholder material" | Implementation: "Start synthesis" | MINOR |
 
-**Result:** PASS with MINOR (eyebrow/button variances)
+**Result:** PASS with MINOR (eyebrow/button label variances)
 
 ---
 
@@ -142,11 +143,17 @@
 | H1 | Topic | `run.topic` | PASS |
 | Meta row | Updated / Version / template | `StatusBadge` + partial meta | PASS |
 | FactsGrid | Sources / Version / Generated | `FactsGrid` component | PASS |
-| Report content | Artifact canonical content | Placeholder only | MINOR |
-| GitHub path | Link to repo | Conditional display | PASS |
+| Report content | Artifact canonical content | `useDiscoveryArtifact` → `MarkdownDisplay` | PASS |
+| Markdown headings | H1, H2, H3 | `MarkdownDisplay` renders all levels | PASS |
+| Markdown lists | ul, ol | `MarkdownDisplay` renders correctly | PASS |
+| Markdown tables | GFM tables | `MarkdownDisplay` with editorial styling | PASS |
+| Loading state | Skeleton during fetch | `artifactQuery.isLoading` → Skeleton | PASS |
+| Error state | Error message | `artifactQuery.error` → Alert | PASS |
+| No GitHub read | API only | `useDiscoveryArtifact` (not GitHub fetch) | PASS |
+| No mutation | Read-only view | No POST/PUT on Report tab | PASS |
 | Tabs active | Report tab highlighted | `tabActive` class | PASS |
 
-**Result:** PASS with MINOR (content is placeholder pending artifact rendering)
+**Result:** PASS
 
 ---
 
@@ -273,17 +280,18 @@
 - Processing state
 - Failed state
 - Sources tab
+- **Report tab with canonical content rendering** (FIXED)
 - Status badges
 - LifecycleRail counts with exactness guarantee
 - File drop zone
+- **Stakeholder role-only context note** (FIXED)
+- **Stakeholder desk research context note** (FIXED)
 - All accessibility patterns
 
 ### MINOR Variances (Acceptable)
 1. **Eyebrow wording:** Design: "Add evidence · Desk research" vs Implementation: "Desk Research" — Simpler is acceptable
 2. **Button labels:** Design: "Analyze documents" vs Implementation: "Start analysis" — Clearer action verb
-3. **Stakeholder role context line:** Not shown — Can add in polish pass
-4. **Report content:** Placeholder pending artifact content rendering — Backend dependency
-5. **Lineage line:** Not shown in Extracted tab — Can add in polish pass
+3. **Lineage line:** Not shown in Extracted tab — Can add in polish pass
 
 ### BLOCKING
 **None.**
@@ -307,16 +315,27 @@ Tests: `useDiscovery.test.tsx` (7 tests), `LifecycleRail.test.tsx` (6 tests)
 
 ## 7. Test Coverage Verification
 
+### Discovery-Specific Tests
 | Test File | Tests | Status |
 |-----------|-------|--------|
 | `useDiscovery.test.tsx` | 7 | PASS |
 | `DiscoveryHub.test.tsx` | 13 | PASS |
 | `DeskIntake.test.tsx` | 10 | PASS |
-| `StakeholderIntake.test.tsx` | 8 | PASS |
-| `DiscoveryRunPage.test.tsx` | 14 | PASS |
-| `LifecycleRail.test.tsx` | 6 (exactness) | PASS |
+| `StakeholderIntake.test.tsx` | 9 | PASS |
+| `DiscoveryRunPage.test.tsx` | 20 | PASS |
 
-**Total:** 58 Discovery-specific tests
+**Discovery Page/Hook Tests:** 59
+
+### LifecycleRail Discovery Tests
+| Test | Status |
+|------|--------|
+| LifecycleRail.test.tsx (22 total, 6 exactness-related) | PASS |
+
+### Test Count Reconciliation
+- **Previous "74 tests":** Full frontend test count at that commit
+- **"58 tests" in visual acceptance:** Discovery-specific tests only
+- **Current Discovery-specific:** 59 tests (added 7 canonical content tests)
+- **Full frontend test suite:** 718 tests passing (1 skipped)
 
 ---
 

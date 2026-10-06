@@ -139,19 +139,26 @@ describe('StakeholderIntake', () => {
     });
   });
 
-  describe('desk research context line', () => {
-    it('shows context line when desk research exists', () => {
-      setupMocks({ hasDeskResearch: true });
-      renderWithProviders(<StakeholderIntake />);
-
-      expect(screen.getByText(/Desk research in this project is given to Qori as context/i)).toBeInTheDocument();
-    });
-
-    it('does not show context line when no desk research exists', () => {
+  describe('context notes', () => {
+    it('always shows role-only attribution note', () => {
       setupMocks({ hasDeskResearch: false });
       renderWithProviders(<StakeholderIntake />);
 
-      expect(screen.queryByText(/Desk research in this project/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/Qori refers to stakeholders by role/i)).toBeInTheDocument();
+    });
+
+    it('shows desk research context when desk research exists', () => {
+      setupMocks({ hasDeskResearch: true });
+      renderWithProviders(<StakeholderIntake />);
+
+      expect(screen.getByText(/Builds on desk research in this project/i)).toBeInTheDocument();
+    });
+
+    it('does not show desk research context when no desk research exists', () => {
+      setupMocks({ hasDeskResearch: false });
+      renderWithProviders(<StakeholderIntake />);
+
+      expect(screen.queryByText(/Builds on desk research/i)).not.toBeInTheDocument();
     });
   });
 

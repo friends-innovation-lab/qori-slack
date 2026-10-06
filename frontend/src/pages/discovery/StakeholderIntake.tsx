@@ -14,7 +14,7 @@
 
 import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { FileText, Upload, X, AlertCircle } from 'lucide-react';
+import { FileText, Upload, X, AlertCircle, Info, ListTree } from 'lucide-react';
 import { useStudy } from '@/api/queries/useStudy';
 import { useCreateDiscoveryRun } from '@/api/mutations/useCreateDiscoveryRun';
 import { WorkspaceLayout } from '@/components/study/workspace/WorkspaceLayout';
@@ -270,11 +270,25 @@ export function StakeholderIntake() {
               </Alert>
             )}
 
-            {/* Context line about desk research */}
+            {/* Role-only attribution context (always shown) */}
+            <div className={styles.contextNote}>
+              <Info size={16} aria-hidden="true" />
+              <span>
+                Qori refers to stakeholders by role (SH-001, SH-002), never by name.
+                Names in your files aren&apos;t carried into the synthesis.
+              </span>
+            </div>
+
+            {/* Desk research context (shown when desk research exists) */}
             {hasDeskResearch && (
-              <p className={styles.contextLine}>
-                Desk research in this project is given to Qori as context.
-              </p>
+              <div className={styles.contextNote}>
+                <ListTree size={16} aria-hidden="true" />
+                <span>
+                  <strong>Builds on desk research in this project.</strong>{' '}
+                  Barriers and knowledge gaps from desk research are given to Qori as context,
+                  so this synthesis can confirm or challenge them.
+                </span>
+              </div>
             )}
 
             {/* Topic */}

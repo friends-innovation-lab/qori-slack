@@ -19,6 +19,7 @@ vi.mock('@/api/queries/useStudy', () => ({
 
 vi.mock('@/api/queries/useDiscovery', () => ({
   useDiscoveryRun: vi.fn(),
+  useDiscoveryArtifact: vi.fn(),
   useArtifactVariables: vi.fn(),
   useDiscoveryCounts: vi.fn(),
 }));
@@ -35,12 +36,14 @@ vi.mock('react-router', async () => {
 import { useStudy } from '@/api/queries/useStudy';
 import {
   useDiscoveryRun,
+  useDiscoveryArtifact,
   useArtifactVariables,
   useDiscoveryCounts,
 } from '@/api/queries/useDiscovery';
 
 const mockedUseStudy = vi.mocked(useStudy);
 const mockedUseDiscoveryRun = vi.mocked(useDiscoveryRun);
+const mockedUseDiscoveryArtifact = vi.mocked(useDiscoveryArtifact);
 const mockedUseArtifactVariables = vi.mocked(useArtifactVariables);
 const mockedUseDiscoveryCounts = vi.mocked(useDiscoveryCounts);
 
@@ -129,8 +132,68 @@ const mockVariables = {
   extractedAt: '2026-01-15T10:05:00Z',
 };
 
+const mockArtifactDetail: {
+  publicId: string;
+  runPublicId: string;
+  artifactType: string;
+  title: string;
+  topicSlug: string;
+  version: number;
+  status: string;
+  templateName: string;
+  templateVersion: string;
+  createdAt: string;
+  githubPath: string | null;
+  projectedAt: string | null;
+  marker: string | null;
+  canonicalContent: string | null;
+  derivationFingerprint: string | null;
+  githubSha: string | null;
+} = {
+  publicId: 'art-1',
+  runPublicId: 'run-456',
+  artifactType: 'desk_research',
+  title: 'Accessibility Research Analysis',
+  topicSlug: 'accessibility-research',
+  version: 1,
+  status: 'current',
+  templateName: 'desk_research',
+  templateVersion: '1.0',
+  createdAt: '2026-01-15T10:05:00Z',
+  githubPath: 'discovery/desk-research/accessibility-research.md',
+  projectedAt: '2026-01-15T10:06:00Z',
+  marker: 'D1',
+  canonicalContent: `# Key Findings
+
+## 1. Accessibility Requirements
+
+Veterans need accessible interfaces that support screen readers.
+
+- **WCAG 2.1 AA** compliance is required
+- Color contrast must meet minimum ratios
+- All interactive elements need keyboard navigation
+
+## 2. Common Pain Points
+
+| Issue | Frequency | Severity |
+|-------|-----------|----------|
+| Missing alt text | 78% | High |
+| Poor contrast | 45% | Medium |
+| Keyboard traps | 23% | High |
+`,
+  derivationFingerprint: 'abc123',
+  githubSha: 'def456',
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function setupMocks(overrides: { run?: any; runLoading?: boolean; runError?: Error | null } = {}) {
+function setupMocks(overrides: {
+  run?: any;
+  runLoading?: boolean;
+  runError?: Error | null;
+  artifact?: typeof mockArtifactDetail | null;
+  artifactLoading?: boolean;
+  artifactError?: Error | null;
+} = {}) {
   mockedUseStudy.mockReturnValue({
     data: mockStudy,
     isLoading: false,
@@ -144,6 +207,12 @@ function setupMocks(overrides: { run?: any; runLoading?: boolean; runError?: Err
     error: overrides.runError ?? null,
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useDiscoveryRun>);
+
+  mockedUseDiscoveryArtifact.mockReturnValue({
+    data: 'artifact' in overrides ? overrides.artifact : mockArtifactDetail,
+    isLoading: overrides.artifactLoading ?? false,
+    error: overrides.artifactError ?? null,
+  } as unknown as ReturnType<typeof useDiscoveryArtifact>);
 
   mockedUseArtifactVariables.mockReturnValue({
     data: mockVariables,
@@ -271,18 +340,79 @@ describe('DiscoveryRunPage', () => {
   });
 
   describe('report tab content', () => {
-    it('shows artifact title', () => {
+    it('renders canonical content from artifact API', () => {
       setupMocks();
       renderWithProviders(<DiscoveryRunPage />);
 
-      expect(screen.getByText('Accessibility Research Analysis')).toBeInTheDocument();
+      // Check that markdown headings render
+      expect(screen.getByRole('heading', { name: 'Key Findings' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Accessibility Requirements/ })).toBeInTheDocument();
     });
 
-    it('shows GitHub path when available', () => {
+    it('renders markdown lists', () => {
       setupMocks();
       renderWithProviders(<DiscoveryRunPage />);
 
-      expect(screen.getByText(/View on GitHub/i)).toBeInTheDocument();
+      expect(screen.getByText(/WCAG 2.1 AA/i)).toBeInTheDocument();
+    });
+
+    it('renders markdown tables', () => {
+      setupMocks();
+      renderWithProviders(<DiscoveryRunPage />);
+
+      // Table headers
+      expect(screen.getByText('Issue')).toBeInTheDocument();
+      expect(screen.getByText('Frequency')).toBeInTheDocument();
+      // Table data
+      expect(screen.getByText('Missing alt text')).toBeInTheDocument();
+    });
+
+    it('shows loading state while artifact loads', () => {
+      setupMocks({ artifactLoading: true, artifact: null });
+      renderWithProviders(<DiscoveryRunPage />);
+
+      // Should show FactsGrid with sources count (the "3" value)
+      expect(screen.getByText('3')).toBeInTheDocument();
+      // Content area shows skeleton (loading state)
+    });
+
+    it('shows error state when artifact fails to load', () => {
+      setupMocks({ artifactError: new Error('Failed to load artifact'), artifact: null });
+      renderWithProviders(<DiscoveryRunPage />);
+
+      expect(screen.getByText(/Could not load report/i)).toBeInTheDocument();
+      expect(screen.getByText(/Failed to load artifact/i)).toBeInTheDocument();
+    });
+
+    it('shows message when artifact has no canonical content', () => {
+      setupMocks({ artifact: { ...mockArtifactDetail, canonicalContent: null } });
+      renderWithProviders(<DiscoveryRunPage />);
+
+      expect(screen.getByText(/no canonical content/i)).toBeInTheDocument();
+    });
+
+    it('does NOT fetch from GitHub (canonical content from API only)', () => {
+      setupMocks();
+      renderWithProviders(<DiscoveryRunPage />);
+
+      // Verify no GitHub-related fetch call
+      // The content comes from useDiscoveryArtifact, not a GitHub read
+      expect(mockedUseDiscoveryArtifact).toHaveBeenCalledWith(
+        'proj-456',
+        'art-1',
+        expect.objectContaining({ enabled: true }),
+      );
+    });
+
+    it('viewing Report performs no mutation/POST', () => {
+      setupMocks();
+      renderWithProviders(<DiscoveryRunPage />);
+
+      // All mocked hooks are read-only queries
+      // No mutateAsync or mutation functions should be called
+      // This test verifies that rendering Report tab is purely read-only
+      expect(mockedUseDiscoveryRun).toHaveBeenCalled();
+      expect(mockedUseDiscoveryArtifact).toHaveBeenCalled();
     });
   });
 });

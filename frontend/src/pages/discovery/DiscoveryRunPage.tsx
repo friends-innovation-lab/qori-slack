@@ -14,17 +14,23 @@ import { useState, useEffect } from 'react';
 import { useParams, useLocation, Link } from 'react-router';
 import { LoaderCircle, AlertTriangle, FileText, RefreshCw } from 'lucide-react';
 import { useStudy } from '@/api/queries/useStudy';
-import { useDiscoveryRun, useArtifactVariables, useDiscoveryCounts } from '@/api/queries/useDiscovery';
+import {
+  useDiscoveryRun,
+  useDiscoveryArtifact,
+  useArtifactVariables,
+  useDiscoveryCounts,
+} from '@/api/queries/useDiscovery';
 import { WorkspaceLayout } from '@/components/study/workspace/WorkspaceLayout';
 import { LifecycleRail, type DiscoveryCounts } from '@/components/study/LifecycleRail';
 import { computeLifecycleNodes } from '@/components/study/lifecycle';
 import { DocumentSection, FactsGrid } from '@/components/study/document';
+import { MarkdownDisplay } from '@/components/study/editor/MarkdownDisplay';
 import { DiscoveryMarker } from '@/components/discovery';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Alert } from '@/components/ui/Alert';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
-import type { DiscoveryTypeKey } from '@qori/api-contracts';
+import type { DiscoveryTypeKey, DiscoveryArtifactDetail } from '@qori/api-contracts';
 import styles from './DiscoveryRunPage.module.css';
 import docStyles from '@/components/study/document/document.module.css';
 
@@ -75,8 +81,13 @@ export function DiscoveryRunPage() {
     }
   }, [runQuery.data?.status]);
 
-  // Fetch variables for the artifact
+  // Fetch artifact detail for canonical content (Report tab)
   const artifactPublicId = runQuery.data?.currentArtifact?.publicId;
+  const artifactQuery = useDiscoveryArtifact(projectPublicId, artifactPublicId || '', {
+    enabled: !!projectPublicId && !!artifactPublicId && activeTab === 'report',
+  });
+
+  // Fetch variables for the artifact (Extracted tab)
   const variablesQuery = useArtifactVariables(projectPublicId, artifactPublicId || '', {
     enabled: !!projectPublicId && !!artifactPublicId && activeTab === 'extracted',
   });
@@ -208,7 +219,12 @@ export function DiscoveryRunPage() {
           {run.status === 'completed' && (
             <>
               {activeTab === 'report' && (
-                <ReportTab run={run} />
+                <ReportTab
+                  run={run}
+                  artifact={artifactQuery.data}
+                  isLoading={artifactQuery.isLoading}
+                  error={artifactQuery.error}
+                />
               )}
               {activeTab === 'sources' && (
                 <SourcesTab sources={run.sources} />
@@ -294,10 +310,20 @@ function FailedState({
 }
 
 /** Report tab content */
-function ReportTab({ run }: { run: NonNullable<ReturnType<typeof useDiscoveryRun>['data']> }) {
-  const artifact = run.currentArtifact;
+function ReportTab({
+  run,
+  artifact,
+  isLoading,
+  error,
+}: {
+  run: NonNullable<ReturnType<typeof useDiscoveryRun>['data']>;
+  artifact: DiscoveryArtifactDetail | undefined;
+  isLoading: boolean;
+  error: Error | null;
+}) {
+  const artifactSummary = run.currentArtifact;
 
-  if (!artifact) {
+  if (!artifactSummary) {
     return (
       <Alert variant="info" title="No report yet">
         The analysis is still in progress.
@@ -308,10 +334,10 @@ function ReportTab({ run }: { run: NonNullable<ReturnType<typeof useDiscoveryRun
   // Quick facts for the masthead
   const facts = [
     { label: 'Sources', value: String(run.sourceCount), exists: true },
-    { label: 'Version', value: String(artifact.version), exists: true },
+    { label: 'Version', value: String(artifactSummary.version), exists: true },
     {
       label: 'Generated',
-      value: new Date(artifact.createdAt).toLocaleDateString('en-US', {
+      value: new Date(artifactSummary.createdAt).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -320,21 +346,44 @@ function ReportTab({ run }: { run: NonNullable<ReturnType<typeof useDiscoveryRun
     },
   ];
 
-  // For now, show placeholder content. In full impl, artifact.canonicalContent would be used.
+  // Loading state for artifact content
+  if (isLoading) {
+    return (
+      <>
+        <FactsGrid facts={facts} />
+        <Skeleton variant="card" count={2} />
+      </>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <>
+        <FactsGrid facts={facts} />
+        <Alert variant="error" title="Could not load report">
+          {error.message}
+        </Alert>
+      </>
+    );
+  }
+
+  // Render canonical content with MarkdownDisplay
+  const canonicalContent = artifact?.canonicalContent;
+
   return (
     <>
       <FactsGrid facts={facts} />
 
-      <DocumentSection sectionId="report-content" title={artifact.title}>
-        <p className={docStyles.block}>
-          Report content would be rendered here from the artifact's canonical content.
-        </p>
-        {artifact.githubPath && (
-          <p className={docStyles.docFootnote}>
-            View on GitHub: {artifact.githubPath}
-          </p>
-        )}
-      </DocumentSection>
+      {canonicalContent ? (
+        <article className={docStyles.prose}>
+          <MarkdownDisplay markdown={canonicalContent} />
+        </article>
+      ) : (
+        <Alert variant="info" title="No content">
+          This artifact has no canonical content.
+        </Alert>
+      )}
     </>
   );
 }
