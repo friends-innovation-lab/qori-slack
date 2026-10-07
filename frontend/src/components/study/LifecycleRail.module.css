@@ -146,8 +146,11 @@
 
 .railInverse {
   width: var(--layout-lifecycle);
-  flex: 0 0 var(--layout-lifecycle);
-  height: 100%;
+  /* NAV-1a fix: flex: 0 0 was incorrectly applying flex-basis to HEIGHT
+     in the flex-column parent (StudyWorkspaceLayout aside), truncating
+     the rail. Use flex: 1 to fill available height and scroll content. */
+  flex: 1;
+  min-height: 0; /* Required for flex child to respect overflow */
   overflow-y: auto;
   scrollbar-width: thin;
   background: var(--color-surface-inverse-2);

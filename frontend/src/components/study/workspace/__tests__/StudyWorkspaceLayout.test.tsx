@@ -280,4 +280,110 @@ describe('NAV-1a: StudyWorkspaceLayout', () => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
     });
   });
+
+  /**
+   * NAV-1a Full Lifecycle Rail Regression Tests
+   *
+   * These tests ensure ALL lifecycle groups render on every study route.
+   * The rail must show the complete lifecycle, not be truncated.
+   */
+  describe('Full Lifecycle Rail (NAV-1a Regression)', () => {
+    it('renders all lifecycle group headings on /brief', () => {
+      setupMocks();
+      renderWithRouter('/studies/study-1/brief');
+
+      // All 5 group headings must be present
+      expect(screen.getByText('Discovery')).toBeInTheDocument();
+      expect(screen.getByText('Planning')).toBeInTheDocument();
+      expect(screen.getByText('Fieldwork')).toBeInTheDocument();
+      expect(screen.getByText('Analysis')).toBeInTheDocument();
+      expect(screen.getByText('Outputs')).toBeInTheDocument();
+    });
+
+    it('renders all lifecycle group headings on /plan', () => {
+      setupMocks();
+      renderWithRouter('/studies/study-1/plan');
+
+      expect(screen.getByText('Discovery')).toBeInTheDocument();
+      expect(screen.getByText('Planning')).toBeInTheDocument();
+      expect(screen.getByText('Fieldwork')).toBeInTheDocument();
+      expect(screen.getByText('Analysis')).toBeInTheDocument();
+      expect(screen.getByText('Outputs')).toBeInTheDocument();
+    });
+
+    it('renders all lifecycle group headings on /discovery', () => {
+      setupMocks();
+      renderWithRouter('/studies/study-1/discovery');
+
+      expect(screen.getByText('Discovery')).toBeInTheDocument();
+      expect(screen.getByText('Planning')).toBeInTheDocument();
+      expect(screen.getByText('Fieldwork')).toBeInTheDocument();
+      expect(screen.getByText('Analysis')).toBeInTheDocument();
+      expect(screen.getByText('Outputs')).toBeInTheDocument();
+    });
+
+    it('renders representative lifecycle items from all groups', () => {
+      setupMocks();
+      renderWithRouter('/studies/study-1/brief');
+
+      // Discovery group items
+      expect(screen.getByText('All evidence')).toBeInTheDocument();
+
+      // Planning group items
+      expect(screen.getByText('Research Brief')).toBeInTheDocument();
+      expect(screen.getByText('Research Plan')).toBeInTheDocument();
+
+      // Fieldwork group items
+      expect(screen.getByText('Outreach')).toBeInTheDocument();
+
+      // Analysis group items
+      expect(screen.getByText('Session Analysis')).toBeInTheDocument();
+
+      // Outputs group items
+      expect(screen.getByText('Design Opportunities')).toBeInTheDocument();
+    });
+
+    it('Research Brief is current on /brief route', () => {
+      setupMocks();
+      renderWithRouter('/studies/study-1/brief');
+
+      const briefLink = screen.getByRole('link', { name: /Research Brief/i });
+      // NavLink adds active class via className function - check class contains nvOn
+      expect(briefLink.className).toMatch(/nvOn/);
+    });
+
+    it('Research Plan is current on /plan route', () => {
+      setupMocks();
+      renderWithRouter('/studies/study-1/plan');
+
+      const planLink = screen.getByRole('link', { name: /Research Plan/i });
+      expect(planLink.className).toMatch(/nvOn/);
+    });
+
+    it('All evidence is current on /discovery route', () => {
+      setupMocks();
+      renderWithRouter('/studies/study-1/discovery');
+
+      const discoveryLink = screen.getByRole('link', { name: /All evidence/i });
+      expect(discoveryLink.className).toMatch(/nvOn/);
+    });
+
+    it('exactly one LifecycleRail on all routes', async () => {
+      setupMocks();
+
+      // Check Brief route
+      const { unmount: unmount1 } = renderWithRouter('/studies/study-1/brief');
+      expect(screen.queryAllByLabelText('Study lifecycle')).toHaveLength(1);
+      unmount1();
+
+      // Check Plan route
+      const { unmount: unmount2 } = renderWithRouter('/studies/study-1/plan');
+      expect(screen.queryAllByLabelText('Study lifecycle')).toHaveLength(1);
+      unmount2();
+
+      // Check Discovery route
+      renderWithRouter('/studies/study-1/discovery');
+      expect(screen.queryAllByLabelText('Study lifecycle')).toHaveLength(1);
+    });
+  });
 });
