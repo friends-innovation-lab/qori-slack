@@ -2,6 +2,10 @@
  * Brief Form — 13-field contract with progressive disclosure.
  * Cascade-prefilled values show provenance. Discovery source picker.
  * Contract: research-brief.md
+ *
+ * NOTE: For revision briefs, form fields are pre-filled from structured_fields
+ * (pre-parsed by backend) to show researcher-readable text without exposing
+ * internal JSON or IDs. See projectStructuredToReadable().
  */
 
 import { useState } from 'react';
@@ -21,6 +25,80 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import type { ResearchMethodology } from '@qori/api-contracts';
 import styles from './BriefForm.module.css';
+
+// ─── Structured → Readable Projection ────────────────────────────────────────
+
+/**
+ * Projects structured objectives/questions into researcher-readable text.
+ * Preserves ordering. Never exposes IDs or JSON syntax.
+ *
+ * @param items - Pre-parsed structured items (from structured_fields)
+ * @param textKey - Key containing the text content ('objective' or 'question')
+ * @returns Multi-line string with numbered items, or empty string
+ */
+function projectStructuredToReadable<T extends Record<string, unknown>>(
+  items: T[] | null | undefined,
+  textKey: keyof T,
+): string {
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return '';
+  }
+  // Project to numbered list without IDs
+  return items
+    .map((item, idx) => {
+      const text = item[textKey];
+      if (typeof text !== 'string') return '';
+      return `${idx + 1}. ${text}`;
+    })
+    .filter(Boolean)
+    .join('\n');
+}
+
+/**
+ * Safely parses a JSON string to an array. Returns null on failure.
+ * Used as fallback when structured_fields is unavailable.
+ */
+function safeParseJsonArray<T>(raw: string | null | undefined): T[] | null {
+  if (!raw || typeof raw !== 'string') return null;
+  // Quick check: if it doesn't look like JSON array, it's plain prose
+  if (!raw.trim().startsWith('[')) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Gets researcher-readable text for a field, preferring structured_fields.
+ * Falls back to parsing cascade_fields if needed.
+ * Never returns raw JSON syntax.
+ */
+function getReadableFieldValue(
+  structuredItems: unknown[] | null | undefined,
+  cascadeRaw: string | null | undefined,
+  textKey: string,
+): string {
+  // Prefer pre-parsed structured_fields
+  if (structuredItems && Array.isArray(structuredItems) && structuredItems.length > 0) {
+    return projectStructuredToReadable(structuredItems as Record<string, unknown>[], textKey);
+  }
+
+  // Fallback: try to parse cascade_fields JSON
+  if (cascadeRaw) {
+    const parsed = safeParseJsonArray<Record<string, unknown>>(cascadeRaw);
+    if (parsed && parsed.length > 0) {
+      return projectStructuredToReadable(parsed, textKey);
+    }
+    // If it's not JSON, it might be plain prose - use as-is
+    if (!cascadeRaw.trim().startsWith('[')) {
+      return cascadeRaw;
+    }
+  }
+
+  return '';
+}
 
 const methodologyOptions: Array<{ value: ResearchMethodology; label: string }> = [
   { value: 'usability_testing', label: 'Usability Testing' },
@@ -64,6 +142,19 @@ export function BriefForm() {
 
   const isRevision = existingBrief?.brief_status === 'changes_requested';
   const cascade = existingBrief?.cascade_fields;
+  const structured = existingBrief?.structured_fields;
+
+  // Project structured fields to researcher-readable text (no JSON, no IDs)
+  const objectivesReadable = getReadableFieldValue(
+    structured?.research_objectives,
+    cascade?.research_objectives,
+    'objective',
+  );
+  const questionsReadable = getReadableFieldValue(
+    structured?.research_questions,
+    cascade?.research_questions,
+    'question',
+  );
 
   const {
     register,
@@ -72,8 +163,10 @@ export function BriefForm() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      problem_statement: cascade?.research_objectives || '',
-      learning_objectives: cascade?.research_objectives || '',
+      // For revision: pre-fill with readable objectives (not raw JSON)
+      // For new brief: empty (researcher provides fresh input)
+      problem_statement: objectivesReadable,
+      learning_objectives: questionsReadable,
       out_of_scope: '',
       methodology: cascade?.methodology_selection || '',
       method_override: '',
