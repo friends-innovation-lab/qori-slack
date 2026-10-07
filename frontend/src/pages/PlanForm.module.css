@@ -1,3 +1,11 @@
+/* NAV-1a: Content wrapper for workspace shell padding */
+.content {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-6);
+  max-width: 960px;
+}
+
 .form {
   max-width: 720px;
   display: flex;

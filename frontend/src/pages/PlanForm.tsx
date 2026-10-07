@@ -46,7 +46,7 @@ export function PlanForm() {
   // Cascade readiness gate
   if (readiness && !readiness.ready) {
     return (
-      <>
+      <div className={styles.content}>
         <PageHeader
           title="Research Plan"
           breadcrumbs={[
@@ -65,7 +65,7 @@ export function PlanForm() {
             ))}
           </ul>
         </Alert>
-      </>
+      </div>
     );
   }
 
@@ -84,7 +84,7 @@ export function PlanForm() {
   }
 
   return (
-    <>
+    <div className={styles.content}>
       <PageHeader
         title="Research Plan"
         breadcrumbs={[
@@ -154,6 +154,6 @@ export function PlanForm() {
           </Button>
         </div>
       </form>
-    </>
+    </div>
   );
 }
