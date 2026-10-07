@@ -78,6 +78,28 @@ vi.mock('@/api/coaching', () => ({
   isTerminalRun: (r: { status: string }) => r.status === 'completed' || r.status === 'failed',
 }));
 
+// NAV-1a: Mock workspace context (provides nav state)
+vi.mock('@/components/study/workspace', async () => {
+  const actual = await vi.importActual('@/components/study/workspace');
+  return {
+    ...actual,
+    useStudyWorkspace: () => ({
+      studyPublicId: 'study-1',
+      projectPublicId: 'p1',
+      studyName: 'Test Study',
+      briefStatus: 'approved',
+      lifecycleNodes: [],
+      discoveryCounts: undefined,
+      navOpen: false,
+      openNav: vi.fn(),
+      closeNav: vi.fn(),
+      toggleNav: vi.fn(),
+      isLoading: false,
+      error: null,
+    }),
+  };
+});
+
 function makePlan(overrides: Record<string, unknown> = {}) {
   return {
     study: {
@@ -552,11 +574,13 @@ describe('PlanDocument', () => {
   // ─── CC-4: Workspace shell ─────────────────────────────────────────
 
   describe('CC-4: Workspace shell', () => {
-    it('renders LifecycleRail navigation', () => {
+    // NAV-1a: LifecycleRail moved to StudyWorkspaceLayout
+    // PlanDocument now uses workspaceContent layout (nav owned by parent)
+    it('renders workspaceContent layout without embedded nav', () => {
       mockPlan.mockReturnValue({ data: makePlan(), isLoading: false, error: null });
       renderWithProviders(<PlanDocument />);
-      // Lifecycle rail has Study lifecycle navigation
-      expect(screen.getByLabelText('Study lifecycle')).toBeInTheDocument();
+      // NAV-1a: LifecycleRail is not rendered by PlanDocument (owned by StudyWorkspaceLayout)
+      expect(screen.queryByLabelText('Study lifecycle')).not.toBeInTheDocument();
     });
 
     it('renders ArtifactHeader with artifact tabs', () => {

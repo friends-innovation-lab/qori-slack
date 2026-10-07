@@ -34,6 +34,28 @@ vi.mock('react-router', async () => {
   };
 });
 
+// NAV-1a: Mock workspace context (provides nav state)
+vi.mock('@/components/study/workspace', async () => {
+  const actual = await vi.importActual('@/components/study/workspace');
+  return {
+    ...actual,
+    useStudyWorkspace: () => ({
+      studyPublicId: 'study-123',
+      projectPublicId: 'proj-456',
+      studyName: 'Test Study',
+      briefStatus: null,
+      lifecycleNodes: [],
+      discoveryCounts: undefined,
+      navOpen: false,
+      openNav: vi.fn(),
+      closeNav: vi.fn(),
+      toggleNav: vi.fn(),
+      isLoading: false,
+      error: null,
+    }),
+  };
+});
+
 import { useStudy } from '@/api/queries/useStudy';
 import { useDiscoveryCounts } from '@/api/queries/useDiscovery';
 import { useCreateDiscoveryRun } from '@/api/mutations/useCreateDiscoveryRun';
@@ -91,14 +113,8 @@ describe('DeskIntake', () => {
     vi.clearAllMocks();
   });
 
-  describe('error state', () => {
-    it('shows error when study fails to load', () => {
-      setupMocks({ studyError: new Error('Network error'), study: null });
-      renderWithProviders(<DeskIntake />);
-
-      expect(screen.getByText(/Network error/)).toBeInTheDocument();
-    });
-  });
+  // NAV-1a: Study loading errors are now handled by StudyWorkspaceLayout
+  // DeskIntake uses workspace context which provides already-loaded study data
 
   describe('form rendering', () => {
     it('renders page header with eyebrow', () => {

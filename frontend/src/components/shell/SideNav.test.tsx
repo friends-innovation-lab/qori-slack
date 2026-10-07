@@ -62,17 +62,17 @@ describe('SideNav inverse variant (CC-3)', () => {
   it('all nav items have accessible names (visually hidden labels)', () => {
     renderSideNav({ variant: 'inverse' });
 
-    // VC-2A: Inverse variant shows only Home, Projects, Studies, Ask Qori, Admin
-    // Search and Work Queue are removed from workspace nav
+    // NAV-1a: Inverse variant shows Home, Projects, Studies, Ask Qori, Work Queue, Admin
+    // Search is removed from workspace nav; Work Queue restored per STUDY_WORKSPACE_NAV_CORRECTION
     expect(screen.getByRole('link', { name: /Home/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Projects/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Studies/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Ask Qori/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Work Queue/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Admin/ })).toBeInTheDocument();
 
-    // Search and Work Queue should NOT be in inverse variant
+    // Search should NOT be in inverse variant
     expect(screen.queryByRole('link', { name: /Search/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Work Queue/ })).not.toBeInTheDocument();
   });
 
   it('labels are visually hidden but in DOM', () => {

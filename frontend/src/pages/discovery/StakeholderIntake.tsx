@@ -1,6 +1,8 @@
 /**
  * StakeholderIntake — DISC-3
  *
+ * NAV-1a: Removed page-level LifecycleRail — now owned by StudyWorkspaceLayout.
+ *
  * Stakeholder synthesis intake form for adding interview transcripts and notes.
  * Per DISCOVERY_WORKSPACE_DESIGN_SPEC §5.3.
  *
@@ -13,20 +15,15 @@
  */
 
 import { useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { FileText, Upload, X, AlertCircle, Info, ListTree } from 'lucide-react';
-import { useStudy } from '@/api/queries/useStudy';
 import { useCreateDiscoveryRun } from '@/api/mutations/useCreateDiscoveryRun';
-import { WorkspaceLayout } from '@/components/study/workspace/WorkspaceLayout';
-import { LifecycleRail, type DiscoveryCounts } from '@/components/study/LifecycleRail';
-import { computeLifecycleNodes } from '@/components/study/lifecycle';
-import { useDiscoveryCounts, useDiscoveryArtifacts } from '@/api/queries/useDiscovery';
+import { WorkspaceLayout, useStudyWorkspace } from '@/components/study/workspace';
+import { useDiscoveryArtifacts } from '@/api/queries/useDiscovery';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Alert } from '@/components/ui/Alert';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { ErrorState } from '@/components/ui/ErrorState';
 import styles from './IntakeForm.module.css';
 import docStyles from '@/components/study/document/document.module.css';
 
@@ -59,7 +56,12 @@ async function hashContent(content: string): Promise<string> {
 }
 
 export function StakeholderIntake() {
-  const { studyPublicId } = useParams<{ studyPublicId: string }>();
+  // NAV-1a: Get study data from workspace context (loaded by layout)
+  const {
+    studyPublicId,
+    projectPublicId,
+  } = useStudyWorkspace();
+
   const navigate = useNavigate();
 
   // Form state
@@ -69,15 +71,6 @@ export function StakeholderIntake() {
   const [dragActive, setDragActive] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // State for nav drawer
-  const [navOpen, setNavOpen] = useState(false);
-
-  // Fetch study to get project_public_id
-  const { data: study, isLoading: studyLoading, error: studyError } = useStudy(studyPublicId || '');
-
-  const projectPublicId = study?.project_public_id || '';
-  const countsResult = useDiscoveryCounts(projectPublicId, { enabled: !!projectPublicId });
 
   // Check for existing desk research artifacts
   const artifactsQuery = useDiscoveryArtifacts(
@@ -89,18 +82,6 @@ export function StakeholderIntake() {
     artifactsQuery.data?.some((a) => a.artifactType === 'desk_research') ?? false;
 
   const createRun = useCreateDiscoveryRun(projectPublicId);
-
-  // Build lifecycle rail counts
-  const discoveryCounts: DiscoveryCounts | undefined = countsResult.data
-    ? {
-        desk: countsResult.data.desk,
-        stakeholder: countsResult.data.stakeholder,
-        survey: countsResult.data.survey,
-        needsReview: countsResult.data.needsReview,
-      }
-    : undefined;
-
-  const lifecycleNodes = computeLifecycleNodes(null);
 
   // File validation
   const validateFile = useCallback((file: File): string | undefined => {
@@ -218,36 +199,11 @@ export function StakeholderIntake() {
     }
   };
 
-  // Loading state
-  if (studyLoading) {
-    return <Skeleton variant="card" count={3} />;
-  }
-
-  // Error state
-  if (studyError || !study) {
-    return <ErrorState message={studyError?.message || 'Could not load study'} />;
-  }
-
-  // Study info for lifecycle rail
-  const studyInfo = {
-    name: study.name,
-    backTo: '/',
-    backLabel: 'All studies',
-  };
-
   const canSubmit = topic.trim() && files.some((f) => !f.error) && !submitting;
 
   return (
     <WorkspaceLayout
-      nav={
-        <LifecycleRail
-          variant="inverse"
-          studyPublicId={studyPublicId || ''}
-          nodes={lifecycleNodes}
-          study={studyInfo}
-          discoveryCounts={discoveryCounts}
-        />
-      }
+      // NAV-1a: nav prop removed — LifecycleRail owned by StudyWorkspaceLayout
       header={
         <div className={styles.header}>
           <span className={styles.eyebrow}>Stakeholder Synthesis</span>
@@ -258,8 +214,6 @@ export function StakeholderIntake() {
           </p>
         </div>
       }
-      navOpen={navOpen}
-      onNavClose={() => setNavOpen(false)}
     >
       <div className={docStyles.docWrap}>
         <div className={docStyles.docCol}>

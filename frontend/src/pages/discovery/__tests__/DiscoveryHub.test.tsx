@@ -36,6 +36,28 @@ vi.mock('react-router', async () => {
   };
 });
 
+// NAV-1a: Mock workspace context (provides nav state)
+vi.mock('@/components/study/workspace', async () => {
+  const actual = await vi.importActual('@/components/study/workspace');
+  return {
+    ...actual,
+    useStudyWorkspace: () => ({
+      studyPublicId: 'study-123',
+      projectPublicId: 'proj-456',
+      studyName: 'Test Study',
+      briefStatus: null,
+      lifecycleNodes: [],
+      discoveryCounts: undefined,
+      navOpen: false,
+      openNav: vi.fn(),
+      closeNav: vi.fn(),
+      toggleNav: vi.fn(),
+      isLoading: false,
+      error: null,
+    }),
+  };
+});
+
 import { useStudy } from '@/api/queries/useStudy';
 import {
   useDiscoveryRuns,
@@ -172,21 +194,9 @@ describe('DiscoveryHub', () => {
     vi.clearAllMocks();
   });
 
-  describe('error state', () => {
-    it('shows error message when study fails to load', () => {
-      setupMocks({ studyError: new Error('Network error'), study: null });
-      renderWithProviders(<DiscoveryHub />);
-
-      expect(screen.getByText(/Network error/)).toBeInTheDocument();
-    });
-
-    it('shows error message when study is null', () => {
-      setupMocks({ study: null });
-      renderWithProviders(<DiscoveryHub />);
-
-      expect(screen.getByText(/Could not load study/)).toBeInTheDocument();
-    });
-  });
+  // NAV-1a: Study loading errors are now handled by StudyWorkspaceLayout
+  // DiscoveryHub uses workspace context which provides already-loaded study data
+  // Error states for study loading should be tested at the layout level
 
   describe('empty state', () => {
     it('shows empty explainer when no discovery data exists', () => {

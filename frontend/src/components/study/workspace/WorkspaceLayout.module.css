@@ -1,8 +1,19 @@
 /**
- * WorkspaceLayout — Three-region layout for workspace routes.
+ * WorkspaceLayout — Content layout for workspace routes.
+ * NAV-1a: Added workspaceContent for simplified layout when nav is owned by StudyWorkspaceLayout.
  * Spec: WORKSPACE_V2_SPEC.md §3, RESPONSIVE.md §3.
  */
 
+/* NAV-1a: Simplified content-only layout (no nav drawer) */
+.workspaceContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+}
+
+/* Legacy: Full layout with nav drawer */
 .workspace {
   display: flex;
   flex: 1;

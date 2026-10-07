@@ -25,6 +25,28 @@ vi.mock('@/api/queries/useStudy', () => ({
   useCascadeReadiness: () => ({ data: null, isLoading: false, error: null }),
 }));
 
+// NAV-1a: Mock workspace context (provides nav state)
+vi.mock('@/components/study/workspace', async () => {
+  const actual = await vi.importActual('@/components/study/workspace');
+  return {
+    ...actual,
+    useStudyWorkspace: () => ({
+      studyPublicId: 'study-uuid-1',
+      projectPublicId: 'proj-1',
+      studyName: 'Test Study',
+      briefStatus: null,
+      lifecycleNodes: [],
+      discoveryCounts: undefined,
+      navOpen: false,
+      openNav: vi.fn(),
+      closeNav: vi.fn(),
+      toggleNav: vi.fn(),
+      isLoading: false,
+      error: null,
+    }),
+  };
+});
+
 describe('StudyOverview page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -37,14 +59,9 @@ describe('StudyOverview page', () => {
     // Should not crash
   });
 
-  it('shows error state on failure', () => {
-    mockUseStudy.mockReturnValue({ data: undefined, isLoading: false, error: new Error('fail') });
-    mockUseStudyBrief.mockReturnValue({ data: undefined, isLoading: false, error: null });
-    renderWithProviders(<StudyOverview />);
-    expect(screen.getByText(/Could not load/i)).toBeInTheDocument();
-  });
-
-  it('renders study name and lifecycle rail when data loaded', () => {
+  // NAV-1a: Error states for study loading are now handled by StudyWorkspaceLayout
+  // The component renders normally when workspace context provides study data
+  it('renders study name from workspace context', () => {
     mockUseStudy.mockReturnValue({
       data: {
         public_id: 'study-uuid-1',
@@ -85,10 +102,9 @@ describe('StudyOverview page', () => {
       error: null,
     });
     renderWithProviders(<StudyOverview />);
-    // Study name may appear in multiple places (header, breadcrumb, etc.)
-    expect(screen.getAllByText('Claims Usability').length).toBeGreaterThan(0);
-    // Lifecycle rail should have Brief stage
-    expect(screen.getByText('Brief')).toBeInTheDocument();
-    expect(screen.getByText('Plan')).toBeInTheDocument();
+    // NAV-1a: Study name comes from workspace context mock ("Test Study")
+    expect(screen.getAllByText('Test Study').length).toBeGreaterThan(0);
+    // NAV-1a: Lifecycle rail is now owned by StudyWorkspaceLayout, not StudyOverview
+    // The component renders the study overview content without the rail
   });
 });

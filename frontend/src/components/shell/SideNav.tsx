@@ -41,14 +41,16 @@ const navItems = [
 ];
 
 /**
- * VC-2A: Workspace inverse variant uses filtered items.
- * Removes Search and Work Queue per COMPONENT_DELTAS §1.
+ * NAV-1a: Workspace inverse variant uses filtered items.
+ * Restores Work Queue per STUDY_WORKSPACE_NAV_CORRECTION.md §4.
+ * Search remains removed per locked decision.
  */
 const workspaceNavItems = [
   { to: '/', icon: Home, label: 'Home' },
   { to: '/projects', icon: FolderOpen, label: 'Projects' },
   { to: '/studies', icon: BookOpen, label: 'Studies' },
   { to: '/ask', icon: MessageSquare, label: 'Ask Qori' },
+  { to: '/queue', icon: ListChecks, label: 'Work Queue', hasBadge: true },
 ];
 
 export function SideNav({

@@ -1,0 +1,114 @@
+/**
+ * StudyWorkspaceLayout.module.css — NAV-1a
+ *
+ * Shell layout for study workspace.
+ * Per STUDY_WORKSPACE_NAV_CORRECTION.md §9 Shell Redlines.
+ *
+ * Structure:
+ * - 64px org icon rail (from AppShell)
+ * - 240px lifecycle rail
+ * - fluid content area
+ *
+ * Responsive:
+ * - >980px: both rails visible
+ * - ≤980px: lifecycle rail as drawer
+ */
+
+/* Shell container */
+.shell {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+/* Lifecycle rail */
+.rail {
+  flex: 0 0 240px;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-inverse);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Content area */
+.content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  background: var(--color-surface);
+}
+
+/* Scrim (mobile nav backdrop) */
+.scrim {
+  display: none;
+}
+
+/* Loading state */
+.loadingShell {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.loadingRail {
+  flex: 0 0 240px;
+  padding: var(--space-4);
+  background: var(--color-surface-inverse);
+}
+
+.loadingContent {
+  flex: 1;
+  padding: var(--space-6);
+}
+
+/* Error state */
+.errorShell {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+/* Responsive: ≤980px */
+@media (max-width: 980px) {
+  .rail {
+    position: fixed;
+    left: 64px; /* Account for org icon rail */
+    top: 0;
+    bottom: 0;
+    z-index: var(--z-drawer);
+    transform: translateX(-100%);
+    transition: transform 200ms ease-out;
+  }
+
+  .railOpen {
+    transform: translateX(0);
+  }
+
+  .scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    left: 64px; /* Account for org icon rail */
+    background: rgba(0, 0, 0, 0.4);
+    z-index: calc(var(--z-drawer) - 1);
+  }
+}
+
+/* Responsive: ≤640px (mobile - org rail collapses) */
+@media (max-width: 640px) {
+  .rail {
+    left: 0;
+    width: 280px;
+  }
+
+  .scrim {
+    left: 0;
+  }
+}

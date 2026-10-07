@@ -1,6 +1,8 @@
 /**
  * PlanDocument — Research Plan document in Workspace v2 shell.
  *
+ * NAV-1a: Removed page-level LifecycleRail — now owned by StudyWorkspaceLayout.
+ *
  * CC-4: Migrated to workspace shell with:
  * - usePlanViewModel called before early returns (fixes PF-19)
  * - View model provenance for all sections (fixes PF-20)
@@ -29,9 +31,7 @@ import { serializePlan } from '@/components/study/editor/serializer';
 import { buildEditorDocument } from '@/components/study/editor/markdownBridge';
 import { MarkdownDisplay } from '@/components/study/editor/MarkdownDisplay';
 import { useSavePipeline } from '@/components/study/editor/useSavePipeline';
-import { WorkspaceLayout, ContextRail, type RailMode } from '@/components/study/workspace';
-import { LifecycleRail } from '@/components/study/LifecycleRail';
-import { computeLifecycleNodes } from '@/components/study/lifecycle';
+import { WorkspaceLayout, ContextRail, useStudyWorkspace, type RailMode } from '@/components/study/workspace';
 import {
   ArtifactHeader,
   CoachingRail,
@@ -65,6 +65,9 @@ function isInherited(provenance: FieldProvenance | FieldProvenance[] | undefined
 export function PlanDocument() {
   const { studyPublicId } = useParams<{ studyPublicId: string }>();
 
+  // NAV-1a: Get nav state from workspace context
+  const { navOpen, toggleNav } = useStudyWorkspace();
+
   // Call hooks unconditionally at the top (fixes PF-19)
   const { data: plan, isLoading, error } = useStudyPlan(studyPublicId || '');
   const { viewModel: vm, exists: planExists } = usePlanViewModel(studyPublicId || '');
@@ -75,7 +78,7 @@ export function PlanDocument() {
   const editorRef = useRef<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-  const [navOpen, setNavOpen] = useState(false);
+  // NAV-1a: navOpen state moved to StudyWorkspaceLayout
   const [railMode, setRailMode] = useState<'coaching' | 'comments' | null>(null);
   // CMT-7: Track comments scope (section-scoped or all)
   const [commentsScope, setCommentsScope] = useState<CommentsRailScope>({ mode: 'all' });
@@ -183,15 +186,9 @@ export function PlanDocument() {
   // Error state
   if (error || !plan) return <ErrorState message="Could not load plan." />;
 
-  // Compute lifecycle nodes for navigation
-  const lifecycleNodes = computeLifecycleNodes(plan.study?.brief_status ?? null);
-
-  // Study info for lifecycle rail
-  const study = {
-    name: plan.study?.name || '',
-    backTo: '/',
-    backLabel: 'All studies',
-  };
+  // NAV-1a: LifecycleRail moved to StudyWorkspaceLayout
+  // Study name for header display
+  const studyName = plan.study?.name || '';
 
   // Build save state indicator
   const saveState = (() => {
@@ -234,26 +231,17 @@ export function PlanDocument() {
   if (!planExists) {
     return (
       <WorkspaceLayout
-        nav={
-          <LifecycleRail
-            variant="inverse"
-            studyPublicId={studyPublicId || ''}
-            nodes={lifecycleNodes}
-            study={study}
-          />
-        }
+        // NAV-1a: nav prop removed — LifecycleRail owned by StudyWorkspaceLayout
         header={
           <ArtifactHeader
-            studyName={study.name}
+            studyName={studyName}
             studyPublicId={studyPublicId || ''}
             active="plan"
-            navOpen={navOpen}
-            onNavToggle={() => setNavOpen(!navOpen)}
             actions={<></>}
+            navOpen={navOpen}
+            onNavToggle={toggleNav}
           />
         }
-        navOpen={navOpen}
-        onNavClose={() => setNavOpen(false)}
       >
         <div className={styles.emptyCanvas}>
           <EmptyState
@@ -373,26 +361,19 @@ export function PlanDocument() {
 
   return (
     <WorkspaceLayout
-        nav={
-          <LifecycleRail
-            variant="inverse"
-            studyPublicId={studyPublicId || ''}
-            nodes={lifecycleNodes}
-            study={study}
-          />
-        }
+        // NAV-1a: nav prop removed — LifecycleRail owned by StudyWorkspaceLayout
         header={
           <ArtifactHeader
-            studyName={study.name}
+            studyName={studyName}
             studyPublicId={studyPublicId || ''}
             active="plan"
             saveState={saveState}
             status={artifactStatus}
             githubUrl={vm.githubUrl}
             railToggles={railToggles}
-            navOpen={navOpen}
-            onNavToggle={() => setNavOpen(!navOpen)}
             actions={actions}
+            navOpen={navOpen}
+            onNavToggle={toggleNav}
           />
         }
         rail={
@@ -405,8 +386,6 @@ export function PlanDocument() {
           ) : undefined
         }
         railOpen={showRail && railMode !== null}
-        navOpen={navOpen}
-        onNavClose={() => setNavOpen(false)}
       >
       <div className={docStyles.docWrap}>
         <div className={docStyles.docCol}>
