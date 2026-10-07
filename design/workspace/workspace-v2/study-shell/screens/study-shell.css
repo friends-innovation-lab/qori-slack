@@ -1,0 +1,52 @@
+/* Study Workspace shell correction — additions on top of ../../discovery/screens/discovery.css. NOT PRODUCTION.
+   §N NEW values are authoritative and mirror STUDY_WORKSPACE_NAV_CORRECTION.md §Redlines. */
+/* N1 Study block: name is text, not a link (the Study overview row is the single target) */
+.srail .study .nm{cursor:default}
+/* N2 Top row (Study overview), ungrouped, above the lifecycle groups */
+.srail ul.top{padding:0 0 8px;margin:0 0 4px;border-bottom:1px solid var(--color-rule-inverse)}
+/* N3 Current-group heading: the group that contains the active row reads as text-inverse */
+.srail h2.grp.cur{color:var(--color-text-inverse)}
+/* N4 Header breadcrumb starts at the lifecycle group; last crumb is the page */
+.hdr .crumb .cur{color:var(--color-text);font-weight:600}
+.hdr .crumb{max-width:420px}
+/* N5 Discovery overview: evidence-type rows (reuses B27 .erow geometry) */
+.trows{border-top:1px solid var(--color-border-emphasis)}
+.trow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 24px;align-items:center;padding:16px 2px;border-bottom:1px solid var(--color-border);text-decoration:none;color:var(--color-text)}
+.trow:hover{background:var(--color-surface-hover);color:var(--color-text)}
+.trow .et{font-family:var(--font-serif);font-size:17px;line-height:24px;font-weight:600;display:flex;gap:8px;align-items:baseline}
+.trow .ed{font-size:13px;line-height:20px;color:var(--color-text-muted);grid-column:1;display:flex;gap:4px 8px;flex-wrap:wrap}
+.trow .ed b{font-weight:600;color:var(--color-text-meta)}
+.trow .go{grid-row:1/3;grid-column:2;font-size:13px;font-weight:600;color:var(--color-link);display:flex;gap:6px;align-items:center}
+.trow.dim .et{color:var(--color-text-muted)}
+/* N6 Study overview: lifecycle summary rows */
+.lcs{border-top:1px solid var(--color-border-emphasis)}
+.lcs li{display:grid;grid-template-columns:128px minmax(0,1fr) auto;gap:4px 24px;align-items:baseline;padding:16px 2px;border-bottom:1px solid var(--color-border);list-style:none}
+.lcs{margin:0;padding:0}
+.lcs .g{font-family:var(--font-mono);font-size:11px;line-height:20px;letter-spacing:.16em;font-weight:600;text-transform:uppercase;color:var(--color-text-meta)}
+.lcs .s{font-size:14px;line-height:20px;color:var(--color-text);display:flex;flex-direction:column;gap:2px}
+.lcs .s small{font-size:12px;line-height:16px;color:var(--color-text-muted)}
+.lcs a.go{font-size:13px;font-weight:600;white-space:nowrap}
+.lcs li.dim .g,.lcs li.dim .s{color:var(--color-text-muted)}
+/* Org shell (existing, reference only) */
+.oapp{display:flex;flex-direction:column;height:calc(100vh - var(--layout-spec-bar));overflow:hidden;background:var(--color-paper)}
+body.noann .oapp{height:100vh}
+.otop{flex-shrink:0;height:56px;display:flex;align-items:center;gap:20px;padding:0 20px;border-bottom:1px solid var(--color-border);background:var(--color-surface)}
+.otop .q{font-family:var(--font-display);font-size:26px;font-weight:500;width:212px}
+.otop .srch{flex:1;max-width:420px;height:34px;border:1px solid var(--color-border);border-radius:var(--radius-md);display:flex;align-items:center;gap:8px;padding:0 12px;color:var(--color-text-muted);font-size:13px}
+.otop .grow{flex:1}
+.otop .av{width:32px;height:32px;border-radius:50%;background:var(--color-brand);color:var(--color-text-on-brand);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.obody{flex:1;display:flex;min-height:0}
+.onav{width:232px;flex:0 0 232px;border-right:1px solid var(--color-border);background:var(--color-surface);padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+.onav a{display:flex;gap:12px;align-items:center;height:36px;padding:0 12px;border-radius:var(--radius-md);font-size:14px;color:var(--color-text-meta);text-decoration:none}
+.onav a:hover{background:var(--color-surface-hover);color:var(--color-text)}
+.onav a.on{background:var(--color-brand-tint);color:var(--color-text);font-weight:600}
+.onav .bdg{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--color-text-muted)}
+.omain{flex:1;min-width:0;overflow:auto}
+.dt tr.clk{cursor:pointer}
+.dt tr.hov td{background:var(--color-surface-hover)}
+.dt td a.sn{font-family:var(--font-serif);font-size:15px;font-weight:600;color:var(--color-text);text-decoration:none}
+.dt tr.hov td a.sn{text-decoration:underline;text-decoration-color:var(--color-brand)}
+/* Annotation-only helpers */
+.callout{position:absolute;z-index:250;font-family:var(--font-mono);font-size:10.5px;line-height:15px;color:#fff;background:#C2185B;padding:3px 7px;border-radius:3px;pointer-events:none;max-width:260px}
+body.noann .callout{display:none}
+@media (max-width:980px){.onav{display:none}.otop .q{width:auto}}
