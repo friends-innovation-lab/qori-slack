@@ -1,6 +1,8 @@
 /**
  * DiscoveryHub — DISC-3
  *
+ * NAV-1a: Removed page-level LifecycleRail — now owned by StudyWorkspaceLayout.
+ *
  * Discovery Hub page showing all Discovery evidence for a project.
  * Per DISCOVERY_WORKSPACE_DESIGN_SPEC §4.
  *
@@ -14,22 +16,17 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useParams, useSearchParams, Link } from 'react-router';
+import { useSearchParams, Link } from 'react-router';
 import { ChevronDown, FileText, Users } from 'lucide-react';
-import { useStudy } from '@/api/queries/useStudy';
 import {
   useDiscoveryRuns,
   useDiscoveryArtifacts,
   useKnowledgeGaps,
-  useDiscoveryCounts,
 } from '@/api/queries/useDiscovery';
-import { WorkspaceLayout } from '@/components/study/workspace/WorkspaceLayout';
-import { LifecycleRail, type DiscoveryCounts } from '@/components/study/LifecycleRail';
-import { computeLifecycleNodes } from '@/components/study/lifecycle';
+import { WorkspaceLayout, useStudyWorkspace } from '@/components/study/workspace';
 import { DocumentSection } from '@/components/study/document';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { ErrorState } from '@/components/ui/ErrorState';
 import {
   RunLedgerTable,
   ReviewQueue,
@@ -48,20 +45,19 @@ const filterTypeMap: Record<string, DiscoveryTypeKey | undefined> = {
 };
 
 export function DiscoveryHub() {
-  const { studyPublicId } = useParams<{ studyPublicId: string }>();
+  // NAV-1a: Get study data from workspace context (loaded by layout)
+  const {
+    studyPublicId,
+    projectPublicId,
+    studyName,
+  } = useStudyWorkspace();
+
   const [searchParams] = useSearchParams();
-  const [navOpen, setNavOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Get filter type from URL
   const typeFilter = searchParams.get('type');
   const discoveryTypeFilter = typeFilter ? filterTypeMap[typeFilter] : undefined;
-
-  // Fetch study to get project_public_id
-  const { data: study, isLoading: studyLoading, error: studyError } = useStudy(studyPublicId || '');
-
-  // Get project ID for Discovery API calls
-  const projectPublicId = study?.project_public_id || '';
 
   // Fetch Discovery data with polling for pending runs
   const runsQuery = useDiscoveryRuns(
@@ -82,22 +78,6 @@ export function DiscoveryHub() {
 
   const knowledgeGapsQuery = useKnowledgeGaps(projectPublicId, { enabled: !!projectPublicId });
 
-  const countsResult = useDiscoveryCounts(projectPublicId, { enabled: !!projectPublicId });
-
-  // Build lifecycle rail counts
-  const discoveryCounts: DiscoveryCounts | undefined = countsResult.data
-    ? {
-        desk: countsResult.data.desk,
-        stakeholder: countsResult.data.stakeholder,
-        survey: countsResult.data.survey,
-        needsReview: countsResult.data.needsReview,
-      }
-    : undefined;
-
-  // Compute lifecycle nodes for Brief status
-  const briefStatus = null; // TODO: Get from study or brief query
-  const lifecycleNodes = computeLifecycleNodes(briefStatus);
-
   // Check if there's any discovery data
   const hasRuns = runsQuery.data && runsQuery.data.length > 0;
   const hasArtifacts = artifactsQuery.data && artifactsQuery.data.length > 0;
@@ -108,23 +88,6 @@ export function DiscoveryHub() {
     if (!runsQuery.data) return [];
     return runsQuery.data.filter((run) => run.status === 'failed');
   }, [runsQuery.data]);
-
-  // Loading state
-  if (studyLoading) {
-    return <Skeleton variant="card" count={3} />;
-  }
-
-  // Error state
-  if (studyError || !study) {
-    return <ErrorState message={studyError?.message || 'Could not load study'} />;
-  }
-
-  // Study info for lifecycle rail
-  const studyInfo = {
-    name: study.name,
-    backTo: '/',
-    backLabel: 'All studies',
-  };
 
   // Artifact counts for status line
   const deskCount = artifactsQuery.data?.filter(
@@ -140,20 +103,12 @@ export function DiscoveryHub() {
 
   return (
     <WorkspaceLayout
-      nav={
-        <LifecycleRail
-          variant="inverse"
-          studyPublicId={studyPublicId || ''}
-          nodes={lifecycleNodes}
-          study={studyInfo}
-          discoveryCounts={discoveryCounts}
-        />
-      }
+      // NAV-1a: nav prop removed — LifecycleRail owned by StudyWorkspaceLayout
       header={
         <div className={styles.header}>
           <div className={styles.headerMain}>
             <span className={styles.eyebrow}>Discovery</span>
-            <h1 className={styles.title}>{study.name}</h1>
+            <h1 className={styles.title}>{studyName}</h1>
             <p className={styles.meta}>
               <span className={styles.scope}>Project discovery · shared by all studies</span>
             </p>
@@ -215,8 +170,6 @@ export function DiscoveryHub() {
           </div>
         </div>
       }
-      navOpen={navOpen}
-      onNavClose={() => setNavOpen(false)}
     >
       <div className={docStyles.docWrap}>
         <div className={docStyles.docCol}>

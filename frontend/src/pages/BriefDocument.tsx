@@ -1,6 +1,8 @@
 /**
  * BriefDocument — Research Brief in Workspace v2 shell.
  *
+ * NAV-1a: Removed page-level LifecycleRail — now owned by StudyWorkspaceLayout.
+ *
  * CC-5: Migrated to workspace shell with:
  * - useBriefViewModel called before early returns
  * - WorkspaceLayout composition
@@ -36,9 +38,7 @@ import { serializeBrief } from '@/components/study/editor/serializer';
 import { buildEditorDocument, type SectionProvenance } from '@/components/study/editor/markdownBridge';
 import { MarkdownDisplay } from '@/components/study/editor/MarkdownDisplay';
 import { useSavePipeline } from '@/components/study/editor/useSavePipeline';
-import { WorkspaceLayout, ContextRail, type RailMode } from '@/components/study/workspace';
-import { LifecycleRail } from '@/components/study/LifecycleRail';
-import { computeLifecycleNodes } from '@/components/study/lifecycle';
+import { WorkspaceLayout, ContextRail, useStudyWorkspace, type RailMode } from '@/components/study/workspace';
 import {
   ArtifactHeader,
   ApprovalSection,
@@ -170,6 +170,9 @@ function formatDate(d: string | null | undefined): string | null {
 export function BriefDocument() {
   const { studyPublicId } = useParams<{ studyPublicId: string }>();
 
+  // NAV-1a: Get nav state from workspace context
+  const { navOpen, toggleNav } = useStudyWorkspace();
+
   // Call hooks unconditionally at the top (same pattern as PlanDocument)
   const { data: brief, isLoading, error } = useStudyBrief(studyPublicId || '');
   const { viewModel: vm } = useBriefViewModel(studyPublicId || '');
@@ -182,7 +185,7 @@ export function BriefDocument() {
   const editorRef = useRef<Editor | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-  const [navOpen, setNavOpen] = useState(false);
+  // NAV-1a: navOpen state moved to StudyWorkspaceLayout
   const [checklist, setChecklist] = useState<ChecklistState>({
     scope: false,
     timeline: false,
@@ -326,15 +329,9 @@ export function BriefDocument() {
     return <ErrorState message={error?.message || 'Could not load brief'} />;
   }
 
-  // Compute lifecycle nodes for navigation
-  const lifecycleNodes = computeLifecycleNodes(brief.brief_status ?? null);
-
-  // Study info for lifecycle rail
-  const study = {
-    name: vm.study.name,
-    backTo: '/',
-    backLabel: 'All studies',
-  };
+  // NAV-1a: LifecycleRail moved to StudyWorkspaceLayout
+  // Study name for header display
+  const studyName = vm.study.name;
 
   // Approval state from view model
   const isPendingApproval = vm.approval.status === 'pending_approval';
@@ -524,26 +521,19 @@ export function BriefDocument() {
 
   return (
     <WorkspaceLayout
-        nav={
-          <LifecycleRail
-            variant="inverse"
-            studyPublicId={studyPublicId || ''}
-            nodes={lifecycleNodes}
-            study={study}
-          />
-        }
+        // NAV-1a: nav prop removed — LifecycleRail owned by StudyWorkspaceLayout
         header={
           <ArtifactHeader
-            studyName={study.name}
+            studyName={studyName}
             studyPublicId={studyPublicId || ''}
             active="brief"
             saveState={saveState}
             status={artifactStatus}
             githubUrl={vm.githubUrl}
             railToggles={railToggles}
-            navOpen={navOpen}
-            onNavToggle={() => setNavOpen(!navOpen)}
             actions={actions}
+            navOpen={navOpen}
+            onNavToggle={toggleNav}
           />
         }
         rail={
@@ -556,8 +546,6 @@ export function BriefDocument() {
           ) : undefined
         }
         railOpen={showRail && railMode !== null}
-        navOpen={navOpen}
-        onNavClose={() => setNavOpen(false)}
       >
       <div className={docStyles.docWrap}>
         <div className={docStyles.docCol}>

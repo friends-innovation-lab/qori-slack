@@ -1,6 +1,8 @@
 /**
  * DiscoveryRunPage — DISC-3
  *
+ * NAV-1a: Removed page-level LifecycleRail — now owned by StudyWorkspaceLayout.
+ *
  * Discovery run detail page with tabs: Report, Sources, Extracted.
  * Per DISCOVERY_WORKSPACE_DESIGN_SPEC §6, §8.
  *
@@ -13,16 +15,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation, Link } from 'react-router';
 import { LoaderCircle, AlertTriangle, FileText, RefreshCw } from 'lucide-react';
-import { useStudy } from '@/api/queries/useStudy';
 import {
   useDiscoveryRun,
   useDiscoveryArtifact,
   useArtifactVariables,
-  useDiscoveryCounts,
 } from '@/api/queries/useDiscovery';
-import { WorkspaceLayout } from '@/components/study/workspace/WorkspaceLayout';
-import { LifecycleRail, type DiscoveryCounts } from '@/components/study/LifecycleRail';
-import { computeLifecycleNodes } from '@/components/study/lifecycle';
+import { WorkspaceLayout, useStudyWorkspace } from '@/components/study/workspace';
 import { DocumentSection, FactsGrid } from '@/components/study/document';
 import { MarkdownDisplay } from '@/components/study/editor/MarkdownDisplay';
 import { DiscoveryMarker } from '@/components/discovery';
@@ -52,16 +50,16 @@ function getActiveTab(pathname: string): RunTab {
 }
 
 export function DiscoveryRunPage() {
-  const { studyPublicId, runId } = useParams<{ studyPublicId: string; runId: string }>();
+  // NAV-1a: Get study data from workspace context (loaded by layout)
+  const {
+    studyPublicId,
+    projectPublicId,
+  } = useStudyWorkspace();
+
+  const { runId } = useParams<{ runId: string }>();
   const location = useLocation();
-  const [navOpen, setNavOpen] = useState(false);
 
   const activeTab = getActiveTab(location.pathname);
-
-  // Fetch study to get project_public_id
-  const { data: study, isLoading: studyLoading, error: studyError } = useStudy(studyPublicId || '');
-
-  const projectPublicId = study?.project_public_id || '';
 
   // DISC-3: Poll for status updates when run is pending/processing.
   const [pollingEnabled, setPollingEnabled] = useState(true);
@@ -92,59 +90,26 @@ export function DiscoveryRunPage() {
     enabled: !!projectPublicId && !!artifactPublicId && activeTab === 'extracted',
   });
 
-  const countsResult = useDiscoveryCounts(projectPublicId, { enabled: !!projectPublicId });
-
-  // Build lifecycle rail counts
-  const discoveryCounts: DiscoveryCounts | undefined = countsResult.data
-    ? {
-        desk: countsResult.data.desk,
-        stakeholder: countsResult.data.stakeholder,
-        survey: countsResult.data.survey,
-        needsReview: countsResult.data.needsReview,
-      }
-    : undefined;
-
-  const lifecycleNodes = computeLifecycleNodes(null);
-
   // Handle polling updates - refetch effect
   const run = runQuery.data;
   const isProcessing = run?.status === 'pending' || run?.status === 'processing';
 
   // Loading state
-  if (studyLoading || runQuery.isLoading) {
+  if (runQuery.isLoading) {
     return <Skeleton variant="card" count={3} />;
   }
 
   // Error state
-  if (studyError || !study) {
-    return <ErrorState message={studyError?.message || 'Could not load study'} />;
-  }
-
   if (runQuery.error || !run) {
     return <ErrorState message={runQuery.error?.message || 'Could not load run'} />;
   }
-
-  // Study info for lifecycle rail
-  const studyInfo = {
-    name: study.name,
-    backTo: '/',
-    backLabel: 'All studies',
-  };
 
   // Build tabs based on URL
   const basePath = `/studies/${studyPublicId}/discovery/runs/${runId}`;
 
   return (
     <WorkspaceLayout
-      nav={
-        <LifecycleRail
-          variant="inverse"
-          studyPublicId={studyPublicId || ''}
-          nodes={lifecycleNodes}
-          study={studyInfo}
-          discoveryCounts={discoveryCounts}
-        />
-      }
+      // NAV-1a: nav prop removed — LifecycleRail owned by StudyWorkspaceLayout
       header={
         <div className={styles.header}>
           <div className={styles.headerMain}>
@@ -195,8 +160,6 @@ export function DiscoveryRunPage() {
           )}
         </div>
       }
-      navOpen={navOpen}
-      onNavClose={() => setNavOpen(false)}
     >
       <div className={docStyles.docWrap}>
         <div className={docStyles.docCol}>
@@ -211,7 +174,7 @@ export function DiscoveryRunPage() {
               failureCode={run.failureCode}
               failureMessage={run.failureMessage}
               discoveryType={run.discoveryType}
-              studyPublicId={studyPublicId || ''}
+              studyPublicId={studyPublicId}
             />
           )}
 

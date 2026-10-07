@@ -19,13 +19,11 @@ import styles from './AppShell.module.css';
 
 /**
  * Routes that use the workspace shell variant.
- * CC-3: empty (shell components built, no routes migrated yet).
- * CC-4: adds '/studies/:studyPublicId/plan'.
- * CC-5: adds '/studies/:studyPublicId/brief'.
+ * NAV-1a: All study routes use workspace shell (persistent study workspace).
  */
 export const WORKSPACE_ROUTE_PATTERNS: readonly string[] = [
-  '/studies/:studyPublicId/plan',
-  '/studies/:studyPublicId/brief',
+  '/studies/:studyPublicId/*',
+  '/studies/:studyPublicId',
 ] as const;
 
 interface AppShellProps {

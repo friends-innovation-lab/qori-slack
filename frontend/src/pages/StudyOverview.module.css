@@ -1,11 +1,10 @@
-.layout {
-  display: flex;
-  gap: var(--space-6);
-}
+/* NAV-1a: No longer uses .layout - content is inside StudyWorkspaceLayout */
 
 .content {
   flex: 1;
   min-width: 0;
+  padding: var(--space-6);
+  max-width: 960px;
 }
 
 .attentionCard {

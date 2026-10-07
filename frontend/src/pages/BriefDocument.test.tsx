@@ -53,6 +53,28 @@ vi.mock('@/api/coaching', () => ({
   isTerminalRun: (r: { status: string }) => r.status === 'completed' || r.status === 'failed',
 }));
 
+// NAV-1a: Mock workspace context (provides nav state)
+vi.mock('@/components/study/workspace', async () => {
+  const actual = await vi.importActual('@/components/study/workspace');
+  return {
+    ...actual,
+    useStudyWorkspace: () => ({
+      studyPublicId: 'study-1',
+      projectPublicId: 'p1',
+      studyName: 'Test Study',
+      briefStatus: 'approved',
+      lifecycleNodes: [],
+      discoveryCounts: undefined,
+      navOpen: false,
+      openNav: vi.fn(),
+      closeNav: vi.fn(),
+      toggleNav: vi.fn(),
+      isLoading: false,
+      error: null,
+    }),
+  };
+});
+
 function makeBrief(overrides: any = {}) {
   return {
     study: { public_id: 'study-1', name: 'Test Study', status: 'active', brief_status: 'approved', project_public_id: 'p1', created_at: '2026-09-01' },

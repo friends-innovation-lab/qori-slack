@@ -87,7 +87,7 @@ vi.mock('@/api/coaching', () => ({
   isTerminalRun: (r: { status: string }) => r.status === 'completed' || r.status === 'failed',
 }));
 
-// Reference navigation mock
+// Reference navigation mock + NAV-1a workspace context
 vi.mock('@/components/study/workspace', async () => {
   const actual = await vi.importActual('@/components/study/workspace');
   return {
@@ -101,6 +101,21 @@ vi.mock('@/components/study/workspace', async () => {
       resolveDestination: () => null,
       getReviewedVersionForReference: () => null,
       isNavigationActive: false,
+    }),
+    // NAV-1a: Workspace context mock
+    useStudyWorkspace: () => ({
+      studyPublicId: 'study-1',
+      projectPublicId: 'p1',
+      studyName: 'M4A Test Study',
+      briefStatus: 'approved',
+      lifecycleNodes: [],
+      discoveryCounts: undefined,
+      navOpen: false,
+      openNav: vi.fn(),
+      closeNav: vi.fn(),
+      toggleNav: vi.fn(),
+      isLoading: false,
+      error: null,
     }),
   };
 });

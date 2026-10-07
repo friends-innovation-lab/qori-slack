@@ -116,12 +116,13 @@ describe('AppShell workspace variant (CC-3)', () => {
     document.documentElement.removeAttribute('data-qori-surface');
   });
 
-  it('WORKSPACE_ROUTE_PATTERNS contains Plan pattern (CC-4)', () => {
-    expect(WORKSPACE_ROUTE_PATTERNS).toContain('/studies/:studyPublicId/plan');
+  // NAV-1a: All study routes now use wildcard pattern
+  it('WORKSPACE_ROUTE_PATTERNS contains study wildcard pattern (NAV-1a)', () => {
+    expect(WORKSPACE_ROUTE_PATTERNS).toContain('/studies/:studyPublicId/*');
   });
 
-  it('WORKSPACE_ROUTE_PATTERNS contains Brief pattern (CC-5)', () => {
-    expect(WORKSPACE_ROUTE_PATTERNS).toContain('/studies/:studyPublicId/brief');
+  it('WORKSPACE_ROUTE_PATTERNS contains base study pattern (NAV-1a)', () => {
+    expect(WORKSPACE_ROUTE_PATTERNS).toContain('/studies/:studyPublicId');
   });
 
   it('renders workspace variant for a matched pattern (injected via _testPatterns)', () => {

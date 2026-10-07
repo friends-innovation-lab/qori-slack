@@ -1,6 +1,7 @@
 /**
  * App — Router + providers. All authenticated routes wrapped in AppShell.
  *
+ * NAV-1a: Study routes nested under StudyWorkspaceLayout for persistent shell.
  * DISC-3: Added Discovery routes under /studies/:studyPublicId/discovery/*
  */
 
@@ -9,6 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/auth/AuthProvider';
 import { RequireAuth } from '@/auth/RequireAuth';
 import { AppShell } from '@/components/shell/AppShell';
+import { StudyWorkspaceLayout } from '@/components/study/workspace';
 import { Home } from '@/pages/Home';
 import { NewProject } from '@/pages/NewProject';
 import { BriefForm } from '@/pages/BriefForm';
@@ -48,18 +50,21 @@ export function App() {
                       <Route path="projects" element={<Projects />} />
                       <Route path="projects/new" element={<NewProject />} />
                       <Route path="projects/:projectPublicId" element={<ProjectDetail />} />
-                      <Route path="studies/:studyPublicId/brief/new" element={<BriefForm />} />
-                      <Route path="studies/:studyPublicId/brief" element={<BriefDocument />} />
-                      <Route path="studies/:studyPublicId" element={<StudyOverview />} />
-                      <Route path="studies/:studyPublicId/plan/new" element={<PlanForm />} />
-                      <Route path="studies/:studyPublicId/plan" element={<PlanDocument />} />
-                      {/* DISC-3: Discovery routes */}
-                      <Route path="studies/:studyPublicId/discovery" element={<DiscoveryHub />} />
-                      <Route path="studies/:studyPublicId/discovery/new/desk" element={<DeskIntake />} />
-                      <Route path="studies/:studyPublicId/discovery/new/stakeholder" element={<StakeholderIntake />} />
-                      <Route path="studies/:studyPublicId/discovery/runs/:runId" element={<DiscoveryRunPage />} />
-                      <Route path="studies/:studyPublicId/discovery/runs/:runId/sources" element={<DiscoveryRunPage />} />
-                      <Route path="studies/:studyPublicId/discovery/runs/:runId/extracted" element={<DiscoveryRunPage />} />
+                      {/* NAV-1a: All study routes nested under StudyWorkspaceLayout */}
+                      <Route path="studies/:studyPublicId" element={<StudyWorkspaceLayout />}>
+                        <Route index element={<StudyOverview />} />
+                        <Route path="brief/new" element={<BriefForm />} />
+                        <Route path="brief" element={<BriefDocument />} />
+                        <Route path="plan/new" element={<PlanForm />} />
+                        <Route path="plan" element={<PlanDocument />} />
+                        {/* DISC-3: Discovery routes */}
+                        <Route path="discovery" element={<DiscoveryHub />} />
+                        <Route path="discovery/new/desk" element={<DeskIntake />} />
+                        <Route path="discovery/new/stakeholder" element={<StakeholderIntake />} />
+                        <Route path="discovery/runs/:runId" element={<DiscoveryRunPage />} />
+                        <Route path="discovery/runs/:runId/sources" element={<DiscoveryRunPage />} />
+                        <Route path="discovery/runs/:runId/extracted" element={<DiscoveryRunPage />} />
+                      </Route>
                       <Route path="*" element={<Home />} />
                     </Routes>
                   </AppShell>

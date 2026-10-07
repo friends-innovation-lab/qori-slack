@@ -48,6 +48,43 @@ vi.mock('@/auth/AuthProvider', () => ({
   }),
 }));
 
+// Coach M3A: Mock coaching API
+vi.mock('@/api/coaching', () => ({
+  useCoachHistory: () => ({
+    data: { runs: [], capabilities: { artifact_review: true, coachable_sections: [] } },
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  }),
+  useCoachRun: () => ({ data: null, isLoading: false }),
+  useActiveCoachRun: () => ({ data: null, isLoading: false }),
+  useCreateCoachRun: () => ({ mutate: vi.fn(), isPending: false }),
+  isActiveRun: (r: { status: string }) => r.status === 'pending' || r.status === 'running',
+  isTerminalRun: (r: { status: string }) => r.status === 'completed' || r.status === 'failed',
+}));
+
+// NAV-1a: Mock workspace context
+vi.mock('@/components/study/workspace', async () => {
+  const actual = await vi.importActual('@/components/study/workspace');
+  return {
+    ...actual,
+    useStudyWorkspace: () => ({
+      studyPublicId: 'study-1',
+      projectPublicId: 'p1',
+      studyName: 'Test Study',
+      briefStatus: 'approved',
+      lifecycleNodes: [],
+      discoveryCounts: undefined,
+      navOpen: false,
+      openNav: vi.fn(),
+      closeNav: vi.fn(),
+      toggleNav: vi.fn(),
+      isLoading: false,
+      error: null,
+    }),
+  };
+});
+
 function makePlan(overrides: Record<string, unknown> = {}) {
   return {
     study: {
