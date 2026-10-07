@@ -207,7 +207,7 @@ export function BriefForm() {
   }
 
   return (
-    <>
+    <div className={styles.content}>
       <PageHeader
         title={isRevision ? 'Revise Brief' : 'Research Brief'}
         breadcrumbs={[
@@ -339,6 +339,6 @@ export function BriefForm() {
           </Button>
         </div>
       </form>
-    </>
+    </div>
   );
 }
