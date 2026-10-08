@@ -227,11 +227,11 @@ describe('DiscoveryHub', () => {
   });
 
   describe('populated state', () => {
-    it('renders study name in header', () => {
+    it('renders Discovery as page title', () => {
       setupMocks();
       renderWithProviders(<DiscoveryHub />);
 
-      expect(screen.getByRole('heading', { name: 'Test Study' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Discovery' })).toBeInTheDocument();
     });
 
     it('shows Discovery eyebrow', () => {
@@ -384,7 +384,7 @@ describe('DiscoveryHub', () => {
 
       expect(mockNavigate).not.toHaveBeenCalled();
       // Should render the Overview page normally
-      expect(screen.getByRole('heading', { name: 'Test Study' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Discovery' })).toBeInTheDocument();
     });
 
     it('renders Overview content when no redirect needed', () => {
@@ -393,7 +393,7 @@ describe('DiscoveryHub', () => {
       renderWithProviders(<DiscoveryHub />);
 
       // Should render the Overview page
-      expect(screen.getByRole('heading', { name: 'Test Study' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Discovery' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Add evidence/i })).toBeInTheDocument();
     });
   });
