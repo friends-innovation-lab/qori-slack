@@ -1,111 +1,135 @@
 /**
- * StudyOverview — Study orientation page.
- * NAV-1a: Now renders inside StudyWorkspaceLayout (no page-level rail).
+ * StudyOverview — NAV-1c S02 Design
  *
- * Shows: progress, needs-attention, at-a-glance metadata.
+ * Study landing page with truthful lifecycle status.
+ * Per STUDY_WORKSPACE_NAV_CORRECTION.md §S02.
+ *
+ * Content (two sections, no filler):
+ * 1. Needs you: top 3 actionable items (brief approval, discovery review queue)
+ * 2. Where this study is: one row per lifecycle group with status and action
  */
 
 import { Link } from 'react-router';
-import { useStudyBrief } from '@/api/queries/useStudy';
 import { useStudyWorkspace } from '@/components/study/workspace';
-import { PageHeader } from '@/components/shell/PageHeader';
-import { StatusBadge } from '@/components/ui/StatusBadge';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { WorkspaceLayout } from '@/components/study/workspace';
+import { Skeleton } from '@/components/ui/Skeleton';
+import {
+  deriveNeedsYouItems,
+  deriveLifecycleGroupStatuses,
+  type BriefStatusValue,
+} from '@/components/study/studyStatus';
 import styles from './StudyOverview.module.css';
 
 export function StudyOverview() {
-  // NAV-1a: Get study data from workspace context (loaded by layout)
   const {
     studyPublicId,
     studyName,
     briefStatus,
+    discoveryCounts,
+    isLoading,
+    error,
   } = useStudyWorkspace();
 
-  // Fetch brief for "At a glance" section
-  const { data: brief } = useStudyBrief(studyPublicId);
+  // Derive needs-you items from canonical state
+  const needsYouItems = deriveNeedsYouItems(
+    studyPublicId,
+    briefStatus as BriefStatusValue,
+    discoveryCounts,
+  );
 
-  const briefApproved = briefStatus === 'approved';
-  const hasBrief = !!briefStatus;
+  // Derive lifecycle group statuses
+  const lifecycleStatuses = deriveLifecycleGroupStatuses(
+    studyPublicId,
+    briefStatus as BriefStatusValue,
+    discoveryCounts,
+  );
+
+  // Show more than 3 items link
+  const hasMoreItems = needsYouItems.length >= 3;
 
   return (
-    <div className={styles.content}>
-      <PageHeader
-        title={studyName}
-        breadcrumbs={[
-          { label: 'Home', to: '/' },
-          { label: studyName },
-        ]}
-        meta={
-          briefStatus ? (
-            <StatusBadge status={briefStatus} />
-          ) : undefined
-        }
-      />
+    <WorkspaceLayout
+      header={
+        <div className={styles.header}>
+          <span className={styles.eyebrow}>Study</span>
+          <h1 className={styles.title}>{studyName}</h1>
+        </div>
+      }
+    >
+      <div className={styles.content}>
+        {/* Loading state */}
+        {isLoading && <Skeleton variant="card" count={2} />}
 
-      {/* Needs attention */}
-      {briefStatus === 'pending_approval' && (
-        <Card padding="compact" className={styles.attentionCard}>
-          <div className={styles.attentionRow}>
-            <span>Brief needs approval</span>
-            <Link to={`/studies/${studyPublicId}/brief`}>
-              <Button variant="secondary">Review</Button>
-            </Link>
+        {/* Error state */}
+        {error && (
+          <div className={styles.errorState} role="alert">
+            <p>Could not load study data.</p>
+            <p className={styles.errorMessage}>{error.message}</p>
           </div>
-        </Card>
-      )}
+        )}
 
-      {/* What next */}
-      {!hasBrief && (
-        <EmptyState
-          heading="Ready to define your research"
-          description="Create a research brief to define what you'll study, why, and how."
-          action={
-            <Link to={`/studies/${studyPublicId}/brief/new`}>
-              <Button>Create brief</Button>
-            </Link>
-          }
-        />
-      )}
-
-      {briefApproved && (
-        <Card>
-          <h2 className={styles.sectionTitle}>Next step</h2>
-          <p>
-            Your brief has been approved. Create a research plan to outline
-            the operational details.
-          </p>
-          <div className={styles.nextAction}>
-            <Link to={`/studies/${studyPublicId}/plan/new`}>
-              <Button>Create research plan</Button>
-            </Link>
-          </div>
-        </Card>
-      )}
-
-      {/* At a glance */}
-      {brief && (
-        <Card className={styles.glanceCard}>
-          <h2 className={styles.sectionTitle}>At a glance</h2>
-          <dl className={styles.glanceList}>
-            {brief.cascade_fields.methodology_selection && (
-              <>
-                <dt>Method</dt>
-                <dd>{brief.cascade_fields.methodology_selection.replace(/_/g, ' ')}</dd>
-              </>
+        {/* Main content when loaded */}
+        {!isLoading && !error && (
+          <>
+            {/* §1 Needs you */}
+            {needsYouItems.length > 0 && (
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Needs you</h2>
+                <div className={styles.needsYouList}>
+                  {needsYouItems.map((item) => (
+                    <Link
+                      key={item.id}
+                      to={item.href}
+                      className={styles.needsYouRow}
+                    >
+                      <div className={styles.needsYouContent}>
+                        <span className={styles.needsYouLabel}>{item.label}</span>
+                        {item.sublabel && (
+                          <span className={styles.needsYouSublabel}>{item.sublabel}</span>
+                        )}
+                      </div>
+                      <span className={styles.needsYouAction}>{item.action} →</span>
+                    </Link>
+                  ))}
+                </div>
+                {hasMoreItems && (
+                  <Link
+                    to={`/studies/${studyPublicId}/discovery`}
+                    className={styles.seeAllLink}
+                  >
+                    See all in Discovery →
+                  </Link>
+                )}
+              </section>
             )}
-            {brief.cascade_fields.start_date && (
-              <>
-                <dt>Start date</dt>
-                <dd>{brief.cascade_fields.start_date}</dd>
-              </>
-            )}
-            <dt>Status</dt>
-            <dd>{briefStatus || 'Not started'}</dd>
-          </dl>
-        </Card>
-      )}
-    </div>
+
+            {/* §2 Where this study is */}
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Where this study is</h2>
+              <div className={styles.lifecycleGrid}>
+                {lifecycleStatuses.map((group) => (
+                  <div key={group.group} className={styles.lifecycleRow}>
+                    <span className={styles.lifecycleGroup}>{group.group}</span>
+                    <div className={styles.lifecycleStatus}>
+                      <span className={styles.lifecycleStatusText}>{group.status}</span>
+                      {group.statusMuted && (
+                        <span className={styles.lifecycleStatusMuted}>{group.statusMuted}</span>
+                      )}
+                    </div>
+                    <div className={styles.lifecycleAction}>
+                      {group.action && (
+                        <Link to={group.action.href} className={styles.lifecycleActionLink}>
+                          {group.action.label} →
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+      </div>
+    </WorkspaceLayout>
   );
 }

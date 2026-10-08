@@ -1,56 +1,200 @@
-/* NAV-1a: No longer uses .layout - content is inside StudyWorkspaceLayout */
+/**
+ * StudyOverview — NAV-1c S02 Design
+ *
+ * Styles for Study Overview landing page.
+ * Per STUDY_WORKSPACE_NAV_CORRECTION.md N6 visual rules.
+ */
 
 .content {
   flex: 1;
   min-width: 0;
   padding: var(--space-6);
-  max-width: 960px;
+  max-width: 720px;
 }
 
-.attentionCard {
-  margin-bottom: var(--space-4);
-}
-
-.attentionRow {
+/* Header */
+.header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.eyebrow {
+  font-size: 11px;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.title {
+  font-size: var(--text-h1-size);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* Section */
+.section {
+  margin-bottom: var(--space-8);
 }
 
 .sectionTitle {
   font-size: var(--text-h3-size);
-  margin-bottom: var(--space-3);
-}
-
-.nextAction {
-  margin-top: var(--space-4);
-}
-
-.glanceCard {
-  margin-top: var(--space-4);
-}
-
-.glanceList {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: var(--space-2) var(--space-4);
-}
-
-.glanceList dt {
   font-weight: 600;
-  font-size: var(--text-secondary-size);
+  color: var(--color-text);
+  margin: 0 0 var(--space-4);
+}
+
+/* Needs You list */
+.needsYouList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.needsYouRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.needsYouRow:hover {
+  background: var(--color-surface-hover);
+}
+
+.needsYouContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.needsYouLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.needsYouSublabel {
+  font-size: 12px;
   color: var(--color-text-muted);
 }
 
-.glanceList dd {
-  margin: 0;
-  text-transform: capitalize;
+.needsYouAction {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-link);
+  white-space: nowrap;
 }
 
-@media (max-width: 1023px) {
-  .layout {
-    flex-direction: column;
+.seeAllLink {
+  display: inline-block;
+  margin-top: var(--space-3);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+.seeAllLink:hover {
+  text-decoration: underline;
+}
+
+/* Lifecycle grid (N6: 128px / 1fr / auto) */
+.lifecycleGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.lifecycleRow {
+  display: grid;
+  grid-template-columns: 128px 1fr auto;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.lifecycleRow:last-child {
+  border-bottom: none;
+}
+
+/* N6: Group in mono 11 caps */
+.lifecycleGroup {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-meta);
+}
+
+/* N6: Status 14/20 with 12/16 muted sub-line */
+.lifecycleStatus {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lifecycleStatusText {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--color-text);
+}
+
+.lifecycleStatusMuted {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--color-text-muted);
+}
+
+/* N6: Action 13 600 link */
+.lifecycleAction {
+  min-width: 100px;
+  text-align: right;
+}
+
+.lifecycleActionLink {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-link);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.lifecycleActionLink:hover {
+  text-decoration: underline;
+}
+
+/* Error state */
+.errorState {
+  padding: var(--space-6);
+  background: var(--color-error-surface);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-error);
+}
+
+.errorMessage {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: var(--space-2);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .lifecycleRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .lifecycleAction {
+    text-align: left;
   }
 }
