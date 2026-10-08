@@ -173,7 +173,9 @@ describe('M4B.1 Cross-Artifact Navigation Guard', () => {
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    // Only restore the confirm spy, not global mocks (like matchMedia from setup.ts)
+    // Using restoreAllMocks() would clear the matchMedia mock before async cleanup completes
+    vi.mocked(window.confirm).mockRestore();
   });
 
   const getConfirmSpy = () => vi.mocked(window.confirm);

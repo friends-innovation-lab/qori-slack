@@ -224,6 +224,39 @@
   }
 }
 
+/* ─── Empty state (DiscoveryTypePage) ─── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+.emptyIcon {
+  color: var(--color-text-disabled);
+}
+.emptyTitle {
+  margin: 0;
+  font: var(--weight-medium) var(--type-section-size)/var(--type-section-line) var(--font-display);
+  color: var(--color-text);
+}
+.emptyDescription {
+  margin: 0;
+  max-width: var(--layout-prose-measure);
+  font: var(--type-doc-body-size)/var(--type-doc-body-line) var(--font-serif);
+  color: var(--color-text-muted);
+}
+.emptyAction {
+  margin-top: var(--space-2);
+  font: var(--weight-semibold) var(--type-ui-size)/var(--type-ui-line) var(--font-ui);
+  color: var(--color-link);
+  text-decoration: none;
+}
+.emptyAction:hover {
+  text-decoration: underline;
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 980px) {
   .docCol { padding: var(--space-6) var(--space-5) calc(var(--space-8) + var(--space-6)); }
