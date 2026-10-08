@@ -122,75 +122,77 @@ export function DiscoveryHub() {
   return (
     <WorkspaceLayout
       // NAV-1a: nav prop removed — LifecycleRail owned by StudyWorkspaceLayout
-      header={
-        <div className={styles.header}>
-          <div className={styles.headerMain}>
-            <span className={styles.eyebrow}>Discovery</span>
-            <h1 className={styles.title}>{studyName}</h1>
-            <p className={styles.meta}>
-              <span className={styles.scope}>Project discovery · shared by all studies</span>
-            </p>
-            {hasDiscovery && (
-              <p className={styles.statusLine}>
-                <span className={styles.count}>{totalArtifacts}</span> artifacts
-                {needsReviewRuns.length > 0 && (
-                  <>
-                    {' · '}
-                    <span className={styles.count}>{needsReviewRuns.length}</span> needs review
-                  </>
-                )}
-              </p>
-            )}
-          </div>
-
-          <div className={styles.headerActions}>
-            {/* Add evidence menu (DISC-3: 2 items only) */}
-            <div className={styles.menuContainer}>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setMenuOpen(!menuOpen)}
-                aria-expanded={menuOpen}
-                aria-haspopup="true"
-              >
-                Add evidence
-                <ChevronDown size={14} aria-hidden="true" />
-              </Button>
-              {menuOpen && (
-                <div className={styles.menu} role="menu">
-                  <Link
-                    to={`/studies/${studyPublicId}/discovery/new/desk`}
-                    className={styles.menuItem}
-                    role="menuitem"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <FileText size={14} aria-hidden="true" />
-                    <div>
-                      <span className={styles.menuItemTitle}>Documents</span>
-                      <span className={styles.menuItemSub}>Reports, policies, prior studies</span>
-                    </div>
-                  </Link>
-                  <Link
-                    to={`/studies/${studyPublicId}/discovery/new/stakeholder`}
-                    className={styles.menuItem}
-                    role="menuitem"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <Users size={14} aria-hidden="true" />
-                    <div>
-                      <span className={styles.menuItemTitle}>Stakeholder material</span>
-                      <span className={styles.menuItemSub}>Transcripts, notes, feedback</span>
-                    </div>
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      }
+      // Overview pages: masthead inside docCol for centered canvas alignment
+      header={<div className={styles.headerSpacer} />}
     >
       <div className={docStyles.docWrap}>
         <div className={docStyles.docCol}>
+          {/* Masthead — inside docCol for centered canvas alignment per CD S03 */}
+          <div className={styles.masthead}>
+            <div className={styles.mastheadMain}>
+              <span className={styles.eyebrow}>Discovery</span>
+              <h1 className={styles.title}>{studyName}</h1>
+              <p className={styles.meta}>
+                <span className={styles.scope}>Project discovery · shared by all studies</span>
+              </p>
+              {hasDiscovery && (
+                <p className={styles.statusLine}>
+                  <span className={styles.count}>{totalArtifacts}</span> artifacts
+                  {needsReviewRuns.length > 0 && (
+                    <>
+                      {' · '}
+                      <span className={styles.count}>{needsReviewRuns.length}</span> needs review
+                    </>
+                  )}
+                </p>
+              )}
+            </div>
+
+            <div className={styles.mastheadActions}>
+              {/* Add evidence menu (DISC-3: 2 items only) */}
+              <div className={styles.menuContainer}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  aria-expanded={menuOpen}
+                  aria-haspopup="true"
+                >
+                  Add evidence
+                  <ChevronDown size={14} aria-hidden="true" />
+                </Button>
+                {menuOpen && (
+                  <div className={styles.menu} role="menu">
+                    <Link
+                      to={`/studies/${studyPublicId}/discovery/new/desk`}
+                      className={styles.menuItem}
+                      role="menuitem"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <FileText size={14} aria-hidden="true" />
+                      <div>
+                        <span className={styles.menuItemTitle}>Documents</span>
+                        <span className={styles.menuItemSub}>Reports, policies, prior studies</span>
+                      </div>
+                    </Link>
+                    <Link
+                      to={`/studies/${studyPublicId}/discovery/new/stakeholder`}
+                      className={styles.menuItem}
+                      role="menuitem"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <Users size={14} aria-hidden="true" />
+                      <div>
+                        <span className={styles.menuItemTitle}>Stakeholder material</span>
+                        <span className={styles.menuItemSub}>Transcripts, notes, feedback</span>
+                      </div>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Empty state */}
           {!hasDiscovery && !runsQuery.isLoading && (
             <HubEmptyExplainer studyPublicId={studyPublicId || ''} />

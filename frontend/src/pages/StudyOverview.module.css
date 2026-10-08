@@ -8,12 +8,13 @@
  */
 
 /* ─── Content Container ─────────────────────────────────────────────── */
+/* CD reference: .doc in discovery.css — centered reading canvas */
 
 .content {
-  flex: 1;
-  min-width: 0;
-  padding: var(--space-6);
-  max-width: 720px;
+  /* CD pattern: max-width + margin auto for centered canvas */
+  max-width: calc(var(--layout-doc-measure) + 2 * var(--space-7));
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-7) calc(2 * var(--space-8));
 }
 
 /* ─── Header / Masthead ─────────────────────────────────────────────── */
@@ -247,9 +248,15 @@
 
 /* ─── Responsive ────────────────────────────────────────────────────── */
 
-@media (max-width: 640px) {
+@media (max-width: 980px) {
   .content {
-    padding: var(--space-4);
+    padding: var(--space-6) var(--space-5) calc(var(--space-8) + var(--space-6));
+  }
+}
+
+@media (max-width: 767px) {
+  .content {
+    padding: var(--space-5) var(--space-4) calc(var(--space-8) + var(--space-6));
   }
 
   .title {
