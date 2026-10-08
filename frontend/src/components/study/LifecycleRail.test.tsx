@@ -58,13 +58,13 @@ describe('LifecycleRail', () => {
 });
 
 /**
- * VC-2A: Inverse variant tests for grouped lifecycle navigation.
+ * VC-2A + NAV-1b: Inverse variant tests for grouped lifecycle navigation.
  *
- * Requirements from LIFECYCLE_NAV_CONVERGENCE.md:
+ * Requirements from LIFECYCLE_NAV_CONVERGENCE.md + STUDY_WORKSPACE_NAV_CORRECTION.md:
  * - 5 group headings: Discovery, Planning, Fieldwork, Analysis, Outputs
- * - 15 lifecycle labels in exact order
- * - Only Research Brief and Research Plan are links
- * - 13 placeholders are non-interactive
+ * - 17 lifecycle labels in exact order (NAV-1b renamed "All evidence" to "Overview")
+ * - NAV-1b: Discovery routes are now path-based (/desk, /stakeholders, /surveys)
+ * - 11 placeholders are non-interactive
  * - Plan lock state from computeLifecycleNodes
  * - Study name links to StudyOverview
  */
@@ -91,10 +91,10 @@ describe('LifecycleRail inverse variant (VC-2A)', () => {
   // Expected group headings in order
   const expectedGroups = ['Discovery', 'Planning', 'Fieldwork', 'Analysis', 'Outputs'];
 
-  // Expected labels in order (17 items — DISC-3 added All evidence + Synthesis)
+  // NAV-1b: Expected labels in order (17 items — renamed "All evidence" to "Overview", "Desk Research" to "Desk research")
   const expectedLabels = [
-    'All evidence',
-    'Desk Research',
+    'Overview',
+    'Desk research',
     'Stakeholders',
     'Surveys',
     'Synthesis',
@@ -112,10 +112,10 @@ describe('LifecycleRail inverse variant (VC-2A)', () => {
     'Tickets',
   ];
 
-  // DISC-3: These are real routes (Brief, Plan, and Discovery routes)
+  // NAV-1b: These are real routes (Brief, Plan, and Discovery routes)
   const routeLabels = [
-    'All evidence',
-    'Desk Research',
+    'Overview',
+    'Desk research',
     'Stakeholders',
     'Surveys',
     'Research Brief',
@@ -171,7 +171,7 @@ describe('LifecycleRail inverse variant (VC-2A)', () => {
     expect(allItems).toEqual(expectedLabels);
   });
 
-  it('DISC-3: Brief, Plan, and Discovery routes are links', () => {
+  it('NAV-1b: Brief, Plan, and Discovery routes are links with path-based URLs', () => {
     renderWithProviders(
       <LifecycleRail
         studyPublicId={studyId}
@@ -184,25 +184,25 @@ describe('LifecycleRail inverse variant (VC-2A)', () => {
     // Check that lifecycle links exist
     const briefLink = screen.getByRole('link', { name: 'Research Brief' });
     const planLink = screen.getByRole('link', { name: 'Research Plan' });
-    const allEvidenceLink = screen.getByRole('link', { name: /All evidence/ });
-    const deskLink = screen.getByRole('link', { name: /Desk Research/ });
+    const overviewLink = screen.getByRole('link', { name: /Overview/ });
+    const deskLink = screen.getByRole('link', { name: /Desk research/ });
     const stakeholderLink = screen.getByRole('link', { name: /Stakeholders/ });
     const surveyLink = screen.getByRole('link', { name: /Surveys/ });
 
     expect(briefLink).toBeInTheDocument();
     expect(planLink).toBeInTheDocument();
-    expect(allEvidenceLink).toBeInTheDocument();
+    expect(overviewLink).toBeInTheDocument();
     expect(deskLink).toBeInTheDocument();
     expect(stakeholderLink).toBeInTheDocument();
     expect(surveyLink).toBeInTheDocument();
 
-    // Verify links point to correct routes
+    // NAV-1b: Verify links use path-based routes (not query params)
     expect(briefLink).toHaveAttribute('href', `/studies/${studyId}/brief`);
     expect(planLink).toHaveAttribute('href', `/studies/${studyId}/plan`);
-    expect(allEvidenceLink).toHaveAttribute('href', `/studies/${studyId}/discovery`);
-    expect(deskLink).toHaveAttribute('href', `/studies/${studyId}/discovery?type=desk`);
-    expect(stakeholderLink).toHaveAttribute('href', `/studies/${studyId}/discovery?type=stakeholder`);
-    expect(surveyLink).toHaveAttribute('href', `/studies/${studyId}/discovery?type=survey`);
+    expect(overviewLink).toHaveAttribute('href', `/studies/${studyId}/discovery`);
+    expect(deskLink).toHaveAttribute('href', `/studies/${studyId}/discovery/desk`);
+    expect(stakeholderLink).toHaveAttribute('href', `/studies/${studyId}/discovery/stakeholders`);
+    expect(surveyLink).toHaveAttribute('href', `/studies/${studyId}/discovery/surveys`);
   });
 
   it('11 placeholders are non-interactive and expose "not yet available"', () => {
@@ -385,7 +385,7 @@ describe('LifecycleRail discovery counts exactness (DISC-3)', () => {
     );
 
     // Individual type counts should be visible
-    const deskLink = screen.getByRole('link', { name: /Desk Research/ });
+    const deskLink = screen.getByRole('link', { name: /Desk research/ });
     expect(deskLink).toHaveTextContent('3');
 
     const stakeholderLink = screen.getByRole('link', { name: /Stakeholders/ });
@@ -394,9 +394,9 @@ describe('LifecycleRail discovery counts exactness (DISC-3)', () => {
     const surveyLink = screen.getByRole('link', { name: /Surveys/ });
     expect(surveyLink).toHaveTextContent('1');
 
-    // "All evidence" should show sum
-    const allEvidenceLink = screen.getByRole('link', { name: /All evidence/ });
-    expect(allEvidenceLink).toHaveTextContent('6');
+    // NAV-1b: "Overview" does not show a count (per design)
+    const overviewLink = screen.getByRole('link', { name: /Overview/ });
+    expect(overviewLink.querySelector('[class*="nvCount"]')).toBeNull();
   });
 
   it('hides zero counts (shows nothing, not "0")', () => {
@@ -418,7 +418,7 @@ describe('LifecycleRail discovery counts exactness (DISC-3)', () => {
     );
 
     // Desk and Survey have 0, should not show count badge
-    const deskLink = screen.getByRole('link', { name: /Desk Research/ });
+    const deskLink = screen.getByRole('link', { name: /Desk research/ });
     expect(deskLink.querySelector('[class*="nvCount"]')).toBeNull();
 
     const surveyLink = screen.getByRole('link', { name: /Surveys/ });
@@ -449,7 +449,7 @@ describe('LifecycleRail discovery counts exactness (DISC-3)', () => {
     );
 
     // Desk count is null, should not show count badge
-    const deskLink = screen.getByRole('link', { name: /Desk Research/ });
+    const deskLink = screen.getByRole('link', { name: /Desk research/ });
     expect(deskLink.querySelector('[class*="nvCount"]')).toBeNull();
 
     // Stakeholder and Survey have exact counts, should show
@@ -460,9 +460,8 @@ describe('LifecycleRail discovery counts exactness (DISC-3)', () => {
     expect(surveyLink).toHaveTextContent('1');
   });
 
-  it('omits "All evidence" sum when ANY type count is null', () => {
-    // If we can't prove desk count, we can't prove total either
-    // Don't show a misleading partial sum
+  it('NAV-1b: Overview never shows count (per design)', () => {
+    // Per NAV-1b, Overview does not show a count badge
     const truncatedCounts = {
       desk: null, // Indeterminate
       stakeholder: 2,
@@ -480,9 +479,9 @@ describe('LifecycleRail discovery counts exactness (DISC-3)', () => {
       />,
     );
 
-    // "All evidence" should NOT show any count badge when sum is indeterminate
-    const allEvidenceLink = screen.getByRole('link', { name: /All evidence/ });
-    expect(allEvidenceLink.querySelector('[class*="nvCount"]')).toBeNull();
+    // Overview should NOT show any count badge
+    const overviewLink = screen.getByRole('link', { name: /Overview/ });
+    expect(overviewLink.querySelector('[class*="nvCount"]')).toBeNull();
   });
 
   it('does not show false "100" when there may be more artifacts', () => {
@@ -507,12 +506,12 @@ describe('LifecycleRail discovery counts exactness (DISC-3)', () => {
     );
 
     // None of the links should have count badges
-    const allEvidenceLink = screen.getByRole('link', { name: /All evidence/ });
-    const deskLink = screen.getByRole('link', { name: /Desk Research/ });
+    const overviewLink = screen.getByRole('link', { name: /Overview/ });
+    const deskLink = screen.getByRole('link', { name: /Desk research/ });
     const stakeholderLink = screen.getByRole('link', { name: /Stakeholders/ });
     const surveyLink = screen.getByRole('link', { name: /Surveys/ });
 
-    expect(allEvidenceLink.querySelector('[class*="nvCount"]')).toBeNull();
+    expect(overviewLink.querySelector('[class*="nvCount"]')).toBeNull();
     expect(deskLink.querySelector('[class*="nvCount"]')).toBeNull();
     expect(stakeholderLink.querySelector('[class*="nvCount"]')).toBeNull();
     expect(surveyLink.querySelector('[class*="nvCount"]')).toBeNull();
@@ -542,15 +541,15 @@ describe('LifecycleRail discovery counts exactness (DISC-3)', () => {
     );
 
     // Desk needs review — should have dot and sr-only text
-    const deskReviewText = screen.getByRole('link', { name: /Desk Research.*needs your review/ });
+    const deskReviewText = screen.getByRole('link', { name: /Desk research.*needs your review/ });
     expect(deskReviewText).toBeInTheDocument();
 
     // Survey needs review too
     const surveyReviewText = screen.getByRole('link', { name: /Surveys.*needs your review/ });
     expect(surveyReviewText).toBeInTheDocument();
 
-    // "All evidence" shows dot if any type needs review
-    const allEvidenceReviewText = screen.getByRole('link', { name: /All evidence.*needs your review/ });
-    expect(allEvidenceReviewText).toBeInTheDocument();
+    // Overview shows dot if any type needs review
+    const overviewReviewText = screen.getByRole('link', { name: /Overview.*needs your review/ });
+    expect(overviewReviewText).toBeInTheDocument();
   });
 });

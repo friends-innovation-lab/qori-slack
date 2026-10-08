@@ -2,7 +2,7 @@
  * App — Router + providers. All authenticated routes wrapped in AppShell.
  *
  * NAV-1a: Study routes nested under StudyWorkspaceLayout for persistent shell.
- * DISC-3: Added Discovery routes under /studies/:studyPublicId/discovery/*
+ * NAV-1b: Discovery routes are now path-based (/desk, /stakeholders, /surveys).
  */
 
 import { BrowserRouter, Routes, Route } from 'react-router';
@@ -21,8 +21,14 @@ import { PlanDocument } from '@/pages/PlanDocument';
 import { Projects } from '@/pages/Projects';
 import { ProjectDetail } from '@/pages/ProjectDetail';
 import { Login } from '@/pages/Login';
-// DISC-3: Discovery pages
-import { DiscoveryHub, DeskIntake, StakeholderIntake, DiscoveryRunPage } from '@/pages/discovery';
+// NAV-1b: Discovery pages with path-based routes
+import {
+  DiscoveryHub,
+  DiscoveryTypePage,
+  DeskIntake,
+  StakeholderIntake,
+  DiscoveryRunPage,
+} from '@/pages/discovery';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,8 +63,11 @@ export function App() {
                         <Route path="brief" element={<BriefDocument />} />
                         <Route path="plan/new" element={<PlanForm />} />
                         <Route path="plan" element={<PlanDocument />} />
-                        {/* DISC-3: Discovery routes */}
+                        {/* NAV-1b: Discovery routes with path-based navigation */}
                         <Route path="discovery" element={<DiscoveryHub />} />
+                        <Route path="discovery/desk" element={<DiscoveryTypePage />} />
+                        <Route path="discovery/stakeholders" element={<DiscoveryTypePage />} />
+                        <Route path="discovery/surveys" element={<DiscoveryTypePage />} />
                         <Route path="discovery/new/desk" element={<DeskIntake />} />
                         <Route path="discovery/new/stakeholder" element={<StakeholderIntake />} />
                         <Route path="discovery/runs/:runId" element={<DiscoveryRunPage />} />
