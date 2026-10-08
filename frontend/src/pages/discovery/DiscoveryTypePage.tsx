@@ -146,10 +146,16 @@ export function DiscoveryTypePage() {
   // Handle invalid type param
   if (!filterType || !config) {
     return (
-      <WorkspaceLayout header={<div className={styles.header}><h1>Not found</h1></div>}>
+      <WorkspaceLayout header={<div className={styles.headerSpacer} />}>
         <div className={docStyles.docWrap}>
           <div className={docStyles.docCol}>
-            <p>Unknown discovery type.</p>
+            <div className={styles.masthead}>
+              <div className={styles.mastheadMain}>
+                <span className={styles.eyebrow}>Discovery</span>
+                <h1 className={styles.title}>Not found</h1>
+                <p className={styles.meta}>Unknown discovery type.</p>
+              </div>
+            </div>
           </div>
         </div>
       </WorkspaceLayout>
@@ -160,44 +166,46 @@ export function DiscoveryTypePage() {
 
   return (
     <WorkspaceLayout
-      header={
-        <div className={styles.header}>
-          <div className={styles.headerMain}>
-            <span className={styles.eyebrow}>Discovery</span>
-            <h1 className={styles.title}>{config.label}</h1>
-            <p className={styles.meta}>{config.description}</p>
-            {hasRuns && (
-              <p className={styles.statusLine}>
-                <span className={styles.count}>{artifactCount}</span> {artifactCount === 1 ? 'artifact' : 'artifacts'}
-                {needsReviewRuns.length > 0 && (
-                  <>
-                    {' · '}
-                    <span className={styles.count}>{needsReviewRuns.length}</span> needs review
-                  </>
-                )}
-              </p>
-            )}
-          </div>
-
-          <div className={styles.headerActions}>
-            {config.addPath ? (
-              <Link
-                to={`/studies/${studyPublicId}${config.addPath}`}
-                className={styles.addButton}
-              >
-                {config.addLabel}
-              </Link>
-            ) : (
-              <Button variant="ghost" size="sm" disabled>
-                Coming soon
-              </Button>
-            )}
-          </div>
-        </div>
-      }
+      // Masthead inside docCol for centered canvas alignment (matches DiscoveryHub)
+      header={<div className={styles.headerSpacer} />}
     >
       <div className={docStyles.docWrap}>
         <div className={docStyles.docCol}>
+          {/* Masthead — inside docCol for centered canvas alignment per CD S04/S05 */}
+          <div className={styles.masthead}>
+            <div className={styles.mastheadMain}>
+              <span className={styles.eyebrow}>Discovery</span>
+              <h1 className={styles.title}>{config.label}</h1>
+              <p className={styles.meta}>{config.description}</p>
+              {hasRuns && (
+                <p className={styles.statusLine}>
+                  <span className={styles.count}>{artifactCount}</span> {artifactCount === 1 ? 'artifact' : 'artifacts'}
+                  {needsReviewRuns.length > 0 && (
+                    <>
+                      {' · '}
+                      <span className={styles.count}>{needsReviewRuns.length}</span> needs review
+                    </>
+                  )}
+                </p>
+              )}
+            </div>
+
+            <div className={styles.mastheadActions}>
+              {config.addPath ? (
+                <Link
+                  to={`/studies/${studyPublicId}${config.addPath}`}
+                  className={styles.addButton}
+                >
+                  {config.addLabel}
+                </Link>
+              ) : (
+                <Button variant="ghost" size="sm" disabled>
+                  Coming soon
+                </Button>
+              )}
+            </div>
+          </div>
+
           {/* Loading state */}
           {runsQuery.isLoading && <Skeleton variant="card" count={2} />}
 

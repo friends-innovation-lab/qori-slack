@@ -49,7 +49,6 @@ export function DiscoveryHub() {
   const {
     studyPublicId,
     projectPublicId,
-    studyName,
   } = useStudyWorkspace();
 
   const [searchParams] = useSearchParams();
@@ -131,9 +130,9 @@ export function DiscoveryHub() {
           <div className={styles.masthead}>
             <div className={styles.mastheadMain}>
               <span className={styles.eyebrow}>Discovery</span>
-              <h1 className={styles.title}>{studyName}</h1>
+              <h1 className={styles.title}>Discovery</h1>
               <p className={styles.meta}>
-                <span className={styles.scope}>Project discovery · shared by all studies</span>
+                <span className={styles.scope}>Shared across studies in this project</span>
               </p>
               {hasDiscovery && (
                 <p className={styles.statusLine}>
