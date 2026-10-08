@@ -6,10 +6,10 @@
  * navigation structure only.
  *
  * Source of truth: LIFECYCLE_NAV_CONVERGENCE.md §4
- * DISC-3: Discovery group has 5 rows: All evidence, Desk Research,
+ * NAV-1b: Discovery group has 5 rows: Overview, Desk research,
  * Stakeholders, Surveys (all routes), and Synthesis (placeholder until DISC-5).
  *
- * - Discovery rows, Brief, and Plan are real routes
+ * - Discovery rows use path-based routes (not query params)
  * - Plan lock state comes from computeLifecycleNodes (not from this config)
  * - Synthesis is a placeholder until DISC-5
  */
@@ -35,17 +35,18 @@ export interface WorkspaceLifecycleGroup {
 }
 
 /**
- * DISC-3 CD composition: 5 groups, 16 items.
- * Discovery group now has 5 rows per DISCOVERY_WORKSPACE_DESIGN_SPEC §3.2.
+ * NAV-1b CD composition: 5 groups, 16 items.
+ * Discovery group has 5 rows per STUDY_WORKSPACE_NAV_CORRECTION.md.
+ * Routes are path-based, not query-param based.
  */
 export const WORKSPACE_LIFECYCLE: WorkspaceLifecycleGroup[] = [
   {
     group: 'Discovery',
     items: [
-      { label: 'All evidence', kind: 'discovery-route', path: '', filterType: null },
-      { label: 'Desk Research', kind: 'discovery-route', path: '?type=desk', filterType: 'desk' },
-      { label: 'Stakeholders', kind: 'discovery-route', path: '?type=stakeholder', filterType: 'stakeholder' },
-      { label: 'Surveys', kind: 'discovery-route', path: '?type=survey', filterType: 'survey' },
+      { label: 'Overview', kind: 'discovery-route', path: '', filterType: null },
+      { label: 'Desk research', kind: 'discovery-route', path: '/desk', filterType: 'desk' },
+      { label: 'Stakeholders', kind: 'discovery-route', path: '/stakeholders', filterType: 'stakeholder' },
+      { label: 'Surveys', kind: 'discovery-route', path: '/surveys', filterType: 'survey' },
       { label: 'Synthesis', kind: 'placeholder' }, // DISC-5
     ],
   },

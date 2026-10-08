@@ -33,7 +33,7 @@ vi.mock('react-router', async () => {
   };
 });
 
-// NAV-1a: Mock workspace context (provides nav state)
+// NAV-1a + NAV-1b: Mock workspace context (provides nav state + activeDiscoveryType)
 vi.mock('@/components/study/workspace', async () => {
   const actual = await vi.importActual('@/components/study/workspace');
   return {
@@ -45,6 +45,8 @@ vi.mock('@/components/study/workspace', async () => {
       briefStatus: null,
       lifecycleNodes: [],
       discoveryCounts: undefined,
+      activeDiscoveryType: null,
+      setActiveDiscoveryType: vi.fn(),
       navOpen: false,
       openNav: vi.fn(),
       closeNav: vi.fn(),

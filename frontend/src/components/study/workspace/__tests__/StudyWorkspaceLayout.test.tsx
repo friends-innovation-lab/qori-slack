@@ -326,8 +326,8 @@ describe('NAV-1a: StudyWorkspaceLayout', () => {
       setupMocks();
       renderWithRouter('/studies/study-1/brief');
 
-      // Discovery group items
-      expect(screen.getByText('All evidence')).toBeInTheDocument();
+      // Discovery group items (NAV-1b: renamed "All evidence" to "Overview")
+      expect(screen.getByText('Overview')).toBeInTheDocument();
 
       // Planning group items
       expect(screen.getByText('Research Brief')).toBeInTheDocument();
@@ -360,11 +360,11 @@ describe('NAV-1a: StudyWorkspaceLayout', () => {
       expect(planLink.className).toMatch(/nvOn/);
     });
 
-    it('All evidence is current on /discovery route', () => {
+    it('Overview is current on /discovery route (NAV-1b)', () => {
       setupMocks();
       renderWithRouter('/studies/study-1/discovery');
 
-      const discoveryLink = screen.getByRole('link', { name: /All evidence/i });
+      const discoveryLink = screen.getByRole('link', { name: /Overview/i });
       expect(discoveryLink.className).toMatch(/nvOn/);
     });
 

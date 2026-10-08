@@ -1,7 +1,8 @@
 /**
- * DiscoveryRunPage — DISC-3
+ * DiscoveryRunPage — DISC-3 + NAV-1b
  *
  * NAV-1a: Removed page-level LifecycleRail — now owned by StudyWorkspaceLayout.
+ * NAV-1b: Sets activeDiscoveryType based on run's type for correct rail highlighting.
  *
  * Discovery run detail page with tabs: Report, Sources, Extracted.
  * Per DISCOVERY_WORKSPACE_DESIGN_SPEC §6, §8.
@@ -29,8 +30,16 @@ import { Alert } from '@/components/ui/Alert';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import type { DiscoveryTypeKey, DiscoveryArtifactDetail } from '@qori/api-contracts';
+import type { DiscoveryTypeFilter } from '@/components/study/workspaceLifecycle';
 import styles from './DiscoveryRunPage.module.css';
 import docStyles from '@/components/study/document/document.module.css';
+
+/** Map API discovery type to filter type for rail highlighting */
+const apiTypeToFilter: Record<DiscoveryTypeKey, DiscoveryTypeFilter> = {
+  desk_research: 'desk',
+  stakeholder_synthesis: 'stakeholder',
+  survey_synthesis: 'survey',
+};
 
 /** Type labels */
 const typeLabels: Record<DiscoveryTypeKey, string> = {
@@ -51,9 +60,11 @@ function getActiveTab(pathname: string): RunTab {
 
 export function DiscoveryRunPage() {
   // NAV-1a: Get study data from workspace context (loaded by layout)
+  // NAV-1b: Also get setActiveDiscoveryType to signal parent type to rail
   const {
     studyPublicId,
     projectPublicId,
+    setActiveDiscoveryType,
   } = useStudyWorkspace();
 
   const { runId } = useParams<{ runId: string }>();
@@ -78,6 +89,18 @@ export function DiscoveryRunPage() {
       setPollingEnabled(false);
     }
   }, [runQuery.data?.status]);
+
+  // NAV-1b: Set active discovery type based on run's type for rail highlighting
+  useEffect(() => {
+    const discoveryType = runQuery.data?.discoveryType;
+    if (discoveryType) {
+      setActiveDiscoveryType(apiTypeToFilter[discoveryType]);
+    }
+    // Clean up when leaving the page
+    return () => {
+      setActiveDiscoveryType(null);
+    };
+  }, [runQuery.data?.discoveryType, setActiveDiscoveryType]);
 
   // Fetch artifact detail for canonical content (Report tab)
   const artifactPublicId = runQuery.data?.currentArtifact?.publicId;

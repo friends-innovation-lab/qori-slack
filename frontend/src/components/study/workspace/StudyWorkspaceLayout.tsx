@@ -1,5 +1,5 @@
 /**
- * StudyWorkspaceLayout — NAV-1a
+ * StudyWorkspaceLayout — NAV-1a + NAV-1b
  *
  * Persistent study workspace shell for all routes under /studies/:studyPublicId/*.
  * Per STUDY_WORKSPACE_NAV_CORRECTION.md §2.
@@ -10,6 +10,7 @@
  * - Discovery counts (for rail badges)
  * - Nav drawer state
  * - LifecycleRail rendering (ONCE, not per-page)
+ * - NAV-1b: activeDiscoveryType for run pages to signal parent type
  *
  * Uses existing WorkspaceLayout for the actual shell structure.
  * Child routes render into <Outlet />.
@@ -24,6 +25,7 @@ import { computeLifecycleNodes } from '@/components/study/lifecycle';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { StudyWorkspaceProvider, type StudyWorkspaceState } from './StudyWorkspaceContext';
+import type { DiscoveryTypeFilter } from '@/components/study/workspaceLifecycle';
 import styles from './StudyWorkspaceLayout.module.css';
 
 export function StudyWorkspaceLayout() {
@@ -34,6 +36,9 @@ export function StudyWorkspaceLayout() {
   const openNav = useCallback(() => setNavOpen(true), []);
   const closeNav = useCallback(() => setNavOpen(false), []);
   const toggleNav = useCallback(() => setNavOpen((prev) => !prev), []);
+
+  // NAV-1b: Active discovery type for run pages to signal their parent type
+  const [activeDiscoveryType, setActiveDiscoveryType] = useState<DiscoveryTypeFilter | null>(null);
 
   // Fetch study data (shared with all child routes)
   const {
@@ -83,6 +88,8 @@ export function StudyWorkspaceLayout() {
       briefStatus,
       lifecycleNodes,
       discoveryCounts,
+      activeDiscoveryType,
+      setActiveDiscoveryType,
       navOpen,
       openNav,
       closeNav,
@@ -97,6 +104,7 @@ export function StudyWorkspaceLayout() {
       briefStatus,
       lifecycleNodes,
       discoveryCounts,
+      activeDiscoveryType,
       navOpen,
       openNav,
       closeNav,
@@ -150,6 +158,7 @@ export function StudyWorkspaceLayout() {
             nodes={lifecycleNodes}
             study={studyInfo}
             discoveryCounts={discoveryCounts}
+            activeDiscoveryType={activeDiscoveryType}
           />
         </aside>
 

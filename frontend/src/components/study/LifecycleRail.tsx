@@ -6,13 +6,15 @@
  * - inverse: Dark panel, 224px, grouped lifecycle per CD (VC-2A)
  *
  * VC-2A: The inverse variant renders the approved CD composition:
- * - 5 groups, 16 items (LIFECYCLE_NAV_CONVERGENCE.md §1 + DISC-3)
+ * - 5 groups, 16 items (LIFECYCLE_NAV_CONVERGENCE.md §1 + NAV-1b)
  * - Discovery rows, Brief, and Plan are routes
  * - Synthesis is a placeholder until DISC-5
  * - Study name links to StudyOverview
  * - Plan lock state from computeLifecycleNodes
  *
- * DISC-3: Discovery rows show Ready artifact counts and needs-review brass dots.
+ * NAV-1b: Discovery routes are now path-based (/desk, /stakeholders, /surveys)
+ * instead of query-param based (?type=desk). Run pages use activeDiscoveryType
+ * to signal their parent type for correct highlighting.
  */
 
 import { NavLink, Link, useLocation } from 'react-router';
@@ -58,6 +60,11 @@ interface LifecycleRailProps {
   study?: StudyHeader;
   /** DISC-3: Discovery counts per type (for inverse variant) */
   discoveryCounts?: DiscoveryCounts;
+  /**
+   * NAV-1b: Active discovery type for run pages.
+   * When on a run page, this signals which type row should be highlighted.
+   */
+  activeDiscoveryType?: DiscoveryTypeFilter | null;
 }
 
 const stateIcons = {
@@ -74,6 +81,7 @@ export function LifecycleRail({
   variant = 'default',
   study,
   discoveryCounts,
+  activeDiscoveryType,
 }: LifecycleRailProps) {
   const isInverse = variant === 'inverse';
   const location = useLocation();
@@ -92,14 +100,9 @@ export function LifecycleRail({
   const getDiscoveryCount = (filterType: DiscoveryTypeFilter | null): number | null => {
     if (!discoveryCounts) return null;
     if (filterType === null) {
-      // "All evidence" shows sum of all types.
-      // DISC-3 exactness: If ANY type count is null (indeterminate), sum is also null.
-      // This prevents displaying a misleading partial sum as definitive.
-      const { desk, stakeholder, survey } = discoveryCounts;
-      if (desk === null || stakeholder === null || survey === null) {
-        return null;
-      }
-      return desk + stakeholder + survey;
+      // "Overview" does not show a count (per NAV-1b: no sum, dot only).
+      // Return null to hide the count badge.
+      return null;
     }
     return discoveryCounts[filterType];
   };
@@ -108,7 +111,7 @@ export function LifecycleRail({
   const getNeedsReview = (filterType: DiscoveryTypeFilter | null): boolean => {
     if (!discoveryCounts?.needsReview) return false;
     if (filterType === null) {
-      // "All evidence" shows dot if any type needs review
+      // "Overview" shows dot if any type needs review
       return (
         discoveryCounts.needsReview.desk ||
         discoveryCounts.needsReview.stakeholder ||
@@ -118,23 +121,65 @@ export function LifecycleRail({
     return discoveryCounts.needsReview[filterType];
   };
 
-  // DISC-3: Check if discovery route is active (handle query params)
+  /**
+   * NAV-1b: Check if discovery route is active (path-based).
+   * - Overview (/discovery): active when pathname is exactly /discovery
+   * - Type pages (/discovery/desk, etc.): active when pathname matches
+   * - Run pages (/discovery/runs/:runId): use activeDiscoveryType to determine parent
+   * - Intake pages (/discovery/new/desk): use pathname to determine parent
+   */
   const isDiscoveryActive = (item: WorkspaceNavItem): boolean => {
     if (item.kind !== 'discovery-route') return false;
     const discoveryBase = `/studies/${studyPublicId}/discovery`;
-    if (!location.pathname.startsWith(discoveryBase)) return false;
+    const currentPath = location.pathname;
 
-    // For hub routes, match query param
-    if (location.pathname === discoveryBase || location.pathname === `${discoveryBase}/`) {
-      const params = new URLSearchParams(location.search);
-      const typeParam = params.get('type');
-      if (item.path === '') {
-        // "All evidence" is active when no type filter
-        return !typeParam;
-      }
-      // Type-filtered routes match their type param
-      return item.path === `?type=${typeParam}`;
+    if (!currentPath.startsWith(discoveryBase)) return false;
+
+    // Get the path after /discovery
+    const relativePath = currentPath.slice(discoveryBase.length);
+
+    // Overview is active when path is exactly /discovery or /discovery/
+    if (item.path === '') {
+      return relativePath === '' || relativePath === '/';
     }
+
+    // Type pages: /desk, /stakeholders, /surveys
+    if (item.path === '/desk') {
+      // Active when on /discovery/desk or /discovery/new/desk
+      if (relativePath === '/desk' || relativePath.startsWith('/new/desk')) {
+        return true;
+      }
+      // Active when on a run page and activeDiscoveryType is desk
+      if (relativePath.startsWith('/runs/') && activeDiscoveryType === 'desk') {
+        return true;
+      }
+      return false;
+    }
+
+    if (item.path === '/stakeholders') {
+      // Active when on /discovery/stakeholders or /discovery/new/stakeholder
+      if (relativePath === '/stakeholders' || relativePath.startsWith('/new/stakeholder')) {
+        return true;
+      }
+      // Active when on a run page and activeDiscoveryType is stakeholder
+      if (relativePath.startsWith('/runs/') && activeDiscoveryType === 'stakeholder') {
+        return true;
+      }
+      return false;
+    }
+
+    if (item.path === '/surveys') {
+      // Active when on /discovery/surveys
+      if (relativePath === '/surveys') {
+        return true;
+      }
+      // Active when on a run page and activeDiscoveryType is survey
+      if (relativePath.startsWith('/runs/') && activeDiscoveryType === 'survey') {
+        return true;
+      }
+      return false;
+    }
+
     return false;
   };
 

@@ -1,10 +1,11 @@
 /**
- * DiscoveryHub — DISC-3
+ * DiscoveryHub — DISC-3 + NAV-1b
  *
  * NAV-1a: Removed page-level LifecycleRail — now owned by StudyWorkspaceLayout.
+ * NAV-1b: This is now the "Overview" page. Legacy ?type= URLs redirect to section pages.
  *
  * Discovery Hub page showing all Discovery evidence for a project.
- * Per DISCOVERY_WORKSPACE_DESIGN_SPEC §4.
+ * Per DISCOVERY_WORKSPACE_DESIGN_SPEC §4 and STUDY_WORKSPACE_NAV_CORRECTION.md.
  *
  * Sections:
  * - §1 Needs your review (failed runs)
@@ -15,8 +16,8 @@
  * Note: §3 "Across sources" is DISC-5 (synthesis) — not rendered in DISC-3.
  */
 
-import { useState, useMemo } from 'react';
-import { useSearchParams, Link } from 'react-router';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams, Link, useNavigate } from 'react-router';
 import { ChevronDown, FileText, Users } from 'lucide-react';
 import {
   useDiscoveryRuns,
@@ -33,15 +34,14 @@ import {
   HubEmptyExplainer,
   KnowledgeGapsSection,
 } from '@/components/discovery';
-import type { DiscoveryTypeKey } from '@qori/api-contracts';
 import styles from './DiscoveryHub.module.css';
 import docStyles from '@/components/study/document/document.module.css';
 
-/** Filter type from query param to API type */
-const filterTypeMap: Record<string, DiscoveryTypeKey | undefined> = {
-  desk: 'desk_research',
-  stakeholder: 'stakeholder_synthesis',
-  survey: 'survey_synthesis',
+/** NAV-1b: Legacy type param to canonical path mapping */
+const typeToPath: Record<string, string> = {
+  desk: '/desk',
+  stakeholder: '/stakeholders',
+  survey: '/surveys',
 };
 
 export function DiscoveryHub() {
@@ -53,16 +53,34 @@ export function DiscoveryHub() {
   } = useStudyWorkspace();
 
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Get filter type from URL
-  const typeFilter = searchParams.get('type');
-  const discoveryTypeFilter = typeFilter ? filterTypeMap[typeFilter] : undefined;
+  // NAV-1b: Check for legacy ?type= URL and redirect BEFORE rendering
+  // This prevents Overview content flash during redirect
+  const typeParam = searchParams.get('type');
+  const isLegacyRedirect = typeParam && typeToPath[typeParam];
 
-  // Fetch Discovery data with polling for pending runs
+  useEffect(() => {
+    if (isLegacyRedirect) {
+      // Build new URL preserving non-type query params
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('type');
+      const queryString = newParams.toString();
+      const newPath = `/studies/${studyPublicId}/discovery${typeToPath[typeParam]}${queryString ? `?${queryString}` : ''}`;
+      navigate(newPath, { replace: true });
+    }
+  }, [isLegacyRedirect, typeParam, searchParams, studyPublicId, navigate]);
+
+  // Don't render Overview content during legacy redirect - prevents flash
+  if (isLegacyRedirect) {
+    return null;
+  }
+
+  // NAV-1b: Overview page shows all types (no filter)
   const runsQuery = useDiscoveryRuns(
     projectPublicId,
-    discoveryTypeFilter ? { type: discoveryTypeFilter } : undefined,
+    undefined, // No type filter - show all
     {
       enabled: !!projectPublicId,
       // Poll every 2s if any run is pending/processing
@@ -197,7 +215,7 @@ export function DiscoveryHub() {
               <RunLedgerTable
                 runs={runsQuery.data || []}
                 studyPublicId={studyPublicId || ''}
-                grouped={!discoveryTypeFilter}
+                grouped={true}
               />
             </DocumentSection>
           )}
