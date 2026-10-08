@@ -14,7 +14,7 @@ import { useStudyWorkspace } from '@/components/study/workspace';
 import { WorkspaceLayout } from '@/components/study/workspace';
 import { Skeleton } from '@/components/ui/Skeleton';
 import {
-  deriveNeedsYouItems,
+  deriveAttentionItems,
   deriveLifecycleGroupStatuses,
   type BriefStatusValue,
 } from '@/components/study/studyStatus';
@@ -30,8 +30,8 @@ export function StudyOverview() {
     error,
   } = useStudyWorkspace();
 
-  // Derive needs-you items from canonical state
-  const needsYouItems = deriveNeedsYouItems(
+  // Derive attention items from canonical state (neutral - no user assignment)
+  const attentionItems = deriveAttentionItems(
     studyPublicId,
     briefStatus as BriefStatusValue,
     discoveryCounts,
@@ -45,7 +45,7 @@ export function StudyOverview() {
   );
 
   // Show more than 3 items link
-  const hasMoreItems = needsYouItems.length >= 3;
+  const hasMoreItems = attentionItems.length >= 3;
 
   return (
     <WorkspaceLayout
@@ -71,12 +71,12 @@ export function StudyOverview() {
         {/* Main content when loaded */}
         {!isLoading && !error && (
           <>
-            {/* §1 Needs you */}
-            {needsYouItems.length > 0 && (
+            {/* §1 Needs attention (neutral - no user assignment claim) */}
+            {attentionItems.length > 0 && (
               <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>Needs you</h2>
+                <h2 className={styles.sectionTitle}>Needs attention</h2>
                 <div className={styles.needsYouList}>
-                  {needsYouItems.map((item) => (
+                  {attentionItems.map((item) => (
                     <Link
                       key={item.id}
                       to={item.href}

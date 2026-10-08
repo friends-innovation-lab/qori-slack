@@ -2,7 +2,7 @@
  * NAV-1c: Study Overview tests — S02 design verification.
  *
  * Tests for:
- * - Needs You section with actionable items
+ * - Needs attention section with study-level items (neutral wording)
  * - Where this study is section with lifecycle statuses
  * - Loading and error states
  */
@@ -76,6 +76,13 @@ describe('StudyOverview page (NAV-1c S02)', () => {
       // Should render without crashing during loading
       expect(screen.getByText('Test Study')).toBeInTheDocument();
     });
+
+    it('does not show attention items while loading', () => {
+      setWorkspaceContext({ isLoading: true, briefStatus: 'pending_approval' });
+      renderWithProviders(<StudyOverview />);
+      // Attention section should not render during loading
+      expect(screen.queryByText('Needs attention')).not.toBeInTheDocument();
+    });
   });
 
   describe('error state', () => {
@@ -89,6 +96,17 @@ describe('StudyOverview page (NAV-1c S02)', () => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
       expect(screen.getByText(/Could not load study data/i)).toBeInTheDocument();
       expect(screen.getByText(/Network error/i)).toBeInTheDocument();
+    });
+
+    it('does not show attention items on error', () => {
+      setWorkspaceContext({
+        isLoading: false,
+        error: new Error('Network error'),
+        briefStatus: 'pending_approval',
+      });
+      renderWithProviders(<StudyOverview />);
+      // Attention section should not render on error
+      expect(screen.queryByText('Needs attention')).not.toBeInTheDocument();
     });
   });
 
@@ -106,8 +124,8 @@ describe('StudyOverview page (NAV-1c S02)', () => {
     });
   });
 
-  describe('Needs You section', () => {
-    it('does not render when no actionable items', () => {
+  describe('Needs attention section (neutral wording)', () => {
+    it('does not render when no attention items', () => {
       setWorkspaceContext({
         briefStatus: 'approved',
         discoveryCounts: {
@@ -119,21 +137,22 @@ describe('StudyOverview page (NAV-1c S02)', () => {
       });
       renderWithProviders(<StudyOverview />);
 
-      expect(screen.queryByText('Needs you')).not.toBeInTheDocument();
+      expect(screen.queryByText('Needs attention')).not.toBeInTheDocument();
     });
 
-    it('renders brief approval item when pending', () => {
+    it('renders brief awaiting approval with neutral wording', () => {
       setWorkspaceContext({ briefStatus: 'pending_approval' });
       renderWithProviders(<StudyOverview />);
 
-      expect(screen.getByText('Needs you')).toBeInTheDocument();
-      expect(screen.getByText('Research brief needs approval')).toBeInTheDocument();
-      // The Needs You row contains "Review →"
-      const needsYouRow = screen.getByText('Research brief needs approval').closest('a');
-      expect(needsYouRow).toHaveAttribute('href', '/studies/study-123/brief');
+      expect(screen.getByText('Needs attention')).toBeInTheDocument();
+      // Neutral wording - not "needs your approval"
+      expect(screen.getByText('Research brief awaiting approval')).toBeInTheDocument();
+      // View action - not "Review" which implies authority
+      const row = screen.getByText('Research brief awaiting approval').closest('a');
+      expect(row).toHaveAttribute('href', '/studies/study-123/brief');
     });
 
-    it('renders discovery review items when runs failed', () => {
+    it('renders discovery failure with neutral wording', () => {
       setWorkspaceContext({
         discoveryCounts: {
           desk: 3,
@@ -144,11 +163,13 @@ describe('StudyOverview page (NAV-1c S02)', () => {
       });
       renderWithProviders(<StudyOverview />);
 
-      expect(screen.getByText('Needs you')).toBeInTheDocument();
-      expect(screen.getByText('Desk research needs review')).toBeInTheDocument();
+      expect(screen.getByText('Needs attention')).toBeInTheDocument();
+      // States fact, not assignment
+      expect(screen.getByText('Desk research has failed analysis')).toBeInTheDocument();
+      expect(screen.getByText('May need retry or different files')).toBeInTheDocument();
     });
 
-    it('prioritizes brief over discovery reviews', () => {
+    it('prioritizes brief over discovery items', () => {
       setWorkspaceContext({
         briefStatus: 'pending_approval',
         discoveryCounts: {
@@ -161,8 +182,8 @@ describe('StudyOverview page (NAV-1c S02)', () => {
       renderWithProviders(<StudyOverview />);
 
       const items = screen.getAllByRole('link', { name: /→/ });
-      // First item should be brief (Review), not desk research
-      expect(items[0]).toHaveTextContent('Review');
+      // First item should be brief
+      expect(items[0]).toHaveTextContent('Research brief awaiting approval');
     });
   });
 
@@ -211,12 +232,13 @@ describe('StudyOverview page (NAV-1c S02)', () => {
         );
       });
 
-      it('shows "Brief pending approval" when pending', () => {
+      it('shows "Brief pending approval" with view action when pending', () => {
         setWorkspaceContext({ briefStatus: 'pending_approval' });
         renderWithProviders(<StudyOverview />);
 
         expect(screen.getByText('Brief pending approval')).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: /Review brief/ })).toBeInTheDocument();
+        // Neutral action - "View brief" not "Review brief"
+        expect(screen.getByRole('link', { name: /View brief/ })).toBeInTheDocument();
       });
 
       it('shows "Brief approved" with create plan action when approved', () => {
@@ -232,16 +254,16 @@ describe('StudyOverview page (NAV-1c S02)', () => {
       });
     });
 
-    describe('Placeholder groups', () => {
+    describe('Unqueried groups (truthful status)', () => {
       it.each(['Fieldwork', 'Analysis', 'Outputs'])(
-        '%s shows "Not started" with no action',
+        '%s shows neutral status (em dash) since no query exists',
         (groupName) => {
           renderWithProviders(<StudyOverview />);
 
-          // Find the group row and verify status
+          // Find the group row and verify status is "—" not "Not started"
           const groupLabel = screen.getByText(groupName);
           const row = groupLabel.closest('[class*="lifecycleRow"]');
-          expect(row).toHaveTextContent('Not started');
+          expect(row).toHaveTextContent('—');
         }
       );
     });

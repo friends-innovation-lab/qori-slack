@@ -2,56 +2,56 @@
  * NAV-1c: studyStatus derivation tests.
  *
  * Tests status derivation logic for Study Overview:
- * - deriveNeedsYouItems: actionable items sorted by priority
+ * - deriveAttentionItems: study-level attention items (neutral, no user assignment)
  * - deriveLifecycleGroupStatuses: lifecycle group status lines
  */
 
 import { describe, it, expect } from 'vitest';
 import {
-  deriveNeedsYouItems,
+  deriveAttentionItems,
   deriveLifecycleGroupStatuses,
 } from '../studyStatus';
 import type { DiscoveryCounts } from '../LifecycleRail';
 
 const studyPublicId = 'study-123';
 
-describe('deriveNeedsYouItems', () => {
-  describe('brief approval', () => {
+describe('deriveAttentionItems', () => {
+  describe('brief approval (neutral wording)', () => {
     it('returns brief approval item when status is pending_approval', () => {
-      const items = deriveNeedsYouItems(studyPublicId, 'pending_approval', undefined);
+      const items = deriveAttentionItems(studyPublicId, 'pending_approval', undefined);
 
       expect(items).toHaveLength(1);
       expect(items[0]).toMatchObject({
         id: 'brief-approval',
-        label: 'Research brief needs approval',
-        action: 'Review',
+        label: 'Research brief awaiting approval', // Neutral - not "needs your approval"
+        action: 'View', // Neutral - not "Review" which implies authority
         href: '/studies/study-123/brief',
       });
     });
 
     it('returns brief changes item when status is changes_requested', () => {
-      const items = deriveNeedsYouItems(studyPublicId, 'changes_requested', undefined);
+      const items = deriveAttentionItems(studyPublicId, 'changes_requested', undefined);
 
       expect(items).toHaveLength(1);
       expect(items[0]).toMatchObject({
         id: 'brief-changes',
         label: 'Research brief has requested changes',
-        action: 'Edit',
+        action: 'View', // Neutral - not "Edit" which assumes authorship
       });
     });
 
     it('returns empty when brief is approved', () => {
-      const items = deriveNeedsYouItems(studyPublicId, 'approved', undefined);
+      const items = deriveAttentionItems(studyPublicId, 'approved', undefined);
       expect(items).toHaveLength(0);
     });
 
     it('returns empty when no brief exists', () => {
-      const items = deriveNeedsYouItems(studyPublicId, null, undefined);
+      const items = deriveAttentionItems(studyPublicId, null, undefined);
       expect(items).toHaveLength(0);
     });
   });
 
-  describe('discovery review queue', () => {
+  describe('discovery review queue (neutral wording)', () => {
     it('returns desk review item when desk needs review', () => {
       const counts: DiscoveryCounts = {
         desk: 5,
@@ -60,12 +60,14 @@ describe('deriveNeedsYouItems', () => {
         needsReview: { desk: true, stakeholder: false, survey: false },
       };
 
-      const items = deriveNeedsYouItems(studyPublicId, null, counts);
+      const items = deriveAttentionItems(studyPublicId, null, counts);
 
       expect(items).toHaveLength(1);
       expect(items[0]).toMatchObject({
         id: 'discovery-review-desk',
-        label: 'Desk research needs review',
+        label: 'Desk research has failed analysis', // Neutral - states fact
+        sublabel: 'May need retry or different files',
+        action: 'View',
         href: '/studies/study-123/discovery/desk',
       });
     });
@@ -78,7 +80,7 @@ describe('deriveNeedsYouItems', () => {
         needsReview: { desk: true, stakeholder: true, survey: false },
       };
 
-      const items = deriveNeedsYouItems(studyPublicId, null, counts);
+      const items = deriveAttentionItems(studyPublicId, null, counts);
 
       expect(items).toHaveLength(2);
       expect(items.map((i) => i.id)).toContain('discovery-review-desk');
@@ -95,7 +97,7 @@ describe('deriveNeedsYouItems', () => {
         needsReview: { desk: true, stakeholder: false, survey: false },
       };
 
-      const items = deriveNeedsYouItems(studyPublicId, 'pending_approval', counts);
+      const items = deriveAttentionItems(studyPublicId, 'pending_approval', counts);
 
       expect(items[0].id).toBe('brief-approval');
       expect(items[1].id).toBe('discovery-review-desk');
@@ -109,7 +111,7 @@ describe('deriveNeedsYouItems', () => {
         needsReview: { desk: true, stakeholder: true, survey: true },
       };
 
-      const items = deriveNeedsYouItems(studyPublicId, 'pending_approval', counts);
+      const items = deriveAttentionItems(studyPublicId, 'pending_approval', counts);
 
       expect(items).toHaveLength(3);
       // First should be brief (priority 1), then first 2 discovery reviews (priority 2)
@@ -183,20 +185,20 @@ describe('deriveLifecycleGroupStatuses', () => {
       expect(planning?.action?.href).toBe('/studies/study-123/brief/new');
     });
 
-    it('shows "Brief pending approval" with review action', () => {
+    it('shows "Brief pending approval" with view action', () => {
       const groups = deriveLifecycleGroupStatuses(studyPublicId, 'pending_approval', undefined);
       const planning = groups.find((g) => g.group === 'Planning');
 
       expect(planning?.status).toBe('Brief pending approval');
-      expect(planning?.action?.label).toBe('Review brief');
+      expect(planning?.action?.label).toBe('View brief');
     });
 
-    it('shows "Brief has changes requested" with edit action', () => {
+    it('shows "Brief has changes requested" with view action', () => {
       const groups = deriveLifecycleGroupStatuses(studyPublicId, 'changes_requested', undefined);
       const planning = groups.find((g) => g.group === 'Planning');
 
       expect(planning?.status).toBe('Brief has changes requested');
-      expect(planning?.action?.label).toBe('Edit brief');
+      expect(planning?.action?.label).toBe('View brief');
     });
 
     it('shows "Brief approved" with create plan action when approved', () => {
@@ -210,14 +212,15 @@ describe('deriveLifecycleGroupStatuses', () => {
     });
   });
 
-  describe('placeholder groups', () => {
-    const placeholderGroups = ['Fieldwork', 'Analysis', 'Outputs'];
+  describe('unqueried groups (truthful - no false claims)', () => {
+    const unqueriedGroups = ['Fieldwork', 'Analysis', 'Outputs'];
 
-    it.each(placeholderGroups)('%s shows "Not started" with no action', (groupName) => {
+    it.each(unqueriedGroups)('%s shows neutral status (no query available)', (groupName) => {
       const groups = deriveLifecycleGroupStatuses(studyPublicId, null, undefined);
       const group = groups.find((g) => g.group === groupName);
 
-      expect(group?.status).toBe('Not started');
+      // Shows "—" not "Not started" since we have no query to verify
+      expect(group?.status).toBe('—');
       expect(group?.action).toBeUndefined();
     });
   });

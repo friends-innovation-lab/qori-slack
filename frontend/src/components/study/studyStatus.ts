@@ -2,9 +2,13 @@
  * studyStatus.ts — NAV-1c
  *
  * Status derivation helpers for Study Overview.
- * Computes "Needs You" items and lifecycle group statuses from canonical data.
+ * Computes attention items and lifecycle group statuses from canonical data.
  *
  * Design authority: STUDY_WORKSPACE_NAV_CORRECTION.md §S02
+ *
+ * IMPORTANT: Current-user responsibility cannot be determined from existing
+ * contracts. Items use neutral wording ("needs attention" not "needs you")
+ * and do not claim user assignment.
  */
 
 import type { DiscoveryCounts } from '@/components/study/LifecycleRail';
@@ -17,7 +21,7 @@ export type BriefStatusValue =
   | 'approved'
   | null;
 
-export interface NeedsYouItem {
+export interface AttentionItem {
   id: string;
   label: string;
   sublabel?: string;
@@ -33,46 +37,50 @@ export interface LifecycleGroupStatus {
   action?: { label: string; href: string };
 }
 
-// ─── Needs You Derivation ──────────────────────────────────────────
+// ─── Attention Items Derivation ────────────────────────────────────
 
 /**
- * Derive actionable "Needs You" items from study state.
+ * Derive attention items from study state.
  * Returns items sorted by priority (highest first), limited to top 3.
+ *
+ * NOTE: Current-user assignment cannot be determined from existing contracts.
+ * Labels use neutral wording ("awaiting approval" not "needs your approval").
+ * These are study-level attention items, not user-assigned tasks.
  *
  * Priority order:
  * 1. Brief approval (blocking)
  * 2. Discovery review queue
  */
-export function deriveNeedsYouItems(
+export function deriveAttentionItems(
   studyPublicId: string,
   briefStatus: BriefStatusValue,
   discoveryCounts: DiscoveryCounts | undefined,
-): NeedsYouItem[] {
-  const items: NeedsYouItem[] = [];
+): AttentionItem[] {
+  const items: AttentionItem[] = [];
 
-  // Brief pending approval
+  // Brief pending approval - neutral wording, no user assignment claim
   if (briefStatus === 'pending_approval') {
     items.push({
       id: 'brief-approval',
-      label: 'Research brief needs approval',
-      action: 'Review',
+      label: 'Research brief awaiting approval',
+      action: 'View',
       href: `/studies/${studyPublicId}/brief`,
       priority: 1,
     });
   }
 
-  // Brief changes requested
+  // Brief changes requested - neutral wording
   if (briefStatus === 'changes_requested') {
     items.push({
       id: 'brief-changes',
       label: 'Research brief has requested changes',
-      action: 'Edit',
+      action: 'View',
       href: `/studies/${studyPublicId}/brief`,
       priority: 1,
     });
   }
 
-  // Discovery review queue
+  // Discovery review queue - failed runs need attention
   if (discoveryCounts?.needsReview) {
     const types: Array<{ key: 'desk' | 'stakeholder' | 'survey'; label: string; path: string }> = [
       { key: 'desk', label: 'Desk research', path: '/desk' },
@@ -84,9 +92,9 @@ export function deriveNeedsYouItems(
       if (discoveryCounts.needsReview[type.key]) {
         items.push({
           id: `discovery-review-${type.key}`,
-          label: `${type.label} needs review`,
-          sublabel: 'Failed analysis',
-          action: 'Review',
+          label: `${type.label} has failed analysis`,
+          sublabel: 'May need retry or different files',
+          action: 'View',
           href: `/studies/${studyPublicId}/discovery${type.path}`,
           priority: 2,
         });
@@ -128,22 +136,22 @@ export function deriveLifecycleGroupStatuses(
   const planningStatus = derivePlanningStatus(studyPublicId, briefStatus);
   groups.push(planningStatus);
 
-  // Fieldwork - placeholder
+  // Fieldwork - no query available, omit status claim
   groups.push({
     group: 'Fieldwork',
-    status: 'Not started',
+    status: '—', // No status available from current queries
   });
 
-  // Analysis - placeholder
+  // Analysis - no query available, omit status claim
   groups.push({
     group: 'Analysis',
-    status: 'Not started',
+    status: '—', // No status available from current queries
   });
 
-  // Outputs - placeholder
+  // Outputs - no query available, omit status claim
   groups.push({
     group: 'Outputs',
-    status: 'Not started',
+    status: '—', // No status available from current queries
   });
 
   return groups;
@@ -199,7 +207,7 @@ function derivePlanningStatus(
     return {
       group: 'Planning',
       status: 'Brief pending approval',
-      action: { label: 'Review brief', href: `/studies/${studyPublicId}/brief` },
+      action: { label: 'View brief', href: `/studies/${studyPublicId}/brief` },
     };
   }
 
@@ -207,7 +215,7 @@ function derivePlanningStatus(
     return {
       group: 'Planning',
       status: 'Brief has changes requested',
-      action: { label: 'Edit brief', href: `/studies/${studyPublicId}/brief` },
+      action: { label: 'View brief', href: `/studies/${studyPublicId}/brief` },
     };
   }
 
