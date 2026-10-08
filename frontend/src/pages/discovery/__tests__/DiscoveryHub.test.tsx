@@ -1,5 +1,5 @@
 /**
- * DISC-3: DiscoveryHub page tests.
+ * DISC-3 + NAV-1b: DiscoveryHub page tests.
  *
  * Tests for:
  * - Empty state (no discovery data)
@@ -7,6 +7,8 @@
  * - Error state
  * - Populated state with runs and artifacts
  * - Add evidence menu
+ * - NAV-1b: Legacy ?type= redirects
+ * - NAV-1b: No Overview flash during redirect
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -27,16 +29,21 @@ vi.mock('@/api/queries/useDiscovery', () => ({
   useDiscoveryCounts: vi.fn(),
 }));
 
+// NAV-1b: Track navigate calls for redirect tests
+const mockNavigate = vi.fn();
+let mockSearchParams = new URLSearchParams();
+
 vi.mock('react-router', async () => {
   const actual = await vi.importActual('react-router');
   return {
     ...actual,
     useParams: () => ({ studyPublicId: 'study-123' }),
-    useSearchParams: () => [new URLSearchParams()],
+    useSearchParams: () => [mockSearchParams],
+    useNavigate: () => mockNavigate,
   };
 });
 
-// NAV-1a: Mock workspace context (provides nav state)
+// NAV-1a + NAV-1b: Mock workspace context (provides nav state + activeDiscoveryType)
 vi.mock('@/components/study/workspace', async () => {
   const actual = await vi.importActual('@/components/study/workspace');
   return {
@@ -48,6 +55,8 @@ vi.mock('@/components/study/workspace', async () => {
       briefStatus: null,
       lifecycleNodes: [],
       discoveryCounts: undefined,
+      activeDiscoveryType: null,
+      setActiveDiscoveryType: vi.fn(),
       navOpen: false,
       openNav: vi.fn(),
       closeNav: vi.fn(),
@@ -192,6 +201,8 @@ function setupMocks(overrides: {
 describe('DiscoveryHub', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSearchParams = new URLSearchParams();
+    mockNavigate.mockClear();
   });
 
   // NAV-1a: Study loading errors are now handled by StudyWorkspaceLayout
@@ -291,6 +302,99 @@ describe('DiscoveryHub', () => {
       renderWithProviders(<DiscoveryHub />);
 
       expect(screen.getByText(/Into the brief/i)).toBeInTheDocument();
+    });
+  });
+
+  /**
+   * NAV-1b: Legacy ?type= redirect tests.
+   *
+   * Requirements:
+   * - ?type=desk -> /discovery/desk
+   * - ?type=stakeholder -> /discovery/stakeholders
+   * - ?type=survey -> /discovery/surveys
+   * - preserve unrelated query parameters
+   * - no visible Overview flash (returns null during redirect)
+   */
+  describe('NAV-1b: legacy ?type= redirects', () => {
+    it('redirects ?type=desk to /discovery/desk', () => {
+      mockSearchParams = new URLSearchParams('type=desk');
+      setupMocks();
+      renderWithProviders(<DiscoveryHub />);
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/studies/study-123/discovery/desk',
+        { replace: true },
+      );
+    });
+
+    it('redirects ?type=stakeholder to /discovery/stakeholders', () => {
+      mockSearchParams = new URLSearchParams('type=stakeholder');
+      setupMocks();
+      renderWithProviders(<DiscoveryHub />);
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/studies/study-123/discovery/stakeholders',
+        { replace: true },
+      );
+    });
+
+    it('redirects ?type=survey to /discovery/surveys', () => {
+      mockSearchParams = new URLSearchParams('type=survey');
+      setupMocks();
+      renderWithProviders(<DiscoveryHub />);
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/studies/study-123/discovery/surveys',
+        { replace: true },
+      );
+    });
+
+    it('preserves unrelated query parameters during redirect', () => {
+      mockSearchParams = new URLSearchParams('type=desk&foo=bar&baz=123');
+      setupMocks();
+      renderWithProviders(<DiscoveryHub />);
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/studies/study-123/discovery/desk?foo=bar&baz=123',
+        { replace: true },
+      );
+    });
+
+    it('renders nothing during legacy redirect (no Overview flash)', () => {
+      mockSearchParams = new URLSearchParams('type=desk');
+      setupMocks();
+      const { container } = renderWithProviders(<DiscoveryHub />);
+
+      // Should render nothing (null) during redirect
+      expect(container.firstChild).toBeNull();
+    });
+
+    it('does not redirect when no ?type= param', () => {
+      mockSearchParams = new URLSearchParams();
+      setupMocks();
+      renderWithProviders(<DiscoveryHub />);
+
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('does not redirect for unknown ?type= values', () => {
+      mockSearchParams = new URLSearchParams('type=unknown');
+      setupMocks();
+      renderWithProviders(<DiscoveryHub />);
+
+      expect(mockNavigate).not.toHaveBeenCalled();
+      // Should render the Overview page normally
+      expect(screen.getByRole('heading', { name: 'Test Study' })).toBeInTheDocument();
+    });
+
+    it('renders Overview content when no redirect needed', () => {
+      mockSearchParams = new URLSearchParams();
+      setupMocks();
+      renderWithProviders(<DiscoveryHub />);
+
+      // Should render the Overview page
+      expect(screen.getByRole('heading', { name: 'Test Study' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Add evidence/i })).toBeInTheDocument();
     });
   });
 });

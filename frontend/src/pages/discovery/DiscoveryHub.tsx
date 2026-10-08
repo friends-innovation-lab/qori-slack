@@ -56,18 +56,26 @@ export function DiscoveryHub() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // NAV-1b: Redirect legacy ?type= URLs to canonical section routes
+  // NAV-1b: Check for legacy ?type= URL and redirect BEFORE rendering
+  // This prevents Overview content flash during redirect
+  const typeParam = searchParams.get('type');
+  const isLegacyRedirect = typeParam && typeToPath[typeParam];
+
   useEffect(() => {
-    const typeParam = searchParams.get('type');
-    if (typeParam && typeToPath[typeParam]) {
-      // Build new URL without type param
+    if (isLegacyRedirect) {
+      // Build new URL preserving non-type query params
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('type');
       const queryString = newParams.toString();
       const newPath = `/studies/${studyPublicId}/discovery${typeToPath[typeParam]}${queryString ? `?${queryString}` : ''}`;
       navigate(newPath, { replace: true });
     }
-  }, [searchParams, studyPublicId, navigate]);
+  }, [isLegacyRedirect, typeParam, searchParams, studyPublicId, navigate]);
+
+  // Don't render Overview content during legacy redirect - prevents flash
+  if (isLegacyRedirect) {
+    return null;
+  }
 
   // NAV-1b: Overview page shows all types (no filter)
   const runsQuery = useDiscoveryRuns(

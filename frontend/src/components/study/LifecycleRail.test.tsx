@@ -553,3 +553,190 @@ describe('LifecycleRail discovery counts exactness (DISC-3)', () => {
     expect(overviewReviewText).toBeInTheDocument();
   });
 });
+
+/**
+ * NAV-1b: Route-based active state tests.
+ *
+ * Requirements:
+ * - /discovery -> Overview active
+ * - /discovery/desk -> Desk research active
+ * - /discovery/stakeholders -> Stakeholders active
+ * - /discovery/surveys -> Surveys active
+ * - /discovery/new/desk -> Desk research active (intake)
+ * - /discovery/new/stakeholder -> Stakeholders active (intake)
+ * - /discovery/runs/:runId -> parent type active (via activeDiscoveryType)
+ */
+describe('NAV-1b: route-based active state', () => {
+  const minimalNodes: LifecycleNode[] = [
+    { stage: 'brief', label: 'Brief', state: 'free', unlock_hint: null, count: 0, is_current: false },
+    { stage: 'plan', label: 'Plan', state: 'free', unlock_hint: null, count: 0, is_current: false },
+  ];
+
+  const studyHeader = {
+    name: 'Test Study',
+    backTo: '/projects',
+    backLabel: 'All projects',
+  };
+
+  it('/discovery -> Overview is active', () => {
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+      />,
+      { initialEntries: [`/studies/${studyId}/discovery`] },
+    );
+
+    const overviewLink = screen.getByRole('link', { name: /Overview/ });
+    expect(overviewLink.className).toMatch(/nvOn/);
+  });
+
+  it('/discovery/desk -> Desk research is active', () => {
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+      />,
+      { initialEntries: [`/studies/${studyId}/discovery/desk`] },
+    );
+
+    const deskLink = screen.getByRole('link', { name: /Desk research/ });
+    expect(deskLink.className).toMatch(/nvOn/);
+  });
+
+  it('/discovery/stakeholders -> Stakeholders is active', () => {
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+      />,
+      { initialEntries: [`/studies/${studyId}/discovery/stakeholders`] },
+    );
+
+    const stakeholderLink = screen.getByRole('link', { name: /Stakeholders/ });
+    expect(stakeholderLink.className).toMatch(/nvOn/);
+  });
+
+  it('/discovery/surveys -> Surveys is active', () => {
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+      />,
+      { initialEntries: [`/studies/${studyId}/discovery/surveys`] },
+    );
+
+    const surveyLink = screen.getByRole('link', { name: /Surveys/ });
+    expect(surveyLink.className).toMatch(/nvOn/);
+  });
+
+  it('/discovery/new/desk -> Desk research is active (intake route)', () => {
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+      />,
+      { initialEntries: [`/studies/${studyId}/discovery/new/desk`] },
+    );
+
+    const deskLink = screen.getByRole('link', { name: /Desk research/ });
+    expect(deskLink.className).toMatch(/nvOn/);
+  });
+
+  it('/discovery/new/stakeholder -> Stakeholders is active (intake route)', () => {
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+      />,
+      { initialEntries: [`/studies/${studyId}/discovery/new/stakeholder`] },
+    );
+
+    const stakeholderLink = screen.getByRole('link', { name: /Stakeholders/ });
+    expect(stakeholderLink.className).toMatch(/nvOn/);
+  });
+
+  it('/discovery/runs/:runId with activeDiscoveryType=desk -> Desk research is active', () => {
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+        activeDiscoveryType="desk"
+      />,
+      { initialEntries: [`/studies/${studyId}/discovery/runs/run-123`] },
+    );
+
+    const deskLink = screen.getByRole('link', { name: /Desk research/ });
+    expect(deskLink.className).toMatch(/nvOn/);
+  });
+
+  it('/discovery/runs/:runId with activeDiscoveryType=stakeholder -> Stakeholders is active', () => {
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+        activeDiscoveryType="stakeholder"
+      />,
+      { initialEntries: [`/studies/${studyId}/discovery/runs/run-123`] },
+    );
+
+    const stakeholderLink = screen.getByRole('link', { name: /Stakeholders/ });
+    expect(stakeholderLink.className).toMatch(/nvOn/);
+  });
+
+  it('/discovery/runs/:runId with activeDiscoveryType=survey -> Surveys is active', () => {
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+        activeDiscoveryType="survey"
+      />,
+      { initialEntries: [`/studies/${studyId}/discovery/runs/run-123`] },
+    );
+
+    const surveyLink = screen.getByRole('link', { name: /Surveys/ });
+    expect(surveyLink.className).toMatch(/nvOn/);
+  });
+
+  it('/discovery/runs/:runId without activeDiscoveryType -> no Discovery row active', () => {
+    renderWithProviders(
+      <LifecycleRail
+        studyPublicId={studyId}
+        nodes={minimalNodes}
+        variant="inverse"
+        study={studyHeader}
+        activeDiscoveryType={null}
+      />,
+      { initialEntries: [`/studies/${studyId}/discovery/runs/run-123`] },
+    );
+
+    // None of the Discovery rows should be active
+    const overviewLink = screen.getByRole('link', { name: /Overview/ });
+    const deskLink = screen.getByRole('link', { name: /Desk research/ });
+    const stakeholderLink = screen.getByRole('link', { name: /Stakeholders/ });
+    const surveyLink = screen.getByRole('link', { name: /Surveys/ });
+
+    expect(overviewLink.className).not.toMatch(/nvOn/);
+    expect(deskLink.className).not.toMatch(/nvOn/);
+    expect(stakeholderLink.className).not.toMatch(/nvOn/);
+    expect(surveyLink.className).not.toMatch(/nvOn/);
+  });
+});
