@@ -4,8 +4,11 @@
  * Study landing page with truthful lifecycle status.
  * Per STUDY_WORKSPACE_NAV_CORRECTION.md §S02.
  *
+ * Visual reference:
+ *   design/workspace/workspace-v2/study-shell/screens/02 Study Overview.html
+ *
  * Content (two sections, no filler):
- * 1. Needs you: top 3 actionable items (brief approval, discovery review queue)
+ * 1. Needs attention: top 3 actionable items (brief approval, discovery review queue)
  * 2. Where this study is: one row per lifecycle group with status and action
  */
 
@@ -44,9 +47,6 @@ export function StudyOverview() {
     discoveryCounts,
   );
 
-  // Show more than 3 items link
-  const hasMoreItems = attentionItems.length >= 3;
-
   return (
     <WorkspaceLayout
       header={
@@ -74,25 +74,26 @@ export function StudyOverview() {
             {/* §1 Needs attention (neutral - no user assignment claim) */}
             {attentionItems.length > 0 && (
               <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>Needs attention</h2>
-                <div className={styles.needsYouList}>
-                  {attentionItems.map((item) => (
-                    <Link
-                      key={item.id}
-                      to={item.href}
-                      className={styles.needsYouRow}
-                    >
-                      <div className={styles.needsYouContent}>
-                        <span className={styles.needsYouLabel}>{item.label}</span>
-                        {item.sublabel && (
-                          <span className={styles.needsYouSublabel}>{item.sublabel}</span>
-                        )}
-                      </div>
-                      <span className={styles.needsYouAction}>{item.action} →</span>
-                    </Link>
-                  ))}
+                <div className={styles.sectionHeader}>
+                  <h2 className={styles.sectionTitle}>Needs attention</h2>
+                  <span className={styles.sectionCount}>{attentionItems.length}</span>
                 </div>
-                {hasMoreItems && (
+                <ul className={styles.needsAttentionList}>
+                  {attentionItems.map((item) => (
+                    <li key={item.id}>
+                      <Link to={item.href} className={styles.needsAttentionItem}>
+                        <div className={styles.needsAttentionContent}>
+                          <span className={styles.needsAttentionLabel}>{item.label}</span>
+                          {item.sublabel && (
+                            <span className={styles.needsAttentionSublabel}>{item.sublabel}</span>
+                          )}
+                        </div>
+                        <span className={styles.needsAttentionAction}>{item.action} →</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                {attentionItems.length >= 3 && (
                   <Link
                     to={`/studies/${studyPublicId}/discovery`}
                     className={styles.seeAllLink}
@@ -105,27 +106,37 @@ export function StudyOverview() {
 
             {/* §2 Where this study is */}
             <section className={styles.section}>
-              <h2 className={styles.sectionTitle}>Where this study is</h2>
-              <div className={styles.lifecycleGrid}>
-                {lifecycleStatuses.map((group) => (
-                  <div key={group.group} className={styles.lifecycleRow}>
-                    <span className={styles.lifecycleGroup}>{group.group}</span>
-                    <div className={styles.lifecycleStatus}>
-                      <span className={styles.lifecycleStatusText}>{group.status}</span>
-                      {group.statusMuted && (
-                        <span className={styles.lifecycleStatusMuted}>{group.statusMuted}</span>
-                      )}
-                    </div>
-                    <div className={styles.lifecycleAction}>
-                      {group.action && (
-                        <Link to={group.action.href} className={styles.lifecycleActionLink}>
-                          {group.action.label} →
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <div className={styles.sectionHeader}>
+                <h2 className={styles.sectionTitle}>Where this study is</h2>
               </div>
+              <ul className={styles.lifecycleGrid}>
+                {lifecycleStatuses.map((group) => {
+                  // Dim rows without actions (unqueried groups showing "—")
+                  const isDim = !group.action && group.status === '—';
+                  const rowClassName = isDim
+                    ? `${styles.lifecycleRow} ${styles.lifecycleRowDim}`
+                    : styles.lifecycleRow;
+
+                  return (
+                    <li key={group.group} className={rowClassName}>
+                      <span className={styles.lifecycleGroup}>{group.group}</span>
+                      <div className={styles.lifecycleStatus}>
+                        <span className={styles.lifecycleStatusText}>{group.status}</span>
+                        {group.statusMuted && (
+                          <span className={styles.lifecycleStatusMuted}>{group.statusMuted}</span>
+                        )}
+                      </div>
+                      <div className={styles.lifecycleAction}>
+                        {group.action && (
+                          <Link to={group.action.href} className={styles.lifecycleActionLink}>
+                            {group.action.label} →
+                          </Link>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             </section>
           </>
         )}

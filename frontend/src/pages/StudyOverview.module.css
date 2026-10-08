@@ -1,56 +1,282 @@
-/* NAV-1a: No longer uses .layout - content is inside StudyWorkspaceLayout */
+/**
+ * StudyOverview — NAV-1c S02 Visual Design
+ *
+ * Implements CD design from:
+ *   design/workspace/workspace-v2/study-shell/screens/02 Study Overview.html
+ *   design/workspace/workspace-v2/study-shell/screens/study-shell.css (N6)
+ *   design/workspace/workspace-v2/discovery/screens/discovery.css
+ */
+
+/* ─── Content Container ─────────────────────────────────────────────── */
 
 .content {
   flex: 1;
   min-width: 0;
   padding: var(--space-6);
-  max-width: 960px;
+  max-width: 720px;
 }
 
-.attentionCard {
-  margin-bottom: var(--space-4);
-}
+/* ─── Header / Masthead ─────────────────────────────────────────────── */
 
-.attentionRow {
+.header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
+  flex-direction: column;
+  gap: 4px;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 27px;
+  line-height: 32px;
   font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* ─── Sections ──────────────────────────────────────────────────────── */
+
+.section {
+  margin-bottom: var(--space-8);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .sectionTitle {
-  font-size: var(--text-h3-size);
-  margin-bottom: var(--space-3);
+  font-family: var(--font-display);
+  font-size: 21px;
+  line-height: 28px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--color-text);
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
 }
 
-.nextAction {
-  margin-top: var(--space-4);
-}
-
-.glanceCard {
-  margin-top: var(--space-4);
-}
-
-.glanceList {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: var(--space-2) var(--space-4);
-}
-
-.glanceList dt {
-  font-weight: 600;
-  font-size: var(--text-secondary-size);
+.sectionCount {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 20px;
+  letter-spacing: 0.06em;
   color: var(--color-text-muted);
 }
 
-.glanceList dd {
+/* ─── Needs Attention List (§1) ─────────────────────────────────────── */
+/* CD reference: .rq in discovery.css */
+
+.needsAttentionList {
+  list-style: none;
   margin: 0;
-  text-transform: capitalize;
+  padding: 0;
+  border-top: 1px solid var(--color-border-emphasis);
+  border-bottom: 1px solid var(--color-border);
 }
 
-@media (max-width: 1023px) {
-  .layout {
-    flex-direction: column;
+.needsAttentionItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 24px;
+  align-items: center;
+  min-height: 56px;
+  padding: 16px 2px;
+  border-bottom: 1px solid var(--color-border);
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.needsAttentionItem:last-child {
+  border-bottom: none;
+}
+
+.needsAttentionItem:hover {
+  background: var(--color-surface-hover);
+}
+
+.needsAttentionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.needsAttentionLabel {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.needsAttentionSublabel {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-text-muted);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.needsAttentionAction {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-link);
+}
+
+.seeAllLink {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+.seeAllLink:hover {
+  text-decoration: underline;
+}
+
+/* ─── Lifecycle Grid (§2) ───────────────────────────────────────────── */
+/* CD reference: .lcs in study-shell.css (N6) */
+
+.lifecycleGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--color-border-emphasis);
+}
+
+.lifecycleRow {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr) auto;
+  gap: 4px 24px;
+  align-items: baseline;
+  padding: 16px 2px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.lifecycleGroup {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 20px;
+  letter-spacing: 0.16em;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-text-meta);
+}
+
+.lifecycleStatus {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lifecycleStatusText {
+  color: var(--color-text);
+}
+
+.lifecycleStatusMuted {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--color-text-muted);
+}
+
+.lifecycleAction {
+  text-align: right;
+}
+
+.lifecycleActionLink {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+.lifecycleActionLink:hover {
+  text-decoration: underline;
+}
+
+/* Dim state for not-started lifecycle groups */
+.lifecycleRowDim .lifecycleGroup,
+.lifecycleRowDim .lifecycleStatus,
+.lifecycleRowDim .lifecycleStatusText {
+  color: var(--color-text-muted);
+}
+
+/* ─── Error State ───────────────────────────────────────────────────── */
+
+.errorState {
+  padding: 16px;
+  background: var(--color-error-surface);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-md);
+}
+
+.errorState p {
+  margin: 0;
+}
+
+.errorState p + p {
+  margin-top: 8px;
+}
+
+.errorMessage {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* ─── Responsive ────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .content {
+    padding: var(--space-4);
+  }
+
+  .title {
+    font-size: 24px;
+    line-height: 28px;
+  }
+
+  .lifecycleRow {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .lifecycleGroup {
+    margin-bottom: 4px;
+  }
+
+  .lifecycleAction {
+    text-align: left;
+    margin-top: 8px;
+  }
+
+  .needsAttentionItem {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .needsAttentionAction {
+    text-align: left;
   }
 }
