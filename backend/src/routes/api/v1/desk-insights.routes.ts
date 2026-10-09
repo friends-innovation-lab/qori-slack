@@ -16,6 +16,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../../../middleware/auth';
 import * as deskInsightService from '../../../services/desk-insight.service';
+import { assertProjectAccessByActor, AuthorizationError } from '../../../services/authorization.service';
 import type { EvidenceReference } from '../../../database/models/evidence_construct_revision';
 
 const router = Router({ mergeParams: true });
@@ -51,6 +52,9 @@ router.get('/', requireAuth, async (req, res, next) => {
       return;
     }
 
+    // Verify actor has access to this project
+    await assertProjectAccessByActor(req.ctx!.actor.id, projectId, req.ctx!.organization.id);
+
     const status = req.query.status as string | undefined;
     const limit = Math.min(parseInt(req.query.limit as string, 10) || 50, 100);
     const offset = parseInt(req.query.offset as string, 10) || 0;
@@ -80,6 +84,12 @@ router.get('/', requireAuth, async (req, res, next) => {
       },
     });
   } catch (error) {
+    if (error instanceof AuthorizationError) {
+      res.status(403).json({
+        error: { code: 'AUTHORIZATION_ERROR', message: error.message },
+      });
+      return;
+    }
     next(error);
   }
 });
@@ -99,10 +109,19 @@ router.get('/needs-review-count', requireAuth, async (req, res, next) => {
       return;
     }
 
+    // Verify actor has access to this project
+    await assertProjectAccessByActor(req.ctx!.actor.id, projectId, req.ctx!.organization.id);
+
     const count = await deskInsightService.countInsightsNeedingReview(projectId);
 
     res.json({ data: { count } });
   } catch (error) {
+    if (error instanceof AuthorizationError) {
+      res.status(403).json({
+        error: { code: 'AUTHORIZATION_ERROR', message: error.message },
+      });
+      return;
+    }
     next(error);
   }
 });
@@ -122,10 +141,19 @@ router.get('/synthesis-eligible', requireAuth, async (req, res, next) => {
       return;
     }
 
+    // Verify actor has access to this project
+    await assertProjectAccessByActor(req.ctx!.actor.id, projectId, req.ctx!.organization.id);
+
     const insights = await deskInsightService.getSynthesisEligibleInsights(projectId);
 
     res.json({ data: insights });
   } catch (error) {
+    if (error instanceof AuthorizationError) {
+      res.status(403).json({
+        error: { code: 'AUTHORIZATION_ERROR', message: error.message },
+      });
+      return;
+    }
     next(error);
   }
 });
@@ -153,6 +181,9 @@ router.post('/', requireAuth, async (req, res, next) => {
       });
       return;
     }
+
+    // Verify actor has access to this project
+    await assertProjectAccessByActor(req.ctx!.actor.id, projectId, req.ctx!.organization.id);
 
     const { wording, evidenceReferences, origin, discoveryRunId } = req.body;
 
@@ -200,6 +231,12 @@ router.post('/', requireAuth, async (req, res, next) => {
 
     res.status(201).json({ data: insight });
   } catch (error) {
+    if (error instanceof AuthorizationError) {
+      res.status(403).json({
+        error: { code: 'AUTHORIZATION_ERROR', message: error.message },
+      });
+      return;
+    }
     if (error instanceof deskInsightService.ValidationError) {
       res.status(400).json({
         error: { code: 'VALIDATION_ERROR', message: error.message },
@@ -235,6 +272,9 @@ router.get('/:insightId', requireAuth, async (req, res, next) => {
       return;
     }
 
+    // Verify actor has access to this project
+    await assertProjectAccessByActor(req.ctx!.actor.id, projectId, req.ctx!.organization.id);
+
     const insightIdParam = req.params.insightId;
     if (!insightIdParam || typeof insightIdParam !== 'string') {
       res.status(400).json({
@@ -269,6 +309,12 @@ router.get('/:insightId', requireAuth, async (req, res, next) => {
 
     res.json({ data: insight });
   } catch (error) {
+    if (error instanceof AuthorizationError) {
+      res.status(403).json({
+        error: { code: 'AUTHORIZATION_ERROR', message: error.message },
+      });
+      return;
+    }
     next(error);
   }
 });
@@ -287,6 +333,9 @@ router.get('/:insightId/revisions', requireAuth, async (req, res, next) => {
       });
       return;
     }
+
+    // Verify actor has access to this project
+    await assertProjectAccessByActor(req.ctx!.actor.id, projectId, req.ctx!.organization.id);
 
     const insightId = parseInt(req.params.insightId as string, 10);
     if (isNaN(insightId)) {
@@ -309,6 +358,12 @@ router.get('/:insightId/revisions', requireAuth, async (req, res, next) => {
 
     res.json({ data: revisions });
   } catch (error) {
+    if (error instanceof AuthorizationError) {
+      res.status(403).json({
+        error: { code: 'AUTHORIZATION_ERROR', message: error.message },
+      });
+      return;
+    }
     if (error instanceof deskInsightService.InsightNotFoundError) {
       res.status(404).json({
         error: { code: 'NOT_FOUND', message: error.message },
@@ -334,6 +389,9 @@ router.get('/:insightId/reviews', requireAuth, async (req, res, next) => {
       return;
     }
 
+    // Verify actor has access to this project
+    await assertProjectAccessByActor(req.ctx!.actor.id, projectId, req.ctx!.organization.id);
+
     const insightId = parseInt(req.params.insightId as string, 10);
     if (isNaN(insightId)) {
       res.status(400).json({
@@ -355,6 +413,12 @@ router.get('/:insightId/reviews', requireAuth, async (req, res, next) => {
 
     res.json({ data: reviews });
   } catch (error) {
+    if (error instanceof AuthorizationError) {
+      res.status(403).json({
+        error: { code: 'AUTHORIZATION_ERROR', message: error.message },
+      });
+      return;
+    }
     if (error instanceof deskInsightService.InsightNotFoundError) {
       res.status(404).json({
         error: { code: 'NOT_FOUND', message: error.message },
@@ -387,6 +451,9 @@ router.post('/:insightId/revisions', requireAuth, async (req, res, next) => {
       });
       return;
     }
+
+    // Verify actor has access to this project
+    await assertProjectAccessByActor(req.ctx!.actor.id, projectId, req.ctx!.organization.id);
 
     const insightId = parseInt(req.params.insightId as string, 10);
     if (isNaN(insightId)) {
@@ -441,6 +508,12 @@ router.post('/:insightId/revisions', requireAuth, async (req, res, next) => {
 
     res.status(201).json({ data: insight });
   } catch (error) {
+    if (error instanceof AuthorizationError) {
+      res.status(403).json({
+        error: { code: 'AUTHORIZATION_ERROR', message: error.message },
+      });
+      return;
+    }
     if (error instanceof deskInsightService.ConcurrencyError) {
       res.status(409).json({
         error: {
@@ -496,6 +569,9 @@ router.post('/:insightId/reviews', requireAuth, async (req, res, next) => {
       });
       return;
     }
+
+    // Verify actor has access to this project
+    await assertProjectAccessByActor(req.ctx!.actor.id, projectId, req.ctx!.organization.id);
 
     const insightId = parseInt(req.params.insightId as string, 10);
     if (isNaN(insightId)) {
@@ -564,6 +640,12 @@ router.post('/:insightId/reviews', requireAuth, async (req, res, next) => {
 
     res.status(201).json({ data: insight });
   } catch (error) {
+    if (error instanceof AuthorizationError) {
+      res.status(403).json({
+        error: { code: 'AUTHORIZATION_ERROR', message: error.message },
+      });
+      return;
+    }
     if (error instanceof deskInsightService.ConcurrencyError) {
       res.status(409).json({
         error: {
@@ -608,6 +690,17 @@ router.post('/:insightId/reviews', requireAuth, async (req, res, next) => {
  */
 router.get('/source-protection/:sourceId', requireAuth, async (req, res, next) => {
   try {
+    const projectId = extractProjectId(req.params);
+    if (projectId === null) {
+      res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid project ID' },
+      });
+      return;
+    }
+
+    // Verify actor has access to this project
+    await assertProjectAccessByActor(req.ctx!.actor.id, projectId, req.ctx!.organization.id);
+
     const sourceId = parseInt(req.params.sourceId as string, 10);
     if (isNaN(sourceId)) {
       res.status(400).json({
@@ -626,6 +719,12 @@ router.get('/source-protection/:sourceId', requireAuth, async (req, res, next) =
       },
     });
   } catch (error) {
+    if (error instanceof AuthorizationError) {
+      res.status(403).json({
+        error: { code: 'AUTHORIZATION_ERROR', message: error.message },
+      });
+      return;
+    }
     next(error);
   }
 });
