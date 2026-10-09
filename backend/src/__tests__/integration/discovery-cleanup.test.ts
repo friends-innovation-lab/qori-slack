@@ -96,7 +96,8 @@ async function hasExtractedText(sourceId: number): Promise<boolean> {
 
 beforeAll(async () => {
   await sequelize.authenticate();
-  await sequelize.sync();
+  // Do NOT call sync() - it removes database DEFAULTs set by migrations
+  // (e.g., gen_random_uuid() becomes null, breaking raw SQL INSERTs)
 });
 
 beforeEach(async () => {
