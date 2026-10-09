@@ -40,6 +40,11 @@ beforeAll(async () => {
 
 // Clean up test data between tests
 async function cleanup() {
+  // Delete records hold targets and holds before projects (FK constraint)
+  await sequelize.query(`DELETE FROM records_hold_targets WHERE hold_id IN (SELECT id FROM records_holds WHERE project_id IN (SELECT id FROM projects WHERE slug LIKE 'plat2-test-%'))`);
+  await sequelize.query(`DELETE FROM records_holds WHERE project_id IN (SELECT id FROM projects WHERE slug LIKE 'plat2-test-%')`);
+  // Delete evidence sources created by Hold Target tests
+  await sequelize.query(`DELETE FROM evidence_sources WHERE project_id IN (SELECT id FROM projects WHERE slug LIKE 'plat2-test-%')`);
   await sequelize.query(`DELETE FROM project_memberships WHERE project_id IN (SELECT id FROM projects WHERE slug LIKE 'plat2-test-%')`);
   await sequelize.query(`DELETE FROM repository_bindings WHERE owner LIKE 'plat2-test-%'`);
   await sequelize.query(`DELETE FROM adapter_workspace_bindings WHERE workspace_external_id LIKE 'T-PLAT2-%'`);
