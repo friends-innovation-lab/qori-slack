@@ -137,35 +137,47 @@ module.exports = {
     `);
 
     // ═══════════════════════════════════════════════════════════════════
-    // RULE: Prevent deletion of revisions (append-only)
+    // TRIGGER: Prevent deletion of revisions (append-only with explicit error)
     // ═══════════════════════════════════════════════════════════════════
     await queryInterface.sequelize.query(`
-      CREATE OR REPLACE RULE prevent_revision_delete AS
-      ON DELETE TO evidence_construct_revisions
-      DO INSTEAD NOTHING;
+      CREATE OR REPLACE FUNCTION prevent_revision_delete()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        RAISE EXCEPTION 'revisions are append-only - deletion not allowed';
+      END;
+      $$ LANGUAGE plpgsql;
+
+      CREATE TRIGGER trg_prevent_revision_delete
+      BEFORE DELETE ON evidence_construct_revisions
+      FOR EACH ROW
+      EXECUTE FUNCTION prevent_revision_delete();
     `);
 
     // ═══════════════════════════════════════════════════════════════════
-    // RULE: Prevent deletion of reviews (append-only)
+    // TRIGGER: Prevent deletion of reviews (append-only with explicit error)
     // ═══════════════════════════════════════════════════════════════════
     await queryInterface.sequelize.query(`
-      CREATE OR REPLACE RULE prevent_review_delete AS
-      ON DELETE TO evidence_construct_reviews
-      DO INSTEAD NOTHING;
+      CREATE OR REPLACE FUNCTION prevent_review_delete()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        RAISE EXCEPTION 'reviews are append-only - deletion not allowed';
+      END;
+      $$ LANGUAGE plpgsql;
+
+      CREATE TRIGGER trg_prevent_review_delete
+      BEFORE DELETE ON evidence_construct_reviews
+      FOR EACH ROW
+      EXECUTE FUNCTION prevent_review_delete();
     `);
 
     console.log('Added DR-1 same-construct validation triggers and immutability protections');
   },
 
   async down(queryInterface) {
-    // Drop rules
+    // Drop all triggers
     await queryInterface.sequelize.query(`
-      DROP RULE IF EXISTS prevent_review_delete ON evidence_construct_reviews;
-      DROP RULE IF EXISTS prevent_revision_delete ON evidence_construct_revisions;
-    `);
-
-    // Drop triggers
-    await queryInterface.sequelize.query(`
+      DROP TRIGGER IF EXISTS trg_prevent_review_delete ON evidence_construct_reviews;
+      DROP TRIGGER IF EXISTS trg_prevent_revision_delete ON evidence_construct_revisions;
       DROP TRIGGER IF EXISTS trg_prevent_review_update ON evidence_construct_reviews;
       DROP TRIGGER IF EXISTS trg_prevent_revision_content_update ON evidence_construct_revisions;
       DROP TRIGGER IF EXISTS trg_check_review_revision_construct ON evidence_construct_reviews;
@@ -173,13 +185,21 @@ module.exports = {
       DROP TRIGGER IF EXISTS trg_check_latest_revision_construct ON evidence_constructs;
     `);
 
-    // Drop functions
+    // Drop all functions
     await queryInterface.sequelize.query(`
+      DROP FUNCTION IF EXISTS prevent_review_delete();
+      DROP FUNCTION IF EXISTS prevent_revision_delete();
       DROP FUNCTION IF EXISTS prevent_review_update();
       DROP FUNCTION IF EXISTS prevent_revision_content_update();
       DROP FUNCTION IF EXISTS check_review_revision_construct();
       DROP FUNCTION IF EXISTS check_accepted_revision_construct();
       DROP FUNCTION IF EXISTS check_latest_revision_construct();
+    `);
+
+    // Also drop legacy rules if they exist (from earlier migration versions)
+    await queryInterface.sequelize.query(`
+      DROP RULE IF EXISTS prevent_review_delete ON evidence_construct_reviews;
+      DROP RULE IF EXISTS prevent_revision_delete ON evidence_construct_revisions;
     `);
 
     console.log('Removed DR-1 same-construct validation triggers and immutability protections');

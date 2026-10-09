@@ -380,9 +380,9 @@ describe('DR-1 Migration Constraints', () => {
   // APPEND-ONLY RULES (DELETE PROTECTION)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  describe('Append-Only Rules', () => {
-    describe('prevent_revision_delete', () => {
-      it('silently ignores revision deletion (DO INSTEAD NOTHING)', async () => {
+  describe('Append-Only Triggers (Explicit Error)', () => {
+    describe('trg_prevent_revision_delete', () => {
+      it('raises exception on revision deletion attempt', async () => {
         // Create construct with revision
         const [constructResults] = await sequelize.query(`
           INSERT INTO evidence_constructs (public_id, project_id, construct_type, label, status, derivation_type, created_by, created_at, updated_at)
@@ -400,10 +400,10 @@ describe('DR-1 Migration Constraints', () => {
         `);
         const revisionId = (revisionResults as any[])[0].id;
 
-        // Delete should "succeed" but do nothing
-        await sequelize.query(`
-          DELETE FROM evidence_construct_revisions WHERE id = ${revisionId}
-        `);
+        // Delete should raise exception
+        await expect(
+          sequelize.query(`DELETE FROM evidence_construct_revisions WHERE id = ${revisionId}`),
+        ).rejects.toThrow('revisions are append-only - deletion not allowed');
 
         // Verify revision still exists
         const [checkResults] = await sequelize.query(`
@@ -413,8 +413,8 @@ describe('DR-1 Migration Constraints', () => {
       });
     });
 
-    describe('prevent_review_delete', () => {
-      it('silently ignores review deletion (DO INSTEAD NOTHING)', async () => {
+    describe('trg_prevent_review_delete', () => {
+      it('raises exception on review deletion attempt', async () => {
         // Create construct with revision and review
         const [constructResults] = await sequelize.query(`
           INSERT INTO evidence_constructs (public_id, project_id, construct_type, label, status, derivation_type, created_by, created_at, updated_at)
@@ -441,10 +441,10 @@ describe('DR-1 Migration Constraints', () => {
         `);
         const reviewId = (reviewResults as any[])[0].id;
 
-        // Delete should "succeed" but do nothing
-        await sequelize.query(`
-          DELETE FROM evidence_construct_reviews WHERE id = ${reviewId}
-        `);
+        // Delete should raise exception
+        await expect(
+          sequelize.query(`DELETE FROM evidence_construct_reviews WHERE id = ${reviewId}`),
+        ).rejects.toThrow('reviews are append-only - deletion not allowed');
 
         // Verify review still exists
         const [checkResults] = await sequelize.query(`
@@ -460,7 +460,7 @@ describe('DR-1 Migration Constraints', () => {
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe('Migration Rollback Verification', () => {
-    it('triggers exist after migration', async () => {
+    it('all triggers exist after migration', async () => {
       const [results] = await sequelize.query(`
         SELECT trigger_name FROM information_schema.triggers
         WHERE trigger_schema = 'public'
@@ -470,28 +470,34 @@ describe('DR-1 Migration Constraints', () => {
 
       const triggerNames = (results as any[]).map(r => r.trigger_name);
 
+      // Same-construct validation triggers
       expect(triggerNames).toContain('trg_check_latest_revision_construct');
       expect(triggerNames).toContain('trg_check_accepted_revision_construct');
       expect(triggerNames).toContain('trg_check_review_revision_construct');
+      // Immutability triggers
       expect(triggerNames).toContain('trg_prevent_revision_content_update');
       expect(triggerNames).toContain('trg_prevent_review_update');
+      // Append-only triggers (replaces rules)
+      expect(triggerNames).toContain('trg_prevent_revision_delete');
+      expect(triggerNames).toContain('trg_prevent_review_delete');
     });
 
-    it('rules exist after migration', async () => {
+    it('no DELETE rules exist (replaced by triggers)', async () => {
       const [results] = await sequelize.query(`
         SELECT rulename FROM pg_rules
         WHERE schemaname = 'public'
-        AND rulename LIKE 'prevent_%'
+        AND rulename LIKE 'prevent_%delete%'
         ORDER BY rulename
       `);
 
       const ruleNames = (results as any[]).map(r => r.rulename);
 
-      expect(ruleNames).toContain('prevent_revision_delete');
-      expect(ruleNames).toContain('prevent_review_delete');
+      // Rules should NOT exist - replaced by triggers
+      expect(ruleNames).not.toContain('prevent_revision_delete');
+      expect(ruleNames).not.toContain('prevent_review_delete');
     });
 
-    it('functions exist after migration', async () => {
+    it('all functions exist after migration', async () => {
       const [results] = await sequelize.query(`
         SELECT proname FROM pg_proc
         WHERE pronamespace = 'public'::regnamespace
@@ -500,7 +506,9 @@ describe('DR-1 Migration Constraints', () => {
           'check_accepted_revision_construct',
           'check_review_revision_construct',
           'prevent_revision_content_update',
-          'prevent_review_update'
+          'prevent_review_update',
+          'prevent_revision_delete',
+          'prevent_review_delete'
         )
         ORDER BY proname
       `);
@@ -512,6 +520,8 @@ describe('DR-1 Migration Constraints', () => {
       expect(funcNames).toContain('check_review_revision_construct');
       expect(funcNames).toContain('prevent_revision_content_update');
       expect(funcNames).toContain('prevent_review_update');
+      expect(funcNames).toContain('prevent_revision_delete');
+      expect(funcNames).toContain('prevent_review_delete');
     });
   });
 });
