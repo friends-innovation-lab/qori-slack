@@ -44,7 +44,8 @@ export type ConstructType =
   | 'persona'
   | 'ticket_candidate'
   | 'survey_qualitative_pattern'
-  | 'survey_individual_observation';
+  | 'survey_individual_observation'
+  | 'desk_insight';
 
 export type DerivationType = 'deterministic' | 'model' | 'human' | 'hybrid';
 
@@ -83,6 +84,22 @@ class EvidenceConstruct extends Model<
   declare created_at: CreationOptional<Date>;
   declare updated_at: CreationOptional<Date>;
 
+  // DR-1: Desk insight revision tracking fields
+  /** Project-unique display sequence for IN-NNNN format. NULL for non-insight constructs. */
+  declare display_sequence: number | null;
+  /** FK to latest revision (any state). NULL for constructs without revision tracking. */
+  declare latest_revision_id: number | null;
+  /** FK to currently accepted revision. NULL if never accepted or withdrawn. */
+  declare accepted_revision_id: number | null;
+  /** Optimistic concurrency version. Incremented on each state change. */
+  declare version: CreationOptional<number>;
+  /** When the insight was withdrawn from synthesis eligibility. */
+  declare withdrawn_at: Date | null;
+  /** Actor identity who withdrew the insight. */
+  declare withdrawn_by: string | null;
+  /** Required reason for withdrawal (per D6). */
+  declare withdrawal_reason: string | null;
+
   static associate(models: Record<string, any>) {
     this.belongsTo(models.Project, {
       foreignKey: 'project_id',
@@ -95,6 +112,31 @@ class EvidenceConstruct extends Model<
       as: 'study',
       onDelete: 'CASCADE',
     });
+
+    // DR-1: Revision tracking associations
+    if (models.EvidenceConstructRevision) {
+      this.hasMany(models.EvidenceConstructRevision, {
+        foreignKey: 'construct_id',
+        as: 'revisions',
+      });
+
+      this.belongsTo(models.EvidenceConstructRevision, {
+        foreignKey: 'latest_revision_id',
+        as: 'latestRevision',
+      });
+
+      this.belongsTo(models.EvidenceConstructRevision, {
+        foreignKey: 'accepted_revision_id',
+        as: 'acceptedRevision',
+      });
+    }
+
+    if (models.EvidenceConstructReview) {
+      this.hasMany(models.EvidenceConstructReview, {
+        foreignKey: 'construct_id',
+        as: 'reviews',
+      });
+    }
   }
 }
 
@@ -131,6 +173,7 @@ export default (sequelize: Sequelize) => {
             'usability_finding', 'journey_stage', 'recommendation',
             'finding', 'theme', 'persona', 'ticket_candidate',
             'survey_qualitative_pattern', 'survey_individual_observation',
+            'desk_insight',
           ]],
         },
       },
@@ -192,6 +235,36 @@ export default (sequelize: Sequelize) => {
         type: DataTypes.DATE,
         allowNull: false,
         defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+      },
+      // DR-1: Desk insight revision tracking fields
+      display_sequence: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      latest_revision_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      accepted_revision_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      version: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 1,
+      },
+      withdrawn_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      withdrawn_by: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      withdrawal_reason: {
+        type: DataTypes.TEXT,
+        allowNull: true,
       },
     },
     {

@@ -20,6 +20,7 @@ import brandingRoutes from './branding.routes';
 import commentsRoutes from './comments.routes';
 import coachingRoutes from './coaching.routes';
 import discoveryRoutes from './discovery.routes';
+import deskInsightsRoutes from './desk-insights.routes';
 
 const v1Router = Router();
 
@@ -44,5 +45,8 @@ v1Router.use('/', coachingRoutes);
 
 // Discovery routes — project-scoped
 v1Router.use('/projects/:projectId/discovery', discoveryRoutes);
+
+// DR-1: Desk research insights — project-scoped
+v1Router.use('/projects/:projectId/insights', deskInsightsRoutes);
 
 export default v1Router;
