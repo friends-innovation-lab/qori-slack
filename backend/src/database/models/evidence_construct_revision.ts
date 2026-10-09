@@ -40,21 +40,25 @@ export interface EvidenceLocator {
   excerpt?: string;
   /** True if referencing source as a whole (no specific locator) */
   sourceLevel?: boolean;
+  /** DR-2: Explanation of why precise locator is unavailable */
+  attributionLimitation?: string;
+  /** DR-2: AI-extracted context (evidence quotes) that couldn't be verified */
+  aiExtractedContext?: string;
 }
 
 export interface EvidenceReference {
   /** FK to EvidenceSource.id */
   evidenceSourceId: number;
   /** Public ID of the EvidenceSource for external references */
-  evidenceSourcePublicId: string;
+  evidenceSourcePublicId?: string;
   /** Locator within the source */
   locator: EvidenceLocator;
   /** Validation status */
-  validation: 'verified' | 'source_attributed_unverified';
+  validation: 'verified' | 'source_attributed_unverified' | 'ai_unverified';
   /** SHA hash of captured content for verification */
   capturedContentHash?: string;
   /** Human-readable source label at time of capture */
-  sourceLabel: string;
+  sourceLabel?: string;
 }
 
 export interface RevisionContent {

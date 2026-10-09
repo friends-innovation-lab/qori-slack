@@ -100,6 +100,10 @@ class EvidenceConstruct extends Model<
   /** Required reason for withdrawal (per D6). */
   declare withdrawal_reason: string | null;
 
+  // DR-2: Idempotent extraction key
+  /** Idempotency key for AI-extracted insights. Format: {run_id}:{variable_key}:{item_id} */
+  declare ingestion_key: string | null;
+
   static associate(models: Record<string, any>) {
     this.belongsTo(models.Project, {
       foreignKey: 'project_id',
@@ -264,6 +268,11 @@ export default (sequelize: Sequelize) => {
       },
       withdrawal_reason: {
         type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      // DR-2: Idempotent extraction key
+      ingestion_key: {
+        type: DataTypes.STRING(200),
         allowNull: true,
       },
     },

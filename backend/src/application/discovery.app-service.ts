@@ -49,6 +49,7 @@ import * as runService from '../services/discovery-run.service';
 import * as artifactService from '../services/discovery-artifact.service';
 import * as evidenceService from '../services/evidence-source.service';
 import * as claimService from '../services/discovery-claim.service';
+import * as insightExtractionService from '../services/insight-extraction.service';
 import { formatMarker } from '../services/discovery-marker.service';
 import type { DiscoveryType, DiscoveryRun } from '../database/models/discovery_run';
 import type { EvidenceSource } from '../database/models/evidence_source';
@@ -584,6 +585,37 @@ export async function executeDiscoveryRun(
       }
     }
 
+    // DR-2: Extract candidate insights from emitted variables
+    // Only for desk_research runs — others do not produce insight-worthy variables
+    let insightExtractionResult: Awaited<ReturnType<typeof insightExtractionService.extractInsightsFromDiscoveryRun>> | null = null;
+
+    if (run.discovery_type === 'desk_research' && extractionSuccess && extractionVariableCount > 0) {
+      try {
+        // Update heartbeat before insight extraction
+        await claimService.updateHeartbeat(run.id, workerId);
+
+        insightExtractionResult = await insightExtractionService.extractInsightsFromDiscoveryRun(
+          run.id,
+          artifact.id,
+          { verbose: true },
+        );
+
+        if (insightExtractionResult.success) {
+          console.log(
+            `[DR-2] Insight extraction: ${insightExtractionResult.createdCount} created, ` +
+            `${insightExtractionResult.skippedCount} skipped, ${insightExtractionResult.failedCount} failed`,
+          );
+        } else {
+          // Extraction failed but we don't fail the run (per DR-2 spec)
+          console.warn(`⚠️ [DR-2] Insight extraction failed (non-blocking): ${insightExtractionResult.error}`);
+        }
+      } catch (insightError) {
+        // Catch any unexpected errors — extraction failure must not fail the run
+        const errMsg = insightError instanceof Error ? insightError.message : String(insightError);
+        console.error(`⚠️ [DR-2] Insight extraction error (non-blocking): ${errMsg}`);
+      }
+    }
+
     // Finalize artifact
     await artifactService.finalizeArtifactSupersession(artifact.id);
 
@@ -600,6 +632,10 @@ export async function executeDiscoveryRun(
       githubUrl: githubResult.url,
       extractionSuccess,
       extractionVariableCount,
+      // DR-2: Insight extraction results
+      insightExtractionSuccess: insightExtractionResult?.success,
+      insightsCreated: insightExtractionResult?.createdCount,
+      insightsSkipped: insightExtractionResult?.skippedCount,
     };
 
   } catch (error) {
