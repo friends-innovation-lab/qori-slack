@@ -16,7 +16,11 @@
 import { Router } from 'express';
 import { requireAuth } from '../../../middleware/auth';
 import * as deskInsightService from '../../../services/desk-insight.service';
-import { assertProjectAccessByActor, AuthorizationError } from '../../../services/authorization.service';
+import {
+  assertProjectAccessByActor,
+  assertProjectResearcherByActor,
+  AuthorizationError,
+} from '../../../services/authorization.service';
 import type { EvidenceReference } from '../../../database/models/evidence_construct_revision';
 
 const router = Router({ mergeParams: true });
@@ -570,8 +574,8 @@ router.post('/:insightId/reviews', requireAuth, async (req, res, next) => {
       return;
     }
 
-    // Verify actor has access to this project
-    await assertProjectAccessByActor(req.ctx!.actor.id, projectId, req.ctx!.organization.id);
+    // D2: Verify actor has researcher role or higher for accept/reject/withdraw
+    await assertProjectResearcherByActor(req.ctx!.actor.id, projectId, req.ctx!.organization.id);
 
     const insightId = parseInt(req.params.insightId as string, 10);
     if (isNaN(insightId)) {

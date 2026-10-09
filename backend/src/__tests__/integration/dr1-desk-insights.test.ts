@@ -26,6 +26,11 @@ import type { Project } from '../../database/models/project';
 import type { Actor } from '../../database/models/actor';
 import type { EvidenceSource } from '../../database/models/evidence_source';
 import * as deskInsightService from '../../services/desk-insight.service';
+import {
+  hasProjectRoleByActor,
+  assertProjectResearcherByActor,
+  AuthorizationError,
+} from '../../services/authorization.service';
 
 const sequelize = getTestDb();
 
@@ -805,6 +810,124 @@ describe('DR-1 Desk Research Insights', () => {
       expect(history).toHaveLength(2);
       expect(history[0].action).toBe('reject'); // Most recent first
       expect(history[1].action).toBe('accept');
+    });
+  });
+
+  describe('D2 Role Authorization', () => {
+    const ProjectMembership = sequelize.models.ProjectMembership;
+
+    let researcherActorId: number;
+    let adminActorId: number;
+    let ownerActorId: number;
+    let nonMemberActorId: number;
+
+    beforeEach(async () => {
+      // Create actors with different roles
+      const researcher = await ActorModel.create({
+        organization_id: TEST_ORG_ID,
+        display_name: 'Researcher Actor',
+        status: 'active',
+      });
+      researcherActorId = (researcher as any).id;
+
+      const admin = await ActorModel.create({
+        organization_id: TEST_ORG_ID,
+        display_name: 'Admin Actor',
+        status: 'active',
+      });
+      adminActorId = (admin as any).id;
+
+      const owner = await ActorModel.create({
+        organization_id: TEST_ORG_ID,
+        display_name: 'Owner Actor',
+        status: 'active',
+      });
+      ownerActorId = (owner as any).id;
+
+      const nonMember = await ActorModel.create({
+        organization_id: TEST_ORG_ID,
+        display_name: 'Non-Member Actor',
+        status: 'active',
+      });
+      nonMemberActorId = (nonMember as any).id;
+
+      // Create memberships
+      await ProjectMembership.create({
+        project_id: projectId,
+        actor_id: researcherActorId,
+        role: 'researcher',
+      });
+
+      await ProjectMembership.create({
+        project_id: projectId,
+        actor_id: adminActorId,
+        role: 'admin',
+      });
+
+      await ProjectMembership.create({
+        project_id: projectId,
+        actor_id: ownerActorId,
+        role: 'owner',
+      });
+      // nonMemberActorId intentionally NOT added to project
+    });
+
+    it('researcher has researcher role', async () => {
+      const hasRole = await hasProjectRoleByActor(researcherActorId, projectId, 'researcher');
+      expect(hasRole).toBe(true);
+    });
+
+    it('admin has researcher role (hierarchy)', async () => {
+      const hasRole = await hasProjectRoleByActor(adminActorId, projectId, 'researcher');
+      expect(hasRole).toBe(true);
+    });
+
+    it('owner has researcher role (hierarchy)', async () => {
+      const hasRole = await hasProjectRoleByActor(ownerActorId, projectId, 'researcher');
+      expect(hasRole).toBe(true);
+    });
+
+    it('non-member denied researcher role', async () => {
+      const hasRole = await hasProjectRoleByActor(nonMemberActorId, projectId, 'researcher');
+      expect(hasRole).toBe(false);
+    });
+
+    it('assertProjectResearcherByActor allows researcher', async () => {
+      await expect(
+        assertProjectResearcherByActor(researcherActorId, projectId, TEST_ORG_ID),
+      ).resolves.toBeUndefined();
+    });
+
+    it('assertProjectResearcherByActor allows admin', async () => {
+      await expect(
+        assertProjectResearcherByActor(adminActorId, projectId, TEST_ORG_ID),
+      ).resolves.toBeUndefined();
+    });
+
+    it('assertProjectResearcherByActor allows owner', async () => {
+      await expect(
+        assertProjectResearcherByActor(ownerActorId, projectId, TEST_ORG_ID),
+      ).resolves.toBeUndefined();
+    });
+
+    it('assertProjectResearcherByActor denies non-member', async () => {
+      await expect(
+        assertProjectResearcherByActor(nonMemberActorId, projectId, TEST_ORG_ID),
+      ).rejects.toThrow(AuthorizationError);
+    });
+
+    it('assertProjectResearcherByActor denies cross-project', async () => {
+      // Researcher is member of project1, not project2
+      await expect(
+        assertProjectResearcherByActor(researcherActorId, project2Id, TEST_ORG_ID),
+      ).rejects.toThrow(AuthorizationError);
+    });
+
+    it('assertProjectResearcherByActor denies wrong organization', async () => {
+      const wrongOrgId = TEST_ORG_ID + 999;
+      await expect(
+        assertProjectResearcherByActor(researcherActorId, projectId, wrongOrgId),
+      ).rejects.toThrow(AuthorizationError);
     });
   });
 });

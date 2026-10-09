@@ -471,6 +471,98 @@ export async function assertProjectAccessByActor(
   }
 }
 
+// ─── Role Hierarchy (DR-1: D2 Review Authorization) ──────────────────
+// ProjectMembership roles: owner > admin > researcher
+// Researcher is the minimum role; all members have at least researcher authority.
+
+const ROLE_HIERARCHY: Record<string, number> = {
+  owner: 3,
+  admin: 2,
+  researcher: 1,
+};
+
+/**
+ * Check if an actor has at least the specified role in a project.
+ * Returns false on any error (fail-closed).
+ *
+ * Per D2: Researchers and higher may accept, reject, and withdraw insights.
+ *
+ * @param actorId - Canonical actor database ID
+ * @param projectId - Project database ID
+ * @param minimumRole - Minimum required role (default: 'researcher')
+ */
+export async function hasProjectRoleByActor(
+  actorId: number,
+  projectId: number,
+  minimumRole: 'owner' | 'admin' | 'researcher' = 'researcher',
+): Promise<boolean> {
+  try {
+    const membership = await ProjectMembershipModel.findOne({
+      where: { project_id: projectId, actor_id: actorId },
+    });
+
+    if (!membership) return false;
+
+    const actualRole = (membership as any).role as string;
+    const actualLevel = ROLE_HIERARCHY[actualRole] ?? 0;
+    const requiredLevel = ROLE_HIERARCHY[minimumRole] ?? 0;
+
+    return actualLevel >= requiredLevel;
+  } catch (error) {
+    console.error(
+      `[AUTH] hasProjectRoleByActor failed for actor=${actorId} project=${projectId}, DENYING:`,
+      error instanceof Error ? error.message : error,
+    );
+    return false;
+  }
+}
+
+/**
+ * Assert that an actor has at least researcher role in a project.
+ * Throws AuthorizationError if not.
+ *
+ * Per D2: Researchers and higher project roles may accept, reject, and
+ * withdraw Desk insights. Self-acceptance is allowed.
+ *
+ * FAIL-CLOSED: Database errors → DENY
+ *
+ * @param actorId - Canonical actor database ID
+ * @param projectId - Project database ID
+ * @param organizationId - Expected organization ID (from actor's context)
+ */
+export async function assertProjectResearcherByActor(
+  actorId: number,
+  projectId: number,
+  organizationId: number,
+): Promise<void> {
+  try {
+    // Verify project belongs to the actor's organization
+    const project = await ProjectModel.findByPk(projectId, {
+      attributes: ['id', 'organization_id'],
+    });
+
+    if (!project) {
+      throw new AuthorizationError('Project not found');
+    }
+
+    if (project.organization_id !== organizationId) {
+      throw new AuthorizationError('Access denied: organization scope mismatch');
+    }
+
+    const hasRole = await hasProjectRoleByActor(actorId, projectId, 'researcher');
+    if (!hasRole) {
+      throw new AuthorizationError('Access denied: requires researcher role or higher');
+    }
+  } catch (error) {
+    if (error instanceof AuthorizationError) throw error;
+    console.error(
+      `[AUTH] assertProjectResearcherByActor failed for actor=${actorId} project=${projectId}:`,
+      error instanceof Error ? error.message : error,
+    );
+    throw new AuthorizationError('Access denied: authorization check failed');
+  }
+}
+
 /**
  * Assert that an actor has access to a study, verifying organization scope.
  * Throws AuthorizationError if not.
