@@ -69,6 +69,9 @@ import CoachingRunSnapshot from './models/coaching_run_snapshot';
 import DiscoveryRun from './models/discovery_run';
 import DiscoveryRunSource from './models/discovery_run_source';
 import DiscoveryArtifact from './models/discovery_artifact';
+// DR-1: Desk insight revision tracking
+import EvidenceConstructRevision from './models/evidence_construct_revision';
+import EvidenceConstructReview from './models/evidence_construct_review';
 
 
 // Set environment and configuration
@@ -148,6 +151,11 @@ const modelDefiners = [
   DiscoveryRun,
   DiscoveryRunSource,
   DiscoveryArtifact,
+  // DR-1: Desk insight revision tracking (must be after EvidenceConstruct and DiscoveryRun)
+  // EvidenceConstructRevision references EvidenceConstruct and DiscoveryRun
+  // EvidenceConstructReview references EvidenceConstruct and EvidenceConstructRevision
+  EvidenceConstructRevision,
+  EvidenceConstructReview,
 ];
 
 // Register all models with Sequelize

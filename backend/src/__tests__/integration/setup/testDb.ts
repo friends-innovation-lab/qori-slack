@@ -78,6 +78,9 @@ import CoachingRunSnapshot from '../../../database/models/coaching_run_snapshot'
 import DiscoveryRun from '../../../database/models/discovery_run';
 import DiscoveryRunSource from '../../../database/models/discovery_run_source';
 import DiscoveryArtifact from '../../../database/models/discovery_artifact';
+// DR-1: Desk insight revision tracking
+import EvidenceConstructRevision from '../../../database/models/evidence_construct_revision';
+import EvidenceConstructReview from '../../../database/models/evidence_construct_review';
 
 let instance: Sequelize | null = null;
 
@@ -122,6 +125,8 @@ export function getTestDb(): Sequelize {
     CoachingRunSnapshot,
     // DISC-1/2: Discovery research
     DiscoveryRun, DiscoveryRunSource, DiscoveryArtifact,
+    // DR-1: Desk insight revision tracking
+    EvidenceConstructRevision, EvidenceConstructReview,
   ];
 
   for (const defineModel of modelDefiners) {
@@ -170,8 +175,8 @@ export let TEST_ORG_ID: number;
 async function seedTestOrg(): Promise<void> {
   const db = getTestDb();
   const [results] = await db.query(
-    `INSERT INTO organizations (slug, name, status)
-     VALUES ('test-org', 'Test Organization', 'active')
+    `INSERT INTO organizations (public_id, slug, name, status)
+     VALUES (gen_random_uuid(), 'test-org', 'Test Organization', 'active')
      RETURNING id`,
   ) as [Array<{ id: number }>, unknown];
   TEST_ORG_ID = results[0].id;
