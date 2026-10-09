@@ -138,11 +138,21 @@ module.exports = {
 
     // ═══════════════════════════════════════════════════════════════════
     // TRIGGER: Prevent deletion of revisions (append-only with explicit error)
+    // Allows CASCADE deletes from parent tables (construct/project deletion)
     // ═══════════════════════════════════════════════════════════════════
     await queryInterface.sequelize.query(`
       CREATE OR REPLACE FUNCTION prevent_revision_delete()
       RETURNS TRIGGER AS $$
       BEGIN
+        -- Allow CASCADE deletes (when parent construct is being deleted)
+        -- pg_trigger_depth() > 1 means we're inside a cascaded trigger
+        IF pg_trigger_depth() > 1 THEN
+          RETURN OLD;
+        END IF;
+        -- Also allow if the parent construct no longer exists (already deleted in same transaction)
+        IF NOT EXISTS (SELECT 1 FROM evidence_constructs WHERE id = OLD.construct_id) THEN
+          RETURN OLD;
+        END IF;
         RAISE EXCEPTION 'revisions are append-only - deletion not allowed';
       END;
       $$ LANGUAGE plpgsql;
@@ -155,11 +165,20 @@ module.exports = {
 
     // ═══════════════════════════════════════════════════════════════════
     // TRIGGER: Prevent deletion of reviews (append-only with explicit error)
+    // Allows CASCADE deletes from parent tables (construct/project deletion)
     // ═══════════════════════════════════════════════════════════════════
     await queryInterface.sequelize.query(`
       CREATE OR REPLACE FUNCTION prevent_review_delete()
       RETURNS TRIGGER AS $$
       BEGIN
+        -- Allow CASCADE deletes (when parent construct is being deleted)
+        IF pg_trigger_depth() > 1 THEN
+          RETURN OLD;
+        END IF;
+        -- Also allow if the parent construct no longer exists
+        IF NOT EXISTS (SELECT 1 FROM evidence_constructs WHERE id = OLD.construct_id) THEN
+          RETURN OLD;
+        END IF;
         RAISE EXCEPTION 'reviews are append-only - deletion not allowed';
       END;
       $$ LANGUAGE plpgsql;

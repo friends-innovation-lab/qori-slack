@@ -382,7 +382,7 @@ describe('DR-1 Migration Constraints', () => {
 
   describe('Append-Only Triggers (Explicit Error)', () => {
     describe('trg_prevent_revision_delete', () => {
-      it('raises exception on revision deletion attempt', async () => {
+      it('raises exception on direct revision deletion attempt', async () => {
         // Create construct with revision
         const [constructResults] = await sequelize.query(`
           INSERT INTO evidence_constructs (public_id, project_id, construct_type, label, status, derivation_type, created_by, created_at, updated_at)
@@ -400,7 +400,7 @@ describe('DR-1 Migration Constraints', () => {
         `);
         const revisionId = (revisionResults as any[])[0].id;
 
-        // Delete should raise exception
+        // Direct delete should raise exception
         await expect(
           sequelize.query(`DELETE FROM evidence_construct_revisions WHERE id = ${revisionId}`),
         ).rejects.toThrow('revisions are append-only - deletion not allowed');
@@ -411,10 +411,38 @@ describe('DR-1 Migration Constraints', () => {
         `);
         expect((checkResults as any[]).length).toBe(1);
       });
+
+      it('allows CASCADE deletion when parent construct is deleted', async () => {
+        // Create construct with revision
+        const [constructResults] = await sequelize.query(`
+          INSERT INTO evidence_constructs (public_id, project_id, construct_type, label, status, derivation_type, created_by, created_at, updated_at)
+          VALUES (gen_random_uuid(), ${projectId}, 'desk_insight', 'Insight for CASCADE test', 'candidate', 'human', 'U_TEST', NOW(), NOW())
+          RETURNING id
+        `);
+        const constructId = (constructResults as any[])[0].id;
+
+        await sequelize.query(`
+          INSERT INTO evidence_construct_revisions
+            (public_id, construct_id, revision_number, content, evidence_snapshot, origin, created_by, created_at)
+          VALUES
+            (gen_random_uuid(), ${constructId}, 1, '{"wording": "cascade test"}', '[]', 'researcher', 'U_TEST', NOW())
+        `);
+
+        // Deleting the construct should CASCADE to revisions without error
+        await expect(
+          sequelize.query(`DELETE FROM evidence_constructs WHERE id = ${constructId}`),
+        ).resolves.toBeDefined();
+
+        // Verify revision was deleted via CASCADE
+        const [checkResults] = await sequelize.query(`
+          SELECT id FROM evidence_construct_revisions WHERE construct_id = ${constructId}
+        `);
+        expect((checkResults as any[]).length).toBe(0);
+      });
     });
 
     describe('trg_prevent_review_delete', () => {
-      it('raises exception on review deletion attempt', async () => {
+      it('raises exception on direct review deletion attempt', async () => {
         // Create construct with revision and review
         const [constructResults] = await sequelize.query(`
           INSERT INTO evidence_constructs (public_id, project_id, construct_type, label, status, derivation_type, created_by, created_at, updated_at)
@@ -441,7 +469,7 @@ describe('DR-1 Migration Constraints', () => {
         `);
         const reviewId = (reviewResults as any[])[0].id;
 
-        // Delete should raise exception
+        // Direct delete should raise exception
         await expect(
           sequelize.query(`DELETE FROM evidence_construct_reviews WHERE id = ${reviewId}`),
         ).rejects.toThrow('reviews are append-only - deletion not allowed');
@@ -451,6 +479,43 @@ describe('DR-1 Migration Constraints', () => {
           SELECT id FROM evidence_construct_reviews WHERE id = ${reviewId}
         `);
         expect((checkResults as any[]).length).toBe(1);
+      });
+
+      it('allows CASCADE deletion when parent construct is deleted', async () => {
+        // Create construct with revision and review
+        const [constructResults] = await sequelize.query(`
+          INSERT INTO evidence_constructs (public_id, project_id, construct_type, label, status, derivation_type, created_by, created_at, updated_at)
+          VALUES (gen_random_uuid(), ${projectId}, 'desk_insight', 'Insight for review CASCADE', 'candidate', 'human', 'U_TEST', NOW(), NOW())
+          RETURNING id
+        `);
+        const constructId = (constructResults as any[])[0].id;
+
+        const [revisionResults] = await sequelize.query(`
+          INSERT INTO evidence_construct_revisions
+            (public_id, construct_id, revision_number, content, evidence_snapshot, origin, created_by, created_at)
+          VALUES
+            (gen_random_uuid(), ${constructId}, 1, '{"wording": "cascade test"}', '[]', 'researcher', 'U_TEST', NOW())
+          RETURNING id
+        `);
+        const revisionId = (revisionResults as any[])[0].id;
+
+        await sequelize.query(`
+          INSERT INTO evidence_construct_reviews
+            (public_id, construct_id, revision_id, action, reviewed_by, expected_version, reviewed_at)
+          VALUES
+            (gen_random_uuid(), ${constructId}, ${revisionId}, 'accept', 'U_TEST', 1, NOW())
+        `);
+
+        // Deleting the construct should CASCADE to reviews without error
+        await expect(
+          sequelize.query(`DELETE FROM evidence_constructs WHERE id = ${constructId}`),
+        ).resolves.toBeDefined();
+
+        // Verify review was deleted via CASCADE
+        const [checkResults] = await sequelize.query(`
+          SELECT id FROM evidence_construct_reviews WHERE construct_id = ${constructId}
+        `);
+        expect((checkResults as any[]).length).toBe(0);
       });
     });
   });
