@@ -279,7 +279,7 @@ describe('Design Tokens — CC-1 Contract', () => {
     it('defines z-index layer tokens', () => {
       const zTokens = [
         '--z-sticky', '--z-popover', '--z-nav', '--z-rail-overlay',
-        '--z-topbar', '--z-drawer-scrim', '--z-drawer', '--z-toast', '--z-skip',
+        '--z-topbar', '--z-drawer-scrim', '--z-drawer', '--z-modal', '--z-toast', '--z-skip',
       ];
       for (const token of zTokens) {
         expect(allTokens.has(token)).toBe(true);
