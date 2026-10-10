@@ -9,7 +9,7 @@
  * - Never invent missing data
  */
 
-import { CheckCircle, AlertCircle, Info, ExternalLink } from 'lucide-react';
+import { CheckCircle, AlertCircle, Info, ExternalLink, Filter } from 'lucide-react';
 import styles from './insights.module.css';
 import type { EvidenceReference, EvidenceLocator } from '@qori/api-contracts';
 
@@ -22,6 +22,8 @@ interface EvidenceReferenceCardProps {
   runName?: string;
   /** Click handler for navigating to source */
   onNavigateToSource?: () => void;
+  /** DR-4d: Click handler for filtering by this source */
+  onFilterBySource?: () => void;
   /** Additional class name */
   className?: string;
 }
@@ -31,6 +33,7 @@ export function EvidenceReferenceCard({
   addedDate,
   runName,
   onNavigateToSource,
+  onFilterBySource,
   className,
 }: EvidenceReferenceCardProps) {
   const { locator, validation, sourceLabel } = reference;
@@ -73,16 +76,30 @@ export function EvidenceReferenceCard({
         </>
       )}
 
-      {/* Navigate to source link */}
-      {onNavigateToSource && (
-        <button
-          type="button"
-          onClick={onNavigateToSource}
-          className={styles.evidenceRefSource}
-          style={{ marginTop: 'var(--space-2)', cursor: 'pointer', background: 'none', border: 'none', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 'var(--space-1)', color: 'var(--color-brand-text)' }}
-        >
-          Open source <ExternalLink size={12} aria-hidden="true" />
-        </button>
+      {/* Actions */}
+      {(onNavigateToSource || onFilterBySource) && (
+        <div className={styles.evidenceRefActions}>
+          {onFilterBySource && (
+            <button
+              type="button"
+              onClick={onFilterBySource}
+              className={styles.evidenceRefAction}
+            >
+              <Filter size={12} aria-hidden="true" />
+              Filter by this source
+            </button>
+          )}
+          {onNavigateToSource && (
+            <button
+              type="button"
+              onClick={onNavigateToSource}
+              className={styles.evidenceRefAction}
+            >
+              <ExternalLink size={12} aria-hidden="true" />
+              Open source
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

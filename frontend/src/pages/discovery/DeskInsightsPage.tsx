@@ -20,6 +20,7 @@ import {
   useInsightReviews,
   type InsightSummary,
 } from '@/api/insights';
+import type { EvidenceReference } from '@qori/api-contracts';
 
 /** Status filter values (subset of InsightStatus that API filter accepts) */
 type StatusFilterValue = 'proposed' | 'accepted' | 'rejected' | 'withdrawn' | 'all';
@@ -73,8 +74,10 @@ export function DeskInsightsPage() {
 
   // Filter state from URL params
   const statusFilter = (searchParams.get('status') as StatusFilterValue) || 'all';
-  // TODO DR-4e: sourceFilter disabled until backend supports publicId filtering
-  // const sourceFilter = searchParams.get('source') || '';
+  // DR-4d: Source filter uses numeric evidenceSourceId from insight evidence snapshots
+  const sourceIdFilter = searchParams.get('sourceId');
+  const sourceIdNum = sourceIdFilter ? parseInt(sourceIdFilter, 10) : undefined;
+  const sourceLabelFilter = searchParams.get('sourceLabel') || null;
 
   // Selection state
   const [selectedInsightId, setSelectedInsightId] = useState<string | null>(null);
@@ -85,12 +88,11 @@ export function DeskInsightsPage() {
   // Refs for focus management
   const rowRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
-  // Fetch insights
-  // TODO DR-4e: sourceId filter needs backend support for publicId filtering
-  // Currently disabled as InsightListFilters.sourceId expects numeric ID
+  // Fetch insights with status and source filters
+  // DR-4d: sourceId filter uses numeric ID from evidence snapshots
   const insightsQuery = useInsights(projectPublicId, {
     status: statusFilter === 'all' ? undefined : statusFilter,
-    // sourceId filtering disabled until DR-4e
+    sourceId: sourceIdNum,
     limit: 100,
   });
 
@@ -142,6 +144,32 @@ export function DeskInsightsPage() {
       return next;
     });
   }, [setSearchParams]);
+
+  // DR-4d: Set source filter from evidence reference
+  const setSourceFilter = useCallback((sourceId: number, sourceLabel: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('sourceId', String(sourceId));
+      next.set('sourceLabel', sourceLabel);
+      return next;
+    });
+  }, [setSearchParams]);
+
+  // DR-4d: Clear source filter
+  const clearSourceFilter = useCallback(() => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('sourceId');
+      next.delete('sourceLabel');
+      return next;
+    });
+  }, [setSearchParams]);
+
+  // DR-4d: Handle source click from evidence reference - apply source filter
+  const handleSourceClick = useCallback((reference: EvidenceReference) => {
+    const label = reference.sourceLabel || `Source ${reference.evidenceSourceId}`;
+    setSourceFilter(reference.evidenceSourceId, label);
+  }, [setSourceFilter]);
 
   // Toggle group collapse
   const toggleGroup = useCallback((group: InsightGroup) => {
@@ -290,7 +318,8 @@ export function DeskInsightsPage() {
           <div className={styles.insightPanel}>
             <InsightDetailPanel
               insight={selectedInsight.data}
-              canEdit={true} // DR-4e will wire permissions
+              canEdit={true} // TODO DR-4e: Wire permissions
+              onFilterBySource={handleSourceClick}
               onViewHistory={() => {
                 // History is shown inline via RevisionHistory component
               }}
@@ -400,22 +429,22 @@ export function DeskInsightsPage() {
                 ))}
               </div>
 
-              {/* TODO DR-4e: Source filter disabled until backend supports publicId filtering */}
-              {/* sourcesQuery.data && sourcesQuery.data.length > 0 && (
-                <select
-                  className={styles.sourceSelect}
-                  value={sourceFilter}
-                  onChange={(e) => updateFilter('source', e.target.value)}
-                  aria-label="Filter by source"
-                >
-                  <option value="">All sources</option>
-                  {sourcesQuery.data.map((source) => (
-                    <option key={source.publicId} value={source.publicId}>
-                      {source.title}
-                    </option>
-                  ))}
-                </select>
-              ) */}
+              {/* DR-4d: Active source filter indicator with clear button */}
+              {sourceIdNum && sourceLabelFilter && (
+                <div className={styles.activeSourceFilter}>
+                  <span className={styles.sourceFilterLabel}>
+                    Source: {sourceLabelFilter}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.clearSourceFilter}
+                    onClick={clearSourceFilter}
+                    aria-label="Clear source filter"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
