@@ -45,17 +45,19 @@ function normalizeFilters(filters: InsightListFilters): NormalizedInsightFilters
  * - ['insights', 'project', projectId, 'detail', insightPublicId, 'revisions'] — revision history
  * - ['insights', 'project', projectId, 'detail', insightPublicId, 'reviews'] — review history
  * - ['insights', 'project', projectId, 'needs-review-count'] — count for badge display
+ *
+ * DR-4d: projectId is now a string (public ID) for consistency with discovery API.
  */
 export const insightsKeys = {
   /** Root key for all insights queries */
   all: ['insights'] as const,
 
   /** All data for a specific project */
-  project: (projectId: number) =>
+  project: (projectId: string) =>
     ['insights', 'project', projectId] as const,
 
   /** Filtered list for a project. Filters are normalized for cache consistency. */
-  list: (projectId: number, filters: InsightListFilters = {}) =>
+  list: (projectId: string, filters: InsightListFilters = {}) =>
     [
       'insights',
       'project',
@@ -65,18 +67,18 @@ export const insightsKeys = {
     ] as const,
 
   /** Single insight detail */
-  detail: (projectId: number, insightPublicId: string) =>
+  detail: (projectId: string, insightPublicId: string) =>
     ['insights', 'project', projectId, 'detail', insightPublicId] as const,
 
   /** Revision history for an insight */
-  revisions: (projectId: number, insightPublicId: string) =>
+  revisions: (projectId: string, insightPublicId: string) =>
     ['insights', 'project', projectId, 'detail', insightPublicId, 'revisions'] as const,
 
   /** Review history for an insight */
-  reviews: (projectId: number, insightPublicId: string) =>
+  reviews: (projectId: string, insightPublicId: string) =>
     ['insights', 'project', projectId, 'detail', insightPublicId, 'reviews'] as const,
 
   /** Needs review count for project badge */
-  needsReviewCount: (projectId: number) =>
+  needsReviewCount: (projectId: string) =>
     ['insights', 'project', projectId, 'needs-review-count'] as const,
 };

@@ -308,6 +308,30 @@
   color: var(--color-text-muted);
 }
 
+/* DR-4d: Evidence reference actions */
+.evidenceRefActions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.evidenceRefAction {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: var(--color-brand-text);
+  cursor: pointer;
+  transition: color var(--motion-fast) var(--motion-ease);
+}
+
+.evidenceRefAction:hover {
+  color: var(--color-brand-deep);
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    REVISION BLOCK
    Per DR03: Version blocks with different border styles.
