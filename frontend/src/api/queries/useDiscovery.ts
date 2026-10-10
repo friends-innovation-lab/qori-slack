@@ -1,12 +1,15 @@
 /**
- * Discovery API Hooks — DISC-3
+ * Discovery API Hooks — DISC-3 + DR-4d
  *
  * React Query hooks for Discovery runs, artifacts, variables, and knowledge gaps.
  * Project-scoped data accessed via study context (study → project mapping).
+ *
+ * DR-4d: Integrated insight needs-review count into useDiscoveryCounts.
  */
 
 import { useQuery, type Query } from '@tanstack/react-query';
 import { api } from '@/api/client';
+import { useNeedsReviewCount } from '@/api/insights';
 import type {
   DiscoveryRunSummary,
   DiscoveryRunDetail,
@@ -240,6 +243,9 @@ export function useDiscoveryCounts(
     { enabled: options?.enabled },
   );
 
+  // DR-4d: Fetch insight needs-review count for desk research badge
+  const insightReviewQuery = useNeedsReviewCount(projectPublicId);
+
   // DISC-3 exactness: If we received exactly the limit, count may be truncated
   const artifactsExact = artifactsQuery.data
     ? artifactsQuery.data.length < ARTIFACTS_QUERY_LIMIT
@@ -300,6 +306,12 @@ export function useDiscoveryCounts(
         }
       }
     }
+  }
+
+  // DR-4d: Desk research also needs review if insights need review
+  // Per SPEC-2 §5: "Use the backend count endpoint as authority"
+  if (insightReviewQuery.data && insightReviewQuery.data > 0) {
+    needsReview.desk = true;
   }
 
   return {

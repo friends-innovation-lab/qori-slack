@@ -1,0 +1,344 @@
+/**
+ * DeskInsightsPage styles — DR-4d
+ *
+ * Per SPEC-2 redlines:
+ * - DR01: Filter bar with status chips + source select
+ * - DR02: Empty state
+ * - Layout: 640px measure canvas
+ */
+
+/* ─── Layout ─────────────────────────────────────────────────────────────── */
+
+.headerSpacer {
+  height: var(--space-4);
+}
+
+/* ─── Masthead ───────────────────────────────────────────────────────────── */
+
+.masthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mastheadMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.eyebrow {
+  display: block;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--type-eyebrow-track);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--type-masthead-size);
+  line-height: var(--type-masthead-line);
+  letter-spacing: var(--type-masthead-track);
+  font-weight: var(--weight-regular);
+  color: var(--color-text);
+  margin: 0 0 var(--space-2);
+}
+
+.meta {
+  font-size: var(--type-ui-size);
+  line-height: var(--type-ui-line);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.statusLine {
+  font-size: var(--type-ui-size);
+  line-height: var(--type-ui-line);
+  color: var(--color-text-muted);
+  margin: var(--space-2) 0 0;
+}
+
+.count {
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+}
+
+.needsReview {
+  color: var(--color-brand-text);
+}
+
+.mastheadActions {
+  flex-shrink: 0;
+}
+
+.addButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-brand);
+  color: var(--color-brand-ink);
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-semibold);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: background var(--motion-fast) var(--motion-ease);
+}
+
+.addButton:hover {
+  background: var(--color-brand-deep);
+  color: var(--color-text-inverse);
+}
+
+/* ─── Header Tabs ────────────────────────────────────────────────────────── */
+
+.headerTabs {
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.headerTab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease);
+}
+
+.headerTab:hover {
+  color: var(--color-text);
+}
+
+.headerTabActive {
+  color: var(--color-text);
+  border-bottom-color: var(--color-brand);
+}
+
+.tabCount {
+  font-size: var(--type-ui-sm-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+}
+
+.headerTabActive .tabCount {
+  background: var(--color-brand-tint);
+  color: var(--color-brand-text);
+}
+
+/* ─── Filter Bar (DR01) ──────────────────────────────────────────────────── */
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.statusFilters {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.statusChip {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--type-ui-sm-size);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--motion-fast) var(--motion-ease);
+}
+
+.statusChip:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-emphasis);
+}
+
+.statusChipActive {
+  background: var(--color-brand-tint);
+  border-color: var(--color-brand);
+  color: var(--color-brand-text);
+}
+
+.sourceSelect {
+  min-width: 220px;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--type-ui-size);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.sourceSelect:focus {
+  outline: none;
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 2px var(--color-brand-tint);
+}
+
+/* DR-4d: Active source filter indicator */
+.activeSourceFilter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--type-ui-sm-size);
+  font-weight: var(--weight-medium);
+  color: var(--color-brand-text);
+  background: var(--color-brand-tint);
+  border: 1px solid var(--color-brand);
+  border-radius: var(--radius-full);
+}
+
+.sourceFilterLabel {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clearSourceFilter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--color-brand-text);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  transition: background var(--motion-fast) var(--motion-ease);
+}
+
+.clearSourceFilter:hover {
+  background: var(--color-brand-wash);
+}
+
+/* ─── Group Headers ──────────────────────────────────────────────────────── */
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: var(--type-section-size);
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.groupHeader:disabled {
+  cursor: default;
+}
+
+.groupCount {
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-regular);
+  color: var(--color-text-muted);
+}
+
+/* ─── No Results ─────────────────────────────────────────────────────────── */
+
+.noResults {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.clearFilters {
+  margin-top: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: none;
+  border: none;
+  font-size: var(--type-ui-size);
+  color: var(--color-brand-text);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.clearFilters:hover {
+  color: var(--color-brand-deep);
+}
+
+/* ─── Insight Panel ──────────────────────────────────────────────────────── */
+
+.insightPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.revisionSection {
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.revisionTitle {
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin: 0 0 var(--space-3);
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .filterBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .statusFilters {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: var(--space-1);
+  }
+
+  .sourceSelect {
+    width: 100%;
+  }
+
+  .masthead {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .mastheadActions {
+    width: 100%;
+  }
+
+  .addButton {
+    width: 100%;
+    justify-content: center;
+  }
+}

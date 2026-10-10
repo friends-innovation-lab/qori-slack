@@ -173,6 +173,32 @@ export interface DiscoveryArtifactSummary {
 
   /** DISC-3B: Stable marker (e.g., "D1", "S2") - null for legacy artifacts */
   marker: string | null;
+
+  // ─── DR-4d: Extraction Status (promoted from Detail) ───────────────
+
+  /**
+   * Insight extraction status for this artifact.
+   * Only applies to desk_research artifacts.
+   */
+  extractionStatus: ExtractionStatus | null;
+
+  /** When extraction was last attempted */
+  extractionAttemptedAt: string | null;
+
+  /** Number of insights extracted */
+  extractionInsightCount: number | null;
+
+  /**
+   * Sanitized failure reason (if extraction failed/partial).
+   * Does not expose internal error details.
+   */
+  extractionFailureReason: string | null;
+
+  /** Whether extraction is permanently failed (will not retry) */
+  extractionPermanentFailure: boolean | null;
+
+  /** When next retry is scheduled (if applicable) */
+  extractionNextRetryAt: string | null;
 }
 
 // ─── Extraction Status ─────────────────────────────────────────────

@@ -35,6 +35,8 @@ interface InsightDetailPanelProps {
   actionSlot?: ReactNode;
   /** Handler for navigating to evidence source */
   onNavigateToSource?: (reference: EvidenceReference) => void;
+  /** DR-4d: Handler for filtering by evidence source */
+  onFilterBySource?: (reference: EvidenceReference) => void;
   /** Handler for viewing revision history */
   onViewHistory?: () => void;
   /** Additional class name */
@@ -49,6 +51,7 @@ export const InsightDetailPanel = forwardRef<HTMLDivElement, InsightDetailPanelP
       readOnlyReason,
       actionSlot,
       onNavigateToSource,
+      onFilterBySource,
       onViewHistory,
       className,
     },
@@ -84,6 +87,7 @@ export const InsightDetailPanel = forwardRef<HTMLDivElement, InsightDetailPanelP
                 revision={insight.acceptedRevision}
                 variant="inUse"
                 onNavigateToSource={onNavigateToSource}
+                onFilterBySource={onFilterBySource}
               />
             </section>
           )}
@@ -97,6 +101,7 @@ export const InsightDetailPanel = forwardRef<HTMLDivElement, InsightDetailPanelP
                 variant="pending"
                 label={`Revision r${insight.latestRevision.revisionNumber} pending`}
                 onNavigateToSource={onNavigateToSource}
+                onFilterBySource={onFilterBySource}
               />
             </section>
           )}
@@ -114,6 +119,7 @@ export const InsightDetailPanel = forwardRef<HTMLDivElement, InsightDetailPanelP
                     : `Revision r${insight.latestRevision.revisionNumber}`
                 }
                 onNavigateToSource={onNavigateToSource}
+                onFilterBySource={onFilterBySource}
               />
             </section>
           )}
@@ -164,6 +170,7 @@ interface RevisionBlockProps {
   variant: 'inUse' | 'pending' | 'past';
   label?: string;
   onNavigateToSource?: (reference: EvidenceReference) => void;
+  onFilterBySource?: (reference: EvidenceReference) => void;
 }
 
 function RevisionBlock({
@@ -171,6 +178,7 @@ function RevisionBlock({
   variant,
   label,
   onNavigateToSource,
+  onFilterBySource,
 }: RevisionBlockProps) {
   const blockClass =
     variant === 'inUse'
@@ -214,6 +222,9 @@ function RevisionBlock({
                 addedDate={revision.createdAt}
                 onNavigateToSource={
                   onNavigateToSource ? () => onNavigateToSource(ref) : undefined
+                }
+                onFilterBySource={
+                  onFilterBySource ? () => onFilterBySource(ref) : undefined
                 }
               />
             ))}

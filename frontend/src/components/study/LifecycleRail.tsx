@@ -145,8 +145,13 @@ export function LifecycleRail({
 
     // Type pages: /desk, /stakeholders, /surveys
     if (item.path === '/desk') {
-      // Active when on /discovery/desk or /discovery/new/desk
-      if (relativePath === '/desk' || relativePath.startsWith('/new/desk')) {
+      // Active when on /discovery/desk, /discovery/desk/sources, or /discovery/new/desk
+      // DR-4d: Also active when on insight-first desk research sub-routes
+      if (
+        relativePath === '/desk' ||
+        relativePath.startsWith('/desk/') ||
+        relativePath.startsWith('/new/desk')
+      ) {
         return true;
       }
       // Active when on a run page and activeDiscoveryType is desk

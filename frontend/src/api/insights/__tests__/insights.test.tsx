@@ -1,5 +1,8 @@
 /**
- * Insights API Layer Tests — DR-4b
+ * Insights API Layer Tests — DR-4b + DR-4d
+ *
+ * DR-4d: Updated to use string project IDs (public IDs) for consistency
+ * with discovery API patterns.
  *
  * Tests for:
  * - Query keys and project isolation
@@ -78,7 +81,7 @@ const mockInsightSummary: InsightSummary = {
   id: 1,
   publicId: 'insight-uuid-1',
   displayId: 'IN-0001',
-  projectId: 100,
+  projectId: 100, // Internal numeric ID in response (API params use string public ID)
   wording: 'Test insight wording',
   status: 'proposed',
   latestRevisionNumber: 1,
@@ -130,24 +133,24 @@ describe('insightsKeys', () => {
   });
 
   it('project includes projectId', () => {
-    const key = insightsKeys.project(100);
-    expect(key).toEqual(['insights', 'project', 100]);
+    const key = insightsKeys.project('project-100');
+    expect(key).toEqual(['insights', 'project', 'project-100']);
   });
 
   it('list includes normalized filters', () => {
-    const key = insightsKeys.list(100, { status: 'proposed' });
+    const key = insightsKeys.list('project-100', { status: 'proposed' });
     expect(key).toEqual([
       'insights',
       'project',
-      100,
+      'project-100',
       'list',
       { status: 'proposed', sourceId: undefined, limit: 50, offset: 0 },
     ]);
   });
 
   it('list normalizes undefined status to all', () => {
-    const implicitAll = insightsKeys.list(100, {});
-    const explicitAll = insightsKeys.list(100, { status: 'all' });
+    const implicitAll = insightsKeys.list('project-100', {});
+    const explicitAll = insightsKeys.list('project-100', { status: 'all' });
 
     expect(implicitAll).toEqual(explicitAll);
     expect(implicitAll[4]).toEqual({
@@ -159,10 +162,10 @@ describe('insightsKeys', () => {
   });
 
   it('list distinguishes different filter combinations', () => {
-    const key1 = insightsKeys.list(100, { status: 'proposed' });
-    const key2 = insightsKeys.list(100, { status: 'accepted' });
-    const key3 = insightsKeys.list(100, { sourceId: 42 });
-    const key4 = insightsKeys.list(100, { limit: 20 });
+    const key1 = insightsKeys.list('project-100', { status: 'proposed' });
+    const key2 = insightsKeys.list('project-100', { status: 'accepted' });
+    const key3 = insightsKeys.list('project-100', { sourceId: 42 });
+    const key4 = insightsKeys.list('project-100', { limit: 20 });
 
     expect(key1).not.toEqual(key2);
     expect(key1).not.toEqual(key3);
@@ -170,16 +173,16 @@ describe('insightsKeys', () => {
   });
 
   it('detail includes projectId and insightPublicId', () => {
-    const key = insightsKeys.detail(100, 'insight-uuid');
-    expect(key).toEqual(['insights', 'project', 100, 'detail', 'insight-uuid']);
+    const key = insightsKeys.detail('project-100', 'insight-uuid');
+    expect(key).toEqual(['insights', 'project', 'project-100', 'detail', 'insight-uuid']);
   });
 
   it('revisions extends detail key', () => {
-    const key = insightsKeys.revisions(100, 'insight-uuid');
+    const key = insightsKeys.revisions('project-100', 'insight-uuid');
     expect(key).toEqual([
       'insights',
       'project',
-      100,
+      'project-100',
       'detail',
       'insight-uuid',
       'revisions',
@@ -187,11 +190,11 @@ describe('insightsKeys', () => {
   });
 
   it('reviews extends detail key', () => {
-    const key = insightsKeys.reviews(100, 'insight-uuid');
+    const key = insightsKeys.reviews('project-100', 'insight-uuid');
     expect(key).toEqual([
       'insights',
       'project',
-      100,
+      'project-100',
       'detail',
       'insight-uuid',
       'reviews',
@@ -199,18 +202,18 @@ describe('insightsKeys', () => {
   });
 
   it('needsReviewCount is project-scoped', () => {
-    const key = insightsKeys.needsReviewCount(100);
-    expect(key).toEqual(['insights', 'project', 100, 'needs-review-count']);
+    const key = insightsKeys.needsReviewCount('project-100');
+    expect(key).toEqual(['insights', 'project', 'project-100', 'needs-review-count']);
   });
 
   it('keys for different projects are distinct (project isolation)', () => {
-    const project1Key = insightsKeys.project(100);
-    const project2Key = insightsKeys.project(200);
+    const project1Key = insightsKeys.project('project-100');
+    const project2Key = insightsKeys.project('project-200');
 
     expect(project1Key).not.toEqual(project2Key);
 
-    const list1 = insightsKeys.list(100, {});
-    const list2 = insightsKeys.list(200, {});
+    const list1 = insightsKeys.list('project-100', {});
+    const list2 = insightsKeys.list('project-200', {});
 
     expect(list1).not.toEqual(list2);
   });
@@ -407,13 +410,13 @@ describe('query hooks', () => {
     it('fetches insights list', async () => {
       mockGet.mockResolvedValueOnce(mockListResponse);
 
-      const { result } = renderHook(() => useInsights(100), {
+      const { result } = renderHook(() => useInsights('project-100'), {
         wrapper: createWrapper(),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(mockGet).toHaveBeenCalledWith('projects/100/insights');
+      expect(mockGet).toHaveBeenCalledWith('projects/project-100/insights');
       expect(result.current.data?.data).toHaveLength(1);
       expect(result.current.data?.meta.needsReviewCount).toBe(1);
     });
@@ -422,14 +425,14 @@ describe('query hooks', () => {
       mockGet.mockResolvedValueOnce(mockListResponse);
 
       const { result } = renderHook(
-        () => useInsights(100, { status: 'proposed' }),
+        () => useInsights('project-100', { status: 'proposed' }),
         { wrapper: createWrapper() },
       );
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        'projects/100/insights?status=proposed',
+        'projects/project-100/insights?status=proposed',
       );
     });
 
@@ -437,14 +440,14 @@ describe('query hooks', () => {
       mockGet.mockResolvedValueOnce(mockListResponse);
 
       const { result } = renderHook(
-        () => useInsights(100, { sourceId: 42 }),
+        () => useInsights('project-100', { sourceId: 42 }),
         { wrapper: createWrapper() },
       );
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        'projects/100/insights?sourceId=42',
+        'projects/project-100/insights?sourceId=42',
       );
     });
 
@@ -452,19 +455,19 @@ describe('query hooks', () => {
       mockGet.mockResolvedValueOnce(mockListResponse);
 
       const { result } = renderHook(
-        () => useInsights(100, { limit: 20, offset: 40 }),
+        () => useInsights('project-100', { limit: 20, offset: 40 }),
         { wrapper: createWrapper() },
       );
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        'projects/100/insights?limit=20&offset=40',
+        'projects/project-100/insights?limit=20&offset=40',
       );
     });
 
     it('is disabled for invalid projectId', () => {
-      const { result } = renderHook(() => useInsights(0), {
+      const { result } = renderHook(() => useInsights(''), {
         wrapper: createWrapper(),
       });
 
@@ -478,18 +481,18 @@ describe('query hooks', () => {
       mockGet.mockResolvedValueOnce({ data: mockInsightDetail });
 
       const { result } = renderHook(
-        () => useInsight(100, 'insight-uuid'),
+        () => useInsight('project-100', 'insight-uuid'),
         { wrapper: createWrapper() },
       );
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(mockGet).toHaveBeenCalledWith('projects/100/insights/insight-uuid');
+      expect(mockGet).toHaveBeenCalledWith('projects/project-100/insights/insight-uuid');
       expect(result.current.data?.displayId).toBe('IN-0001');
     });
 
     it('is disabled for empty insightPublicId', () => {
-      const { result } = renderHook(() => useInsight(100, ''), {
+      const { result } = renderHook(() => useInsight('project-100', ''), {
         wrapper: createWrapper(),
       });
 
@@ -501,14 +504,14 @@ describe('query hooks', () => {
     it('fetches needs-review count', async () => {
       mockGet.mockResolvedValueOnce({ data: { count: 5 } });
 
-      const { result } = renderHook(() => useNeedsReviewCount(100), {
+      const { result } = renderHook(() => useNeedsReviewCount('project-100'), {
         wrapper: createWrapper(),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        'projects/100/insights/needs-review-count',
+        'projects/project-100/insights/needs-review-count',
       );
       expect(result.current.data).toBe(5);
     });
@@ -538,14 +541,14 @@ describe('mutation hooks', () => {
       });
 
       await result.current.mutateAsync({
-        projectId: 100,
+        projectId: 'project-100',
         wording: 'New insight',
         evidenceReferences: [],
       });
 
       expect(mockPost).toHaveBeenCalled();
       expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: ['insights', 'project', 100],
+        queryKey: ['insights', 'project', 'project-100'],
       });
     });
 
@@ -565,7 +568,7 @@ describe('mutation hooks', () => {
 
       await expect(
         result.current.mutateAsync({
-          projectId: 100,
+          projectId: 'project-100',
           wording: 'Test',
           evidenceReferences: [],
         }),
@@ -585,7 +588,7 @@ describe('mutation hooks', () => {
       });
 
       await result.current.mutateAsync({
-        projectId: 100,
+        projectId: 'project-100',
         insightPublicId: 'insight-uuid',
         wording: 'Updated wording',
         evidenceReferences: [],
@@ -593,7 +596,7 @@ describe('mutation hooks', () => {
       });
 
       expect(mockPost).toHaveBeenCalledWith(
-        'projects/100/insights/insight-uuid/revisions',
+        'projects/project-100/insights/insight-uuid/revisions',
         expect.objectContaining({
           json: expect.objectContaining({
             expectedVersion: 1,
@@ -622,7 +625,7 @@ describe('mutation hooks', () => {
 
       await expect(
         result.current.mutateAsync({
-          projectId: 100,
+          projectId: 'project-100',
           insightPublicId: 'insight-uuid',
           wording: 'Updated',
           evidenceReferences: [],
@@ -646,7 +649,7 @@ describe('mutation hooks', () => {
       });
 
       await result.current.mutateAsync({
-        projectId: 100,
+        projectId: 'project-100',
         insightPublicId: 'insight-uuid',
         action: 'accept',
         revisionId: 1,
@@ -654,7 +657,7 @@ describe('mutation hooks', () => {
       });
 
       expect(mockPost).toHaveBeenCalledWith(
-        'projects/100/insights/insight-uuid/reviews',
+        'projects/project-100/insights/insight-uuid/reviews',
         expect.objectContaining({
           json: expect.objectContaining({
             action: 'accept',
@@ -674,7 +677,7 @@ describe('mutation hooks', () => {
       });
 
       await result.current.mutateAsync({
-        projectId: 100,
+        projectId: 'project-100',
         insightPublicId: 'insight-uuid',
         action: 'withdraw',
         comment: 'No longer relevant',
@@ -682,7 +685,7 @@ describe('mutation hooks', () => {
       });
 
       expect(mockPost).toHaveBeenCalledWith(
-        'projects/100/insights/insight-uuid/reviews',
+        'projects/project-100/insights/insight-uuid/reviews',
         expect.objectContaining({
           json: expect.objectContaining({
             action: 'withdraw',
@@ -711,7 +714,7 @@ describe('mutation hooks', () => {
 
       await expect(
         result.current.mutateAsync({
-          projectId: 100,
+          projectId: 'project-100',
           insightPublicId: 'insight-uuid',
           action: 'accept',
           revisionId: 1,
@@ -743,7 +746,7 @@ describe('mutation hooks', () => {
 
       await expect(
         result.current.mutateAsync({
-          projectId: 100,
+          projectId: 'project-100',
           insightPublicId: 'insight-uuid',
           action: 'accept',
           revisionId: 1,
@@ -775,7 +778,7 @@ describe('cache consistency', () => {
     });
 
     await result.current.mutateAsync({
-      projectId: 100,
+      projectId: 'project-100',
       insightPublicId: 'insight-uuid',
       action: 'accept',
       revisionId: 1,
@@ -784,7 +787,7 @@ describe('cache consistency', () => {
 
     // Should invalidate project root key (covers list, detail, revisions, reviews, count)
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: ['insights', 'project', 100],
+      queryKey: ['insights', 'project', 'project-100'],
     });
   });
 
@@ -807,7 +810,7 @@ describe('cache consistency', () => {
 
     try {
       await result.current.mutateAsync({
-        projectId: 100,
+        projectId: 'project-100',
         insightPublicId: 'insight-uuid',
         action: 'accept',
         revisionId: 1,
@@ -823,12 +826,12 @@ describe('cache consistency', () => {
 
   it('maintains project isolation between caches', () => {
     // Different projects have completely separate query keys
-    const project100List = insightsKeys.list(100, {});
-    const project200List = insightsKeys.list(200, {});
+    const project100List = insightsKeys.list('project-100', {});
+    const project200List = insightsKeys.list('project-200', {});
 
     // Invalidating project 100 should not affect project 200
-    expect(project100List[2]).toBe(100);
-    expect(project200List[2]).toBe(200);
+    expect(project100List[2]).toBe('project-100');
+    expect(project200List[2]).toBe('project-200');
     expect(project100List).not.toEqual(project200List);
   });
 });
