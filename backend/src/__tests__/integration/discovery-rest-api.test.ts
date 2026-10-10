@@ -498,6 +498,95 @@ describe('listCanonicalDiscoveryArtifacts', () => {
 
     expect(artifacts.every(a => a.artifactType === 'desk_research')).toBe(true);
   });
+
+  // DR-4d: Extraction status fields in summary response
+  it('includes extraction status fields in summary response', async () => {
+    const run = await createTestRun();
+    const artifact = await createTestArtifact(run.id);
+    await artifactService.finalizeArtifactSupersession(artifact.id);
+
+    // Set extraction status fields directly in DB
+    await sequelize.query(
+      `UPDATE discovery_artifacts SET
+        extraction_status = 'success',
+        extraction_attempted_at = NOW(),
+        extraction_insight_count = 12,
+        extraction_failure_reason = NULL,
+        extraction_permanent_failure = false,
+        extraction_next_retry_at = NULL
+      WHERE id = :id`,
+      { replacements: { id: artifact.id } },
+    );
+
+    const artifacts = await appService.listCanonicalDiscoveryArtifacts(
+      mockCtx,
+      projectId,
+    );
+
+    expect(artifacts).toHaveLength(1);
+    expect(artifacts[0].extractionStatus).toBe('success');
+    expect(artifacts[0].extractionAttemptedAt).not.toBeNull();
+    expect(artifacts[0].extractionInsightCount).toBe(12);
+    expect(artifacts[0].extractionFailureReason).toBeNull();
+    expect(artifacts[0].extractionPermanentFailure).toBe(false);
+    expect(artifacts[0].extractionNextRetryAt).toBeNull();
+  });
+
+  it('includes failed extraction status with failure details in summary', async () => {
+    const run = await createTestRun();
+    const artifact = await createTestArtifact(run.id);
+    await artifactService.finalizeArtifactSupersession(artifact.id);
+    const nextRetry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
+
+    await sequelize.query(
+      `UPDATE discovery_artifacts SET
+        extraction_status = 'failed',
+        extraction_attempted_at = NOW(),
+        extraction_insight_count = 0,
+        extraction_failure_reason = 'Document parsing failed',
+        extraction_permanent_failure = false,
+        extraction_next_retry_at = :nextRetry
+      WHERE id = :id`,
+      { replacements: { id: artifact.id, nextRetry } },
+    );
+
+    const artifacts = await appService.listCanonicalDiscoveryArtifacts(
+      mockCtx,
+      projectId,
+    );
+
+    expect(artifacts[0].extractionStatus).toBe('failed');
+    expect(artifacts[0].extractionFailureReason).toBe('Document parsing failed');
+    expect(artifacts[0].extractionPermanentFailure).toBe(false);
+    expect(artifacts[0].extractionNextRetryAt).not.toBeNull();
+  });
+
+  it('includes permanent failure extraction status in summary', async () => {
+    const run = await createTestRun();
+    const artifact = await createTestArtifact(run.id);
+    await artifactService.finalizeArtifactSupersession(artifact.id);
+
+    await sequelize.query(
+      `UPDATE discovery_artifacts SET
+        extraction_status = 'failed',
+        extraction_attempted_at = NOW(),
+        extraction_insight_count = 0,
+        extraction_failure_reason = 'Unsupported format',
+        extraction_permanent_failure = true,
+        extraction_next_retry_at = NULL
+      WHERE id = :id`,
+      { replacements: { id: artifact.id } },
+    );
+
+    const artifacts = await appService.listCanonicalDiscoveryArtifacts(
+      mockCtx,
+      projectId,
+    );
+
+    expect(artifacts[0].extractionStatus).toBe('failed');
+    expect(artifacts[0].extractionPermanentFailure).toBe(true);
+    expect(artifacts[0].extractionNextRetryAt).toBeNull();
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════

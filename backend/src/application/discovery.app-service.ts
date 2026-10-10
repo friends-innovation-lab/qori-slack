@@ -913,6 +913,13 @@ export async function getDiscoveryRunByPublicId(
     githubPath: artifact.github_path,
     projectedAt: artifact.projected_at?.toISOString() || null,
     marker: runMarker,
+    // DR-4d: Extraction status fields
+    extractionStatus: artifact.extraction_status || null,
+    extractionAttemptedAt: artifact.extraction_attempted_at?.toISOString() || null,
+    extractionInsightCount: artifact.extraction_insight_count ?? null,
+    extractionFailureReason: artifact.extraction_failure_reason || null,
+    extractionPermanentFailure: artifact.extraction_permanent_failure ?? null,
+    extractionNextRetryAt: artifact.extraction_next_retry_at?.toISOString() || null,
   } : null;
 
   return {
@@ -994,6 +1001,13 @@ export async function listCanonicalDiscoveryArtifacts(
     marker: a.discoveryRun
       ? formatMarker(a.discoveryRun.discovery_type, a.discoveryRun.marker_index)
       : null,
+    // DR-4d: Extraction status fields (promoted from Detail)
+    extractionStatus: a.extraction_status || null,
+    extractionAttemptedAt: a.extraction_attempted_at?.toISOString() || null,
+    extractionInsightCount: a.extraction_insight_count ?? null,
+    extractionFailureReason: a.extraction_failure_reason || null,
+    extractionPermanentFailure: a.extraction_permanent_failure ?? null,
+    extractionNextRetryAt: a.extraction_next_retry_at?.toISOString() || null,
   }));
 }
 

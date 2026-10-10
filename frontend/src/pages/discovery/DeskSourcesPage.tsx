@@ -18,7 +18,12 @@ import {
   Clock,
   AlertCircle,
   Loader2,
+  Sparkles,
+  AlertTriangle,
+  Ban,
+  RefreshCw,
 } from 'lucide-react';
+import type { ExtractionStatus } from '@qori/api-contracts';
 import { useDiscoveryRuns, useDiscoveryArtifacts } from '@/api/queries/useDiscovery';
 import { WorkspaceLayout, useStudyWorkspace } from '@/components/study/workspace';
 import { DocumentSection } from '@/components/study/document';
@@ -51,6 +56,18 @@ const RUN_STATUS_CONFIG: Record<
   completed: { icon: CheckCircle, label: 'Completed', className: 'statusCompleted' },
   failed: { icon: AlertCircle, label: 'Failed', className: 'statusFailed' },
   cancelled: { icon: AlertCircle, label: 'Cancelled', className: 'statusFailed' },
+};
+
+/** Extraction status display configuration */
+const EXTRACTION_STATUS_CONFIG: Record<
+  ExtractionStatus,
+  { icon: typeof CheckCircle; label: string; className: string }
+> = {
+  pending: { icon: Clock, label: 'Extraction pending', className: 'extractionPending' },
+  success: { icon: Sparkles, label: 'Extracted', className: 'extractionSuccess' },
+  partial: { icon: AlertTriangle, label: 'Partial extraction', className: 'extractionPartial' },
+  failed: { icon: AlertCircle, label: 'Extraction failed', className: 'extractionFailed' },
+  not_applicable: { icon: Ban, label: 'N/A', className: 'extractionNA' },
 };
 
 /** Group artifacts by run */
@@ -280,6 +297,32 @@ function RunCard({ run, artifacts, studyPublicId }: RunCardProps) {
   const statusConfig = RUN_STATUS_CONFIG[run.status];
   const StatusIcon = statusConfig.icon;
 
+  // DR-4d: Aggregate extraction status from artifacts
+  const extractionInfo = useMemo(() => {
+    if (artifacts.length === 0) return null;
+
+    // Find the primary artifact (current status) or first artifact
+    const primaryArtifact = artifacts.find(a => a.status === 'current') || artifacts[0];
+    const extractionStatus = primaryArtifact.extractionStatus;
+
+    if (!extractionStatus) return null;
+
+    const config = EXTRACTION_STATUS_CONFIG[extractionStatus];
+    const insightCount = primaryArtifact.extractionInsightCount;
+    const failureReason = primaryArtifact.extractionFailureReason;
+    const permanentFailure = primaryArtifact.extractionPermanentFailure;
+    const nextRetryAt = primaryArtifact.extractionNextRetryAt;
+
+    return {
+      status: extractionStatus,
+      config,
+      insightCount,
+      failureReason,
+      permanentFailure,
+      nextRetryAt,
+    };
+  }, [artifacts]);
+
   const formatDate = (dateString: string) => {
     try {
       return new Date(dateString).toLocaleDateString('en-US', {
@@ -292,6 +335,23 @@ function RunCard({ run, artifacts, studyPublicId }: RunCardProps) {
     }
   };
 
+  const formatRelativeTime = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = date.getTime() - now.getTime();
+      const diffMins = Math.round(diffMs / 60000);
+
+      if (diffMins < 1) return 'soon';
+      if (diffMins < 60) return `in ${diffMins}m`;
+      const diffHours = Math.round(diffMins / 60);
+      if (diffHours < 24) return `in ${diffHours}h`;
+      return formatDate(dateString);
+    } catch {
+      return dateString;
+    }
+  };
+
   return (
     <Link
       to={`/studies/${studyPublicId}/discovery/runs/${run.publicId}`}
@@ -299,22 +359,64 @@ function RunCard({ run, artifacts, studyPublicId }: RunCardProps) {
     >
       <div className={styles.runHeader}>
         <span className={styles.runName}>{run.topic || `Run ${run.publicId.slice(0, 8)}`}</span>
-        <span className={`${styles.runStatus} ${styles[statusConfig.className]}`}>
-          <StatusIcon
-            size={14}
-            aria-hidden="true"
-            className={run.status === 'processing' ? styles.spinIcon : undefined}
-          />
-          {statusConfig.label}
-        </span>
+        <div className={styles.runStatusGroup}>
+          {/* Run lifecycle status */}
+          <span className={`${styles.runStatus} ${styles[statusConfig.className]}`}>
+            <StatusIcon
+              size={14}
+              aria-hidden="true"
+              className={run.status === 'processing' ? styles.spinIcon : undefined}
+            />
+            {statusConfig.label}
+          </span>
+        </div>
       </div>
 
       <div className={styles.runMeta}>
         <span>{formatDate(run.createdAt)}</span>
         <span>·</span>
         <span>{artifacts.length} source{artifacts.length !== 1 ? 's' : ''}</span>
-        {/* Note: extractedInsightsCount not available on DiscoveryRunSummary - would need detail endpoint */}
+        {/* DR-4d: Show insight count from extraction */}
+        {extractionInfo?.insightCount != null && extractionInfo.insightCount > 0 && (
+          <>
+            <span>·</span>
+            <span className={styles.insightCount}>
+              <Sparkles size={12} aria-hidden="true" />
+              {extractionInfo.insightCount} insight{extractionInfo.insightCount !== 1 ? 's' : ''}
+            </span>
+          </>
+        )}
       </div>
+
+      {/* DR-4d: Extraction status (separate from run status) */}
+      {extractionInfo && extractionInfo.status !== 'not_applicable' && (
+        <div className={styles.extractionStatus}>
+          <span className={`${styles.extractionBadge} ${styles[extractionInfo.config.className]}`}>
+            <extractionInfo.config.icon size={12} aria-hidden="true" />
+            {extractionInfo.config.label}
+          </span>
+
+          {/* Failure details */}
+          {(extractionInfo.status === 'failed' || extractionInfo.status === 'partial') && (
+            <div className={styles.extractionDetails}>
+              {extractionInfo.failureReason && (
+                <span className={styles.failureReason}>{extractionInfo.failureReason}</span>
+              )}
+              {extractionInfo.permanentFailure ? (
+                <span className={styles.permanentFailure}>
+                  <Ban size={10} aria-hidden="true" />
+                  Will not retry
+                </span>
+              ) : extractionInfo.nextRetryAt ? (
+                <span className={styles.retryScheduled}>
+                  <RefreshCw size={10} aria-hidden="true" />
+                  Retry {formatRelativeTime(extractionInfo.nextRetryAt)}
+                </span>
+              ) : null}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Show artifact titles preview */}
       {artifacts.length > 0 && (

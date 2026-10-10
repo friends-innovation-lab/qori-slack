@@ -99,6 +99,13 @@ const mockArtifactsData: DiscoveryArtifactSummary[] = [
     githubPath: null,
     projectedAt: null,
     marker: 'D1',
+    // DR-4d extraction fields
+    extractionStatus: 'success',
+    extractionAttemptedAt: '2024-01-01T01:00:00Z',
+    extractionInsightCount: 5,
+    extractionFailureReason: null,
+    extractionPermanentFailure: null,
+    extractionNextRetryAt: null,
   },
 ];
 

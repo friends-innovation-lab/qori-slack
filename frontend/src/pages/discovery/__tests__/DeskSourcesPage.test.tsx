@@ -96,6 +96,13 @@ const mockArtifactsData: DiscoveryArtifactSummary[] = [
     githubPath: null,
     projectedAt: null,
     marker: 'D1',
+    // DR-4d extraction fields
+    extractionStatus: 'success',
+    extractionAttemptedAt: '2024-01-15T01:00:00Z',
+    extractionInsightCount: 12,
+    extractionFailureReason: null,
+    extractionPermanentFailure: null,
+    extractionNextRetryAt: null,
   },
   {
     publicId: 'artifact-2',
@@ -111,6 +118,13 @@ const mockArtifactsData: DiscoveryArtifactSummary[] = [
     githubPath: null,
     projectedAt: null,
     marker: 'D1',
+    // DR-4d extraction fields
+    extractionStatus: 'success',
+    extractionAttemptedAt: '2024-01-15T01:00:00Z',
+    extractionInsightCount: 8,
+    extractionFailureReason: null,
+    extractionPermanentFailure: null,
+    extractionNextRetryAt: null,
   },
   {
     publicId: 'artifact-3',
@@ -126,6 +140,13 @@ const mockArtifactsData: DiscoveryArtifactSummary[] = [
     githubPath: null,
     projectedAt: null,
     marker: 'D2',
+    // DR-4d extraction fields
+    extractionStatus: 'failed',
+    extractionAttemptedAt: '2024-01-16T00:30:00Z',
+    extractionInsightCount: 0,
+    extractionFailureReason: 'Document parsing failed',
+    extractionPermanentFailure: false,
+    extractionNextRetryAt: '2024-01-16T01:30:00Z',
   },
 ];
 
@@ -447,5 +468,279 @@ describe('DeskSourcesPage accessibility', () => {
 
     const links = screen.getAllByRole('link', { name: /Research|Study/ });
     expect(links.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('DeskSourcesPage extraction status display', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('shows successful extraction with insight count', async () => {
+    const successArtifact: DiscoveryArtifactSummary = {
+      publicId: 'artifact-success',
+      runPublicId: 'run-1',
+      title: 'Success Report',
+      artifactType: 'desk_research',
+      topicSlug: 'success-report',
+      version: 1,
+      status: 'current',
+      templateName: 'desk_research',
+      templateVersion: '1.0.0',
+      createdAt: '2024-01-15T00:00:00Z',
+      githubPath: null,
+      projectedAt: null,
+      marker: 'D1',
+      extractionStatus: 'success',
+      extractionAttemptedAt: '2024-01-15T01:00:00Z',
+      extractionInsightCount: 15,
+      extractionFailureReason: null,
+      extractionPermanentFailure: null,
+      extractionNextRetryAt: null,
+    };
+
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('/runs')) {
+        return Promise.resolve({ data: [mockRunsData[0]] });
+      }
+      if (url.includes('/artifacts')) {
+        return Promise.resolve({ data: [successArtifact] });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    render(<DeskSourcesPage />, { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(screen.getByText('Extracted')).toBeInTheDocument();
+    });
+
+    // Should show insight count
+    expect(screen.getByText(/15 insights/)).toBeInTheDocument();
+  });
+
+  it('shows pending extraction status', async () => {
+    const pendingArtifact: DiscoveryArtifactSummary = {
+      publicId: 'artifact-pending',
+      runPublicId: 'run-1',
+      title: 'Pending Report',
+      artifactType: 'desk_research',
+      topicSlug: 'pending-report',
+      version: 1,
+      status: 'current',
+      templateName: 'desk_research',
+      templateVersion: '1.0.0',
+      createdAt: '2024-01-15T00:00:00Z',
+      githubPath: null,
+      projectedAt: null,
+      marker: 'D1',
+      extractionStatus: 'pending',
+      extractionAttemptedAt: null,
+      extractionInsightCount: null,
+      extractionFailureReason: null,
+      extractionPermanentFailure: null,
+      extractionNextRetryAt: null,
+    };
+
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('/runs')) {
+        return Promise.resolve({ data: [mockRunsData[0]] });
+      }
+      if (url.includes('/artifacts')) {
+        return Promise.resolve({ data: [pendingArtifact] });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    render(<DeskSourcesPage />, { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(screen.getByText('Extraction pending')).toBeInTheDocument();
+    });
+  });
+
+  it('shows failed extraction with retry scheduled', async () => {
+    // Set a future retry time
+    const futureRetry = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 mins from now
+
+    const failedArtifact: DiscoveryArtifactSummary = {
+      publicId: 'artifact-failed',
+      runPublicId: 'run-1',
+      title: 'Failed Report',
+      artifactType: 'desk_research',
+      topicSlug: 'failed-report',
+      version: 1,
+      status: 'current',
+      templateName: 'desk_research',
+      templateVersion: '1.0.0',
+      createdAt: '2024-01-15T00:00:00Z',
+      githubPath: null,
+      projectedAt: null,
+      marker: 'D1',
+      extractionStatus: 'failed',
+      extractionAttemptedAt: '2024-01-15T01:00:00Z',
+      extractionInsightCount: 0,
+      extractionFailureReason: 'Rate limit exceeded',
+      extractionPermanentFailure: false,
+      extractionNextRetryAt: futureRetry,
+    };
+
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('/runs')) {
+        return Promise.resolve({ data: [mockRunsData[0]] });
+      }
+      if (url.includes('/artifacts')) {
+        return Promise.resolve({ data: [failedArtifact] });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    render(<DeskSourcesPage />, { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(screen.getByText('Extraction failed')).toBeInTheDocument();
+    });
+
+    // Should show failure reason
+    expect(screen.getByText('Rate limit exceeded')).toBeInTheDocument();
+
+    // Should show retry scheduled
+    expect(screen.getByText(/Retry/)).toBeInTheDocument();
+  });
+
+  it('shows permanent failure without retry indicator', async () => {
+    const permanentFailArtifact: DiscoveryArtifactSummary = {
+      publicId: 'artifact-permanent-fail',
+      runPublicId: 'run-1',
+      title: 'Permanent Fail Report',
+      artifactType: 'desk_research',
+      topicSlug: 'permanent-fail-report',
+      version: 1,
+      status: 'current',
+      templateName: 'desk_research',
+      templateVersion: '1.0.0',
+      createdAt: '2024-01-15T00:00:00Z',
+      githubPath: null,
+      projectedAt: null,
+      marker: 'D1',
+      extractionStatus: 'failed',
+      extractionAttemptedAt: '2024-01-15T01:00:00Z',
+      extractionInsightCount: 0,
+      extractionFailureReason: 'Unsupported document format',
+      extractionPermanentFailure: true,
+      extractionNextRetryAt: null,
+    };
+
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('/runs')) {
+        return Promise.resolve({ data: [mockRunsData[0]] });
+      }
+      if (url.includes('/artifacts')) {
+        return Promise.resolve({ data: [permanentFailArtifact] });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    render(<DeskSourcesPage />, { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(screen.getByText('Extraction failed')).toBeInTheDocument();
+    });
+
+    // Should show failure reason
+    expect(screen.getByText('Unsupported document format')).toBeInTheDocument();
+
+    // Should show permanent failure indicator
+    expect(screen.getByText('Will not retry')).toBeInTheDocument();
+  });
+
+  it('shows partial extraction status', async () => {
+    const partialArtifact: DiscoveryArtifactSummary = {
+      publicId: 'artifact-partial',
+      runPublicId: 'run-1',
+      title: 'Partial Report',
+      artifactType: 'desk_research',
+      topicSlug: 'partial-report',
+      version: 1,
+      status: 'current',
+      templateName: 'desk_research',
+      templateVersion: '1.0.0',
+      createdAt: '2024-01-15T00:00:00Z',
+      githubPath: null,
+      projectedAt: null,
+      marker: 'D1',
+      extractionStatus: 'partial',
+      extractionAttemptedAt: '2024-01-15T01:00:00Z',
+      extractionInsightCount: 5,
+      extractionFailureReason: 'Some sections could not be processed',
+      extractionPermanentFailure: false,
+      extractionNextRetryAt: null,
+    };
+
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('/runs')) {
+        return Promise.resolve({ data: [mockRunsData[0]] });
+      }
+      if (url.includes('/artifacts')) {
+        return Promise.resolve({ data: [partialArtifact] });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    render(<DeskSourcesPage />, { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(screen.getByText('Partial extraction')).toBeInTheDocument();
+    });
+
+    // Should show partial extraction insight count
+    expect(screen.getByText(/5 insights/)).toBeInTheDocument();
+
+    // Should show failure reason for partial
+    expect(screen.getByText('Some sections could not be processed')).toBeInTheDocument();
+  });
+
+  it('does not show extraction status for not_applicable', async () => {
+    const naArtifact: DiscoveryArtifactSummary = {
+      publicId: 'artifact-na',
+      runPublicId: 'run-1',
+      title: 'N/A Report',
+      artifactType: 'desk_research',
+      topicSlug: 'na-report',
+      version: 1,
+      status: 'current',
+      templateName: 'desk_research',
+      templateVersion: '1.0.0',
+      createdAt: '2024-01-15T00:00:00Z',
+      githubPath: null,
+      projectedAt: null,
+      marker: 'D1',
+      extractionStatus: 'not_applicable',
+      extractionAttemptedAt: null,
+      extractionInsightCount: null,
+      extractionFailureReason: null,
+      extractionPermanentFailure: null,
+      extractionNextRetryAt: null,
+    };
+
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('/runs')) {
+        return Promise.resolve({ data: [mockRunsData[0]] });
+      }
+      if (url.includes('/artifacts')) {
+        return Promise.resolve({ data: [naArtifact] });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    render(<DeskSourcesPage />, { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(screen.getByText('VA Research Q1')).toBeInTheDocument();
+    });
+
+    // Should NOT show extraction status badge for not_applicable
+    expect(screen.queryByText('N/A')).not.toBeInTheDocument();
+    expect(screen.queryByText('Extracted')).not.toBeInTheDocument();
   });
 });
