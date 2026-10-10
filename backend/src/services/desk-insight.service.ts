@@ -40,6 +40,8 @@ export interface CreateInsightInput {
   createdBy: string;
   origin?: RevisionOrigin;
   discoveryRunId?: number;
+  /** DR-2: Idempotency key for AI-extracted insights. Format: {run_id}:{variable_key}:{item_id} */
+  ingestionKey?: string;
 }
 
 export interface CreateRevisionInput {
@@ -157,6 +159,17 @@ export class ProjectAccessError extends Error {
   constructor(message = 'Evidence source belongs to a different project') {
     super(message);
     this.name = 'ProjectAccessError';
+  }
+}
+
+export class DuplicateIngestionError extends Error {
+  constructor(
+    public readonly ingestionKey: string,
+    public readonly existingConstructId: number,
+    message = 'Insight with this ingestion key already exists',
+  ) {
+    super(message);
+    this.name = 'DuplicateIngestionError';
   }
 }
 
@@ -317,7 +330,7 @@ function needsReview(construct: any): boolean {
  * Create a new desk insight with initial revision
  */
 export async function createInsight(input: CreateInsightInput): Promise<InsightDetail> {
-  const { projectId, wording, evidenceReferences, createdBy, origin = 'researcher', discoveryRunId } = input;
+  const { projectId, wording, evidenceReferences, createdBy, origin = 'researcher', discoveryRunId, ingestionKey } = input;
 
   // Validate
   if (!wording || wording.trim().length === 0) {
@@ -326,6 +339,21 @@ export async function createInsight(input: CreateInsightInput): Promise<InsightD
   validateEvidenceLocators(evidenceReferences);
 
   return sequelize.transaction(async (transaction) => {
+    // DR-2: Check for duplicate ingestion key before creating
+    if (ingestionKey) {
+      const existing = await EvidenceConstruct.findOne({
+        where: {
+          project_id: projectId,
+          ingestion_key: ingestionKey,
+        },
+        attributes: ['id'],
+        transaction,
+      });
+      if (existing) {
+        throw new DuplicateIngestionError(ingestionKey, (existing as any).id);
+      }
+    }
+
     // Validate evidence ownership within transaction
     await validateEvidenceOwnership(projectId, evidenceReferences, transaction);
 
@@ -345,6 +373,7 @@ export async function createInsight(input: CreateInsightInput): Promise<InsightD
         created_by: createdBy,
         display_sequence: displaySequence,
         version: 1,
+        ingestion_key: ingestionKey ?? null,
       },
       { transaction },
     );
@@ -933,6 +962,81 @@ export async function countInsightsNeedingReview(projectId: number): Promise<num
   });
 
   return constructs.filter((c: any) => needsReview(c)).length;
+}
+
+/**
+ * DR-2: Find insight by ingestion key for idempotency checks
+ */
+export async function getInsightByIngestionKey(
+  projectId: number,
+  ingestionKey: string,
+): Promise<InsightDetail | null> {
+  const construct = await EvidenceConstruct.findOne({
+    where: {
+      project_id: projectId,
+      construct_type: 'desk_insight',
+      ingestion_key: ingestionKey,
+    },
+    include: [
+      { model: EvidenceConstructRevision, as: 'latestRevision' },
+      { model: EvidenceConstructRevision, as: 'acceptedRevision' },
+      { model: EvidenceConstructRevision, as: 'revisions', order: [['revision_number', 'DESC']] },
+    ],
+  });
+
+  if (!construct) {
+    return null;
+  }
+
+  return toInsightDetail(construct);
+}
+
+/**
+ * DR-2: Create insight if not exists, skip if already ingested
+ *
+ * Returns { created: true, insight } if new insight was created
+ * Returns { created: false, insight } if insight already exists with this ingestion key
+ */
+export async function createInsightIdempotent(
+  input: CreateInsightInput,
+): Promise<{ created: boolean; insight: InsightDetail }> {
+  const { projectId, ingestionKey } = input;
+
+  if (!ingestionKey) {
+    // No ingestion key = always create (non-idempotent path)
+    const insight = await createInsight(input);
+    return { created: true, insight };
+  }
+
+  // Check for existing
+  const existing = await getInsightByIngestionKey(projectId, ingestionKey);
+  if (existing) {
+    return { created: false, insight: existing };
+  }
+
+  // Create new - handle potential race condition
+  try {
+    const insight = await createInsight(input);
+    return { created: true, insight };
+  } catch (error) {
+    // Handle race condition: another worker created the insight concurrently
+    // This can manifest as:
+    // 1. DuplicateIngestionError from our pre-check
+    // 2. UniqueConstraintError from database constraint
+    const isDuplicateError =
+      error instanceof DuplicateIngestionError ||
+      (error instanceof Error && error.name === 'SequelizeUniqueConstraintError');
+
+    if (isDuplicateError) {
+      // Wait a bit for the concurrent transaction to commit
+      await new Promise(resolve => setTimeout(resolve, 50));
+      const insight = await getInsightByIngestionKey(projectId, ingestionKey);
+      if (insight) {
+        return { created: false, insight };
+      }
+    }
+    throw error;
+  }
 }
 
 /**

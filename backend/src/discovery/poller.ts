@@ -14,6 +14,7 @@
 
 import { randomUUID } from 'crypto';
 import * as claimService from '../services/discovery-claim.service';
+import * as extractionRetryService from '../services/extraction-retry.service';
 import { executeDiscoveryRun, PrivacyError } from '../application/discovery.app-service';
 
 // ─── Configuration ─────────────────────────────────────────────────
@@ -123,8 +124,9 @@ async function pollCycle(): Promise<void> {
   }
 
   try {
-    // Priority 1: Recover stale runs
+    // Priority 1: Recover stale runs and expired extraction claims
     await claimService.failExceededAttemptRuns(currentWorkerId);
+    await extractionRetryService.recoverExpiredClaims();
     const staleRun = await claimService.recoverStaleRun(currentWorkerId);
 
     if (staleRun) {
@@ -140,6 +142,22 @@ async function pollCycle(): Promise<void> {
     if (pendingRun) {
       console.log(`[DISC-2] Claimed pending run ${pendingRun.id} (${pendingRun.discovery_type}: ${pendingRun.topic})`);
       await executeClaimedRun(pendingRun.id);
+      schedulePoll();
+      return;
+    }
+
+    // Priority 3: Retry failed/partial extractions
+    const retryableArtifact = await extractionRetryService.claimNextRetryableArtifact(currentWorkerId);
+
+    if (retryableArtifact) {
+      console.log(`[DISC-2] Claimed extraction retry for artifact ${retryableArtifact.publicId} (attempt ${retryableArtifact.attemptCount + 1})`);
+      const retryResult = await extractionRetryService.executeExtractionRetry(retryableArtifact, currentWorkerId);
+
+      if (retryResult.success) {
+        console.log(`[DISC-2] Extraction retry succeeded: ${retryResult.createdCount} insights created, ${retryResult.skippedCount} skipped`);
+      } else {
+        console.log(`[DISC-2] Extraction retry ${retryResult.status}: ${retryResult.error || 'unknown'}`);
+      }
     }
 
   } catch (error) {

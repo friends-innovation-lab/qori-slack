@@ -82,6 +82,19 @@ class DiscoveryArtifact extends Model<
   declare created_at: CreationOptional<Date>;
   declare updated_at: CreationOptional<Date>;
 
+  // DR-2: Insight extraction status
+  declare extraction_status: 'pending' | 'success' | 'partial' | 'failed' | 'not_applicable' | null;
+  declare extraction_attempted_at: Date | null;
+  declare extraction_failure_reason: string | null;
+  declare extraction_insight_count: number | null;
+
+  // DR-2: Extraction retry tracking
+  declare extraction_attempt_count: number;
+  declare extraction_next_retry_at: Date | null;
+  declare extraction_permanent_failure: boolean;
+  declare extraction_claimed_by: string | null;
+  declare extraction_claimed_at: Date | null;
+
   // Association mixins
   declare getProject: BelongsToGetAssociationMixin<Project>;
   declare project?: NonAttribute<Project>;
@@ -224,6 +237,46 @@ export default (sequelize: Sequelize) => {
       generated_by_identity: {
         type: DataTypes.STRING(100),
         allowNull: false,
+      },
+      // DR-2: Insight extraction status
+      extraction_status: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+      },
+      extraction_attempted_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      extraction_failure_reason: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      extraction_insight_count: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      // DR-2: Extraction retry tracking
+      extraction_attempt_count: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      extraction_next_retry_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      extraction_permanent_failure: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      extraction_claimed_by: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      extraction_claimed_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
       created_at: {
         type: DataTypes.DATE,

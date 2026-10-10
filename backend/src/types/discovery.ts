@@ -220,6 +220,11 @@ export interface DiscoveryExecutionResult {
   /** Extraction outcome */
   extractionSuccess: boolean;
   extractionVariableCount: number;
+
+  /** DR-2: Insight extraction outcome */
+  insightExtractionSuccess?: boolean;
+  insightsCreated?: number;
+  insightsSkipped?: number;
 }
 
 // ─── DISC-3B: Artifact Variables ────────────────────────────────────
