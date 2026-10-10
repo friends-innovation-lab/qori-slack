@@ -562,6 +562,120 @@ describe('getDiscoveryArtifactByPublicId', () => {
 
     expect(detail).toBeNull();
   });
+
+  // DR-4a: Extraction status fields
+  it('includes extraction status fields in detail response', async () => {
+    const run = await createTestRun();
+    const artifact = await createTestArtifact(run.id);
+
+    // Set extraction status fields directly in DB
+    await sequelize.query(
+      `UPDATE discovery_artifacts SET
+        extraction_status = 'success',
+        extraction_attempted_at = NOW(),
+        extraction_insight_count = 5,
+        extraction_failure_reason = NULL,
+        extraction_permanent_failure = false,
+        extraction_next_retry_at = NULL
+      WHERE id = :id`,
+      { replacements: { id: artifact.id } },
+    );
+
+    const detail = await appService.getDiscoveryArtifactByPublicId(
+      mockCtx,
+      projectId,
+      artifact.public_id,
+    );
+
+    expect(detail).not.toBeNull();
+    expect(detail!.extractionStatus).toBe('success');
+    expect(detail!.extractionAttemptedAt).not.toBeNull();
+    expect(detail!.extractionInsightCount).toBe(5);
+    expect(detail!.extractionFailureReason).toBeNull();
+    expect(detail!.extractionPermanentFailure).toBe(false);
+    expect(detail!.extractionNextRetryAt).toBeNull();
+  });
+
+  it('returns pending extraction status for new artifacts', async () => {
+    const run = await createTestRun();
+    const artifact = await createTestArtifact(run.id);
+
+    // Set to pending status
+    await sequelize.query(
+      `UPDATE discovery_artifacts SET
+        extraction_status = 'pending',
+        extraction_attempted_at = NULL,
+        extraction_insight_count = NULL
+      WHERE id = :id`,
+      { replacements: { id: artifact.id } },
+    );
+
+    const detail = await appService.getDiscoveryArtifactByPublicId(
+      mockCtx,
+      projectId,
+      artifact.public_id,
+    );
+
+    expect(detail!.extractionStatus).toBe('pending');
+    expect(detail!.extractionAttemptedAt).toBeNull();
+    expect(detail!.extractionInsightCount).toBeNull();
+  });
+
+  it('returns failed extraction status with retry info', async () => {
+    const run = await createTestRun();
+    const artifact = await createTestArtifact(run.id);
+    const nextRetry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+
+    await sequelize.query(
+      `UPDATE discovery_artifacts SET
+        extraction_status = 'failed',
+        extraction_attempted_at = NOW(),
+        extraction_insight_count = 0,
+        extraction_failure_reason = 'Source attribution unresolved',
+        extraction_permanent_failure = false,
+        extraction_next_retry_at = :nextRetry
+      WHERE id = :id`,
+      { replacements: { id: artifact.id, nextRetry } },
+    );
+
+    const detail = await appService.getDiscoveryArtifactByPublicId(
+      mockCtx,
+      projectId,
+      artifact.public_id,
+    );
+
+    expect(detail!.extractionStatus).toBe('failed');
+    expect(detail!.extractionFailureReason).toBe('Source attribution unresolved');
+    expect(detail!.extractionPermanentFailure).toBe(false);
+    expect(detail!.extractionNextRetryAt).not.toBeNull();
+  });
+
+  it('returns permanent failure extraction status', async () => {
+    const run = await createTestRun();
+    const artifact = await createTestArtifact(run.id);
+
+    await sequelize.query(
+      `UPDATE discovery_artifacts SET
+        extraction_status = 'failed',
+        extraction_attempted_at = NOW(),
+        extraction_insight_count = 0,
+        extraction_failure_reason = 'Maximum retries exceeded',
+        extraction_permanent_failure = true,
+        extraction_next_retry_at = NULL
+      WHERE id = :id`,
+      { replacements: { id: artifact.id } },
+    );
+
+    const detail = await appService.getDiscoveryArtifactByPublicId(
+      mockCtx,
+      projectId,
+      artifact.public_id,
+    );
+
+    expect(detail!.extractionStatus).toBe('failed');
+    expect(detail!.extractionPermanentFailure).toBe(true);
+    expect(detail!.extractionNextRetryAt).toBeNull();
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════

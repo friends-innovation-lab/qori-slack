@@ -1062,6 +1062,13 @@ export async function getDiscoveryArtifactByPublicId(
     supersededAt: artifact.superseded_at?.toISOString() || null,
     sourceCount,
     marker,
+    // DR-4a: Extraction status fields
+    extractionStatus: artifact.extraction_status || null,
+    extractionAttemptedAt: artifact.extraction_attempted_at?.toISOString() || null,
+    extractionInsightCount: artifact.extraction_insight_count ?? null,
+    extractionFailureReason: artifact.extraction_failure_reason || null,
+    extractionPermanentFailure: artifact.extraction_permanent_failure ?? null,
+    extractionNextRetryAt: artifact.extraction_next_retry_at?.toISOString() || null,
   };
 }
 

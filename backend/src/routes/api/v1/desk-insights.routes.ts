@@ -43,6 +43,7 @@ function extractProjectId(params: Record<string, string | string[] | undefined>)
  * List desk research insights for a project.
  * Query params:
  *   - status: 'proposed' | 'accepted' | 'rejected' | 'withdrawn' | 'all'
+ *   - sourceId: number (filter by evidence source)
  *   - limit: number (default 50, max 100)
  *   - offset: number (default 0)
  */
@@ -63,6 +64,19 @@ router.get('/', requireAuth, async (req, res, next) => {
     const limit = Math.min(parseInt(req.query.limit as string, 10) || 50, 100);
     const offset = parseInt(req.query.offset as string, 10) || 0;
 
+    // DR-4a: Parse optional sourceId filter
+    const sourceIdParam = req.query.sourceId as string | undefined;
+    let sourceId: number | undefined;
+    if (sourceIdParam) {
+      sourceId = parseInt(sourceIdParam, 10);
+      if (isNaN(sourceId)) {
+        res.status(400).json({
+          error: { code: 'VALIDATION_ERROR', message: 'Invalid sourceId filter' },
+        });
+        return;
+      }
+    }
+
     // Validate status
     const validStatuses = ['proposed', 'accepted', 'rejected', 'withdrawn', 'all'];
     if (status && !validStatuses.includes(status)) {
@@ -74,6 +88,7 @@ router.get('/', requireAuth, async (req, res, next) => {
 
     const result = await deskInsightService.listInsights(projectId, {
       status: status as any,
+      sourceId,
       limit,
       offset,
     });

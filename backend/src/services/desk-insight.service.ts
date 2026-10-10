@@ -775,16 +775,19 @@ export async function withdrawInsight(input: WithdrawInsightInput): Promise<Insi
 
 /**
  * List insights for a project
+ *
+ * DR-4a: sourceId filter returns only insights citing that evidence source.
  */
 export async function listInsights(
   projectId: number,
   options: {
     status?: 'proposed' | 'accepted' | 'rejected' | 'withdrawn' | 'all';
+    sourceId?: number;
     limit?: number;
     offset?: number;
   } = {},
 ): Promise<{ insights: InsightSummary[]; total: number; needsReviewCount: number }> {
-  const { status = 'all', limit = 50, offset = 0 } = options;
+  const { status = 'all', sourceId, limit = 50, offset = 0 } = options;
 
   const where: any = {
     project_id: projectId,
@@ -797,6 +800,31 @@ export async function listInsights(
   } else if (status !== 'all') {
     where.withdrawn_at = null;
     // Additional filtering done post-query based on derived status
+  }
+
+  // DR-4a: If sourceId filter provided, get construct IDs that cite this source
+  let constructIdFilter: number[] | null = null;
+  if (sourceId !== undefined) {
+    const citingRelationships = await EvidenceRelationship.findAll({
+      where: {
+        from_source_id: sourceId,
+        to_construct_id: { [Op.ne]: null },
+        relationship_type: 'DERIVED_FROM',
+      },
+      attributes: ['to_construct_id'],
+    });
+    constructIdFilter = citingRelationships.map((r: any) => r.to_construct_id);
+
+    // Early return if no constructs cite this source
+    if (constructIdFilter.length === 0) {
+      return {
+        insights: [],
+        total: 0,
+        needsReviewCount: 0,
+      };
+    }
+
+    where.id = { [Op.in]: constructIdFilter };
   }
 
   const { rows, count } = await EvidenceConstruct.findAndCountAll({
