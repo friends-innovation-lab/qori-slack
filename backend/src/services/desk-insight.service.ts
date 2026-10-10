@@ -802,21 +802,32 @@ export async function listInsights(
     // Additional filtering done post-query based on derived status
   }
 
-  // DR-4a: If sourceId filter provided, get construct IDs that cite this source
-  let constructIdFilter: number[] | null = null;
+  // DR-4a: sourceId filter uses immutable revision snapshots (not accumulated lineage)
+  // Pre-filter construct IDs where latest revision cites the source
   if (sourceId !== undefined) {
-    const citingRelationships = await EvidenceRelationship.findAll({
-      where: {
-        from_source_id: sourceId,
-        to_construct_id: { [Op.ne]: null },
-        relationship_type: 'DERIVED_FROM',
+    // Query latest revisions that cite this source in their evidence_snapshot JSONB
+    const citingConstructs = await sequelize.query<{ construct_id: number }>(
+      `
+      SELECT DISTINCT ec.id as construct_id
+      FROM evidence_constructs ec
+      JOIN evidence_construct_revisions ecr ON ecr.id = ec.latest_revision_id
+      WHERE ec.project_id = :projectId
+        AND ec.construct_type = 'desk_insight'
+        AND EXISTS (
+          SELECT 1 FROM jsonb_array_elements(ecr.evidence_snapshot) AS ref
+          WHERE (ref->>'evidenceSourceId')::int = :sourceId
+        )
+      `,
+      {
+        replacements: { projectId, sourceId },
+        type: 'SELECT' as any,
       },
-      attributes: ['to_construct_id'],
-    });
-    constructIdFilter = citingRelationships.map((r: any) => r.to_construct_id);
+    );
+
+    const constructIds = citingConstructs.map(r => r.construct_id);
 
     // Early return if no constructs cite this source
-    if (constructIdFilter.length === 0) {
+    if (constructIds.length === 0) {
       return {
         insights: [],
         total: 0,
@@ -824,7 +835,7 @@ export async function listInsights(
       };
     }
 
-    where.id = { [Op.in]: constructIdFilter };
+    where.id = { [Op.in]: constructIds };
   }
 
   const { rows, count } = await EvidenceConstruct.findAndCountAll({

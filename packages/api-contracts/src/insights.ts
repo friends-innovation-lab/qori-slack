@@ -46,6 +46,9 @@ export interface EvidenceReference {
   /** Evidence source ID */
   evidenceSourceId: number;
 
+  /** Public ID of the evidence source */
+  evidenceSourcePublicId?: string;
+
   /** Source label for display */
   sourceLabel?: string;
 
@@ -53,7 +56,10 @@ export interface EvidenceReference {
   locator: EvidenceLocator;
 
   /** Validation status */
-  validation?: 'verified' | 'ai_unverified' | 'researcher_provided';
+  validation?: 'verified' | 'source_attributed_unverified' | 'ai_unverified';
+
+  /** SHA hash of captured content for verification */
+  capturedContentHash?: string;
 }
 
 // ─── Revision ────────────────────────────────────────────────────────
