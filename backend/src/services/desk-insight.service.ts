@@ -775,16 +775,19 @@ export async function withdrawInsight(input: WithdrawInsightInput): Promise<Insi
 
 /**
  * List insights for a project
+ *
+ * DR-4a: sourceId filter returns only insights citing that evidence source.
  */
 export async function listInsights(
   projectId: number,
   options: {
     status?: 'proposed' | 'accepted' | 'rejected' | 'withdrawn' | 'all';
+    sourceId?: number;
     limit?: number;
     offset?: number;
   } = {},
 ): Promise<{ insights: InsightSummary[]; total: number; needsReviewCount: number }> {
-  const { status = 'all', limit = 50, offset = 0 } = options;
+  const { status = 'all', sourceId, limit = 50, offset = 0 } = options;
 
   const where: any = {
     project_id: projectId,
@@ -797,6 +800,42 @@ export async function listInsights(
   } else if (status !== 'all') {
     where.withdrawn_at = null;
     // Additional filtering done post-query based on derived status
+  }
+
+  // DR-4a: sourceId filter uses immutable revision snapshots (not accumulated lineage)
+  // Pre-filter construct IDs where latest revision cites the source
+  if (sourceId !== undefined) {
+    // Query latest revisions that cite this source in their evidence_snapshot JSONB
+    const citingConstructs = await sequelize.query<{ construct_id: number }>(
+      `
+      SELECT DISTINCT ec.id as construct_id
+      FROM evidence_constructs ec
+      JOIN evidence_construct_revisions ecr ON ecr.id = ec.latest_revision_id
+      WHERE ec.project_id = :projectId
+        AND ec.construct_type = 'desk_insight'
+        AND EXISTS (
+          SELECT 1 FROM jsonb_array_elements(ecr.evidence_snapshot) AS ref
+          WHERE (ref->>'evidenceSourceId')::int = :sourceId
+        )
+      `,
+      {
+        replacements: { projectId, sourceId },
+        type: 'SELECT' as any,
+      },
+    );
+
+    const constructIds = citingConstructs.map(r => r.construct_id);
+
+    // Early return if no constructs cite this source
+    if (constructIds.length === 0) {
+      return {
+        insights: [],
+        total: 0,
+        needsReviewCount: 0,
+      };
+    }
+
+    where.id = { [Op.in]: constructIds };
   }
 
   const { rows, count } = await EvidenceConstruct.findAndCountAll({

@@ -139,7 +139,44 @@ export interface DiscoveryArtifactDetail extends DiscoveryArtifactSummary {
 
   /** Source lineage summary */
   sourceCount: number;
+
+  // ─── DR-4a: Extraction Status (run-level, not per-file) ───────────
+
+  /**
+   * Insight extraction status for this artifact.
+   * Only applies to desk_research artifacts.
+   */
+  extractionStatus: ExtractionStatus | null;
+
+  /** When extraction was last attempted */
+  extractionAttemptedAt: string | null;
+
+  /** Number of insights extracted */
+  extractionInsightCount: number | null;
+
+  /**
+   * Sanitized failure reason (if extraction failed/partial).
+   * Does not expose internal error details.
+   */
+  extractionFailureReason: string | null;
+
+  /** Whether extraction is permanently failed (will not retry) */
+  extractionPermanentFailure: boolean | null;
+
+  /** When next retry is scheduled (if applicable) */
+  extractionNextRetryAt: string | null;
 }
+
+/**
+ * Extraction status for a discovery artifact.
+ * Represents run-level status, not per-file processing.
+ */
+export type ExtractionStatus =
+  | 'pending'        // Extraction not yet attempted
+  | 'success'        // All candidates extracted successfully
+  | 'partial'        // Some candidates extracted, some failed
+  | 'failed'         // All candidates failed
+  | 'not_applicable'; // Non-desk_research artifact
 
 // ─── DISC-3B: Artifact Variables ────────────────────────────────────
 

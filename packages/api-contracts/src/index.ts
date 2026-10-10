@@ -4,3 +4,4 @@ export * from './requests';
 export * from './comments';
 export * from './coaching';
 export * from './discovery';
+export * from './insights';

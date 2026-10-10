@@ -747,6 +747,253 @@ describe('DR-1 Desk Research Insights', () => {
       expect(accepted).toHaveLength(1);
       expect(accepted[0].wording).toBe('Accepted');
     });
+
+    // DR-4a: sourceId filter
+    it('filters insights by evidence source ID', async () => {
+      // Create insight citing source 1
+      await deskInsightService.createInsight({
+        projectId,
+        wording: 'Insight citing source 1',
+        evidenceReferences: [makeEvidenceRef(sourceId)],
+        createdBy: actorId,
+      });
+
+      // Create insight citing source 2
+      await deskInsightService.createInsight({
+        projectId,
+        wording: 'Insight citing source 2',
+        evidenceReferences: [makeEvidenceRef(source2Id)],
+        createdBy: actorId,
+      });
+
+      // Create insight citing both sources
+      await deskInsightService.createInsight({
+        projectId,
+        wording: 'Insight citing both sources',
+        evidenceReferences: [
+          makeEvidenceRef(sourceId),
+          makeEvidenceRef(source2Id),
+        ],
+        createdBy: actorId,
+      });
+
+      // Filter by source 1 - should find 2 insights
+      const { insights: source1Insights } = await deskInsightService.listInsights(
+        projectId,
+        { sourceId },
+      );
+      expect(source1Insights).toHaveLength(2);
+      expect(source1Insights.map(i => i.wording).sort()).toEqual([
+        'Insight citing both sources',
+        'Insight citing source 1',
+      ]);
+
+      // Filter by source 2 - should find 2 insights
+      const { insights: source2Insights } = await deskInsightService.listInsights(
+        projectId,
+        { sourceId: source2Id },
+      );
+      expect(source2Insights).toHaveLength(2);
+      expect(source2Insights.map(i => i.wording).sort()).toEqual([
+        'Insight citing both sources',
+        'Insight citing source 2',
+      ]);
+    });
+
+    it('returns empty list when no insights cite the source', async () => {
+      // Create insight citing source 1
+      await deskInsightService.createInsight({
+        projectId,
+        wording: 'Insight citing source 1',
+        evidenceReferences: [makeEvidenceRef(sourceId)],
+        createdBy: actorId,
+      });
+
+      // Filter by source 2 (unused) - should find 0 insights
+      const { insights, total } = await deskInsightService.listInsights(
+        projectId,
+        { sourceId: source2Id },
+      );
+      expect(insights).toHaveLength(0);
+      expect(total).toBe(0);
+    });
+
+    it('combines sourceId filter with status filter', async () => {
+      // Create proposed insight citing source 1
+      await deskInsightService.createInsight({
+        projectId,
+        wording: 'Proposed citing source 1',
+        evidenceReferences: [makeEvidenceRef(sourceId)],
+        createdBy: actorId,
+      });
+
+      // Create accepted insight citing source 1
+      const toAccept = await deskInsightService.createInsight({
+        projectId,
+        wording: 'Accepted citing source 1',
+        evidenceReferences: [makeEvidenceRef(sourceId)],
+        createdBy: actorId,
+      });
+      await deskInsightService.acceptRevision({
+        constructId: toAccept.id,
+        revisionId: toAccept.latestRevision.id,
+        reviewedBy: actorId,
+        expectedVersion: toAccept.version,
+      });
+
+      // Create proposed insight citing source 2
+      await deskInsightService.createInsight({
+        projectId,
+        wording: 'Proposed citing source 2',
+        evidenceReferences: [makeEvidenceRef(source2Id)],
+        createdBy: actorId,
+      });
+
+      // Filter by source 1 + proposed - should find 1
+      const { insights: proposed1 } = await deskInsightService.listInsights(
+        projectId,
+        { sourceId, status: 'proposed' },
+      );
+      expect(proposed1).toHaveLength(1);
+      expect(proposed1[0].wording).toBe('Proposed citing source 1');
+
+      // Filter by source 1 + accepted - should find 1
+      const { insights: accepted1 } = await deskInsightService.listInsights(
+        projectId,
+        { sourceId, status: 'accepted' },
+      );
+      expect(accepted1).toHaveLength(1);
+      expect(accepted1[0].wording).toBe('Accepted citing source 1');
+    });
+
+    it('filters by latest revision when accepted insight has pending revision with different source', async () => {
+      // Create and accept insight citing source 1
+      const insight = await deskInsightService.createInsight({
+        projectId,
+        wording: 'Originally citing source 1',
+        evidenceReferences: [makeEvidenceRef(sourceId)],
+        createdBy: actorId,
+      });
+      const accepted = await deskInsightService.acceptRevision({
+        constructId: insight.id,
+        revisionId: insight.latestRevision.id,
+        reviewedBy: actorId,
+        expectedVersion: insight.version,
+      });
+
+      // Create pending revision citing source 2 (different from accepted)
+      await deskInsightService.createRevision({
+        constructId: insight.id,
+        wording: 'Pending citing source 2',
+        evidenceReferences: [makeEvidenceRef(source2Id)],
+        createdBy: actorId,
+        expectedVersion: accepted.version,
+      });
+
+      // Filter by source 1 - should NOT match (latest revision cites source 2)
+      const { insights: source1Insights } = await deskInsightService.listInsights(
+        projectId,
+        { sourceId },
+      );
+      expect(source1Insights).toHaveLength(0);
+
+      // Filter by source 2 - SHOULD match (latest revision cites source 2)
+      const { insights: source2Insights } = await deskInsightService.listInsights(
+        projectId,
+        { sourceId: source2Id },
+      );
+      expect(source2Insights).toHaveLength(1);
+      expect(source2Insights[0].wording).toBe('Pending citing source 2');
+    });
+
+    it('excludes withdrawn insights from non-withdrawn status filters', async () => {
+      // Create, accept, and withdraw insight citing source 1
+      const insight = await deskInsightService.createInsight({
+        projectId,
+        wording: 'To be withdrawn',
+        evidenceReferences: [makeEvidenceRef(sourceId)],
+        createdBy: actorId,
+      });
+      const accepted = await deskInsightService.acceptRevision({
+        constructId: insight.id,
+        revisionId: insight.latestRevision.id,
+        reviewedBy: actorId,
+        expectedVersion: insight.version,
+      });
+      await deskInsightService.withdrawInsight({
+        constructId: insight.id,
+        reviewedBy: actorId,
+        comment: 'No longer relevant',
+        expectedVersion: accepted.version,
+      });
+
+      // Filter by source 1 with status='all' - includes withdrawn
+      const { insights: all } = await deskInsightService.listInsights(
+        projectId,
+        { sourceId, status: 'all' },
+      );
+      expect(all).toHaveLength(1);
+      expect(all[0].status).toBe('withdrawn');
+
+      // Filter by source 1 with status='accepted' - excludes withdrawn
+      const { insights: acceptedOnly } = await deskInsightService.listInsights(
+        projectId,
+        { sourceId, status: 'accepted' },
+      );
+      expect(acceptedOnly).toHaveLength(0);
+
+      // Filter by source 1 with status='withdrawn' - should find it
+      const { insights: withdrawn } = await deskInsightService.listInsights(
+        projectId,
+        { sourceId, status: 'withdrawn' },
+      );
+      expect(withdrawn).toHaveLength(1);
+    });
+
+    it('ignores cross-project source IDs', async () => {
+      // Create insight citing source in this project
+      await deskInsightService.createInsight({
+        projectId,
+        wording: 'Valid insight',
+        evidenceReferences: [makeEvidenceRef(sourceId)],
+        createdBy: actorId,
+      });
+
+      // Filter by cross-project source - should return empty
+      const { insights } = await deskInsightService.listInsights(
+        projectId,
+        { sourceId: crossProjectSourceId },
+      );
+      expect(insights).toHaveLength(0);
+    });
+
+    it('does not return duplicates when multiple insights cite same source', async () => {
+      // Create two insights both citing source 1
+      await deskInsightService.createInsight({
+        projectId,
+        wording: 'First insight citing source 1',
+        evidenceReferences: [makeEvidenceRef(sourceId)],
+        createdBy: actorId,
+      });
+      await deskInsightService.createInsight({
+        projectId,
+        wording: 'Second insight citing source 1',
+        evidenceReferences: [makeEvidenceRef(sourceId)],
+        createdBy: actorId,
+      });
+
+      const { insights, total } = await deskInsightService.listInsights(
+        projectId,
+        { sourceId },
+      );
+      // Should return exactly 2 insights, no duplicates
+      expect(insights).toHaveLength(2);
+      expect(total).toBe(2);
+      expect(insights.map(i => i.wording).sort()).toEqual([
+        'First insight citing source 1',
+        'Second insight citing source 1',
+      ]);
+    });
   });
 
   describe('Backward Compatibility', () => {
