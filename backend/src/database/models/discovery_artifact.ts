@@ -88,6 +88,13 @@ class DiscoveryArtifact extends Model<
   declare extraction_failure_reason: string | null;
   declare extraction_insight_count: number | null;
 
+  // DR-2: Extraction retry tracking
+  declare extraction_attempt_count: number;
+  declare extraction_next_retry_at: Date | null;
+  declare extraction_permanent_failure: boolean;
+  declare extraction_claimed_by: string | null;
+  declare extraction_claimed_at: Date | null;
+
   // Association mixins
   declare getProject: BelongsToGetAssociationMixin<Project>;
   declare project?: NonAttribute<Project>;
@@ -246,6 +253,29 @@ export default (sequelize: Sequelize) => {
       },
       extraction_insight_count: {
         type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      // DR-2: Extraction retry tracking
+      extraction_attempt_count: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      extraction_next_retry_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      extraction_permanent_failure: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      extraction_claimed_by: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      extraction_claimed_at: {
+        type: DataTypes.DATE,
         allowNull: true,
       },
       created_at: {

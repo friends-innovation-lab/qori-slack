@@ -178,6 +178,9 @@ export async function extractInsightsFromDiscoveryRun(
       variablesByKey.get(key)!.push(v);
     }
 
+    // Track failure reasons for error aggregation
+    const failureReasons: string[] = [];
+
     // Process each variable type
     for (const [varKey, vars] of variablesByKey) {
       result.breakdown[varKey] = { created: 0, skipped: 0, failed: 0 };
@@ -193,17 +196,26 @@ export async function extractInsightsFromDiscoveryRun(
           verbose,
         );
 
-        if (itemResult === 'created') {
+        if (itemResult.status === 'created') {
           result.createdCount++;
           result.breakdown[varKey].created++;
-        } else if (itemResult === 'skipped') {
+        } else if (itemResult.status === 'skipped') {
           result.skippedCount++;
           result.breakdown[varKey].skipped++;
         } else {
           result.failedCount++;
           result.breakdown[varKey].failed++;
+          if (itemResult.error) {
+            failureReasons.push(itemResult.error);
+          }
         }
       }
+    }
+
+    // Aggregate failure reasons into result.error
+    if (failureReasons.length > 0) {
+      // Use the first failure reason (most likely to be representative)
+      result.error = failureReasons[0];
     }
 
     if (verbose) {
@@ -369,7 +381,7 @@ async function processVariableItem(
   exactMap: Map<string, SourceMapping>,
   allSources: SourceMapping[],
   verbose: boolean,
-): Promise<'created' | 'skipped' | 'failed'> {
+): Promise<{ status: 'created' | 'skipped' | 'failed'; error?: string }> {
   const itemKey = variable.item_key || 'item-0';
   const value = variable.value;
 
@@ -393,7 +405,7 @@ async function processVariableItem(
         const barrier = item as DiscoveredBarrier;
         if (!barrier.title && !barrier.summary) {
           if (verbose) console.log(`[DR-2] Skipping barrier ${itemId}: no title or summary`);
-          return 'failed';
+          return { status: 'failed', error: 'Insight wording is required (no title or summary)' };
         }
         wording = formatBarrierWording(barrier);
         sourceDocument = barrier.source_document;
@@ -401,7 +413,7 @@ async function processVariableItem(
         const gap = item as KnowledgeGap;
         if (!gap.gap) {
           if (verbose) console.log(`[DR-2] Skipping gap ${itemId}: no gap text`);
-          return 'failed';
+          return { status: 'failed', error: 'Insight wording is required (no gap text)' };
         }
         wording = formatGapWording(gap);
         sourceDocument = gap.source_document;
@@ -425,7 +437,7 @@ async function processVariableItem(
         if (verbose) {
           console.log(`[DR-2] Skipping ${itemId}: source attribution unresolved - ${resolution.resolutionNote}`);
         }
-        return 'failed';
+        return { status: 'failed', error: `Source attribution unresolved: ${resolution.resolutionNote}` };
       }
 
       // Create insight idempotently
@@ -443,21 +455,21 @@ async function processVariableItem(
         if (verbose) {
           console.log(`[DR-2] Created insight ${createResult.insight.displayId} for ${itemId}`);
         }
-        return 'created';
+        return { status: 'created' };
       } else {
         if (verbose) {
           console.log(`[DR-2] Skipped ${itemId}: already exists as ${createResult.insight.displayId}`);
         }
-        return 'skipped';
+        return { status: 'skipped' };
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(`[DR-2] Failed to create insight for ${itemId}: ${errorMessage}`);
-      return 'failed';
+      return { status: 'failed', error: errorMessage };
     }
   }
 
-  return 'skipped';
+  return { status: 'skipped' };
 }
 
 /**

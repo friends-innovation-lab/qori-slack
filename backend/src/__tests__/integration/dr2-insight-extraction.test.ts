@@ -28,6 +28,7 @@ import * as runService from '../../services/discovery-run.service';
 import * as artifactService from '../../services/discovery-artifact.service';
 import * as insightExtractionService from '../../services/insight-extraction.service';
 import * as deskInsightService from '../../services/desk-insight.service';
+import * as extractionRetryService from '../../services/extraction-retry.service';
 
 const sequelize = getTestDb();
 
@@ -1238,7 +1239,8 @@ describe('Durable Failure and Retry', () => {
     const artifact = await DiscoveryArtifactModel.findByPk(artifactId);
     expect((artifact as any).extraction_status).toBe('partial');
     expect((artifact as any).extraction_insight_count).toBe(1);
-    expect((artifact as any).extraction_failure_reason).toContain('1 candidates failed');
+    // Failure reason now contains specific error for first failed candidate
+    expect((artifact as any).extraction_failure_reason).toContain('Source attribution unresolved');
   });
 
   it('persists extraction_status=failed when all candidates fail', async () => {
@@ -1365,7 +1367,355 @@ describe('Durable Failure and Retry', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 10. EXTRACTION STATUS QUERY
+// 10. BOUNDED RETRY MECHANISM
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('Bounded Retry Mechanism', () => {
+  it('claimNextRetryableArtifact finds failed artifacts ready for retry', async () => {
+    const { runId, artifactId } = await createRunWithArtifact();
+
+    // Create variable that will fail extraction (unresolved source)
+    await createEmittedVariables(artifactId, [
+      {
+        key: 'discovered_barriers',
+        itemKey: 'barrier-001',
+        value: {
+          id: 'barrier-001',
+          title: 'Test barrier',
+          summary: 'Description',
+          source_document: 'Non-existent.pdf',
+        },
+      },
+    ]);
+
+    // Run extraction (will fail)
+    await insightExtractionService.extractInsightsFromDiscoveryRun(runId, artifactId);
+
+    // Mark run as completed (required for retry eligibility)
+    await DiscoveryRunModel.update({ status: 'completed' }, { where: { id: runId } });
+
+    // Claim retryable artifact
+    const claimed = await extractionRetryService.claimNextRetryableArtifact('worker-1');
+
+    expect(claimed).not.toBeNull();
+    expect(claimed!.id).toBe(artifactId);
+    expect(claimed!.status).toBe('failed');
+    expect(claimed!.attemptCount).toBe(0); // First extraction doesn't count as retry
+  });
+
+  it('calculates exponential backoff correctly', () => {
+    // Base delay: 5 minutes
+    expect(extractionRetryService.calculateRetryDelay(1)).toBe(5 * 60 * 1000);
+    // Attempt 2: 10 minutes
+    expect(extractionRetryService.calculateRetryDelay(2)).toBe(10 * 60 * 1000);
+    // Attempt 3: 20 minutes
+    expect(extractionRetryService.calculateRetryDelay(3)).toBe(20 * 60 * 1000);
+    // Attempt 4: 40 minutes
+    expect(extractionRetryService.calculateRetryDelay(4)).toBe(40 * 60 * 1000);
+    // Attempt 5: 80 minutes
+    expect(extractionRetryService.calculateRetryDelay(5)).toBe(80 * 60 * 1000);
+    // Very high attempt: capped at 24 hours
+    expect(extractionRetryService.calculateRetryDelay(20)).toBe(24 * 60 * 60 * 1000);
+  });
+
+  it('classifies permanent errors correctly', () => {
+    // Permanent errors - should not retry
+    expect(extractionRetryService.isPermanentError('no exact match in run sources')).toBe(true);
+    expect(extractionRetryService.isPermanentError('Source attribution unresolved')).toBe(true);
+    expect(extractionRetryService.isPermanentError('Evidence reference is required')).toBe(true);
+    expect(extractionRetryService.isPermanentError('Insight wording is required')).toBe(true);
+    expect(extractionRetryService.isPermanentError('project_id 99999 not found')).toBe(true);
+
+    // Retryable errors
+    expect(extractionRetryService.isPermanentError('Connection timeout')).toBe(false);
+    expect(extractionRetryService.isPermanentError('Database connection failed')).toBe(false);
+    expect(extractionRetryService.isPermanentError(undefined)).toBe(false);
+  });
+
+  it('marks permanent failures as not retryable', async () => {
+    const { runId, artifactId } = await createRunWithArtifact();
+
+    // Create variable with permanent failure (unresolvable source)
+    await createEmittedVariables(artifactId, [
+      {
+        key: 'discovered_barriers',
+        itemKey: 'barrier-001',
+        value: {
+          id: 'barrier-001',
+          title: 'Test barrier',
+          summary: 'Description',
+          source_document: 'Non-existent.pdf', // Unresolvable = permanent
+        },
+      },
+    ]);
+
+    // First extraction fails
+    await insightExtractionService.extractInsightsFromDiscoveryRun(runId, artifactId);
+
+    // Mark run as completed
+    await DiscoveryRunModel.update({ status: 'completed' }, { where: { id: runId } });
+
+    // Execute retry - should mark as permanent failure
+    const claimed = await extractionRetryService.claimNextRetryableArtifact('worker-1');
+    expect(claimed).not.toBeNull();
+
+    const result = await extractionRetryService.executeExtractionRetry(claimed!, 'worker-1');
+    expect(result.status).toBe('permanent');
+
+    // Should not be eligible for retry anymore
+    const artifact = await DiscoveryArtifactModel.findByPk(artifactId);
+    expect((artifact as any).extraction_permanent_failure).toBe(true);
+    expect((artifact as any).extraction_next_retry_at).toBeNull();
+
+    // Should not be claimable
+    const claimedAgain = await extractionRetryService.claimNextRetryableArtifact('worker-2');
+    expect(claimedAgain).toBeNull();
+  });
+
+  it('successful retry clears retry eligibility', async () => {
+    const { runId, artifactId } = await createRunWithArtifact();
+
+    // First: create with unresolvable source (will fail)
+    await createEmittedVariables(artifactId, [
+      {
+        key: 'discovered_barriers',
+        itemKey: 'barrier-001',
+        value: {
+          id: 'barrier-001',
+          title: 'Test barrier',
+          summary: 'Description',
+          source_document: 'Non-existent.pdf',
+        },
+      },
+    ]);
+    await insightExtractionService.extractInsightsFromDiscoveryRun(runId, artifactId);
+
+    // Mark run as completed
+    await DiscoveryRunModel.update({ status: 'completed' }, { where: { id: runId } });
+
+    // "Fix" the issue by updating the variable to reference a valid source
+    await StudyVariableModel.update(
+      { value: { id: 'barrier-001', title: 'Test barrier', summary: 'Description', source_document: 'Test Document 1.pdf' } },
+      { where: { discovery_artifact_fk_id: artifactId, item_key: 'barrier-001' } },
+    );
+
+    // Execute retry
+    const claimed = await extractionRetryService.claimNextRetryableArtifact('worker-1');
+    expect(claimed).not.toBeNull();
+
+    const result = await extractionRetryService.executeExtractionRetry(claimed!, 'worker-1');
+    expect(result.success).toBe(true);
+    expect(result.status).toBe('success');
+
+    // Should be marked as success, no longer eligible
+    const artifact = await DiscoveryArtifactModel.findByPk(artifactId);
+    expect((artifact as any).extraction_status).toBe('success');
+    expect((artifact as any).extraction_next_retry_at).toBeNull();
+    expect((artifact as any).extraction_permanent_failure).toBe(false);
+
+    // Should not be claimable
+    const claimedAgain = await extractionRetryService.claimNextRetryableArtifact('worker-2');
+    expect(claimedAgain).toBeNull();
+  });
+
+  it('recovers expired claims', async () => {
+    const { runId, artifactId } = await createRunWithArtifact();
+
+    await createEmittedVariables(artifactId, [
+      {
+        key: 'discovered_barriers',
+        itemKey: 'barrier-001',
+        value: {
+          id: 'barrier-001',
+          title: 'Test barrier',
+          summary: 'Description',
+          source_document: 'Non-existent.pdf',
+        },
+      },
+    ]);
+    await insightExtractionService.extractInsightsFromDiscoveryRun(runId, artifactId);
+    await DiscoveryRunModel.update({ status: 'completed' }, { where: { id: runId } });
+
+    // Simulate an expired claim by directly setting old claim time
+    const expiredTime = new Date(Date.now() - 10 * 60 * 1000); // 10 minutes ago
+    await DiscoveryArtifactModel.update(
+      {
+        extraction_claimed_by: 'dead-worker',
+        extraction_claimed_at: expiredTime,
+      },
+      { where: { id: artifactId } },
+    );
+
+    // Recover expired claims
+    const recovered = await extractionRetryService.recoverExpiredClaims();
+    expect(recovered).toBe(1);
+
+    // Should now be claimable
+    const claimed = await extractionRetryService.claimNextRetryableArtifact('new-worker');
+    expect(claimed).not.toBeNull();
+    expect(claimed!.id).toBe(artifactId);
+  });
+
+  it('releases claim on shutdown', async () => {
+    const { runId, artifactId } = await createRunWithArtifact();
+
+    await createEmittedVariables(artifactId, [
+      {
+        key: 'discovered_barriers',
+        itemKey: 'barrier-001',
+        value: {
+          id: 'barrier-001',
+          title: 'Test barrier',
+          summary: 'Description',
+          source_document: 'Non-existent.pdf',
+        },
+      },
+    ]);
+    await insightExtractionService.extractInsightsFromDiscoveryRun(runId, artifactId);
+    await DiscoveryRunModel.update({ status: 'completed' }, { where: { id: runId } });
+
+    // Claim
+    const claimed = await extractionRetryService.claimNextRetryableArtifact('worker-1');
+    expect(claimed).not.toBeNull();
+
+    // Verify claimed
+    let artifact = await DiscoveryArtifactModel.findByPk(artifactId);
+    expect((artifact as any).extraction_claimed_by).toBe('worker-1');
+
+    // Release claim (simulates shutdown)
+    const released = await extractionRetryService.releaseClaim(artifactId, 'worker-1');
+    expect(released).toBe(true);
+
+    // Verify released
+    artifact = await DiscoveryArtifactModel.findByPk(artifactId);
+    expect((artifact as any).extraction_claimed_by).toBeNull();
+
+    // Should be claimable by another worker
+    const claimedByAnother = await extractionRetryService.claimNextRetryableArtifact('worker-2');
+    expect(claimedByAnother).not.toBeNull();
+  });
+
+  it('getRetryQueueDepth returns correct count', async () => {
+    // Create two failed artifacts
+    const { runId: runId1, artifactId: artifactId1 } = await createRunWithArtifact({ topic: 'Test 1' });
+    const { runId: runId2, artifactId: artifactId2 } = await createRunWithArtifact({ topic: 'Test 2' });
+    const { runId: runId3, artifactId: artifactId3 } = await createRunWithArtifact({ topic: 'Test 3' });
+
+    // Artifact 1: success
+    await createEmittedVariables(artifactId1, [
+      { key: 'discovered_barriers', itemKey: 'b1', value: { id: 'b1', title: 'T', summary: 'S', source_document: 'Test Document 1.pdf' } },
+    ]);
+    await insightExtractionService.extractInsightsFromDiscoveryRun(runId1, artifactId1);
+
+    // Artifact 2: failed (retryable)
+    await createEmittedVariables(artifactId2, [
+      { key: 'discovered_barriers', itemKey: 'b2', value: { id: 'b2', title: 'T', summary: 'S', source_document: 'Missing.pdf' } },
+    ]);
+    await insightExtractionService.extractInsightsFromDiscoveryRun(runId2, artifactId2);
+
+    // Artifact 3: failed (retryable)
+    await createEmittedVariables(artifactId3, [
+      { key: 'discovered_barriers', itemKey: 'b3', value: { id: 'b3', title: 'T', summary: 'S', source_document: 'Missing2.pdf' } },
+    ]);
+    await insightExtractionService.extractInsightsFromDiscoveryRun(runId3, artifactId3);
+
+    // Mark runs as completed (required for retry eligibility)
+    await DiscoveryRunModel.update({ status: 'completed' }, { where: { id: [runId1, runId2, runId3] } });
+
+    const depth = await extractionRetryService.getRetryQueueDepth();
+    expect(depth).toBe(2); // Only the 2 failed ones
+  });
+
+  it('getExhaustedArtifacts returns artifacts at max attempts', async () => {
+    const { runId, artifactId } = await createRunWithArtifact();
+
+    await createEmittedVariables(artifactId, [
+      { key: 'discovered_barriers', itemKey: 'b1', value: { id: 'b1', title: 'T', summary: 'S', source_document: 'Missing.pdf' } },
+    ]);
+    await insightExtractionService.extractInsightsFromDiscoveryRun(runId, artifactId);
+
+    // Simulate exhausted attempts
+    await DiscoveryArtifactModel.update(
+      { extraction_attempt_count: 5, extraction_permanent_failure: true },
+      { where: { id: artifactId } },
+    );
+
+    const exhausted = await extractionRetryService.getExhaustedArtifacts(projectId);
+    expect(exhausted.length).toBe(1);
+    expect(exhausted[0].artifactId).toBe(artifactId);
+    expect(exhausted[0].attemptCount).toBe(5);
+  });
+
+  it('respects retry timing (not_before)', async () => {
+    const { runId, artifactId } = await createRunWithArtifact();
+
+    await createEmittedVariables(artifactId, [
+      { key: 'discovered_barriers', itemKey: 'b1', value: { id: 'b1', title: 'T', summary: 'S', source_document: 'Missing.pdf' } },
+    ]);
+    await insightExtractionService.extractInsightsFromDiscoveryRun(runId, artifactId);
+    await DiscoveryRunModel.update({ status: 'completed' }, { where: { id: runId } });
+
+    // Set next retry time in the future
+    const futureTime = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+    await DiscoveryArtifactModel.update(
+      {
+        extraction_attempt_count: 1,
+        extraction_next_retry_at: futureTime,
+      },
+      { where: { id: artifactId } },
+    );
+
+    // Should not be claimable (not yet time to retry)
+    const claimed = await extractionRetryService.claimNextRetryableArtifact('worker-1');
+    expect(claimed).toBeNull();
+
+    // Set next retry time in the past
+    const pastTime = new Date(Date.now() - 60 * 1000); // 1 minute ago
+    await DiscoveryArtifactModel.update(
+      { extraction_next_retry_at: pastTime },
+      { where: { id: artifactId } },
+    );
+
+    // Should now be claimable
+    const claimedAfter = await extractionRetryService.claimNextRetryableArtifact('worker-1');
+    expect(claimedAfter).not.toBeNull();
+    expect(claimedAfter!.id).toBe(artifactId);
+  });
+
+  it('excludes non-desk_research runs from retry', async () => {
+    const { runId, artifactId } = await createRunWithArtifact({ discoveryType: 'stakeholder_synthesis' });
+
+    // Even if extraction failed, stakeholder runs shouldn't be retried
+    await DiscoveryArtifactModel.update(
+      {
+        extraction_status: 'failed',
+        extraction_failure_reason: 'Some error',
+      },
+      { where: { id: artifactId } },
+    );
+    await DiscoveryRunModel.update({ status: 'completed' }, { where: { id: runId } });
+
+    const claimed = await extractionRetryService.claimNextRetryableArtifact('worker-1');
+    expect(claimed).toBeNull();
+  });
+
+  it('excludes non-completed runs from retry', async () => {
+    const { runId, artifactId } = await createRunWithArtifact();
+
+    await createEmittedVariables(artifactId, [
+      { key: 'discovered_barriers', itemKey: 'b1', value: { id: 'b1', title: 'T', summary: 'S', source_document: 'Missing.pdf' } },
+    ]);
+    await insightExtractionService.extractInsightsFromDiscoveryRun(runId, artifactId);
+
+    // Run is not completed (still in 'pending' state)
+    // Should not be claimable
+    const claimed = await extractionRetryService.claimNextRetryableArtifact('worker-1');
+    expect(claimed).toBeNull();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 11. EXTRACTION STATUS QUERY
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe('Extraction Status', () => {
