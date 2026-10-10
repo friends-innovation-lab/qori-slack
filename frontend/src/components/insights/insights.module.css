@@ -1,0 +1,1130 @@
+/**
+ * Insights Components — DR-4c
+ *
+ * Styling for Desk Research Insights UI components.
+ * Per DESK_RESEARCH_DESIGN_SPEC.md redlines.
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATUS BADGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--text-caption-size);
+  line-height: var(--text-caption-line);
+  font-weight: var(--text-caption-weight);
+  white-space: nowrap;
+  border: var(--border-width) solid;
+}
+
+.proposed {
+  background-color: var(--color-brand-wash);
+  border-color: var(--color-brand);
+  color: var(--color-brand-text);
+}
+
+.accepted {
+  background-color: var(--color-success-surface);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.rejected {
+  background-color: var(--color-error-surface);
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.withdrawn {
+  background-color: var(--color-surface-muted);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ORIGIN TAG
+   Per DR02: Mono 11 uppercase. AI uses sparkles + brand-text.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.originTag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.originAi {
+  color: var(--color-brand-text);
+}
+
+.originResearcher {
+  color: var(--color-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   IN USE BADGE
+   Per DR03: success color, indicates synthesis eligibility.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.inUseBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-caption-size);
+  font-weight: 600;
+  color: var(--color-success);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INSIGHT ROW
+   Per DR02: Grid 56px | 1fr | auto, gap 6/16, padding 16/8/16/2.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.insightRow {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 6px 16px;
+  padding: 16px 8px 16px 2px;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--motion-ease);
+}
+
+.insightRow:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.insightRow:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: -2px;
+}
+
+/* Selected state: brand-wash + 2px inset indicator */
+.insightRowSelected {
+  background-color: var(--color-brand-wash);
+  box-shadow: inset 2px 0 0 var(--color-brand);
+}
+
+.insightRowSelected:hover {
+  background-color: var(--color-brand-wash);
+}
+
+/* Row ID: mono 11/600 brand-deep */
+.insightRowId {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-brand-deep);
+  padding-top: 4px;
+}
+
+/* Row wording: serif 15.5/26 */
+.insightRowWording {
+  font-family: var(--font-serif);
+  font-size: 15.5px;
+  line-height: 26px;
+  color: var(--color-text);
+}
+
+/* Proposed rows use text-meta for wording */
+.insightRowWordingProposed {
+  color: var(--color-text-meta);
+}
+
+/* Row meta: 12/18 muted */
+.insightRowMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-text-muted);
+  grid-column: 2 / -1;
+}
+
+.insightRowMeta > * + *::before {
+  content: '·';
+  margin-right: var(--space-2);
+}
+
+/* Row actions column */
+.insightRowActions {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PENDING BLOCK
+   Per DR02: Dashed border-emphasis, radius-sm, label.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.pendingBlock {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: 1px dashed var(--color-border-emphasis);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-paper);
+}
+
+.pendingBlockLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.pendingBlockWording {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--color-text-meta);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EVIDENCE REFERENCE
+   Per DR04/DR09: File name 13/600, locator dl, excerpt block.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.evidenceRef {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.evidenceRef:last-child {
+  border-bottom: none;
+}
+
+.evidenceRefHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.evidenceRefSource {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.evidenceRefMeta {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* Locator definition list: 72px label column */
+.evidenceRefLocator {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: var(--space-1) var(--space-2);
+  margin-top: var(--space-2);
+  font-size: 13px;
+}
+
+.evidenceRefLocator dt {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.evidenceRefLocator dd {
+  color: var(--color-text);
+  margin: 0;
+}
+
+.evidenceRefNotRecorded {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Source excerpt block: muted surface, roman serif 14/22 */
+.evidenceExcerpt {
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  background-color: var(--color-surface-muted);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-serif);
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--color-text);
+}
+
+.evidenceExcerptLabel {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
+}
+
+/* Source-level attribution notice */
+.evidenceSourceLevel {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-surface-muted);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.evidenceSourceLevel svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Validation badge */
+.evidenceValidation {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.evidenceValidationVerified {
+  color: var(--color-success);
+}
+
+.evidenceValidationUnverified {
+  color: var(--color-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REVISION BLOCK
+   Per DR03: Version blocks with different border styles.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.revisionBlock {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+/* In use: solid border + 2px success top rule */
+.revisionBlockInUse {
+  border-color: var(--color-success);
+  border-top: 2px solid var(--color-success);
+}
+
+/* Pending/AI: dashed, paper background */
+.revisionBlockPending {
+  border-style: dashed;
+  border-color: var(--color-border-emphasis);
+  background-color: var(--color-paper);
+}
+
+/* Past: muted surface */
+.revisionBlockPast {
+  background-color: var(--color-surface-muted);
+}
+
+.revisionBlockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface-muted);
+}
+
+.revisionBlockLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.revisionBlockContent {
+  padding: var(--space-3);
+}
+
+.revisionBlockWording {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--color-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REVISION HISTORY
+   Per DR06: Newest first, each with ID, status badge, wording, decisions.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.revisionHistory {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.revisionHistoryItem {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.revisionHistoryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.revisionHistoryId {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.revisionHistoryWording {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+}
+
+.revisionHistoryDecisions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.revisionHistoryDecision {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.revisionHistoryDecision strong {
+  color: var(--color-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INSIGHT PANEL
+   Per DR03: Panel with action bar pinned at bottom.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.insightPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.insightPanelHeader {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.insightPanelId {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-brand-deep);
+  margin: 0 0 var(--space-1);
+}
+
+.insightPanelMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.insightPanelBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.insightPanelSection {
+  margin-bottom: var(--space-4);
+}
+
+.insightPanelSectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-2);
+}
+
+/* Action bar: pinned, border-top emphasis */
+.insightPanelActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border-emphasis);
+  background-color: var(--color-paper);
+}
+
+.insightPanelActionButtons {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* Why line: explains consequence of actions */
+.insightPanelWhy {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* Eligibility line: 12px success or muted */
+.insightPanelEligibility {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 12px;
+}
+
+.insightPanelEligibilityYes {
+  color: var(--color-success);
+}
+
+.insightPanelEligibilityNo {
+  color: var(--color-text-muted);
+}
+
+/* Read-only state */
+.insightPanelReadOnly {
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-surface-muted);
+  border-top: 1px solid var(--color-border);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INSIGHT EDITOR
+   Per DR05: Brand-wash ground with brand top rule, serif textarea.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.insightEditor {
+  padding: var(--space-4);
+  background-color: var(--color-brand-wash);
+  border-top: 2px solid var(--color-brand);
+}
+
+.insightEditorLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.insightEditorTextarea {
+  width: 100%;
+  min-height: 120px;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-paper);
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--color-text);
+  resize: vertical;
+}
+
+.insightEditorTextarea:focus {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 2px var(--color-brand-wash);
+}
+
+.insightEditorTextarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.insightEditorRefs {
+  margin-top: var(--space-4);
+}
+
+.insightEditorRefLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.insightEditorRefList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.insightEditorRefItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.insightEditorRefRemove {
+  flex-shrink: 0;
+  padding: var(--space-1);
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.insightEditorRefRemove:hover {
+  color: var(--color-error);
+}
+
+.insightEditorActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.insightEditorHint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DIALOGS
+   Per DR07: alertdialog, max 480, radius-lg, elevation-lg.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  padding: var(--space-4);
+}
+
+.dialog {
+  width: 100%;
+  max-width: 480px;
+  background-color: var(--color-paper);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-lg);
+  overflow: hidden;
+}
+
+/* Sheet mode for <767px */
+@media (max-width: 767px) {
+  .dialogOverlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .dialog {
+    max-width: none;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+}
+
+.dialogHeader {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.dialogBody {
+  padding: var(--space-4);
+}
+
+.dialogFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface-muted);
+}
+
+/* Withdraw dialog consequences list */
+.dialogConsequences {
+  margin: var(--space-3) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dialogConsequences li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.dialogConsequences li::before {
+  content: '•';
+  color: var(--color-text-muted);
+}
+
+/* Withdraw reason textarea */
+.dialogReasonLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.dialogReasonRequired {
+  color: var(--color-error);
+}
+
+.dialogReasonTextarea {
+  width: 100%;
+  min-height: 80px;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 20px;
+  resize: vertical;
+}
+
+.dialogReasonTextarea:focus {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 2px var(--color-brand-wash);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONFLICT DIALOG
+   Per DR10a: Side-by-side latest vs. theirs comparison.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.conflictComparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+}
+
+@media (max-width: 767px) {
+  .conflictComparison {
+    grid-template-columns: 1fr;
+  }
+}
+
+.conflictColumn {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.conflictColumnTheirs {
+  background-color: var(--color-surface-muted);
+}
+
+.conflictColumnYours {
+  background-color: var(--color-brand-wash);
+  border-color: var(--color-brand);
+}
+
+.conflictColumnLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.conflictColumnWording {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--color-text);
+}
+
+.conflictActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INSIGHT EDITOR — Additional styles
+   Per DR05: Header, close button, reference rows.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.insightEditorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.insightEditorTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.insightEditorClose {
+  padding: var(--space-1);
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.insightEditorClose:hover {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.insightEditorClose:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.insightEditorWording {
+  margin-bottom: var(--space-4);
+}
+
+.insightEditorReferences {
+  margin-bottom: var(--space-3);
+}
+
+.insightEditorReferencesHeader {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.insightEditorError {
+  padding: var(--space-2);
+  background-color: var(--color-error-surface);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--color-error);
+  margin-bottom: var(--space-2);
+}
+
+.insightEditorRefRow {
+  padding: var(--space-3);
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-2);
+}
+
+.insightEditorRefRowHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.insightEditorRefSource {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.insightEditorRefRemove {
+  padding: var(--space-1);
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.insightEditorRefRemove:hover {
+  background-color: var(--color-error-surface);
+  color: var(--color-error);
+}
+
+.insightEditorRefRemove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.insightEditorRefSourceLevel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.insightEditorRefSourceLevel input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-brand);
+}
+
+.insightEditorRefLocator {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.insightEditorAddRef {
+  margin-top: var(--space-2);
+}
+
+.insightEditorEmpty {
+  padding: var(--space-3);
+  background-color: var(--color-surface-muted);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.insightEditorNote {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  background-color: var(--color-surface-muted);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WITHDRAW DIALOG
+   Per DR08a: Consequences list, required reason.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.withdrawDialog {
+  width: 100%;
+  max-width: 480px;
+  background-color: var(--color-paper);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-lg);
+  overflow: hidden;
+}
+
+/* Sheet mode for <767px */
+@media (max-width: 767px) {
+  .withdrawDialog {
+    max-width: none;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+}
+
+.withdrawDialogHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.withdrawDialogIcon {
+  flex-shrink: 0;
+  color: var(--color-warning);
+}
+
+.withdrawDialogTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.withdrawDialogDescription {
+  padding: var(--space-4);
+}
+
+.withdrawDialogDescription p {
+  margin: 0 0 var(--space-2);
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.withdrawDialogDescription ul {
+  margin: var(--space-2) 0;
+  padding-left: var(--space-4);
+  list-style: disc;
+}
+
+.withdrawDialogDescription li {
+  font-size: 14px;
+  color: var(--color-text);
+  padding: var(--space-1) 0;
+}
+
+.withdrawDialogCount {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-warning-surface);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--color-warning);
+}
+
+.withdrawDialogReason {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.withdrawDialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONFLICT DIALOG
+   Per DR10a: Side-by-side comparison, resolution actions.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.conflictDialog {
+  width: 100%;
+  max-width: 480px;
+  background-color: var(--color-paper);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-lg);
+  overflow: hidden;
+}
+
+.conflictDialogWide {
+  max-width: 720px;
+}
+
+/* Sheet mode for <767px */
+@media (max-width: 767px) {
+  .conflictDialog {
+    max-width: none;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+}
+
+.conflictDialogHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.conflictDialogIcon {
+  flex-shrink: 0;
+  color: var(--color-error);
+}
+
+.conflictDialogTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.conflictDialogDescription {
+  padding: var(--space-4);
+}
+
+.conflictDialogDescription p {
+  margin: 0 0 var(--space-2);
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.conflictVersion {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-muted);
+}
+
+.conflictVersion:first-child {
+  background-color: var(--color-brand-wash);
+  border-color: var(--color-brand);
+}
+
+.conflictVersionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+
+.conflictVersionHeader strong {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.conflictVersionMeta {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.conflictVersionWording {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--color-text);
+}
+
+.conflictDialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface-muted);
+}
+
+.conflictDialogHint {
+  padding: var(--space-2) var(--space-4) var(--space-3);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
