@@ -25,6 +25,7 @@ import type { EvidenceReference } from '@qori/api-contracts';
 /** Status filter values (subset of InsightStatus that API filter accepts) */
 type StatusFilterValue = 'proposed' | 'accepted' | 'rejected' | 'withdrawn' | 'all';
 import { useDiscoveryArtifacts } from '@/api/queries/useDiscovery';
+import { useProjectPermissions } from '@/hooks/useProjectPermissions';
 import { WorkspaceLayout, useStudyWorkspace } from '@/components/study/workspace';
 import { Skeleton } from '@/components/ui/Skeleton';
 import {
@@ -71,6 +72,9 @@ const GROUP_CONFIG: Record<InsightGroup, { title: string; collapsible: boolean }
 export function DeskInsightsPage() {
   const { studyPublicId, projectPublicId } = useStudyWorkspace();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // DR-4d: Get project permissions for review gating
+  const permissions = useProjectPermissions(projectPublicId);
 
   // Filter state from URL params
   const statusFilter = (searchParams.get('status') as StatusFilterValue) || 'all';
@@ -318,7 +322,8 @@ export function DeskInsightsPage() {
           <div className={styles.insightPanel}>
             <InsightDetailPanel
               insight={selectedInsight.data}
-              canEdit={true} // TODO DR-4e: Wire permissions
+              canEdit={permissions.canReview}
+              readOnlyReason={permissions.readOnlyReason ?? undefined}
               onFilterBySource={handleSourceClick}
               onViewHistory={() => {
                 // History is shown inline via RevisionHistory component

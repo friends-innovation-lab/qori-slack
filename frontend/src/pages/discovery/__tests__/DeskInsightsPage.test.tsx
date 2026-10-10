@@ -12,6 +12,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DeskInsightsPage } from '../DeskInsightsPage';
@@ -22,6 +23,18 @@ const mockStudyWorkspace = {
   studyPublicId: 'study-123',
   projectPublicId: 'project-456',
 };
+
+// Mock permissions
+const mockPermissions = {
+  canReview: true,
+  role: 'researcher' as string | null,
+  isLoading: false,
+  readOnlyReason: null as string | null,
+};
+
+vi.mock('@/hooks/useProjectPermissions', () => ({
+  useProjectPermissions: () => mockPermissions,
+}));
 
 vi.mock('@/components/study/workspace', () => ({
   WorkspaceLayout: ({ children, rail }: { children: React.ReactNode; rail?: React.ReactNode }) => (
@@ -378,5 +391,264 @@ describe('DeskInsightsPage accessibility', () => {
 
     const tabs = screen.getAllByRole('tab');
     expect(tabs).toHaveLength(2);
+  });
+});
+
+describe('DeskInsightsPage permissions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Reset to default authorized state
+    mockPermissions.canReview = true;
+    mockPermissions.role = 'researcher';
+    mockPermissions.isLoading = false;
+    mockPermissions.readOnlyReason = null;
+  });
+
+  it('shows read-only notice for unauthorized viewers', async () => {
+    // Set up read-only permissions
+    mockPermissions.canReview = false;
+    mockPermissions.role = null;
+    mockPermissions.readOnlyReason = 'You have view-only access to this project.';
+
+    // Mock insight detail for panel
+    const mockInsightDetail = {
+      id: 1,
+      publicId: 'insight-1',
+      displayId: 'IN-0001',
+      projectId: 100,
+      wording: 'Veterans prefer simpler interfaces',
+      status: 'proposed',
+      latestRevisionNumber: 1,
+      acceptedRevisionNumber: null,
+      pendingRevisionNumber: null,
+      origin: 'ai',
+      needsReview: true,
+      createdBy: 'system',
+      createdAt: '2024-01-01T00:00:00Z',
+      withdrawnAt: null,
+      version: 1,
+      revisionCount: 1,
+      latestRevision: {
+        id: 1,
+        publicId: 'rev-1',
+        revisionNumber: 1,
+        content: { wording: 'Veterans prefer simpler interfaces' },
+        evidenceSnapshot: [],
+        origin: 'ai',
+        createdBy: 'system',
+        createdAt: '2024-01-01T00:00:00Z',
+        isAccepted: false,
+        isLatest: true,
+      },
+      acceptedRevision: null,
+    };
+
+    mockGet.mockImplementation((url: string) => {
+      // Check for revisions/reviews BEFORE insight detail (more specific first)
+      if (url.includes('/revisions')) {
+        return Promise.resolve({ data: [] });
+      }
+      if (url.includes('/reviews')) {
+        return Promise.resolve({ data: [] });
+      }
+      if (url.includes('/insights/insight-1')) {
+        return Promise.resolve({ data: mockInsightDetail });
+      }
+      if (url.includes('/insights')) {
+        return Promise.resolve({
+          data: mockInsightsData,
+          meta: { total: 2, needsReviewCount: 1, limit: 50, offset: 0 },
+        });
+      }
+      if (url.includes('/artifacts')) {
+        return Promise.resolve({ data: mockArtifactsData });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    const user = userEvent.setup();
+    render(<DeskInsightsPage />, { wrapper: createWrapper() });
+
+    // Wait for insights to load
+    await waitFor(() => {
+      expect(screen.getByText('Veterans prefer simpler interfaces')).toBeInTheDocument();
+    });
+
+    // Click on an insight row to open the panel
+    await user.click(screen.getByText('Veterans prefer simpler interfaces'));
+
+    // Wait for panel to load and show read-only notice
+    await waitFor(() => {
+      expect(screen.getByTestId('rail')).toBeInTheDocument();
+    });
+
+    // The ReadOnlyNotice component should show the reason
+    await waitFor(() => {
+      expect(screen.getByText(/view-only access/)).toBeInTheDocument();
+    });
+  });
+
+  it('does not show read-only notice for authorized reviewers', async () => {
+    // Permissions are already set to canReview=true in beforeEach
+
+    const mockInsightDetail = {
+      id: 1,
+      publicId: 'insight-1',
+      displayId: 'IN-0001',
+      projectId: 100,
+      wording: 'Veterans prefer simpler interfaces',
+      status: 'proposed',
+      latestRevisionNumber: 1,
+      acceptedRevisionNumber: null,
+      pendingRevisionNumber: null,
+      origin: 'ai',
+      needsReview: true,
+      createdBy: 'system',
+      createdAt: '2024-01-01T00:00:00Z',
+      withdrawnAt: null,
+      version: 1,
+      revisionCount: 1,
+      latestRevision: {
+        id: 1,
+        publicId: 'rev-1',
+        revisionNumber: 1,
+        content: { wording: 'Veterans prefer simpler interfaces' },
+        evidenceSnapshot: [],
+        origin: 'ai',
+        createdBy: 'system',
+        createdAt: '2024-01-01T00:00:00Z',
+        isAccepted: false,
+        isLatest: true,
+      },
+      acceptedRevision: null,
+    };
+
+    mockGet.mockImplementation((url: string) => {
+      // Check for revisions/reviews BEFORE insight detail (more specific first)
+      if (url.includes('/revisions')) {
+        return Promise.resolve({ data: [] });
+      }
+      if (url.includes('/reviews')) {
+        return Promise.resolve({ data: [] });
+      }
+      if (url.includes('/insights/insight-1')) {
+        return Promise.resolve({ data: mockInsightDetail });
+      }
+      if (url.includes('/insights')) {
+        return Promise.resolve({
+          data: mockInsightsData,
+          meta: { total: 2, needsReviewCount: 1, limit: 50, offset: 0 },
+        });
+      }
+      if (url.includes('/artifacts')) {
+        return Promise.resolve({ data: mockArtifactsData });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    const user = userEvent.setup();
+    render(<DeskInsightsPage />, { wrapper: createWrapper() });
+
+    // Wait for insights to load
+    await waitFor(() => {
+      expect(screen.getByText('Veterans prefer simpler interfaces')).toBeInTheDocument();
+    });
+
+    // Click on an insight row to open the panel
+    await user.click(screen.getByText('Veterans prefer simpler interfaces'));
+
+    // Wait for panel to load
+    await waitFor(() => {
+      expect(screen.getByTestId('rail')).toBeInTheDocument();
+    });
+
+    // Should NOT show read-only notice
+    expect(screen.queryByText(/view-only access/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/must be signed in/)).not.toBeInTheDocument();
+  });
+
+  it('fails closed when permissions are loading', async () => {
+    // Set permissions to loading state
+    mockPermissions.canReview = false;
+    mockPermissions.role = null;
+    mockPermissions.isLoading = true;
+    mockPermissions.readOnlyReason = null;
+
+    const mockInsightDetail = {
+      id: 1,
+      publicId: 'insight-1',
+      displayId: 'IN-0001',
+      projectId: 100,
+      wording: 'Veterans prefer simpler interfaces',
+      status: 'proposed',
+      latestRevisionNumber: 1,
+      acceptedRevisionNumber: null,
+      pendingRevisionNumber: null,
+      origin: 'ai',
+      needsReview: true,
+      createdBy: 'system',
+      createdAt: '2024-01-01T00:00:00Z',
+      withdrawnAt: null,
+      version: 1,
+      revisionCount: 1,
+      latestRevision: {
+        id: 1,
+        publicId: 'rev-1',
+        revisionNumber: 1,
+        content: { wording: 'Veterans prefer simpler interfaces' },
+        evidenceSnapshot: [],
+        origin: 'ai',
+        createdBy: 'system',
+        createdAt: '2024-01-01T00:00:00Z',
+        isAccepted: false,
+        isLatest: true,
+      },
+      acceptedRevision: null,
+    };
+
+    mockGet.mockImplementation((url: string) => {
+      // Check for revisions/reviews BEFORE insight detail (more specific first)
+      if (url.includes('/revisions')) {
+        return Promise.resolve({ data: [] });
+      }
+      if (url.includes('/reviews')) {
+        return Promise.resolve({ data: [] });
+      }
+      if (url.includes('/insights/insight-1')) {
+        return Promise.resolve({ data: mockInsightDetail });
+      }
+      if (url.includes('/insights')) {
+        return Promise.resolve({
+          data: mockInsightsData,
+          meta: { total: 2, needsReviewCount: 1, limit: 50, offset: 0 },
+        });
+      }
+      if (url.includes('/artifacts')) {
+        return Promise.resolve({ data: mockArtifactsData });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    const user = userEvent.setup();
+    render(<DeskInsightsPage />, { wrapper: createWrapper() });
+
+    // Wait for insights to load
+    await waitFor(() => {
+      expect(screen.getByText('Veterans prefer simpler interfaces')).toBeInTheDocument();
+    });
+
+    // Click on an insight row to open the panel
+    await user.click(screen.getByText('Veterans prefer simpler interfaces'));
+
+    // Wait for panel to load
+    await waitFor(() => {
+      expect(screen.getByTestId('rail')).toBeInTheDocument();
+    });
+
+    // When loading, canReview is false, so panel should be in read-only mode
+    // The ReadOnlyNotice shows the default message when no reason is provided
+    await waitFor(() => {
+      expect(screen.getByText(/view-only access to this insight/)).toBeInTheDocument();
+    });
   });
 });
