@@ -1,7 +1,10 @@
 /**
- * Insights Mutation Hooks — DR-4b
+ * Insights Mutation Hooks — DR-4b + DR-4d
  *
  * React Query mutation hooks for Desk Research Insights operations.
+ *
+ * DR-4d: Updated to use project public ID (string) for consistency
+ * with discovery API patterns.
  *
  * DESIGN DECISIONS:
  * - NO optimistic updates for review actions (accept/reject/withdraw)
@@ -30,7 +33,7 @@ import type {
 // ─── Create Insight ─────────────────────────────────────────────────────────
 
 export interface CreateInsightInput {
-  projectId: number;
+  projectId: string;
   wording: string;
   evidenceReferences: EvidenceReference[];
   origin?: 'ai' | 'researcher';
@@ -80,7 +83,7 @@ export function useCreateInsight() {
 // ─── Create Revision ────────────────────────────────────────────────────────
 
 export interface CreateRevisionInput {
-  projectId: number;
+  projectId: string;
   insightPublicId: string;
   wording: string;
   evidenceReferences: EvidenceReference[];
@@ -138,7 +141,7 @@ export function useCreateRevision() {
 // ─── Review Insight ─────────────────────────────────────────────────────────
 
 export interface ReviewInsightInput {
-  projectId: number;
+  projectId: string;
   insightPublicId: string;
   action: ReviewAction;
   revisionId?: number;

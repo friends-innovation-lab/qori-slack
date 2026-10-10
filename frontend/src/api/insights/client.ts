@@ -1,8 +1,11 @@
 /**
- * Insights API Client — DR-4b
+ * Insights API Client — DR-4b + DR-4d
  *
  * Low-level API functions for Desk Research Insights.
  * Uses ky with session credentials and CSRF handling.
+ *
+ * DR-4d: Updated to use project public ID (string) for consistency
+ * with discovery API patterns.
  */
 
 import { api } from '../client';
@@ -24,7 +27,7 @@ import type {
  * Fetch paginated insights list for a project.
  */
 export async function fetchInsights(
-  projectId: number,
+  projectId: string,
   filters: InsightListFilters = {},
 ): Promise<InsightsListResponse> {
   const searchParams = new URLSearchParams();
@@ -53,7 +56,7 @@ export async function fetchInsights(
  * Fetch a single insight detail by public ID.
  */
 export async function fetchInsight(
-  projectId: number,
+  projectId: string,
   insightPublicId: string,
 ): Promise<InsightDetailResponse> {
   return api
@@ -65,7 +68,7 @@ export async function fetchInsight(
  * Fetch revision history for an insight.
  */
 export async function fetchInsightRevisions(
-  projectId: number,
+  projectId: string,
   insightPublicId: string,
 ): Promise<RevisionsListResponse> {
   return api
@@ -77,7 +80,7 @@ export async function fetchInsightRevisions(
  * Fetch review history for an insight.
  */
 export async function fetchInsightReviews(
-  projectId: number,
+  projectId: string,
   insightPublicId: string,
 ): Promise<ReviewsListResponse> {
   return api
@@ -89,7 +92,7 @@ export async function fetchInsightReviews(
  * Fetch needs-review count for a project.
  */
 export async function fetchNeedsReviewCount(
-  projectId: number,
+  projectId: string,
 ): Promise<NeedsReviewCountResponse> {
   return api
     .get(`projects/${projectId}/insights/needs-review-count`)
@@ -102,7 +105,7 @@ export async function fetchNeedsReviewCount(
  * Create a new insight with initial revision.
  */
 export async function createInsight(
-  projectId: number,
+  projectId: string,
   request: CreateInsightRequest,
 ): Promise<InsightDetailResponse> {
   return api
@@ -114,7 +117,7 @@ export async function createInsight(
  * Create a new revision for an existing insight.
  */
 export async function createRevision(
-  projectId: number,
+  projectId: string,
   insightPublicId: string,
   request: CreateRevisionRequest,
 ): Promise<InsightDetailResponse> {
@@ -127,7 +130,7 @@ export async function createRevision(
  * Submit a review action (accept/reject/withdraw).
  */
 export async function submitReview(
-  projectId: number,
+  projectId: string,
   insightPublicId: string,
   request: CreateReviewRequest,
 ): Promise<InsightDetailResponse> {
