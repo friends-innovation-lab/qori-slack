@@ -1,5 +1,5 @@
 /**
- * DeskInsightsPage — DR-4d Insights list for Desk Research.
+ * DeskInsightsPage — DR-4d/DR-4e Insights list for Desk Research.
  *
  * Per SPEC-2 §1-2:
  * - Project-wide insights (D1: same list appears in every study)
@@ -8,19 +8,32 @@
  * - Filter bar: status chips + source select (DR01)
  * - Empty state when no sources (DR02)
  * - Selecting a row opens InsightDetailPanel in ContextRail
+ *
+ * DR-4e: Review interactions wiring:
+ * - Accept/Reject/Withdraw review actions
+ * - Create insight / Propose revision
+ * - 409 conflict handling with ConflictDialog
+ * - 403 permission denied handling
+ * - Duplicate submission prevention
  */
 
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { FileText, Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import { FileText, Plus, ChevronDown, ChevronRight, Check, X, Trash2, Edit3, PlusCircle } from 'lucide-react';
 import {
   useInsights,
   useInsight,
   useInsightRevisions,
   useInsightReviews,
+  useCreateInsight,
+  useCreateRevision,
+  useReviewInsight,
+  isConcurrencyError,
+  isAuthorizationError,
   type InsightSummary,
+  type InsightApiError,
 } from '@/api/insights';
-import type { EvidenceReference } from '@qori/api-contracts';
+import type { EvidenceReference, InsightDetail, ReviewAction } from '@qori/api-contracts';
 
 /** Status filter values (subset of InsightStatus that API filter accepts) */
 type StatusFilterValue = 'proposed' | 'accepted' | 'rejected' | 'withdrawn' | 'all';
@@ -32,9 +45,16 @@ import {
   InsightRow,
   InsightDetailPanel,
   RevisionHistory,
+  InsightEditor,
+  WithdrawDialog,
+  ConflictDialog,
   groupInsights,
   type InsightGroup,
+  type EditorReference,
+  type ConflictVersion,
+  type ConflictResolution,
 } from '@/components/insights';
+import { Button } from '@/components/ui/Button';
 import styles from './DeskInsightsPage.module.css';
 import docStyles from '@/components/study/document/document.module.css';
 
@@ -89,6 +109,22 @@ export function DeskInsightsPage() {
     new Set(['rejected', 'withdrawn'])
   );
 
+  // DR-4e: Editor state
+  const [editorMode, setEditorMode] = useState<'closed' | 'create' | 'edit'>('closed');
+  const [editorDraft, setEditorDraft] = useState<{ wording: string; references: EditorReference[] } | null>(null);
+
+  // DR-4e: Dialog state
+  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [conflictDialog, setConflictDialog] = useState<{
+    open: boolean;
+    type: 'edit' | 'decision';
+    userVersion: ConflictVersion;
+    latestVersion: ConflictVersion;
+  } | null>(null);
+
+  // DR-4e: Permission denied state
+  const [permissionDenied, setPermissionDenied] = useState<string | null>(null);
+
   // Refs for focus management
   const rowRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -125,6 +161,11 @@ export function DeskInsightsPage() {
     { enabled: !!projectPublicId }
   );
 
+  // DR-4e: Mutation hooks
+  const createInsightMutation = useCreateInsight();
+  const createRevisionMutation = useCreateRevision();
+  const reviewMutation = useReviewInsight();
+
   // Group insights by status
   const groupedInsights = useMemo(() => {
     if (!insightsQuery.data?.data) return null;
@@ -135,6 +176,22 @@ export function DeskInsightsPage() {
   const totalCount = insightsQuery.data?.data?.length ?? 0;
   const sourceCount = sourcesQuery.data?.length ?? 0;
   const proposedCount = groupedInsights?.proposed.length ?? 0;
+
+  // DR-4e: Available sources for editor (mock - would come from evidence sources API)
+  // For now, derive from artifacts
+  const availableSources = useMemo(() => {
+    if (!sourcesQuery.data) return [];
+    return sourcesQuery.data.map((artifact, index) => ({
+      id: index + 1, // Placeholder - real implementation would use evidence source IDs
+      label: artifact.title,
+      publicId: artifact.publicId,
+    }));
+  }, [sourcesQuery.data]);
+
+  // DR-4e: Check if any mutation is pending
+  const isMutating = createInsightMutation.isPending ||
+    createRevisionMutation.isPending ||
+    reviewMutation.isPending;
 
   // Update filter
   const updateFilter = useCallback((key: string, value: string) => {
@@ -196,11 +253,228 @@ export function DeskInsightsPage() {
   // Handle panel close
   const handleClosePanel = useCallback(() => {
     setSelectedInsightId(null);
+    setEditorMode('closed');
+    setEditorDraft(null);
     // Return focus to the row
     if (selectedInsightId) {
       rowRefs.current.get(selectedInsightId)?.focus();
     }
   }, [selectedInsightId]);
+
+  // DR-4e: Handle mutation errors (409 conflict, 403 permission)
+  const handleMutationError = useCallback((
+    error: InsightApiError,
+    action: 'edit' | 'decision',
+    userWording?: string
+  ) => {
+    if (isConcurrencyError(error)) {
+      // Show conflict dialog
+      setConflictDialog({
+        open: true,
+        type: action,
+        userVersion: {
+          revisionNumber: selectedInsight.data?.latestRevision.revisionNumber ?? 0,
+          wording: userWording || selectedInsight.data?.latestRevision.content.wording || '',
+          author: 'You',
+          timestamp: new Date().toISOString(),
+        },
+        latestVersion: {
+          revisionNumber: error.currentVersion ?? 0,
+          wording: 'A newer version exists. Refresh to see it.',
+          author: 'Another user',
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } else if (isAuthorizationError(error)) {
+      setPermissionDenied(error.message || 'You do not have permission to perform this action.');
+      // Clear permission denied after 5 seconds
+      setTimeout(() => setPermissionDenied(null), 5000);
+    }
+  }, [selectedInsight.data]);
+
+  // DR-4e: Handle review action (accept/reject)
+  const handleReviewAction = useCallback(async (
+    action: ReviewAction,
+    comment?: string
+  ) => {
+    if (!selectedInsight.data || !projectPublicId) return;
+
+    const insight = selectedInsight.data;
+    const revisionId = action === 'accept'
+      ? insight.latestRevision.id
+      : undefined;
+
+    try {
+      await reviewMutation.mutateAsync({
+        projectId: projectPublicId,
+        insightPublicId: insight.publicId,
+        action,
+        revisionId,
+        comment,
+        expectedVersion: insight.version,
+      });
+    } catch (error) {
+      handleMutationError(error as InsightApiError, 'decision');
+    }
+  }, [selectedInsight.data, projectPublicId, reviewMutation, handleMutationError]);
+
+  // DR-4e: Handle accept
+  const handleAccept = useCallback(() => {
+    handleReviewAction('accept');
+  }, [handleReviewAction]);
+
+  // DR-4e: Handle reject
+  const handleReject = useCallback(() => {
+    handleReviewAction('reject');
+  }, [handleReviewAction]);
+
+  // DR-4e: Open withdraw dialog
+  const handleOpenWithdraw = useCallback(() => {
+    setWithdrawDialogOpen(true);
+  }, []);
+
+  // DR-4e: Confirm withdraw with reason
+  const handleConfirmWithdraw = useCallback(async (reason: string) => {
+    if (!selectedInsight.data || !projectPublicId) return;
+
+    try {
+      await reviewMutation.mutateAsync({
+        projectId: projectPublicId,
+        insightPublicId: selectedInsight.data.publicId,
+        action: 'withdraw',
+        comment: reason,
+        expectedVersion: selectedInsight.data.version,
+      });
+      setWithdrawDialogOpen(false);
+    } catch (error) {
+      handleMutationError(error as InsightApiError, 'decision');
+    }
+  }, [selectedInsight.data, projectPublicId, reviewMutation, handleMutationError]);
+
+  // DR-4e: Open editor for new insight
+  const handleCreateNew = useCallback(() => {
+    setSelectedInsightId(null);
+    setEditorMode('create');
+    setEditorDraft(null);
+  }, []);
+
+  // DR-4e: Open editor for editing existing insight
+  const handleEdit = useCallback(() => {
+    if (!selectedInsight.data) return;
+
+    const revision = selectedInsight.data.latestRevision;
+    setEditorMode('edit');
+    setEditorDraft({
+      wording: revision.content.wording,
+      references: revision.evidenceSnapshot.map((ref, i) => ({
+        key: `${ref.evidenceSourceId}-${i}`,
+        evidenceSourceId: ref.evidenceSourceId,
+        sourceLabel: ref.sourceLabel || `Source ${ref.evidenceSourceId}`,
+        locator: ref.locator,
+      })),
+    });
+  }, [selectedInsight.data]);
+
+  // DR-4e: Cancel editor
+  const handleCancelEditor = useCallback(() => {
+    setEditorMode('closed');
+    setEditorDraft(null);
+  }, []);
+
+  // DR-4e: Save from editor (create or propose revision)
+  const handleSaveEditor = useCallback(async (
+    wording: string,
+    references: EditorReference[]
+  ) => {
+    if (!projectPublicId) return;
+
+    const evidenceReferences = references.map(ref => ({
+      evidenceSourceId: ref.evidenceSourceId,
+      sourceLabel: ref.sourceLabel,
+      locator: ref.locator,
+    }));
+
+    try {
+      if (editorMode === 'create') {
+        // Create new insight
+        const result = await createInsightMutation.mutateAsync({
+          projectId: projectPublicId,
+          wording,
+          evidenceReferences,
+          origin: 'researcher',
+        });
+        // Select the new insight
+        setSelectedInsightId(result.publicId);
+      } else if (editorMode === 'edit' && selectedInsight.data) {
+        // Propose new revision
+        await createRevisionMutation.mutateAsync({
+          projectId: projectPublicId,
+          insightPublicId: selectedInsight.data.publicId,
+          wording,
+          evidenceReferences,
+          expectedVersion: selectedInsight.data.version,
+        });
+      }
+      setEditorMode('closed');
+      setEditorDraft(null);
+    } catch (error) {
+      // Save draft for recovery
+      setEditorDraft({ wording, references });
+      handleMutationError(error as InsightApiError, 'edit', wording);
+    }
+  }, [
+    projectPublicId,
+    editorMode,
+    selectedInsight.data,
+    createInsightMutation,
+    createRevisionMutation,
+    handleMutationError,
+  ]);
+
+  // DR-4e: Handle conflict resolution
+  const handleConflictResolve = useCallback(async (resolution: ConflictResolution) => {
+    if (!selectedInsight.data) {
+      setConflictDialog(null);
+      return;
+    }
+
+    switch (resolution) {
+      case 'discard':
+        // Discard user's changes, close editor
+        setEditorMode('closed');
+        setEditorDraft(null);
+        setConflictDialog(null);
+        // Refetch to get latest
+        selectedInsight.refetch();
+        break;
+
+      case 'review':
+        // Close dialog and let user review the latest
+        setConflictDialog(null);
+        // Refetch to get latest
+        selectedInsight.refetch();
+        break;
+
+      case 'rebase':
+        // Copy user's text to clipboard, open editor with latest
+        if (editorDraft?.wording) {
+          await navigator.clipboard.writeText(editorDraft.wording);
+        }
+        setConflictDialog(null);
+        // Refetch and reopen editor
+        await selectedInsight.refetch();
+        // The editor will be reopened with fresh data
+        setEditorMode('edit');
+        break;
+    }
+  }, [selectedInsight, editorDraft]);
+
+  // DR-4e: Close conflict dialog
+  const handleCloseConflict = useCallback(() => {
+    setConflictDialog(null);
+    // Refetch to sync with server
+    selectedInsight.refetch();
+  }, [selectedInsight]);
 
   // Keyboard navigation within groups
   const handleRowKeyDown = useCallback(
@@ -314,35 +588,130 @@ export function DeskInsightsPage() {
     );
   };
 
+  // DR-4e: Build action buttons for InsightDetailPanel
+  const buildActionSlot = (insight: InsightDetail) => {
+    const canAccept = insight.status === 'proposed' || insight.status === 'accepted_with_pending';
+    const canReject = insight.status === 'proposed' || insight.status === 'accepted_with_pending';
+    const canWithdraw = insight.status === 'accepted' || insight.status === 'accepted_with_pending';
+    const canEdit = insight.status !== 'withdrawn';
+
+    return (
+      <div className={styles.actionButtons}>
+        {canAccept && (
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<Check size={14} />}
+            onClick={handleAccept}
+            loading={reviewMutation.isPending && reviewMutation.variables?.action === 'accept'}
+            disabled={isMutating}
+          >
+            Accept
+          </Button>
+        )}
+        {canReject && (
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<X size={14} />}
+            onClick={handleReject}
+            loading={reviewMutation.isPending && reviewMutation.variables?.action === 'reject'}
+            disabled={isMutating}
+          >
+            Reject
+          </Button>
+        )}
+        {canWithdraw && (
+          <Button
+            variant="danger"
+            size="sm"
+            icon={<Trash2 size={14} />}
+            onClick={handleOpenWithdraw}
+            disabled={isMutating}
+          >
+            Withdraw
+          </Button>
+        )}
+        {canEdit && (
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<Edit3 size={14} />}
+            onClick={handleEdit}
+            disabled={isMutating}
+          >
+            Edit
+          </Button>
+        )}
+      </div>
+    );
+  };
+
+  // DR-4e: Render rail content (editor or detail panel)
+  const renderRailContent = () => {
+    // Editor mode - show editor
+    if (editorMode !== 'closed') {
+      const displayId = editorMode === 'create'
+        ? 'NEW'
+        : selectedInsight.data?.displayId || 'IN-????';
+
+      return (
+        <InsightEditor
+          insightDisplayId={displayId}
+          initialWording={editorDraft?.wording || (editorMode === 'edit' ? selectedInsight.data?.latestRevision.content.wording : '')}
+          initialReferences={editorDraft?.references || (editorMode === 'edit' && selectedInsight.data
+            ? selectedInsight.data.latestRevision.evidenceSnapshot.map((ref, i) => ({
+                key: `${ref.evidenceSourceId}-${i}`,
+                evidenceSourceId: ref.evidenceSourceId,
+                sourceLabel: ref.sourceLabel || `Source ${ref.evidenceSourceId}`,
+                locator: ref.locator,
+              }))
+            : []
+          )}
+          availableSources={availableSources}
+          onSave={handleSaveEditor}
+          onCancel={handleCancelEditor}
+          saving={createInsightMutation.isPending || createRevisionMutation.isPending}
+        />
+      );
+    }
+
+    // Selected insight - show detail panel
+    if (selectedInsightId && selectedInsight.data) {
+      return (
+        <div className={styles.insightPanel}>
+          <InsightDetailPanel
+            insight={selectedInsight.data}
+            canEdit={permissions.canReview}
+            readOnlyReason={permissions.readOnlyReason ?? undefined}
+            actionSlot={permissions.canReview ? buildActionSlot(selectedInsight.data) : undefined}
+            onFilterBySource={handleSourceClick}
+            onViewHistory={() => {
+              // History is shown inline via RevisionHistory component
+            }}
+          />
+          {revisionsQuery.data && reviewsQuery.data && (
+            <div className={styles.revisionSection}>
+              <h3 className={styles.revisionTitle}>
+                Revision History ({revisionsQuery.data.length})
+              </h3>
+              <RevisionHistory
+                revisions={revisionsQuery.data}
+                reviews={reviewsQuery.data}
+              />
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return undefined;
+  };
+
   return (
     <WorkspaceLayout
       header={<div className={styles.headerSpacer} />}
-      rail={
-        selectedInsightId && selectedInsight.data ? (
-          <div className={styles.insightPanel}>
-            <InsightDetailPanel
-              insight={selectedInsight.data}
-              canEdit={permissions.canReview}
-              readOnlyReason={permissions.readOnlyReason ?? undefined}
-              onFilterBySource={handleSourceClick}
-              onViewHistory={() => {
-                // History is shown inline via RevisionHistory component
-              }}
-            />
-            {revisionsQuery.data && reviewsQuery.data && (
-              <div className={styles.revisionSection}>
-                <h3 className={styles.revisionTitle}>
-                  Revision History ({revisionsQuery.data.length})
-                </h3>
-                <RevisionHistory
-                  revisions={revisionsQuery.data}
-                  reviews={reviewsQuery.data}
-                />
-              </div>
-            )}
-          </div>
-        ) : undefined
-      }
+      rail={renderRailContent()}
     >
       <div className={docStyles.docWrap}>
         <div className={docStyles.docCol}>
@@ -475,8 +844,51 @@ export function DeskInsightsPage() {
               )}
             </>
           )}
+
+          {/* DR-4e: Create insight button */}
+          {hasSources && permissions.canReview && editorMode === 'closed' && (
+            <div className={styles.createInsightSection}>
+              <Button
+                variant="secondary"
+                icon={<PlusCircle size={16} />}
+                onClick={handleCreateNew}
+                disabled={isMutating}
+              >
+                Create insight
+              </Button>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* DR-4e: Withdraw dialog */}
+      <WithdrawDialog
+        insightDisplayId={selectedInsight.data?.displayId || ''}
+        open={withdrawDialogOpen}
+        onClose={() => setWithdrawDialogOpen(false)}
+        onConfirm={handleConfirmWithdraw}
+        confirming={reviewMutation.isPending && reviewMutation.variables?.action === 'withdraw'}
+      />
+
+      {/* DR-4e: Conflict dialog */}
+      {conflictDialog && (
+        <ConflictDialog
+          type={conflictDialog.type}
+          insightDisplayId={selectedInsight.data?.displayId || ''}
+          open={conflictDialog.open}
+          userVersion={conflictDialog.userVersion}
+          latestVersion={conflictDialog.latestVersion}
+          onResolve={handleConflictResolve}
+          onClose={handleCloseConflict}
+        />
+      )}
+
+      {/* DR-4e: Permission denied toast */}
+      {permissionDenied && (
+        <div className={styles.permissionDeniedToast} role="alert">
+          {permissionDenied}
+        </div>
+      )}
     </WorkspaceLayout>
   );
 }
