@@ -19,6 +19,8 @@ import type {
   CreateInsightRequest,
   CreateRevisionRequest,
   CreateReviewRequest,
+  EvidenceSourcesResponse,
+  EvidenceSourceType,
 } from '@qori/api-contracts';
 
 // ─── Query Functions ─────────────────────────────────────────────────────────
@@ -137,4 +139,39 @@ export async function submitReview(
   return api
     .post(`projects/${projectId}/insights/${insightPublicId}/reviews`, { json: request })
     .json<InsightDetailResponse>();
+}
+
+// ─── Evidence Sources ─────────────────────────────────────────────────────────
+
+export interface EvidenceSourceFilters {
+  sourceType?: EvidenceSourceType;
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * Fetch evidence sources for a project.
+ * DR-4e: Required for insight attribution in InsightEditor.
+ */
+export async function fetchEvidenceSources(
+  projectId: string,
+  filters: EvidenceSourceFilters = {},
+): Promise<EvidenceSourcesResponse> {
+  const searchParams = new URLSearchParams();
+
+  if (filters.sourceType) {
+    searchParams.set('sourceType', filters.sourceType);
+  }
+  if (filters.limit !== undefined) {
+    searchParams.set('limit', String(filters.limit));
+  }
+  if (filters.offset !== undefined) {
+    searchParams.set('offset', String(filters.offset));
+  }
+
+  const url = searchParams.toString()
+    ? `projects/${projectId}/evidence-sources?${searchParams}`
+    : `projects/${projectId}/evidence-sources`;
+
+  return api.get(url).json<EvidenceSourcesResponse>();
 }

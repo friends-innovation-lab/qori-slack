@@ -32,6 +32,7 @@ import {
   useInsights,
   useInsight,
   useNeedsReviewCount,
+  useEvidenceSources,
 } from '../queries';
 import {
   useCreateInsight,
@@ -204,6 +205,11 @@ describe('insightsKeys', () => {
   it('needsReviewCount is project-scoped', () => {
     const key = insightsKeys.needsReviewCount('project-100');
     expect(key).toEqual(['insights', 'project', 'project-100', 'needs-review-count']);
+  });
+
+  it('evidenceSources is project-scoped (DR-4e)', () => {
+    const key = insightsKeys.evidenceSources('project-100');
+    expect(key).toEqual(['insights', 'project', 'project-100', 'evidence-sources']);
   });
 
   it('keys for different projects are distinct (project isolation)', () => {
@@ -514,6 +520,62 @@ describe('query hooks', () => {
         'projects/project-100/insights/needs-review-count',
       );
       expect(result.current.data).toBe(5);
+    });
+  });
+
+  describe('useEvidenceSources', () => {
+    it('fetches evidence sources for a project', async () => {
+      const mockSources = [
+        { id: 1, publicId: 'source-uuid-1', label: 'Source 1', sourceType: 'uploaded_document', createdAt: '2024-01-01T00:00:00Z' },
+        { id: 2, publicId: 'source-uuid-2', label: 'Source 2', sourceType: 'stakeholder_interview', createdAt: '2024-01-02T00:00:00Z' },
+      ];
+      mockGet.mockResolvedValueOnce({ data: mockSources });
+
+      const { result } = renderHook(() => useEvidenceSources('project-100'), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(mockGet).toHaveBeenCalledWith('projects/project-100/evidence-sources');
+      expect(result.current.data).toHaveLength(2);
+      expect(result.current.data?.[0].id).toBe(1);
+      expect(result.current.data?.[0].label).toBe('Source 1');
+    });
+
+    it('returns empty array when no sources exist', async () => {
+      mockGet.mockResolvedValueOnce({ data: [] });
+
+      const { result } = renderHook(() => useEvidenceSources('project-100'), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data).toEqual([]);
+    });
+
+    it('is disabled for invalid projectId', () => {
+      const { result } = renderHook(() => useEvidenceSources(''), {
+        wrapper: createWrapper(),
+      });
+
+      expect(result.current.fetchStatus).toBe('idle');
+      expect(mockGet).not.toHaveBeenCalled();
+    });
+
+    it('has stale time of 5 minutes for aggressive caching', async () => {
+      // Evidence sources rarely change, so we cache aggressively
+      mockGet.mockResolvedValueOnce({ data: [] });
+
+      const { result } = renderHook(() => useEvidenceSources('project-100'), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      // Data should be considered fresh (not stale)
+      expect(result.current.isStale).toBe(false);
     });
   });
 });

@@ -310,6 +310,81 @@
   margin: 0 0 var(--space-3);
 }
 
+/* ─── DR-4e: Action Buttons ──────────────────────────────────────────────── */
+
+.actionButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ─── DR-4e: Create Insight Section ──────────────────────────────────────── */
+
+.createInsightSection {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ─── DR-4e: Permission Denied Toast ─────────────────────────────────────── */
+
+.permissionDeniedToast {
+  position: fixed;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-error-surface);
+  color: var(--color-error);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-md);
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-medium);
+  z-index: var(--z-toast);
+  animation: toastSlideUp 0.2s ease-out;
+}
+
+.dismissPermissionDenied {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-left: var(--space-2);
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--color-error);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  transition: background var(--motion-fast) var(--motion-ease);
+}
+
+.dismissPermissionDenied:hover {
+  background: var(--color-error-wash);
+}
+
+.draftPreserved {
+  font-weight: var(--weight-regular);
+  font-style: italic;
+}
+
+@keyframes toastSlideUp {
+  from {
+    transform: translateX(-50%) translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
 
 @media (max-width: 767px) {

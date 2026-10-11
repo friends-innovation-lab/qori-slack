@@ -15,6 +15,7 @@ export {
   useInsightRevisions,
   useInsightReviews,
   useNeedsReviewCount,
+  useEvidenceSources,
 } from './queries';
 
 // Mutation hooks
@@ -61,4 +62,7 @@ export type {
   CreateReviewRequest,
   InsightErrorCode,
   InsightErrorResponse,
+  EvidenceSourceSummary,
+  EvidenceSourcesResponse,
+  EvidenceSourceType,
 } from '@qori/api-contracts';

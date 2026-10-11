@@ -12,12 +12,14 @@ jest.mock('../../database', () => ({
   models: {
     EvidenceSource: {
       create: jest.fn(),
+      findAll: jest.fn(),
     },
   },
 }));
 
 const mockSequelize = require('../../database');
 const mockCreate = mockSequelize.models.EvidenceSource.create as jest.Mock;
+const mockFindAll = mockSequelize.models.EvidenceSource.findAll as jest.Mock;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -211,5 +213,71 @@ describe('createDiscoverySources', () => {
 
     expect(sources).toHaveLength(0);
     expect(mockCreate).not.toHaveBeenCalled();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 5. listEvidenceSourcesByProject (DR-4e)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('listEvidenceSourcesByProject', () => {
+  it('returns all sources for a project', async () => {
+    const mockSources = [
+      { id: 1, public_id: 'uuid-1', label: 'Source 1', source_type: 'uploaded_document' },
+      { id: 2, public_id: 'uuid-2', label: 'Source 2', source_type: 'stakeholder_interview' },
+    ];
+    mockFindAll.mockResolvedValue(mockSources);
+
+    const result = await evidenceService.listEvidenceSourcesByProject(100);
+
+    expect(mockFindAll).toHaveBeenCalledWith({
+      where: { project_id: 100 },
+      order: [['created_at', 'DESC']],
+      limit: undefined,
+      offset: undefined,
+      transaction: undefined,
+    });
+    expect(result).toEqual(mockSources);
+  });
+
+  it('filters by sourceType when provided', async () => {
+    mockFindAll.mockResolvedValue([]);
+
+    await evidenceService.listEvidenceSourcesByProject(100, {
+      sourceType: 'stakeholder_interview',
+    });
+
+    expect(mockFindAll).toHaveBeenCalledWith({
+      where: { project_id: 100, source_type: 'stakeholder_interview' },
+      order: [['created_at', 'DESC']],
+      limit: undefined,
+      offset: undefined,
+      transaction: undefined,
+    });
+  });
+
+  it('applies limit and offset when provided', async () => {
+    mockFindAll.mockResolvedValue([]);
+
+    await evidenceService.listEvidenceSourcesByProject(100, {
+      limit: 50,
+      offset: 10,
+    });
+
+    expect(mockFindAll).toHaveBeenCalledWith({
+      where: { project_id: 100 },
+      order: [['created_at', 'DESC']],
+      limit: 50,
+      offset: 10,
+      transaction: undefined,
+    });
+  });
+
+  it('returns empty array when no sources exist', async () => {
+    mockFindAll.mockResolvedValue([]);
+
+    const result = await evidenceService.listEvidenceSourcesByProject(999);
+
+    expect(result).toEqual([]);
   });
 });
