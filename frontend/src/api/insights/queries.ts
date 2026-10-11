@@ -16,8 +16,9 @@ import {
   fetchInsightRevisions,
   fetchInsightReviews,
   fetchNeedsReviewCount,
+  fetchEvidenceSources,
 } from './client';
-import type { InsightListFilters } from '@qori/api-contracts';
+import type { InsightListFilters, EvidenceSourceSummary } from '@qori/api-contracts';
 
 /**
  * Fetch paginated insights list for a project.
@@ -101,5 +102,30 @@ export function useNeedsReviewCount(projectId: string) {
       return response.data.count;
     },
     enabled: !!projectId,
+  });
+}
+
+/**
+ * Fetch evidence sources for a project.
+ * DR-4e: Required for insight attribution in InsightEditor.
+ *
+ * Returns canonical evidence source identity:
+ * - id: numeric database ID (for evidence references)
+ * - publicId: stable public identifier
+ * - label: human-readable source label
+ * - sourceType: classification of source
+ *
+ * @param projectId - Project public ID
+ */
+export function useEvidenceSources(projectId: string) {
+  return useQuery<EvidenceSourceSummary[]>({
+    queryKey: insightsKeys.evidenceSources(projectId),
+    queryFn: async () => {
+      const response = await fetchEvidenceSources(projectId);
+      return response.data;
+    },
+    enabled: !!projectId,
+    // Evidence sources rarely change, cache aggressively
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }

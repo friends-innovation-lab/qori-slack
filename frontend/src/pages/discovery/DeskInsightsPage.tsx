@@ -28,6 +28,7 @@ import {
   useCreateInsight,
   useCreateRevision,
   useReviewInsight,
+  useEvidenceSources,
   isConcurrencyError,
   isAuthorizationError,
   type InsightSummary,
@@ -177,16 +178,18 @@ export function DeskInsightsPage() {
   const sourceCount = sourcesQuery.data?.length ?? 0;
   const proposedCount = groupedInsights?.proposed.length ?? 0;
 
-  // DR-4e: Available sources for editor (mock - would come from evidence sources API)
-  // For now, derive from artifacts
+  // DR-4e: Fetch canonical evidence sources for InsightEditor
+  const evidenceSourcesQuery = useEvidenceSources(projectPublicId);
+
+  // DR-4e: Transform evidence sources to editor format
   const availableSources = useMemo(() => {
-    if (!sourcesQuery.data) return [];
-    return sourcesQuery.data.map((artifact, index) => ({
-      id: index + 1, // Placeholder - real implementation would use evidence source IDs
-      label: artifact.title,
-      publicId: artifact.publicId,
+    if (!evidenceSourcesQuery.data) return [];
+    return evidenceSourcesQuery.data.map((source) => ({
+      id: source.id,
+      label: source.label,
+      publicId: source.publicId,
     }));
-  }, [sourcesQuery.data]);
+  }, [evidenceSourcesQuery.data]);
 
   // DR-4e: Check if any mutation is pending
   const isMutating = createInsightMutation.isPending ||
@@ -286,9 +289,10 @@ export function DeskInsightsPage() {
         },
       });
     } else if (isAuthorizationError(error)) {
+      // DR-4e: Persistent permission denial per DR10b
+      // User must explicitly dismiss - 5-second toast is insufficient
       setPermissionDenied(error.message || 'You do not have permission to perform this action.');
-      // Clear permission denied after 5 seconds
-      setTimeout(() => setPermissionDenied(null), 5000);
+      // Draft is preserved in editorDraft state for recovery
     }
   }, [selectedInsight.data]);
 
@@ -883,10 +887,21 @@ export function DeskInsightsPage() {
         />
       )}
 
-      {/* DR-4e: Permission denied toast */}
+      {/* DR-4e: Permission denied banner (persistent per DR10b) */}
       {permissionDenied && (
         <div className={styles.permissionDeniedToast} role="alert">
-          {permissionDenied}
+          <span>{permissionDenied}</span>
+          <button
+            type="button"
+            className={styles.dismissPermissionDenied}
+            onClick={() => setPermissionDenied(null)}
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+          {editorDraft && (
+            <span className={styles.draftPreserved}> (Your draft has been preserved)</span>
+          )}
         </div>
       )}
     </WorkspaceLayout>

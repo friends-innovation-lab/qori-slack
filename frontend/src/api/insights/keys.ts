@@ -81,4 +81,8 @@ export const insightsKeys = {
   /** Needs review count for project badge */
   needsReviewCount: (projectId: string) =>
     ['insights', 'project', projectId, 'needs-review-count'] as const,
+
+  /** Evidence sources for insight attribution (DR-4e) */
+  evidenceSources: (projectId: string) =>
+    ['insights', 'project', projectId, 'evidence-sources'] as const,
 };

@@ -21,6 +21,7 @@ import commentsRoutes from './comments.routes';
 import coachingRoutes from './coaching.routes';
 import discoveryRoutes from './discovery.routes';
 import deskInsightsRoutes from './desk-insights.routes';
+import evidenceSourcesRoutes from './evidence-sources.routes';
 
 const v1Router = Router();
 
@@ -48,5 +49,8 @@ v1Router.use('/projects/:projectId/discovery', discoveryRoutes);
 
 // DR-1: Desk research insights — project-scoped
 v1Router.use('/projects/:projectId/insights', deskInsightsRoutes);
+
+// DR-4e: Evidence sources — project-scoped, for insight attribution
+v1Router.use('/projects/:projectId/evidence-sources', evidenceSourcesRoutes);
 
 export default v1Router;
