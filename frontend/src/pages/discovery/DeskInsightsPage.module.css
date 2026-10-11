@@ -366,7 +366,7 @@
 }
 
 .dismissPermissionDenied:hover {
-  background: var(--color-error-wash);
+  background: var(--color-error-surface);
 }
 
 .draftPreserved {
