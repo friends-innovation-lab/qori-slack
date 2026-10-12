@@ -496,4 +496,97 @@ describe('DR-1 HTTP Authorization', () => {
       }
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DR-4 HOTFIX: PROJECT SLUG RESOLUTION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('[DR4-HOTFIX] Project Identifier Resolution', () => {
+    it('GET /insights accepts project slug as identifier', async () => {
+      const res = await request(app)
+        .get(`/api/v1/projects/test-project/insights`)
+        .set('X-Test-Actor-PublicId', ownerPublicId)
+        .expect(200);
+
+      expect(res.body.data).toBeDefined();
+      expect(Array.isArray(res.body.data)).toBe(true);
+    });
+
+    it('GET /insights/needs-review-count accepts project slug', async () => {
+      const res = await request(app)
+        .get(`/api/v1/projects/test-project/insights/needs-review-count`)
+        .set('X-Test-Actor-PublicId', ownerPublicId)
+        .expect(200);
+
+      expect(res.body.data.count).toBeDefined();
+    });
+
+    it('POST /insights accepts project slug and creates insight', async () => {
+      const res = await request(app)
+        .post(`/api/v1/projects/test-project/insights`)
+        .set('X-Test-Actor-PublicId', ownerPublicId)
+        .send({
+          wording: 'Insight created via project slug',
+          evidenceReferences: [{
+            evidenceSourceId: sourceId,
+            locator: { sourceLevel: true },
+          }],
+        })
+        .expect(201);
+
+      expect(res.body.data.id).toBeDefined();
+      expect(res.body.data.latestRevision.content.wording).toBe('Insight created via project slug');
+    });
+
+    it('returns empty list for project slug with no insights', async () => {
+      const res = await request(app)
+        .get(`/api/v1/projects/project-2/insights`)
+        .set('X-Test-Actor-PublicId', crossProjectPublicId)
+        .expect(200);
+
+      expect(res.body.data).toEqual([]);
+    });
+
+    it('returns 400 for unknown project slug', async () => {
+      const res = await request(app)
+        .get(`/api/v1/projects/nonexistent-project-slug/insights`)
+        .set('X-Test-Actor-PublicId', ownerPublicId)
+        .expect(400);
+
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+      expect(res.body.error.message).toContain('unknown project identifier');
+    });
+
+    it('maintains project isolation when using slug', async () => {
+      // Create insight in project 1
+      await request(app)
+        .post(`/api/v1/projects/test-project/insights`)
+        .set('X-Test-Actor-PublicId', ownerPublicId)
+        .send({
+          wording: 'Project 1 insight',
+          evidenceReferences: [{
+            evidenceSourceId: sourceId,
+            locator: { sourceLevel: true },
+          }],
+        })
+        .expect(201);
+
+      // Access via slug - crossProjectActor (member of project-2 only) should get 403
+      const res = await request(app)
+        .get(`/api/v1/projects/test-project/insights`)
+        .set('X-Test-Actor-PublicId', crossProjectPublicId)
+        .expect(403);
+
+      expect(res.body.error.code).toBe('AUTHORIZATION_ERROR');
+    });
+
+    it('accepts numeric project ID for backward compatibility', async () => {
+      const res = await request(app)
+        .get(`/api/v1/projects/${(testProject as any).id}/insights`)
+        .set('X-Test-Actor-PublicId', ownerPublicId)
+        .expect(200);
+
+      expect(res.body.data).toBeDefined();
+    });
+  });
 });

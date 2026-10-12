@@ -13,8 +13,13 @@ import { requireAuth } from '../../../middleware/auth';
 import { assertProjectAccessByActor } from '../../../services/authorization.service';
 import * as evidenceSourceService from '../../../services/evidence-source.service';
 import type { SourceType } from '../../../database/models/evidence_source';
+import type { Project } from '../../../database/models/project';
+import sequelize from '../../../database';
 
 const router = Router({ mergeParams: true });
+
+// Typed model reference
+const ProjectModel = sequelize.models.Project as typeof Project;
 
 // Valid source types for validation
 const VALID_SOURCE_TYPES: SourceType[] = [
@@ -27,12 +32,48 @@ const VALID_SOURCE_TYPES: SourceType[] = [
   'external_reference',
 ];
 
-// Helper to extract projectId from route params
-function extractProjectId(params: Record<string, string | string[] | undefined>): number | null {
-  const projectIdParam = params.projectId;
-  if (typeof projectIdParam !== 'string') return null;
-  const parsed = parseInt(projectIdParam, 10);
-  return isNaN(parsed) ? null : parsed;
+// UUID pattern for public_id detection
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Resolve project identifier (numeric ID, UUID public_id, or slug) to numeric project ID.
+ * Returns null if project not found or identifier invalid.
+ *
+ * DR-4 hotfix: Frontend passes project slug from study.project_public_id,
+ * which falls back to slug when public_id is null.
+ */
+async function resolveProjectId(
+  projectIdParam: string | string[] | undefined,
+  organizationId: number,
+): Promise<number | null> {
+  if (typeof projectIdParam !== 'string' || !projectIdParam) return null;
+  if (!ProjectModel) return null;
+
+  // 1. Try parsing as numeric ID (legacy support)
+  const numericId = parseInt(projectIdParam, 10);
+  if (!isNaN(numericId)) {
+    const project = await ProjectModel.findOne({
+      where: { id: numericId, organization_id: organizationId },
+      attributes: ['id'],
+    });
+    return project ? project.id : null;
+  }
+
+  // 2. Try UUID public_id
+  if (UUID_PATTERN.test(projectIdParam)) {
+    const project = await ProjectModel.findOne({
+      where: { public_id: projectIdParam, organization_id: organizationId },
+      attributes: ['id'],
+    });
+    if (project) return project.id;
+  }
+
+  // 3. Fall back to slug
+  const project = await ProjectModel.findOne({
+    where: { slug: projectIdParam, organization_id: organizationId },
+    attributes: ['id'],
+  });
+  return project ? project.id : null;
 }
 
 /**
@@ -48,10 +89,10 @@ function extractProjectId(params: Record<string, string | string[] | undefined>)
  */
 router.get('/', requireAuth, async (req, res, next) => {
   try {
-    const projectId = extractProjectId(req.params);
+    const projectId = await resolveProjectId(req.params.projectId, req.ctx!.organization.id);
     if (projectId === null) {
       res.status(400).json({
-        error: { code: 'VALIDATION_ERROR', message: 'Invalid project ID' },
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid or unknown project identifier' },
       });
       return;
     }
