@@ -589,4 +589,78 @@ describe('DR-1 HTTP Authorization', () => {
       expect(res.body.data).toBeDefined();
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DR-4 HOTFIX: DISCOVERY ROUTES PROJECT SLUG RESOLUTION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('[DR4-HOTFIX] Discovery Project Identifier Resolution', () => {
+    it('GET /discovery/runs accepts project slug', async () => {
+      const res = await request(app)
+        .get(`/api/v1/projects/test-project/discovery/runs?type=desk_research`)
+        .set('X-Test-Actor-PublicId', ownerPublicId)
+        .expect(200);
+
+      expect(res.body.data).toBeDefined();
+      expect(Array.isArray(res.body.data)).toBe(true);
+    });
+
+    it('GET /discovery/artifacts accepts project slug', async () => {
+      const res = await request(app)
+        .get(`/api/v1/projects/test-project/discovery/artifacts`)
+        .set('X-Test-Actor-PublicId', ownerPublicId)
+        .expect(200);
+
+      expect(res.body.data).toBeDefined();
+      expect(Array.isArray(res.body.data)).toBe(true);
+    });
+
+    it('GET /discovery/knowledge-gaps accepts project slug', async () => {
+      const res = await request(app)
+        .get(`/api/v1/projects/test-project/discovery/knowledge-gaps`)
+        .set('X-Test-Actor-PublicId', ownerPublicId)
+        .expect(200);
+
+      expect(res.body.data).toBeDefined();
+    });
+
+    it('returns empty runs list for project with no runs', async () => {
+      const res = await request(app)
+        .get(`/api/v1/projects/project-2/discovery/runs`)
+        .set('X-Test-Actor-PublicId', crossProjectPublicId)
+        .expect(200);
+
+      expect(res.body.data).toEqual([]);
+    });
+
+    it('returns 400 for unknown project slug on discovery routes', async () => {
+      const res = await request(app)
+        .get(`/api/v1/projects/nonexistent-slug/discovery/runs`)
+        .set('X-Test-Actor-PublicId', ownerPublicId)
+        .expect(400);
+
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+      expect(res.body.error.message).toContain('unknown project identifier');
+    });
+
+    it('maintains project isolation on discovery routes', async () => {
+      // crossProjectActor (member of project-2 only) cannot access test-project discovery
+      const res = await request(app)
+        .get(`/api/v1/projects/test-project/discovery/runs`)
+        .set('X-Test-Actor-PublicId', crossProjectPublicId)
+        .expect(403);
+
+      // Discovery routes use global error handler which maps AuthorizationError to AUTHORIZATION_DENIED
+      expect(res.body.error.code).toBe('AUTHORIZATION_DENIED');
+    });
+
+    it('accepts numeric project ID for backward compatibility on discovery routes', async () => {
+      const res = await request(app)
+        .get(`/api/v1/projects/${(testProject as any).id}/discovery/runs`)
+        .set('X-Test-Actor-PublicId', ownerPublicId)
+        .expect(200);
+
+      expect(res.body.data).toBeDefined();
+    });
+  });
 });
