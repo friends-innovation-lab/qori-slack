@@ -181,3 +181,9 @@ node_modules/
 # TypeScript
 *.tsbuildinfo
 backend/.DS_Store
+
+# Playwright E2E
+frontend/e2e-results/
+frontend/e2e-report/
+frontend/playwright-report/
+frontend/test-results/
