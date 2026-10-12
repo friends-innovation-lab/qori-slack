@@ -650,7 +650,8 @@ describe('DR-1 HTTP Authorization', () => {
         .set('X-Test-Actor-PublicId', crossProjectPublicId)
         .expect(403);
 
-      expect(res.body.error.code).toBe('AUTHORIZATION_ERROR');
+      // Discovery routes use global error handler which maps AuthorizationError to AUTHORIZATION_DENIED
+      expect(res.body.error.code).toBe('AUTHORIZATION_DENIED');
     });
 
     it('accepts numeric project ID for backward compatibility on discovery routes', async () => {
