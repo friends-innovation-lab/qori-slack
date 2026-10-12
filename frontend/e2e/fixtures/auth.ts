@@ -15,14 +15,24 @@ import type { MeResource, SessionStatus } from '@qori/api-contracts';
 // ─── Test Actor Data ────────────────────────────────────────────
 
 export const TEST_ACTOR: MeResource = {
-  publicId: 'e2e-test-actor-001',
-  displayName: 'E2E Test User',
-  email: 'e2e-test@qori.test',
-  org: {
-    publicId: 'e2e-test-org-001',
+  actor: {
+    public_id: 'e2e-test-actor-001',
+    display_name: 'E2E Test User',
+    organization_public_id: 'e2e-test-org-001',
+  },
+  organization: {
+    public_id: 'e2e-test-org-001',
     name: 'E2E Test Organization',
     slug: 'e2e-test-org',
   },
+  authentication_provider: 'slack',
+  memberships: [
+    {
+      project_public_id: 'e2e-test-project-001',
+      project_name: 'E2E Test Project',
+      role: 'owner',
+    },
+  ],
 };
 
 export const TEST_PROJECT = {
@@ -64,12 +74,12 @@ export async function setupAuthMocks(page: Page): Promise<void> {
     });
   });
 
-  // Mock CSRF token
-  await page.route('**/api/v1/auth/csrf', async (route) => {
+  // Mock CSRF token - match both /csrf and /csrf-token paths
+  await page.route('**/api/v1/auth/csrf*', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ csrfToken: 'e2e-test-csrf-token' }),
+      body: JSON.stringify({ data: { token: 'e2e-test-csrf-token' } }),
     });
   });
 }
