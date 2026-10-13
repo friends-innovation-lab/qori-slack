@@ -50,8 +50,9 @@ async function resolveProjectId(
   if (!ProjectModel) return null;
 
   // 1. Try parsing as numeric ID (legacy support)
-  const numericId = parseInt(projectIdParam, 10);
-  if (!isNaN(numericId)) {
+  // Only if the entire string is numeric (e.g., "123", not "74e132f6-...")
+  if (/^\d+$/.test(projectIdParam)) {
+    const numericId = parseInt(projectIdParam, 10);
     const project = await ProjectModel.findOne({
       where: { id: numericId, organization_id: organizationId },
       attributes: ['id'],
@@ -59,10 +60,10 @@ async function resolveProjectId(
     return project ? project.id : null;
   }
 
-  // 2. Try UUID public_id
+  // 2. Try UUID public_id (case-insensitive match, lowercase query)
   if (UUID_PATTERN.test(projectIdParam)) {
     const project = await ProjectModel.findOne({
-      where: { public_id: projectIdParam, organization_id: organizationId },
+      where: { public_id: projectIdParam.toLowerCase(), organization_id: organizationId },
       attributes: ['id'],
     });
     if (project) return project.id;
