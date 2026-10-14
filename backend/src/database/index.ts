@@ -72,6 +72,11 @@ import DiscoveryArtifact from './models/discovery_artifact';
 // DR-1: Desk insight revision tracking
 import EvidenceConstructRevision from './models/evidence_construct_revision';
 import EvidenceConstructReview from './models/evidence_construct_review';
+// DR-6b: Desk research readouts
+import DeskResearchReadout from './models/desk_research_readout';
+import DeskResearchReadoutDraft from './models/desk_research_readout_draft';
+import DeskResearchReadoutVersion from './models/desk_research_readout_version';
+import DeskResearchReadoutApproval from './models/desk_research_readout_approval';
 
 
 // Set environment and configuration
@@ -156,6 +161,13 @@ const modelDefiners = [
   // EvidenceConstructReview references EvidenceConstruct and EvidenceConstructRevision
   EvidenceConstructRevision,
   EvidenceConstructReview,
+  // DR-6b: Desk research readouts (must be after ResearchStudy, Project, Actor)
+  // DeskResearchReadout references ResearchStudy, Project, Actor
+  // Draft/Version/Approval reference DeskResearchReadout and Actor
+  DeskResearchReadout,
+  DeskResearchReadoutDraft,
+  DeskResearchReadoutVersion,
+  DeskResearchReadoutApproval,
 ];
 
 // Register all models with Sequelize
