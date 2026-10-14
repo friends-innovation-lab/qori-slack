@@ -1722,3 +1722,151 @@ function mapToApprovalDetail(approval: any): ApprovalDetail {
     supersessionNotes: approval.supersession_notes,
   };
 }
+
+// ─── Evidence Eligibility ─────────────────────────────────────────────────────
+
+/**
+ * Eligible insight source attribution (null-safe)
+ */
+export interface EligibleInsightSource {
+  sourceId: number;
+  sourcePublicId: string;
+  sourceType: string;
+  label: string;
+}
+
+/**
+ * Eligible insight with accepted revision for citation
+ */
+export interface EligibleInsight {
+  constructPublicId: string;
+  displayId: string;
+  wording: string;
+  acceptedRevision: {
+    revisionPublicId: string;
+    revisionNumber: number;
+    acceptedAt: Date;
+  };
+  source: EligibleInsightSource | null;
+}
+
+/**
+ * Get eligible evidence (accepted, non-withdrawn desk insights) for a project.
+ *
+ * Per DR-6b D2: Eligible evidence comes from accepted insights in the same project.
+ * Only returns insights where:
+ * - construct_type = 'desk_insight'
+ * - withdrawn_at IS NULL
+ * - accepted_revision_id IS NOT NULL
+ *
+ * Source attribution is null-safe — returns null when no evidence source exists.
+ */
+export async function getEligibleEvidence(
+  projectId: number,
+  actorId: number,
+  options?: { limit?: number; offset?: number },
+): Promise<{ insights: EligibleInsight[]; total: number }> {
+  // Resolve organization from project for authorization
+  const organizationId = await resolveOrganizationFromProject(projectId);
+
+  // Verify actor has project access
+  await assertProjectAccessByActor(actorId, projectId, organizationId);
+
+  const limit = Math.min(options?.limit ?? 50, 100);
+  const offset = options?.offset ?? 0;
+
+  // Query accepted, non-withdrawn desk insights
+  const { count, rows: constructs } = await EvidenceConstruct.findAndCountAll({
+    where: {
+      project_id: projectId,
+      construct_type: 'desk_insight',
+      withdrawn_at: null,
+      accepted_revision_id: { [Op.ne]: null },
+    },
+    order: [['display_sequence', 'ASC']],
+    limit,
+    offset,
+  });
+
+  if (constructs.length === 0) {
+    return { insights: [], total: count };
+  }
+
+  // Batch load accepted revisions
+  const acceptedRevisionIds = constructs.map((c: any) => c.accepted_revision_id);
+  const revisions = await EvidenceConstructRevision.findAll({
+    where: { id: { [Op.in]: acceptedRevisionIds } },
+  });
+  const revisionMap = new Map(revisions.map((r: any) => [r.id, r]));
+
+  // Collect evidence source IDs from revision snapshots
+  const sourceIds = new Set<number>();
+  for (const revision of revisions) {
+    const snapshot = (revision as any).evidence_snapshot as Array<{ evidenceSourceId?: number }> | null;
+    if (Array.isArray(snapshot)) {
+      for (const ref of snapshot) {
+        if (ref.evidenceSourceId) {
+          sourceIds.add(ref.evidenceSourceId);
+        }
+      }
+    }
+  }
+
+  // Batch load evidence sources (if any)
+  const EvidenceSource = sequelize.models.EvidenceSource;
+  let sourceMap = new Map<number, any>();
+  if (sourceIds.size > 0 && EvidenceSource) {
+    const sources = await EvidenceSource.findAll({
+      where: { id: { [Op.in]: [...sourceIds] } },
+      attributes: ['id', 'public_id', 'source_type', 'label'],
+    });
+    sourceMap = new Map(sources.map((s: any) => [s.id, s]));
+  }
+
+  // Map to output format
+  const insights: EligibleInsight[] = [];
+  for (const construct of constructs) {
+    const c = construct as any;
+    const revision = revisionMap.get(c.accepted_revision_id);
+    if (!revision) continue;
+
+    const r = revision as any;
+    const displayId = formatInsightDisplayId(c.display_sequence);
+
+    // Extract first source from evidence snapshot (null-safe)
+    let source: EligibleInsightSource | null = null;
+    const snapshot = r.evidence_snapshot as Array<{ evidenceSourceId?: number }> | null;
+    if (Array.isArray(snapshot) && snapshot.length > 0 && snapshot[0].evidenceSourceId) {
+      const sourceData = sourceMap.get(snapshot[0].evidenceSourceId);
+      if (sourceData) {
+        source = {
+          sourceId: sourceData.id,
+          sourcePublicId: sourceData.public_id,
+          sourceType: sourceData.source_type,
+          label: sourceData.label,
+        };
+      }
+    }
+
+    insights.push({
+      constructPublicId: c.public_id,
+      displayId,
+      wording: r.content?.wording || '',
+      acceptedRevision: {
+        revisionPublicId: r.public_id,
+        revisionNumber: r.revision_number,
+        acceptedAt: r.reviewed_at || r.created_at,
+      },
+      source,
+    });
+  }
+
+  return { insights, total: count };
+}
+
+/**
+ * Format insight display ID from sequence number: IN-0001
+ */
+function formatInsightDisplayId(sequence: number): string {
+  return `IN-${String(sequence).padStart(4, '0')}`;
+}

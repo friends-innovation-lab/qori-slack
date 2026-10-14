@@ -192,7 +192,9 @@ describe('pattern: as-any budget enforcement', () => {
     // Budget raised 412 → 485 by DR-6b desk-readout.service (DeskResearchReadout/Draft/Approval/
     // Version model findByPk, findOne, findAll, create, update, attribute access — same bounded
     // Sequelize categories).
-    expect(total).toBeLessThanOrEqual(485);
+    // Budget raised 485 → 495 by DR-6b-3 getEligibleEvidence() service function (EvidenceConstruct/
+    // Revision/Source model findAll, attribute access — same bounded Sequelize categories).
+    expect(total).toBeLessThanOrEqual(495);
   });
 
   it('events.ts has no more than 1 as-any cast (excluding comments)', () => {
