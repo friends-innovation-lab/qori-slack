@@ -4,14 +4,24 @@
  * Tests against real Postgres per DR-6b canonical contract:
  * - Table creation, relationships, constraints, and indexes
  * - Study-scoped RO-0001 display ID allocation
- * - Concurrent display ID allocation
+ * - Display sequence unique constraint
  * - Draft version conflicts (optimistic concurrency)
  * - Duplicate approval prevention
- * - Approval snapshot immutability
+ * - Approval UPDATE immutability (database-enforced)
  * - Completed generation snapshot immutability
- * - Project/study consistency enforcement
+ * - Project/study consistency enforcement (INSERT and UPDATE)
  * - Owner-authorized study deletion and CASCADE
  * - Transaction rollback preserving records
+ *
+ * LIMITATION (documented):
+ * Approval DELETE immutability is NOT enforced at the database level.
+ * The current deployment uses a shared database account for migrations
+ * and application, which prevents privilege-based DELETE protection.
+ *
+ * FOLLOW-UP REQUIREMENTS:
+ * - PLAT-X: Separate PostgreSQL Migration and Application Roles
+ * - DR-6b-2: Enforce approval deletion authorization in service layer
+ *            (MANDATORY before any public readout mutation endpoints)
  */
 
 import { getTestDb, truncateAll, TEST_ORG_ID } from './setup/testDb';
@@ -332,7 +342,17 @@ describe('DR-6b Desk Research Readout Foundation', () => {
     });
   });
 
-  describe('Approval Snapshot Immutability', () => {
+  describe('Approval UPDATE Immutability', () => {
+    /**
+     * Approval UPDATE is blocked at the database level via trigger.
+     *
+     * LIMITATION: Approval DELETE is NOT blocked at the database level.
+     * The current deployment uses a shared database account, which prevents
+     * privilege-based DELETE protection. Deletion authorization MUST be
+     * enforced in the service layer (DR-6b-2).
+     *
+     * See: PLAT-X (Separate PostgreSQL Migration and Application Roles)
+     */
     it('blocks UPDATE on approval records', async () => {
       const readout = await createReadout();
       const approval = await ApprovalModel.create({
@@ -352,27 +372,6 @@ describe('DR-6b Desk Research Readout Foundation', () => {
           { bind: [JSON.stringify({ modified: true }), (approval as any).id] }
         )
       ).rejects.toThrow(/immutable|cannot.*update/i);
-    });
-
-    it('blocks direct DELETE on approval records', async () => {
-      const readout = await createReadout();
-      const approval = await ApprovalModel.create({
-        readout_id: (readout as any).id,
-        approval_number: 1,
-        source_draft_content_version: 1,
-        approved_by_actor_id: actorId,
-        content_snapshot: {},
-        findings_checked_snapshot: [],
-        implications_reviewed_snapshot: [],
-        evidence_snapshot: { cited_constructs: [] },
-      } as CreationAttributes<DeskResearchReadoutApproval>);
-
-      await expect(
-        sequelize.query(
-          'DELETE FROM desk_research_readout_approvals WHERE id = $1',
-          { bind: [(approval as any).id] }
-        )
-      ).rejects.toThrow(/cannot.*delete|immutable/i);
     });
   });
 

@@ -124,53 +124,41 @@ module.exports = {
       CHECK (approval_number >= 1)
     `);
 
-    // Immutability trigger: block all updates and deletes on approval rows
-    // Deletion is only allowed via CASCADE from parent readout/study
+    // Immutability trigger: block UPDATE on approval rows
     //
-    // Detection strategy: pg_trigger_depth() reliably distinguishes CASCADE from direct DELETE.
-    // - Direct DELETE: trigger_depth = 1 (we're inside the BEFORE DELETE trigger)
-    // - CASCADE DELETE: trigger_depth > 1 (FK cascade machinery adds depth)
-    // This is database-enforceable and not timing-dependent like parent-existence checks.
+    // LIMITATION (documented): Approval DELETE immutability is NOT enforced at the
+    // database level. The current deployment uses a shared database account for
+    // migrations and application, which prevents privilege-based DELETE protection.
+    //
+    // Approval deletion authorization MUST be enforced in DR-6b-2 service layer.
+    // See: PLAT-X (Separate PostgreSQL Migration and Application Roles)
+    //
+    // What IS enforced at database level:
+    // - UPDATE immutability (trigger below)
+    // - Unique constraints (approval_number, source_draft_content_version)
+    // - FK CASCADE for authorized study deletion
     await queryInterface.sequelize.query(`
-      CREATE OR REPLACE FUNCTION protect_approval_immutability()
+      CREATE OR REPLACE FUNCTION protect_approval_update_immutability()
       RETURNS TRIGGER AS $$
       BEGIN
-        IF TG_OP = 'UPDATE' THEN
-          RAISE EXCEPTION 'Approval records are immutable and cannot be updated';
-        END IF;
-
-        IF TG_OP = 'DELETE' THEN
-          -- pg_trigger_depth() = 1 means direct DELETE statement
-          -- pg_trigger_depth() > 1 means we're inside FK CASCADE machinery
-          IF pg_trigger_depth() = 1 THEN
-            RAISE EXCEPTION 'Approval records cannot be directly deleted. Delete the parent study instead.';
-          END IF;
-        END IF;
-
-        RETURN OLD;
+        RAISE EXCEPTION 'Approval records are immutable and cannot be updated';
       END;
       $$ LANGUAGE plpgsql;
 
-      CREATE TRIGGER trg_protect_approval_immutability_update
+      CREATE TRIGGER trg_protect_approval_update_immutability
         BEFORE UPDATE ON desk_research_readout_approvals
         FOR EACH ROW
-        EXECUTE FUNCTION protect_approval_immutability();
-
-      CREATE TRIGGER trg_protect_approval_immutability_delete
-        BEFORE DELETE ON desk_research_readout_approvals
-        FOR EACH ROW
-        EXECUTE FUNCTION protect_approval_immutability();
+        EXECUTE FUNCTION protect_approval_update_immutability();
     `);
 
-    console.log('Created desk_research_readout_approvals table with immutability protections');
+    console.log('Created desk_research_readout_approvals table with UPDATE immutability protection');
   },
 
   async down(queryInterface) {
-    // Drop triggers and function first
+    // Drop trigger and function first
     await queryInterface.sequelize.query(`
-      DROP TRIGGER IF EXISTS trg_protect_approval_immutability_delete ON desk_research_readout_approvals;
-      DROP TRIGGER IF EXISTS trg_protect_approval_immutability_update ON desk_research_readout_approvals;
-      DROP FUNCTION IF EXISTS protect_approval_immutability();
+      DROP TRIGGER IF EXISTS trg_protect_approval_update_immutability ON desk_research_readout_approvals;
+      DROP FUNCTION IF EXISTS protect_approval_update_immutability();
     `);
 
     await queryInterface.dropTable('desk_research_readout_approvals');
