@@ -30,6 +30,11 @@ import type {
   EvidenceSetEntry,
   GenerationStatus,
 } from '../database/models/desk_research_readout_version';
+import {
+  assertProjectResearcherByActor,
+  assertProjectAccessByActor,
+  AuthorizationError,
+} from './authorization.service';
 
 const {
   DeskResearchReadout,
@@ -243,6 +248,86 @@ export class GenerationConflictError extends Error {
   }
 }
 
+// ─── Authorization Helpers ────────────────────────────────────────────────────
+
+/**
+ * Resolve organizationId from a project.
+ * This ensures authorization uses the persisted association, not caller-supplied data.
+ */
+async function resolveOrganizationFromProject(
+  projectId: number,
+  transaction?: Transaction,
+): Promise<number> {
+  const project = await Project.findByPk(projectId, {
+    attributes: ['id', 'organization_id'],
+    transaction,
+  });
+
+  if (!project) {
+    throw new ValidationError('Project not found');
+  }
+
+  const orgId = (project as any).organization_id;
+  if (!orgId) {
+    throw new ValidationError('Project has no organization');
+  }
+
+  return orgId;
+}
+
+/**
+ * Resolve projectId and organizationId from a readout.
+ * Used by operations that take readoutId as input.
+ */
+async function resolveProjectFromReadout(
+  readoutId: number,
+  transaction?: Transaction,
+): Promise<{ projectId: number; organizationId: number }> {
+  const readout = await DeskResearchReadout.findByPk(readoutId, {
+    attributes: ['id', 'project_id'],
+    transaction,
+  });
+
+  if (!readout) {
+    throw new ReadoutNotFoundError();
+  }
+
+  const projectId = (readout as any).project_id;
+  const organizationId = await resolveOrganizationFromProject(projectId, transaction);
+
+  return { projectId, organizationId };
+}
+
+/**
+ * Resolve projectId and organizationId from a study.
+ * Used by operations that take studyId as input.
+ */
+async function resolveProjectFromStudy(
+  studyId: number,
+  transaction?: Transaction,
+): Promise<{ projectId: number; organizationId: number }> {
+  const study = await ResearchStudy.findByPk(studyId, {
+    attributes: ['id', 'project_id'],
+    transaction,
+  });
+
+  if (!study) {
+    throw new StudyNotFoundError();
+  }
+
+  const projectId = (study as any).project_id;
+  if (!projectId) {
+    throw new ValidationError('Study has no project');
+  }
+
+  const organizationId = await resolveOrganizationFromProject(projectId, transaction);
+
+  return { projectId, organizationId };
+}
+
+// Re-export AuthorizationError for callers
+export { AuthorizationError };
+
 // ─── Helper Functions ─────────────────────────────────────────────────────────
 
 /**
@@ -399,6 +484,8 @@ function citationArraysEqual(
 
 /**
  * Create a new readout with initial empty draft
+ *
+ * AUTHORIZATION: Requires researcher role in the project.
  */
 export async function createReadout(input: CreateReadoutInput): Promise<ReadoutDetail> {
   const { studyId, projectId, title, question, createdByActorId } = input;
@@ -407,6 +494,10 @@ export async function createReadout(input: CreateReadoutInput): Promise<ReadoutD
   if (!title || title.trim().length === 0) {
     throw new ValidationError('Readout title is required');
   }
+
+  // Resolve organization and authorize BEFORE transaction
+  const organizationId = await resolveOrganizationFromProject(projectId);
+  await assertProjectResearcherByActor(createdByActorId, projectId, organizationId);
 
   return sequelize.transaction(async (transaction) => {
     // Verify study exists and belongs to project
@@ -460,11 +551,18 @@ export async function createReadout(input: CreateReadoutInput): Promise<ReadoutD
 
 /**
  * Get readout by ID
+ *
+ * AUTHORIZATION: Requires project membership.
  */
 export async function getReadoutById(
   readoutId: number,
+  actorId: number,
   transaction?: Transaction,
 ): Promise<ReadoutDetail | null> {
+  // Resolve project and authorize
+  const { projectId, organizationId } = await resolveProjectFromReadout(readoutId, transaction);
+  await assertProjectAccessByActor(actorId, projectId, organizationId);
+
   const readout = await DeskResearchReadout.findByPk(readoutId, {
     include: [
       {
@@ -489,11 +587,15 @@ export async function getReadoutById(
 
 /**
  * Get readout by public ID
+ *
+ * AUTHORIZATION: Requires project membership.
  */
 export async function getReadoutByPublicId(
   publicId: string,
+  actorId: number,
   transaction?: Transaction,
 ): Promise<ReadoutDetail | null> {
+  // First find the readout to get projectId
   const readout = await DeskResearchReadout.findOne({
     where: { public_id: publicId },
     include: [
@@ -507,6 +609,11 @@ export async function getReadoutByPublicId(
 
   if (!readout) return null;
 
+  // Resolve project and authorize
+  const projectId = (readout as any).project_id;
+  const organizationId = await resolveOrganizationFromProject(projectId, transaction);
+  await assertProjectAccessByActor(actorId, projectId, organizationId);
+
   const latestApproval = await DeskResearchReadoutApproval.findOne({
     where: { readout_id: (readout as any).id },
     order: [['approval_number', 'DESC']],
@@ -518,11 +625,18 @@ export async function getReadoutByPublicId(
 
 /**
  * List readouts for a study
+ *
+ * AUTHORIZATION: Requires project membership.
  */
 export async function listReadoutsByStudy(
   studyId: number,
+  actorId: number,
   options?: { limit?: number; offset?: number },
 ): Promise<{ readouts: ReadoutSummary[]; total: number }> {
+  // Resolve project and authorize
+  const { projectId, organizationId } = await resolveProjectFromStudy(studyId);
+  await assertProjectAccessByActor(actorId, projectId, organizationId);
+
   const { limit = 50, offset = 0 } = options || {};
 
   const { rows, count } = await DeskResearchReadout.findAndCountAll({
@@ -540,6 +654,8 @@ export async function listReadoutsByStudy(
 
 /**
  * Save draft with optimistic concurrency and review state invalidation
+ *
+ * AUTHORIZATION: Requires researcher role in the project.
  */
 export async function saveDraft(input: SaveDraftInput): Promise<SaveResult> {
   const {
@@ -550,6 +666,10 @@ export async function saveDraft(input: SaveDraftInput): Promise<SaveResult> {
     expectedVersion,
     editedByActorId,
   } = input;
+
+  // Resolve project and authorize BEFORE transaction
+  const { projectId, organizationId } = await resolveProjectFromReadout(readoutId);
+  await assertProjectResearcherByActor(editedByActorId, projectId, organizationId);
 
   return sequelize.transaction(async (transaction) => {
     // Lock and fetch draft
@@ -994,11 +1114,18 @@ export async function validateCitations(
 
 /**
  * Check if readout is eligible for approval
+ *
+ * AUTHORIZATION: Requires project membership.
  */
 export async function checkApprovalEligibility(
   readoutId: number,
+  actorId: number,
   transaction?: Transaction,
 ): Promise<ApprovalEligibility> {
+  // Resolve project and authorize
+  const { projectId, organizationId } = await resolveProjectFromReadout(readoutId, transaction);
+  await assertProjectAccessByActor(actorId, projectId, organizationId);
+
   const errors: string[] = [];
 
   const readout = await DeskResearchReadout.findByPk(readoutId, {
@@ -1082,9 +1209,15 @@ export async function checkApprovalEligibility(
 
 /**
  * Approve readout with immutable snapshot
+ *
+ * AUTHORIZATION: Requires researcher role in the project.
  */
 export async function approveReadout(input: ApproveReadoutInput): Promise<ApprovalDetail> {
   const { readoutId, expectedVersion, approvedByActorId, approvalNote, supersessionNotes } = input;
+
+  // Resolve project and authorize BEFORE transaction
+  const { projectId, organizationId } = await resolveProjectFromReadout(readoutId);
+  await assertProjectResearcherByActor(approvedByActorId, projectId, organizationId);
 
   return sequelize.transaction(async (transaction) => {
     // Lock readout first, then fetch draft separately
@@ -1118,8 +1251,8 @@ export async function approveReadout(input: ApproveReadoutInput): Promise<Approv
       );
     }
 
-    // Check eligibility
-    const eligibility = await checkApprovalEligibility(readoutId, transaction);
+    // Check eligibility (actor already authorized above, passing for signature compliance)
+    const eligibility = await checkApprovalEligibility(readoutId, approvedByActorId, transaction);
     if (!eligibility.eligible) {
       throw new ApprovalEligibilityError('Readout is not eligible for approval', eligibility.errors);
     }
@@ -1192,11 +1325,17 @@ export async function approveReadout(input: ApproveReadoutInput): Promise<Approv
 
 /**
  * Initiate AI generation (service contract only)
+ *
+ * AUTHORIZATION: Requires researcher role in the project.
  */
 export async function initiateGeneration(
   input: InitiateGenerationInput,
 ): Promise<GenerationResult> {
   const { readoutId, evidenceSet, initiatedByActorId } = input;
+
+  // Resolve project and authorize BEFORE transaction
+  const { projectId, organizationId } = await resolveProjectFromReadout(readoutId);
+  await assertProjectResearcherByActor(initiatedByActorId, projectId, organizationId);
 
   return sequelize.transaction(async (transaction) => {
     // Lock readout first, then fetch draft separately
@@ -1281,6 +1420,10 @@ export async function initiateGeneration(
  *
  * This preserves human edits: if the draft was modified since generation started,
  * the generated content is stored but not applied to the draft.
+ *
+ * AUTHORIZATION: NONE — this is called by trusted internal worker infrastructure,
+ * not by user actors. The generation request was already authorized at initiate time.
+ * Do NOT add actor-based authorization here.
  */
 export async function completeGeneration(
   input: CompleteGenerationInput,
@@ -1395,15 +1538,22 @@ export async function completeGeneration(
 
 /**
  * Check if approved readout is stale (cited evidence has changed)
+ *
+ * AUTHORIZATION: Requires project membership.
  */
 export async function evaluateStaleness(
   readoutId: number,
+  actorId: number,
   transaction?: Transaction,
 ): Promise<{
   isStale: boolean;
   reason: 'cited_insight_withdrawn' | 'newer_revision_accepted' | null;
   staleInsights: string[];
 }> {
+  // Resolve project and authorize
+  const { projectId, organizationId } = await resolveProjectFromReadout(readoutId, transaction);
+  await assertProjectAccessByActor(actorId, projectId, organizationId);
+
   // Get latest approval
   const approval = await DeskResearchReadoutApproval.findOne({
     where: { readout_id: readoutId },
@@ -1461,11 +1611,18 @@ export async function evaluateStaleness(
 
 /**
  * Get approval history for a readout
+ *
+ * AUTHORIZATION: Requires project membership.
  */
 export async function getApprovalHistory(
   readoutId: number,
+  actorId: number,
   transaction?: Transaction,
 ): Promise<ApprovalDetail[]> {
+  // Resolve project and authorize
+  const { projectId, organizationId } = await resolveProjectFromReadout(readoutId, transaction);
+  await assertProjectAccessByActor(actorId, projectId, organizationId);
+
   const approvals = await DeskResearchReadoutApproval.findAll({
     where: { readout_id: readoutId },
     order: [['approval_number', 'DESC']],
@@ -1477,11 +1634,18 @@ export async function getApprovalHistory(
 
 /**
  * Get generation history for a readout
+ *
+ * AUTHORIZATION: Requires project membership.
  */
 export async function getGenerationHistory(
   readoutId: number,
+  actorId: number,
   transaction?: Transaction,
 ): Promise<any[]> {
+  // Resolve project and authorize
+  const { projectId, organizationId } = await resolveProjectFromReadout(readoutId, transaction);
+  await assertProjectAccessByActor(actorId, projectId, organizationId);
+
   const versions = await DeskResearchReadoutVersion.findAll({
     where: { readout_id: readoutId },
     order: [['version_number', 'DESC']],

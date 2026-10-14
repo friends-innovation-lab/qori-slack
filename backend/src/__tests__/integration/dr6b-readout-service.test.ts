@@ -24,6 +24,7 @@
 
 import { getTestDb, truncateAll, TEST_ORG_ID } from './setup/testDb';
 import * as readoutService from '../../services/desk-readout.service';
+import { AuthorizationError } from '../../services/authorization.service';
 import type { DraftContent } from '../../database/models/desk_research_readout_draft';
 
 const sequelize = getTestDb();
@@ -31,6 +32,7 @@ const sequelize = getTestDb();
 const ProjectModel = sequelize.models.Project;
 const ResearchStudyModel = sequelize.models.ResearchStudy;
 const ActorModel = sequelize.models.Actor;
+const ProjectMembershipModel = sequelize.models.ProjectMembership;
 const EvidenceSourceModel = sequelize.models.EvidenceSource;
 const EvidenceConstructModel = sequelize.models.EvidenceConstruct;
 const EvidenceConstructRevisionModel = sequelize.models.EvidenceConstructRevision;
@@ -129,6 +131,19 @@ beforeEach(async () => {
     actor_type: 'human',
   } as any);
   actor2Id = (actor2 as any).id;
+
+  // Create project memberships (required for authorization)
+  await ProjectMembershipModel.create({
+    project_id: projectId,
+    actor_id: actorId,
+    role: 'researcher',
+  } as any);
+
+  await ProjectMembershipModel.create({
+    project_id: projectId,
+    actor_id: actor2Id,
+    role: 'researcher',
+  } as any);
 
   // Create evidence source
   const source = await EvidenceSourceModel.create({
@@ -284,15 +299,17 @@ describe('Readout Creation', () => {
     expect(r2.displayId).toBe('RO-0001');
   });
 
-  it('rejects readout with mismatched project', async () => {
+  it('rejects readout with mismatched project (authorization)', async () => {
+    // Authorization now correctly rejects access before business logic check
+    // actorId has membership in projectId, not project2Id
     await expect(
       readoutService.createReadout({
         studyId,
-        projectId: project2Id, // Wrong project
+        projectId: project2Id, // Wrong project - actor doesn't have access
         title: 'Invalid',
         createdByActorId: actorId,
       })
-    ).rejects.toThrow(/does not belong to the specified project/i);
+    ).rejects.toThrow(AuthorizationError);
   });
 
   it('rejects readout with empty title', async () => {
@@ -942,7 +959,7 @@ describe('Approval Eligibility', () => {
       createdByActorId: actorId,
     });
 
-    const eligibility = await readoutService.checkApprovalEligibility(readout.id);
+    const eligibility = await readoutService.checkApprovalEligibility(readout.id, actorId);
 
     expect(eligibility.eligible).toBe(false);
     expect(eligibility.errors).toContain('At least one finding is required');
@@ -980,7 +997,7 @@ describe('Approval Eligibility', () => {
       editedByActorId: actorId,
     });
 
-    const eligibility = await readoutService.checkApprovalEligibility(readout.id);
+    const eligibility = await readoutService.checkApprovalEligibility(readout.id, actorId);
 
     expect(eligibility.eligible).toBe(false);
     expect(eligibility.errors.some((e) => e.includes('must have at least one citation'))).toBe(true);
@@ -1014,7 +1031,7 @@ describe('Approval Eligibility', () => {
       editedByActorId: actorId,
     });
 
-    const eligibility = await readoutService.checkApprovalEligibility(readout.id);
+    const eligibility = await readoutService.checkApprovalEligibility(readout.id, actorId);
 
     expect(eligibility.eligible).toBe(false);
     expect(eligibility.errors.some((e) => e.includes('Findings not checked'))).toBe(true);
@@ -1072,7 +1089,7 @@ describe('Approval Eligibility', () => {
       editedByActorId: actorId,
     });
 
-    const eligibility = await readoutService.checkApprovalEligibility(readout.id);
+    const eligibility = await readoutService.checkApprovalEligibility(readout.id, actorId);
 
     expect(eligibility.eligible).toBe(false);
     expect(eligibility.errors.some((e) => e.includes('Implications not reviewed'))).toBe(true);
@@ -1100,7 +1117,7 @@ describe('Approval Eligibility', () => {
       { where: { readout_id: readout.id } }
     );
 
-    const eligibility = await readoutService.checkApprovalEligibility(readout.id);
+    const eligibility = await readoutService.checkApprovalEligibility(readout.id, actorId);
 
     expect(eligibility.eligible).toBe(false);
     expect(eligibility.errors.some((e) => e.includes('must link to at least one finding'))).toBe(true);
@@ -1388,7 +1405,7 @@ describe('Generation Workflow', () => {
     expect(gen1.generationRequestId).not.toBe(gen2.generationRequestId);
 
     // Check first is superseded
-    const history = await readoutService.getGenerationHistory(readout.id);
+    const history = await readoutService.getGenerationHistory(readout.id, actorId);
     const gen1Record = history.find((h) => h.generationRequestId === gen1.generationRequestId);
     expect(gen1Record?.generationStatus).toBe('superseded');
   });
@@ -1430,11 +1447,11 @@ describe('Generation Workflow', () => {
     expect(result.conflictDetected).toBe(true);
 
     // Draft should retain human edit
-    const updated = await readoutService.getReadoutById(readout.id);
+    const updated = await readoutService.getReadoutById(readout.id, actorId);
     expect(updated?.draft.content.summary?.text).toBe('Human edit');
 
     // Generated content should be preserved in history
-    const history = await readoutService.getGenerationHistory(readout.id);
+    const history = await readoutService.getGenerationHistory(readout.id, actorId);
     expect(history[0].hasContent).toBe(true);
   });
 
@@ -1467,7 +1484,7 @@ describe('Generation Workflow', () => {
     expect(result.conflictDetected).toBe(false);
 
     // Draft should have AI content
-    const updated = await readoutService.getReadoutById(readout.id);
+    const updated = await readoutService.getReadoutById(readout.id, actorId);
     expect(updated?.draft.content.summary?.text).toBe('AI summary');
     expect(updated?.draft.findingsChecked).toEqual([]); // Reset
     expect(updated?.draft.implicationsReviewed).toEqual([]); // Reset
@@ -1498,11 +1515,11 @@ describe('Generation Workflow', () => {
     expect(result.applied).toBe(false);
 
     // Draft should be unchanged
-    const updated = await readoutService.getReadoutById(readout.id);
+    const updated = await readoutService.getReadoutById(readout.id, actorId);
     expect(updated?.draft.content).toEqual({});
 
     // Version should show failure
-    const history = await readoutService.getGenerationHistory(readout.id);
+    const history = await readoutService.getGenerationHistory(readout.id, actorId);
     expect(history[0].generationStatus).toBe('failed');
     expect(history[0].generationError).toBe('API timeout');
   });
@@ -1592,7 +1609,7 @@ describe('Staleness Evaluation', () => {
       { where: { id: insightId } }
     );
 
-    const staleness = await readoutService.evaluateStaleness(readout.id);
+    const staleness = await readoutService.evaluateStaleness(readout.id, actorId);
 
     expect(staleness.isStale).toBe(true);
     expect(staleness.reason).toBe('cited_insight_withdrawn');
@@ -1620,7 +1637,7 @@ describe('Staleness Evaluation', () => {
       { where: { id: insightId } }
     );
 
-    const staleness = await readoutService.evaluateStaleness(readout.id);
+    const staleness = await readoutService.evaluateStaleness(readout.id, actorId);
 
     expect(staleness.isStale).toBe(true);
     expect(staleness.reason).toBe('newer_revision_accepted');
@@ -1630,7 +1647,7 @@ describe('Staleness Evaluation', () => {
   it('reports not stale when evidence unchanged', async () => {
     const readout = await createApprovedReadout();
 
-    const staleness = await readoutService.evaluateStaleness(readout.id);
+    const staleness = await readoutService.evaluateStaleness(readout.id, actorId);
 
     expect(staleness.isStale).toBe(false);
     expect(staleness.reason).toBeNull();
@@ -1760,5 +1777,290 @@ describe('Transaction Rollback', () => {
 
     const approvalCountAfter = await DeskResearchReadoutApprovalModel.count();
     expect(approvalCountAfter).toBe(approvalCountBefore);
+  });
+});
+
+// ─── Authorization ────────────────────────────────────────────────────────────
+
+describe('Authorization', () => {
+  let unauthorizedActorId: number;
+  let otherProjectActorId: number;
+
+  beforeEach(async () => {
+    // Create an actor with NO project membership
+    const unauthorizedActor = await ActorModel.create({
+      organization_id: TEST_ORG_ID,
+      display_name: 'Unauthorized Actor',
+      actor_type: 'human',
+    } as any);
+    unauthorizedActorId = (unauthorizedActor as any).id;
+
+    // Create an actor with membership in project2 only (not the main project)
+    const otherProjectActor = await ActorModel.create({
+      organization_id: TEST_ORG_ID,
+      display_name: 'Other Project Actor',
+      actor_type: 'human',
+    } as any);
+    otherProjectActorId = (otherProjectActor as any).id;
+
+    await ProjectMembershipModel.create({
+      project_id: project2Id,
+      actor_id: otherProjectActorId,
+      role: 'researcher',
+    } as any);
+  });
+
+  describe('createReadout', () => {
+    it('allows authorized researcher to create readout', async () => {
+      const readout = await readoutService.createReadout({
+        studyId,
+        projectId,
+        title: 'Authorized creation',
+        createdByActorId: actorId,
+      });
+
+      expect(readout.id).toBeDefined();
+      expect(readout.title).toBe('Authorized creation');
+    });
+
+    it('rejects actor without project membership', async () => {
+      await expect(
+        readoutService.createReadout({
+          studyId,
+          projectId,
+          title: 'Unauthorized',
+          createdByActorId: unauthorizedActorId,
+        })
+      ).rejects.toThrow(AuthorizationError);
+    });
+
+    it('rejects actor from different project', async () => {
+      await expect(
+        readoutService.createReadout({
+          studyId,
+          projectId,
+          title: 'Cross-project',
+          createdByActorId: otherProjectActorId,
+        })
+      ).rejects.toThrow(AuthorizationError);
+    });
+  });
+
+  describe('getReadoutById', () => {
+    it('allows authorized member to read readout', async () => {
+      const readout = await readoutService.createReadout({
+        studyId,
+        projectId,
+        title: 'Test',
+        createdByActorId: actorId,
+      });
+
+      const fetched = await readoutService.getReadoutById(readout.id, actorId);
+      expect(fetched?.id).toBe(readout.id);
+    });
+
+    it('rejects actor without project membership', async () => {
+      const readout = await readoutService.createReadout({
+        studyId,
+        projectId,
+        title: 'Test',
+        createdByActorId: actorId,
+      });
+
+      await expect(
+        readoutService.getReadoutById(readout.id, unauthorizedActorId)
+      ).rejects.toThrow(AuthorizationError);
+    });
+
+    it('rejects actor from different project', async () => {
+      const readout = await readoutService.createReadout({
+        studyId,
+        projectId,
+        title: 'Test',
+        createdByActorId: actorId,
+      });
+
+      await expect(
+        readoutService.getReadoutById(readout.id, otherProjectActorId)
+      ).rejects.toThrow(AuthorizationError);
+    });
+  });
+
+  describe('saveDraft', () => {
+    it('allows authorized researcher to save draft', async () => {
+      const readout = await readoutService.createReadout({
+        studyId,
+        projectId,
+        title: 'Test',
+        createdByActorId: actorId,
+      });
+
+      const result = await readoutService.saveDraft({
+        readoutId: readout.id,
+        content: { summary: { text: 'Test' } },
+        findingsChecked: [],
+        implicationsReviewed: [],
+        expectedVersion: 1,
+        editedByActorId: actorId,
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it('rejects actor without project membership', async () => {
+      const readout = await readoutService.createReadout({
+        studyId,
+        projectId,
+        title: 'Test',
+        createdByActorId: actorId,
+      });
+
+      await expect(
+        readoutService.saveDraft({
+          readoutId: readout.id,
+          content: { summary: { text: 'Unauthorized' } },
+          findingsChecked: [],
+          implicationsReviewed: [],
+          expectedVersion: 1,
+          editedByActorId: unauthorizedActorId,
+        })
+      ).rejects.toThrow(AuthorizationError);
+    });
+
+    it('rejects actor from different project', async () => {
+      const readout = await readoutService.createReadout({
+        studyId,
+        projectId,
+        title: 'Test',
+        createdByActorId: actorId,
+      });
+
+      await expect(
+        readoutService.saveDraft({
+          readoutId: readout.id,
+          content: { summary: { text: 'Cross-project' } },
+          findingsChecked: [],
+          implicationsReviewed: [],
+          expectedVersion: 1,
+          editedByActorId: otherProjectActorId,
+        })
+      ).rejects.toThrow(AuthorizationError);
+    });
+  });
+
+  describe('approveReadout', () => {
+    it('rejects approval from actor without project membership', async () => {
+      const readout = await readoutService.createReadout({
+        studyId,
+        projectId,
+        title: 'Test',
+        createdByActorId: actorId,
+      });
+
+      await expect(
+        readoutService.approveReadout({
+          readoutId: readout.id,
+          expectedVersion: 1,
+          approvedByActorId: unauthorizedActorId,
+        })
+      ).rejects.toThrow(AuthorizationError);
+    });
+
+    it('rejects approval from actor in different project', async () => {
+      const readout = await readoutService.createReadout({
+        studyId,
+        projectId,
+        title: 'Test',
+        createdByActorId: actorId,
+      });
+
+      await expect(
+        readoutService.approveReadout({
+          readoutId: readout.id,
+          expectedVersion: 1,
+          approvedByActorId: otherProjectActorId,
+        })
+      ).rejects.toThrow(AuthorizationError);
+    });
+  });
+
+  describe('initiateGeneration', () => {
+    it('rejects generation from actor without project membership', async () => {
+      const readout = await readoutService.createReadout({
+        studyId,
+        projectId,
+        title: 'Test',
+        createdByActorId: actorId,
+      });
+
+      await expect(
+        readoutService.initiateGeneration({
+          readoutId: readout.id,
+          evidenceSet: [],
+          initiatedByActorId: unauthorizedActorId,
+        })
+      ).rejects.toThrow(AuthorizationError);
+    });
+
+    it('rejects generation from actor in different project', async () => {
+      const readout = await readoutService.createReadout({
+        studyId,
+        projectId,
+        title: 'Test',
+        createdByActorId: actorId,
+      });
+
+      await expect(
+        readoutService.initiateGeneration({
+          readoutId: readout.id,
+          evidenceSet: [],
+          initiatedByActorId: otherProjectActorId,
+        })
+      ).rejects.toThrow(AuthorizationError);
+    });
+  });
+
+  describe('listReadoutsByStudy', () => {
+    it('rejects listing from actor without project membership', async () => {
+      await expect(
+        readoutService.listReadoutsByStudy(studyId, unauthorizedActorId)
+      ).rejects.toThrow(AuthorizationError);
+    });
+
+    it('rejects listing from actor in different project', async () => {
+      await expect(
+        readoutService.listReadoutsByStudy(studyId, otherProjectActorId)
+      ).rejects.toThrow(AuthorizationError);
+    });
+  });
+
+  describe('evaluateStaleness', () => {
+    it('rejects staleness check from actor without project membership', async () => {
+      const readout = await readoutService.createReadout({
+        studyId,
+        projectId,
+        title: 'Test',
+        createdByActorId: actorId,
+      });
+
+      await expect(
+        readoutService.evaluateStaleness(readout.id, unauthorizedActorId)
+      ).rejects.toThrow(AuthorizationError);
+    });
+  });
+
+  describe('getGenerationHistory', () => {
+    it('rejects history access from actor without project membership', async () => {
+      const readout = await readoutService.createReadout({
+        studyId,
+        projectId,
+        title: 'Test',
+        createdByActorId: actorId,
+      });
+
+      await expect(
+        readoutService.getGenerationHistory(readout.id, unauthorizedActorId)
+      ).rejects.toThrow(AuthorizationError);
+    });
   });
 });
