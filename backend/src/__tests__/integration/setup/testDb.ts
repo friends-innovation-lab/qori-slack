@@ -81,6 +81,11 @@ import DiscoveryArtifact from '../../../database/models/discovery_artifact';
 // DR-1: Desk insight revision tracking
 import EvidenceConstructRevision from '../../../database/models/evidence_construct_revision';
 import EvidenceConstructReview from '../../../database/models/evidence_construct_review';
+// DR-6b: Desk research readouts
+import DeskResearchReadout from '../../../database/models/desk_research_readout';
+import DeskResearchReadoutDraft from '../../../database/models/desk_research_readout_draft';
+import DeskResearchReadoutVersion from '../../../database/models/desk_research_readout_version';
+import DeskResearchReadoutApproval from '../../../database/models/desk_research_readout_approval';
 
 let instance: Sequelize | null = null;
 
@@ -127,6 +132,9 @@ export function getTestDb(): Sequelize {
     DiscoveryRun, DiscoveryRunSource, DiscoveryArtifact,
     // DR-1: Desk insight revision tracking
     EvidenceConstructRevision, EvidenceConstructReview,
+    // DR-6b: Desk research readouts
+    DeskResearchReadout, DeskResearchReadoutDraft,
+    DeskResearchReadoutVersion, DeskResearchReadoutApproval,
   ];
 
   for (const defineModel of modelDefiners) {
