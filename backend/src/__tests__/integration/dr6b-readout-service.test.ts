@@ -65,7 +65,10 @@ let otherProjectRevisionPublicId: string;
 
 beforeAll(async () => {
   await sequelize.authenticate();
-  await sequelize.sync();
+  // Do NOT call sequelize.sync() — rely on migrations only.
+  // sync() modifies schema based on model definitions, removing database-level
+  // defaults (e.g., gen_random_uuid()) and replacing them with JavaScript-only
+  // defaults that raw SQL queries cannot use.
 });
 
 afterAll(async () => {
