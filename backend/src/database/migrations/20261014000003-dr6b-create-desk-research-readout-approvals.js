@@ -126,6 +126,11 @@ module.exports = {
 
     // Immutability trigger: block all updates and deletes on approval rows
     // Deletion is only allowed via CASCADE from parent readout/study
+    //
+    // Detection strategy: pg_trigger_depth() reliably distinguishes CASCADE from direct DELETE.
+    // - Direct DELETE: trigger_depth = 1 (we're inside the BEFORE DELETE trigger)
+    // - CASCADE DELETE: trigger_depth > 1 (FK cascade machinery adds depth)
+    // This is database-enforceable and not timing-dependent like parent-existence checks.
     await queryInterface.sequelize.query(`
       CREATE OR REPLACE FUNCTION protect_approval_immutability()
       RETURNS TRIGGER AS $$
@@ -135,9 +140,9 @@ module.exports = {
         END IF;
 
         IF TG_OP = 'DELETE' THEN
-          -- Check if this is a CASCADE delete by verifying parent exists
-          -- If parent readout still exists, this is a direct delete attempt
-          IF EXISTS (SELECT 1 FROM desk_research_readouts WHERE id = OLD.readout_id) THEN
+          -- pg_trigger_depth() = 1 means direct DELETE statement
+          -- pg_trigger_depth() > 1 means we're inside FK CASCADE machinery
+          IF pg_trigger_depth() = 1 THEN
             RAISE EXCEPTION 'Approval records cannot be directly deleted. Delete the parent study instead.';
           END IF;
         END IF;

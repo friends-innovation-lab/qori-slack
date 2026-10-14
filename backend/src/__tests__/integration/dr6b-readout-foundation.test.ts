@@ -213,9 +213,15 @@ describe('DR-6b Desk Research Readout Foundation', () => {
     });
   });
 
-  describe('Concurrent Display ID Allocation', () => {
-    it('prevents duplicate allocation via unique constraint', async () => {
-      // Simulate concurrent allocation by using raw SQL
+  describe('Display Sequence Unique Constraint', () => {
+    /**
+     * This test verifies the UNIQUE constraint on (study_id, display_sequence).
+     * The constraint prevents duplicate sequences but does NOT allocate them.
+     *
+     * Concurrency-safe allocation (e.g., retry-on-collision or serialized MAX+INSERT)
+     * is service-layer logic pending DR-6b-2. The database only enforces uniqueness.
+     */
+    it('rejects duplicate display_sequence via unique constraint', async () => {
       const insertSQL = `
         INSERT INTO desk_research_readouts
         (study_id, project_id, display_id, display_sequence, title, created_by_actor_id)
@@ -228,7 +234,7 @@ describe('DR-6b Desk Research Readout Foundation', () => {
         bind: [studyId, projectId, 'RO-0001', 1, 'Readout 1', actorId],
       });
 
-      // Second insert with same sequence fails
+      // Second insert with same sequence fails on unique constraint
       await expect(
         sequelize.query(insertSQL, {
           bind: [studyId, projectId, 'RO-0001', 1, 'Readout 2', actorId],
@@ -476,6 +482,22 @@ describe('DR-6b Desk Research Readout Foundation', () => {
       });
 
       expect((readout as any).project_id).toBe(projectId);
+    });
+
+    it('rejects UPDATE that changes project_id to mismatched project', async () => {
+      // Create valid readout
+      const readout = await createReadout({
+        study_id: studyId,
+        project_id: projectId,
+      });
+
+      // Try to UPDATE project_id to a different project (not study's project)
+      await expect(
+        sequelize.query(
+          'UPDATE desk_research_readouts SET project_id = $1 WHERE id = $2',
+          { bind: [project2Id, (readout as any).id] }
+        )
+      ).rejects.toThrow(/project_id.*must match/i);
     });
   });
 
