@@ -8,7 +8,7 @@
  * - HTTP 409/422 are thrown as typed errors for explicit UI handling
  * - All mutations have retry: false to prevent accidental duplicates
  * - No optimistic updates — cache updates only after server confirmation
- * - Query cancellation via AbortSignal where supported
+ * - Query cancellation: not currently wired through to the readouts API client
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
