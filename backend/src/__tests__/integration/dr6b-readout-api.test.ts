@@ -645,13 +645,13 @@ describe('DR-6b-3 Readout HTTP API', () => {
   // EVIDENCE ELIGIBILITY
   // ═══════════════════════════════════════════════════════════════════════════
 
-  describe('GET /readouts/:id/evidence - Evidence Eligibility', () => {
+  describe('GET /readouts/:id/evidence-eligibility - Evidence Eligibility', () => {
     it('member can get eligible evidence', async () => {
       const created = await createReadout(researcherPublicId);
       const readoutId = created.body.data.id;
 
       const res = await request(app)
-        .get(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/evidence`)
+        .get(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/evidence-eligibility`)
         .set('X-Test-Actor-PublicId', adminPublicId);
 
       expect(res.status).toBe(200);
@@ -666,7 +666,7 @@ describe('DR-6b-3 Readout HTTP API', () => {
       const readoutId = created.body.data.id;
 
       const res = await request(app)
-        .get(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/evidence`)
+        .get(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/evidence-eligibility`)
         .set('X-Test-Actor-PublicId', researcherPublicId);
 
       expect(res.status).toBe(200);
@@ -679,7 +679,7 @@ describe('DR-6b-3 Readout HTTP API', () => {
       const readoutId = created.body.data.id;
 
       const res = await request(app)
-        .get(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/evidence?limit=10&offset=5`)
+        .get(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/evidence-eligibility?limit=10&offset=5`)
         .set('X-Test-Actor-PublicId', researcherPublicId);
 
       expect(res.status).toBe(200);

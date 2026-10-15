@@ -567,12 +567,12 @@ router.get('/:readoutId/versions', requireAuth, async (req, res, next) => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * GET /api/v1/projects/:projectId/studies/:studyId/readouts/:readoutId/evidence
+ * GET /api/v1/projects/:projectId/studies/:studyId/readouts/:readoutId/evidence-eligibility
  *
  * Retrieve eligible evidence (accepted, non-withdrawn insights) for citation.
  * Evidence is project-scoped, not study-scoped (per D2).
  */
-router.get('/:readoutId/evidence', requireAuth, async (req, res, next) => {
+router.get('/:readoutId/evidence-eligibility', requireAuth, async (req, res, next) => {
   try {
     const resolved = await resolveAllResources(req, res);
     if (!resolved) return;
