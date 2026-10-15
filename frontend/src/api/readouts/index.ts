@@ -26,6 +26,8 @@ export type {
   // Evidence types
   EligibleInsight,
   EligibleInsightSource,
+  EvidenceSnapshot,
+  EvidenceSnapshotEntry,
   // Response types
   ReadoutListResponse,
   ReadoutDetailResponse,

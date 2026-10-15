@@ -69,14 +69,116 @@ describe('parseReadoutError - 409 CONCURRENCY_ERROR', () => {
     expect(isConcurrencyError(error)).toBe(false);
   });
 
-  it('uses empty object for missing submittedContent', async () => {
+  it('rejects recovery when submittedContent is missing', async () => {
     const mockResponse = new Response(
       JSON.stringify({
         error: {
           code: 'CONCURRENCY_ERROR',
           message: 'Draft was modified',
           currentVersion: 5,
-          // No submittedContent
+          // No submittedContent — do NOT default to {}
+        },
+      }),
+      { status: 409 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    // Status 409 preserved, but not classified as recoverable
+    expect(error.code).toBe('CONCURRENCY_ERROR');
+    expect(error.status).toBe(409);
+    expect(isConcurrencyError(error)).toBe(false);
+  });
+
+  it('rejects recovery when submittedContent is null', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'CONCURRENCY_ERROR',
+          message: 'Draft was modified',
+          currentVersion: 5,
+          submittedContent: null,
+        },
+      }),
+      { status: 409 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(error.code).toBe('CONCURRENCY_ERROR');
+    expect(error.status).toBe(409);
+    expect(isConcurrencyError(error)).toBe(false);
+  });
+
+  it('rejects recovery when submittedContent is an array', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'CONCURRENCY_ERROR',
+          message: 'Draft was modified',
+          currentVersion: 5,
+          submittedContent: [{ text: 'array item' }],
+        },
+      }),
+      { status: 409 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(error.code).toBe('CONCURRENCY_ERROR');
+    expect(error.status).toBe(409);
+    expect(isConcurrencyError(error)).toBe(false);
+  });
+
+  it('rejects recovery when currentVersion is negative', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'CONCURRENCY_ERROR',
+          message: 'Draft was modified',
+          currentVersion: -1,
+          submittedContent: { summary: { text: 'Test', citations: [] } },
+        },
+      }),
+      { status: 409 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(error.code).toBe('CONCURRENCY_ERROR');
+    expect(error.status).toBe(409);
+    expect(isConcurrencyError(error)).toBe(false);
+  });
+
+  it('rejects recovery when currentVersion is not an integer', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'CONCURRENCY_ERROR',
+          message: 'Draft was modified',
+          currentVersion: 3.5,
+          submittedContent: { summary: { text: 'Test', citations: [] } },
+        },
+      }),
+      { status: 409 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(error.code).toBe('CONCURRENCY_ERROR');
+    expect(error.status).toBe(409);
+    expect(isConcurrencyError(error)).toBe(false);
+  });
+
+  it('accepts empty object submittedContent as valid', async () => {
+    // Empty DraftContent {} is structurally valid
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'CONCURRENCY_ERROR',
+          message: 'Draft was modified',
+          currentVersion: 5,
+          submittedContent: {},
         },
       }),
       { status: 409 },
@@ -89,6 +191,49 @@ describe('parseReadoutError - 409 CONCURRENCY_ERROR', () => {
       expect(error.currentVersion).toBe(5);
       expect(error.submittedContent).toEqual({});
     }
+  });
+
+  it('preserves backend error message when recovery data is malformed', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'CONCURRENCY_ERROR',
+          message: 'Your changes conflict with recent edits',
+          currentVersion: 'not-a-number', // Invalid
+          submittedContent: { summary: { text: 'Test', citations: [] } },
+        },
+      }),
+      { status: 409 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(error.status).toBe(409);
+    expect(error.code).toBe('CONCURRENCY_ERROR');
+    // Backend message is preserved even when recovery fails
+    expect(error.message).toBe('Your changes conflict with recent edits');
+    // But it's NOT recoverable
+    expect(isConcurrencyError(error)).toBe(false);
+  });
+
+  it('uses fallback message when backend message is missing and recovery fails', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'CONCURRENCY_ERROR',
+          // No message
+          currentVersion: 'invalid',
+          submittedContent: null,
+        },
+      }),
+      { status: 409 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(error.status).toBe(409);
+    expect(error.message).toContain('recovery data is unavailable');
+    expect(isConcurrencyError(error)).toBe(false);
   });
 });
 
@@ -300,6 +445,81 @@ describe('type guards', () => {
   it('isConcurrencyError returns false for non-409 errors', () => {
     const error = { code: 'CONCURRENCY_ERROR' as const, message: '', status: 400 };
     expect(isConcurrencyError(error)).toBe(false);
+  });
+
+  it('isConcurrencyError returns false when currentVersion is missing', () => {
+    const error = {
+      code: 'CONCURRENCY_ERROR' as const,
+      message: '',
+      status: 409,
+      submittedContent: { summary: { text: 'test', citations: [] } },
+    };
+    expect(isConcurrencyError(error)).toBe(false);
+  });
+
+  it('isConcurrencyError returns false when submittedContent is missing', () => {
+    const error = {
+      code: 'CONCURRENCY_ERROR' as const,
+      message: '',
+      status: 409,
+      currentVersion: 5,
+    };
+    expect(isConcurrencyError(error)).toBe(false);
+  });
+
+  it('isConcurrencyError returns false when submittedContent is null', () => {
+    const error = {
+      code: 'CONCURRENCY_ERROR' as const,
+      message: '',
+      status: 409,
+      currentVersion: 5,
+      submittedContent: null,
+    };
+    expect(isConcurrencyError(error as any)).toBe(false);
+  });
+
+  it('isConcurrencyError returns false when submittedContent is array', () => {
+    const error = {
+      code: 'CONCURRENCY_ERROR' as const,
+      message: '',
+      status: 409,
+      currentVersion: 5,
+      submittedContent: [],
+    };
+    expect(isConcurrencyError(error as any)).toBe(false);
+  });
+
+  it('isConcurrencyError returns false when currentVersion is negative', () => {
+    const error = {
+      code: 'CONCURRENCY_ERROR' as const,
+      message: '',
+      status: 409,
+      currentVersion: -1,
+      submittedContent: {},
+    };
+    expect(isConcurrencyError(error as any)).toBe(false);
+  });
+
+  it('isConcurrencyError returns false when currentVersion is not integer', () => {
+    const error = {
+      code: 'CONCURRENCY_ERROR' as const,
+      message: '',
+      status: 409,
+      currentVersion: 2.5,
+      submittedContent: {},
+    };
+    expect(isConcurrencyError(error as any)).toBe(false);
+  });
+
+  it('isConcurrencyError returns true only with valid recovery data', () => {
+    const error = {
+      code: 'CONCURRENCY_ERROR' as const,
+      message: '',
+      status: 409,
+      currentVersion: 5,
+      submittedContent: { summary: { text: 'test', citations: [] } },
+    };
+    expect(isConcurrencyError(error as any)).toBe(true);
   });
 
   it('isApprovalIneligibleError returns false for non-422 errors', () => {

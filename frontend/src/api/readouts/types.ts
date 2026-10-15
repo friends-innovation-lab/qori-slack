@@ -118,6 +118,25 @@ export interface DraftDetail {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
+ * Evidence snapshot entry for approval records.
+ * Matches backend EvidenceSnapshotEntry (desk_research_readout_approval.ts).
+ * Note: Does NOT include displayId — only the pinned revision reference.
+ */
+export interface EvidenceSnapshotEntry {
+  constructPublicId: string;
+  revisionPublicId: string;
+  revisionNumber: number;
+}
+
+/**
+ * Evidence snapshot structure for approval records.
+ * Matches backend EvidenceSnapshot (desk_research_readout_approval.ts).
+ */
+export interface EvidenceSnapshot {
+  cited_constructs: EvidenceSnapshotEntry[];
+}
+
+/**
  * Approval record with immutable snapshot.
  * Matches backend mapToApprovalDetail output.
  */
@@ -131,7 +150,7 @@ export interface ApprovalDetail {
   contentSnapshot: DraftContent;
   findingsCheckedSnapshot: string[];
   implicationsReviewedSnapshot: string[];
-  evidenceSnapshot: Citation[];
+  evidenceSnapshot: EvidenceSnapshot;
   supersessionNotes: Record<string, string> | null;
 }
 

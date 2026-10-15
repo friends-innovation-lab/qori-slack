@@ -90,15 +90,39 @@ export interface ApprovalIneligibleError extends ReadoutApiError {
 // TYPE GUARDS
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * Type guard for recoverable concurrency errors.
+ * Returns true only when ALL recovery data is valid:
+ * - currentVersion is a nonnegative integer
+ * - submittedContent is a non-null, non-array object
+ */
 export function isConcurrencyError(
   error: ReadoutApiError,
 ): error is ConcurrencyConflictError {
-  return (
-    error.code === 'CONCURRENCY_ERROR' &&
-    error.status === 409 &&
-    'currentVersion' in error &&
-    typeof (error as ConcurrencyConflictError).currentVersion === 'number'
-  );
+  if (error.code !== 'CONCURRENCY_ERROR' || error.status !== 409) {
+    return false;
+  }
+  if (!('currentVersion' in error) || !('submittedContent' in error)) {
+    return false;
+  }
+  const typed = error as ConcurrencyConflictError;
+  // currentVersion must be a nonnegative integer
+  if (
+    typeof typed.currentVersion !== 'number' ||
+    typed.currentVersion < 0 ||
+    !Number.isInteger(typed.currentVersion)
+  ) {
+    return false;
+  }
+  // submittedContent must be a non-null, non-array object
+  if (
+    typed.submittedContent === null ||
+    typeof typed.submittedContent !== 'object' ||
+    Array.isArray(typed.submittedContent)
+  ) {
+    return false;
+  }
+  return true;
 }
 
 export function isApprovalIneligibleError(
@@ -164,20 +188,40 @@ export async function parseReadoutError(
 
       // Parse 409 CONCURRENCY_ERROR with recovery data
       if (status === 409 && backendCode === 'CONCURRENCY_ERROR') {
-        // Defensive: only include currentVersion if actually present
         const currentVersion = body.error?.currentVersion;
         const submittedContent = body.error?.submittedContent;
 
-        if (typeof currentVersion === 'number') {
+        // Only classify as recoverable when ALL conditions are met:
+        // - currentVersion is a nonnegative integer
+        // - submittedContent is a non-null, non-array object
+        const hasValidVersion =
+          typeof currentVersion === 'number' &&
+          currentVersion >= 0 &&
+          Number.isInteger(currentVersion);
+        const hasValidContent =
+          submittedContent !== null &&
+          submittedContent !== undefined &&
+          typeof submittedContent === 'object' &&
+          !Array.isArray(submittedContent);
+
+        if (hasValidVersion && hasValidContent) {
           return {
             code: 'CONCURRENCY_ERROR',
             message: body.error?.message || 'Draft was modified by another user',
             status: 409,
             currentVersion,
-            // Use empty object if submittedContent not present
-            submittedContent: submittedContent ?? {},
+            submittedContent,
           } as ConcurrencyConflictError;
         }
+
+        // Recovery data is malformed — return non-recoverable 409
+        return {
+          code: 'CONCURRENCY_ERROR',
+          message:
+            body.error?.message ||
+            'Draft conflict detected but recovery data is unavailable',
+          status: 409,
+        };
       }
 
       // Parse 422 APPROVAL_INELIGIBLE with errors array

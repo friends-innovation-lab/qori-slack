@@ -118,14 +118,15 @@ const mockApproval: ApprovalDetail = {
   contentSnapshot: mockDraftContent,
   findingsCheckedSnapshot: ['f1'],
   implicationsReviewedSnapshot: ['i1'],
-  evidenceSnapshot: [
-    {
-      constructPublicId: 'ins-abc',
-      revisionPublicId: 'rev-123',
-      revisionNumber: 1,
-      displayId: 'IN-0001',
-    },
-  ],
+  evidenceSnapshot: {
+    cited_constructs: [
+      {
+        constructPublicId: 'ins-abc',
+        revisionPublicId: 'rev-123',
+        revisionNumber: 1,
+      },
+    ],
+  },
   supersessionNotes: null,
 };
 
@@ -375,6 +376,27 @@ describe('approveReadout', () => {
     expect(result.data.approvalNumber).toBe(1);
     expect(result.data.approvedByActorId).toBe(42);
     expect(result.data.contentSnapshot).toBeDefined();
+  });
+
+  it('returns nested evidence snapshot with cited_constructs', async () => {
+    mockPost.mockResolvedValueOnce({ data: mockApproval });
+
+    const result = await approveReadout('proj-1', 'study-1', 'ro-abc-123', {
+      expectedVersion: 2,
+    });
+
+    // Verify nested structure matches backend EvidenceSnapshot
+    expect(result.data.evidenceSnapshot).toHaveProperty('cited_constructs');
+    expect(result.data.evidenceSnapshot.cited_constructs).toHaveLength(1);
+    expect(result.data.evidenceSnapshot.cited_constructs[0]).toEqual({
+      constructPublicId: 'ins-abc',
+      revisionPublicId: 'rev-123',
+      revisionNumber: 1,
+    });
+    // Note: EvidenceSnapshotEntry does NOT include displayId
+    expect(result.data.evidenceSnapshot.cited_constructs[0]).not.toHaveProperty(
+      'displayId',
+    );
   });
 });
 
