@@ -10,3 +10,5 @@ export { DiscoveryRunPage } from './DiscoveryRunPage';
 // DR-4d: Insight-first Desk Research pages
 export { DeskInsightsPage } from './DeskInsightsPage';
 export { DeskSourcesPage } from './DeskSourcesPage';
+// DR-6b-4c: Desk readouts overview
+export { DeskReadoutsPage } from './DeskReadoutsPage';

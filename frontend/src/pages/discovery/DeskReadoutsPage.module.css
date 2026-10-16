@@ -1,0 +1,228 @@
+/**
+ * DeskReadoutsPage styles — DR-6b-4c
+ *
+ * Per DR-6b design spec (Rev 2):
+ * - RO01: Readouts list layout
+ * - RO02: Empty state
+ * - Layout: 640px measure canvas (matches other Desk pages)
+ */
+
+/* ─── Layout ─────────────────────────────────────────────────────────────── */
+
+.headerSpacer {
+  height: var(--space-4);
+}
+
+/* ─── Masthead ───────────────────────────────────────────────────────────── */
+
+.masthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mastheadMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.eyebrow {
+  display: block;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--type-eyebrow-track);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--type-masthead-size);
+  line-height: var(--type-masthead-line);
+  letter-spacing: var(--type-masthead-track);
+  font-weight: var(--weight-regular);
+  color: var(--color-text);
+  margin: 0 0 var(--space-2);
+}
+
+.meta {
+  font-size: var(--type-ui-size);
+  line-height: var(--type-ui-line);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.statusLine {
+  font-size: var(--type-ui-size);
+  line-height: var(--type-ui-line);
+  color: var(--color-text-muted);
+  margin: var(--space-2) 0 0;
+}
+
+.count {
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+}
+
+/* ─── Readout List ───────────────────────────────────────────────────────── */
+
+.readoutList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.readoutRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.readoutMain {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+}
+
+.readoutId {
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.readoutTitle {
+  font-size: var(--text-body-size);
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.readoutMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+.readoutStatus {
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-semibold);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.statusDraft {
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+}
+
+.statusApproved {
+  color: var(--color-success);
+  background: var(--color-success-surface);
+}
+
+.readoutDate {
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+}
+
+/* ─── Error State ────────────────────────────────────────────────────────── */
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+}
+
+.errorIcon {
+  color: var(--color-error);
+  margin-bottom: var(--space-4);
+}
+
+.errorTitle {
+  font-size: var(--text-h2-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin: 0 0 var(--space-2);
+}
+
+.errorDescription {
+  font-size: var(--text-body-size);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-5);
+  max-width: 400px;
+}
+
+/* ─── Pagination ─────────────────────────────────────────────────────────── */
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.pageInfo {
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .masthead {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .readoutRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .readoutMain {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+    width: 100%;
+  }
+
+  .readoutMeta {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .pageInfo {
+    order: -1;
+    width: 100%;
+    text-align: center;
+  }
+}
