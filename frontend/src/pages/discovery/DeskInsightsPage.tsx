@@ -56,22 +56,9 @@ import {
   type ConflictResolution,
 } from '@/components/insights';
 import { Button } from '@/components/ui/Button';
+import { DeskTabs } from '@/components/discovery';
 import styles from './DeskInsightsPage.module.css';
 import docStyles from '@/components/study/document/document.module.css';
-
-/** Tab configuration */
-type TabId = 'insights' | 'sources';
-
-interface Tab {
-  id: TabId;
-  label: string;
-  path: string;
-}
-
-const tabs: Tab[] = [
-  { id: 'insights', label: 'Insights', path: '' },
-  { id: 'sources', label: 'Sources', path: '/sources' },
-];
 
 /** Status filter options */
 const STATUS_FILTERS: { value: StatusFilterValue; label: string }[] = [
@@ -751,26 +738,12 @@ export function DeskInsightsPage() {
             </div>
           </div>
 
-          {/* Header tabs */}
-          <div className={styles.headerTabs} role="tablist">
-            {tabs.map((tab) => (
-              <Link
-                key={tab.id}
-                to={`/studies/${studyPublicId}/discovery/desk${tab.path}`}
-                role="tab"
-                aria-selected={tab.id === 'insights'}
-                className={`${styles.headerTab} ${tab.id === 'insights' ? styles.headerTabActive : ''}`}
-              >
-                {tab.label}
-                {tab.id === 'insights' && totalCount > 0 && (
-                  <span className={styles.tabCount}>{totalCount}</span>
-                )}
-                {tab.id === 'sources' && sourceCount > 0 && (
-                  <span className={styles.tabCount}>{sourceCount}</span>
-                )}
-              </Link>
-            ))}
-          </div>
+          {/* Header tabs — DR-6b-4c: shared DeskTabs component */}
+          <DeskTabs
+            studyPublicId={studyPublicId}
+            activeTab="insights"
+            counts={{ insights: totalCount, sources: sourceCount }}
+          />
 
           {/* Empty state - no sources yet (DR02) */}
           {!hasSources && (

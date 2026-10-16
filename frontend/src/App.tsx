@@ -21,7 +21,7 @@ import { PlanDocument } from '@/pages/PlanDocument';
 import { Projects } from '@/pages/Projects';
 import { ProjectDetail } from '@/pages/ProjectDetail';
 import { Login } from '@/pages/Login';
-// NAV-1b + DR-4d: Discovery pages with path-based routes
+// NAV-1b + DR-4d + DR-6b-4c: Discovery pages with path-based routes
 import {
   DiscoveryHub,
   DiscoveryTypePage,
@@ -30,6 +30,7 @@ import {
   DiscoveryRunPage,
   DeskInsightsPage,
   DeskSourcesPage,
+  DeskReadoutsPage,
 } from '@/pages/discovery';
 
 const queryClient = new QueryClient({
@@ -70,6 +71,8 @@ export function App() {
                         {/* DR-4d: Desk research insight-first pages */}
                         <Route path="discovery/desk" element={<DeskInsightsPage />} />
                         <Route path="discovery/desk/sources" element={<DeskSourcesPage />} />
+                        {/* DR-6b-4c: Desk readouts overview */}
+                        <Route path="discovery/desk/readouts" element={<DeskReadoutsPage />} />
                         {/* Other discovery types still use run-ledger view */}
                         <Route path="discovery/stakeholders" element={<DiscoveryTypePage />} />
                         <Route path="discovery/surveys" element={<DiscoveryTypePage />} />

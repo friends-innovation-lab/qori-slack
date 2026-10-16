@@ -29,22 +29,9 @@ import { WorkspaceLayout, useStudyWorkspace } from '@/components/study/workspace
 import { DocumentSection } from '@/components/study/document';
 import { Skeleton } from '@/components/ui/Skeleton';
 import type { DiscoveryRunSummary, DiscoveryArtifactSummary } from '@qori/api-contracts';
+import { DeskTabs } from '@/components/discovery';
 import styles from './DeskSourcesPage.module.css';
 import docStyles from '@/components/study/document/document.module.css';
-
-/** Tab configuration */
-type TabId = 'insights' | 'sources';
-
-interface Tab {
-  id: TabId;
-  label: string;
-  path: string;
-}
-
-const tabs: Tab[] = [
-  { id: 'insights', label: 'Insights', path: '' },
-  { id: 'sources', label: 'Sources', path: '/sources' },
-];
 
 /** Run status display configuration */
 const RUN_STATUS_CONFIG: Record<
@@ -203,23 +190,12 @@ export function DeskSourcesPage() {
             </div>
           </div>
 
-          {/* Header tabs */}
-          <div className={styles.headerTabs} role="tablist">
-            {tabs.map((tab) => (
-              <Link
-                key={tab.id}
-                to={`/studies/${studyPublicId}/discovery/desk${tab.path}`}
-                role="tab"
-                aria-selected={tab.id === 'sources'}
-                className={`${styles.headerTab} ${tab.id === 'sources' ? styles.headerTabActive : ''}`}
-              >
-                {tab.label}
-                {tab.id === 'sources' && totalSources > 0 && (
-                  <span className={styles.tabCount}>{totalSources}</span>
-                )}
-              </Link>
-            ))}
-          </div>
+          {/* Header tabs — DR-6b-4c: shared DeskTabs component */}
+          <DeskTabs
+            studyPublicId={studyPublicId}
+            activeTab="sources"
+            counts={{ sources: totalSources }}
+          />
 
           {/* Empty state */}
           {totalRuns === 0 && (

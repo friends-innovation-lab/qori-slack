@@ -1,0 +1,79 @@
+/**
+ * DeskTabs styles — DR-6b-4c
+ *
+ * Extracted from DeskInsightsPage.module.css to share across
+ * Insights, Sources, and Readouts pages.
+ */
+
+.headerTabs {
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.headerTab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.headerTab:hover {
+  color: var(--color-text);
+}
+
+.headerTab:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+.headerTabActive {
+  color: var(--color-text);
+  border-bottom-color: var(--color-brand);
+}
+
+.tabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--space-2);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-full);
+}
+
+.headerTabActive .tabCount {
+  color: var(--color-brand-text);
+  background: var(--color-brand-tint);
+}
+
+/* Responsive: tabs scroll horizontally on narrow screens */
+@media (max-width: 767px) {
+  .headerTabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .headerTabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .headerTab {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}

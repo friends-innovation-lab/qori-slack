@@ -445,8 +445,9 @@ describe('DeskSourcesPage accessibility', () => {
       expect(screen.getByRole('tablist')).toBeInTheDocument();
     });
 
+    // DR-6b-4c: Now 3 tabs (Insights, Sources, Desk readouts)
     const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(2);
+    expect(tabs).toHaveLength(3);
   });
 
   it('run cards are focusable links', async () => {
