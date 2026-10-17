@@ -274,13 +274,14 @@ describe('DeskReadoutsPage', () => {
       expect(masthead?.textContent).toContain('readouts');
     });
 
-    it('renders rows as non-clickable elements', () => {
+    it('renders rows as clickable links to detail page (DR-6b-4d)', () => {
+      const mockReadout = createMockReadout();
       mockListReadouts.mockReturnValue({
         isLoading: false,
         error: null,
         data: {
           data: {
-            readouts: [createMockReadout()],
+            readouts: [mockReadout],
             total: 1,
             limit: 20,
             offset: 0,
@@ -293,11 +294,10 @@ describe('DeskReadoutsPage', () => {
 
       const listItems = screen.getAllByRole('listitem');
       listItems.forEach((item) => {
-        // Should not be a link or button
-        expect(item.tagName).not.toBe('A');
-        expect(item.tagName).not.toBe('BUTTON');
-        expect(item.querySelector('a')).toBeNull();
-        expect(item.querySelector('button')).toBeNull();
+        // Should be a link
+        expect(item.tagName).toBe('A');
+        // Should link to the detail page
+        expect(item).toHaveAttribute('href', expect.stringContaining(`/readouts/${mockReadout.publicId}`));
       });
     });
   });

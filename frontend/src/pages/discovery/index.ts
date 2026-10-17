@@ -12,3 +12,5 @@ export { DeskInsightsPage } from './DeskInsightsPage';
 export { DeskSourcesPage } from './DeskSourcesPage';
 // DR-6b-4c: Desk readouts overview
 export { DeskReadoutsPage } from './DeskReadoutsPage';
+// DR-6b-4d: Desk readout editor
+export { ReadoutEditorPage } from './ReadoutEditorPage';

@@ -7,10 +7,11 @@
  * - Shared tabs: Insights / Sources / Desk readouts
  *
  * DR-6b-4c scope:
- * - Read-only list view (rows non-clickable until detail page exists)
- * - No "New readout" or "Generate" buttons
  * - Backend pagination support
  * - Loading, error/retry, empty, responsive states
+ * - No "New readout" or "Generate" buttons
+ *
+ * DR-6b-4d: Rows now link to detail editor page.
  */
 
 import { useState, useCallback } from 'react';
@@ -220,8 +221,9 @@ export function DeskReadoutsPage() {
             {readouts.map((readout) => {
               const status = getStatusDisplay(readout);
               return (
-                <div
+                <Link
                   key={readout.publicId}
+                  to={`/studies/${studyPublicId}/discovery/desk/readouts/${readout.publicId}`}
                   className={styles.readoutRow}
                   role="listitem"
                 >
@@ -237,7 +239,7 @@ export function DeskReadoutsPage() {
                       {formatDate(readout.createdAt)}
                     </span>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

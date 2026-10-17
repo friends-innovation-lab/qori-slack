@@ -1,0 +1,680 @@
+/**
+ * Readout Editor Styles — DR-6b-4d
+ *
+ * Per design spec RO4/4b/4c/5:
+ * - Citation chips (.cite) with tinted background
+ * - Finding links (.flink) with outlined border
+ * - Kind labels for implications (Q/G/P/H)
+ * - Save state and toolbar
+ * - Responsive layout
+ */
+
+/* ─── Layout ─────────────────────────────────────────────────────────────── */
+
+.editorContainer {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.headerSpacer {
+  height: var(--space-4);
+}
+
+/* ─── Masthead ───────────────────────────────────────────────────────────── */
+
+.masthead {
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.eyebrow {
+  display: block;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--type-eyebrow-track);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--type-masthead-size);
+  line-height: var(--type-masthead-line);
+  letter-spacing: var(--type-masthead-track);
+  font-weight: var(--weight-regular);
+  color: var(--color-text);
+  margin: 0 0 var(--space-2);
+}
+
+.question {
+  font-size: var(--text-body-size);
+  font-style: italic;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ─── Toolbar ────────────────────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* ─── Sections ───────────────────────────────────────────────────────────── */
+
+.section {
+  margin-bottom: var(--space-6);
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.sectionTitle {
+  font-size: var(--text-h3-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.sectionCount {
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+}
+
+/* ─── Narrative Block (Summary, Finding, Implication) ───────────────────── */
+
+.narrativeBlock {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+}
+
+.narrativeBlockInvalidated {
+  border-color: var(--color-warning);
+  background: var(--color-warning-surface);
+}
+
+.narrativeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.narrativeId {
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.narrativeKind {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.textArea {
+  width: 100%;
+  min-height: 80px;
+  padding: var(--space-3);
+  font-family: inherit;
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  resize: vertical;
+}
+
+.textArea:focus {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+  border-color: var(--color-focus);
+}
+
+.textAreaReadOnly {
+  background: var(--color-surface-muted);
+  cursor: default;
+}
+
+/* ─── Citation Chip ──────────────────────────────────────────────────────── */
+
+.citationChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-brand-text);
+  background: var(--color-brand-tint);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.citationChip:hover {
+  background: var(--color-surface-selected);
+}
+
+.citationChipRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin-left: var(--space-1);
+  color: var(--color-brand-text);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+.citationChipRemove:hover {
+  background: var(--color-surface-selected);
+}
+
+/* ─── Finding Link (Based-on) ────────────────────────────────────────────── */
+
+.findingLink {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.findingLink:hover {
+  background: var(--color-surface-muted);
+}
+
+/* ─── Kind Label ─────────────────────────────────────────────────────────── */
+
+.kindLabel {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.kindQuestion,
+.kindGap,
+.kindPriority {
+  color: var(--color-brand-text);
+  background: var(--color-brand-tint);
+}
+
+.kindHypothesis {
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+  text-decoration: underline;
+  text-decoration-style: dashed;
+  text-underline-offset: 2px;
+}
+
+/* ─── Citations Row ──────────────────────────────────────────────────────── */
+
+.citationsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.citationsLabel {
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+  margin-right: var(--space-1);
+}
+
+.addCitationButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--type-label-size);
+  color: var(--color-brand);
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.addCitationButton:hover {
+  background: var(--color-surface-muted);
+  border-color: var(--color-brand);
+}
+
+/* ─── Based-on Row (Implications) ────────────────────────────────────────── */
+
+.basedOnRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+}
+
+.basedOnLabel {
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+}
+
+/* ─── Review Checkbox ────────────────────────────────────────────────────── */
+
+.reviewCheckbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.reviewCheckboxInput {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-brand);
+}
+
+.reviewCheckboxLabel {
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+}
+
+.reviewCheckboxLabelChecked {
+  color: var(--color-success);
+}
+
+.invalidatedWarning {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  font-size: var(--type-label-size);
+  color: var(--color-warning);
+  background: var(--color-warning-surface);
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Citation Picker ────────────────────────────────────────────────────── */
+
+.citationPicker {
+  position: absolute;
+  z-index: 100;
+  width: 320px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-md);
+}
+
+.citationPickerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.citationPickerTitle {
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+}
+
+.citationPickerClose {
+  padding: var(--space-1);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.citationPickerClose:hover {
+  background: var(--color-surface-muted);
+}
+
+.citationPickerItem {
+  display: block;
+  width: 100%;
+  padding: var(--space-3);
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.citationPickerItem:hover {
+  background: var(--color-surface-muted);
+}
+
+.citationPickerItem:last-child {
+  border-bottom: none;
+}
+
+.citationPickerItemId {
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-brand-text);
+  margin-bottom: var(--space-1);
+}
+
+.citationPickerItemText {
+  font-size: var(--type-ui-size);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.citationPickerEmpty {
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--type-ui-size);
+}
+
+/* ─── Conflict Comparison ────────────────────────────────────────────────── */
+
+.conflictOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.conflictModal {
+  width: 90%;
+  max-width: 900px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-lg);
+}
+
+.conflictHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.conflictTitle {
+  font-size: var(--text-h2-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.conflictBody {
+  padding: var(--space-4);
+}
+
+.conflictDescription {
+  font-size: var(--text-body-size);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-4);
+}
+
+.conflictColumns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.conflictColumn {
+  padding: var(--space-3);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-md);
+}
+
+.conflictColumnTitle {
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin: 0 0 var(--space-3);
+}
+
+.conflictContent {
+  font-size: var(--type-ui-size);
+  color: var(--color-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.conflictFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ─── Discard Confirm Modal ──────────────────────────────────────────────── */
+
+.discardModal {
+  width: 90%;
+  max-width: 400px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-lg);
+}
+
+.discardHeader {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.discardTitle {
+  font-size: var(--text-h3-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.discardBody {
+  padding: var(--space-4);
+}
+
+.discardDescription {
+  font-size: var(--text-body-size);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.discardFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ─── Unsaved Changes Modal ──────────────────────────────────────────────── */
+
+.unsavedModal {
+  width: 90%;
+  max-width: 400px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-lg);
+}
+
+/* ─── Loading & Error States ─────────────────────────────────────────────── */
+
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+}
+
+.loadingSpinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-brand);
+  border-radius: var(--radius-full);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingText {
+  margin-top: var(--space-3);
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+}
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  text-align: center;
+}
+
+.errorIcon {
+  color: var(--color-error);
+  margin-bottom: var(--space-4);
+}
+
+.errorTitle {
+  font-size: var(--text-h2-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin: 0 0 var(--space-2);
+}
+
+.errorDescription {
+  font-size: var(--text-body-size);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-4);
+}
+
+/* ─── Empty Section ──────────────────────────────────────────────────────── */
+
+.emptySection {
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--type-ui-size);
+  background: var(--color-surface-muted);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.addItemButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--type-ui-size);
+  color: var(--color-brand);
+  background: transparent;
+  border: 1px dashed var(--color-brand);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.addItemButton:hover {
+  background: var(--color-brand-tint);
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .toolbar {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .toolbarLeft,
+  .toolbarRight {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .conflictColumns {
+    grid-template-columns: 1fr;
+  }
+
+  .narrativeHeader {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .basedOnRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
