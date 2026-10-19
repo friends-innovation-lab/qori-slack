@@ -8,6 +8,7 @@
 export type {
   // Citation types
   Citation,
+  SupersededCitation,
   // Content structure
   DraftContent,
   Summary,
