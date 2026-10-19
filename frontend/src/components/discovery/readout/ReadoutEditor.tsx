@@ -6,10 +6,14 @@
  * - Citation selection
  * - Review state management
  * - Save and conflict handling
+ *
+ * DR-6b-4e: Approval integration
+ * - Approve button when eligible
+ * - Eligibility status indicator
  */
 
 import { useCallback, useMemo } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import type {
   DraftContent,
@@ -18,6 +22,7 @@ import type {
   Implication,
   ImplicationKind,
   Citation,
+  ApprovalEligibility,
 } from '@/api/readouts';
 import type { EditorState } from '@/hooks/useReadoutEditor';
 import { SaveStateIndicator } from '@/components/study/document/SaveStateIndicator';
@@ -47,6 +52,11 @@ interface ReadoutEditorProps {
   onToggleFindingChecked: (findingId: string) => void;
   onToggleImplicationReviewed: (implicationId: string) => void;
   onSave: () => void;
+  // Approval props (DR-6b-4e)
+  canApprove?: boolean;
+  eligibility?: ApprovalEligibility;
+  isCheckingEligibility?: boolean;
+  onApprove?: () => void;
 }
 
 export function ReadoutEditor({
@@ -67,6 +77,11 @@ export function ReadoutEditor({
   onToggleFindingChecked,
   onToggleImplicationReviewed,
   onSave,
+  // Approval props
+  canApprove = false,
+  eligibility,
+  isCheckingEligibility = false,
+  onApprove,
 }: ReadoutEditorProps) {
   const { content, findingsChecked, implicationsReviewed } = editorState;
 
@@ -252,16 +267,55 @@ export function ReadoutEditor({
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
           <SaveStateIndicator state={saveState} savedAt={savedAt} />
+          {/* Eligibility indicator */}
+          {canApprove && !isDirty && saveState === 'saved' && (
+            <span className={styles.eligibilityIndicator}>
+              {isCheckingEligibility ? (
+                <>
+                  <Loader2 size={14} className={styles.spinIcon} />
+                  <span>Checking eligibility...</span>
+                </>
+              ) : eligibility?.eligible ? (
+                <>
+                  <CheckCircle size={14} className={styles.eligibleIcon} />
+                  <span>Ready for approval</span>
+                </>
+              ) : eligibility ? (
+                <>
+                  <AlertCircle size={14} className={styles.ineligibleIcon} />
+                  <span>Not eligible</span>
+                </>
+              ) : null}
+            </span>
+          )}
         </div>
         <div className={styles.toolbarRight}>
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn btn-secondary"
             onClick={onSave}
             disabled={!isDirty || saveState === 'saving' || readOnly}
           >
             {saveState === 'saving' ? 'Saving...' : 'Save'}
           </button>
+          {/* Approve button (DR-6b-4e) */}
+          {canApprove && onApprove && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={onApprove}
+              disabled={isDirty || saveState === 'saving' || !eligibility?.eligible}
+              title={
+                isDirty
+                  ? 'Save changes before approving'
+                  : !eligibility?.eligible
+                    ? 'Readout is not eligible for approval'
+                    : 'Approve this readout'
+              }
+            >
+              Approve
+            </button>
+          )}
         </div>
       </div>
 
@@ -443,13 +497,6 @@ export function ReadoutEditor({
         )}
       </section>
 
-      {/* Editor incomplete notice */}
-      <div className={styles.emptySection} style={{ marginTop: 'var(--space-6)' }}>
-        <p>
-          <strong>Note:</strong> This editor is not yet a complete user-facing creation workflow.
-          Approval, generation, and Research Brief integration are planned for future milestones.
-        </p>
-      </div>
     </div>
   );
 }

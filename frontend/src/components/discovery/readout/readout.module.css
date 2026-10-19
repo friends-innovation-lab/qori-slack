@@ -678,3 +678,757 @@
     align-items: flex-start;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * DR-6b-4e APPROVAL UI STYLES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Approval Confirmation Modal ─────────────────────────────────────────── */
+
+.approvalModal {
+  width: 90%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-lg);
+}
+
+.approvalHeader {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.approvalTitle {
+  font-size: var(--text-h2-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.approvalBody {
+  padding: var(--space-4);
+}
+
+.approvalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Eligibility Status */
+.eligibilityStatus {
+  margin-bottom: var(--space-4);
+}
+
+.eligibilitySuccess {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  color: var(--color-success);
+  background: var(--color-success-surface, rgba(34, 197, 94, 0.1));
+  border-radius: var(--radius-md);
+  font-weight: var(--weight-medium);
+}
+
+.eligibilityError {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  color: var(--color-error);
+  background: var(--color-error-surface, rgba(239, 68, 68, 0.1));
+  border-radius: var(--radius-md);
+  font-weight: var(--weight-medium);
+}
+
+/* Blocking Errors */
+.eligibilityErrors {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  background: var(--color-error-surface, rgba(239, 68, 68, 0.1));
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-md);
+}
+
+.eligibilityErrorsTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-error);
+  margin: 0 0 var(--space-2);
+}
+
+.eligibilityErrorsList {
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--color-error);
+  font-size: var(--type-ui-size);
+}
+
+.eligibilityErrorsList li {
+  margin-bottom: var(--space-1);
+}
+
+/* Supersession Section */
+.supersessionSection {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  background: var(--color-warning-surface);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-md);
+}
+
+.supersessionTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-warning);
+  margin: 0 0 var(--space-2);
+}
+
+.supersessionDescription {
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-3);
+}
+
+.supersessionList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.supersededCitation {
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.supersededCitationHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.supersededCitationId {
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-brand-text);
+  background: var(--color-brand-tint);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.supersededCitationRevision {
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+}
+
+.supersededCitationInput {
+  width: 100%;
+  padding: var(--space-2);
+  font-family: inherit;
+  font-size: var(--type-ui-size);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  resize: vertical;
+}
+
+.supersededCitationInput:focus {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+  border-color: var(--color-focus);
+}
+
+.supersededCitationInputRequired {
+  border-color: var(--color-warning);
+}
+
+.supersededCitationHint {
+  display: block;
+  font-size: var(--type-label-size);
+  color: var(--color-warning);
+  margin-top: var(--space-1);
+}
+
+/* Approval Note Section */
+.approvalNoteSection {
+  margin-bottom: var(--space-4);
+}
+
+.approvalNoteLabel {
+  display: block;
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+}
+
+.approvalNoteInput {
+  width: 100%;
+  padding: var(--space-3);
+  font-family: inherit;
+  font-size: var(--type-ui-size);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  resize: vertical;
+}
+
+.approvalNoteInput:focus {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+  border-color: var(--color-focus);
+}
+
+/* Handoff Notice */
+.handoffNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  font-size: var(--type-ui-size);
+}
+
+.handoffNotice p {
+  margin: 0;
+}
+
+/* Approval Error Banner */
+.approvalErrorBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  color: var(--color-error);
+  background: var(--color-error-surface, rgba(239, 68, 68, 0.1));
+  border-radius: var(--radius-md);
+  margin-top: var(--space-3);
+  font-size: var(--type-ui-size);
+}
+
+.refreshButton {
+  margin-left: auto;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--type-label-size);
+  color: var(--color-error);
+  background: transparent;
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.refreshButton:hover {
+  background: var(--color-error-surface);
+}
+
+/* ─── Approved View Snapshot ──────────────────────────────────────────────── */
+
+.approvedSnapshot {
+  padding: var(--space-4);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.approvalBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+}
+
+.approvalMetadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.approvalMetaItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+}
+
+.approvalNote {
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+  font-size: var(--type-ui-size);
+  color: var(--color-text);
+}
+
+.supersessionNotesDisplay {
+  padding: var(--space-3);
+  background: var(--color-warning-surface);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+  font-size: var(--type-ui-size);
+}
+
+.supersessionNotesList {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-4);
+}
+
+.supersessionNotesList code {
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  padding: 0 var(--space-1);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+}
+
+.snapshotContent {
+  margin-top: var(--space-4);
+}
+
+.snapshotSection {
+  margin-bottom: var(--space-5);
+}
+
+.snapshotSectionTitle {
+  font-size: var(--text-h3-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin: 0 0 var(--space-3);
+}
+
+.snapshotNarrativeBlock {
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+}
+
+.snapshotText {
+  font-size: var(--text-body-size);
+  color: var(--color-text);
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.snapshotEmpty {
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.checkedBadge,
+.reviewedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--color-success);
+  background: var(--color-success-surface, rgba(34, 197, 94, 0.1));
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Approval History Panel ──────────────────────────────────────────────── */
+
+.historyPanel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  max-width: 100%;
+  height: 100vh;
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+  box-shadow: var(--elevation-lg);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.historyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.historyHeaderLeft {
+  display: flex;
+  align-items: center;
+}
+
+.historyTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.historyTitle h2 {
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.historyBackButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.historyBackButton:hover {
+  color: var(--color-text);
+}
+
+.historyCloseButton {
+  padding: var(--space-2);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.historyCloseButton:hover {
+  background: var(--color-surface-muted);
+}
+
+.historyBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.historyLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-6);
+  color: var(--color-text-muted);
+}
+
+.historyError {
+  padding: var(--space-4);
+  color: var(--color-error);
+  text-align: center;
+}
+
+.historyEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-6);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.historyEmpty p {
+  margin: var(--space-2) 0 0;
+  font-weight: var(--weight-medium);
+}
+
+.historyEmpty span {
+  font-size: var(--type-ui-size);
+}
+
+.historySnapshotView {
+  overflow-y: auto;
+}
+
+/* Approval List */
+.approvalList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.approvalListItem {
+  display: block;
+  width: 100%;
+  padding: var(--space-3);
+  text-align: left;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.approvalListItem:hover {
+  border-color: var(--color-brand);
+}
+
+.approvalListItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.approvalListItemNumber {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+}
+
+.latestBadge {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--color-success);
+  background: var(--color-success-surface, rgba(34, 197, 94, 0.1));
+  border-radius: var(--radius-sm);
+}
+
+.approvalListItemMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.approvalListItemMetaItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+}
+
+.approvalListItemNote {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Approval Status Banner ──────────────────────────────────────────────── */
+
+.statusBanner {
+  margin-bottom: var(--space-4);
+}
+
+.staleBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-warning-surface);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+}
+
+.staleBannerIcon {
+  flex-shrink: 0;
+  color: var(--color-warning);
+}
+
+.staleBannerContent {
+  flex: 1;
+}
+
+.staleBannerContent strong {
+  display: block;
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-warning);
+  margin-bottom: var(--space-1);
+}
+
+.staleBannerContent p {
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.approvalStatusRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+
+.approvalStatusApproved,
+.approvalStatusPending {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--type-ui-size);
+}
+
+.approvalStatusApproved {
+  color: var(--color-success);
+}
+
+.approvalStatusPending {
+  color: var(--color-text-muted);
+}
+
+.approvalStatusTime {
+  color: var(--color-text-muted);
+  font-weight: var(--weight-regular);
+}
+
+.statusActionLink {
+  margin-left: var(--space-2);
+  padding: 0;
+  font-size: var(--type-ui-size);
+  color: var(--color-brand);
+  background: transparent;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.statusActionLink:hover {
+  color: var(--color-brand);
+  opacity: 0.8;
+}
+
+.draftCoexistenceBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-3);
+}
+
+.draftCoexistenceIcon {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.draftCoexistenceContent {
+  flex: 1;
+}
+
+.draftCoexistenceContent strong {
+  display: block;
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin-bottom: var(--space-1);
+}
+
+.draftCoexistenceContent p {
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.handoffNoticeBrief {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+}
+
+/* Button size variants */
+.btn-sm {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--type-label-size);
+}
+
+/* ─── View Mode Toggle ────────────────────────────────────────────────────── */
+
+.viewModeToggle {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-md);
+}
+
+.viewModeButton {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.viewModeButton:hover {
+  color: var(--color-text);
+}
+
+.viewModeButtonActive {
+  color: var(--color-text);
+  background: var(--color-surface);
+  box-shadow: var(--elevation-sm);
+}
+
+/* ─── Eligibility Indicator ───────────────────────────────────────────────── */
+
+.eligibilityIndicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+}
+
+.eligibleIcon {
+  color: var(--color-success);
+}
+
+.ineligibleIcon {
+  color: var(--color-warning);
+}
+
+.spinIcon {
+  animation: spin 1s linear infinite;
+}

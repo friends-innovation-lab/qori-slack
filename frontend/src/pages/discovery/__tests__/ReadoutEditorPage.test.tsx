@@ -55,6 +55,9 @@ vi.mock('@/components/discovery', () => ({
 const mockUseReadoutDetail = vi.fn();
 const mockUseSaveDraft = vi.fn();
 const mockUseEligibleEvidence = vi.fn();
+const mockUseApprovalEligibility = vi.fn();
+const mockUseApproveReadout = vi.fn();
+const mockUseApprovalHistory = vi.fn();
 const mockMutateAsync = vi.fn();
 const mockRefetch = vi.fn();
 let mockIsConcurrencyError = vi.fn().mockReturnValue(false);
@@ -66,6 +69,9 @@ vi.mock('@/api/readouts', async () => {
     useReadoutDetail: (...args: unknown[]) => mockUseReadoutDetail(...args),
     useSaveDraft: (...args: unknown[]) => mockUseSaveDraft(...args),
     useEligibleEvidence: (...args: unknown[]) => mockUseEligibleEvidence(...args),
+    useApprovalEligibility: (...args: unknown[]) => mockUseApprovalEligibility(...args),
+    useApproveReadout: (...args: unknown[]) => mockUseApproveReadout(...args),
+    useApprovalHistory: (...args: unknown[]) => mockUseApprovalHistory(...args),
     isConcurrencyError: (err: unknown) => mockIsConcurrencyError(err),
   };
 });
@@ -210,6 +216,37 @@ describe('ReadoutEditorPage Integration', () => {
       mutateAsync: mockMutateAsync,
       isPending: false,
       isError: false,
+    });
+
+    // DR-6b-4e: Approval hooks default mocks
+    mockUseApprovalEligibility.mockReturnValue({
+      data: {
+        data: {
+          eligible: true,
+          errors: [],
+          supersededCitations: [],
+        },
+      },
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    mockUseApproveReadout.mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+      isError: false,
+    });
+
+    mockUseApprovalHistory.mockReturnValue({
+      data: {
+        data: {
+          approvals: [],
+        },
+      },
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
     });
   });
 

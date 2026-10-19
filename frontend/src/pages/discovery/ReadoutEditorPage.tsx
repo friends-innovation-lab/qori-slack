@@ -1,27 +1,35 @@
 /**
- * ReadoutEditorPage — Main page for editing readout drafts
+ * ReadoutEditorPage — Main page for readout editing and approval
  *
- * DR-6b-4d: Implements all authorized scope
+ * DR-6b-4d: Draft editing with all safeguards
  * - Draft editing with all safeguards
  * - 409 conflict recovery
  * - Unsaved changes protection
  * - Title/question read-only
  *
- * NOT YET IMPLEMENTED (deferred):
- * - Approve action (DR-6b-4e)
- * - New readout creation
- * - AI generation
- * - Research Brief integration
- * - Staleness integration
+ * DR-6b-4e: Approval UI (implemented)
+ * - A. Review and eligibility display
+ * - B. Approval confirmation dialog with supersession notes
+ * - C. Immutable approved view rendering
+ * - D. Draft and approval coexistence with Edit Draft action
+ * - E. Approval history with historical snapshot viewing
+ * - F. Evidence staleness display
+ * - G. Permissions and concurrency handling (403, 409, 422)
+ * - H. Research Brief handoff explanation
  */
 
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
-import { AlertCircle, ArrowLeft } from 'lucide-react';
+import { AlertCircle, ArrowLeft, FileEdit, Eye, History } from 'lucide-react';
 import {
   useReadoutDetail,
   useSaveDraft,
+  useApprovalEligibility,
+  useApproveReadout,
+  useApprovalHistory,
   isConcurrencyError,
+  isApprovalIneligibleError,
+  isAuthorizationError,
   type ReadoutApiError,
 } from '@/api/readouts';
 import { useStudyWorkspace, WorkspaceLayout } from '@/components/study/workspace';
@@ -32,9 +40,14 @@ import { DeskTabs } from '@/components/discovery';
 import { ReadoutEditor } from '@/components/discovery/readout/ReadoutEditor';
 import { ConflictComparisonView } from '@/components/discovery/readout/ConflictComparisonView';
 import { UnsavedChangesModal } from '@/components/discovery/readout/UnsavedChangesModal';
+import { ApprovalConfirmationModal } from '@/components/discovery/readout/ApprovalConfirmationModal';
+import { ApprovedViewSnapshot } from '@/components/discovery/readout/ApprovedViewSnapshot';
+import { ApprovalHistoryPanel } from '@/components/discovery/readout/ApprovalHistoryPanel';
+import { ApprovalStatusBanner } from '@/components/discovery/readout/ApprovalStatusBanner';
 import styles from '@/components/discovery/readout/readout.module.css';
 
 type SaveState = 'saved' | 'dirty' | 'saving' | 'error';
+type ViewMode = 'edit' | 'approved';
 
 export function ReadoutEditorPage() {
   const { studyPublicId, readoutPublicId } = useParams<{
@@ -69,12 +82,38 @@ export function ReadoutEditorPage() {
     readoutPublicId: readoutPublicId || '',
   });
 
+  // Approval hooks
+  const eligibilityQuery = useApprovalEligibility(
+    projectPublicId || '',
+    studyPublicId || '',
+    readoutPublicId || '',
+    { enabled: !!projectPublicId && !!studyPublicId && !!readoutPublicId },
+  );
+
+  const approveMutation = useApproveReadout({
+    projectPublicId: projectPublicId || '',
+    studyPublicId: studyPublicId || '',
+    readoutPublicId: readoutPublicId || '',
+  });
+
+  const historyQuery = useApprovalHistory(
+    projectPublicId || '',
+    studyPublicId || '',
+    readoutPublicId || '',
+  );
+
   // Local state
   const [saveState, setSaveState] = useState<SaveState>('saved');
   const [savedAt, setSavedAt] = useState<string | undefined>();
   const [invalidatedFindings, setInvalidatedFindings] = useState<string[]>([]);
   const [invalidatedImplications, setInvalidatedImplications] = useState<string[]>([]);
   const [pendingSaveAndLeave, setPendingSaveAndLeave] = useState(false);
+
+  // Approval UI state
+  const [viewMode, setViewMode] = useState<ViewMode>('edit');
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [approvalError, setApprovalError] = useState<string | null>(null);
 
   // Unsaved changes guard
   const unsavedGuard = useUnsavedChangesGuard(editor.isDirty);
@@ -176,6 +215,83 @@ export function ReadoutEditorPage() {
     setPendingSaveAndLeave(false);
   }, [unsavedGuard]);
 
+  // Approval handlers
+  const handleOpenApprovalModal = useCallback(() => {
+    // Refresh eligibility before showing modal
+    eligibilityQuery.refetch();
+    setApprovalError(null);
+    setShowApprovalModal(true);
+  }, [eligibilityQuery]);
+
+  const handleCloseApprovalModal = useCallback(() => {
+    setShowApprovalModal(false);
+    setApprovalError(null);
+  }, []);
+
+  const handleApprove = useCallback(
+    async (request: Parameters<typeof approveMutation.mutateAsync>[0]) => {
+      setApprovalError(null);
+
+      try {
+        await approveMutation.mutateAsync(request);
+
+        // Success - close modal and refresh data
+        setShowApprovalModal(false);
+        detailQuery.refetch();
+        eligibilityQuery.refetch();
+        historyQuery.refetch();
+      } catch (error) {
+        const apiError = error as ReadoutApiError;
+
+        if (isConcurrencyError(apiError)) {
+          // 409: Draft was modified - need to save first or refresh
+          setApprovalError(
+            'The draft was modified since you started. Please close this dialog, review the changes, and try again.',
+          );
+        } else if (isApprovalIneligibleError(apiError)) {
+          // 422: Eligibility check failed - show errors
+          const eligibilityErrors = (apiError as { errors?: string[] }).errors || [];
+          setApprovalError(
+            `Approval blocked: ${eligibilityErrors.join('; ') || 'Readout is not eligible for approval.'}`,
+          );
+          // Refresh eligibility to show current state
+          eligibilityQuery.refetch();
+        } else if (isAuthorizationError(apiError)) {
+          // 403: Permission denied
+          setApprovalError('You do not have permission to approve this readout.');
+        } else {
+          // Other error
+          setApprovalError(apiError.message || 'An error occurred while approving.');
+        }
+      }
+    },
+    [approveMutation, detailQuery, eligibilityQuery, historyQuery],
+  );
+
+  const handleRefreshEligibility = useCallback(() => {
+    eligibilityQuery.refetch();
+    setApprovalError(null);
+  }, [eligibilityQuery]);
+
+  // View mode handlers
+  const handleSwitchToEdit = useCallback(() => {
+    setViewMode('edit');
+  }, []);
+
+  const handleSwitchToApproved = useCallback(() => {
+    setViewMode('approved');
+  }, []);
+
+  // History panel handlers
+  const handleOpenHistory = useCallback(() => {
+    historyQuery.refetch();
+    setShowHistoryPanel(true);
+  }, [historyQuery]);
+
+  const handleCloseHistory = useCallback(() => {
+    setShowHistoryPanel(false);
+  }, []);
+
   // Render states
   if (!projectPublicId || !studyPublicId || !readoutPublicId) {
     return (
@@ -229,6 +345,11 @@ export function ReadoutEditorPage() {
 
   const readout = detailQuery.data.data;
   const readOnly = !permissions.canReview || permissions.isLoading;
+  const hasLatestApproval = readout.latestApproval !== null;
+  const canApprove = permissions.canReview && !permissions.isLoading;
+
+  // Eligibility data for approval button state
+  const eligibility = eligibilityQuery.data?.data;
 
   return (
     <WorkspaceLayout header={<div className={styles.headerSpacer} />}>
@@ -252,6 +373,49 @@ export function ReadoutEditorPage() {
         </Link>
       </div>
 
+      {/* Approval Status Banner (Scope F: Staleness) */}
+      <ApprovalStatusBanner
+        outOfDateSince={readout.outOfDateSince}
+        outOfDateReason={readout.outOfDateReason}
+        approvedAt={readout.approvedAt}
+        approvedVersion={readout.approvedVersion}
+        draftContentVersion={readout.draft.contentVersion}
+        sourceDraftContentVersion={readout.latestApproval?.sourceDraftContentVersion}
+        canEdit={canApprove}
+        onViewHistory={hasLatestApproval ? handleOpenHistory : undefined}
+        onEditDraft={hasLatestApproval ? handleSwitchToEdit : undefined}
+      />
+
+      {/* View Mode Toggle (only when approved) */}
+      {hasLatestApproval && (
+        <div className={styles.viewModeToggle} style={{ marginBottom: 'var(--space-4)' }}>
+          <button
+            type="button"
+            className={`${styles.viewModeButton} ${viewMode === 'edit' ? styles.viewModeButtonActive : ''}`}
+            onClick={handleSwitchToEdit}
+          >
+            <FileEdit size={14} style={{ marginRight: 'var(--space-1)' }} />
+            Edit Draft
+          </button>
+          <button
+            type="button"
+            className={`${styles.viewModeButton} ${viewMode === 'approved' ? styles.viewModeButtonActive : ''}`}
+            onClick={handleSwitchToApproved}
+          >
+            <Eye size={14} style={{ marginRight: 'var(--space-1)' }} />
+            Approved Version
+          </button>
+          <button
+            type="button"
+            className={styles.viewModeButton}
+            onClick={handleOpenHistory}
+          >
+            <History size={14} style={{ marginRight: 'var(--space-1)' }} />
+            History
+          </button>
+        </div>
+      )}
+
       {/* Read-only notice */}
       {readOnly && (
         <div
@@ -271,26 +435,50 @@ export function ReadoutEditorPage() {
         </div>
       )}
 
-      {/* Editor */}
-      <ReadoutEditor
-        title={readout.title}
-        question={readout.question}
-        displayId={readout.displayId}
-        editorState={editor.editorState}
-        isDirty={editor.isDirty}
-        saveState={saveState}
-        savedAt={savedAt}
-        invalidatedFindings={invalidatedFindings}
-        invalidatedImplications={invalidatedImplications}
-        readOnly={readOnly}
-        projectPublicId={projectPublicId}
-        studyPublicId={studyPublicId}
-        readoutPublicId={readoutPublicId}
-        onContentChange={editor.updateContent}
-        onToggleFindingChecked={editor.toggleFindingChecked}
-        onToggleImplicationReviewed={editor.toggleImplicationReviewed}
-        onSave={handleSave}
-      />
+      {/* Main Content Area */}
+      {viewMode === 'edit' ? (
+        <>
+          {/* Editor */}
+          <ReadoutEditor
+            title={readout.title}
+            question={readout.question}
+            displayId={readout.displayId}
+            editorState={editor.editorState}
+            isDirty={editor.isDirty}
+            saveState={saveState}
+            savedAt={savedAt}
+            invalidatedFindings={invalidatedFindings}
+            invalidatedImplications={invalidatedImplications}
+            readOnly={readOnly}
+            projectPublicId={projectPublicId}
+            studyPublicId={studyPublicId}
+            readoutPublicId={readoutPublicId}
+            onContentChange={editor.updateContent}
+            onToggleFindingChecked={editor.toggleFindingChecked}
+            onToggleImplicationReviewed={editor.toggleImplicationReviewed}
+            onSave={handleSave}
+            // Approval props
+            canApprove={canApprove}
+            eligibility={eligibility}
+            isCheckingEligibility={eligibilityQuery.isLoading}
+            onApprove={handleOpenApprovalModal}
+          />
+        </>
+      ) : (
+        /* Approved View (Scope C: Immutable approved view) */
+        hasLatestApproval && (
+          <div className={styles.editorContainer}>
+            {/* Masthead - Read-only title/question */}
+            <div className={styles.masthead}>
+              <span className={styles.eyebrow}>Desk readout · {readout.displayId}</span>
+              <h1 className={styles.title}>{readout.title}</h1>
+              {readout.question && <p className={styles.question}>{readout.question}</p>}
+            </div>
+
+            <ApprovedViewSnapshot approval={readout.latestApproval!} />
+          </div>
+        )
+      )}
 
       {/* Conflict comparison view */}
       {editor.conflictState && (
@@ -309,6 +497,29 @@ export function ReadoutEditorPage() {
           onLeaveWithoutSaving={handleLeaveWithoutSaving}
           onStay={handleStay}
           isSaving={saveState === 'saving'}
+        />
+      )}
+
+      {/* Approval confirmation modal (Scope B) */}
+      {showApprovalModal && eligibility && (
+        <ApprovalConfirmationModal
+          eligibility={eligibility}
+          expectedVersion={editor.serverVersion}
+          isApproving={approveMutation.isPending}
+          approvalError={approvalError}
+          onConfirm={handleApprove}
+          onCancel={handleCloseApprovalModal}
+          onRefreshEligibility={handleRefreshEligibility}
+        />
+      )}
+
+      {/* Approval history panel (Scope E) */}
+      {showHistoryPanel && (
+        <ApprovalHistoryPanel
+          approvals={historyQuery.data?.data.approvals ?? []}
+          isLoading={historyQuery.isLoading}
+          error={historyQuery.error instanceof Error ? historyQuery.error.message : null}
+          onClose={handleCloseHistory}
         />
       )}
     </WorkspaceLayout>
