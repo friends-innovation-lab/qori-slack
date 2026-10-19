@@ -543,6 +543,8 @@ describe('DR-6b-3 Readout HTTP API', () => {
       expect(res.status).toBe(200);
       expect(res.body.data.eligible).toBeDefined();
       expect(res.body.data.errors).toBeDefined();
+      expect(res.body.data.supersededCitations).toBeDefined();
+      expect(Array.isArray(res.body.data.supersededCitations)).toBe(true);
     });
 
     it('returns not eligible when no findings', async () => {
@@ -556,6 +558,104 @@ describe('DR-6b-3 Readout HTTP API', () => {
       expect(res.status).toBe(200);
       expect(res.body.data.eligible).toBe(false);
       expect(res.body.data.errors.length).toBeGreaterThan(0);
+      expect(res.body.data.supersededCitations).toEqual([]);
+    });
+
+    it('returns supersededCitations with revision metadata when citations are superseded', async () => {
+      // Create insight with accepted revision
+      const EvidenceConstructModel = sequelize.models.EvidenceConstruct;
+      const EvidenceConstructRevisionModel = sequelize.models.EvidenceConstructRevision;
+
+      const insight = await EvidenceConstructModel.create({
+        project_id: projectId,
+        construct_type: 'desk_insight',
+        display_sequence: 1,
+        created_by: 'test',
+      } as any);
+      const insightPublicId = (insight as any).public_id;
+
+      const revision1 = await EvidenceConstructRevisionModel.create({
+        construct_id: (insight as any).id,
+        revision_number: 1,
+        content: { wording: 'Original' },
+        evidence_snapshot: [],
+        origin: 'researcher',
+        created_by: 'test',
+      } as any);
+      const revision1PublicId = (revision1 as any).public_id;
+
+      await EvidenceConstructModel.update(
+        { accepted_revision_id: (revision1 as any).id, latest_revision_id: (revision1 as any).id },
+        { where: { id: (insight as any).id } }
+      );
+
+      // Create readout citing revision1
+      const created = await createReadout(researcherPublicId);
+      const readoutId = created.body.data.id;
+
+      const draftContent = {
+        findings: [{
+          id: 'f1',
+          text: 'Finding',
+          citations: [{
+            constructPublicId: insightPublicId,
+            revisionPublicId: revision1PublicId,
+            revisionNumber: 1,
+            displayId: 'IN-0001',
+          }],
+        }],
+        implications: [{ id: 'i1', kind: 'question', text: 'Q', basedOnFindings: ['f1'] }],
+      };
+
+      // First save: create content
+      await request(app)
+        .patch(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/draft`)
+        .set('X-Test-Actor-PublicId', researcherPublicId)
+        .send({
+          expectedVersion: 1,
+          content: draftContent,
+        });
+
+      // Second save: mark as checked/reviewed
+      await request(app)
+        .patch(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/draft`)
+        .set('X-Test-Actor-PublicId', researcherPublicId)
+        .send({
+          expectedVersion: 2,
+          content: draftContent,
+          findingsChecked: ['f1'],
+          implicationsReviewed: ['i1'],
+        });
+
+      // Now supersede revision1 with revision2
+      const revision2 = await EvidenceConstructRevisionModel.create({
+        construct_id: (insight as any).id,
+        revision_number: 2,
+        content: { wording: 'Updated' },
+        evidence_snapshot: [],
+        origin: 'researcher',
+        created_by: 'test',
+      } as any);
+
+      await EvidenceConstructModel.update(
+        { accepted_revision_id: (revision2 as any).id, latest_revision_id: (revision2 as any).id },
+        { where: { id: (insight as any).id } }
+      );
+
+      // Check eligibility
+      const res = await request(app)
+        .get(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/eligibility`)
+        .set('X-Test-Actor-PublicId', researcherPublicId);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.eligible).toBe(true);
+      expect(res.body.data.supersededCitations).toHaveLength(1);
+      expect(res.body.data.supersededCitations[0]).toEqual({
+        constructPublicId: insightPublicId,
+        revisionPublicId: revision1PublicId,
+        revisionNumber: 1,
+        displayId: 'IN-0001',
+      });
     });
   });
 
@@ -600,6 +700,199 @@ describe('DR-6b-3 Readout HTTP API', () => {
         .send({});
 
       expect(res.status).toBe(400);
+    });
+
+    it('returns 422 when supersession notes are missing for superseded citations', async () => {
+      // Create insight and supersede it
+      const EvidenceConstructModel = sequelize.models.EvidenceConstruct;
+      const EvidenceConstructRevisionModel = sequelize.models.EvidenceConstructRevision;
+
+      const insight = await EvidenceConstructModel.create({
+        project_id: projectId,
+        construct_type: 'desk_insight',
+        display_sequence: 1,
+        created_by: 'test',
+      } as any);
+      const insightPublicId = (insight as any).public_id;
+
+      const revision1 = await EvidenceConstructRevisionModel.create({
+        construct_id: (insight as any).id,
+        revision_number: 1,
+        content: { wording: 'Original' },
+        evidence_snapshot: [],
+        origin: 'researcher',
+        created_by: 'test',
+      } as any);
+      const revision1PublicId = (revision1 as any).public_id;
+
+      await EvidenceConstructModel.update(
+        { accepted_revision_id: (revision1 as any).id, latest_revision_id: (revision1 as any).id },
+        { where: { id: (insight as any).id } }
+      );
+
+      // Create readout citing revision1
+      const created = await createReadout(researcherPublicId);
+      const readoutId = created.body.data.id;
+
+      const draftContent = {
+        findings: [{
+          id: 'f1',
+          text: 'Finding',
+          citations: [{
+            constructPublicId: insightPublicId,
+            revisionPublicId: revision1PublicId,
+            revisionNumber: 1,
+            displayId: 'IN-0001',
+          }],
+        }],
+        implications: [{ id: 'i1', kind: 'question', text: 'Q', basedOnFindings: ['f1'] }],
+      };
+
+      // First save: create content
+      await request(app)
+        .patch(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/draft`)
+        .set('X-Test-Actor-PublicId', researcherPublicId)
+        .send({
+          expectedVersion: 1,
+          content: draftContent,
+        });
+
+      // Second save: mark as checked/reviewed
+      await request(app)
+        .patch(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/draft`)
+        .set('X-Test-Actor-PublicId', researcherPublicId)
+        .send({
+          expectedVersion: 2,
+          content: draftContent,
+          findingsChecked: ['f1'],
+          implicationsReviewed: ['i1'],
+        });
+
+      // Supersede revision1 with revision2
+      const revision2 = await EvidenceConstructRevisionModel.create({
+        construct_id: (insight as any).id,
+        revision_number: 2,
+        content: { wording: 'Updated' },
+        evidence_snapshot: [],
+        origin: 'researcher',
+        created_by: 'test',
+      } as any);
+
+      await EvidenceConstructModel.update(
+        { accepted_revision_id: (revision2 as any).id, latest_revision_id: (revision2 as any).id },
+        { where: { id: (insight as any).id } }
+      );
+
+      // Try to approve without supersession notes
+      const res = await request(app)
+        .post(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/approve`)
+        .set('X-Test-Actor-PublicId', researcherPublicId)
+        .send({ expectedVersion: 3 });
+
+      expect(res.status).toBe(422);
+      expect(res.body.error.code).toBe('APPROVAL_INELIGIBLE');
+      expect(res.body.error.errors).toContainEqual(
+        expect.stringContaining('requires a justification note')
+      );
+    });
+
+    it('succeeds when supersession notes are provided for all superseded citations', async () => {
+      // Create insight and supersede it
+      const EvidenceConstructModel = sequelize.models.EvidenceConstruct;
+      const EvidenceConstructRevisionModel = sequelize.models.EvidenceConstructRevision;
+
+      const insight = await EvidenceConstructModel.create({
+        project_id: projectId,
+        construct_type: 'desk_insight',
+        display_sequence: 1,
+        created_by: 'test',
+      } as any);
+      const insightPublicId = (insight as any).public_id;
+
+      const revision1 = await EvidenceConstructRevisionModel.create({
+        construct_id: (insight as any).id,
+        revision_number: 1,
+        content: { wording: 'Original' },
+        evidence_snapshot: [],
+        origin: 'researcher',
+        created_by: 'test',
+      } as any);
+      const revision1PublicId = (revision1 as any).public_id;
+
+      await EvidenceConstructModel.update(
+        { accepted_revision_id: (revision1 as any).id, latest_revision_id: (revision1 as any).id },
+        { where: { id: (insight as any).id } }
+      );
+
+      // Create readout citing revision1
+      const created = await createReadout(researcherPublicId);
+      const readoutId = created.body.data.id;
+
+      const draftContent = {
+        findings: [{
+          id: 'f1',
+          text: 'Finding',
+          citations: [{
+            constructPublicId: insightPublicId,
+            revisionPublicId: revision1PublicId,
+            revisionNumber: 1,
+            displayId: 'IN-0001',
+          }],
+        }],
+        implications: [{ id: 'i1', kind: 'question', text: 'Q', basedOnFindings: ['f1'] }],
+      };
+
+      // First save: create content
+      await request(app)
+        .patch(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/draft`)
+        .set('X-Test-Actor-PublicId', researcherPublicId)
+        .send({
+          expectedVersion: 1,
+          content: draftContent,
+        });
+
+      // Second save: mark as checked/reviewed
+      await request(app)
+        .patch(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/draft`)
+        .set('X-Test-Actor-PublicId', researcherPublicId)
+        .send({
+          expectedVersion: 2,
+          content: draftContent,
+          findingsChecked: ['f1'],
+          implicationsReviewed: ['i1'],
+        });
+
+      // Supersede revision1 with revision2
+      const revision2 = await EvidenceConstructRevisionModel.create({
+        construct_id: (insight as any).id,
+        revision_number: 2,
+        content: { wording: 'Updated' },
+        evidence_snapshot: [],
+        origin: 'researcher',
+        created_by: 'test',
+      } as any);
+
+      await EvidenceConstructModel.update(
+        { accepted_revision_id: (revision2 as any).id, latest_revision_id: (revision2 as any).id },
+        { where: { id: (insight as any).id } }
+      );
+
+      // Approve with supersession note
+      const res = await request(app)
+        .post(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/approve`)
+        .set('X-Test-Actor-PublicId', researcherPublicId)
+        .send({
+          expectedVersion: 3,
+          supersessionNotes: {
+            [revision1PublicId]: 'Using older revision intentionally for specific scope',
+          },
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.approvalNumber).toBe(1);
+      expect(res.body.data.supersessionNotes).toEqual({
+        [revision1PublicId]: 'Using older revision intentionally for specific scope',
+      });
     });
   });
 
