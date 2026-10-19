@@ -200,12 +200,26 @@ export interface GenerationVersion {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
+ * Superseded citation metadata for approval eligibility.
+ * Each entry represents a cited revision that has been superseded by a newer accepted revision.
+ * Frontend must collect justification notes keyed by revisionPublicId.
+ */
+export interface SupersededCitation {
+  constructPublicId: string;
+  revisionPublicId: string;
+  revisionNumber: number;
+  displayId: string; // "IN-0001"
+}
+
+/**
  * Approval eligibility check result.
  * Matches backend checkApprovalEligibility output.
  */
 export interface ApprovalEligibility {
   eligible: boolean;
   errors: string[];
+  /** Revisions cited in the draft that have been superseded by newer accepted revisions */
+  supersededCitations: SupersededCitation[];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

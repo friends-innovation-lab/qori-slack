@@ -1125,6 +1125,543 @@ describe('Approval Eligibility', () => {
     expect(eligibility.eligible).toBe(false);
     expect(eligibility.errors.some((e) => e.includes('must link to at least one finding'))).toBe(true);
   });
+
+  it('returns empty supersededCitations when no revisions are superseded', async () => {
+    const readout = await readoutService.createReadout({
+      studyId,
+      projectId,
+      title: 'Test',
+      createdByActorId: actorId,
+    });
+
+    const draftContent = {
+      findings: [{
+        id: 'f1',
+        text: 'Finding',
+        citations: [{
+          constructPublicId: insightPublicId,
+          revisionPublicId,
+          revisionNumber: 1,
+          displayId: insightDisplayId,
+        }],
+      }],
+      implications: [{ id: 'i1', kind: 'question' as const, text: 'Q', basedOnFindings: ['f1'] }],
+    };
+
+    // First save: create content
+    await readoutService.saveDraft({
+      readoutId: readout.id,
+      content: draftContent,
+      findingsChecked: [],
+      implicationsReviewed: [],
+      expectedVersion: 1,
+      editedByActorId: actorId,
+    });
+
+    // Second save: mark as checked/reviewed
+    await readoutService.saveDraft({
+      readoutId: readout.id,
+      content: draftContent,
+      findingsChecked: ['f1'],
+      implicationsReviewed: ['i1'],
+      expectedVersion: 2,
+      editedByActorId: actorId,
+    });
+
+    const eligibility = await readoutService.checkApprovalEligibility(readout.id, actorId);
+
+    expect(eligibility.eligible).toBe(true);
+    expect(eligibility.supersededCitations).toEqual([]);
+  });
+
+  it('returns revision-specific supersession metadata when citations are superseded', async () => {
+    // Create a new accepted revision (supersedes old)
+    const newRevision = await EvidenceConstructRevisionModel.create({
+      construct_id: insightId,
+      revision_number: 2,
+      content: { wording: 'New accepted revision' },
+      evidence_snapshot: [],
+      origin: 'researcher',
+      created_by: 'test-user',
+    } as any);
+
+    await EvidenceConstructModel.update(
+      {
+        accepted_revision_id: (newRevision as any).id,
+        latest_revision_id: (newRevision as any).id,
+      },
+      { where: { id: insightId } }
+    );
+
+    const readout = await readoutService.createReadout({
+      studyId,
+      projectId,
+      title: 'Test',
+      createdByActorId: actorId,
+    });
+
+    const draftContent = {
+      findings: [{
+        id: 'f1',
+        text: 'Finding citing superseded revision',
+        citations: [{
+          constructPublicId: insightPublicId,
+          revisionPublicId, // Old revision
+          revisionNumber: 1,
+          displayId: insightDisplayId,
+        }],
+      }],
+      implications: [{ id: 'i1', kind: 'question' as const, text: 'Q', basedOnFindings: ['f1'] }],
+    };
+
+    // Cite the OLD (superseded) revision - first save: create content
+    await readoutService.saveDraft({
+      readoutId: readout.id,
+      content: draftContent,
+      findingsChecked: [],
+      implicationsReviewed: [],
+      expectedVersion: 1,
+      editedByActorId: actorId,
+    });
+
+    // Second save: mark as checked/reviewed
+    await readoutService.saveDraft({
+      readoutId: readout.id,
+      content: draftContent,
+      findingsChecked: ['f1'],
+      implicationsReviewed: ['i1'],
+      expectedVersion: 2,
+      editedByActorId: actorId,
+    });
+
+    const eligibility = await readoutService.checkApprovalEligibility(readout.id, actorId);
+
+    expect(eligibility.eligible).toBe(true);
+    expect(eligibility.supersededCitations).toHaveLength(1);
+    expect(eligibility.supersededCitations[0]).toEqual({
+      constructPublicId: insightPublicId,
+      revisionPublicId,
+      revisionNumber: 1,
+      displayId: insightDisplayId,
+    });
+
+    // Clean up: restore original accepted revision for other tests
+    await EvidenceConstructModel.update(
+      {
+        accepted_revision_id: revisionId,
+        latest_revision_id: revisionId,
+      },
+      { where: { id: insightId } }
+    );
+    // Attempt to destroy newRevision, but ignore errors (may be referenced by approvals)
+    try {
+      await newRevision.destroy();
+    } catch {
+      // Ignore - revision may be referenced by approvals
+    }
+  });
+});
+
+describe('Supersession Note Enforcement', () => {
+  let supersededRevisionPublicId: string;
+  let newRevision: any;
+
+  beforeEach(async () => {
+    // Create a new accepted revision (supersedes original)
+    newRevision = await EvidenceConstructRevisionModel.create({
+      construct_id: insightId,
+      revision_number: 2,
+      content: { wording: 'New accepted revision' },
+      evidence_snapshot: [],
+      origin: 'researcher',
+      created_by: 'test-user',
+    } as any);
+
+    await EvidenceConstructModel.update(
+      {
+        accepted_revision_id: (newRevision as any).id,
+        latest_revision_id: (newRevision as any).id,
+      },
+      { where: { id: insightId } }
+    );
+
+    supersededRevisionPublicId = revisionPublicId; // Old revision is now superseded
+  });
+
+  afterEach(async () => {
+    // Restore original accepted revision
+    await EvidenceConstructModel.update(
+      {
+        accepted_revision_id: revisionId,
+        latest_revision_id: revisionId,
+      },
+      { where: { id: insightId } }
+    );
+    // Attempt to destroy newRevision, but ignore errors (may be referenced by approvals)
+    if (newRevision) {
+      try {
+        await newRevision.destroy();
+      } catch {
+        // Ignore - revision may be referenced by approvals created during test
+      }
+    }
+  });
+
+  async function createSupersededReadout() {
+    const readout = await readoutService.createReadout({
+      studyId,
+      projectId,
+      title: 'Superseded Citation Test',
+      createdByActorId: actorId,
+    });
+
+    const draftContent = {
+      findings: [{
+        id: 'f1',
+        text: 'Finding citing superseded revision',
+        citations: [{
+          constructPublicId: insightPublicId,
+          revisionPublicId: supersededRevisionPublicId,
+          revisionNumber: 1,
+          displayId: insightDisplayId,
+        }],
+      }],
+      implications: [{ id: 'i1', kind: 'question' as const, text: 'Q', basedOnFindings: ['f1'] }],
+    };
+
+    // First save: create content
+    await readoutService.saveDraft({
+      readoutId: readout.id,
+      content: draftContent,
+      findingsChecked: [],
+      implicationsReviewed: [],
+      expectedVersion: 1,
+      editedByActorId: actorId,
+    });
+
+    // Second save: mark as checked/reviewed
+    await readoutService.saveDraft({
+      readoutId: readout.id,
+      content: draftContent,
+      findingsChecked: ['f1'],
+      implicationsReviewed: ['i1'],
+      expectedVersion: 2,
+      editedByActorId: actorId,
+    });
+
+    return readout;
+  }
+
+  it('rejects approval when supersession note is missing', async () => {
+    const readout = await createSupersededReadout();
+
+    await expect(
+      readoutService.approveReadout({
+        readoutId: readout.id,
+        expectedVersion: 3,
+        approvedByActorId: actorId,
+        // No supersessionNotes provided
+      })
+    ).rejects.toThrow(/supersession notes required/i);
+  });
+
+  it('rejects approval when supersession note is whitespace-only', async () => {
+    const readout = await createSupersededReadout();
+
+    await expect(
+      readoutService.approveReadout({
+        readoutId: readout.id,
+        expectedVersion: 3,
+        approvedByActorId: actorId,
+        supersessionNotes: {
+          [supersededRevisionPublicId]: '   \t\n  ', // Whitespace only
+        },
+      })
+    ).rejects.toThrow(/supersession notes required/i);
+  });
+
+  it('rejects approval when note is keyed to wrong revision', async () => {
+    const readout = await createSupersededReadout();
+
+    await expect(
+      readoutService.approveReadout({
+        readoutId: readout.id,
+        expectedVersion: 3,
+        approvedByActorId: actorId,
+        supersessionNotes: {
+          'wrong-revision-id': 'This note is for a different revision',
+        },
+      })
+    ).rejects.toThrow(/supersession notes required/i);
+  });
+
+  it('accepts approval with valid supersession note and persists in snapshot', async () => {
+    const readout = await createSupersededReadout();
+
+    const approval = await readoutService.approveReadout({
+      readoutId: readout.id,
+      expectedVersion: 3,
+      approvedByActorId: actorId,
+      supersessionNotes: {
+        [supersededRevisionPublicId]: 'Using older revision intentionally because it addresses our specific scope',
+      },
+    });
+
+    expect(approval.approvalNumber).toBe(1);
+    expect(approval.supersessionNotes).toEqual({
+      [supersededRevisionPublicId]: 'Using older revision intentionally because it addresses our specific scope',
+    });
+  });
+
+  it('trims supersession notes before persisting', async () => {
+    const readout = await createSupersededReadout();
+
+    const approval = await readoutService.approveReadout({
+      readoutId: readout.id,
+      expectedVersion: 3,
+      approvedByActorId: actorId,
+      supersessionNotes: {
+        [supersededRevisionPublicId]: '  Padded note with spaces  ',
+      },
+    });
+
+    expect(approval.supersessionNotes).toEqual({
+      [supersededRevisionPublicId]: 'Padded note with spaces',
+    });
+  });
+
+  it('requires separate notes for multiple superseded revisions', async () => {
+    // Create second insight with superseded revision (use high sequence to avoid conflicts)
+    const insight2 = await EvidenceConstructModel.create({
+      project_id: projectId,
+      construct_type: 'desk_insight',
+      display_sequence: 1000,
+      created_by: 'test-user',
+    } as any);
+    const insight2PublicId = (insight2 as any).public_id;
+
+    const revision2 = await EvidenceConstructRevisionModel.create({
+      construct_id: (insight2 as any).id,
+      revision_number: 1,
+      content: { wording: 'Second insight' },
+      evidence_snapshot: [],
+      origin: 'researcher',
+      created_by: 'test-user',
+    } as any);
+    const revision2PublicId = (revision2 as any).public_id;
+
+    // Accept revision 2
+    await EvidenceConstructModel.update(
+      {
+        accepted_revision_id: (revision2 as any).id,
+        latest_revision_id: (revision2 as any).id,
+      },
+      { where: { id: (insight2 as any).id } }
+    );
+
+    // Create revision 3 and make it accepted (supersedes revision 2)
+    const revision3 = await EvidenceConstructRevisionModel.create({
+      construct_id: (insight2 as any).id,
+      revision_number: 2,
+      content: { wording: 'Second insight - updated' },
+      evidence_snapshot: [],
+      origin: 'researcher',
+      created_by: 'test-user',
+    } as any);
+
+    await EvidenceConstructModel.update(
+      {
+        accepted_revision_id: (revision3 as any).id,
+        latest_revision_id: (revision3 as any).id,
+      },
+      { where: { id: (insight2 as any).id } }
+    );
+
+    // Create readout citing both superseded revisions
+    const readout = await readoutService.createReadout({
+      studyId,
+      projectId,
+      title: 'Multiple Superseded Test',
+      createdByActorId: actorId,
+    });
+
+    const draftContent = {
+      findings: [
+        {
+          id: 'f1',
+          text: 'Finding 1',
+          citations: [{
+            constructPublicId: insightPublicId,
+            revisionPublicId: supersededRevisionPublicId,
+            revisionNumber: 1,
+            displayId: insightDisplayId,
+          }],
+        },
+        {
+          id: 'f2',
+          text: 'Finding 2',
+          citations: [{
+            constructPublicId: insight2PublicId,
+            revisionPublicId: revision2PublicId,
+            revisionNumber: 1,
+            displayId: 'IN-0002',
+          }],
+        },
+      ],
+      implications: [{ id: 'i1', kind: 'question' as const, text: 'Q', basedOnFindings: ['f1', 'f2'] }],
+    };
+
+    // First save: create content
+    await readoutService.saveDraft({
+      readoutId: readout.id,
+      content: draftContent,
+      findingsChecked: [],
+      implicationsReviewed: [],
+      expectedVersion: 1,
+      editedByActorId: actorId,
+    });
+
+    // Second save: mark as checked/reviewed
+    await readoutService.saveDraft({
+      readoutId: readout.id,
+      content: draftContent,
+      findingsChecked: ['f1', 'f2'],
+      implicationsReviewed: ['i1'],
+      expectedVersion: 2,
+      editedByActorId: actorId,
+    });
+
+    // Should fail with only one note
+    await expect(
+      readoutService.approveReadout({
+        readoutId: readout.id,
+        expectedVersion: 3,
+        approvedByActorId: actorId,
+        supersessionNotes: {
+          [supersededRevisionPublicId]: 'Note for first',
+          // Missing note for revision2PublicId
+        },
+      })
+    ).rejects.toThrow(/supersession notes required/i);
+
+    // Should succeed with both notes
+    const approval = await readoutService.approveReadout({
+      readoutId: readout.id,
+      expectedVersion: 3,
+      approvedByActorId: actorId,
+      supersessionNotes: {
+        [supersededRevisionPublicId]: 'Note for first',
+        [revision2PublicId]: 'Note for second',
+      },
+    });
+
+    expect(approval.supersessionNotes).toEqual({
+      [supersededRevisionPublicId]: 'Note for first',
+      [revision2PublicId]: 'Note for second',
+    });
+
+    // Cleanup
+    await insight2.destroy();
+  });
+
+  it('still returns 409 on version mismatch even with valid supersession notes', async () => {
+    const readout = await createSupersededReadout();
+
+    await expect(
+      readoutService.approveReadout({
+        readoutId: readout.id,
+        expectedVersion: 999, // Wrong version
+        approvedByActorId: actorId,
+        supersessionNotes: {
+          [supersededRevisionPublicId]: 'Valid note',
+        },
+      })
+    ).rejects.toThrow(/modified since approval was initiated/i);
+
+    // Verify no approval was created
+    const history = await readoutService.getApprovalHistory(readout.id, actorId);
+    expect(history).toHaveLength(0);
+  });
+
+  it('withdrawn evidence remains ineligible regardless of supersession notes', async () => {
+    // First restore the original revision as accepted (undo supersession from beforeEach)
+    await EvidenceConstructModel.update(
+      {
+        accepted_revision_id: revisionId,
+        latest_revision_id: revisionId,
+      },
+      { where: { id: insightId } }
+    );
+
+    const readout = await readoutService.createReadout({
+      studyId,
+      projectId,
+      title: 'Withdrawn Evidence Test',
+      createdByActorId: actorId,
+    });
+
+    const draftContent = {
+      findings: [{
+        id: 'f1',
+        text: 'Finding citing withdrawn insight',
+        citations: [{
+          constructPublicId: insightPublicId,
+          revisionPublicId,
+          revisionNumber: 1,
+          displayId: insightDisplayId,
+        }],
+      }],
+      implications: [{ id: 'i1', kind: 'question' as const, text: 'Q', basedOnFindings: ['f1'] }],
+    };
+
+    // First save: create content
+    await readoutService.saveDraft({
+      readoutId: readout.id,
+      content: draftContent,
+      findingsChecked: [],
+      implicationsReviewed: [],
+      expectedVersion: 1,
+      editedByActorId: actorId,
+    });
+
+    // Second save: mark as checked/reviewed
+    await readoutService.saveDraft({
+      readoutId: readout.id,
+      content: draftContent,
+      findingsChecked: ['f1'],
+      implicationsReviewed: ['i1'],
+      expectedVersion: 2,
+      editedByActorId: actorId,
+    });
+
+    // Withdraw the insight
+    await EvidenceConstructModel.update(
+      { withdrawn_at: new Date() },
+      { where: { id: insightId } }
+    );
+
+    // Try to approve - should fail because insight is withdrawn, not because of supersession
+    await expect(
+      readoutService.approveReadout({
+        readoutId: readout.id,
+        expectedVersion: 3,
+        approvedByActorId: actorId,
+        supersessionNotes: {
+          [revisionPublicId]: 'This note should not matter',
+        },
+      })
+    ).rejects.toThrow(/not eligible for approval|withdrawn/i);
+
+    // Verify no approval was created
+    const history = await readoutService.getApprovalHistory(readout.id, actorId);
+    expect(history).toHaveLength(0);
+
+    // Cleanup: un-withdraw the insight
+    await EvidenceConstructModel.update(
+      { withdrawn_at: null },
+      { where: { id: insightId } }
+    );
+  });
 });
 
 describe('Approval Creation', () => {

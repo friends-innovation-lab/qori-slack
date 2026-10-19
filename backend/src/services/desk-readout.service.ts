@@ -154,9 +154,23 @@ export interface CitationError {
   reason: string;
 }
 
+/**
+ * Superseded citation metadata for approval eligibility.
+ * Each entry represents a cited revision that has been superseded by a newer accepted revision.
+ * Frontend must collect justification notes keyed by revisionPublicId.
+ */
+export interface SupersededCitation {
+  constructPublicId: string;
+  revisionPublicId: string;
+  revisionNumber: number;
+  displayId: string;
+}
+
 export interface ApprovalEligibility {
   eligible: boolean;
   errors: string[];
+  /** Revisions cited in the draft that have been superseded by newer accepted revisions */
+  supersededCitations: SupersededCitation[];
 }
 
 export interface SaveResult {
@@ -1134,7 +1148,7 @@ export async function checkApprovalEligibility(
   });
 
   if (!readout) {
-    return { eligible: false, errors: ['Readout not found'] };
+    return { eligible: false, errors: ['Readout not found'], supersededCitations: [] };
   }
 
   const draft = (readout as any).draft;
@@ -1196,14 +1210,20 @@ export async function checkApprovalEligibility(
     }
   }
 
-  // Check superseded citations have justifications
-  const supersededCitations = citationResult.validCitations.filter((c) => c.isSuperseded);
-  // Note: supersession justifications would need to be passed in; for now we flag without justification check
-  // This will be enhanced when the UI supports supersession notes
+  // Extract superseded citations for frontend to collect justification notes
+  const supersededCitations: SupersededCitation[] = citationResult.validCitations
+    .filter((c) => c.isSuperseded)
+    .map((c) => ({
+      constructPublicId: c.constructPublicId,
+      revisionPublicId: c.revisionPublicId,
+      revisionNumber: c.revisionNumber,
+      displayId: c.displayId,
+    }));
 
   return {
     eligible: errors.length === 0,
     errors,
+    supersededCitations,
   };
 }
 
@@ -1257,6 +1277,26 @@ export async function approveReadout(input: ApproveReadoutInput): Promise<Approv
       throw new ApprovalEligibilityError('Readout is not eligible for approval', eligibility.errors);
     }
 
+    // Validate supersession notes for all superseded revisions
+    // Notes must be keyed by revisionPublicId and be non-blank
+    if (eligibility.supersededCitations.length > 0) {
+      const missingNotes: string[] = [];
+      for (const superseded of eligibility.supersededCitations) {
+        const note = supersessionNotes?.[superseded.revisionPublicId];
+        if (typeof note !== 'string' || note.trim() === '') {
+          missingNotes.push(
+            `Superseded citation "${superseded.displayId}" (revision ${superseded.revisionNumber}) requires a justification note`,
+          );
+        }
+      }
+      if (missingNotes.length > 0) {
+        throw new ApprovalEligibilityError(
+          'Supersession notes required for cited revisions that have been superseded',
+          missingNotes,
+        );
+      }
+    }
+
     // Check for duplicate approval of same draft version
     const existingApproval = await DeskResearchReadoutApproval.findOne({
       where: {
@@ -1291,6 +1331,22 @@ export async function approveReadout(input: ApproveReadoutInput): Promise<Approv
 
     const nextApprovalNumber = maxApproval ? (maxApproval as any).approval_number + 1 : 1;
 
+    // Build validated supersession notes (only include notes for actual superseded revisions, trimmed)
+    let validatedSupersessionNotes: Record<string, string> | null = null;
+    if (eligibility.supersededCitations.length > 0 && supersessionNotes) {
+      validatedSupersessionNotes = {};
+      for (const superseded of eligibility.supersededCitations) {
+        const note = supersessionNotes[superseded.revisionPublicId];
+        if (typeof note === 'string' && note.trim() !== '') {
+          validatedSupersessionNotes[superseded.revisionPublicId] = note.trim();
+        }
+      }
+      // If no valid notes remain, set to null
+      if (Object.keys(validatedSupersessionNotes).length === 0) {
+        validatedSupersessionNotes = null;
+      }
+    }
+
     // Create approval snapshot
     const approval = await DeskResearchReadoutApproval.create(
       {
@@ -1303,7 +1359,7 @@ export async function approveReadout(input: ApproveReadoutInput): Promise<Approv
         findings_checked_snapshot: (draft as any).findings_checked,
         implications_reviewed_snapshot: (draft as any).implications_reviewed,
         evidence_snapshot: evidenceSnapshot,
-        supersession_notes: supersessionNotes || null,
+        supersession_notes: validatedSupersessionNotes,
       } as any,
       { transaction },
     );
