@@ -26,6 +26,7 @@ import * as readoutService from '../../services/desk-readout.service';
 import * as claimService from '../../services/readout-generation-claim.service';
 import { AuthorizationError } from '../../services/authorization.service';
 import type { DraftContent } from '../../database/models/desk_research_readout_draft';
+import type { Model } from 'sequelize';
 
 const sequelize = getTestDb();
 
@@ -39,6 +40,60 @@ const EvidenceConstructRevisionModel = sequelize.models.EvidenceConstructRevisio
 const DeskResearchReadoutModel = sequelize.models.DeskResearchReadout;
 const DeskResearchReadoutDraftModel = sequelize.models.DeskResearchReadoutDraft;
 const DeskResearchReadoutVersionModel = sequelize.models.DeskResearchReadoutVersion;
+
+// ─── Type-safe model accessors ─────────────────────────────────────────────────
+// These avoid `as any` by using Sequelize's typed `.get()` method or narrowly
+// scoped type assertions. Follows compensation-flow.test.ts pattern (ADR 0014).
+
+type ModelWithId = Model & { get(key: 'id'): number };
+type ModelWithPublicId = Model & { get(key: 'public_id'): string };
+
+function getId(model: Model): number {
+  return (model as ModelWithId).get('id');
+}
+
+function getPublicId(model: Model): string {
+  return (model as ModelWithPublicId).get('public_id');
+}
+
+// Version field accessor for assertions
+interface VersionFields {
+  generation_status: string;
+  idempotency_key: string | null;
+  requested_by_actor_id: number | null;
+  attempt_count: number;
+  evidence_set: Array<{ constructPublicId: string; revisionPublicId: string; displayId: string }>;
+  worker_id: string | null;
+  heartbeat_at: Date | null;
+  last_error_code: string | null;
+  content: DraftContent | null;
+}
+
+function getVersionField<K extends keyof VersionFields>(
+  model: Model,
+  field: K,
+): VersionFields[K] {
+  return model.get(field) as VersionFields[K];
+}
+
+// Readout field accessor
+function getReadoutField(model: Model, field: 'current_generation_request_id'): string | null {
+  return model.get(field) as string | null;
+}
+
+// Error field accessor for typed error objects
+interface EvidenceError {
+  reason: string;
+  revisionPublicId?: string;
+}
+
+function getErrorField(err: unknown, field: 'errors'): EvidenceError[] {
+  return (err as { errors: EvidenceError[] }).errors;
+}
+
+function getErrorRequestId(err: unknown): string {
+  return (err as { existingRequestId: string }).existingRequestId;
+}
 
 // Test fixtures
 let projectId: number;
@@ -87,8 +142,8 @@ beforeEach(async () => {
     slug: 'test-project',
     created_by: 'test-user',
     status: 'active',
-  } as any);
-  projectId = (project as any).id;
+  });
+  projectId = getId(project);
 
   const project2 = await ProjectModel.create({
     organization_id: TEST_ORG_ID,
@@ -96,8 +151,8 @@ beforeEach(async () => {
     slug: 'other-project',
     created_by: 'test-user',
     status: 'active',
-  } as any);
-  project2Id = (project2 as any).id;
+  });
+  project2Id = getId(project2);
 
   // Create test study
   const study = await ResearchStudyModel.create({
@@ -108,36 +163,36 @@ beforeEach(async () => {
     channel_name: 'test-study',
     researcher_name: 'Test Researcher',
     researcher_email: 'test@example.com',
-  } as any);
-  studyId = (study as any).id;
+  });
+  studyId = getId(study);
 
   // Create test actors
   const actor = await ActorModel.create({
     organization_id: TEST_ORG_ID,
     display_name: 'Test Researcher',
     actor_type: 'human',
-  } as any);
-  actorId = (actor as any).id;
+  });
+  actorId = getId(actor);
 
   const actor2 = await ActorModel.create({
     organization_id: TEST_ORG_ID,
     display_name: 'Other Researcher',
     actor_type: 'human',
-  } as any);
-  actor2Id = (actor2 as any).id;
+  });
+  actor2Id = getId(actor2);
 
   // Create project memberships
   await ProjectMembershipModel.create({
     project_id: projectId,
     actor_id: actorId,
     role: 'researcher',
-  } as any);
+  });
 
   await ProjectMembershipModel.create({
     project_id: projectId,
     actor_id: actor2Id,
     role: 'researcher',
-  } as any);
+  });
 
   // Create evidence source
   const source = await EvidenceSourceModel.create({
@@ -145,8 +200,8 @@ beforeEach(async () => {
     source_type: 'uploaded_document',
     label: 'Test Document',
     created_by: 'test-user',
-  } as any);
-  const sourceId = (source as any).id;
+  });
+  const sourceId = getId(source);
 
   // Create accepted insight 1
   const insight1 = await EvidenceConstructModel.create({
@@ -155,9 +210,9 @@ beforeEach(async () => {
     display_sequence: 1,
     status: 'accepted',
     created_by: 'test-user',
-  } as any);
-  insightId = (insight1 as any).id;
-  insightPublicId = (insight1 as any).public_id;
+  });
+  insightId = getId(insight1);
+  insightPublicId = getPublicId(insight1);
 
   const revision1 = await EvidenceConstructRevisionModel.create({
     construct_id: insightId,
@@ -166,9 +221,9 @@ beforeEach(async () => {
     evidence_snapshot: [{ evidenceSourceId: sourceId, locator: { sourceLevel: true }, validation: 'verified' }],
     origin: 'researcher',
     created_by: 'test-user',
-  } as any);
-  revisionId = (revision1 as any).id;
-  revisionPublicId = (revision1 as any).public_id;
+  });
+  revisionId = getId(revision1);
+  revisionPublicId = getPublicId(revision1);
 
   // Mark as accepted
   await insight1.update({
@@ -183,9 +238,9 @@ beforeEach(async () => {
     display_sequence: 2,
     status: 'accepted',
     created_by: 'test-user',
-  } as any);
-  insight2Id = (insight2 as any).id;
-  insight2PublicId = (insight2 as any).public_id;
+  });
+  insight2Id = getId(insight2);
+  insight2PublicId = getPublicId(insight2);
 
   const revision2 = await EvidenceConstructRevisionModel.create({
     construct_id: insight2Id,
@@ -194,9 +249,9 @@ beforeEach(async () => {
     evidence_snapshot: [{ evidenceSourceId: sourceId, locator: { sourceLevel: true }, validation: 'verified' }],
     origin: 'researcher',
     created_by: 'test-user',
-  } as any);
-  revision2Id = (revision2 as any).id;
-  revision2PublicId = (revision2 as any).public_id;
+  });
+  revision2Id = getId(revision2);
+  revision2PublicId = getPublicId(revision2);
 
   await insight2.update({
     accepted_revision_id: revision2Id,
@@ -209,7 +264,7 @@ beforeEach(async () => {
     source_type: 'uploaded_document',
     label: 'Other Project Document',
     created_by: 'test-user',
-  } as any);
+  });
 
   const otherProjectInsight = await EvidenceConstructModel.create({
     project_id: project2Id,
@@ -217,21 +272,21 @@ beforeEach(async () => {
     display_sequence: 1,
     status: 'accepted',
     created_by: 'test-user',
-  } as any);
-  otherProjectInsightPublicId = (otherProjectInsight as any).public_id;
+  });
+  otherProjectInsightPublicId = getPublicId(otherProjectInsight);
 
   const otherProjectRevision = await EvidenceConstructRevisionModel.create({
-    construct_id: (otherProjectInsight as any).id,
+    construct_id: getId(otherProjectInsight),
     revision_number: 1,
     content: { wording: 'Other project insight' },
-    evidence_snapshot: [{ evidenceSourceId: (otherSource as any).id, locator: { sourceLevel: true }, validation: 'verified' }],
+    evidence_snapshot: [{ evidenceSourceId: getId(otherSource), locator: { sourceLevel: true }, validation: 'verified' }],
     origin: 'researcher',
     created_by: 'test-user',
-  } as any);
-  otherProjectRevisionPublicId = (otherProjectRevision as any).public_id;
+  });
+  otherProjectRevisionPublicId = getPublicId(otherProjectRevision);
   await otherProjectInsight.update({
-    accepted_revision_id: (otherProjectRevision as any).id,
-    latest_revision_id: (otherProjectRevision as any).id,
+    accepted_revision_id: getId(otherProjectRevision),
+    latest_revision_id: getId(otherProjectRevision),
   });
 
   // Create withdrawn insight (status is 'accepted' but withdrawn_at is set)
@@ -243,21 +298,21 @@ beforeEach(async () => {
     withdrawn_at: new Date(),
     withdrawn_reason: 'Test withdrawal',
     created_by: 'test-user',
-  } as any);
-  withdrawnInsightPublicId = (withdrawnInsight as any).public_id;
+  });
+  withdrawnInsightPublicId = getPublicId(withdrawnInsight);
 
   const withdrawnRevision = await EvidenceConstructRevisionModel.create({
-    construct_id: (withdrawnInsight as any).id,
+    construct_id: getId(withdrawnInsight),
     revision_number: 1,
     content: { wording: 'Withdrawn insight' },
     evidence_snapshot: [{ evidenceSourceId: sourceId, locator: { sourceLevel: true }, validation: 'verified' }],
     origin: 'researcher',
     created_by: 'test-user',
-  } as any);
-  withdrawnRevisionPublicId = (withdrawnRevision as any).public_id;
+  });
+  withdrawnRevisionPublicId = getPublicId(withdrawnRevision);
   await withdrawnInsight.update({
-    accepted_revision_id: (withdrawnRevision as any).id,
-    latest_revision_id: (withdrawnRevision as any).id,
+    accepted_revision_id: getId(withdrawnRevision),
+    latest_revision_id: getId(withdrawnRevision),
   });
 
   // Create pending revision (not accepted) on insight1
@@ -268,8 +323,8 @@ beforeEach(async () => {
     evidence_snapshot: [{ evidenceSourceId: sourceId, locator: { sourceLevel: true }, validation: 'verified' }],
     origin: 'researcher',
     created_by: 'test-user',
-  } as any);
-  pendingRevisionPublicId = (pendingRevision as any).public_id;
+  });
+  pendingRevisionPublicId = getPublicId(pendingRevision);
 
   // Create readout
   const result = await readoutService.createReadout({
@@ -300,14 +355,14 @@ describe('Valid generation initiation', () => {
     // Verify version record
     const version = await DeskResearchReadoutVersionModel.findByPk(result.versionId);
     expect(version).not.toBeNull();
-    expect((version as any).generation_status).toBe('pending');
-    expect((version as any).idempotency_key).toBe('test-key-12345678');
-    expect((version as any).requested_by_actor_id).toBe(actorId);
-    expect((version as any).attempt_count).toBe(0);
-    expect((version as any).evidence_set).toHaveLength(2);
+    expect(getVersionField(version!, 'generation_status')).toBe('pending');
+    expect(getVersionField(version!, 'idempotency_key')).toBe('test-key-12345678');
+    expect(getVersionField(version!, 'requested_by_actor_id')).toBe(actorId);
+    expect(getVersionField(version!, 'attempt_count')).toBe(0);
+    expect(getVersionField(version!, 'evidence_set')).toHaveLength(2);
 
     // Verify evidence set contains canonical IDs
-    const evidenceSet = (version as any).evidence_set;
+    const evidenceSet = getVersionField(version!, 'evidence_set');
     expect(evidenceSet[0].constructPublicId).toBe(insightPublicId);
     expect(evidenceSet[0].revisionPublicId).toBe(revisionPublicId);
     expect(evidenceSet[0].displayId).toBe('IN-0001');
@@ -322,7 +377,7 @@ describe('Valid generation initiation', () => {
     });
 
     const readout = await DeskResearchReadoutModel.findByPk(readoutId);
-    expect((readout as any).current_generation_request_id).toBe(result.generationRequestId);
+    expect(getReadoutField(readout!, 'current_generation_request_id')).toBe(result.generationRequestId);
   });
 });
 
@@ -386,7 +441,7 @@ describe('Cross-project evidence rejection', () => {
         initiatedByActorId: actorId,
       });
     } catch (err) {
-      expect((err as any).errors[0].reason).toBe('WRONG_PROJECT');
+      expect(getErrorField(err, 'errors')[0].reason).toBe('WRONG_PROJECT');
     }
   });
 });
@@ -405,7 +460,7 @@ describe('Pending and withdrawn revision rejection', () => {
       fail('Should have thrown');
     } catch (err) {
       expect(err).toBeInstanceOf(readoutService.EvidenceSelectionError);
-      expect((err as any).errors[0].reason).toBe('WITHDRAWN');
+      expect(getErrorField(err, 'errors')[0].reason).toBe('WITHDRAWN');
     }
   });
 
@@ -420,7 +475,7 @@ describe('Pending and withdrawn revision rejection', () => {
       fail('Should have thrown');
     } catch (err) {
       expect(err).toBeInstanceOf(readoutService.EvidenceSelectionError);
-      expect((err as any).errors[0].reason).toBe('NOT_ACCEPTED');
+      expect(getErrorField(err, 'errors')[0].reason).toBe('NOT_ACCEPTED');
     }
   });
 });
@@ -513,7 +568,7 @@ describe('Idempotency conflict - same key, different payload', () => {
       });
       fail('Should have thrown');
     } catch (err) {
-      expect((err as any).existingRequestId).toBe(result1.generationRequestId);
+      expect(getErrorRequestId(err)).toBe(result1.generationRequestId);
     }
   });
 });
@@ -552,7 +607,7 @@ describe('Concurrent initiation requests', () => {
     expect(versions).toHaveLength(2);
 
     // The first one to complete will be superseded by the second
-    const statuses = versions.map(v => (v as any).generation_status);
+    const statuses = versions.map(v => getVersionField(v, 'generation_status'));
     expect(statuses).toContain('pending');
     // One may be superseded depending on timing
   });
@@ -578,11 +633,11 @@ describe('Supersession of previous request', () => {
 
     // First version should be superseded
     const version1 = await DeskResearchReadoutVersionModel.findByPk(result1.versionId);
-    expect((version1 as any).generation_status).toBe('superseded');
+    expect(getVersionField(version1!, 'generation_status')).toBe('superseded');
 
     // Second version should be pending
     const version2 = await DeskResearchReadoutVersionModel.findByPk(result2.versionId);
-    expect((version2 as any).generation_status).toBe('pending');
+    expect(getVersionField(version2!, 'generation_status')).toBe('pending');
   });
 });
 
@@ -610,8 +665,8 @@ describe('Concurrent worker claims', () => {
 
     // The successful claim should have correct worker_id
     const claimed = successfulClaims[0]!;
-    expect((claimed as any).worker_id).toMatch(/^worker-[12]$/);
-    expect((claimed as any).generation_status).toBe('generating');
+    expect(claimed.worker_id).toMatch(/^worker-[12]$/);
+    expect(claimed.generation_status).toBe('generating');
   });
 });
 
@@ -629,7 +684,7 @@ describe('Heartbeat ownership', () => {
     const claimed = await claimService.claimNextPendingJob('worker-1');
     expect(claimed).not.toBeNull();
 
-    const initialHeartbeat = (claimed as any).heartbeat_at;
+    const initialHeartbeat = claimed!.heartbeat_at;
 
     // Wait a bit
     await new Promise(r => setTimeout(r, 10));
@@ -638,8 +693,9 @@ describe('Heartbeat ownership', () => {
     await claimService.updateHeartbeat(result.versionId, 'worker-1');
 
     const version = await DeskResearchReadoutVersionModel.findByPk(result.versionId);
-    expect(new Date((version as any).heartbeat_at).getTime()).toBeGreaterThan(
-      new Date(initialHeartbeat).getTime(),
+    const newHeartbeat = getVersionField(version!, 'heartbeat_at');
+    expect(new Date(newHeartbeat!).getTime()).toBeGreaterThan(
+      new Date(initialHeartbeat!).getTime(),
     );
   });
 
@@ -655,7 +711,7 @@ describe('Heartbeat ownership', () => {
     expect(claimed).not.toBeNull();
 
     await expect(
-      claimService.updateHeartbeat((claimed as any).id, 'worker-2'),
+      claimService.updateHeartbeat(claimed!.id, 'worker-2'),
     ).rejects.toThrow(claimService.NotOwnerError);
   });
 });
@@ -686,9 +742,9 @@ describe('Lease expiration and reclaim', () => {
     // Another worker recovers the stale job
     const recovered = await claimService.recoverStaleJob('worker-2');
     expect(recovered).not.toBeNull();
-    expect((recovered as any).worker_id).toBe('worker-2');
-    expect((recovered as any).attempt_count).toBe(2); // Incremented
-    expect((recovered as any).last_error_code).toBe('STALE_RECOVERY');
+    expect(recovered!.worker_id).toBe('worker-2');
+    expect(recovered!.attempt_count).toBe(2); // Incremented
+    expect(recovered!.last_error_code).toBe('STALE_RECOVERY');
   });
 });
 
@@ -720,8 +776,8 @@ describe('Bounded retry exhaustion', () => {
 
     // Verify job is failed
     const version = await DeskResearchReadoutVersionModel.findByPk(result.versionId);
-    expect((version as any).generation_status).toBe('failed');
-    expect((version as any).last_error_code).toBe('MAX_ATTEMPTS_EXCEEDED');
+    expect(getVersionField(version!, 'generation_status')).toBe('failed');
+    expect(getVersionField(version!, 'last_error_code')).toBe('MAX_ATTEMPTS_EXCEEDED');
   });
 });
 
@@ -760,7 +816,7 @@ describe('Stale worker completion rejection', () => {
       'worker-2',
       { summary: { text: 'test', citations: [] }, findings: [], limitations: [], implications: [] },
     );
-    expect((completed as any).generation_status).toBe('completed');
+    expect(completed.generation_status).toBe('completed');
   });
 });
 
@@ -877,7 +933,8 @@ describe('Researcher edit during generation', () => {
 
     // Verify generated content is stored in version history
     const version = await DeskResearchReadoutVersionModel.findByPk(result.versionId);
-    expect((version as any).content.summary.text).toBe('AI generated summary');
+    const versionContent = getVersionField(version!, 'content');
+    expect(versionContent!.summary!.text).toBe('AI generated summary');
   });
 });
 
@@ -959,14 +1016,14 @@ describe('Permission and ownership enforcement', () => {
       organization_id: TEST_ORG_ID,
       display_name: 'Outsider',
       actor_type: 'human',
-    } as any);
+    });
 
     await expect(
       readoutService.initiateGenerationV2({
         readoutId,
         idempotencyKey: 'auth-test-key',
         selectedRevisionIds: [revisionPublicId],
-        initiatedByActorId: (outsiderActor as any).id,
+        initiatedByActorId: getId(outsiderActor),
       }),
     ).rejects.toThrow(AuthorizationError);
   });
@@ -976,19 +1033,19 @@ describe('Permission and ownership enforcement', () => {
       organization_id: TEST_ORG_ID,
       display_name: 'Admin',
       actor_type: 'human',
-    } as any);
+    });
 
     await ProjectMembershipModel.create({
       project_id: projectId,
-      actor_id: (adminActor as any).id,
+      actor_id: getId(adminActor),
       role: 'admin',
-    } as any);
+    });
 
     const result = await readoutService.initiateGenerationV2({
       readoutId,
       idempotencyKey: 'admin-test-key',
       selectedRevisionIds: [revisionPublicId],
-      initiatedByActorId: (adminActor as any).id,
+      initiatedByActorId: getId(adminActor),
     });
 
     expect(result.created).toBe(true);

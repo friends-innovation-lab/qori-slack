@@ -19,7 +19,7 @@
  */
 
 import sequelize from '../database';
-import { Op, Transaction } from 'sequelize';
+import { Op, Transaction, Model } from 'sequelize';
 import { randomUUID } from 'crypto';
 import type { DraftContent } from '../database/models/desk_research_readout_draft';
 import type {
@@ -1661,7 +1661,7 @@ export async function completeGeneration(
  */
 export async function completeGenerationWithFencing(
   input: CompleteGenerationInput & { workerId: string },
-): Promise<{ applied: boolean; conflictDetected: boolean; version: any; fencingViolation: boolean }> {
+): Promise<{ applied: boolean; conflictDetected: boolean; version: Model; fencingViolation: boolean }> {
   const { readoutId, generationRequestId, content, status, error, workerId } = input;
 
   return sequelize.transaction(async (transaction) => {
@@ -1680,7 +1680,8 @@ export async function completeGenerationWithFencing(
     }
 
     // Check worker ownership (fencing)
-    if ((version as any).worker_id !== workerId) {
+    const versionWorkerId = version.get('worker_id') as string | null;
+    if (versionWorkerId !== workerId) {
       return {
         applied: false,
         conflictDetected: false,
@@ -1690,10 +1691,11 @@ export async function completeGenerationWithFencing(
     }
 
     // Check not already completed
-    if (['completed', 'failed', 'superseded'].includes((version as any).generation_status)) {
+    const generationStatus = version.get('generation_status') as GenerationStatus;
+    if (['completed', 'failed', 'superseded'].includes(generationStatus)) {
       // Already completed - idempotent return
       return {
-        applied: (version as any).generation_status === 'completed',
+        applied: generationStatus === 'completed',
         conflictDetected: false,
         version,
         fencingViolation: false,
@@ -1710,13 +1712,13 @@ export async function completeGenerationWithFencing(
       throw new ReadoutNotFoundError('Draft not found');
     }
 
-    const currentDraftVersion = (draft as any).content_version;
-    const versionAtStart = (version as any).draft_content_version_at_start;
+    const currentDraftVersion = draft.get('content_version') as number;
+    const versionAtStart = version.get('draft_content_version_at_start') as number;
     const conflictDetected = currentDraftVersion !== versionAtStart;
 
     if (status === 'failed') {
       // Mark version as failed, preserve draft
-      await (version as any).update(
+      await version.update(
         {
           generation_status: 'failed',
           generation_completed_at: new Date(),
@@ -1738,7 +1740,7 @@ export async function completeGenerationWithFencing(
     // Success case
     if (conflictDetected) {
       // Human edits detected - store content but don't apply
-      await (version as any).update(
+      await version.update(
         {
           generation_status: 'completed',
           generation_completed_at: new Date(),
@@ -1757,7 +1759,7 @@ export async function completeGenerationWithFencing(
     }
 
     // No conflict - apply to draft
-    await (draft as any).update(
+    await draft.update(
       {
         content,
         content_version: currentDraftVersion + 1,
@@ -1768,7 +1770,7 @@ export async function completeGenerationWithFencing(
       { transaction },
     );
 
-    await (version as any).update(
+    await version.update(
       {
         generation_status: 'completed',
         generation_completed_at: new Date(),
@@ -1841,22 +1843,22 @@ export async function initiateGenerationV2(
 
     if (existingVersion) {
       // Validate payload matches (compare sorted revision IDs)
-      const existingEvidenceSet = (existingVersion as any).evidence_set as EvidenceSetEntry[];
+      const existingEvidenceSet = existingVersion.get('evidence_set') as EvidenceSetEntry[];
       const existingRevisionIds = existingEvidenceSet.map(e => e.revisionPublicId).sort();
       const newRevisionIds = [...selectedRevisionIds].sort();
 
       if (JSON.stringify(existingRevisionIds) !== JSON.stringify(newRevisionIds)) {
         throw new IdempotencyConflictError(
           `Idempotency key '${idempotencyKey}' already used with different evidence selection`,
-          (existingVersion as any).generation_request_id,
+          existingVersion.get('generation_request_id') as string,
         );
       }
 
       // Same payload - return existing request (idempotent)
       return {
-        versionId: (existingVersion as any).id,
-        generationRequestId: (existingVersion as any).generation_request_id,
-        status: (existingVersion as any).generation_status,
+        versionId: existingVersion.get('id') as number,
+        generationRequestId: existingVersion.get('generation_request_id') as string,
+        status: existingVersion.get('generation_status') as GenerationStatus,
         created: false,
       };
     }
@@ -1880,7 +1882,8 @@ export async function initiateGenerationV2(
     }
 
     // Supersede existing pending/generating versions
-    if ((readout as any).current_generation_request_id) {
+    const currentRequestId = readout.get('current_generation_request_id') as string | null;
+    if (currentRequestId) {
       await DeskResearchReadoutVersion.update(
         { generation_status: 'superseded' },
         {
@@ -1895,7 +1898,7 @@ export async function initiateGenerationV2(
 
     // Generate unique request ID
     const generationRequestId = randomUUID();
-    const draftVersion = (draft as any).content_version;
+    const draftVersion = draft.get('content_version') as number;
 
     // Allocate next version number
     const maxVersion = await DeskResearchReadoutVersion.findOne({
@@ -1905,7 +1908,7 @@ export async function initiateGenerationV2(
       transaction,
     });
 
-    const nextVersionNumber = maxVersion ? (maxVersion as any).version_number + 1 : 1;
+    const nextVersionNumber = maxVersion ? (maxVersion.get('version_number') as number) + 1 : 1;
 
     // Create version record with idempotency and claim columns
     const version = await DeskResearchReadoutVersion.create(
@@ -1920,20 +1923,20 @@ export async function initiateGenerationV2(
         requested_by_actor_id: initiatedByActorId,
         attempt_count: 0,
         // Worker claim fields remain null until claimed
-      } as any,
+      },
       { transaction },
     );
 
     // Update readout with current generation request
-    await (readout as any).update(
+    await readout.update(
       { current_generation_request_id: generationRequestId },
       { transaction },
     );
 
     return {
-      versionId: (version as any).id,
+      versionId: version.get('id') as number,
       generationRequestId,
-      status: 'pending',
+      status: 'pending' as const,
       created: true,
     };
   });
@@ -1979,8 +1982,9 @@ async function validateAndBuildEvidenceSet(
     }
 
     // Find the parent construct
+    const revisionConstructId = revision.get('construct_id') as number;
     const construct = await EvidenceConstruct.findOne({
-      where: { id: (revision as any).construct_id },
+      where: { id: revisionConstructId },
       attributes: ['id', 'public_id', 'project_id', 'construct_type', 'withdrawn_at', 'accepted_revision_id', 'display_sequence'],
       transaction,
     });
@@ -1995,7 +1999,8 @@ async function validateAndBuildEvidenceSet(
     }
 
     // Validate project ownership
-    if ((construct as any).project_id !== projectId) {
+    const constructProjectId = construct.get('project_id') as number;
+    if (constructProjectId !== projectId) {
       errors.push({
         revisionPublicId,
         reason: 'WRONG_PROJECT',
@@ -2005,7 +2010,8 @@ async function validateAndBuildEvidenceSet(
     }
 
     // Validate construct type (must be desk_insight)
-    if ((construct as any).construct_type !== 'desk_insight') {
+    const constructType = construct.get('construct_type') as string;
+    if (constructType !== 'desk_insight') {
       errors.push({
         revisionPublicId,
         reason: 'NOT_FOUND',
@@ -2015,7 +2021,8 @@ async function validateAndBuildEvidenceSet(
     }
 
     // Check if withdrawn
-    if ((construct as any).withdrawn_at) {
+    const withdrawnAt = construct.get('withdrawn_at') as Date | null;
+    if (withdrawnAt) {
       errors.push({
         revisionPublicId,
         reason: 'WITHDRAWN',
@@ -2025,7 +2032,9 @@ async function validateAndBuildEvidenceSet(
     }
 
     // Check if this revision is accepted
-    if ((construct as any).accepted_revision_id !== (revision as any).id) {
+    const acceptedRevisionId = construct.get('accepted_revision_id') as number | null;
+    const revisionId = revision.get('id') as number;
+    if (acceptedRevisionId !== revisionId) {
       // Check if it's pending or just not the accepted one
       errors.push({
         revisionPublicId,
@@ -2036,13 +2045,13 @@ async function validateAndBuildEvidenceSet(
     }
 
     // Build canonical entry with server-derived display ID
-    const displaySequence = (construct as any).display_sequence;
+    const displaySequence = construct.get('display_sequence') as number;
     const displayId = `IN-${String(displaySequence).padStart(4, '0')}`;
 
     evidenceSet.push({
-      constructPublicId: (construct as any).public_id,
-      revisionPublicId: (revision as any).public_id,
-      revisionNumber: (revision as any).revision_number,
+      constructPublicId: construct.get('public_id') as string,
+      revisionPublicId: revision.get('public_id') as string,
+      revisionNumber: revision.get('revision_number') as number,
       displayId,
     });
   }
