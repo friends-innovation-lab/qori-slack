@@ -1,13 +1,20 @@
 /**
  * DeskResearchReadoutVersion Model
  *
- * Per DR-6b: Immutable generation history.
+ * Per DR-6b: Immutable generation history with worker claim infrastructure.
  *
  * Each AI generation creates a new version row.
  * Content is immutable once generation_status = 'completed'.
  *
  * Generation lifecycle:
  *   pending → generating → completed | failed | superseded
+ *
+ * Worker claim lifecycle (DR-6b-5a):
+ *   pending (unclaimed) → pending (claimed) → generating → completed | failed
+ *   - Worker claims via FOR UPDATE SKIP LOCKED
+ *   - Heartbeat extends lease
+ *   - Stale claims (heartbeat_at too old) can be recovered
+ *   - Bounded retries via attempt_count
  *
  * Human edit detection:
  *   draft_content_version_at_start captures the draft version when generation
@@ -61,6 +68,19 @@ class DeskResearchReadoutVersion extends Model<
   // Evidence set
   declare evidence_set: EvidenceSetEntry[];
 
+  // Idempotency (DR-6b-5a)
+  declare idempotency_key: string | null;
+  declare requested_by_actor_id: ForeignKey<number> | null;
+
+  // Worker claim (DR-6b-5a)
+  declare worker_id: string | null;
+  declare claimed_at: Date | null;
+  declare heartbeat_at: Date | null;
+
+  // Retry tracking (DR-6b-5a)
+  declare attempt_count: CreationOptional<number>;
+  declare last_error_code: string | null;
+
   // Timestamps
   declare created_at: CreationOptional<Date>;
 
@@ -69,6 +89,11 @@ class DeskResearchReadoutVersion extends Model<
       foreignKey: 'readout_id',
       as: 'readout',
       onDelete: 'CASCADE',
+    });
+    this.belongsTo(models.Actor, {
+      foreignKey: 'requested_by_actor_id',
+      as: 'requestedBy',
+      onDelete: 'SET NULL',
     });
   }
 }
@@ -124,6 +149,38 @@ export default (sequelize: Sequelize) => {
       evidence_set: {
         type: DataTypes.JSONB,
         allowNull: false,
+      },
+      // Idempotency (DR-6b-5a)
+      idempotency_key: {
+        type: DataTypes.STRING(64),
+        allowNull: true,
+      },
+      requested_by_actor_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      // Worker claim (DR-6b-5a)
+      worker_id: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      claimed_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      heartbeat_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      // Retry tracking (DR-6b-5a)
+      attempt_count: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      last_error_code: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
       },
       created_at: {
         type: DataTypes.DATE,
