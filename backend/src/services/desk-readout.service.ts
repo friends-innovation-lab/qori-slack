@@ -19,7 +19,7 @@
  */
 
 import sequelize from '../database';
-import { Op, Transaction } from 'sequelize';
+import { Op, Transaction, Model } from 'sequelize';
 import { randomUUID } from 'crypto';
 import type { DraftContent } from '../database/models/desk_research_readout_draft';
 import type {
@@ -75,10 +75,36 @@ export interface ApproveReadoutInput {
   supersessionNotes?: Record<string, string>;
 }
 
+/**
+ * @deprecated Use InitiateGenerationInputV2 for new implementations.
+ * Retained for backward compatibility.
+ */
 export interface InitiateGenerationInput {
   readoutId: number;
   evidenceSet: EvidenceSetEntry[];
   initiatedByActorId: number;
+}
+
+/**
+ * Input for idempotent generation initiation (DR-6b-5a).
+ *
+ * Key changes from V1:
+ * - idempotencyKey: Client-generated key for request deduplication
+ * - selectedRevisionIds: Array of revision public IDs (validated server-side)
+ * - Server derives evidence_set from selectedRevisionIds (no client-provided display labels)
+ */
+export interface InitiateGenerationInputV2 {
+  readoutId: number;
+  idempotencyKey: string;
+  selectedRevisionIds: string[];
+  initiatedByActorId: number;
+}
+
+export interface IdempotentGenerationResult {
+  versionId: number;
+  generationRequestId: string;
+  status: GenerationStatus;
+  created: boolean; // true if new request, false if idempotent return
 }
 
 export interface CompleteGenerationInput {
@@ -259,6 +285,38 @@ export class GenerationConflictError extends Error {
   ) {
     super(message);
     this.name = 'GenerationConflictError';
+  }
+}
+
+/**
+ * Thrown when idempotency key is reused with different payload (DR-6b-5a).
+ */
+export class IdempotencyConflictError extends Error {
+  constructor(
+    message: string,
+    public existingRequestId: string,
+  ) {
+    super(message);
+    this.name = 'IdempotencyConflictError';
+  }
+}
+
+/**
+ * Evidence validation errors for generation initiation (DR-6b-5a).
+ */
+export interface EvidenceValidationError {
+  revisionPublicId: string;
+  reason: 'NOT_FOUND' | 'WRONG_PROJECT' | 'NOT_ACCEPTED' | 'WITHDRAWN' | 'PENDING';
+  details?: string;
+}
+
+export class EvidenceSelectionError extends Error {
+  constructor(
+    message: string,
+    public errors: EvidenceValidationError[],
+  ) {
+    super(message);
+    this.name = 'EvidenceSelectionError';
   }
 }
 
@@ -1590,6 +1648,422 @@ export async function completeGeneration(
 
     return { applied: true, conflictDetected: false, version };
   });
+}
+
+/**
+ * Complete AI generation with worker fencing (DR-6b-5a)
+ *
+ * Extended version of completeGeneration that validates worker ownership
+ * before completing. This prevents stale workers from overwriting results.
+ *
+ * AUTHORIZATION: NONE — called by trusted internal worker infrastructure.
+ * The generation request was already authorized at initiate time.
+ */
+export async function completeGenerationWithFencing(
+  input: CompleteGenerationInput & { workerId: string },
+): Promise<{ applied: boolean; conflictDetected: boolean; version: Model; fencingViolation: boolean }> {
+  const { readoutId, generationRequestId, content, status, error, workerId } = input;
+
+  return sequelize.transaction(async (transaction) => {
+    // Find version record with worker validation
+    const version = await DeskResearchReadoutVersion.findOne({
+      where: {
+        readout_id: readoutId,
+        generation_request_id: generationRequestId,
+      },
+      lock: true,
+      transaction,
+    });
+
+    if (!version) {
+      throw new ValidationError('Generation request not found');
+    }
+
+    // Check worker ownership (fencing)
+    const versionWorkerId = version.get('worker_id') as string | null;
+    if (versionWorkerId !== workerId) {
+      return {
+        applied: false,
+        conflictDetected: false,
+        version,
+        fencingViolation: true,
+      };
+    }
+
+    // Check not already completed
+    const generationStatus = version.get('generation_status') as GenerationStatus;
+    if (['completed', 'failed', 'superseded'].includes(generationStatus)) {
+      // Already completed - idempotent return
+      return {
+        applied: generationStatus === 'completed',
+        conflictDetected: false,
+        version,
+        fencingViolation: false,
+      };
+    }
+
+    // Get current draft
+    const draft = await DeskResearchReadoutDraft.findOne({
+      where: { readout_id: readoutId },
+      transaction,
+    });
+
+    if (!draft) {
+      throw new ReadoutNotFoundError('Draft not found');
+    }
+
+    const currentDraftVersion = draft.get('content_version') as number;
+    const versionAtStart = version.get('draft_content_version_at_start') as number;
+    const conflictDetected = currentDraftVersion !== versionAtStart;
+
+    if (status === 'failed') {
+      // Mark version as failed, preserve draft
+      await version.update(
+        {
+          generation_status: 'failed',
+          generation_completed_at: new Date(),
+          generation_error: error || 'Unknown error',
+          last_error_code: 'GENERATION_FAILED',
+        },
+        { transaction },
+      );
+
+      // Clear current generation request
+      await DeskResearchReadout.update(
+        { current_generation_request_id: null },
+        { where: { id: readoutId }, transaction },
+      );
+
+      return { applied: false, conflictDetected, version, fencingViolation: false };
+    }
+
+    // Success case
+    if (conflictDetected) {
+      // Human edits detected - store content but don't apply
+      await version.update(
+        {
+          generation_status: 'completed',
+          generation_completed_at: new Date(),
+          content,
+        },
+        { transaction },
+      );
+
+      // Clear current generation request
+      await DeskResearchReadout.update(
+        { current_generation_request_id: null },
+        { where: { id: readoutId }, transaction },
+      );
+
+      return { applied: false, conflictDetected: true, version, fencingViolation: false };
+    }
+
+    // No conflict - apply to draft
+    await draft.update(
+      {
+        content,
+        content_version: currentDraftVersion + 1,
+        last_edited_at: new Date(),
+        findings_checked: [],
+        implications_reviewed: [],
+      },
+      { transaction },
+    );
+
+    await version.update(
+      {
+        generation_status: 'completed',
+        generation_completed_at: new Date(),
+        content,
+      },
+      { transaction },
+    );
+
+    // Clear current generation request
+    await DeskResearchReadout.update(
+      { current_generation_request_id: null },
+      { where: { id: readoutId }, transaction },
+    );
+
+    return { applied: true, conflictDetected: false, version, fencingViolation: false };
+  });
+}
+
+/**
+ * Initiate AI generation with idempotency and evidence validation (DR-6b-5a)
+ *
+ * Key behaviors:
+ * 1. Validates all selected revisions belong to the project and are accepted
+ * 2. Rejects withdrawn insights and pending revisions
+ * 3. Idempotency: same key + payload returns existing request
+ * 4. Idempotency conflict: same key + different payload throws error
+ * 5. Supersedes existing pending/generating requests for this readout
+ *
+ * AUTHORIZATION: Requires researcher role in the project.
+ */
+export async function initiateGenerationV2(
+  input: InitiateGenerationInputV2,
+): Promise<IdempotentGenerationResult> {
+  const { readoutId, idempotencyKey, selectedRevisionIds, initiatedByActorId } = input;
+
+  // Validate idempotency key format
+  if (!idempotencyKey || idempotencyKey.length < 8 || idempotencyKey.length > 64) {
+    throw new ValidationError('Idempotency key must be 8-64 characters');
+  }
+
+  // Require at least one evidence selection
+  if (!selectedRevisionIds || selectedRevisionIds.length === 0) {
+    throw new EvidenceSelectionError('At least one evidence revision must be selected', []);
+  }
+
+  // Resolve project and authorize BEFORE transaction
+  const { projectId, organizationId } = await resolveProjectFromReadout(readoutId);
+  await assertProjectResearcherByActor(initiatedByActorId, projectId, organizationId);
+
+  return sequelize.transaction(async (transaction) => {
+    // Lock readout first
+    const readout = await DeskResearchReadout.findByPk(readoutId, {
+      lock: true,
+      transaction,
+    });
+
+    if (!readout) {
+      throw new ReadoutNotFoundError();
+    }
+
+    // Check for existing request with same idempotency key
+    const existingVersion = await DeskResearchReadoutVersion.findOne({
+      where: {
+        readout_id: readoutId,
+        requested_by_actor_id: initiatedByActorId,
+        idempotency_key: idempotencyKey,
+      },
+      transaction,
+    });
+
+    if (existingVersion) {
+      // Validate payload matches (compare sorted revision IDs)
+      const existingEvidenceSet = existingVersion.get('evidence_set') as EvidenceSetEntry[];
+      const existingRevisionIds = existingEvidenceSet.map(e => e.revisionPublicId).sort();
+      const newRevisionIds = [...selectedRevisionIds].sort();
+
+      if (JSON.stringify(existingRevisionIds) !== JSON.stringify(newRevisionIds)) {
+        throw new IdempotencyConflictError(
+          `Idempotency key '${idempotencyKey}' already used with different evidence selection`,
+          existingVersion.get('generation_request_id') as string,
+        );
+      }
+
+      // Same payload - return existing request (idempotent)
+      return {
+        versionId: existingVersion.get('id') as number,
+        generationRequestId: existingVersion.get('generation_request_id') as string,
+        status: existingVersion.get('generation_status') as GenerationStatus,
+        created: false,
+      };
+    }
+
+    // Validate evidence selection
+    const evidenceSet = await validateAndBuildEvidenceSet(
+      projectId,
+      selectedRevisionIds,
+      transaction,
+    );
+
+    // Get draft for version tracking
+    const draft = await DeskResearchReadoutDraft.findOne({
+      where: { readout_id: readoutId },
+      lock: true,
+      transaction,
+    });
+
+    if (!draft) {
+      throw new ReadoutNotFoundError('Draft not found');
+    }
+
+    // Supersede existing pending/generating versions
+    const currentRequestId = readout.get('current_generation_request_id') as string | null;
+    if (currentRequestId) {
+      await DeskResearchReadoutVersion.update(
+        { generation_status: 'superseded' },
+        {
+          where: {
+            readout_id: readoutId,
+            generation_status: { [Op.in]: ['pending', 'generating'] },
+          },
+          transaction,
+        },
+      );
+    }
+
+    // Generate unique request ID
+    const generationRequestId = randomUUID();
+    const draftVersion = draft.get('content_version') as number;
+
+    // Allocate next version number
+    const maxVersion = await DeskResearchReadoutVersion.findOne({
+      where: { readout_id: readoutId },
+      order: [['version_number', 'DESC']],
+      attributes: ['version_number'],
+      transaction,
+    });
+
+    const nextVersionNumber = maxVersion ? (maxVersion.get('version_number') as number) + 1 : 1;
+
+    // Create version record with idempotency and claim columns
+    const version = await DeskResearchReadoutVersion.create(
+      {
+        readout_id: readoutId,
+        version_number: nextVersionNumber,
+        generation_request_id: generationRequestId,
+        generation_status: 'pending',
+        draft_content_version_at_start: draftVersion,
+        evidence_set: evidenceSet,
+        idempotency_key: idempotencyKey,
+        requested_by_actor_id: initiatedByActorId,
+        attempt_count: 0,
+        // Worker claim fields remain null until claimed
+      },
+      { transaction },
+    );
+
+    // Update readout with current generation request
+    await readout.update(
+      { current_generation_request_id: generationRequestId },
+      { transaction },
+    );
+
+    return {
+      versionId: version.get('id') as number,
+      generationRequestId,
+      status: 'pending' as const,
+      created: true,
+    };
+  });
+}
+
+/**
+ * Validate evidence selection and build canonical evidence set.
+ *
+ * Validates that:
+ * - All revision IDs exist
+ * - All revisions belong to insights in the same project
+ * - All insights are not withdrawn
+ * - All revisions are accepted (not pending)
+ *
+ * Returns canonical evidence set with server-derived data.
+ */
+async function validateAndBuildEvidenceSet(
+  projectId: number,
+  selectedRevisionIds: string[],
+  transaction: Transaction,
+): Promise<EvidenceSetEntry[]> {
+  const errors: EvidenceValidationError[] = [];
+  const evidenceSet: EvidenceSetEntry[] = [];
+
+  // Deduplicate revision IDs
+  const uniqueRevisionIds = [...new Set(selectedRevisionIds)];
+
+  for (const revisionPublicId of uniqueRevisionIds) {
+    // Find the revision
+    const revision = await EvidenceConstructRevision.findOne({
+      where: { public_id: revisionPublicId },
+      attributes: ['id', 'public_id', 'revision_number', 'construct_id'],
+      transaction,
+    });
+
+    if (!revision) {
+      errors.push({
+        revisionPublicId,
+        reason: 'NOT_FOUND',
+        details: 'Revision does not exist',
+      });
+      continue;
+    }
+
+    // Find the parent construct
+    const revisionConstructId = revision.get('construct_id') as number;
+    const construct = await EvidenceConstruct.findOne({
+      where: { id: revisionConstructId },
+      attributes: ['id', 'public_id', 'project_id', 'construct_type', 'withdrawn_at', 'accepted_revision_id', 'display_sequence'],
+      transaction,
+    });
+
+    if (!construct) {
+      errors.push({
+        revisionPublicId,
+        reason: 'NOT_FOUND',
+        details: 'Parent construct not found',
+      });
+      continue;
+    }
+
+    // Validate project ownership
+    const constructProjectId = construct.get('project_id') as number;
+    if (constructProjectId !== projectId) {
+      errors.push({
+        revisionPublicId,
+        reason: 'WRONG_PROJECT',
+        details: 'Insight belongs to a different project',
+      });
+      continue;
+    }
+
+    // Validate construct type (must be desk_insight)
+    const constructType = construct.get('construct_type') as string;
+    if (constructType !== 'desk_insight') {
+      errors.push({
+        revisionPublicId,
+        reason: 'NOT_FOUND',
+        details: 'Not a desk research insight',
+      });
+      continue;
+    }
+
+    // Check if withdrawn
+    const withdrawnAt = construct.get('withdrawn_at') as Date | null;
+    if (withdrawnAt) {
+      errors.push({
+        revisionPublicId,
+        reason: 'WITHDRAWN',
+        details: 'Insight has been withdrawn',
+      });
+      continue;
+    }
+
+    // Check if this revision is accepted
+    const acceptedRevisionId = construct.get('accepted_revision_id') as number | null;
+    const revisionId = revision.get('id') as number;
+    if (acceptedRevisionId !== revisionId) {
+      // Check if it's pending or just not the accepted one
+      errors.push({
+        revisionPublicId,
+        reason: 'NOT_ACCEPTED',
+        details: 'Revision is not the currently accepted version',
+      });
+      continue;
+    }
+
+    // Build canonical entry with server-derived display ID
+    const displaySequence = construct.get('display_sequence') as number;
+    const displayId = `IN-${String(displaySequence).padStart(4, '0')}`;
+
+    evidenceSet.push({
+      constructPublicId: construct.get('public_id') as string,
+      revisionPublicId: revision.get('public_id') as string,
+      revisionNumber: revision.get('revision_number') as number,
+      displayId,
+    });
+  }
+
+  if (errors.length > 0) {
+    throw new EvidenceSelectionError(
+      `Evidence validation failed: ${errors.length} error(s)`,
+      errors,
+    );
+  }
+
+  return evidenceSet;
 }
 
 /**
