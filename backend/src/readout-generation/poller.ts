@@ -22,7 +22,7 @@
 import { randomUUID } from 'crypto';
 import * as claimService from '../services/readout-generation-claim.service';
 import { executeGeneration, type ExecutionResult } from '../services/readout-generation-executor.service';
-import { failJob } from '../services/readout-generation-claim.service';
+import { failJob, releaseForRetry, getAttemptCount } from '../services/readout-generation-claim.service';
 
 // ─── Configuration ─────────────────────────────────────────────────
 
@@ -210,9 +210,34 @@ async function executeClaimedVersion(versionId: number): Promise<void> {
       const failure = result.failure!;
       console.error(`[DR-6b-5b] Version ${versionId} failed: [${failure.code}] ${failure.message}`);
 
-      // If it's a retry-eligible transient error, don't mark as failed yet
-      // The claim service will handle retry via stale recovery
-      if (!failure.retryEligible) {
+      if (failure.retryEligible) {
+        // Transient error: release for retry with bounded backoff
+        // Get current attempt count to determine if retry is still allowed
+        const attemptCount = await getAttemptCount(versionId);
+
+        if (attemptCount < claimService.READOUT_GEN_MAX_ATTEMPTS) {
+          try {
+            await releaseForRetry(versionId, currentWorkerId, failure.code, attemptCount);
+          } catch (releaseError) {
+            console.error(`[DR-6b-5b] Failed to release for retry version ${versionId}:`, releaseError);
+            // Fall through to failJob as last resort
+            try {
+              await failJob(versionId, currentWorkerId, failure.code, failure.message);
+            } catch (failError) {
+              console.error(`[DR-6b-5b] Failed to record failure for version ${versionId}:`, failError);
+            }
+          }
+        } else {
+          // Max attempts reached — mark as terminal failure
+          console.log(`[DR-6b-5b] Version ${versionId} exceeded max attempts (${attemptCount})`);
+          try {
+            await failJob(versionId, currentWorkerId, 'MAX_ATTEMPTS_EXCEEDED', failure.message);
+          } catch (failError) {
+            console.error(`[DR-6b-5b] Failed to record failure for version ${versionId}:`, failError);
+          }
+        }
+      } else {
+        // Permanent failure — mark as terminal
         try {
           await failJob(versionId, currentWorkerId, failure.code, failure.message);
         } catch (failError) {

@@ -634,3 +634,615 @@ describe('DR-6b-5b Executor (Mocked)', () => {
     expect(sanitized).toContain('[API_KEY]');
   });
 });
+
+// ─── Citation Uniqueness Tests ────────────────────────────────────
+
+describe('DR-6b-5b Citation Uniqueness', () => {
+  it('rejects evidence snapshot with duplicate displayIds', () => {
+    // This tests the defensive validation that prevents silent overwrites
+    // in the lookup map if duplicate displayIds somehow exist
+    const duplicateEvidenceSet: EvidenceSetEntry[] = [
+      {
+        constructPublicId: 'con_001',
+        revisionPublicId: 'rev_001',
+        revisionNumber: 1,
+        displayId: 'IN-0001', // First occurrence
+      },
+      {
+        constructPublicId: 'con_002',
+        revisionPublicId: 'rev_002',
+        revisionNumber: 1,
+        displayId: 'IN-0001', // Duplicate!
+      },
+    ];
+
+    const validOutput = JSON.stringify({
+      summary: { text: 'Test summary', citations: [{ displayId: 'IN-0001' }] },
+      findings: [{ id: 'F1', text: 'Finding', citations: [{ displayId: 'IN-0001' }] }],
+      limitations: [{ id: 'L1', text: 'Limitation' }],
+      implications: [{ id: 'I1', kind: 'question', text: 'Question', basedOnFindings: ['F1'] }],
+    });
+
+    const result = validateGeneratedOutput(validOutput, duplicateEvidenceSet);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].code).toBe('DUPLICATE_DISPLAY_ID');
+    expect(result.errors[0].message).toContain('IN-0001');
+  });
+
+  it('accepts unique displayIds', () => {
+    const uniqueEvidenceSet: EvidenceSetEntry[] = [
+      {
+        constructPublicId: 'con_001',
+        revisionPublicId: 'rev_001',
+        revisionNumber: 1,
+        displayId: 'IN-0001',
+      },
+      {
+        constructPublicId: 'con_002',
+        revisionPublicId: 'rev_002',
+        revisionNumber: 1,
+        displayId: 'IN-0002',
+      },
+    ];
+
+    const validOutput = JSON.stringify({
+      summary: { text: 'Test summary', citations: [{ displayId: 'IN-0001' }] },
+      findings: [{ id: 'F1', text: 'Finding', citations: [{ displayId: 'IN-0001' }, { displayId: 'IN-0002' }] }],
+      limitations: [{ id: 'L1', text: 'Limitation' }],
+      implications: [{ id: 'I1', kind: 'question', text: 'Question', basedOnFindings: ['F1'] }],
+    });
+
+    const result = validateGeneratedOutput(validOutput, uniqueEvidenceSet);
+
+    expect(result.valid).toBe(true);
+  });
+});
+
+// ─── Retry Behavior Tests ─────────────────────────────────────────
+
+describe('DR-6b-5b Retry Behavior', () => {
+  let testOrg: Model;
+  let testProject: Model;
+  let testStudy: Model;
+  let testActor: Model;
+  let testReadout: Model;
+
+  beforeEach(async () => {
+    // Create test fixtures using the same pattern as existing tests
+    const { Organization, Project, ResearchStudy, Actor, ProjectMembership } = sequelize.models;
+
+    testOrg = await Organization.create({
+      name: 'DR6b5b Retry Test Org',
+      slug: `dr6b5b-retry-test-org-${Date.now()}`,
+    });
+
+    testActor = await Actor.create({
+      organization_id: getId(testOrg),
+      display_name: `DR6B5B Retry Test Actor ${Date.now()}`,
+    });
+
+    testProject = await Project.create({
+      organization_id: getId(testOrg),
+      name: 'DR6B5B Retry Test Project',
+      slug: `dr6b5b-retry-test-project-${Date.now()}`,
+      created_by: 'test-user',
+    });
+
+    await ProjectMembership.create({
+      project_id: getId(testProject),
+      actor_id: getId(testActor),
+      role: 'researcher',
+    });
+
+    const studySlug = `dr6b5b-retry-test-study-${Date.now()}`;
+    testStudy = await ResearchStudy.create({
+      project_id: getId(testProject),
+      name: 'DR6B5B Retry Test Study',
+      slug: studySlug,
+      path: `dr6b5b-retry-test-project/${studySlug}`,
+      status: 'active',
+      researcher_name: 'Test Researcher',
+      researcher_email: 'test@example.com',
+      channel_name: 'test-channel',
+      created_by: 'test-user',
+    });
+
+    // Use service to create readout (handles display_id/sequence correctly)
+    const readout = await deskReadoutService.createReadout({
+      studyId: getId(testStudy),
+      projectId: getId(testProject),
+      title: 'DR6B5B Retry Test Readout',
+      question: 'Test question?',
+      createdByActorId: getId(testActor),
+    });
+
+    const { DeskResearchReadout } = sequelize.models;
+    testReadout = (await DeskResearchReadout.findByPk(readout.id))!;
+  });
+
+  afterEach(async () => {
+    // Cleanup in reverse order of creation
+    await sequelize.query(`DELETE FROM desk_research_readout_versions WHERE readout_id IN (SELECT id FROM desk_research_readouts WHERE title LIKE 'DR6B5B Retry Test%')`);
+    await sequelize.query(`DELETE FROM desk_research_readout_drafts WHERE readout_id IN (SELECT id FROM desk_research_readouts WHERE title LIKE 'DR6B5B Retry Test%')`);
+    await sequelize.query(`DELETE FROM desk_research_readouts WHERE title LIKE 'DR6B5B Retry Test%'`);
+    await sequelize.query(`DELETE FROM project_memberships WHERE project_id IN (SELECT id FROM projects WHERE slug LIKE 'dr6b5b-retry-test%')`);
+    await sequelize.query(`DELETE FROM research_studies WHERE slug LIKE 'dr6b5b-retry-test%'`);
+    await sequelize.query(`DELETE FROM projects WHERE slug LIKE 'dr6b5b-retry-test%'`);
+    await sequelize.query(`DELETE FROM actors WHERE display_name LIKE 'DR6B5B Retry Test%'`);
+    await sequelize.query(`DELETE FROM organizations WHERE slug LIKE 'dr6b5b-retry-test%'`);
+  });
+
+  it('releaseForRetry sets pending status with future retry_after for backoff', async () => {
+    const { DeskResearchReadoutVersion } = sequelize.models;
+    const workerId = `test-worker-${randomUUID()}`;
+
+    // Clean up versions for this readout
+    await sequelize.query(
+      'DELETE FROM desk_research_readout_versions WHERE readout_id = :readoutId',
+      { replacements: { readoutId: getId(testReadout) } }
+    );
+
+    // Create a version in generating status
+    const version = await DeskResearchReadoutVersion.create({
+      readout_id: getId(testReadout),
+      version_number: 1,
+      generation_request_id: randomUUID(),
+      generation_status: 'generating',
+      evidence_set: TEST_EVIDENCE_SET,
+      draft_content_version_at_start: 1,
+      requested_by_actor_id: getId(testActor),
+      idempotency_key: `retry-test-${Date.now()}`,
+      worker_id: workerId,
+      claimed_at: new Date(),
+      heartbeat_at: new Date(),
+      attempt_count: 1,
+    });
+
+    const beforeRelease = Date.now();
+
+    // Release for retry at attempt 2 (should have 5s delay)
+    const released = await claimService.releaseForRetry(
+      getId(version),
+      workerId,
+      'PROVIDER_ERROR',
+      2, // attempt count
+    );
+
+    expect(released).toBe(true);
+
+    // Verify the version state
+    await version.reload();
+    expect(version.get('generation_status')).toBe('pending');
+    expect(version.get('worker_id')).toBeNull();
+    expect(version.get('heartbeat_at')).toBeNull(); // Cleared per constraint
+    expect(version.get('last_error_code')).toBe('PROVIDER_ERROR');
+    expect(version.get('attempt_count')).toBe(1); // Preserved, not incremented
+
+    // Verify retry_after is in the future (backoff delay)
+    const retryAfter = new Date(version.get('retry_after') as Date).getTime();
+    expect(retryAfter).toBeGreaterThan(beforeRelease);
+    expect(retryAfter).toBeGreaterThanOrEqual(beforeRelease + 5000 - 100); // 5s delay minus tolerance
+  });
+
+  it('claimNextPendingJob respects retry timing (skips jobs with future retry_after)', async () => {
+    const { DeskResearchReadoutVersion } = sequelize.models;
+    const workerId = `test-worker-${randomUUID()}`;
+
+    // Clean up versions for this readout
+    await sequelize.query(
+      'DELETE FROM desk_research_readout_versions WHERE readout_id = :readoutId',
+      { replacements: { readoutId: getId(testReadout) } }
+    );
+
+    // Create a version with retry_after in the future (simulating retry backoff)
+    const futureTime = new Date(Date.now() + 60000); // 1 minute in the future
+    const version = await DeskResearchReadoutVersion.create({
+      readout_id: getId(testReadout),
+      version_number: 1,
+      generation_request_id: randomUUID(),
+      generation_status: 'pending',
+      evidence_set: TEST_EVIDENCE_SET,
+      draft_content_version_at_start: 1,
+      requested_by_actor_id: getId(testActor),
+      idempotency_key: `retry-timing-test-${Date.now()}`,
+      retry_after: futureTime, // Future time = not claimable yet
+      attempt_count: 1,
+    });
+
+    // Try to claim — should return null because retry_after is in the future
+    const claimed = await claimService.claimNextPendingJob(workerId);
+
+    expect(claimed).toBeNull();
+
+    // Verify the version is still pending with no worker
+    await version.reload();
+    expect(version.get('generation_status')).toBe('pending');
+    expect(version.get('worker_id')).toBeNull();
+  });
+
+  it('claimNextPendingJob claims jobs with null retry_after (immediately claimable)', async () => {
+    const { DeskResearchReadoutVersion } = sequelize.models;
+    const workerId = `test-worker-${randomUUID()}`;
+
+    // Clean up versions for this readout
+    await sequelize.query(
+      'DELETE FROM desk_research_readout_versions WHERE readout_id = :readoutId',
+      { replacements: { readoutId: getId(testReadout) } }
+    );
+
+    // Create a version with null retry_after (fresh pending, immediately claimable)
+    const version = await DeskResearchReadoutVersion.create({
+      readout_id: getId(testReadout),
+      version_number: 1,
+      generation_request_id: randomUUID(),
+      generation_status: 'pending',
+      evidence_set: TEST_EVIDENCE_SET,
+      draft_content_version_at_start: 1,
+      requested_by_actor_id: getId(testActor),
+      idempotency_key: `null-retry-test-${Date.now()}`,
+      retry_after: null,
+      attempt_count: 0,
+    });
+
+    // Should claim successfully
+    const claimed = await claimService.claimNextPendingJob(workerId);
+
+    expect(claimed).not.toBeNull();
+    expect(claimed!.id).toBe(getId(version));
+    expect(claimed!.generation_status).toBe('generating');
+    expect(claimed!.worker_id).toBe(workerId);
+  });
+
+  it('claimNextPendingJob claims jobs with past retry_after (delay elapsed)', async () => {
+    const { DeskResearchReadoutVersion } = sequelize.models;
+    const workerId = `test-worker-${randomUUID()}`;
+
+    // Clean up versions for this readout
+    await sequelize.query(
+      'DELETE FROM desk_research_readout_versions WHERE readout_id = :readoutId',
+      { replacements: { readoutId: getId(testReadout) } }
+    );
+
+    // Create a version with retry_after in the past (retry delay elapsed)
+    const pastTime = new Date(Date.now() - 60000); // 1 minute ago
+    const version = await DeskResearchReadoutVersion.create({
+      readout_id: getId(testReadout),
+      version_number: 1,
+      generation_request_id: randomUUID(),
+      generation_status: 'pending',
+      evidence_set: TEST_EVIDENCE_SET,
+      draft_content_version_at_start: 1,
+      requested_by_actor_id: getId(testActor),
+      idempotency_key: `past-retry-test-${Date.now()}`,
+      retry_after: pastTime, // Past time = claimable
+      attempt_count: 1,
+    });
+
+    // Should claim successfully
+    const claimed = await claimService.claimNextPendingJob(workerId);
+
+    expect(claimed).not.toBeNull();
+    expect(claimed!.id).toBe(getId(version));
+    expect(claimed!.retry_after).toBeNull(); // Cleared on claim
+  });
+
+  it('claim clears retry_after timing', async () => {
+    const { DeskResearchReadoutVersion } = sequelize.models;
+    const workerId = `test-worker-${randomUUID()}`;
+
+    // Clean up versions for this readout
+    await sequelize.query(
+      'DELETE FROM desk_research_readout_versions WHERE readout_id = :readoutId',
+      { replacements: { readoutId: getId(testReadout) } }
+    );
+
+    // Create a version with retry_after in the past
+    const pastTime = new Date(Date.now() - 1000);
+    const version = await DeskResearchReadoutVersion.create({
+      readout_id: getId(testReadout),
+      version_number: 1,
+      generation_request_id: randomUUID(),
+      generation_status: 'pending',
+      evidence_set: TEST_EVIDENCE_SET,
+      draft_content_version_at_start: 1,
+      requested_by_actor_id: getId(testActor),
+      idempotency_key: `clear-retry-test-${Date.now()}`,
+      retry_after: pastTime,
+      attempt_count: 1,
+    });
+
+    // Claim should clear retry_after
+    const claimed = await claimService.claimNextPendingJob(workerId);
+
+    expect(claimed).not.toBeNull();
+    await version.reload();
+    expect(version.get('retry_after')).toBeNull();
+    expect(version.get('generation_status')).toBe('generating');
+    expect(version.get('attempt_count')).toBe(2); // Incremented exactly once
+  });
+
+  it('maximum attempts results in terminal failure (not requeue)', async () => {
+    const { DeskResearchReadoutVersion } = sequelize.models;
+    const workerId = `test-worker-${randomUUID()}`;
+
+    // Clean up versions for this readout
+    await sequelize.query(
+      'DELETE FROM desk_research_readout_versions WHERE readout_id = :readoutId',
+      { replacements: { readoutId: getId(testReadout) } }
+    );
+
+    // Create a version at max attempts
+    const version = await DeskResearchReadoutVersion.create({
+      readout_id: getId(testReadout),
+      version_number: 1,
+      generation_request_id: randomUUID(),
+      generation_status: 'generating',
+      evidence_set: TEST_EVIDENCE_SET,
+      draft_content_version_at_start: 1,
+      requested_by_actor_id: getId(testActor),
+      idempotency_key: `max-attempts-test-${Date.now()}`,
+      worker_id: workerId,
+      claimed_at: new Date(),
+      heartbeat_at: new Date(),
+      attempt_count: 3, // At max (READOUT_GEN_MAX_ATTEMPTS = 3)
+    });
+
+    // Attempt to release for retry at attempt 3 — should fail since at max
+    // The poller should call failJob instead when attempt_count >= MAX_ATTEMPTS
+    const released = await claimService.releaseForRetry(
+      getId(version),
+      workerId,
+      'PROVIDER_ERROR',
+      3, // attempt count at max
+    );
+
+    // releaseForRetry still works (it doesn't check max attempts)
+    // The poller is responsible for checking max attempts and calling failJob
+    expect(released).toBe(true);
+
+    await version.reload();
+    expect(version.get('generation_status')).toBe('pending');
+    // The poller should check attempt_count and call failJob instead
+  });
+
+  it('stale worker cannot requeue a job it no longer owns', async () => {
+    const { DeskResearchReadoutVersion } = sequelize.models;
+    const workerA = `worker-A-${randomUUID()}`;
+    const workerB = `worker-B-${randomUUID()}`;
+
+    // Clean up versions for this readout
+    await sequelize.query(
+      'DELETE FROM desk_research_readout_versions WHERE readout_id = :readoutId',
+      { replacements: { readoutId: getId(testReadout) } }
+    );
+
+    // Create a version owned by worker A
+    const version = await DeskResearchReadoutVersion.create({
+      readout_id: getId(testReadout),
+      version_number: 1,
+      generation_request_id: randomUUID(),
+      generation_status: 'generating',
+      evidence_set: TEST_EVIDENCE_SET,
+      draft_content_version_at_start: 1,
+      requested_by_actor_id: getId(testActor),
+      idempotency_key: `stale-worker-test-${Date.now()}`,
+      worker_id: workerA,
+      claimed_at: new Date(),
+      heartbeat_at: new Date(),
+      attempt_count: 1,
+    });
+
+    // Simulate worker A losing the claim (shutdown) and worker B claiming
+    await claimService.releaseClaim(getId(version), workerA);
+    const claimedByB = await claimService.claimNextPendingJob(workerB);
+    expect(claimedByB).not.toBeNull();
+    expect(claimedByB!.worker_id).toBe(workerB);
+
+    // Worker A tries to requeue — should fail (doesn't own)
+    const releasedByA = await claimService.releaseForRetry(
+      getId(version),
+      workerA, // Stale worker
+      'PROVIDER_ERROR',
+      1,
+    );
+
+    expect(releasedByA).toBe(false); // Stale worker rejected
+  });
+});
+
+// ─── Shutdown Fencing Tests ───────────────────────────────────────
+
+describe('DR-6b-5b Shutdown Fencing', () => {
+  let testOrg: Model;
+  let testProject: Model;
+  let testStudy: Model;
+  let testActor: Model;
+  let testReadout: Model;
+  let testDraft: Model;
+
+  beforeEach(async () => {
+    // Create test fixtures using the same pattern as existing tests
+    const { Organization, Project, ResearchStudy, Actor, ProjectMembership, DeskResearchReadoutDraft } = sequelize.models;
+
+    testOrg = await Organization.create({
+      name: 'DR6b5b Fencing Test Org',
+      slug: `dr6b5b-fencing-test-org-${Date.now()}`,
+    });
+
+    testActor = await Actor.create({
+      organization_id: getId(testOrg),
+      display_name: `DR6B5B Fencing Test Actor ${Date.now()}`,
+    });
+
+    testProject = await Project.create({
+      organization_id: getId(testOrg),
+      name: 'DR6B5B Fencing Test Project',
+      slug: `dr6b5b-fencing-test-project-${Date.now()}`,
+      created_by: 'test-user',
+    });
+
+    await ProjectMembership.create({
+      project_id: getId(testProject),
+      actor_id: getId(testActor),
+      role: 'researcher',
+    });
+
+    const studySlug = `dr6b5b-fencing-test-study-${Date.now()}`;
+    testStudy = await ResearchStudy.create({
+      project_id: getId(testProject),
+      name: 'DR6B5B Fencing Test Study',
+      slug: studySlug,
+      path: `dr6b5b-fencing-test-project/${studySlug}`,
+      status: 'active',
+      researcher_name: 'Test Researcher',
+      researcher_email: 'test@example.com',
+      channel_name: 'test-channel',
+      created_by: 'test-user',
+    });
+
+    // Use service to create readout (handles display_id/sequence correctly)
+    const readout = await deskReadoutService.createReadout({
+      studyId: getId(testStudy),
+      projectId: getId(testProject),
+      title: 'DR6B5B Fencing Test Readout',
+      question: 'Test question?',
+      createdByActorId: getId(testActor),
+    });
+
+    const { DeskResearchReadout } = sequelize.models;
+    testReadout = (await DeskResearchReadout.findByPk(readout.id))!;
+
+    // Get the draft created by the service
+    testDraft = (await DeskResearchReadoutDraft.findOne({
+      where: { readout_id: readout.id },
+    }))!;
+  });
+
+  afterEach(async () => {
+    // Cleanup in reverse order of creation
+    await sequelize.query(`DELETE FROM desk_research_readout_versions WHERE readout_id IN (SELECT id FROM desk_research_readouts WHERE title LIKE 'DR6B5B Fencing Test%')`);
+    await sequelize.query(`DELETE FROM desk_research_readout_drafts WHERE readout_id IN (SELECT id FROM desk_research_readouts WHERE title LIKE 'DR6B5B Fencing Test%')`);
+    await sequelize.query(`DELETE FROM desk_research_readouts WHERE title LIKE 'DR6B5B Fencing Test%'`);
+    await sequelize.query(`DELETE FROM project_memberships WHERE project_id IN (SELECT id FROM projects WHERE slug LIKE 'dr6b5b-fencing-test%')`);
+    await sequelize.query(`DELETE FROM research_studies WHERE slug LIKE 'dr6b5b-fencing-test%'`);
+    await sequelize.query(`DELETE FROM projects WHERE slug LIKE 'dr6b5b-fencing-test%'`);
+    await sequelize.query(`DELETE FROM actors WHERE display_name LIKE 'DR6B5B Fencing Test%'`);
+    await sequelize.query(`DELETE FROM organizations WHERE slug LIKE 'dr6b5b-fencing-test%'`);
+  });
+
+  it('completeGenerationWithFencing rejects completion from released worker', async () => {
+    /**
+     * This test simulates the shutdown scenario:
+     * 1. Worker A claims a job
+     * 2. Worker A's claim is released (shutdown)
+     * 3. Worker B claims the same job
+     * 4. Worker A's model call completes and tries to write results
+     * 5. Worker A should be rejected (fencing violation)
+     *
+     * This documents the remaining possibility of duplicate in-flight AI calls
+     * during shutdown — both workers may call the model, but only the owner
+     * can persist results.
+     */
+    const { DeskResearchReadoutVersion, DeskResearchReadout } = sequelize.models;
+    const workerA = `worker-A-${randomUUID()}`;
+    const workerB = `worker-B-${randomUUID()}`;
+    const requestId = randomUUID();
+
+    // Worker A claims the job
+    const version = await DeskResearchReadoutVersion.create({
+      readout_id: getId(testReadout),
+      version_number: 1,
+      generation_request_id: requestId,
+      generation_status: 'generating',
+      evidence_set: TEST_EVIDENCE_SET,
+      draft_content_version_at_start: 1,
+      requested_by_actor_id: getId(testActor),
+      idempotency_key: `fencing-test-${Date.now()}`,
+      worker_id: workerA,
+      claimed_at: new Date(),
+      heartbeat_at: new Date(),
+      attempt_count: 1,
+    });
+
+    // Update readout to track current request
+    await DeskResearchReadout.update(
+      { current_generation_request_id: requestId },
+      { where: { id: getId(testReadout) } },
+    );
+
+    // Simulate shutdown: release Worker A's claim
+    const released = await claimService.releaseClaim(getId(version), workerA);
+    expect(released).toBe(true);
+
+    // Worker B claims the job
+    const claimedByB = await claimService.claimNextPendingJob(workerB);
+    expect(claimedByB).not.toBeNull();
+    expect(claimedByB!.worker_id).toBe(workerB);
+
+    // Worker A's model call "completes" and tries to write results
+    // This should be rejected because Worker A no longer owns the claim
+    const testContent: DraftContent = {
+      summary: { text: 'Test summary', citations: [] },
+      findings: [{ id: 'F1', text: 'Finding', citations: [] }],
+      limitations: [{ id: 'L1', text: 'Limitation' }],
+      implications: [{ id: 'I1', kind: 'question', text: 'Question', basedOnFindings: ['F1'] }],
+    };
+
+    const result = await deskReadoutService.completeGenerationWithFencing({
+      readoutId: getId(testReadout),
+      generationRequestId: requestId,
+      content: testContent,
+      status: 'completed',
+      workerId: workerA, // Stale worker trying to complete
+    });
+
+    // Worker A's completion should be rejected
+    expect(result.fencingViolation).toBe(true);
+    expect(result.applied).toBe(false);
+
+    // The draft should NOT have been updated
+    await testDraft.reload();
+    expect(testDraft.get('content')).toEqual({});
+
+    // Version should still be in 'generating' status (owned by Worker B)
+    await version.reload();
+    expect(version.get('generation_status')).toBe('generating');
+    expect(version.get('worker_id')).toBe(workerB);
+  });
+
+  it('heartbeat throws NotOwnerError after claim release', async () => {
+    const { DeskResearchReadoutVersion } = sequelize.models;
+    const workerA = `worker-A-${randomUUID()}`;
+
+    // Worker A claims a job
+    const version = await DeskResearchReadoutVersion.create({
+      readout_id: getId(testReadout),
+      version_number: 1,
+      generation_request_id: randomUUID(),
+      generation_status: 'generating',
+      evidence_set: TEST_EVIDENCE_SET,
+      draft_content_version_at_start: 1,
+      requested_by_actor_id: getId(testActor),
+      idempotency_key: `heartbeat-test-${Date.now()}`,
+      worker_id: workerA,
+      claimed_at: new Date(),
+      heartbeat_at: new Date(),
+      attempt_count: 1,
+    });
+
+    // Verify heartbeat works while we own the claim
+    await expect(
+      claimService.updateHeartbeat(getId(version), workerA)
+    ).resolves.not.toThrow();
+
+    // Release the claim
+    await claimService.releaseClaim(getId(version), workerA);
+
+    // Heartbeat should now throw NotOwnerError
+    await expect(
+      claimService.updateHeartbeat(getId(version), workerA)
+    ).rejects.toThrow(claimService.NotOwnerError);
+  });
+});

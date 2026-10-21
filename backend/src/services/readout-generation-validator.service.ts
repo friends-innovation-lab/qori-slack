@@ -138,6 +138,27 @@ export function validateGeneratedOutput(
   const evidenceDisplayIds = new Set(evidenceSet.map(e => e.displayId));
   const evidenceLookup = new Map(evidenceSet.map(e => [e.displayId, e]));
 
+  // Defensive check: reject duplicate displayIds in evidence snapshot
+  // (Database constraints normally prevent this, but verify to avoid silent overwrites)
+  if (evidenceDisplayIds.size !== evidenceSet.length) {
+    const seenIds = new Set<string>();
+    const duplicates: string[] = [];
+    for (const entry of evidenceSet) {
+      if (seenIds.has(entry.displayId)) {
+        duplicates.push(entry.displayId);
+      }
+      seenIds.add(entry.displayId);
+    }
+    return {
+      valid: false,
+      errors: [{
+        code: 'DUPLICATE_DISPLAY_ID',
+        message: `Evidence snapshot contains duplicate displayId(s): ${duplicates.join(', ')}`,
+        details: 'Each displayId must map to exactly one pinned revision tuple',
+      }],
+    };
+  }
+
   // Check for unexpected top-level fields
   const allowedTopLevelFields = ['summary', 'findings', 'limitations', 'implications'];
   for (const key of Object.keys(parsed)) {
@@ -463,6 +484,7 @@ function transformToDraftContent(
 
 export const ErrorCodes = {
   PARSE_ERROR: 'PARSE_ERROR',
+  DUPLICATE_DISPLAY_ID: 'DUPLICATE_DISPLAY_ID',
   MISSING_SECTION: 'MISSING_SECTION',
   UNEXPECTED_FIELD: 'UNEXPECTED_FIELD',
   INVALID_SUMMARY: 'INVALID_SUMMARY',

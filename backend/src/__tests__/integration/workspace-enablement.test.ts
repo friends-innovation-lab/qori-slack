@@ -182,9 +182,11 @@ describe('Admin org isolation', () => {
       organization_id: TEST_ORG_ID,
     } as any);
 
-    // Create a second org
+    // Create a second org with unique slug to avoid test isolation issues
+    const uniqueSlug = `other-org-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const [org2] = await sequelize.query(
-      `INSERT INTO organizations (slug, name, status) VALUES ('other-org', 'Other Org', 'active') RETURNING id`,
+      `INSERT INTO organizations (public_id, slug, name, status) VALUES (gen_random_uuid(), :slug, 'Other Org', 'active') RETURNING id`,
+      { replacements: { slug: uniqueSlug } },
     ) as [Array<{ id: number }>, unknown];
 
     // Try to find the project under wrong org

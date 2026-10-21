@@ -37,6 +37,19 @@ export const READOUT_GEN_MAX_ATTEMPTS = parseInt(
   10,
 );
 
+/**
+ * Retry delay backoff schedule (milliseconds).
+ * Index corresponds to attempt number (1-based).
+ * Attempt 1 has no delay (first try).
+ * Attempt 2 waits 5s, Attempt 3 waits 15s.
+ * After attempt 3, terminal failure.
+ */
+export const READOUT_GEN_RETRY_DELAYS_MS: readonly number[] = [
+  0,      // Attempt 1: immediate (first try)
+  5000,   // Attempt 2: 5 second delay
+  15000,  // Attempt 3: 15 second delay
+];
+
 // ─── Error Types ───────────────────────────────────────────────────
 
 export class ClaimError extends Error {
@@ -92,6 +105,15 @@ export class VersionTerminalError extends Error {
  *
  * Uses FOR UPDATE SKIP LOCKED to prevent duplicate claims.
  *
+ * Respects retry timing: pending jobs with retry_after > NOW() are deferred
+ * (used for bounded backoff on transient failures).
+ *
+ * On successful claim:
+ * - Sets status to 'generating'
+ * - Sets worker_id and timestamps
+ * - Clears retry_after (no longer pending)
+ * - Increments attempt_count exactly once
+ *
  * Returns null if no pending jobs available.
  */
 export async function claimNextPendingJob(
@@ -100,6 +122,7 @@ export async function claimNextPendingJob(
   const now = new Date();
 
   // Use raw query for FOR UPDATE SKIP LOCKED with atomic status transition
+  // Respects retry_after timing for pending jobs (DR-6b-5b bounded backoff)
   const [results] = await sequelize.query(
     `
     UPDATE desk_research_readout_versions
@@ -109,10 +132,12 @@ export async function claimNextPendingJob(
       claimed_at = :now,
       heartbeat_at = :now,
       generation_started_at = COALESCE(generation_started_at, :now),
-      attempt_count = attempt_count + 1
+      attempt_count = attempt_count + 1,
+      retry_after = NULL
     WHERE id = (
       SELECT id FROM desk_research_readout_versions
       WHERE generation_status = 'pending'
+        AND (retry_after IS NULL OR retry_after <= :now)
       ORDER BY created_at ASC
       FOR UPDATE SKIP LOCKED
       LIMIT 1
@@ -427,8 +452,11 @@ export async function failJob(
 /**
  * Release a claim without completing/failing.
  *
- * Resets the job to pending for another worker to claim.
+ * Resets the job to pending for immediate reclaim by another worker.
  * Used for graceful shutdown.
+ *
+ * Clears retry_after so the job is immediately claimable
+ * (graceful shutdown is not a transient error).
  */
 export async function releaseClaim(
   versionId: number,
@@ -442,6 +470,7 @@ export async function releaseClaim(
       worker_id = NULL,
       claimed_at = NULL,
       heartbeat_at = NULL,
+      retry_after = NULL,
       generation_started_at = NULL
     WHERE id = :versionId
       AND worker_id = :workerId
@@ -453,6 +482,81 @@ export async function releaseClaim(
   );
 
   return ((metadata as { rowCount?: number })?.rowCount || 0) > 0;
+}
+
+/**
+ * Release a claim for retry with bounded backoff (DR-6b-5b).
+ *
+ * Atomically transitions a job from 'generating' to 'pending' with:
+ * - `worker_id = NULL` (unclaimed)
+ * - `claimed_at = NULL`
+ * - `heartbeat_at = NULL` (satisfies chk_version_claimed_has_worker)
+ * - `retry_after = now + backoff_delay` (bounded retry timing)
+ * - `last_error_code = sanitized error`
+ *
+ * Backoff schedule based on attempt_count:
+ * - Attempt 2: 5 second delay
+ * - Attempt 3: 15 second delay
+ *
+ * Does NOT increment attempt_count (already incremented on claim).
+ * Does NOT change attempt_count (preserved for retry tracking).
+ *
+ * Transition requires:
+ * - Worker owns the claim (worker_id = workerId)
+ * - Job is in 'generating' status
+ *
+ * A stale worker cannot requeue a job it no longer owns.
+ *
+ * Returns true if released, false if worker doesn't own the claim.
+ */
+export async function releaseForRetry(
+  versionId: number,
+  workerId: string,
+  errorCode: string,
+  attemptCount: number,
+): Promise<boolean> {
+  const now = new Date();
+
+  // Calculate retry delay based on attempt count
+  const delayMs = attemptCount < READOUT_GEN_RETRY_DELAYS_MS.length
+    ? READOUT_GEN_RETRY_DELAYS_MS[attemptCount]
+    : READOUT_GEN_RETRY_DELAYS_MS[READOUT_GEN_RETRY_DELAYS_MS.length - 1];
+
+  const retryAfter = new Date(now.getTime() + delayMs);
+
+  const [, metadata] = await sequelize.query(
+    `
+    UPDATE desk_research_readout_versions
+    SET
+      generation_status = 'pending',
+      worker_id = NULL,
+      claimed_at = NULL,
+      heartbeat_at = NULL,
+      retry_after = :retryAfter,
+      last_error_code = :errorCode
+    WHERE id = :versionId
+      AND worker_id = :workerId
+      AND generation_status = 'generating'
+    `,
+    {
+      replacements: {
+        versionId,
+        workerId,
+        retryAfter,
+        errorCode: errorCode.substring(0, 50),
+      },
+    },
+  );
+
+  const released = ((metadata as { rowCount?: number })?.rowCount || 0) > 0;
+
+  if (released) {
+    console.log(
+      `[DR-6b-5b] Released version ${versionId} for retry in ${delayMs}ms (attempt ${attemptCount}, code: ${errorCode})`,
+    );
+  }
+
+  return released;
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────
@@ -508,4 +612,14 @@ export async function getVersionByRequestId(
   return DeskResearchReadoutVersionModel.findOne({
     where: { generation_request_id: generationRequestId },
   });
+}
+
+/**
+ * Get the attempt count for a version.
+ */
+export async function getAttemptCount(versionId: number): Promise<number> {
+  const version = await DeskResearchReadoutVersionModel.findByPk(versionId, {
+    attributes: ['attempt_count'],
+  });
+  return version?.attempt_count ?? 0;
 }

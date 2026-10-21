@@ -214,9 +214,11 @@ describe('Cross-org admin denial', () => {
   beforeEach(() => truncateAll());
 
   it('org admin in org A cannot access org B admin', async () => {
-    // Create second org
+    // Create second org with unique slug to avoid test isolation issues
+    const uniqueSlug = `other-org-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const [org2Result] = await sequelize.query(
-      `INSERT INTO organizations (slug, name, status) VALUES ('other-org', 'Other Org', 'active') RETURNING id`,
+      `INSERT INTO organizations (public_id, slug, name, status) VALUES (gen_random_uuid(), :slug, 'Other Org', 'active') RETURNING id`,
+      { replacements: { slug: uniqueSlug } },
     ) as [Array<{ id: number }>, unknown];
     const org2Id = org2Result[0].id;
 
@@ -355,9 +357,11 @@ describe('Bootstrap owner assignment', () => {
   });
 
   it('bootstrap rejects actor from wrong organization', async () => {
-    // Create second org
+    // Create second org with unique slug to avoid test isolation issues
+    const uniqueSlug = `other-org-2-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const [org2Result] = await sequelize.query(
-      `INSERT INTO organizations (slug, name, status) VALUES ('other-org-2', 'Other Org 2', 'active') RETURNING id`,
+      `INSERT INTO organizations (public_id, slug, name, status) VALUES (gen_random_uuid(), :slug, 'Other Org 2', 'active') RETURNING id`,
+      { replacements: { slug: uniqueSlug } },
     ) as [Array<{ id: number }>, unknown];
     const org2Id = org2Result[0].id;
 
