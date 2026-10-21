@@ -234,8 +234,8 @@ describe('DR-6b Desk Research Readout Foundation', () => {
     it('rejects duplicate display_sequence via unique constraint', async () => {
       const insertSQL = `
         INSERT INTO desk_research_readouts
-        (study_id, project_id, display_id, display_sequence, title, created_by_actor_id)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        (public_id, study_id, project_id, display_id, display_sequence, title, created_by_actor_id)
+        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6)
         RETURNING id
       `;
 

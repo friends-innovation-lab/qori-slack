@@ -83,8 +83,8 @@ async function seedStudy(projectId: number, name = 'test-study'): Promise<{ id: 
 
 async function seedSource(projectId: number): Promise<string> {
   const [rows] = await sequelize.query(
-    `INSERT INTO evidence_sources (project_id, source_type, label, created_by, created_at, updated_at)
-     VALUES (${projectId}, 'survey_dataset', 'Test Source', 'U_TEST', NOW(), NOW())
+    `INSERT INTO evidence_sources (public_id, project_id, source_type, label, created_by, created_at, updated_at)
+     VALUES (gen_random_uuid(), ${projectId}, 'survey_dataset', 'Test Source', 'U_TEST', NOW(), NOW())
      RETURNING public_id`
   );
   return (rows as any[])[0].public_id;
@@ -92,8 +92,8 @@ async function seedSource(projectId: number): Promise<string> {
 
 async function seedConstruct(projectId: number, label = 'Test nugget', payload: Record<string, unknown> = { text: 'Finding content', severity: 'high' }): Promise<string> {
   const [rows] = await sequelize.query(
-    `INSERT INTO evidence_constructs (project_id, construct_type, derivation_type, status, label, payload, created_by, created_at, updated_at)
-     VALUES (${projectId}, 'nugget', 'model', 'candidate', '${label}', '${JSON.stringify(payload)}', 'U_TEST', NOW(), NOW())
+    `INSERT INTO evidence_constructs (public_id, project_id, construct_type, derivation_type, status, label, payload, created_by, created_at, updated_at)
+     VALUES (gen_random_uuid(), ${projectId}, 'nugget', 'model', 'candidate', '${label}', '${JSON.stringify(payload)}', 'U_TEST', NOW(), NOW())
      RETURNING public_id`
   );
   return (rows as any[])[0].public_id;
@@ -102,8 +102,8 @@ async function seedConstruct(projectId: number, label = 'Test nugget', payload: 
 async function seedArtifact(projectId: number): Promise<string> {
   const semanticKey = `test:${crypto.randomUUID()}`;
   const [rows] = await sequelize.query(
-    `INSERT INTO research_artifacts (project_id, template_id, template_version, artifact_type, title, repo, ref, path, url, status, semantic_key, created_by, created_at, updated_at)
-     VALUES (${projectId}, 'test_template', '1.0', 'readout', 'Test Artifact Title', 'test/repo', 'main', 'path/to/doc.md', 'https://example.com/doc', 'written', '${semanticKey}', 'U_TEST', NOW(), NOW())
+    `INSERT INTO research_artifacts (public_id, project_id, template_id, template_version, artifact_type, title, repo, ref, path, url, status, semantic_key, created_by, created_at, updated_at)
+     VALUES (gen_random_uuid(), ${projectId}, 'test_template', '1.0', 'readout', 'Test Artifact Title', 'test/repo', 'main', 'path/to/doc.md', 'https://example.com/doc', 'written', '${semanticKey}', 'U_TEST', NOW(), NOW())
      RETURNING public_id`
   );
   return (rows as any[])[0].public_id;
@@ -165,8 +165,8 @@ describe('Records Schedule', () => {
   test('invalid authority_type rejected by DB', async () => {
     await expect(
       sequelize.query(
-        `INSERT INTO records_schedules (authority_type, authority_code, title, record_value, retention_trigger, disposition_action, created_at)
-         VALUES ('invalid_type', 'X', 'X', 'temporary', 'project_closed', 'destroy', NOW())`
+        `INSERT INTO records_schedules (public_id, authority_type, authority_code, title, record_value, retention_trigger, disposition_action, created_at)
+         VALUES (gen_random_uuid(), 'invalid_type', 'X', 'X', 'temporary', 'project_closed', 'destroy', NOW())`
       )
     ).rejects.toThrow(/chk_rs_authority_type/);
   });
@@ -174,8 +174,8 @@ describe('Records Schedule', () => {
   test('invalid record_value rejected by DB', async () => {
     await expect(
       sequelize.query(
-        `INSERT INTO records_schedules (authority_type, authority_code, title, record_value, retention_trigger, disposition_action, created_at)
-         VALUES ('grs', 'X', 'X', 'invalid_value', 'project_closed', 'destroy', NOW())`
+        `INSERT INTO records_schedules (public_id, authority_type, authority_code, title, record_value, retention_trigger, disposition_action, created_at)
+         VALUES (gen_random_uuid(), 'grs', 'X', 'X', 'invalid_value', 'project_closed', 'destroy', NOW())`
       )
     ).rejects.toThrow(/chk_rs_record_value/);
   });
@@ -183,8 +183,8 @@ describe('Records Schedule', () => {
   test('invalid disposition_action rejected by DB', async () => {
     await expect(
       sequelize.query(
-        `INSERT INTO records_schedules (authority_type, authority_code, title, record_value, retention_trigger, disposition_action, created_at)
-         VALUES ('grs', 'X', 'X', 'temporary', 'project_closed', 'invalid_action', NOW())`
+        `INSERT INTO records_schedules (public_id, authority_type, authority_code, title, record_value, retention_trigger, disposition_action, created_at)
+         VALUES (gen_random_uuid(), 'grs', 'X', 'X', 'temporary', 'project_closed', 'invalid_action', NOW())`
       )
     ).rejects.toThrow(/chk_rs_disposition_action/);
   });
@@ -214,8 +214,8 @@ describe('Records Assignment', () => {
 
     await expect(
       sequelize.query(
-        `INSERT INTO records_management_assignments (project_id, record_type, record_public_id, lifecycle_status, assigned_at, updated_at)
-         VALUES (${projectId}, 'invalid_type', '${crypto.randomUUID()}', 'active', NOW(), NOW())`
+        `INSERT INTO records_management_assignments (public_id, project_id, record_type, record_public_id, lifecycle_status, assigned_at, updated_at)
+         VALUES (gen_random_uuid(), ${projectId}, 'invalid_type', '${crypto.randomUUID()}', 'active', NOW(), NOW())`
       )
     ).rejects.toThrow(/chk_rma_record_type/);
   });
@@ -225,8 +225,8 @@ describe('Records Assignment', () => {
 
     await expect(
       sequelize.query(
-        `INSERT INTO records_management_assignments (project_id, record_type, record_public_id, lifecycle_status, assigned_at, updated_at)
-         VALUES (${projectId}, 'project', '${crypto.randomUUID()}', 'invalid_status', NOW(), NOW())`
+        `INSERT INTO records_management_assignments (public_id, project_id, record_type, record_public_id, lifecycle_status, assigned_at, updated_at)
+         VALUES (gen_random_uuid(), ${projectId}, 'project', '${crypto.randomUUID()}', 'invalid_status', NOW(), NOW())`
       )
     ).rejects.toThrow(/chk_rma_lifecycle_status/);
   });
@@ -236,14 +236,14 @@ describe('Records Assignment', () => {
     const pubId = crypto.randomUUID();
 
     await sequelize.query(
-      `INSERT INTO records_management_assignments (project_id, record_type, record_public_id, lifecycle_status, assigned_at, updated_at)
-       VALUES (${projectId}, 'project', '${pubId}', 'active', NOW(), NOW())`
+      `INSERT INTO records_management_assignments (public_id, project_id, record_type, record_public_id, lifecycle_status, assigned_at, updated_at)
+       VALUES (gen_random_uuid(), ${projectId}, 'project', '${pubId}', 'active', NOW(), NOW())`
     );
 
     await expect(
       sequelize.query(
-        `INSERT INTO records_management_assignments (project_id, record_type, record_public_id, lifecycle_status, assigned_at, updated_at)
-         VALUES (${projectId}, 'project', '${pubId}', 'active', NOW(), NOW())`
+        `INSERT INTO records_management_assignments (public_id, project_id, record_type, record_public_id, lifecycle_status, assigned_at, updated_at)
+         VALUES (gen_random_uuid(), ${projectId}, 'project', '${pubId}', 'active', NOW(), NOW())`
       )
     ).rejects.toThrow(/uq_rma_record_type_public_id|Validation error/);
   });
@@ -479,8 +479,8 @@ describe('Holds', () => {
 
     await expect(
       sequelize.query(
-        `INSERT INTO records_holds (project_id, hold_type, title, status, issued_by, issued_at, created_at)
-         VALUES (${projectId}, 'invalid_type', 'X', 'active', 'U_TEST', NOW(), NOW())`
+        `INSERT INTO records_holds (public_id, project_id, hold_type, title, status, issued_by, issued_at, created_at)
+         VALUES (gen_random_uuid(), ${projectId}, 'invalid_type', 'X', 'active', 'U_TEST', NOW(), NOW())`
       )
     ).rejects.toThrow(/chk_rh_hold_type/);
   });
@@ -490,8 +490,8 @@ describe('Holds', () => {
 
     await expect(
       sequelize.query(
-        `INSERT INTO records_holds (project_id, hold_type, title, status, issued_by, issued_at, created_at)
-         VALUES (${projectId}, 'legal', 'X', 'invalid_status', 'U_TEST', NOW(), NOW())`
+        `INSERT INTO records_holds (public_id, project_id, hold_type, title, status, issued_by, issued_at, created_at)
+         VALUES (gen_random_uuid(), ${projectId}, 'legal', 'X', 'invalid_status', 'U_TEST', NOW(), NOW())`
       )
     ).rejects.toThrow(/chk_rh_status/);
   });
@@ -773,8 +773,8 @@ describe('Disposition', () => {
 
     await expect(
       sequelize.query(
-        `INSERT INTO records_disposition_events (assignment_id, action, authority_code, outcome, actor, executed_at, details)
-         VALUES (${assignment.id}, 'invalid_action', 'X', 'completed', 'U_TEST', NOW(), '{}')`
+        `INSERT INTO records_disposition_events (public_id, assignment_id, action, authority_code, outcome, actor, executed_at, details)
+         VALUES (gen_random_uuid(), ${assignment.id}, 'invalid_action', 'X', 'completed', 'U_TEST', NOW(), '{}')`
       )
     ).rejects.toThrow(/chk_rde_action/);
   });
@@ -791,8 +791,8 @@ describe('Disposition', () => {
 
     await expect(
       sequelize.query(
-        `INSERT INTO records_disposition_events (assignment_id, action, authority_code, outcome, actor, executed_at, details)
-         VALUES (${assignment.id}, 'destroy', 'X', 'invalid_outcome', 'U_TEST', NOW(), '{}')`
+        `INSERT INTO records_disposition_events (public_id, assignment_id, action, authority_code, outcome, actor, executed_at, details)
+         VALUES (gen_random_uuid(), ${assignment.id}, 'destroy', 'X', 'invalid_outcome', 'U_TEST', NOW(), '{}')`
       )
     ).rejects.toThrow(/chk_rde_outcome/);
   });

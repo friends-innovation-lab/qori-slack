@@ -38,8 +38,8 @@ async function seedStudy(projectId: number, name = 'test-study'): Promise<number
 /** Insert an evidence source and return its id */
 async function seedSource(projectId: number, studyId: number | null = null): Promise<number> {
   const [rows] = await sequelize.query(
-    `INSERT INTO evidence_sources (project_id, study_id, source_type, label, created_by, created_at, updated_at)
-     VALUES (${projectId}, ${studyId ?? 'NULL'}, 'survey_dataset', 'Test Source', 'U_TEST', NOW(), NOW())
+    `INSERT INTO evidence_sources (public_id, project_id, study_id, source_type, label, created_by, created_at, updated_at)
+     VALUES (gen_random_uuid(), ${projectId}, ${studyId ?? 'NULL'}, 'survey_dataset', 'Test Source', 'U_TEST', NOW(), NOW())
      RETURNING id`
   );
   return (rows as any[])[0].id;
@@ -48,8 +48,8 @@ async function seedSource(projectId: number, studyId: number | null = null): Pro
 /** Insert an evidence construct and return its id */
 async function seedConstruct(projectId: number, studyId: number | null = null): Promise<number> {
   const [rows] = await sequelize.query(
-    `INSERT INTO evidence_constructs (project_id, study_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
-     VALUES (${projectId}, ${studyId ?? 'NULL'}, 'nugget', 'model', 'candidate', 'U_TEST', NOW(), NOW())
+    `INSERT INTO evidence_constructs (public_id, project_id, study_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
+     VALUES (gen_random_uuid(), ${projectId}, ${studyId ?? 'NULL'}, 'nugget', 'model', 'candidate', 'U_TEST', NOW(), NOW())
      RETURNING id`
   );
   return (rows as any[])[0].id;
@@ -78,8 +78,8 @@ async function seedParticipant(studyId: number, code = 'P01'): Promise<number> {
 /** Insert a research artifact and return its id */
 async function seedArtifact(projectId: number, studyId: number | null, semanticKey: string): Promise<number> {
   const [rows] = await sequelize.query(
-    `INSERT INTO research_artifacts (project_id, study_id, template_id, template_version, artifact_type, repo, status, semantic_key, created_by, created_at, updated_at)
-     VALUES (${projectId}, ${studyId ?? 'NULL'}, 'test_template', '1.0', 'synthesis', 'test/repo', 'pending', '${semanticKey}', 'U_TEST', NOW(), NOW())
+    `INSERT INTO research_artifacts (public_id, project_id, study_id, template_id, template_version, artifact_type, repo, status, semantic_key, created_by, created_at, updated_at)
+     VALUES (gen_random_uuid(), ${projectId}, ${studyId ?? 'NULL'}, 'test_template', '1.0', 'synthesis', 'test/repo', 'pending', '${semanticKey}', 'U_TEST', NOW(), NOW())
      RETURNING id`
   );
   return (rows as any[])[0].id;
@@ -88,8 +88,8 @@ async function seedArtifact(projectId: number, studyId: number | null, semanticK
 /** Insert a codebook and return its id */
 async function seedCodebook(sourceId: number, projectId: number, studyId: number | null = null): Promise<number> {
   const [rows] = await sequelize.query(
-    `INSERT INTO survey_codebooks (evidence_source_id, project_id, study_id, version, status, method, generation_metadata, created_by, created_at, updated_at)
-     VALUES (${sourceId}, ${projectId}, ${studyId ?? 'NULL'}, 1, 'draft', 'scqa', '{}', 'U_TEST', NOW(), NOW())
+    `INSERT INTO survey_codebooks (public_id, evidence_source_id, project_id, study_id, version, status, method, generation_metadata, created_by, created_at, updated_at)
+     VALUES (gen_random_uuid(), ${sourceId}, ${projectId}, ${studyId ?? 'NULL'}, 1, 'draft', 'scqa', '{}', 'U_TEST', NOW(), NOW())
      RETURNING id`
   );
   return (rows as any[])[0].id;
@@ -98,8 +98,8 @@ async function seedCodebook(sourceId: number, projectId: number, studyId: number
 /** Insert a survey code and return its id */
 async function seedCode(codebookId: number, codeKey = 'code-1'): Promise<number> {
   const [rows] = await sequelize.query(
-    `INSERT INTO survey_codes (codebook_id, code_key, label, definition, include_when, origin, status, sort_order, metadata, created_at, updated_at)
-     VALUES (${codebookId}, '${codeKey}', 'Test Code', 'Def', 'When X', 'qori_proposed', 'proposed', 0, '{}', NOW(), NOW())
+    `INSERT INTO survey_codes (public_id, codebook_id, code_key, label, definition, include_when, origin, status, sort_order, metadata, created_at, updated_at)
+     VALUES (gen_random_uuid(), ${codebookId}, '${codeKey}', 'Test Code', 'Def', 'When X', 'qori_proposed', 'proposed', 0, '{}', NOW(), NOW())
      RETURNING id`
   );
   return (rows as any[])[0].id;
@@ -108,8 +108,8 @@ async function seedCode(codebookId: number, codeKey = 'code-1'): Promise<number>
 /** Insert a qualitative entry and return its id */
 async function seedQualEntry(sourceId: number, projectId: number, respondentKey = 'R01', fieldName = 'q1'): Promise<number> {
   const [rows] = await sequelize.query(
-    `INSERT INTO survey_qualitative_entries (evidence_source_id, project_id, respondent_key, display_respondent_id, field_name, field_display_name, entry_hash, pii_status, metadata, created_at, updated_at)
-     VALUES (${sourceId}, ${projectId}, '${respondentKey}', '${respondentKey}', '${fieldName}', '${fieldName}', 'hash123', 'pending', '{}', NOW(), NOW())
+    `INSERT INTO survey_qualitative_entries (public_id, evidence_source_id, project_id, respondent_key, display_respondent_id, field_name, field_display_name, entry_hash, pii_status, metadata, created_at, updated_at)
+     VALUES (gen_random_uuid(), ${sourceId}, ${projectId}, '${respondentKey}', '${respondentKey}', '${fieldName}', '${fieldName}', 'hash123', 'pending', '{}', NOW(), NOW())
      RETURNING id`
   );
   return (rows as any[])[0].id;
@@ -118,8 +118,8 @@ async function seedQualEntry(sourceId: number, projectId: number, respondentKey 
 /** Insert a coding run and return its id */
 async function seedCodingRun(sourceId: number, codebookId: number, projectId: number): Promise<number> {
   const [rows] = await sequelize.query(
-    `INSERT INTO survey_coding_runs (evidence_source_id, codebook_id, project_id, version, status, generation_metadata, created_by, created_at, updated_at)
-     VALUES (${sourceId}, ${codebookId}, ${projectId}, 1, 'draft', '{}', 'U_TEST', NOW(), NOW())
+    `INSERT INTO survey_coding_runs (public_id, evidence_source_id, codebook_id, project_id, version, status, generation_metadata, created_by, created_at, updated_at)
+     VALUES (gen_random_uuid(), ${sourceId}, ${codebookId}, ${projectId}, 1, 'draft', '{}', 'U_TEST', NOW(), NOW())
      RETURNING id`
   );
   return (rows as any[])[0].id;
@@ -166,8 +166,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
     it('rejects invalid source_type', async () => {
       const projId = await seedProject();
       await expectRejected(
-        `INSERT INTO evidence_sources (project_id, source_type, label, created_by, created_at, updated_at)
-         VALUES (${projId}, 'invalid_type', 'Bad', 'U_TEST', NOW(), NOW())`,
+        `INSERT INTO evidence_sources (public_id, project_id, source_type, label, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${projId}, 'invalid_type', 'Bad', 'U_TEST', NOW(), NOW())`,
         'chk_evidence_source_type'
       );
     });
@@ -175,8 +175,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
     it('accepts valid source_type', async () => {
       const projId = await seedProject();
       await sequelize.query(
-        `INSERT INTO evidence_sources (project_id, source_type, label, created_by, created_at, updated_at)
-         VALUES (${projId}, 'session_transcript', 'Good', 'U_TEST', NOW(), NOW())`
+        `INSERT INTO evidence_sources (public_id, project_id, source_type, label, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${projId}, 'session_transcript', 'Good', 'U_TEST', NOW(), NOW())`
       );
     });
   });
@@ -189,8 +189,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
     it('rejects invalid construct_type', async () => {
       const projId = await seedProject();
       await expectRejected(
-        `INSERT INTO evidence_constructs (project_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
-         VALUES (${projId}, 'made_up_type', 'model', 'candidate', 'U_TEST', NOW(), NOW())`,
+        `INSERT INTO evidence_constructs (public_id, project_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${projId}, 'made_up_type', 'model', 'candidate', 'U_TEST', NOW(), NOW())`,
         'chk_construct_type'
       );
     });
@@ -198,16 +198,16 @@ describe('GOV-3A Database Integrity Hardening', () => {
     it('accepts valid construct_type', async () => {
       const projId = await seedProject();
       await sequelize.query(
-        `INSERT INTO evidence_constructs (project_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
-         VALUES (${projId}, 'survey_qualitative_pattern', 'model', 'candidate', 'U_TEST', NOW(), NOW())`
+        `INSERT INTO evidence_constructs (public_id, project_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${projId}, 'survey_qualitative_pattern', 'model', 'candidate', 'U_TEST', NOW(), NOW())`
       );
     });
 
     it('rejects invalid derivation_type', async () => {
       const projId = await seedProject();
       await expectRejected(
-        `INSERT INTO evidence_constructs (project_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
-         VALUES (${projId}, 'nugget', 'magic', 'candidate', 'U_TEST', NOW(), NOW())`,
+        `INSERT INTO evidence_constructs (public_id, project_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${projId}, 'nugget', 'magic', 'candidate', 'U_TEST', NOW(), NOW())`,
         'chk_construct_derivation_type'
       );
     });
@@ -215,16 +215,16 @@ describe('GOV-3A Database Integrity Hardening', () => {
     it('accepts valid derivation_type', async () => {
       const projId = await seedProject();
       await sequelize.query(
-        `INSERT INTO evidence_constructs (project_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
-         VALUES (${projId}, 'nugget', 'hybrid', 'candidate', 'U_TEST', NOW(), NOW())`
+        `INSERT INTO evidence_constructs (public_id, project_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${projId}, 'nugget', 'hybrid', 'candidate', 'U_TEST', NOW(), NOW())`
       );
     });
 
     it('rejects invalid construct status', async () => {
       const projId = await seedProject();
       await expectRejected(
-        `INSERT INTO evidence_constructs (project_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
-         VALUES (${projId}, 'nugget', 'model', 'bogus', 'U_TEST', NOW(), NOW())`,
+        `INSERT INTO evidence_constructs (public_id, project_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${projId}, 'nugget', 'model', 'bogus', 'U_TEST', NOW(), NOW())`,
         'chk_construct_status'
       );
     });
@@ -232,8 +232,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
     it('accepts valid construct status', async () => {
       const projId = await seedProject();
       await sequelize.query(
-        `INSERT INTO evidence_constructs (project_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
-         VALUES (${projId}, 'nugget', 'model', 'overridden', 'U_TEST', NOW(), NOW())`
+        `INSERT INTO evidence_constructs (public_id, project_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${projId}, 'nugget', 'model', 'overridden', 'U_TEST', NOW(), NOW())`
       );
     });
   });
@@ -248,8 +248,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const srcId = await seedSource(projId);
       const constId = await seedConstruct(projId);
       await expectRejected(
-        `INSERT INTO evidence_relationships (project_id, from_source_id, to_construct_id, relationship_type, created_at)
-         VALUES (${projId}, ${srcId}, ${constId}, 'INVENTED', NOW())`,
+        `INSERT INTO evidence_relationships (public_id, project_id, from_source_id, to_construct_id, relationship_type, created_at)
+         VALUES (gen_random_uuid(), ${projId}, ${srcId}, ${constId}, 'INVENTED', NOW())`,
         'chk_relationship_type'
       );
     });
@@ -259,8 +259,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const srcId = await seedSource(projId);
       const constId = await seedConstruct(projId);
       await sequelize.query(
-        `INSERT INTO evidence_relationships (project_id, from_source_id, to_construct_id, relationship_type, created_at)
-         VALUES (${projId}, ${srcId}, ${constId}, 'CONTRADICTS', NOW())`
+        `INSERT INTO evidence_relationships (public_id, project_id, from_source_id, to_construct_id, relationship_type, created_at)
+         VALUES (gen_random_uuid(), ${projId}, ${srcId}, ${constId}, 'CONTRADICTS', NOW())`
       );
     });
 
@@ -268,8 +268,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const projId = await seedProject();
       const constId = await seedConstruct(projId);
       await expectRejected(
-        `INSERT INTO evidence_relationships (project_id, from_source_id, from_construct_id, to_construct_id, relationship_type, created_at)
-         VALUES (${projId}, NULL, NULL, ${constId}, 'SUPPORTS', NOW())`,
+        `INSERT INTO evidence_relationships (public_id, project_id, from_source_id, from_construct_id, to_construct_id, relationship_type, created_at)
+         VALUES (gen_random_uuid(), ${projId}, NULL, NULL, ${constId}, 'SUPPORTS', NOW())`,
         'chk_exactly_one_from'
       );
     });
@@ -280,8 +280,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const constId = await seedConstruct(projId);
       const constId2 = await seedConstruct(projId);
       await expectRejected(
-        `INSERT INTO evidence_relationships (project_id, from_source_id, from_construct_id, to_construct_id, relationship_type, created_at)
-         VALUES (${projId}, ${srcId}, ${constId}, ${constId2}, 'SUPPORTS', NOW())`,
+        `INSERT INTO evidence_relationships (public_id, project_id, from_source_id, from_construct_id, to_construct_id, relationship_type, created_at)
+         VALUES (gen_random_uuid(), ${projId}, ${srcId}, ${constId}, ${constId2}, 'SUPPORTS', NOW())`,
         'chk_exactly_one_from'
       );
     });
@@ -392,8 +392,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
     it('rejects invalid artifact_type', async () => {
       const projId = await seedProject();
       await expectRejected(
-        `INSERT INTO research_artifacts (project_id, template_id, template_version, artifact_type, repo, status, semantic_key, created_by, created_at, updated_at)
-         VALUES (${projId}, 'tmpl', '1.0', 'report', 'r/r', 'pending', 'sk-bad-1', 'U_TEST', NOW(), NOW())`,
+        `INSERT INTO research_artifacts (public_id, project_id, template_id, template_version, artifact_type, repo, status, semantic_key, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${projId}, 'tmpl', '1.0', 'report', 'r/r', 'pending', 'sk-bad-1', 'U_TEST', NOW(), NOW())`,
         'chk_artifact_type'
       );
     });
@@ -401,16 +401,16 @@ describe('GOV-3A Database Integrity Hardening', () => {
     it('accepts valid artifact_type', async () => {
       const projId = await seedProject();
       await sequelize.query(
-        `INSERT INTO research_artifacts (project_id, template_id, template_version, artifact_type, repo, status, semantic_key, created_by, created_at, updated_at)
-         VALUES (${projId}, 'tmpl', '1.0', 'readout', 'r/r', 'pending', 'sk-good-1', 'U_TEST', NOW(), NOW())`
+        `INSERT INTO research_artifacts (public_id, project_id, template_id, template_version, artifact_type, repo, status, semantic_key, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${projId}, 'tmpl', '1.0', 'readout', 'r/r', 'pending', 'sk-good-1', 'U_TEST', NOW(), NOW())`
       );
     });
 
     it('rejects invalid artifact status', async () => {
       const projId = await seedProject();
       await expectRejected(
-        `INSERT INTO research_artifacts (project_id, template_id, template_version, artifact_type, repo, status, semantic_key, created_by, created_at, updated_at)
-         VALUES (${projId}, 'tmpl', '1.0', 'synthesis', 'r/r', 'published', 'sk-bad-2', 'U_TEST', NOW(), NOW())`,
+        `INSERT INTO research_artifacts (public_id, project_id, template_id, template_version, artifact_type, repo, status, semantic_key, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${projId}, 'tmpl', '1.0', 'synthesis', 'r/r', 'published', 'sk-bad-2', 'U_TEST', NOW(), NOW())`,
         'chk_artifact_status'
       );
     });
@@ -419,8 +419,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const projId = await seedProject();
       await seedArtifact(projId, null, 'dup-key');
       await expectRejected(
-        `INSERT INTO research_artifacts (project_id, template_id, template_version, artifact_type, repo, status, semantic_key, created_by, created_at, updated_at)
-         VALUES (${projId}, 'tmpl', '1.0', 'synthesis', 'r/r', 'pending', 'dup-key', 'U_TEST', NOW(), NOW())`,
+        `INSERT INTO research_artifacts (public_id, project_id, template_id, template_version, artifact_type, repo, status, semantic_key, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${projId}, 'tmpl', '1.0', 'synthesis', 'r/r', 'pending', 'dup-key', 'U_TEST', NOW(), NOW())`,
         'research_artifacts_semantic_key_key'
       );
     });
@@ -531,8 +531,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const projId = await seedProject();
       const srcId = await seedSource(projId);
       await expectRejected(
-        `INSERT INTO survey_codebooks (evidence_source_id, project_id, version, status, method, generation_metadata, created_by, created_at, updated_at)
-         VALUES (${srcId}, ${projId}, 1, 'published', 'scqa', '{}', 'U_TEST', NOW(), NOW())`,
+        `INSERT INTO survey_codebooks (public_id, evidence_source_id, project_id, version, status, method, generation_metadata, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${srcId}, ${projId}, 1, 'published', 'scqa', '{}', 'U_TEST', NOW(), NOW())`,
         'chk_codebook_status'
       );
     });
@@ -541,8 +541,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const projId = await seedProject();
       const srcId = await seedSource(projId);
       await sequelize.query(
-        `INSERT INTO survey_codebooks (evidence_source_id, project_id, version, status, method, generation_metadata, created_by, created_at, updated_at)
-         VALUES (${srcId}, ${projId}, 1, 'under_review', 'scqa', '{}', 'U_TEST', NOW(), NOW())`
+        `INSERT INTO survey_codebooks (public_id, evidence_source_id, project_id, version, status, method, generation_metadata, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${srcId}, ${projId}, 1, 'under_review', 'scqa', '{}', 'U_TEST', NOW(), NOW())`
       );
     });
   });
@@ -557,8 +557,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const srcId = await seedSource(projId);
       const cbId = await seedCodebook(srcId, projId);
       await expectRejected(
-        `INSERT INTO survey_codes (codebook_id, code_key, label, definition, include_when, origin, status, sort_order, metadata, created_at, updated_at)
-         VALUES (${cbId}, 'c1', 'L', 'D', 'W', 'auto_generated', 'proposed', 0, '{}', NOW(), NOW())`,
+        `INSERT INTO survey_codes (public_id, codebook_id, code_key, label, definition, include_when, origin, status, sort_order, metadata, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${cbId}, 'c1', 'L', 'D', 'W', 'auto_generated', 'proposed', 0, '{}', NOW(), NOW())`,
         'chk_code_origin'
       );
     });
@@ -568,8 +568,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const srcId = await seedSource(projId);
       const cbId = await seedCodebook(srcId, projId);
       await sequelize.query(
-        `INSERT INTO survey_codes (codebook_id, code_key, label, definition, include_when, origin, status, sort_order, metadata, created_at, updated_at)
-         VALUES (${cbId}, 'c1', 'L', 'D', 'W', 'inherited', 'proposed', 0, '{}', NOW(), NOW())`
+        `INSERT INTO survey_codes (public_id, codebook_id, code_key, label, definition, include_when, origin, status, sort_order, metadata, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${cbId}, 'c1', 'L', 'D', 'W', 'inherited', 'proposed', 0, '{}', NOW(), NOW())`
       );
     });
 
@@ -578,8 +578,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const srcId = await seedSource(projId);
       const cbId = await seedCodebook(srcId, projId);
       await expectRejected(
-        `INSERT INTO survey_codes (codebook_id, code_key, label, definition, include_when, origin, status, sort_order, metadata, created_at, updated_at)
-         VALUES (${cbId}, 'c2', 'L', 'D', 'W', 'qori_proposed', 'deleted', 0, '{}', NOW(), NOW())`,
+        `INSERT INTO survey_codes (public_id, codebook_id, code_key, label, definition, include_when, origin, status, sort_order, metadata, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${cbId}, 'c2', 'L', 'D', 'W', 'qori_proposed', 'deleted', 0, '{}', NOW(), NOW())`,
         'chk_code_status'
       );
     });
@@ -626,8 +626,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const srcId = await seedSource(projId);
       const cbId = await seedCodebook(srcId, projId);
       await expectRejected(
-        `INSERT INTO survey_coding_runs (evidence_source_id, codebook_id, project_id, version, status, generation_metadata, created_by, created_at, updated_at)
-         VALUES (${srcId}, ${cbId}, ${projId}, 1, 'completed', '{}', 'U_TEST', NOW(), NOW())`,
+        `INSERT INTO survey_coding_runs (public_id, evidence_source_id, codebook_id, project_id, version, status, generation_metadata, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${srcId}, ${cbId}, ${projId}, 1, 'completed', '{}', 'U_TEST', NOW(), NOW())`,
         'chk_coding_run_status'
       );
     });
@@ -637,8 +637,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const srcId = await seedSource(projId);
       const cbId = await seedCodebook(srcId, projId);
       await sequelize.query(
-        `INSERT INTO survey_coding_runs (evidence_source_id, codebook_id, project_id, version, status, generation_metadata, created_by, created_at, updated_at)
-         VALUES (${srcId}, ${cbId}, ${projId}, 1, 'superseded', '{}', 'U_TEST', NOW(), NOW())`
+        `INSERT INTO survey_coding_runs (public_id, evidence_source_id, codebook_id, project_id, version, status, generation_metadata, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${srcId}, ${cbId}, ${projId}, 1, 'superseded', '{}', 'U_TEST', NOW(), NOW())`
       );
     });
   });
@@ -656,8 +656,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const entryId = await seedQualEntry(srcId, projId);
       const runId = await seedCodingRun(srcId, cbId, projId);
       await expectRejected(
-        `INSERT INTO survey_coding_assignments (coding_run_id, qualitative_entry_id, code_id, origin, status, created_at, updated_at)
-         VALUES (${runId}, ${entryId}, ${codeId}, 'auto_detected', 'proposed', NOW(), NOW())`,
+        `INSERT INTO survey_coding_assignments (public_id, coding_run_id, qualitative_entry_id, code_id, origin, status, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${runId}, ${entryId}, ${codeId}, 'auto_detected', 'proposed', NOW(), NOW())`,
         'chk_assignment_origin'
       );
     });
@@ -670,8 +670,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const entryId = await seedQualEntry(srcId, projId);
       const runId = await seedCodingRun(srcId, cbId, projId);
       await sequelize.query(
-        `INSERT INTO survey_coding_assignments (coding_run_id, qualitative_entry_id, code_id, origin, status, created_at, updated_at)
-         VALUES (${runId}, ${entryId}, ${codeId}, 'researcher_added', 'proposed', NOW(), NOW())`
+        `INSERT INTO survey_coding_assignments (public_id, coding_run_id, qualitative_entry_id, code_id, origin, status, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${runId}, ${entryId}, ${codeId}, 'researcher_added', 'proposed', NOW(), NOW())`
       );
     });
 
@@ -683,8 +683,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const entryId = await seedQualEntry(srcId, projId);
       const runId = await seedCodingRun(srcId, cbId, projId);
       await expectRejected(
-        `INSERT INTO survey_coding_assignments (coding_run_id, qualitative_entry_id, code_id, origin, status, created_at, updated_at)
-         VALUES (${runId}, ${entryId}, ${codeId}, 'qori_proposed', 'archived', NOW(), NOW())`,
+        `INSERT INTO survey_coding_assignments (public_id, coding_run_id, qualitative_entry_id, code_id, origin, status, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${runId}, ${entryId}, ${codeId}, 'qori_proposed', 'archived', NOW(), NOW())`,
         'chk_assignment_status'
       );
     });
@@ -730,8 +730,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const projId = await seedProject();
       const srcId = await seedSource(projId);
       await expectRejected(
-        `INSERT INTO survey_qualitative_entries (evidence_source_id, project_id, respondent_key, display_respondent_id, field_name, field_display_name, entry_hash, pii_status, metadata, created_at, updated_at)
-         VALUES (${srcId}, ${projId}, 'R99', 'R99', 'q1', 'q1', 'h1', 'approved', '{}', NOW(), NOW())`,
+        `INSERT INTO survey_qualitative_entries (public_id, evidence_source_id, project_id, respondent_key, display_respondent_id, field_name, field_display_name, entry_hash, pii_status, metadata, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${srcId}, ${projId}, 'R99', 'R99', 'q1', 'q1', 'h1', 'approved', '{}', NOW(), NOW())`,
         'chk_pii_status'
       );
     });
@@ -740,8 +740,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       const projId = await seedProject();
       const srcId = await seedSource(projId);
       await sequelize.query(
-        `INSERT INTO survey_qualitative_entries (evidence_source_id, project_id, respondent_key, display_respondent_id, field_name, field_display_name, entry_hash, pii_status, metadata, created_at, updated_at)
-         VALUES (${srcId}, ${projId}, 'R99', 'R99', 'q1', 'q1', 'h1', 'redacted', '{}', NOW(), NOW())`
+        `INSERT INTO survey_qualitative_entries (public_id, evidence_source_id, project_id, respondent_key, display_respondent_id, field_name, field_display_name, entry_hash, pii_status, metadata, created_at, updated_at)
+         VALUES (gen_random_uuid(), ${srcId}, ${projId}, 'R99', 'R99', 'q1', 'q1', 'h1', 'redacted', '{}', NOW(), NOW())`
       );
     });
   });
@@ -907,15 +907,15 @@ describe('GOV-3A Database Integrity Hardening', () => {
   describe('FK referential integrity', () => {
     it('rejects evidence_source with non-existent project', async () => {
       await expectRejected(
-        `INSERT INTO evidence_sources (project_id, source_type, label, created_by, created_at, updated_at)
-         VALUES (99999, 'survey_dataset', 'Orphan', 'U_TEST', NOW(), NOW())`
+        `INSERT INTO evidence_sources (public_id, project_id, source_type, label, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), 99999, 'survey_dataset', 'Orphan', 'U_TEST', NOW(), NOW())`
       );
     });
 
     it('rejects evidence_construct with non-existent project', async () => {
       await expectRejected(
-        `INSERT INTO evidence_constructs (project_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
-         VALUES (99999, 'nugget', 'model', 'candidate', 'U_TEST', NOW(), NOW())`
+        `INSERT INTO evidence_constructs (public_id, project_id, construct_type, derivation_type, status, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), 99999, 'nugget', 'model', 'candidate', 'U_TEST', NOW(), NOW())`
       );
     });
 
@@ -956,16 +956,16 @@ describe('GOV-3A Database Integrity Hardening', () => {
 
     it('rejects research_artifact with non-existent project', async () => {
       await expectRejected(
-        `INSERT INTO research_artifacts (project_id, template_id, template_version, artifact_type, repo, status, semantic_key, created_by, created_at, updated_at)
-         VALUES (99999, 'tmpl', '1.0', 'synthesis', 'r/r', 'pending', 'sk-orphan', 'U_TEST', NOW(), NOW())`
+        `INSERT INTO research_artifacts (public_id, project_id, template_id, template_version, artifact_type, repo, status, semantic_key, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), 99999, 'tmpl', '1.0', 'synthesis', 'r/r', 'pending', 'sk-orphan', 'U_TEST', NOW(), NOW())`
       );
     });
 
     it('rejects survey_codebook with non-existent source', async () => {
       const projId = await seedProject();
       await expectRejected(
-        `INSERT INTO survey_codebooks (evidence_source_id, project_id, version, status, method, generation_metadata, created_by, created_at, updated_at)
-         VALUES (99999, ${projId}, 1, 'draft', 'scqa', '{}', 'U_TEST', NOW(), NOW())`
+        `INSERT INTO survey_codebooks (public_id, evidence_source_id, project_id, version, status, method, generation_metadata, created_by, created_at, updated_at)
+         VALUES (gen_random_uuid(), 99999, ${projId}, 1, 'draft', 'scqa', '{}', 'U_TEST', NOW(), NOW())`
       );
     });
   });
@@ -1008,8 +1008,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
         const srcId = await seedSource(projId);
         const constId = await seedConstruct(projId);
         await sequelize.query(
-          `INSERT INTO evidence_relationships (project_id, from_source_id, to_construct_id, relationship_type, created_at)
-           VALUES (${projId}, ${srcId}, ${constId}, 'DERIVED_FROM', NOW())`
+          `INSERT INTO evidence_relationships (public_id, project_id, from_source_id, to_construct_id, relationship_type, created_at)
+           VALUES (gen_random_uuid(), ${projId}, ${srcId}, ${constId}, 'DERIVED_FROM', NOW())`
         );
       });
 
@@ -1018,8 +1018,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
         const c1 = await seedConstruct(projId);
         const c2 = await seedConstruct(projId);
         await sequelize.query(
-          `INSERT INTO evidence_relationships (project_id, from_construct_id, to_construct_id, relationship_type, created_at)
-           VALUES (${projId}, ${c1}, ${c2}, 'SYNTHESIZED_FROM', NOW())`
+          `INSERT INTO evidence_relationships (public_id, project_id, from_construct_id, to_construct_id, relationship_type, created_at)
+           VALUES (gen_random_uuid(), ${projId}, ${c1}, ${c2}, 'SYNTHESIZED_FROM', NOW())`
         );
       });
 
@@ -1030,8 +1030,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
         const constB = await seedConstruct(projB);
         // Use projA as relationship project_id — constB belongs to projB
         await expectRejected(
-          `INSERT INTO evidence_relationships (project_id, from_source_id, to_construct_id, relationship_type, created_at)
-           VALUES (${projA}, ${srcA}, ${constB}, 'DERIVED_FROM', NOW())`,
+          `INSERT INTO evidence_relationships (public_id, project_id, from_source_id, to_construct_id, relationship_type, created_at)
+           VALUES (gen_random_uuid(), ${projA}, ${srcA}, ${constB}, 'DERIVED_FROM', NOW())`,
           'fk_er_to_construct_project'
         );
       });
@@ -1042,8 +1042,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
         const constA = await seedConstruct(projA);
         const constB = await seedConstruct(projB);
         await expectRejected(
-          `INSERT INTO evidence_relationships (project_id, from_construct_id, to_construct_id, relationship_type, created_at)
-           VALUES (${projA}, ${constA}, ${constB}, 'SUPPORTS', NOW())`,
+          `INSERT INTO evidence_relationships (public_id, project_id, from_construct_id, to_construct_id, relationship_type, created_at)
+           VALUES (gen_random_uuid(), ${projA}, ${constA}, ${constB}, 'SUPPORTS', NOW())`,
           'fk_er_to_construct_project'
         );
       });
@@ -1054,8 +1054,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
         const constA = await seedConstruct(projA);
         const srcB = await seedSource(projB);
         await expectRejected(
-          `INSERT INTO evidence_relationships (project_id, from_construct_id, to_source_id, relationship_type, created_at)
-           VALUES (${projA}, ${constA}, ${srcB}, 'VALIDATES', NOW())`,
+          `INSERT INTO evidence_relationships (public_id, project_id, from_construct_id, to_source_id, relationship_type, created_at)
+           VALUES (gen_random_uuid(), ${projA}, ${constA}, ${srcB}, 'VALIDATES', NOW())`,
           'fk_er_to_source_project'
         );
       });
@@ -1067,8 +1067,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
         const constA = await seedConstruct(projA);
         // project_id is projA but from_source belongs to projB
         await expectRejected(
-          `INSERT INTO evidence_relationships (project_id, from_source_id, to_construct_id, relationship_type, created_at)
-           VALUES (${projA}, ${srcB}, ${constA}, 'DERIVED_FROM', NOW())`,
+          `INSERT INTO evidence_relationships (public_id, project_id, from_source_id, to_construct_id, relationship_type, created_at)
+           VALUES (gen_random_uuid(), ${projA}, ${srcB}, ${constA}, 'DERIVED_FROM', NOW())`,
           'fk_er_from_source_project'
         );
       });
@@ -1078,8 +1078,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
         const srcId = await seedSource(projId);
         const constId = await seedConstruct(projId);
         await expectRejected(
-          `INSERT INTO evidence_relationships (project_id, from_source_id, to_construct_id, relationship_type, created_at)
-           VALUES (NULL, ${srcId}, ${constId}, 'DERIVED_FROM', NOW())`
+          `INSERT INTO evidence_relationships (public_id, project_id, from_source_id, to_construct_id, relationship_type, created_at)
+           VALUES (gen_random_uuid(), NULL, ${srcId}, ${constId}, 'DERIVED_FROM', NOW())`
         );
       });
     });
