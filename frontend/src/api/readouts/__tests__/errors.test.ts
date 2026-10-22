@@ -10,6 +10,8 @@ import {
   parseReadoutError,
   isConcurrencyError,
   isApprovalIneligibleError,
+  isIdempotencyConflictError,
+  isEvidenceSelectionError,
   isNotFoundError,
   isAuthorizationError,
   isValidationError,
@@ -313,6 +315,200 @@ describe('parseReadoutError - 422 APPROVAL_INELIGIBLE', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
+// IDEMPOTENCY CONFLICT ERROR (409) — DR-6b-5d-A
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('parseReadoutError - 409 IDEMPOTENCY_CONFLICT', () => {
+  it('parses 409 idempotency conflict', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'IDEMPOTENCY_CONFLICT',
+          message: 'Idempotency key used with different payload',
+        },
+      }),
+      { status: 409 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(error.code).toBe('IDEMPOTENCY_CONFLICT');
+    expect(error.status).toBe(409);
+    expect(isIdempotencyConflictError(error)).toBe(true);
+    expect(error.message).toBe('Idempotency key used with different payload');
+  });
+
+  it('uses default message when not provided', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'IDEMPOTENCY_CONFLICT',
+        },
+      }),
+      { status: 409 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(isIdempotencyConflictError(error)).toBe(true);
+    expect(error.message).toBe('Idempotency key used with different payload');
+  });
+
+  it('distinguishes from CONCURRENCY_ERROR', async () => {
+    const idempotencyResponse = new Response(
+      JSON.stringify({
+        error: { code: 'IDEMPOTENCY_CONFLICT', message: 'Key conflict' },
+      }),
+      { status: 409 },
+    );
+    const concurrencyResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'CONCURRENCY_ERROR',
+          message: 'Version conflict',
+          currentVersion: 5,
+          submittedContent: {},
+        },
+      }),
+      { status: 409 },
+    );
+
+    const idempotencyError = await parseReadoutError({
+      response: idempotencyResponse,
+    });
+    const concurrencyError = await parseReadoutError({
+      response: concurrencyResponse,
+    });
+
+    expect(isIdempotencyConflictError(idempotencyError)).toBe(true);
+    expect(isConcurrencyError(idempotencyError)).toBe(false);
+
+    expect(isConcurrencyError(concurrencyError)).toBe(true);
+    expect(isIdempotencyConflictError(concurrencyError)).toBe(false);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EVIDENCE SELECTION ERROR (422) — DR-6b-5d-A
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('parseReadoutError - 422 EVIDENCE_SELECTION_ERROR', () => {
+  it('parses 422 with invalidRevisionIds', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'EVIDENCE_SELECTION_ERROR',
+          message: 'Some selected revisions are invalid',
+          invalidRevisionIds: ['rev-001', 'rev-003'],
+        },
+      }),
+      { status: 422 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(error.code).toBe('EVIDENCE_SELECTION_ERROR');
+    expect(error.status).toBe(422);
+    expect(isEvidenceSelectionError(error)).toBe(true);
+
+    if (isEvidenceSelectionError(error)) {
+      expect(error.invalidRevisionIds).toHaveLength(2);
+      expect(error.invalidRevisionIds).toContain('rev-001');
+      expect(error.invalidRevisionIds).toContain('rev-003');
+    }
+  });
+
+  it('handles empty invalidRevisionIds array', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'EVIDENCE_SELECTION_ERROR',
+          message: 'Invalid selection',
+          invalidRevisionIds: [],
+        },
+      }),
+      { status: 422 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(isEvidenceSelectionError(error)).toBe(true);
+    if (isEvidenceSelectionError(error)) {
+      expect(error.invalidRevisionIds).toEqual([]);
+    }
+  });
+
+  it('handles missing invalidRevisionIds array', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'EVIDENCE_SELECTION_ERROR',
+          message: 'Invalid selection',
+          // No invalidRevisionIds
+        },
+      }),
+      { status: 422 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    // Should still be parsed as EVIDENCE_SELECTION_ERROR but with empty array
+    expect(error.code).toBe('EVIDENCE_SELECTION_ERROR');
+    if (isEvidenceSelectionError(error)) {
+      expect(error.invalidRevisionIds).toEqual([]);
+    }
+  });
+
+  it('uses default message when not provided', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'EVIDENCE_SELECTION_ERROR',
+          invalidRevisionIds: ['rev-001'],
+        },
+      }),
+      { status: 422 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(error.message).toBe('Invalid evidence selection');
+  });
+
+  it('distinguishes from APPROVAL_INELIGIBLE', async () => {
+    const evidenceResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'EVIDENCE_SELECTION_ERROR',
+          message: 'Bad revisions',
+          invalidRevisionIds: ['rev-001'],
+        },
+      }),
+      { status: 422 },
+    );
+    const approvalResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'APPROVAL_INELIGIBLE',
+          message: 'Not eligible',
+          errors: ['Missing citations'],
+        },
+      }),
+      { status: 422 },
+    );
+
+    const evidenceError = await parseReadoutError({ response: evidenceResponse });
+    const approvalError = await parseReadoutError({ response: approvalResponse });
+
+    expect(isEvidenceSelectionError(evidenceError)).toBe(true);
+    expect(isApprovalIneligibleError(evidenceError)).toBe(false);
+
+    expect(isApprovalIneligibleError(approvalError)).toBe(true);
+    expect(isEvidenceSelectionError(approvalError)).toBe(false);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 // STANDARD ERRORS (400, 403, 404)
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -531,5 +727,92 @@ describe('type guards', () => {
     expect(isNotFoundError({ code: 'NOT_FOUND', message: '', status: 404 })).toBe(true);
     expect(isNotFoundError({ code: 'NOT_FOUND', message: '', status: 400 })).toBe(false);
     expect(isNotFoundError({ code: 'UNKNOWN', message: '', status: 404 })).toBe(false);
+  });
+
+  // DR-6b-5d-A type guards
+  it('isIdempotencyConflictError checks both code and status', () => {
+    expect(
+      isIdempotencyConflictError({
+        code: 'IDEMPOTENCY_CONFLICT',
+        message: '',
+        status: 409,
+      }),
+    ).toBe(true);
+    expect(
+      isIdempotencyConflictError({
+        code: 'IDEMPOTENCY_CONFLICT',
+        message: '',
+        status: 400,
+      }),
+    ).toBe(false);
+    expect(
+      isIdempotencyConflictError({
+        code: 'CONCURRENCY_ERROR',
+        message: '',
+        status: 409,
+      }),
+    ).toBe(false);
+  });
+
+  it('isEvidenceSelectionError checks code, status, and invalidRevisionIds', () => {
+    // Valid case
+    expect(
+      isEvidenceSelectionError({
+        code: 'EVIDENCE_SELECTION_ERROR',
+        message: '',
+        status: 422,
+        invalidRevisionIds: ['rev-001'],
+      } as any),
+    ).toBe(true);
+
+    // Missing invalidRevisionIds
+    expect(
+      isEvidenceSelectionError({
+        code: 'EVIDENCE_SELECTION_ERROR',
+        message: '',
+        status: 422,
+      }),
+    ).toBe(false);
+
+    // Wrong status
+    expect(
+      isEvidenceSelectionError({
+        code: 'EVIDENCE_SELECTION_ERROR',
+        message: '',
+        status: 400,
+        invalidRevisionIds: [],
+      } as any),
+    ).toBe(false);
+
+    // Wrong code
+    expect(
+      isEvidenceSelectionError({
+        code: 'APPROVAL_INELIGIBLE',
+        message: '',
+        status: 422,
+        invalidRevisionIds: [],
+      } as any),
+    ).toBe(false);
+
+    // Non-array invalidRevisionIds
+    expect(
+      isEvidenceSelectionError({
+        code: 'EVIDENCE_SELECTION_ERROR',
+        message: '',
+        status: 422,
+        invalidRevisionIds: 'not-an-array',
+      } as any),
+    ).toBe(false);
+  });
+
+  it('isEvidenceSelectionError accepts empty array', () => {
+    expect(
+      isEvidenceSelectionError({
+        code: 'EVIDENCE_SELECTION_ERROR',
+        message: '',
+        status: 422,
+        invalidRevisionIds: [],
+      } as any),
+    ).toBe(true);
   });
 });

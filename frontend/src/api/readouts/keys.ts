@@ -130,4 +130,21 @@ export const readoutsKeys = {
       'evidence-eligibility',
       normalizePagination(params),
     ] as const,
+
+  /**
+   * Generation status for a specific generation request.
+   * Used for polling async generation jobs.
+   * DR-6b-5d-A
+   */
+  generationStatus: (
+    projectPublicId: string,
+    studyPublicId: string,
+    readoutPublicId: string,
+    generationRequestId: string,
+  ) =>
+    [
+      ...readoutsKeys.detail(projectPublicId, studyPublicId, readoutPublicId),
+      'generation-status',
+      generationRequestId,
+    ] as const,
 };

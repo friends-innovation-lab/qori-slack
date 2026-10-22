@@ -16,6 +16,8 @@ import {
   getApprovalHistory,
   getGenerationHistory,
   getEligibleEvidence,
+  initiateGeneration,
+  getGenerationStatus,
 } from '../client';
 import type { ReadoutDetail, DraftContent, ApprovalDetail } from '../types';
 
@@ -546,5 +548,262 @@ describe('getEligibleEvidence', () => {
         searchParams: expect.any(URLSearchParams),
       }),
     );
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INITIATE GENERATION (DR-6b-5d-A)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('initiateGeneration', () => {
+  it('initiates generation and returns 202 response', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: {
+        generationRequestId: 'gen-req-abc-123',
+        versionId: 5,
+        status: 'pending',
+        created: true,
+      },
+    });
+
+    const result = await initiateGeneration('proj-1', 'study-1', 'ro-abc-123', {
+      idempotencyKey: 'idem-key-12345678',
+      selectedRevisionIds: ['rev-001', 'rev-002'],
+    });
+
+    expect(mockPost).toHaveBeenCalledWith(
+      'projects/proj-1/studies/study-1/readouts/ro-abc-123/generate',
+      {
+        json: {
+          idempotencyKey: 'idem-key-12345678',
+          selectedRevisionIds: ['rev-001', 'rev-002'],
+        },
+      },
+    );
+    expect(result.data.generationRequestId).toBe('gen-req-abc-123');
+    expect(result.data.versionId).toBe(5);
+    expect(result.data.status).toBe('pending');
+    expect(result.data.created).toBe(true);
+  });
+
+  it('returns created: false for idempotent hit', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: {
+        generationRequestId: 'gen-req-existing',
+        versionId: 3,
+        status: 'pending',
+        created: false,
+      },
+    });
+
+    const result = await initiateGeneration('proj-1', 'study-1', 'ro-abc-123', {
+      idempotencyKey: 'same-key-12345678',
+      selectedRevisionIds: ['rev-001'],
+    });
+
+    expect(result.data.created).toBe(false);
+  });
+
+  it('propagates backend 400 error for empty selectedRevisionIds', async () => {
+    // Backend requires non-empty selectedRevisionIds array
+    const mockError = {
+      response: {
+        status: 400,
+        json: () =>
+          Promise.resolve({
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'selectedRevisionIds must be a non-empty array',
+            },
+          }),
+      },
+    };
+
+    mockPost.mockRejectedValueOnce(mockError);
+
+    await expect(
+      initiateGeneration('proj-1', 'study-1', 'ro-abc-123', {
+        idempotencyKey: 'empty-evidence-key',
+        selectedRevisionIds: [],
+      }),
+    ).rejects.toEqual(mockError);
+
+    expect(mockPost).toHaveBeenCalledWith(
+      'projects/proj-1/studies/study-1/readouts/ro-abc-123/generate',
+      {
+        json: {
+          idempotencyKey: 'empty-evidence-key',
+          selectedRevisionIds: [],
+        },
+      },
+    );
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GET GENERATION STATUS (DR-6b-5d-A)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('getGenerationStatus', () => {
+  it('returns pending status', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        generationRequestId: 'gen-req-abc-123',
+        status: 'pending',
+        versionNumber: 5,
+        attemptCount: 0,
+        retryAfter: null,
+        generationStartedAt: null,
+        generationCompletedAt: null,
+        generationError: null,
+        hasContent: false,
+      },
+    });
+
+    const result = await getGenerationStatus(
+      'proj-1',
+      'study-1',
+      'ro-abc-123',
+      'gen-req-abc-123',
+    );
+
+    expect(mockGet).toHaveBeenCalledWith(
+      'projects/proj-1/studies/study-1/readouts/ro-abc-123/generate/gen-req-abc-123',
+    );
+    expect(result.data.status).toBe('pending');
+    expect(result.data.hasContent).toBe(false);
+  });
+
+  it('returns generating status with start time', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        generationRequestId: 'gen-req-abc-123',
+        status: 'generating',
+        versionNumber: 5,
+        attemptCount: 1,
+        retryAfter: null,
+        generationStartedAt: '2026-10-15T10:00:00.000Z',
+        generationCompletedAt: null,
+        generationError: null,
+        hasContent: false,
+      },
+    });
+
+    const result = await getGenerationStatus(
+      'proj-1',
+      'study-1',
+      'ro-abc-123',
+      'gen-req-abc-123',
+    );
+
+    expect(result.data.status).toBe('generating');
+    expect(result.data.generationStartedAt).toBe('2026-10-15T10:00:00.000Z');
+    expect(result.data.attemptCount).toBe(1);
+  });
+
+  it('returns completed status with content', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        generationRequestId: 'gen-req-abc-123',
+        status: 'completed',
+        versionNumber: 5,
+        attemptCount: 1,
+        retryAfter: null,
+        generationStartedAt: '2026-10-15T10:00:00.000Z',
+        generationCompletedAt: '2026-10-15T10:05:00.000Z',
+        generationError: null,
+        hasContent: true,
+      },
+    });
+
+    const result = await getGenerationStatus(
+      'proj-1',
+      'study-1',
+      'ro-abc-123',
+      'gen-req-abc-123',
+    );
+
+    expect(result.data.status).toBe('completed');
+    expect(result.data.hasContent).toBe(true);
+    expect(result.data.generationCompletedAt).toBe('2026-10-15T10:05:00.000Z');
+  });
+
+  it('returns failed status with error', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        generationRequestId: 'gen-req-abc-123',
+        status: 'failed',
+        versionNumber: 5,
+        attemptCount: 3,
+        retryAfter: null,
+        generationStartedAt: '2026-10-15T10:00:00.000Z',
+        generationCompletedAt: '2026-10-15T10:01:00.000Z',
+        generationError: 'LLM provider timeout',
+        hasContent: false,
+      },
+    });
+
+    const result = await getGenerationStatus(
+      'proj-1',
+      'study-1',
+      'ro-abc-123',
+      'gen-req-abc-123',
+    );
+
+    expect(result.data.status).toBe('failed');
+    expect(result.data.generationError).toBe('LLM provider timeout');
+    expect(result.data.attemptCount).toBe(3);
+    expect(result.data.hasContent).toBe(false);
+  });
+
+  it('returns superseded status', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        generationRequestId: 'gen-req-old',
+        status: 'superseded',
+        versionNumber: 3,
+        attemptCount: 0,
+        retryAfter: null,
+        generationStartedAt: null,
+        generationCompletedAt: null,
+        generationError: null,
+        hasContent: false,
+      },
+    });
+
+    const result = await getGenerationStatus(
+      'proj-1',
+      'study-1',
+      'ro-abc-123',
+      'gen-req-old',
+    );
+
+    expect(result.data.status).toBe('superseded');
+  });
+
+  it('returns retryAfter for transient failures', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        generationRequestId: 'gen-req-retry',
+        status: 'pending',
+        versionNumber: 5,
+        attemptCount: 2,
+        retryAfter: '2026-10-15T10:10:00.000Z',
+        generationStartedAt: null,
+        generationCompletedAt: null,
+        generationError: null,
+        hasContent: false,
+      },
+    });
+
+    const result = await getGenerationStatus(
+      'proj-1',
+      'study-1',
+      'ro-abc-123',
+      'gen-req-retry',
+    );
+
+    expect(result.data.retryAfter).toBe('2026-10-15T10:10:00.000Z');
+    expect(result.data.attemptCount).toBe(2);
   });
 });

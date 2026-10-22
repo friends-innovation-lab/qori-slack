@@ -337,3 +337,59 @@ export interface PaginationParams {
   limit?: number;
   offset?: number;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GENERATION API TYPES (DR-6b-5d-A)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Request to initiate readout generation.
+ * POST /readouts/:readoutId/generate
+ */
+export interface InitiateGenerationRequest {
+  /** Client-generated idempotency key (8-64 chars) */
+  idempotencyKey: string;
+  /** Selected revision public IDs from eligible evidence */
+  selectedRevisionIds: string[];
+}
+
+/**
+ * Response from generation initiation.
+ * POST /readouts/:readoutId/generate
+ *
+ * 202 Accepted response with pending job info.
+ * Returns created: true for new jobs, created: false for idempotent hits.
+ */
+export interface InitiateGenerationResponse {
+  data: {
+    generationRequestId: string;
+    versionId: number;
+    status: 'pending';
+    created: boolean;
+  };
+}
+
+/**
+ * Response from generation status polling.
+ * GET /readouts/:readoutId/generate/:generationRequestId
+ *
+ * Poll until status is terminal: 'completed' | 'failed' | 'superseded'
+ */
+export interface GenerationStatusResponse {
+  data: {
+    generationRequestId: string;
+    status: GenerationStatus;
+    versionNumber: number;
+    attemptCount: number;
+    /** ISO 8601 timestamp — earliest time retry can occur (transient failures) */
+    retryAfter: string | null;
+    /** ISO 8601 timestamp — when generation started processing */
+    generationStartedAt: string | null;
+    /** ISO 8601 timestamp — when generation completed/failed */
+    generationCompletedAt: string | null;
+    /** Error message if status is 'failed' */
+    generationError: string | null;
+    /** Whether the version has content (completed generations only) */
+    hasContent: boolean;
+  };
+}
