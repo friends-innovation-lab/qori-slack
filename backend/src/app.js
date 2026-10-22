@@ -172,18 +172,23 @@ let server;
   const { startDiscoveryPoller, stopDiscoveryPoller } = require('./discovery/poller');
   startDiscoveryPoller();
 
-  // 5. Then finally spin up Express
+  // 5. Start Readout Generation poller (if enabled) — DR-6b-5b
+  const { startReadoutGenerationPoller, stopReadoutGenerationPoller } = require('./readout-generation');
+  startReadoutGenerationPoller();
+
+  // 6. Then finally spin up Express
   server = app.listen(PORT || 3000, () => {
     console.log(`Server is running on port ${PORT || 3000}`);
   });
 
-  // 6. Graceful shutdown handling
+  // 7. Graceful shutdown handling
   const shutdown = async (signal) => {
     console.log(`\n${signal} received. Starting graceful shutdown...`);
 
     // Stop pollers first (allows current work to finish)
     stopCoachPoller();
     stopDiscoveryPoller();
+    stopReadoutGenerationPoller();
 
     // Close HTTP server
     if (server) {

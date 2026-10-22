@@ -77,9 +77,10 @@ class DeskResearchReadoutVersion extends Model<
   declare claimed_at: Date | null;
   declare heartbeat_at: Date | null;
 
-  // Retry tracking (DR-6b-5a)
+  // Retry tracking (DR-6b-5a, DR-6b-5b)
   declare attempt_count: CreationOptional<number>;
   declare last_error_code: string | null;
+  declare retry_after: Date | null; // DR-6b-5b: Bounded backoff for transient failures
 
   // Timestamps
   declare created_at: CreationOptional<Date>;
@@ -172,7 +173,7 @@ export default (sequelize: Sequelize) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
-      // Retry tracking (DR-6b-5a)
+      // Retry tracking (DR-6b-5a, DR-6b-5b)
       attempt_count: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -181,6 +182,11 @@ export default (sequelize: Sequelize) => {
       last_error_code: {
         type: DataTypes.STRING(50),
         allowNull: true,
+      },
+      retry_after: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: 'Earliest time this pending job can be claimed (bounded retry backoff)',
       },
       created_at: {
         type: DataTypes.DATE,
