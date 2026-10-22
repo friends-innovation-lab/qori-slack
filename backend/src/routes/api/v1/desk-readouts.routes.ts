@@ -263,6 +263,27 @@ function handleServiceError(error: unknown, res: Response, next: NextFunction): 
     });
     return;
   }
+  // DR-6b-5c: Generation API error handlers
+  if (error instanceof deskReadoutService.IdempotencyConflictError) {
+    res.status(409).json({
+      error: {
+        code: 'IDEMPOTENCY_CONFLICT',
+        message: error.message,
+        existingRequestId: error.existingRequestId,
+      },
+    });
+    return;
+  }
+  if (error instanceof deskReadoutService.EvidenceSelectionError) {
+    res.status(422).json({
+      error: {
+        code: 'EVIDENCE_SELECTION_ERROR',
+        message: error.message,
+        errors: error.errors,
+      },
+    });
+    return;
+  }
   next(error);
 }
 
@@ -595,6 +616,137 @@ router.get('/:readoutId/evidence-eligibility', requireAuth, async (req, res, nex
         offset,
       },
     });
+  } catch (error) {
+    handleServiceError(error, res, next);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INITIATE GENERATION (DR-6b-5c)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/v1/projects/:projectId/studies/:studyId/readouts/:readoutId/generate
+ *
+ * Initiate asynchronous AI generation for a readout.
+ * Creates a pending generation job for the background poller.
+ *
+ * - Requires researcher role.
+ * - Requires idempotency key (8-64 chars) and at least one selected revision ID.
+ * - Supersedes any existing pending/generating requests for this readout.
+ * - Same idempotency key + same payload returns existing request (202).
+ * - Same idempotency key + different payload returns 409.
+ *
+ * Returns 202 Accepted (not 201) because generation is asynchronous.
+ */
+router.post('/:readoutId/generate', requireAuth, async (req, res, next) => {
+  try {
+    const resolved = await resolveAllResources(req, res);
+    if (!resolved) return;
+
+    const { projectId, readoutId } = resolved;
+
+    // Validate request body
+    const { idempotencyKey, selectedRevisionIds } = req.body;
+
+    if (!idempotencyKey || typeof idempotencyKey !== 'string') {
+      res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'idempotencyKey is required' },
+      });
+      return;
+    }
+
+    if (idempotencyKey.length < 8 || idempotencyKey.length > 64) {
+      res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'idempotencyKey must be 8-64 characters' },
+      });
+      return;
+    }
+
+    if (!Array.isArray(selectedRevisionIds) || selectedRevisionIds.length === 0) {
+      res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'selectedRevisionIds must be a non-empty array' },
+      });
+      return;
+    }
+
+    // Validate all revision IDs are strings
+    if (!selectedRevisionIds.every((id: unknown) => typeof id === 'string')) {
+      res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'selectedRevisionIds must contain only strings' },
+      });
+      return;
+    }
+
+    // Verify researcher role
+    await assertProjectResearcherByActor(req.ctx!.actor.id, projectId, req.ctx!.organization.id);
+
+    // Call service (handles idempotency, supersession, evidence validation)
+    const result = await deskReadoutService.initiateGenerationV2({
+      readoutId,
+      idempotencyKey,
+      selectedRevisionIds,
+      initiatedByActorId: req.ctx!.actor.id,
+    });
+
+    // Always 202 for async operations (whether new or idempotent return)
+    res.status(202).json({
+      data: {
+        generationRequestId: result.generationRequestId,
+        versionId: result.versionId,
+        status: result.status,
+        created: result.created,
+      },
+    });
+  } catch (error) {
+    handleServiceError(error, res, next);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GENERATION STATUS (DR-6b-5c)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/v1/projects/:projectId/studies/:studyId/readouts/:readoutId/generate/:generationRequestId
+ *
+ * Retrieve status for a specific generation request.
+ * Optimized for polling with minimal payload.
+ *
+ * - Requires project access.
+ * - Returns 404 if request doesn't belong to the specified readout.
+ * - Includes status, attempt count, retry timing, and content availability.
+ */
+router.get('/:readoutId/generate/:generationRequestId', requireAuth, async (req, res, next) => {
+  try {
+    const resolved = await resolveAllResources(req, res);
+    if (!resolved) return;
+
+    const { readoutId } = resolved;
+    const generationRequestId = req.params.generationRequestId as string;
+
+    // Validate UUID format for generation request ID
+    if (!UUID_PATTERN.test(generationRequestId)) {
+      res.status(404).json({
+        error: { code: 'NOT_FOUND', message: 'Generation request not found' },
+      });
+      return;
+    }
+
+    const status = await deskReadoutService.getGenerationStatus(
+      readoutId,
+      generationRequestId,
+      req.ctx!.actor.id,
+    );
+
+    if (!status) {
+      res.status(404).json({
+        error: { code: 'NOT_FOUND', message: 'Generation request not found' },
+      });
+      return;
+    }
+
+    res.json({ data: status });
   } catch (error) {
     handleServiceError(error, res, next);
   }

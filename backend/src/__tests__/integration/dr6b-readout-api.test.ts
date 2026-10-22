@@ -982,21 +982,22 @@ describe('DR-6b-3 Readout HTTP API', () => {
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // NO PUBLIC GENERATION ENDPOINT
+  // GENERATION ENDPOINT (implemented in DR-6b-5c)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  describe('[GENERATION] No Public Generation-Completion Route', () => {
-    it('POST /generate is not exposed (404 or deferred)', async () => {
+  describe('[GENERATION] POST /generate validation', () => {
+    it('POST /generate rejects invalid idempotency key', async () => {
       const created = await createReadout(researcherPublicId);
       const readoutId = created.body.data.id;
 
       const res = await request(app)
         .post(`/api/v1/projects/${projectId}/studies/${studyId}/readouts/${readoutId}/generate`)
         .set('X-Test-Actor-PublicId', researcherPublicId)
-        .send({ evidenceSet: [] });
+        .send({ idempotencyKey: 'short', selectedRevisionIds: [] });
 
-      // Should be 404 (not implemented) — we explicitly deferred this endpoint
-      expect(res.status).toBe(404);
+      // Should reject with validation error (short idempotency key)
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
     });
   });
 
