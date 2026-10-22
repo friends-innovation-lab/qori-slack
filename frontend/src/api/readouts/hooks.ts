@@ -23,17 +23,23 @@ import {
   getApprovalHistory,
   getGenerationHistory,
   getEligibleEvidence,
+  initiateGeneration,
+  getGenerationStatus,
 } from './client';
 import {
   parseReadoutError,
   isConcurrencyError,
   isApprovalIneligibleError,
+  isIdempotencyConflictError,
+  isEvidenceSelectionError,
 } from './errors';
 import type {
   PaginationParams,
   CreateReadoutRequest,
   SaveDraftRequest,
   ApproveReadoutRequest,
+  InitiateGenerationRequest,
+  GenerationStatus,
 } from './types';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -303,5 +309,158 @@ export function useApproveReadout(context: ReadoutDetailMutationContext) {
       });
     },
     // onError: intentionally omitted — do NOT invalidate on failure
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GENERATION HOOKS (DR-6b-5d-A)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Terminal generation statuses — stop polling when reached */
+const TERMINAL_STATUSES: GenerationStatus[] = ['completed', 'failed', 'superseded'];
+
+/**
+ * Check if a generation status is terminal (polling should stop).
+ */
+export function isTerminalGenerationStatus(status: GenerationStatus): boolean {
+  return TERMINAL_STATUSES.includes(status);
+}
+
+/**
+ * Initiate async readout generation.
+ *
+ * On success: invalidates generation history and detail.
+ * On HTTP 409: throws IdempotencyConflictError (same key, different payload).
+ * On HTTP 422: throws EvidenceSelectionError (invalid revision IDs).
+ *
+ * CRITICAL: retry: false prevents accidental duplicate generation requests.
+ */
+export function useInitiateGeneration(context: ReadoutDetailMutationContext) {
+  const queryClient = useQueryClient();
+  const { projectPublicId, studyPublicId, readoutPublicId } = context;
+
+  return useMutation({
+    mutationFn: async (request: InitiateGenerationRequest) => {
+      try {
+        return await initiateGeneration(
+          projectPublicId,
+          studyPublicId,
+          readoutPublicId,
+          request,
+        );
+      } catch (err) {
+        // Parse and rethrow typed error for UI handling
+        const parsed = await parseReadoutError(err);
+        if (isIdempotencyConflictError(parsed)) {
+          throw parsed;
+        }
+        if (isEvidenceSelectionError(parsed)) {
+          throw parsed;
+        }
+        throw parsed;
+      }
+    },
+    retry: false, // CRITICAL: No automatic retries — idempotency key management
+    onSuccess: () => {
+      // Invalidate generation history — new version created
+      queryClient.invalidateQueries({
+        queryKey: readoutsKeys.versions(
+          projectPublicId,
+          studyPublicId,
+          readoutPublicId,
+        ),
+      });
+      // Invalidate detail — currentGenerationRequestId updated
+      queryClient.invalidateQueries({
+        queryKey: readoutsKeys.detail(
+          projectPublicId,
+          studyPublicId,
+          readoutPublicId,
+        ),
+      });
+    },
+  });
+}
+
+/**
+ * Poll generation status with automatic refetch.
+ *
+ * Polling stops automatically when status reaches terminal state.
+ * Use refetchInterval option to customize poll interval (default: 2s).
+ *
+ * @param generationRequestId - The generation request ID to poll
+ * @param options.enabled - Whether to enable the query (default: true when ID provided)
+ * @param options.refetchInterval - Poll interval in ms (default: 2000)
+ */
+export function useGenerationStatus(
+  projectPublicId: string,
+  studyPublicId: string,
+  readoutPublicId: string,
+  generationRequestId: string | null,
+  options?: {
+    enabled?: boolean;
+    refetchInterval?: number;
+  },
+) {
+  const queryClient = useQueryClient();
+
+  return useQuery({
+    queryKey: readoutsKeys.generationStatus(
+      projectPublicId,
+      studyPublicId,
+      readoutPublicId,
+      generationRequestId ?? '',
+    ),
+    queryFn: async () => {
+      if (!generationRequestId) {
+        throw new Error('generationRequestId is required');
+      }
+      const response = await getGenerationStatus(
+        projectPublicId,
+        studyPublicId,
+        readoutPublicId,
+        generationRequestId,
+      );
+
+      // When generation completes, invalidate related queries
+      if (isTerminalGenerationStatus(response.data.status)) {
+        // Invalidate generation history
+        queryClient.invalidateQueries({
+          queryKey: readoutsKeys.versions(
+            projectPublicId,
+            studyPublicId,
+            readoutPublicId,
+          ),
+        });
+        // Invalidate detail if generation completed (draft may have updated content)
+        if (response.data.status === 'completed' && response.data.hasContent) {
+          queryClient.invalidateQueries({
+            queryKey: readoutsKeys.detail(
+              projectPublicId,
+              studyPublicId,
+              readoutPublicId,
+            ),
+          });
+        }
+      }
+
+      return response;
+    },
+    enabled:
+      (options?.enabled ?? true) &&
+      !!projectPublicId &&
+      !!studyPublicId &&
+      !!readoutPublicId &&
+      !!generationRequestId,
+    staleTime: 0, // Always fresh — status changes frequently
+    refetchInterval: (query) => {
+      // Stop polling on terminal status
+      const status = query.state.data?.data.status;
+      if (status && isTerminalGenerationStatus(status)) {
+        return false;
+      }
+      // Continue polling at specified interval
+      return options?.refetchInterval ?? 2000;
+    },
   });
 }

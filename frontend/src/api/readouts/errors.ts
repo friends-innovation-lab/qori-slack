@@ -23,6 +23,8 @@ export type ReadoutErrorCode =
   | 'AUTHENTICATION_REQUIRED'
   | 'CONCURRENCY_ERROR'
   | 'APPROVAL_INELIGIBLE'
+  | 'IDEMPOTENCY_CONFLICT'
+  | 'EVIDENCE_SELECTION_ERROR'
   | 'UNKNOWN';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -87,6 +89,47 @@ export interface ApprovalIneligibleError extends ReadoutApiError {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// GENERATION ERRORS (DR-6b-5d-A)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Idempotency conflict (409).
+ * Returned when same idempotencyKey is used with different selectedRevisionIds.
+ *
+ * Backend shape:
+ * {
+ *   error: {
+ *     code: 'IDEMPOTENCY_CONFLICT',
+ *     message: 'Idempotency key used with different payload'
+ *   }
+ * }
+ */
+export interface IdempotencyConflictError extends ReadoutApiError {
+  code: 'IDEMPOTENCY_CONFLICT';
+  status: 409;
+}
+
+/**
+ * Evidence selection error (422).
+ * Returned when selected revisions are invalid (non-existent, not accepted, withdrawn).
+ *
+ * Backend shape:
+ * {
+ *   error: {
+ *     code: 'EVIDENCE_SELECTION_ERROR',
+ *     message: string,
+ *     invalidRevisionIds: string[]
+ *   }
+ * }
+ */
+export interface EvidenceSelectionError extends ReadoutApiError {
+  code: 'EVIDENCE_SELECTION_ERROR';
+  status: 422;
+  /** Revision IDs that failed validation */
+  invalidRevisionIds: string[];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // TYPE GUARDS
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -131,6 +174,33 @@ export function isApprovalIneligibleError(
   return error.code === 'APPROVAL_INELIGIBLE' && error.status === 422;
 }
 
+/**
+ * Type guard for idempotency conflict errors.
+ * Same idempotency key used with different payload.
+ */
+export function isIdempotencyConflictError(
+  error: ReadoutApiError,
+): error is IdempotencyConflictError {
+  return error.code === 'IDEMPOTENCY_CONFLICT' && error.status === 409;
+}
+
+/**
+ * Type guard for evidence selection errors.
+ * Returns true when error has invalidRevisionIds array.
+ */
+export function isEvidenceSelectionError(
+  error: ReadoutApiError,
+): error is EvidenceSelectionError {
+  if (error.code !== 'EVIDENCE_SELECTION_ERROR' || error.status !== 422) {
+    return false;
+  }
+  if (!('invalidRevisionIds' in error)) {
+    return false;
+  }
+  const typed = error as EvidenceSelectionError;
+  return Array.isArray(typed.invalidRevisionIds);
+}
+
 export function isNotFoundError(error: ReadoutApiError): boolean {
   return error.code === 'NOT_FOUND' && error.status === 404;
 }
@@ -154,6 +224,7 @@ interface BackendErrorBody {
     currentVersion?: number;
     submittedContent?: DraftContent;
     errors?: string[];
+    invalidRevisionIds?: string[];
   };
 }
 
@@ -234,6 +305,28 @@ export async function parseReadoutError(
         } as ApprovalIneligibleError;
       }
 
+      // Parse 409 IDEMPOTENCY_CONFLICT (generation)
+      if (status === 409 && backendCode === 'IDEMPOTENCY_CONFLICT') {
+        return {
+          code: 'IDEMPOTENCY_CONFLICT',
+          message:
+            body.error?.message || 'Idempotency key used with different payload',
+          status: 409,
+        } as IdempotencyConflictError;
+      }
+
+      // Parse 422 EVIDENCE_SELECTION_ERROR (generation)
+      if (status === 422 && backendCode === 'EVIDENCE_SELECTION_ERROR') {
+        return {
+          code: 'EVIDENCE_SELECTION_ERROR',
+          message: body.error?.message || 'Invalid evidence selection',
+          status: 422,
+          invalidRevisionIds: Array.isArray(body.error?.invalidRevisionIds)
+            ? body.error.invalidRevisionIds
+            : [],
+        } as EvidenceSelectionError;
+      }
+
       // Standard error codes
       return {
         code: mapStatusToCode(status, backendCode),
@@ -273,6 +366,8 @@ function mapStatusToCode(
       'AUTHENTICATION_REQUIRED',
       'CONCURRENCY_ERROR',
       'APPROVAL_INELIGIBLE',
+      'IDEMPOTENCY_CONFLICT',
+      'EVIDENCE_SELECTION_ERROR',
     ];
     if (validCodes.includes(backendCode as ReadoutErrorCode)) {
       return backendCode as ReadoutErrorCode;
