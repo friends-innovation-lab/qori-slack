@@ -2197,6 +2197,60 @@ export async function getGenerationHistory(
   }));
 }
 
+/**
+ * Get status for a specific generation request (DR-6b-5c).
+ *
+ * Returns persisted generation state for efficient polling.
+ * Verifies the request belongs to the specified readout.
+ *
+ * AUTHORIZATION: Requires project membership.
+ */
+export interface GenerationStatusResult {
+  generationRequestId: string;
+  status: GenerationStatus;
+  versionNumber: number;
+  attemptCount: number;
+  retryAfter: Date | null;
+  generationStartedAt: Date | null;
+  generationCompletedAt: Date | null;
+  generationError: string | null;
+  hasContent: boolean;
+}
+
+export async function getGenerationStatus(
+  readoutId: number,
+  generationRequestId: string,
+  actorId: number,
+): Promise<GenerationStatusResult | null> {
+  // Resolve project and authorize
+  const { projectId, organizationId } = await resolveProjectFromReadout(readoutId);
+  await assertProjectAccessByActor(actorId, projectId, organizationId);
+
+  // Find version by generation request ID, scoped to readout
+  const version = await DeskResearchReadoutVersion.findOne({
+    where: {
+      readout_id: readoutId,
+      generation_request_id: generationRequestId,
+    },
+  });
+
+  if (!version) {
+    return null;
+  }
+
+  return {
+    generationRequestId: version.get('generation_request_id') as string,
+    status: version.get('generation_status') as GenerationStatus,
+    versionNumber: version.get('version_number') as number,
+    attemptCount: version.get('attempt_count') as number,
+    retryAfter: version.get('retry_after') as Date | null,
+    generationStartedAt: version.get('generation_started_at') as Date | null,
+    generationCompletedAt: version.get('generation_completed_at') as Date | null,
+    generationError: version.get('generation_error') as string | null,
+    hasContent: version.get('content') !== null,
+  };
+}
+
 // ─── Mapping Functions ────────────────────────────────────────────────────────
 
 function mapToReadoutSummary(readout: any): ReadoutSummary {
