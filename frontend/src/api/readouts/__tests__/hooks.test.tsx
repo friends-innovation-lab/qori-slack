@@ -26,8 +26,16 @@ import {
   useCreateReadout,
   useSaveDraft,
   useApproveReadout,
+  useInitiateGeneration,
+  useGenerationStatus,
+  isTerminalGenerationStatus,
 } from '../hooks';
-import type { ConcurrencyConflictError, ApprovalIneligibleError } from '../errors';
+import type {
+  ConcurrencyConflictError,
+  ApprovalIneligibleError,
+  IdempotencyConflictError,
+  EvidenceSelectionError,
+} from '../errors';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MOCKS
@@ -1105,5 +1113,677 @@ describe('cache isolation', () => {
       { limit: 50, offset: 0 },
     ]);
     expect(study2Cache).toBeDefined();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GENERATION HOOKS TESTS (DR-6b-5d-A)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('isTerminalGenerationStatus', () => {
+  it('returns true for completed', () => {
+    expect(isTerminalGenerationStatus('completed')).toBe(true);
+  });
+
+  it('returns true for failed', () => {
+    expect(isTerminalGenerationStatus('failed')).toBe(true);
+  });
+
+  it('returns true for superseded', () => {
+    expect(isTerminalGenerationStatus('superseded')).toBe(true);
+  });
+
+  it('returns false for pending', () => {
+    expect(isTerminalGenerationStatus('pending')).toBe(false);
+  });
+
+  it('returns false for generating', () => {
+    expect(isTerminalGenerationStatus('generating')).toBe(false);
+  });
+});
+
+describe('useInitiateGeneration', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('initiates generation and returns 202 response', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: {
+        generationRequestId: 'gen-req-123',
+        versionId: 5,
+        status: 'pending',
+        created: true,
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () =>
+        useInitiateGeneration({
+          projectPublicId: 'proj-1',
+          studyPublicId: 'study-1',
+          readoutPublicId: 'ro-abc-123',
+        }),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        idempotencyKey: 'idem-key-12345678',
+        selectedRevisionIds: ['rev-001'],
+      });
+    });
+
+    expect(mockPost).toHaveBeenCalledWith(
+      'projects/proj-1/studies/study-1/readouts/ro-abc-123/generate',
+      {
+        json: {
+          idempotencyKey: 'idem-key-12345678',
+          selectedRevisionIds: ['rev-001'],
+        },
+      },
+    );
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.data.generationRequestId).toBe('gen-req-123');
+    expect(result.current.data?.data.created).toBe(true);
+  });
+
+  it('invalidates generation history and detail on success', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: {
+        generationRequestId: 'gen-req-123',
+        versionId: 5,
+        status: 'pending',
+        created: true,
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(
+      () =>
+        useInitiateGeneration({
+          projectPublicId: 'proj-1',
+          studyPublicId: 'study-1',
+          readoutPublicId: 'ro-abc-123',
+        }),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        idempotencyKey: 'idem-key-12345678',
+        selectedRevisionIds: ['rev-001'],
+      });
+    });
+
+    // Should invalidate both versions and detail
+    const versionsCall = invalidateSpy.mock.calls.find(
+      (call) => call[0]?.queryKey?.includes('versions'),
+    );
+    const detailCall = invalidateSpy.mock.calls.find(
+      (call) => call[0]?.queryKey?.includes('detail'),
+    );
+    expect(versionsCall).toBeDefined();
+    expect(detailCall).toBeDefined();
+  });
+
+  it('throws IdempotencyConflictError on HTTP 409', async () => {
+    const mockResponseBody = {
+      error: {
+        code: 'IDEMPOTENCY_CONFLICT',
+        message: 'Idempotency key used with different payload',
+      },
+    };
+
+    const mockResponse = {
+      status: 409,
+      json: vi.fn().mockResolvedValue(mockResponseBody),
+    };
+
+    mockPost.mockRejectedValueOnce({ response: mockResponse });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () =>
+        useInitiateGeneration({
+          projectPublicId: 'proj-1',
+          studyPublicId: 'study-1',
+          readoutPublicId: 'ro-abc-123',
+        }),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await act(async () => {
+      try {
+        await result.current.mutateAsync({
+          idempotencyKey: 'duplicate-key-123',
+          selectedRevisionIds: ['rev-001'],
+        });
+      } catch {
+        // Expected
+      }
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    const thrownError = result.current.error as unknown as IdempotencyConflictError;
+    expect(thrownError.code).toBe('IDEMPOTENCY_CONFLICT');
+    expect(thrownError.status).toBe(409);
+  });
+
+  it('throws EvidenceSelectionError on HTTP 422', async () => {
+    const mockResponseBody = {
+      error: {
+        code: 'EVIDENCE_SELECTION_ERROR',
+        message: 'Some revisions are invalid',
+        invalidRevisionIds: ['rev-bad-001', 'rev-bad-002'],
+      },
+    };
+
+    const mockResponse = {
+      status: 422,
+      json: vi.fn().mockResolvedValue(mockResponseBody),
+    };
+
+    mockPost.mockRejectedValueOnce({ response: mockResponse });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () =>
+        useInitiateGeneration({
+          projectPublicId: 'proj-1',
+          studyPublicId: 'study-1',
+          readoutPublicId: 'ro-abc-123',
+        }),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await act(async () => {
+      try {
+        await result.current.mutateAsync({
+          idempotencyKey: 'valid-key-12345678',
+          selectedRevisionIds: ['rev-bad-001', 'rev-bad-002'],
+        });
+      } catch {
+        // Expected
+      }
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    const thrownError = result.current.error as unknown as EvidenceSelectionError;
+    expect(thrownError.code).toBe('EVIDENCE_SELECTION_ERROR');
+    expect(thrownError.status).toBe(422);
+    expect(thrownError.invalidRevisionIds).toContain('rev-bad-001');
+  });
+
+  it('does not retry on failure', async () => {
+    mockPost.mockRejectedValue(new Error('Network error'));
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () =>
+        useInitiateGeneration({
+          projectPublicId: 'proj-1',
+          studyPublicId: 'study-1',
+          readoutPublicId: 'ro-abc-123',
+        }),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await act(async () => {
+      try {
+        await result.current.mutateAsync({
+          idempotencyKey: 'key-12345678',
+          selectedRevisionIds: ['rev-001'],
+        });
+      } catch {
+        // Expected
+      }
+    });
+
+    // Should only be called once — no retry
+    expect(mockPost).toHaveBeenCalledTimes(1);
+  });
+
+  it('distinguishes 409 idempotency conflict from 409 draft concurrency', async () => {
+    // Idempotency conflict has different error code
+    const idempotencyError = {
+      error: {
+        code: 'IDEMPOTENCY_CONFLICT',
+        message: 'Key conflict',
+      },
+    };
+
+    const mockResponse = {
+      status: 409,
+      json: vi.fn().mockResolvedValue(idempotencyError),
+    };
+
+    mockPost.mockRejectedValueOnce({ response: mockResponse });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () =>
+        useInitiateGeneration({
+          projectPublicId: 'proj-1',
+          studyPublicId: 'study-1',
+          readoutPublicId: 'ro-abc-123',
+        }),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await act(async () => {
+      try {
+        await result.current.mutateAsync({
+          idempotencyKey: 'key-12345678',
+          selectedRevisionIds: ['rev-001'],
+        });
+      } catch {
+        // Expected
+      }
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    const thrownError = result.current.error as unknown as IdempotencyConflictError;
+    // Should be IDEMPOTENCY_CONFLICT, not CONCURRENCY_ERROR
+    expect(thrownError.code).toBe('IDEMPOTENCY_CONFLICT');
+    expect((thrownError as unknown as ConcurrencyConflictError).currentVersion).toBeUndefined();
+  });
+});
+
+describe('useGenerationStatus', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('does not request status when generationRequestId is null', () => {
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useGenerationStatus('proj-1', 'study-1', 'ro-abc-123', null),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(mockGet).not.toHaveBeenCalled();
+  });
+
+  it('requests status when generationRequestId becomes available', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        generationRequestId: 'gen-req-123',
+        status: 'pending',
+        versionNumber: 1,
+        attemptCount: 0,
+        retryAfter: null,
+        generationStartedAt: null,
+        generationCompletedAt: null,
+        generationError: null,
+        hasContent: false,
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useGenerationStatus('proj-1', 'study-1', 'ro-abc-123', 'gen-req-123'),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockGet).toHaveBeenCalledWith(
+      'projects/proj-1/studies/study-1/readouts/ro-abc-123/generate/gen-req-123',
+    );
+    expect(result.current.data?.data.status).toBe('pending');
+  });
+
+  it('continues polling for pending status', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        generationRequestId: 'gen-req-123',
+        status: 'pending',
+        versionNumber: 1,
+        attemptCount: 0,
+        retryAfter: null,
+        generationStartedAt: null,
+        generationCompletedAt: null,
+        generationError: null,
+        hasContent: false,
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () =>
+        useGenerationStatus('proj-1', 'study-1', 'ro-abc-123', 'gen-req-123', {
+          refetchInterval: 100,
+        }),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    // Wait for at least one refetch
+    await waitFor(
+      () => {
+        expect(mockGet.mock.calls.length).toBeGreaterThan(1);
+      },
+      { timeout: 500 },
+    );
+
+    // Should have been called multiple times (polling continues)
+    expect(mockGet.mock.calls.length).toBeGreaterThan(1);
+  });
+
+  it('continues polling for generating status', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        generationRequestId: 'gen-req-123',
+        status: 'generating',
+        versionNumber: 1,
+        attemptCount: 1,
+        retryAfter: null,
+        generationStartedAt: '2026-10-15T10:00:00.000Z',
+        generationCompletedAt: null,
+        generationError: null,
+        hasContent: false,
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () =>
+        useGenerationStatus('proj-1', 'study-1', 'ro-abc-123', 'gen-req-123', {
+          refetchInterval: 100,
+        }),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    // Wait for at least one refetch
+    await waitFor(
+      () => {
+        expect(mockGet.mock.calls.length).toBeGreaterThan(1);
+      },
+      { timeout: 500 },
+    );
+  });
+
+  it('stops polling for completed status', async () => {
+    // Return completed status for all calls
+    mockGet.mockResolvedValue({
+      data: {
+        generationRequestId: 'gen-req-123',
+        status: 'completed',
+        versionNumber: 1,
+        attemptCount: 1,
+        retryAfter: null,
+        generationStartedAt: '2026-10-15T10:00:00.000Z',
+        generationCompletedAt: '2026-10-15T10:05:00.000Z',
+        generationError: null,
+        hasContent: true,
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () =>
+        useGenerationStatus('proj-1', 'study-1', 'ro-abc-123', 'gen-req-123', {
+          refetchInterval: 50,
+        }),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.data.status).toBe('completed');
+
+    // Record call count and wait for potential additional polls
+    const callCountAfterSuccess = mockGet.mock.calls.length;
+    await new Promise((r) => setTimeout(r, 200));
+
+    // Terminal status should stop polling - no significant increase in calls
+    // Allow for 1-2 additional calls due to React rendering cycles
+    expect(mockGet.mock.calls.length).toBeLessThanOrEqual(callCountAfterSuccess + 2);
+  });
+
+  it('stops polling for failed status', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        generationRequestId: 'gen-req-123',
+        status: 'failed',
+        versionNumber: 1,
+        attemptCount: 3,
+        retryAfter: null,
+        generationStartedAt: '2026-10-15T10:00:00.000Z',
+        generationCompletedAt: '2026-10-15T10:01:00.000Z',
+        generationError: 'LLM timeout',
+        hasContent: false,
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () =>
+        useGenerationStatus('proj-1', 'study-1', 'ro-abc-123', 'gen-req-123', {
+          refetchInterval: 50,
+        }),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.data.status).toBe('failed');
+
+    const callCountAfterSuccess = mockGet.mock.calls.length;
+    await new Promise((r) => setTimeout(r, 150));
+    expect(mockGet.mock.calls.length).toBe(callCountAfterSuccess);
+  });
+
+  it('stops polling for superseded status', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        generationRequestId: 'gen-req-old',
+        status: 'superseded',
+        versionNumber: 1,
+        attemptCount: 0,
+        retryAfter: null,
+        generationStartedAt: null,
+        generationCompletedAt: null,
+        generationError: null,
+        hasContent: false,
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () =>
+        useGenerationStatus('proj-1', 'study-1', 'ro-abc-123', 'gen-req-old', {
+          refetchInterval: 50,
+        }),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.data.status).toBe('superseded');
+
+    const callCountAfterSuccess = mockGet.mock.calls.length;
+    await new Promise((r) => setTimeout(r, 150));
+    expect(mockGet.mock.calls.length).toBe(callCountAfterSuccess);
+  });
+
+  it('changes query key when generationRequestId changes', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        generationRequestId: 'gen-req-1',
+        status: 'pending',
+        versionNumber: 1,
+        attemptCount: 0,
+        retryAfter: null,
+        generationStartedAt: null,
+        generationCompletedAt: null,
+        generationError: null,
+        hasContent: false,
+      },
+    });
+
+    const queryClient = createQueryClient();
+
+    // Start with first request ID
+    const { result, rerender } = renderHook(
+      ({ requestId }: { requestId: string }) =>
+        useGenerationStatus('proj-1', 'study-1', 'ro-abc-123', requestId),
+      {
+        wrapper: createWrapper(queryClient),
+        initialProps: { requestId: 'gen-req-1' },
+      },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockGet).toHaveBeenCalledWith(
+      'projects/proj-1/studies/study-1/readouts/ro-abc-123/generate/gen-req-1',
+    );
+
+    // Change to second request ID
+    mockGet.mockResolvedValueOnce({
+      data: {
+        generationRequestId: 'gen-req-2',
+        status: 'generating',
+        versionNumber: 2,
+        attemptCount: 1,
+        retryAfter: null,
+        generationStartedAt: '2026-10-15T10:00:00.000Z',
+        generationCompletedAt: null,
+        generationError: null,
+        hasContent: false,
+      },
+    });
+
+    rerender({ requestId: 'gen-req-2' });
+
+    await waitFor(() =>
+      expect(mockGet).toHaveBeenCalledWith(
+        'projects/proj-1/studies/study-1/readouts/ro-abc-123/generate/gen-req-2',
+      ),
+    );
+  });
+
+  it('transient HTTP error is distinct from terminal generation failure', async () => {
+    // Server reports 'failed' status - this is a terminal generation failure
+    const failedStatusResponse = {
+      data: {
+        generationRequestId: 'gen-req-123',
+        status: 'failed',
+        versionNumber: 1,
+        attemptCount: 3,
+        retryAfter: null,
+        generationStartedAt: '2026-10-15T10:00:00.000Z',
+        generationCompletedAt: '2026-10-15T10:01:00.000Z',
+        generationError: 'LLM provider timeout',
+        hasContent: false,
+      },
+    };
+
+    mockGet.mockResolvedValueOnce(failedStatusResponse);
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useGenerationStatus('proj-1', 'study-1', 'ro-abc-123', 'gen-req-123'),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    // Server-reported 'failed' status is a successful query with failed generation
+    // The query itself succeeds (isSuccess: true), but the generation failed
+    expect(result.current.isSuccess).toBe(true);
+    expect(result.current.isError).toBe(false);
+    expect(result.current.data?.data.status).toBe('failed');
+    expect(result.current.data?.data.generationError).toBe('LLM provider timeout');
+
+    // This is distinct from a transient HTTP error which would set isError: true
+    // and not have a data.status at all
+  });
+
+  it('invalidates caches only once per generation request on completion', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        generationRequestId: 'gen-req-123',
+        status: 'completed',
+        versionNumber: 1,
+        attemptCount: 1,
+        retryAfter: null,
+        generationStartedAt: '2026-10-15T10:00:00.000Z',
+        generationCompletedAt: '2026-10-15T10:05:00.000Z',
+        generationError: null,
+        hasContent: true,
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result, rerender } = renderHook(
+      () => useGenerationStatus('proj-1', 'study-1', 'ro-abc-123', 'gen-req-123'),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    // Count invalidations after first success
+    const invalidationCountAfterFirst = invalidateSpy.mock.calls.length;
+
+    // Force a re-render to simulate component update
+    rerender();
+
+    // Wait a tick
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Should NOT have additional invalidations
+    expect(invalidateSpy.mock.calls.length).toBe(invalidationCountAfterFirst);
+  });
+
+  it('invalidates detail only when completed with content', async () => {
+    // Completed without content (e.g., human edits detected)
+    mockGet.mockResolvedValueOnce({
+      data: {
+        generationRequestId: 'gen-req-123',
+        status: 'completed',
+        versionNumber: 1,
+        attemptCount: 1,
+        retryAfter: null,
+        generationStartedAt: '2026-10-15T10:00:00.000Z',
+        generationCompletedAt: '2026-10-15T10:05:00.000Z',
+        generationError: null,
+        hasContent: false, // No content to apply
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(
+      () => useGenerationStatus('proj-1', 'study-1', 'ro-abc-123', 'gen-req-123'),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    // Should invalidate versions but NOT detail (hasContent: false)
+    // Note: versions key is [...detail, 'versions'], so we check the last element
+    const versionsInvalidation = invalidateSpy.mock.calls.find((call) => {
+      const key = call[0]?.queryKey;
+      return Array.isArray(key) && key[key.length - 1] === 'versions';
+    });
+
+    // Detail invalidation would have 'detail' as the 6th element and 'ro-abc-123' as last
+    // (the readoutPublicId, not 'versions')
+    const detailInvalidation = invalidateSpy.mock.calls.find((call) => {
+      const key = call[0]?.queryKey;
+      return (
+        Array.isArray(key) &&
+        key.includes('detail') &&
+        key[key.length - 1] === 'ro-abc-123'
+      );
+    });
+
+    expect(versionsInvalidation).toBeDefined();
+    expect(detailInvalidation).toBeUndefined();
   });
 });

@@ -11,6 +11,7 @@
  * - Query cancellation: not currently wired through to the readouts API client
  */
 
+import { useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { readoutsKeys } from './keys';
 import {
@@ -388,6 +389,10 @@ export function useInitiateGeneration(context: ReadoutDetailMutationContext) {
  * Polling stops automatically when status reaches terminal state.
  * Use refetchInterval option to customize poll interval (default: 2s).
  *
+ * Cache invalidation happens once per generation request when it reaches
+ * a terminal state (completed/failed/superseded). Repeated reads of the
+ * same completed status do not re-trigger invalidation.
+ *
  * @param generationRequestId - The generation request ID to poll
  * @param options.enabled - Whether to enable the query (default: true when ID provided)
  * @param options.refetchInterval - Poll interval in ms (default: 2000)
@@ -404,7 +409,11 @@ export function useGenerationStatus(
 ) {
   const queryClient = useQueryClient();
 
-  return useQuery({
+  // Track which generation request IDs have already triggered invalidation
+  // to prevent repeated invalidation on subsequent reads
+  const invalidatedRequestsRef = useRef<Set<string>>(new Set());
+
+  const query = useQuery({
     queryKey: readoutsKeys.generationStatus(
       projectPublicId,
       studyPublicId,
@@ -415,36 +424,12 @@ export function useGenerationStatus(
       if (!generationRequestId) {
         throw new Error('generationRequestId is required');
       }
-      const response = await getGenerationStatus(
+      return getGenerationStatus(
         projectPublicId,
         studyPublicId,
         readoutPublicId,
         generationRequestId,
       );
-
-      // When generation completes, invalidate related queries
-      if (isTerminalGenerationStatus(response.data.status)) {
-        // Invalidate generation history
-        queryClient.invalidateQueries({
-          queryKey: readoutsKeys.versions(
-            projectPublicId,
-            studyPublicId,
-            readoutPublicId,
-          ),
-        });
-        // Invalidate detail if generation completed (draft may have updated content)
-        if (response.data.status === 'completed' && response.data.hasContent) {
-          queryClient.invalidateQueries({
-            queryKey: readoutsKeys.detail(
-              projectPublicId,
-              studyPublicId,
-              readoutPublicId,
-            ),
-          });
-        }
-      }
-
-      return response;
     },
     enabled:
       (options?.enabled ?? true) &&
@@ -453,9 +438,9 @@ export function useGenerationStatus(
       !!readoutPublicId &&
       !!generationRequestId,
     staleTime: 0, // Always fresh — status changes frequently
-    refetchInterval: (query) => {
+    refetchInterval: (q) => {
       // Stop polling on terminal status
-      const status = query.state.data?.data.status;
+      const status = q.state.data?.data.status;
       if (status && isTerminalGenerationStatus(status)) {
         return false;
       }
@@ -463,4 +448,50 @@ export function useGenerationStatus(
       return options?.refetchInterval ?? 2000;
     },
   });
+
+  // Once-per-request invalidation when terminal status is reached
+  useEffect(() => {
+    const data = query.data;
+    if (!data || !generationRequestId) return;
+
+    const status = data.data.status;
+    const hasContent = data.data.hasContent;
+
+    // Only invalidate once per generation request ID
+    if (
+      isTerminalGenerationStatus(status) &&
+      !invalidatedRequestsRef.current.has(generationRequestId)
+    ) {
+      invalidatedRequestsRef.current.add(generationRequestId);
+
+      // Invalidate generation history
+      queryClient.invalidateQueries({
+        queryKey: readoutsKeys.versions(
+          projectPublicId,
+          studyPublicId,
+          readoutPublicId,
+        ),
+      });
+
+      // Invalidate detail if generation completed with content
+      if (status === 'completed' && hasContent) {
+        queryClient.invalidateQueries({
+          queryKey: readoutsKeys.detail(
+            projectPublicId,
+            studyPublicId,
+            readoutPublicId,
+          ),
+        });
+      }
+    }
+  }, [
+    query.data,
+    generationRequestId,
+    queryClient,
+    projectPublicId,
+    studyPublicId,
+    readoutPublicId,
+  ]);
+
+  return query;
 }

@@ -604,20 +604,29 @@ describe('initiateGeneration', () => {
     expect(result.data.created).toBe(false);
   });
 
-  it('handles empty selectedRevisionIds', async () => {
-    mockPost.mockResolvedValueOnce({
-      data: {
-        generationRequestId: 'gen-req-empty',
-        versionId: 1,
-        status: 'pending',
-        created: true,
+  it('propagates backend 400 error for empty selectedRevisionIds', async () => {
+    // Backend requires non-empty selectedRevisionIds array
+    const mockError = {
+      response: {
+        status: 400,
+        json: () =>
+          Promise.resolve({
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'selectedRevisionIds must be a non-empty array',
+            },
+          }),
       },
-    });
+    };
 
-    await initiateGeneration('proj-1', 'study-1', 'ro-abc-123', {
-      idempotencyKey: 'empty-evidence-key',
-      selectedRevisionIds: [],
-    });
+    mockPost.mockRejectedValueOnce(mockError);
+
+    await expect(
+      initiateGeneration('proj-1', 'study-1', 'ro-abc-123', {
+        idempotencyKey: 'empty-evidence-key',
+        selectedRevisionIds: [],
+      }),
+    ).rejects.toEqual(mockError);
 
     expect(mockPost).toHaveBeenCalledWith(
       'projects/proj-1/studies/study-1/readouts/ro-abc-123/generate',
