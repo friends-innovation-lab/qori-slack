@@ -589,6 +589,99 @@ describe('Finality — Regeneration After Approval', () => {
     ).rejects.toThrow(ReadoutFinalizedError);
   });
 
+  it('rejects idempotent replay of pre-approval generation after approval', async () => {
+    const IDEMPOTENCY_KEY = 'replay-finality-test-key';
+
+    // 1. Initiate generation on unapproved readout
+    const genResult = await initiateGenerationV2({
+      readoutId: testReadoutId,
+      idempotencyKey: IDEMPOTENCY_KEY,
+      selectedRevisionIds: [testRevisionPublicId],
+      initiatedByActorId: testActorId,
+    });
+
+    expect(genResult.created).toBe(true);
+    expect(genResult.status).toBe('pending');
+
+    // 2. Complete generation to terminal state (fail it to preserve draft content)
+    await sequelize.query(`
+      UPDATE desk_research_readout_versions
+      SET worker_id = 'test-worker', claimed_at = NOW(), heartbeat_at = NOW(), generation_status = 'generating'
+      WHERE id = ${genResult.versionId}
+    `);
+
+    await completeGenerationWithFencing({
+      readoutId: testReadoutId,
+      generationRequestId: genResult.generationRequestId,
+      content: {},
+      status: 'failed',
+      error: 'Intentional failure for test',
+      workerId: 'test-worker',
+    });
+
+    // Verify terminal state
+    const versionAfterFail = await getVersionContent(
+      testReadoutId,
+      genResult.versionId,
+      testActorId,
+    );
+    expect(versionAfterFail!.generationStatus).toBe('failed');
+
+    // 3. Approve the readout
+    const approval = await approveReadout({
+      readoutId: testReadoutId,
+      expectedVersion: 1, // Draft unchanged because generation failed
+      approvedByActorId: testActorId,
+    });
+
+    expect(approval.approvalNumber).toBe(1);
+
+    // Capture state before replay attempt
+    const readoutBeforeReplay = await getReadoutById(testReadoutId, testActorId);
+    const approvalBeforeReplay = readoutBeforeReplay!.latestApproval;
+
+    // Count versions before replay
+    const [versionCountBefore] = await sequelize.query(`
+      SELECT COUNT(*) as count FROM desk_research_readout_versions WHERE readout_id = ${testReadoutId}
+    `);
+    const countBefore = parseInt((versionCountBefore as any[])[0].count, 10);
+
+    // 4. Replay the original generation request with same idempotency key K
+    await expect(
+      initiateGenerationV2({
+        readoutId: testReadoutId,
+        idempotencyKey: IDEMPOTENCY_KEY, // Same key as original
+        selectedRevisionIds: [testRevisionPublicId],
+        initiatedByActorId: testActorId,
+      }),
+    ).rejects.toThrow(ReadoutFinalizedError);
+
+    // 5. Verify no new version created
+    const [versionCountAfter] = await sequelize.query(`
+      SELECT COUNT(*) as count FROM desk_research_readout_versions WHERE readout_id = ${testReadoutId}
+    `);
+    const countAfter = parseInt((versionCountAfter as any[])[0].count, 10);
+    expect(countAfter).toBe(countBefore);
+
+    // 6. Verify original version state unchanged
+    const versionAfterReplay = await getVersionContent(
+      testReadoutId,
+      genResult.versionId,
+      testActorId,
+    );
+    expect(versionAfterReplay!.generationStatus).toBe('failed'); // Still failed
+
+    // 7. Verify approved snapshot intact
+    const readoutAfterReplay = await getReadoutById(testReadoutId, testActorId);
+    expect(readoutAfterReplay!.latestApproval).not.toBeNull();
+    expect(readoutAfterReplay!.latestApproval!.approvalNumber).toBe(
+      approvalBeforeReplay!.approvalNumber,
+    );
+    expect(readoutAfterReplay!.latestApproval!.contentSnapshot).toEqual(
+      approvalBeforeReplay!.contentSnapshot,
+    );
+  });
+
   it('preserves existing versions after finality rejection', async () => {
     // Create a version before approval
     const genResult = await initiateGenerationV2({
