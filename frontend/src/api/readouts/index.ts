@@ -87,6 +87,7 @@ export {
   useApprovalHistory,
   useGenerationHistory,
   useEligibleEvidence,
+  useGenerationStatus,
 } from './hooks';
 
 // Mutation hooks
@@ -94,4 +95,8 @@ export {
   useCreateReadout,
   useSaveDraft,
   useApproveReadout,
+  useInitiateGeneration,
 } from './hooks';
+
+// Utility functions
+export { isTerminalGenerationStatus } from './hooks';

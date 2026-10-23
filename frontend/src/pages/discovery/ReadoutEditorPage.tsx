@@ -16,21 +16,33 @@
  * - F. Evidence staleness display
  * - G. Permissions and concurrency handling (403, 409, 422)
  * - H. Research Brief handoff explanation
+ *
+ * DR-6b-5d-B: Initial generation UI
+ * - Evidence selection with all eligible pre-selected
+ * - Generate action with guards
+ * - Status polling and reload recovery
+ * - Clean/dirty draft handling on completion
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useParams, Link } from 'react-router';
-import { AlertCircle, ArrowLeft, FileEdit, Eye, History } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
+import { AlertCircle, ArrowLeft, FileEdit, Eye, History, CheckCircle, Info, Sparkles } from 'lucide-react';
 import {
   useReadoutDetail,
   useSaveDraft,
   useApprovalEligibility,
   useApproveReadout,
   useApprovalHistory,
+  useGenerationHistory,
+  useInitiateGeneration,
+  useGenerationStatus,
+  isTerminalGenerationStatus,
   isConcurrencyError,
   isApprovalIneligibleError,
   isAuthorizationError,
   type ReadoutApiError,
+  type GenerationStatus,
 } from '@/api/readouts';
 import { useStudyWorkspace, WorkspaceLayout } from '@/components/study/workspace';
 import { useProjectPermissions } from '@/hooks/useProjectPermissions';
@@ -44,10 +56,34 @@ import { ApprovalConfirmationModal } from '@/components/discovery/readout/Approv
 import { ApprovedViewSnapshot } from '@/components/discovery/readout/ApprovedViewSnapshot';
 import { ApprovalHistoryPanel } from '@/components/discovery/readout/ApprovalHistoryPanel';
 import { ApprovalStatusBanner } from '@/components/discovery/readout/ApprovalStatusBanner';
+import { EvidenceSelectionPanel } from '@/components/discovery/readout/EvidenceSelectionPanel';
+import { GenerationProgress } from '@/components/discovery/readout/GenerationProgress';
+import { GenerationFailure } from '@/components/discovery/readout/GenerationFailure';
 import styles from '@/components/discovery/readout/readout.module.css';
 
 type SaveState = 'saved' | 'dirty' | 'saving' | 'error';
 type ViewMode = 'edit' | 'approved';
+
+/**
+ * Generation UI state machine
+ * - idle: No active generation, can show evidence selection if no history
+ * - selecting: User is selecting evidence (shown when no generation history exists)
+ * - initiating: Generation request in flight
+ * - pending: Generation queued on server
+ * - generating: Generation in progress
+ * - completed: Generation finished successfully
+ * - failed: Generation failed
+ * - superseded: Generation was superseded by another request
+ */
+type GenerationUIState =
+  | 'idle'
+  | 'selecting'
+  | 'initiating'
+  | 'pending'
+  | 'generating'
+  | 'completed'
+  | 'failed'
+  | 'superseded';
 
 export function ReadoutEditorPage() {
   const { studyPublicId, readoutPublicId } = useParams<{
@@ -102,6 +138,19 @@ export function ReadoutEditorPage() {
     readoutPublicId || '',
   );
 
+  // Generation hooks (DR-6b-5d-B)
+  const generationHistoryQuery = useGenerationHistory(
+    projectPublicId || '',
+    studyPublicId || '',
+    readoutPublicId || '',
+  );
+
+  const initiateGenerationMutation = useInitiateGeneration({
+    projectPublicId: projectPublicId || '',
+    studyPublicId: studyPublicId || '',
+    readoutPublicId: readoutPublicId || '',
+  });
+
   // Local state
   const [saveState, setSaveState] = useState<SaveState>('saved');
   const [savedAt, setSavedAt] = useState<string | undefined>();
@@ -115,8 +164,145 @@ export function ReadoutEditorPage() {
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const [approvalError, setApprovalError] = useState<string | null>(null);
 
+  // Generation UI state (DR-6b-5d-B)
+  const [selectedRevisionIds, setSelectedRevisionIds] = useState<string[]>([]);
+  const [activeGenerationRequestId, setActiveGenerationRequestId] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [showEvidenceSelection, setShowEvidenceSelection] = useState(false);
+  const [generationCompletedWhileDirty, setGenerationCompletedWhileDirty] = useState(false);
+
+  // Stable idempotency key for current submission
+  const idempotencyKeyRef = useRef<string | null>(null);
+
+  // Track current readout to detect navigation
+  const currentReadoutRef = useRef<string | null>(null);
+
   // Unsaved changes guard
   const unsavedGuard = useUnsavedChangesGuard(editor.isDirty);
+
+  // Generation status polling
+  const generationStatusQuery = useGenerationStatus(
+    projectPublicId || '',
+    studyPublicId || '',
+    readoutPublicId || '',
+    activeGenerationRequestId,
+    {
+      enabled: !!activeGenerationRequestId,
+      refetchInterval: 2000,
+    },
+  );
+
+  // Extract currentGenerationRequestId from server for recovery
+  const serverGenerationRequestId = detailQuery.data?.data.currentGenerationRequestId ?? null;
+
+  // Check if readout has any generation history (to determine if we show evidence selection or not)
+  const hasGenerationHistory = useMemo(() => {
+    const versions = generationHistoryQuery.data?.data.versions ?? [];
+    return versions.length > 0;
+  }, [generationHistoryQuery.data]);
+
+  // Determine if there's a completed generation (for regeneration guard)
+  const hasCompletedGeneration = useMemo(() => {
+    const versions = generationHistoryQuery.data?.data.versions ?? [];
+    return versions.some((v) => v.generationStatus === 'completed');
+  }, [generationHistoryQuery.data]);
+
+  // Current generation status from polling
+  const currentGenerationStatus = generationStatusQuery.data?.data.status as GenerationStatus | undefined;
+
+  // Compute generation UI state
+  const generationUIState = useMemo((): GenerationUIState => {
+    // If we're initiating a generation request
+    if (initiateGenerationMutation.isPending) {
+      return 'initiating';
+    }
+
+    // If we have an active request being polled
+    if (activeGenerationRequestId && currentGenerationStatus) {
+      if (currentGenerationStatus === 'pending') return 'pending';
+      if (currentGenerationStatus === 'generating') return 'generating';
+      if (currentGenerationStatus === 'completed') return 'completed';
+      if (currentGenerationStatus === 'failed') return 'failed';
+      if (currentGenerationStatus === 'superseded') return 'superseded';
+    }
+
+    // If showing evidence selection
+    if (showEvidenceSelection) {
+      return 'selecting';
+    }
+
+    return 'idle';
+  }, [
+    initiateGenerationMutation.isPending,
+    activeGenerationRequestId,
+    currentGenerationStatus,
+    showEvidenceSelection,
+  ]);
+
+  // Reset state when navigating to a different readout
+  useEffect(() => {
+    const currentKey = `${projectPublicId}:${studyPublicId}:${readoutPublicId}`;
+    if (currentReadoutRef.current !== null && currentReadoutRef.current !== currentKey) {
+      // Different readout - reset generation state
+      setActiveGenerationRequestId(null);
+      setGenerationError(null);
+      setShowEvidenceSelection(false);
+      setSelectedRevisionIds([]);
+      setGenerationCompletedWhileDirty(false);
+      idempotencyKeyRef.current = null;
+    }
+    currentReadoutRef.current = currentKey;
+  }, [projectPublicId, studyPublicId, readoutPublicId]);
+
+  // Recovery: On mount/reload, check if there's an active generation to resume polling
+  useEffect(() => {
+    if (serverGenerationRequestId && !activeGenerationRequestId) {
+      // Server has an active generation - start polling it
+      setActiveGenerationRequestId(serverGenerationRequestId);
+    }
+  }, [serverGenerationRequestId, activeGenerationRequestId]);
+
+  // Handle terminal generation states
+  useEffect(() => {
+    if (!currentGenerationStatus || !activeGenerationRequestId) return;
+
+    if (isTerminalGenerationStatus(currentGenerationStatus)) {
+      if (currentGenerationStatus === 'failed') {
+        // Capture error message
+        const errorMsg = generationStatusQuery.data?.data.generationError ?? null;
+        setGenerationError(errorMsg);
+      }
+
+      if (currentGenerationStatus === 'completed') {
+        // Check if editor is dirty - if so, warn the user
+        if (editor.isDirty) {
+          setGenerationCompletedWhileDirty(true);
+        }
+        // Clear generation request ID after handling completion
+        // The detail query invalidation will refresh the draft if editor is clean
+      }
+
+      if (currentGenerationStatus === 'superseded') {
+        // Another request took over - refetch detail to get latest state
+        detailQuery.refetch();
+      }
+
+      // For terminal states, clear the active request after a short delay
+      // to allow the UI to show the final state
+      const timer = setTimeout(() => {
+        setActiveGenerationRequestId(null);
+        idempotencyKeyRef.current = null;
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [
+    currentGenerationStatus,
+    activeGenerationRequestId,
+    generationStatusQuery.data,
+    editor.isDirty,
+    detailQuery,
+  ]);
 
   // Update save state when dirty changes
   useEffect(() => {
@@ -149,6 +335,9 @@ export function ReadoutEditorPage() {
       setInvalidatedFindings(result.data.invalidatedFindings);
       setInvalidatedImplications(result.data.invalidatedImplications);
 
+      // Clear the dirty completion warning since user has saved
+      setGenerationCompletedWhileDirty(false);
+
       // If this was a save-and-leave, proceed with navigation
       if (pendingSaveAndLeave) {
         setPendingSaveAndLeave(false);
@@ -177,8 +366,6 @@ export function ReadoutEditorPage() {
 
   // Handle conflict resolution
   const handleReconcile = useCallback(() => {
-    // User has reviewed the comparison and wants to edit their content
-    // Keep their content in the editor with the updated server version
     if (editor.conflictState) {
       editor.resolveConflict({
         content: editor.conflictState.submittedContent,
@@ -193,6 +380,7 @@ export function ReadoutEditorPage() {
     editor.discardChanges();
     setSaveState('saved');
     setSavedAt(undefined);
+    setGenerationCompletedWhileDirty(false);
   }, [editor]);
 
   const handleContinueEditing = useCallback(() => {
@@ -217,7 +405,6 @@ export function ReadoutEditorPage() {
 
   // Approval handlers
   const handleOpenApprovalModal = useCallback(() => {
-    // Refresh eligibility before showing modal
     eligibilityQuery.refetch();
     setApprovalError(null);
     setShowApprovalModal(true);
@@ -235,7 +422,6 @@ export function ReadoutEditorPage() {
       try {
         await approveMutation.mutateAsync(request);
 
-        // Success - close modal and refresh data
         setShowApprovalModal(false);
         detailQuery.refetch();
         eligibilityQuery.refetch();
@@ -244,23 +430,18 @@ export function ReadoutEditorPage() {
         const apiError = error as ReadoutApiError;
 
         if (isConcurrencyError(apiError)) {
-          // 409: Draft was modified - need to save first or refresh
           setApprovalError(
             'The draft was modified since you started. Please close this dialog, review the changes, and try again.',
           );
         } else if (isApprovalIneligibleError(apiError)) {
-          // 422: Eligibility check failed - show errors
           const eligibilityErrors = (apiError as { errors?: string[] }).errors || [];
           setApprovalError(
             `Approval blocked: ${eligibilityErrors.join('; ') || 'Readout is not eligible for approval.'}`,
           );
-          // Refresh eligibility to show current state
           eligibilityQuery.refetch();
         } else if (isAuthorizationError(apiError)) {
-          // 403: Permission denied
           setApprovalError('You do not have permission to approve this readout.');
         } else {
-          // Other error
           setApprovalError(apiError.message || 'An error occurred while approving.');
         }
       }
@@ -291,6 +472,97 @@ export function ReadoutEditorPage() {
   const handleCloseHistory = useCallback(() => {
     setShowHistoryPanel(false);
   }, []);
+
+  // Generation handlers (DR-6b-5d-B)
+  const handleShowEvidenceSelection = useCallback(() => {
+    setShowEvidenceSelection(true);
+    setGenerationError(null);
+  }, []);
+
+  const handleCancelEvidenceSelection = useCallback(() => {
+    setShowEvidenceSelection(false);
+    setSelectedRevisionIds([]);
+  }, []);
+
+  const handleSelectionChange = useCallback((revisionIds: string[]) => {
+    setSelectedRevisionIds(revisionIds);
+  }, []);
+
+  const handleGenerate = useCallback(async () => {
+    if (selectedRevisionIds.length === 0) return;
+
+    // Generate a stable idempotency key for this submission
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current = uuidv4();
+    }
+
+    setGenerationError(null);
+
+    try {
+      const result = await initiateGenerationMutation.mutateAsync({
+        idempotencyKey: idempotencyKeyRef.current,
+        selectedRevisionIds,
+      });
+
+      // Start polling the new generation request
+      setActiveGenerationRequestId(result.data.generationRequestId);
+      setShowEvidenceSelection(false);
+
+      // Handle idempotent replay (created: false)
+      // This is not an error - just means we're resuming an existing request
+      if (!result.data.created) {
+        // Already have a request with this key - just poll it
+      }
+    } catch (error) {
+      // Handle generation initiation errors
+      const apiError = error as ReadoutApiError;
+      setGenerationError(apiError.message || 'Failed to start generation.');
+      // Clear idempotency key on error so user can retry
+      idempotencyKeyRef.current = null;
+    }
+  }, [selectedRevisionIds, initiateGenerationMutation]);
+
+  const handleRetryPolling = useCallback(() => {
+    if (activeGenerationRequestId) {
+      generationStatusQuery.refetch();
+    }
+  }, [activeGenerationRequestId, generationStatusQuery]);
+
+  const handleDismissCompletionWarning = useCallback(() => {
+    setGenerationCompletedWhileDirty(false);
+  }, []);
+
+  // Determine if Generate button should be shown and enabled
+  const canShowGenerate = useMemo(() => {
+    // Must have researcher+ permissions
+    if (!permissions.canReview || permissions.isLoading) return false;
+    // Must not be read-only
+    return true;
+  }, [permissions]);
+
+  const canInitiateGenerate = useMemo(() => {
+    // All the conditions for showing Generate must be met
+    if (!canShowGenerate) return false;
+    // Editor must be initialized and clean
+    if (!editor.isInitialized || editor.isDirty) return false;
+    // No save in progress
+    if (saveState === 'saving') return false;
+    // No conflict in progress
+    if (editor.conflictState !== null) return false;
+    // No active generation
+    if (activeGenerationRequestId !== null) return false;
+    // No completed generation (regeneration is out of scope for DR-6b-5d-B)
+    if (hasCompletedGeneration) return false;
+    return true;
+  }, [
+    canShowGenerate,
+    editor.isInitialized,
+    editor.isDirty,
+    saveState,
+    editor.conflictState,
+    activeGenerationRequestId,
+    hasCompletedGeneration,
+  ]);
 
   // Render states
   if (!projectPublicId || !studyPublicId || !readoutPublicId) {
@@ -346,10 +618,14 @@ export function ReadoutEditorPage() {
   const readout = detailQuery.data.data;
   const readOnly = !permissions.canReview || permissions.isLoading;
   const hasLatestApproval = readout.latestApproval !== null;
-  const canApprove = permissions.canReview && !permissions.isLoading;
+  // Block approve during active generation (DR-6b-5d-B)
+  const canApprove = permissions.canReview && !permissions.isLoading && !activeGenerationRequestId;
 
   // Eligibility data for approval button state
   const eligibility = eligibilityQuery.data?.data;
+
+  // Determine if we should show the Generate button in toolbar
+  const showGenerateButton = canShowGenerate && !hasCompletedGeneration && !hasGenerationHistory;
 
   return (
     <WorkspaceLayout header={<div className={styles.headerSpacer} />}>
@@ -435,6 +711,114 @@ export function ReadoutEditorPage() {
         </div>
       )}
 
+      {/* Generation UI (DR-6b-5d-B) */}
+      {viewMode === 'edit' && (
+        <>
+          {/* Generation Progress */}
+          {(generationUIState === 'pending' || generationUIState === 'generating') && (
+            <GenerationProgress
+              status={currentGenerationStatus!}
+              pollingError={generationStatusQuery.isError}
+              onRetryPolling={handleRetryPolling}
+            />
+          )}
+
+          {/* Generation Initiating */}
+          {generationUIState === 'initiating' && (
+            <GenerationProgress status="pending" />
+          )}
+
+          {/* Generation Failure */}
+          {generationUIState === 'failed' && (
+            <GenerationFailure error={generationError} />
+          )}
+
+          {/* Generation Completed Notice */}
+          {generationUIState === 'completed' && !generationCompletedWhileDirty && (
+            <div className={styles.generationComplete}>
+              <div className={styles.completeIcon}>
+                <CheckCircle size={24} />
+              </div>
+              <div className={styles.completeContent}>
+                <h3 className={styles.completeTitle}>Generation finished</h3>
+                <p className={styles.completeMessage}>
+                  Check the current draft before continuing.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Dirty Draft Warning (generation completed but editor has unsaved changes) */}
+          {generationCompletedWhileDirty && (
+            <div className={styles.dirtyDraftWarning}>
+              <div className={styles.dirtyDraftIcon}>
+                <Info size={20} />
+              </div>
+              <div className={styles.dirtyDraftContent}>
+                <strong>Generation finished with unsaved changes</strong>
+                <p>
+                  You have unsaved edits. Generated content may not have been applied due to
+                  the concurrent edit. Save or discard your changes, then check the draft.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={handleDismissCompletionWarning}
+                style={{ marginLeft: 'auto', flexShrink: 0 }}
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          {/* Superseded Notice */}
+          {generationUIState === 'superseded' && (
+            <div className={styles.supersededNotice}>
+              <Info size={16} />
+              <span>This generation request was superseded by a newer request.</span>
+            </div>
+          )}
+
+          {/* Evidence Selection Panel */}
+          {showEvidenceSelection && generationUIState === 'selecting' && (
+            <>
+              <EvidenceSelectionPanel
+                projectPublicId={projectPublicId}
+                studyPublicId={studyPublicId}
+                readoutPublicId={readoutPublicId}
+                selectedRevisionIds={selectedRevisionIds}
+                onSelectionChange={handleSelectionChange}
+                disabled={initiateGenerationMutation.isPending}
+              />
+              <div className={styles.generateToolbar}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleCancelEvidenceSelection}
+                  disabled={initiateGenerationMutation.isPending}
+                  style={{ marginRight: 'var(--space-2)' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary generateButton"
+                  onClick={handleGenerate}
+                  disabled={
+                    selectedRevisionIds.length === 0 ||
+                    initiateGenerationMutation.isPending
+                  }
+                >
+                  <Sparkles size={16} />
+                  Generate Readout
+                </button>
+              </div>
+            </>
+          )}
+        </>
+      )}
+
       {/* Main Content Area */}
       {viewMode === 'edit' ? (
         <>
@@ -463,6 +847,42 @@ export function ReadoutEditorPage() {
             isCheckingEligibility={eligibilityQuery.isLoading}
             onApprove={handleOpenApprovalModal}
           />
+
+          {/* Generate Button (shown in empty state or when no generation history) */}
+          {showGenerateButton &&
+            !showEvidenceSelection &&
+            generationUIState === 'idle' &&
+            !hasCompletedGeneration && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  padding: 'var(--space-4)',
+                  marginTop: 'var(--space-4)',
+                  borderTop: '1px solid var(--color-border)',
+                }}
+              >
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleShowEvidenceSelection}
+                  disabled={!canInitiateGenerate}
+                  title={
+                    !canInitiateGenerate
+                      ? editor.isDirty
+                        ? 'Save changes before generating'
+                        : !editor.isInitialized
+                          ? 'Loading...'
+                          : 'Cannot generate at this time'
+                      : 'Generate readout content using AI'
+                  }
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)' }}
+                >
+                  <Sparkles size={16} />
+                  Generate with AI
+                </button>
+              </div>
+            )}
         </>
       ) : (
         /* Approved View (Scope C: Immutable approved view) */
