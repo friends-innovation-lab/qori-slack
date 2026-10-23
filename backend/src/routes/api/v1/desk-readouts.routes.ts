@@ -284,6 +284,32 @@ function handleServiceError(error: unknown, res: Response, next: NextFunction): 
     });
     return;
   }
+  // DR-6b-5e: Finality error handlers
+  if (error instanceof deskReadoutService.ReadoutFinalizedError) {
+    res.status(422).json({
+      error: {
+        code: 'READOUT_FINALIZED',
+        message: error.message,
+      },
+    });
+    return;
+  }
+  if (error instanceof deskReadoutService.GenerationInProgressError) {
+    res.status(409).json({
+      error: {
+        code: 'GENERATION_IN_PROGRESS',
+        message: error.message,
+        generationRequestId: error.generationRequestId,
+      },
+    });
+    return;
+  }
+  if (error instanceof deskReadoutService.VersionNotFoundError) {
+    res.status(404).json({
+      error: { code: 'NOT_FOUND', message: error.message },
+    });
+    return;
+  }
   next(error);
 }
 
@@ -747,6 +773,59 @@ router.get('/:readoutId/generate/:generationRequestId', requireAuth, async (req,
     }
 
     res.json({ data: status });
+  } catch (error) {
+    handleServiceError(error, res, next);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VERSION CONTENT (DR-6b-5e)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/v1/projects/:projectId/studies/:studyId/readouts/:readoutId/versions/:versionId/content
+ *
+ * Retrieve stored content for a specific generation version.
+ * Read-only endpoint for accessing persisted generation results.
+ *
+ * - Requires project access (read permission).
+ * - Returns 404 if version doesn't belong to the specified readout.
+ * - Returns content, evidence snapshot, and version metadata.
+ * - Does not expose internal worker metadata or raw provider errors.
+ * - Does not modify draft, approval state, or review state.
+ */
+router.get('/:readoutId/versions/:versionId/content', requireAuth, async (req, res, next) => {
+  try {
+    const resolved = await resolveAllResources(req, res);
+    if (!resolved) return;
+
+    const { readoutId } = resolved;
+    const versionIdParam = req.params.versionId as string;
+
+    // Validate numeric version ID
+    if (!/^\d+$/.test(versionIdParam)) {
+      res.status(404).json({
+        error: { code: 'NOT_FOUND', message: 'Version not found' },
+      });
+      return;
+    }
+
+    const versionId = parseInt(versionIdParam, 10);
+
+    const result = await deskReadoutService.getVersionContent(
+      readoutId,
+      versionId,
+      req.ctx!.actor.id,
+    );
+
+    if (!result) {
+      res.status(404).json({
+        error: { code: 'NOT_FOUND', message: 'Version not found' },
+      });
+      return;
+    }
+
+    res.json({ data: result });
   } catch (error) {
     handleServiceError(error, res, next);
   }

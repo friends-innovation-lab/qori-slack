@@ -320,6 +320,31 @@ export class EvidenceSelectionError extends Error {
   }
 }
 
+/**
+ * Thrown when generation is requested on an already-approved readout (DR-6b-5e).
+ * Approved readouts are final — generation is no longer permitted.
+ */
+export class ReadoutFinalizedError extends Error {
+  constructor(message = 'Readout has been approved and cannot be regenerated') {
+    super(message);
+    this.name = 'ReadoutFinalizedError';
+  }
+}
+
+/**
+ * Thrown when approval is requested while generation is in progress (DR-6b-5e).
+ * Prevents race between approval and active generation.
+ */
+export class GenerationInProgressError extends Error {
+  constructor(
+    message = 'Approval cannot proceed while generation is in progress',
+    public generationRequestId: string,
+  ) {
+    super(message);
+    this.name = 'GenerationInProgressError';
+  }
+}
+
 // ─── Authorization Helpers ────────────────────────────────────────────────────
 
 /**
@@ -1309,6 +1334,17 @@ export async function approveReadout(input: ApproveReadoutInput): Promise<Approv
       throw new ReadoutNotFoundError();
     }
 
+    // DR-6b-5e: Reject approval while generation is in progress
+    // Prevents race between approval and active generation.
+    // Check inside transaction with lock held for atomicity.
+    const currentGenerationRequestId = readout.get('current_generation_request_id') as string | null;
+    if (currentGenerationRequestId !== null) {
+      throw new GenerationInProgressError(
+        'Approval cannot proceed while generation is in progress',
+        currentGenerationRequestId,
+      );
+    }
+
     const draft = await DeskResearchReadoutDraft.findOne({
       where: { readout_id: readoutId },
       lock: true,
@@ -1831,6 +1867,14 @@ export async function initiateGenerationV2(
       throw new ReadoutNotFoundError();
     }
 
+    // DR-6b-5e: Enforce approved-readout finality
+    // Once a readout has been approved, no further generation is permitted.
+    // Check inside transaction with lock held to prevent approval/generation race.
+    const approvedAt = readout.get('approved_at') as Date | null;
+    if (approvedAt !== null) {
+      throw new ReadoutFinalizedError();
+    }
+
     // Check for existing request with same idempotency key
     const existingVersion = await DeskResearchReadoutVersion.findOne({
       where: {
@@ -2248,6 +2292,89 @@ export async function getGenerationStatus(
     generationCompletedAt: version.get('generation_completed_at') as Date | null,
     generationError: version.get('generation_error') as string | null,
     hasContent: version.get('content') !== null,
+  };
+}
+
+/**
+ * Version content retrieval result (DR-6b-5e).
+ *
+ * Read-only endpoint for retrieving stored generation content.
+ * Does not expose internal worker metadata or raw provider errors.
+ */
+export interface VersionContentResult {
+  /** Numeric version ID */
+  versionId: number;
+  /** Human-readable version sequence number */
+  versionNumber: number;
+  /** Terminal generation status */
+  generationStatus: GenerationStatus;
+  /** Whether the version has stored content */
+  hasContent: boolean;
+  /** Generated content (null if not yet completed or failed) */
+  content: DraftContent | null;
+  /** Pinned evidence snapshot used for generation */
+  evidenceSet: EvidenceSetEntry[];
+  /** Draft version when generation was initiated (for conflict detection context) */
+  draftContentVersionAtStart: number;
+  /** When generation completed (null if not yet completed) */
+  generationCompletedAt: Date | null;
+}
+
+/**
+ * Thrown when a version is not found or doesn't belong to the specified readout (DR-6b-5e).
+ */
+export class VersionNotFoundError extends Error {
+  constructor(message = 'Version not found') {
+    super(message);
+    this.name = 'VersionNotFoundError';
+  }
+}
+
+/**
+ * Get stored content for a specific generation version (DR-6b-5e).
+ *
+ * Read-only retrieval of persisted generation content and evidence snapshot.
+ * Returns version metadata and content without exposing internal worker state.
+ *
+ * Security considerations:
+ * - Verifies version belongs to the specified readout (ownership isolation)
+ * - Authorization requires project membership
+ * - Does not expose: worker_id, claimed_at, heartbeat_at, last_error_code, retry_after
+ *
+ * AUTHORIZATION: Requires project membership (read access).
+ */
+export async function getVersionContent(
+  readoutId: number,
+  versionId: number,
+  actorId: number,
+): Promise<VersionContentResult | null> {
+  // Resolve project and authorize
+  const { projectId, organizationId } = await resolveProjectFromReadout(readoutId);
+  await assertProjectAccessByActor(actorId, projectId, organizationId);
+
+  // Find version by ID, scoped to readout for ownership isolation
+  const version = await DeskResearchReadoutVersion.findOne({
+    where: {
+      id: versionId,
+      readout_id: readoutId,
+    },
+  });
+
+  if (!version) {
+    return null;
+  }
+
+  const content = version.get('content') as DraftContent | null;
+
+  return {
+    versionId: version.get('id') as number,
+    versionNumber: version.get('version_number') as number,
+    generationStatus: version.get('generation_status') as GenerationStatus,
+    hasContent: content !== null,
+    content,
+    evidenceSet: version.get('evidence_set') as EvidenceSetEntry[],
+    draftContentVersionAtStart: version.get('draft_content_version_at_start') as number,
+    generationCompletedAt: version.get('generation_completed_at') as Date | null,
   };
 }
 
