@@ -1828,3 +1828,230 @@
   border-radius: var(--radius-md);
   margin-bottom: var(--space-4);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * DR-6b-5e-B-2 VERSION HISTORY UI STYLES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Version List ───────────────────────────────────────────────────────────── */
+
+.versionList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.versionListItem {
+  display: block;
+  width: 100%;
+  padding: var(--space-3);
+  text-align: left;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.versionListItem:hover {
+  border-color: var(--color-brand);
+}
+
+.versionListItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.versionListItemNumber {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+}
+
+.versionListItemMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-1);
+}
+
+.versionListItemMetaItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+}
+
+.versionListItemEvidence {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+}
+
+/* ─── Version Status Colors ──────────────────────────────────────────────────── */
+
+.statusCompleted {
+  color: var(--color-success);
+}
+
+.statusFailed {
+  color: var(--color-error);
+}
+
+.statusSuperseded {
+  color: var(--color-warning);
+}
+
+.statusPending,
+.statusGenerating {
+  color: var(--color-text-muted);
+}
+
+.versionStatusCompleted {
+  color: var(--color-success);
+}
+
+.versionStatusFailed {
+  color: var(--color-error);
+}
+
+.versionStatusSuperseded {
+  color: var(--color-warning);
+}
+
+.versionStatusPending,
+.versionStatusGenerating {
+  color: var(--color-text-muted);
+}
+
+/* ─── Version Snapshot View ──────────────────────────────────────────────────── */
+
+.versionSnapshot {
+  padding: var(--space-4);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.versionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+}
+
+.versionMetadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.versionMetaItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+}
+
+/* ─── Read-Only Notice ───────────────────────────────────────────────────────── */
+
+.readOnlyNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.readOnlyNotice p {
+  margin: 0;
+}
+
+/* ─── Version Evidence Section ───────────────────────────────────────────────── */
+
+.versionEvidenceSection {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.versionEvidenceTitle {
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin: 0 0 var(--space-2);
+}
+
+.versionEvidenceList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.versionEvidenceChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  background: var(--color-brand-tint);
+  border-radius: var(--radius-sm);
+}
+
+.versionEvidenceId {
+  font-weight: var(--weight-semibold);
+  color: var(--color-brand-text);
+}
+
+.versionEvidenceRevision {
+  color: var(--color-text-muted);
+}
+
+/* ─── No Content State ───────────────────────────────────────────────────────── */
+
+.versionNoContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-6);
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.versionNoContentIcon {
+  margin-bottom: var(--space-3);
+}
+
+.versionNoContentMessage {
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+  margin: 0;
+  max-width: 300px;
+}
