@@ -147,4 +147,24 @@ export const readoutsKeys = {
       'generation-status',
       generationRequestId,
     ] as const,
+
+  /**
+   * Version content for a specific generation version.
+   * Read-only endpoint for accessing historical generated content.
+   * DR-6b-5e-B
+   *
+   * Key includes versionId (numeric) for cross-readout cache isolation.
+   * Historical version content is immutable once completed.
+   */
+  versionContent: (
+    projectPublicId: string,
+    studyPublicId: string,
+    readoutPublicId: string,
+    versionId: number,
+  ) =>
+    [
+      ...readoutsKeys.detail(projectPublicId, studyPublicId, readoutPublicId),
+      'version-content',
+      versionId,
+    ] as const,
 };

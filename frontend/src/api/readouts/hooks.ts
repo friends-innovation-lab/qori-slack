@@ -26,6 +26,7 @@ import {
   getEligibleEvidence,
   initiateGeneration,
   getGenerationStatus,
+  getVersionContent,
 } from './client';
 import {
   parseReadoutError,
@@ -494,4 +495,72 @@ export function useGenerationStatus(
   ]);
 
   return query;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VERSION CONTENT HOOK (DR-6b-5e-B)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Fetch stored content for a specific generation version.
+ *
+ * Read-only hook for accessing historical generated content and evidence snapshots.
+ * Uses infinite staleTime since completed version content is immutable.
+ *
+ * Disabled when versionId is null/undefined — no unnecessary fetch when
+ * no version is selected.
+ *
+ * Does not trigger any draft mutations, optimistic updates, or generation initiations.
+ * Cache is separate from mutable draft data.
+ *
+ * @param versionId - Numeric version ID (null to disable query)
+ * @param options.enabled - Additional enabled condition (default: true)
+ */
+export function useVersionContent(
+  projectPublicId: string,
+  studyPublicId: string,
+  readoutPublicId: string,
+  versionId: number | null,
+  options?: { enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: readoutsKeys.versionContent(
+      projectPublicId,
+      studyPublicId,
+      readoutPublicId,
+      versionId ?? 0, // Use 0 as placeholder when disabled
+    ),
+    queryFn: () => {
+      if (versionId === null) {
+        throw new Error('versionId is required');
+      }
+      return getVersionContent(
+        projectPublicId,
+        studyPublicId,
+        readoutPublicId,
+        versionId,
+      );
+    },
+    enabled:
+      (options?.enabled ?? true) &&
+      !!projectPublicId &&
+      !!studyPublicId &&
+      !!readoutPublicId &&
+      versionId !== null,
+    // Completed version content is immutable — never goes stale
+    staleTime: Infinity,
+    // Don't retry authorization or 404 errors — they won't change
+    retry: (failureCount, error) => {
+      // Stop retrying after 3 attempts
+      if (failureCount >= 3) return false;
+      // Don't retry 4xx errors (auth, not found, etc.)
+      if (error && typeof error === 'object' && 'response' in error) {
+        const httpError = error as { response: Response };
+        if (httpError.response.status >= 400 && httpError.response.status < 500) {
+          return false;
+        }
+      }
+      return true;
+    },
+  });
 }

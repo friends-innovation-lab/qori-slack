@@ -25,6 +25,8 @@ export type ReadoutErrorCode =
   | 'APPROVAL_INELIGIBLE'
   | 'IDEMPOTENCY_CONFLICT'
   | 'EVIDENCE_SELECTION_ERROR'
+  | 'READOUT_FINALIZED'
+  | 'GENERATION_IN_PROGRESS'
   | 'UNKNOWN';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -130,6 +132,49 @@ export interface EvidenceSelectionError extends ReadoutApiError {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// FINALITY ERRORS (DR-6b-5e)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Readout finalized error (422).
+ * Returned when generation is requested on an already-approved readout.
+ * Approved readouts are final — generation is no longer permitted.
+ *
+ * Backend shape (desk-readouts.routes.ts):
+ * {
+ *   error: {
+ *     code: 'READOUT_FINALIZED',
+ *     message: 'Readout has been approved and cannot be regenerated'
+ *   }
+ * }
+ */
+export interface ReadoutFinalizedError extends ReadoutApiError {
+  code: 'READOUT_FINALIZED';
+  status: 422;
+}
+
+/**
+ * Generation in progress error (409).
+ * Returned when approval is requested while generation is active.
+ * Prevents race between approval and active generation.
+ *
+ * Backend shape (desk-readouts.routes.ts):
+ * {
+ *   error: {
+ *     code: 'GENERATION_IN_PROGRESS',
+ *     message: 'Approval cannot proceed while generation is in progress',
+ *     generationRequestId: string
+ *   }
+ * }
+ */
+export interface GenerationInProgressError extends ReadoutApiError {
+  code: 'GENERATION_IN_PROGRESS';
+  status: 409;
+  /** The active generation request blocking approval */
+  generationRequestId: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // TYPE GUARDS
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -201,6 +246,33 @@ export function isEvidenceSelectionError(
   return Array.isArray(typed.invalidRevisionIds);
 }
 
+/**
+ * Type guard for readout finalized errors (DR-6b-5e).
+ * Approved readouts cannot be regenerated.
+ */
+export function isReadoutFinalizedError(
+  error: ReadoutApiError,
+): error is ReadoutFinalizedError {
+  return error.code === 'READOUT_FINALIZED' && error.status === 422;
+}
+
+/**
+ * Type guard for generation-in-progress errors (DR-6b-5e).
+ * Returns true when error includes generationRequestId.
+ */
+export function isGenerationInProgressError(
+  error: ReadoutApiError,
+): error is GenerationInProgressError {
+  if (error.code !== 'GENERATION_IN_PROGRESS' || error.status !== 409) {
+    return false;
+  }
+  if (!('generationRequestId' in error)) {
+    return false;
+  }
+  const typed = error as GenerationInProgressError;
+  return typeof typed.generationRequestId === 'string';
+}
+
 export function isNotFoundError(error: ReadoutApiError): boolean {
   return error.code === 'NOT_FOUND' && error.status === 404;
 }
@@ -225,6 +297,7 @@ interface BackendErrorBody {
     submittedContent?: DraftContent;
     errors?: string[];
     invalidRevisionIds?: string[];
+    generationRequestId?: string; // DR-6b-5e: GENERATION_IN_PROGRESS
   };
 }
 
@@ -327,6 +400,30 @@ export async function parseReadoutError(
         } as EvidenceSelectionError;
       }
 
+      // Parse 422 READOUT_FINALIZED (DR-6b-5e finality)
+      if (status === 422 && backendCode === 'READOUT_FINALIZED') {
+        return {
+          code: 'READOUT_FINALIZED',
+          message:
+            body.error?.message ||
+            'Readout has been approved and cannot be regenerated',
+          status: 422,
+        } as ReadoutFinalizedError;
+      }
+
+      // Parse 409 GENERATION_IN_PROGRESS (DR-6b-5e finality)
+      if (status === 409 && backendCode === 'GENERATION_IN_PROGRESS') {
+        const generationRequestId = body.error?.generationRequestId;
+        return {
+          code: 'GENERATION_IN_PROGRESS',
+          message:
+            body.error?.message ||
+            'Approval cannot proceed while generation is in progress',
+          status: 409,
+          generationRequestId: generationRequestId ?? '',
+        } as GenerationInProgressError;
+      }
+
       // Standard error codes
       return {
         code: mapStatusToCode(status, backendCode),
@@ -368,6 +465,8 @@ function mapStatusToCode(
       'APPROVAL_INELIGIBLE',
       'IDEMPOTENCY_CONFLICT',
       'EVIDENCE_SELECTION_ERROR',
+      'READOUT_FINALIZED',
+      'GENERATION_IN_PROGRESS',
     ];
     if (validCodes.includes(backendCode as ReadoutErrorCode)) {
       return backendCode as ReadoutErrorCode;

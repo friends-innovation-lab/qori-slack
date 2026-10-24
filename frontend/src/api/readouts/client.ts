@@ -34,6 +34,7 @@ import type {
   InitiateGenerationRequest,
   InitiateGenerationResponse,
   GenerationStatusResponse,
+  VersionContentResponse,
 } from './types';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -317,4 +318,31 @@ export async function getGenerationStatus(
       ),
     )
     .json<GenerationStatusResponse>();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VERSION CONTENT (DR-6b-5e-B)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /projects/:projectId/studies/:studyId/readouts/:readoutId/versions/:versionId/content
+ *
+ * Retrieve stored content for a specific generation version.
+ * Read-only endpoint for accessing persisted generation results.
+ *
+ * - Requires project access (read permission).
+ * - Returns 404 if version doesn't belong to the specified readout.
+ * - Returns content, evidence snapshot, and version metadata.
+ * - Does not expose internal worker metadata or raw provider errors.
+ * - Does not modify draft, approval state, or review state.
+ */
+export async function getVersionContent(
+  projectId: string,
+  studyId: string,
+  readoutId: string,
+  versionId: number,
+): Promise<VersionContentResponse> {
+  return api
+    .get(readoutsPath(projectId, studyId, readoutId, `versions/${versionId}/content`))
+    .json<VersionContentResponse>();
 }

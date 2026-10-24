@@ -393,3 +393,62 @@ export interface GenerationStatusResponse {
     hasContent: boolean;
   };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VERSION CONTENT API TYPES (DR-6b-5e-B)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Pinned evidence entry stored with a generation version.
+ * Matches backend EvidenceSetEntry (desk_research_readout_version.ts).
+ *
+ * Note: This is identical to Citation but defined separately to distinguish
+ * between draft citations (mutable) and version evidence (immutable snapshot).
+ */
+export interface VersionEvidenceEntry {
+  constructPublicId: string;
+  revisionPublicId: string;
+  revisionNumber: number;
+  displayId: string; // "IN-0001"
+}
+
+/**
+ * Version content retrieval result.
+ * GET /readouts/:readoutId/versions/:versionId/content
+ *
+ * Matches backend VersionContentResult (desk-readout.service.ts).
+ *
+ * Read-only endpoint for accessing persisted generation results.
+ * Does not expose internal worker metadata or raw provider errors.
+ *
+ * IMPORTANT:
+ * - hasContent: true does NOT mean content was applied to the current draft.
+ * - The draft may have been concurrently edited (CAS conflict at apply time).
+ * - Use draftContentVersionAtStart vs current draft.contentVersion to detect.
+ */
+export interface VersionContent {
+  /** Numeric version ID (primary key) */
+  versionId: number;
+  /** Human-readable version sequence number */
+  versionNumber: number;
+  /** Terminal generation status */
+  generationStatus: GenerationStatus;
+  /** Whether the version has stored content */
+  hasContent: boolean;
+  /** Generated content (null if not yet completed or failed) */
+  content: DraftContent | null;
+  /** Pinned evidence snapshot used for generation */
+  evidenceSet: VersionEvidenceEntry[];
+  /** Draft version when generation was initiated (for conflict detection context) */
+  draftContentVersionAtStart: number;
+  /** ISO 8601 timestamp — when generation completed (null if not yet completed) */
+  generationCompletedAt: string | null;
+}
+
+/**
+ * Response from version content endpoint.
+ * GET /readouts/:readoutId/versions/:versionId/content
+ */
+export interface VersionContentResponse {
+  data: VersionContent;
+}

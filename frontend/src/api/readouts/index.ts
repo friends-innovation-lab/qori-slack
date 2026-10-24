@@ -29,6 +29,10 @@ export type {
   EligibleInsightSource,
   EvidenceSnapshot,
   EvidenceSnapshotEntry,
+  // Version content types (DR-6b-5e-B)
+  VersionContent,
+  VersionContentResponse,
+  VersionEvidenceEntry,
   // Response types
   ReadoutListResponse,
   ReadoutDetailResponse,
@@ -60,6 +64,7 @@ export {
   getApprovalHistory,
   getGenerationHistory,
   getEligibleEvidence,
+  getVersionContent,
 } from './client';
 
 // Error handling
@@ -68,6 +73,9 @@ export type {
   ReadoutApiError,
   ConcurrencyConflictError,
   ApprovalIneligibleError,
+  // Finality errors (DR-6b-5e)
+  ReadoutFinalizedError,
+  GenerationInProgressError,
 } from './errors';
 
 export {
@@ -77,6 +85,9 @@ export {
   isNotFoundError,
   isAuthorizationError,
   isValidationError,
+  // Finality error guards (DR-6b-5e)
+  isReadoutFinalizedError,
+  isGenerationInProgressError,
 } from './errors';
 
 // Query hooks
@@ -88,6 +99,7 @@ export {
   useGenerationHistory,
   useEligibleEvidence,
   useGenerationStatus,
+  useVersionContent,
 } from './hooks';
 
 // Mutation hooks
