@@ -23,3 +23,7 @@ export { ApprovalStatusBanner } from './ApprovalStatusBanner';
 export { EvidenceSelectionPanel } from './EvidenceSelectionPanel';
 export { GenerationProgress } from './GenerationProgress';
 export { GenerationFailure } from './GenerationFailure';
+
+// Generation history components (DR-6b-5e-B-2)
+export { VersionHistoryPanel } from './VersionHistoryPanel';
+export { VersionContentView } from './VersionContentView';
