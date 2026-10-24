@@ -8,7 +8,7 @@
  * - Supports all generation statuses: completed, failed, superseded, pending, generating
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, type MutableRefObject } from 'react';
 import {
   History,
   ChevronRight,
@@ -24,6 +24,67 @@ import type { GenerationVersion, GenerationStatus, VersionContent } from '@/api/
 import { useVersionContent } from '@/api/readouts';
 import { VersionContentView } from './VersionContentView';
 import styles from './readout.module.css';
+
+/**
+ * Focus trap hook for modal dialogs
+ * Keeps focus within the dialog and restores focus on close
+ */
+function useFocusTrap(
+  panelRef: MutableRefObject<HTMLDivElement | null>,
+  closeButtonRef: MutableRefObject<HTMLButtonElement | null>,
+): MutableRefObject<HTMLElement | null> {
+  // Store the element that was focused when the panel opened
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+
+  // Capture previously focused element and focus close button on mount
+  useEffect(() => {
+    previouslyFocusedRef.current = document.activeElement as HTMLElement;
+
+    // Focus the close button after a brief delay to ensure DOM is ready
+    const focusTimer = setTimeout(() => {
+      closeButtonRef.current?.focus();
+    }, 0);
+
+    return () => {
+      clearTimeout(focusTimer);
+    };
+  }, [closeButtonRef]);
+
+  // Handle Tab key for focus trapping
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab' || !panelRef.current) return;
+
+      const focusableElements = panelRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+
+      if (focusableElements.length === 0) return;
+
+      const firstFocusable = focusableElements[0];
+      const lastFocusable = focusableElements[focusableElements.length - 1];
+
+      if (event.shiftKey) {
+        // Shift+Tab: if on first element, wrap to last
+        if (document.activeElement === firstFocusable) {
+          event.preventDefault();
+          lastFocusable.focus();
+        }
+      } else {
+        // Tab: if on last element, wrap to first
+        if (document.activeElement === lastFocusable) {
+          event.preventDefault();
+          firstFocusable.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [panelRef]);
+
+  return previouslyFocusedRef;
+}
 
 /**
  * Format a date as a human-readable string
@@ -116,9 +177,13 @@ export function VersionHistoryPanel({
   // Selected version for detailed view (null = list view)
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
 
-  // Track ref for close button focus management
+  // Track refs for focus management
+  const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const backButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Set up focus trap and get ref to previously focused element
+  const previouslyFocusedRef = useFocusTrap(panelRef, closeButtonRef);
 
   // Find selected version from the list
   const selectedVersion = selectedVersionId !== null
@@ -148,11 +213,20 @@ export function VersionHistoryPanel({
     setSelectedVersionId(null);
   }, []);
 
+  // Close handler that restores focus to the previously focused element
   const handleClose = useCallback(() => {
+    // Restore focus to the element that was focused before the panel opened
+    const previousElement = previouslyFocusedRef.current;
+    if (previousElement && typeof previousElement.focus === 'function') {
+      // Check if element is still in DOM and focusable
+      if (document.body.contains(previousElement)) {
+        previousElement.focus();
+      }
+    }
     onClose();
-  }, [onClose]);
+  }, [onClose, previouslyFocusedRef]);
 
-  // Handle Escape key to close panel
+  // Handle Escape key to close panel or go back
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -177,6 +251,7 @@ export function VersionHistoryPanel({
 
   return (
     <div
+      ref={panelRef}
       className={styles.historyPanel}
       role="dialog"
       aria-label="Generation History"

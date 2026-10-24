@@ -14,6 +14,7 @@
  * 10. No draft mutations, generation POSTs, or approval actions
  */
 
+import { useState } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -671,6 +672,233 @@ describe('VersionHistoryPanel', () => {
       const dialog = screen.getByRole('dialog');
       expect(dialog).toHaveAttribute('aria-label', 'Generation History');
       expect(dialog).toHaveAttribute('aria-modal', 'true');
+    });
+
+    // ─── Focus entry tests ───────────────────────────────────────────────────
+    it('focuses close button when panel opens', async () => {
+      render(
+        <VersionHistoryPanel {...defaultProps} versions={[]} />,
+        { wrapper: createWrapper() },
+      );
+
+      // Wait for focus to be set (setTimeout in useFocusTrap)
+      await waitFor(() => {
+        expect(screen.getByLabelText('Close history panel')).toHaveFocus();
+      });
+    });
+
+    // ─── Focus containment tests ─────────────────────────────────────────────
+    it('traps focus within dialog on Tab', async () => {
+      const versions = [createVersion({ id: 1, versionNumber: 1 })];
+
+      render(
+        <VersionHistoryPanel {...defaultProps} versions={versions} />,
+        { wrapper: createWrapper() },
+      );
+
+      // Wait for initial focus
+      await waitFor(() => {
+        expect(screen.getByLabelText('Close history panel')).toHaveFocus();
+      });
+
+      // Tab from close button (should go to version list item)
+      fireEvent.keyDown(document, { key: 'Tab' });
+
+      // Focus should stay within the dialog
+      const activeElement = document.activeElement;
+      const dialog = screen.getByRole('dialog');
+      expect(dialog.contains(activeElement)).toBe(true);
+    });
+
+    it('traps focus within dialog on Shift+Tab from first element', async () => {
+      const versions = [createVersion({ id: 1, versionNumber: 1 })];
+
+      render(
+        <VersionHistoryPanel {...defaultProps} versions={versions} />,
+        { wrapper: createWrapper() },
+      );
+
+      // Wait for initial focus on close button
+      await waitFor(() => {
+        expect(screen.getByLabelText('Close history panel')).toHaveFocus();
+      });
+
+      // Get the version list item (last focusable element)
+      const versionItem = screen.getByRole('listitem');
+
+      // Focus the version item
+      versionItem.focus();
+
+      // Shift+Tab from version item should wrap to close button
+      fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+
+      // Wait and verify focus is still within dialog
+      await waitFor(() => {
+        const activeElement = document.activeElement;
+        const dialog = screen.getByRole('dialog');
+        expect(dialog.contains(activeElement)).toBe(true);
+      });
+    });
+
+    it('wraps focus from last to first element on Tab', async () => {
+      render(
+        <VersionHistoryPanel {...defaultProps} versions={[]} />,
+        { wrapper: createWrapper() },
+      );
+
+      // Wait for initial focus
+      await waitFor(() => {
+        expect(screen.getByLabelText('Close history panel')).toHaveFocus();
+      });
+
+      // With no versions, close button is the only focusable element
+      // Tab should keep focus on close button (wraps to itself)
+      fireEvent.keyDown(document, { key: 'Tab' });
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Close history panel')).toHaveFocus();
+      });
+    });
+
+    // ─── Focus restoration tests ─────────────────────────────────────────────
+    it('restores focus to opener element on close', async () => {
+      const onClose = vi.fn();
+
+      // Create an opener button to focus before opening the panel
+      const OpenerWithPanel = () => {
+        const [isOpen, setIsOpen] = useState(false);
+        return (
+          <>
+            <button data-testid="opener" onClick={() => setIsOpen(true)}>
+              Open Panel
+            </button>
+            {isOpen && (
+              <VersionHistoryPanel
+                {...defaultProps}
+                onClose={() => {
+                  setIsOpen(false);
+                  onClose();
+                }}
+                versions={[]}
+              />
+            )}
+          </>
+        );
+      };
+
+      render(<OpenerWithPanel />, { wrapper: createWrapper() });
+
+      // Focus and click the opener button
+      const openerButton = screen.getByTestId('opener');
+      openerButton.focus();
+      fireEvent.click(openerButton);
+
+      // Wait for panel to open and focus close button
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+        expect(screen.getByLabelText('Close history panel')).toHaveFocus();
+      });
+
+      // Close the panel
+      fireEvent.click(screen.getByLabelText('Close history panel'));
+
+      // Focus should be restored to opener
+      await waitFor(() => {
+        expect(openerButton).toHaveFocus();
+      });
+    });
+
+    it('restores focus to opener on Escape key close', async () => {
+      const OpenerWithPanel = () => {
+        const [isOpen, setIsOpen] = useState(false);
+        return (
+          <>
+            <button data-testid="opener" onClick={() => setIsOpen(true)}>
+              Open Panel
+            </button>
+            {isOpen && (
+              <VersionHistoryPanel
+                {...defaultProps}
+                onClose={() => setIsOpen(false)}
+                versions={[]}
+              />
+            )}
+          </>
+        );
+      };
+
+      render(<OpenerWithPanel />, { wrapper: createWrapper() });
+
+      // Focus and click the opener button
+      const openerButton = screen.getByTestId('opener');
+      openerButton.focus();
+      fireEvent.click(openerButton);
+
+      // Wait for panel to open
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      // Press Escape to close
+      fireEvent.keyDown(document, { key: 'Escape' });
+
+      // Focus should be restored to opener
+      await waitFor(() => {
+        expect(openerButton).toHaveFocus();
+      });
+    });
+
+    it('does not restore focus if opener is removed from DOM', async () => {
+      const onClose = vi.fn();
+
+      // Create a scenario where opener gets removed
+      const OpenerWithPanel = () => {
+        const [isOpen, setIsOpen] = useState(false);
+        const [showOpener, setShowOpener] = useState(true);
+        return (
+          <>
+            {showOpener && (
+              <button data-testid="opener" onClick={() => setIsOpen(true)}>
+                Open Panel
+              </button>
+            )}
+            <button data-testid="remove-opener" onClick={() => setShowOpener(false)}>
+              Remove Opener
+            </button>
+            {isOpen && (
+              <VersionHistoryPanel
+                {...defaultProps}
+                onClose={() => {
+                  setIsOpen(false);
+                  onClose();
+                }}
+                versions={[]}
+              />
+            )}
+          </>
+        );
+      };
+
+      render(<OpenerWithPanel />, { wrapper: createWrapper() });
+
+      // Focus and click the opener button
+      const openerButton = screen.getByTestId('opener');
+      openerButton.focus();
+      fireEvent.click(openerButton);
+
+      // Wait for panel to open
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      // Remove the opener from DOM
+      fireEvent.click(screen.getByTestId('remove-opener'));
+
+      // Close the panel
+      fireEvent.click(screen.getByLabelText('Close history panel'));
+
+      // Should not throw, onClose should still be called
+      expect(onClose).toHaveBeenCalled();
     });
 
     it('has accessible version list items', () => {
