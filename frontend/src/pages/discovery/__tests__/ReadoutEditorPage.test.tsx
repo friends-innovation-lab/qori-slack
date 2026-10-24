@@ -70,6 +70,7 @@ let mockIsConcurrencyError = vi.fn().mockReturnValue(false);
 let mockIsApprovalIneligibleError = vi.fn().mockReturnValue(false);
 let mockIsAuthorizationError = vi.fn().mockReturnValue(false);
 let mockIsTerminalGenerationStatus = vi.fn().mockReturnValue(false);
+let mockIsReadoutFinalizedError = vi.fn().mockReturnValue(false);
 
 vi.mock('@/api/readouts', async () => {
   const actual = await vi.importActual('@/api/readouts');
@@ -88,6 +89,7 @@ vi.mock('@/api/readouts', async () => {
     isApprovalIneligibleError: (err: unknown) => mockIsApprovalIneligibleError(err),
     isAuthorizationError: (err: unknown) => mockIsAuthorizationError(err),
     isTerminalGenerationStatus: (status: unknown) => mockIsTerminalGenerationStatus(status),
+    isReadoutFinalizedError: (err: unknown) => mockIsReadoutFinalizedError(err),
   };
 });
 
@@ -168,6 +170,38 @@ function createMockEligibleInsight(overrides: Partial<EligibleInsight> = {}): El
       acceptedAt: '2026-10-16T12:00:00Z',
     },
     source: null,
+    ...overrides,
+  };
+}
+
+function createMockApprovalDetail(overrides: Partial<ApprovalDetail> = {}): ApprovalDetail {
+  return {
+    id: 1,
+    approvalNumber: 1,
+    approvedAt: '2026-10-17T14:00:00Z',
+    approvedByActorId: 1,
+    approvalNote: 'Approved after review',
+    sourceDraftContentVersion: 5,
+    contentSnapshot: {
+      summary: { text: 'Approved summary', citations: [] },
+      findings: [{ id: 'f1', text: 'Approved finding', citations: [] }],
+      limitations: [],
+      implications: [{ id: 'i1', kind: 'question', text: 'Approved implication', basedOnFindings: ['f1'] }],
+    },
+    findingsCheckedSnapshot: ['f1'],
+    implicationsReviewedSnapshot: ['i1'],
+    evidenceSnapshot: { cited_constructs: [] },
+    supersessionNotes: {},
+    ...overrides,
+  };
+}
+
+function createMockSupersededCitation(overrides: Partial<SupersededCitation> = {}): SupersededCitation {
+  return {
+    constructPublicId: 'construct-old',
+    revisionPublicId: 'revision-old-v1',
+    revisionNumber: 1,
+    displayId: 'IN-0050',
     ...overrides,
   };
 }
@@ -705,40 +739,6 @@ describe('ReadoutEditorPage Integration', () => {
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe('DR-6b-4e Approval UI', () => {
-    // Helper to create approval detail fixtures
-    function createMockApprovalDetail(overrides: Partial<ApprovalDetail> = {}): ApprovalDetail {
-      return {
-        id: 1,
-        approvalNumber: 1,
-        approvedAt: '2026-10-17T14:00:00Z',
-        approvedByActorId: 1,
-        approvalNote: 'Approved after review',
-        sourceDraftContentVersion: 5,
-        contentSnapshot: {
-          summary: { text: 'Approved summary', citations: [] },
-          findings: [{ id: 'f1', text: 'Approved finding', citations: [] }],
-          limitations: [],
-          implications: [{ id: 'i1', kind: 'question', text: 'Approved implication', basedOnFindings: ['f1'] }],
-        },
-        findingsCheckedSnapshot: ['f1'],
-        implicationsReviewedSnapshot: ['i1'],
-        evidenceSnapshot: { cited_constructs: [] },
-        supersessionNotes: {},
-        ...overrides,
-      };
-    }
-
-    // Helper for superseded citation fixture
-    function createMockSupersededCitation(overrides: Partial<SupersededCitation> = {}): SupersededCitation {
-      return {
-        constructPublicId: 'construct-old',
-        revisionPublicId: 'revision-old-v1',
-        revisionNumber: 1,
-        displayId: 'IN-0050',
-        ...overrides,
-      };
-    }
-
     describe('Scenario 1: Eligible → confirmation → successful approval → immutable snapshot', () => {
       it('shows approval confirmation modal when eligible and creates immutable snapshot on success', async () => {
         const user = userEvent.setup();
@@ -1259,7 +1259,8 @@ describe('ReadoutEditorPage Integration', () => {
 
         // History panel should open with list of approvals
         await waitFor(() => {
-          expect(screen.getByText('Approval History')).toBeInTheDocument();
+          // Use role selector to target the h2 heading in the panel, not the button
+          expect(screen.getByRole('heading', { name: 'Approval History' })).toBeInTheDocument();
         });
 
         // Both approvals should be listed
@@ -2169,6 +2170,730 @@ describe('ReadoutEditorPage Integration', () => {
         // Approve button should be enabled (no active generation)
         const approveButton = screen.getByRole('button', { name: /approve/i });
         expect(approveButton).not.toBeDisabled();
+      });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DR-6b-5e-B-3 GENERATION HISTORY & REGENERATION TESTS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('DR-6b-5e-B-3 Generation History & Regeneration', () => {
+    describe('Generation History button visibility', () => {
+      it('shows Generation History button for approved readouts', async () => {
+        // Approved readout (latestApproval indicates the readout has been approved)
+        const mockReadout = createMockReadout({
+          latestApproval: createMockApprovalDetail(),
+        });
+
+        mockUseReadoutDetail.mockReturnValue({
+          data: { data: mockReadout },
+          isLoading: false,
+          error: null,
+          refetch: mockRefetch,
+        });
+
+        // Has completed generation
+        mockUseGenerationHistory.mockReturnValue({
+          data: {
+            data: {
+              versions: [
+                {
+                  id: 1,
+                  versionNumber: 1,
+                  generationRequestId: 'gen-123',
+                  generationStatus: 'completed',
+                  generationStartedAt: '2026-10-15T10:00:00Z',
+                  generationCompletedAt: '2026-10-15T10:05:00Z',
+                  generationError: null,
+                  draftContentVersionAtStart: 1,
+                  evidenceSet: [],
+                  createdAt: '2026-10-15T10:00:00Z',
+                },
+              ],
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        renderPage();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Readout Title')).toBeInTheDocument();
+        });
+
+        // Generation History button should be visible for approved readouts
+        expect(screen.getByRole('button', { name: /generation history/i })).toBeInTheDocument();
+      });
+
+      it('opens Generation History panel when button is clicked', async () => {
+        const user = userEvent.setup();
+
+        // Approved readout (latestApproval indicates the readout has been approved)
+        const mockReadout = createMockReadout({
+          latestApproval: createMockApprovalDetail(),
+        });
+
+        mockUseReadoutDetail.mockReturnValue({
+          data: { data: mockReadout },
+          isLoading: false,
+          error: null,
+          refetch: mockRefetch,
+        });
+
+        mockUseGenerationHistory.mockReturnValue({
+          data: {
+            data: {
+              versions: [
+                {
+                  id: 1,
+                  versionNumber: 1,
+                  generationRequestId: 'gen-123',
+                  generationStatus: 'completed',
+                  generationStartedAt: '2026-10-15T10:00:00Z',
+                  generationCompletedAt: '2026-10-15T10:05:00Z',
+                  generationError: null,
+                  draftContentVersionAtStart: 1,
+                  evidenceSet: [],
+                  createdAt: '2026-10-15T10:00:00Z',
+                },
+              ],
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        renderPage();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Readout Title')).toBeInTheDocument();
+        });
+
+        // Click Generation History button
+        await user.click(screen.getByRole('button', { name: /generation history/i }));
+
+        // Panel should open
+        await waitFor(() => {
+          expect(screen.getByRole('heading', { name: /generation history/i })).toBeInTheDocument();
+        });
+      });
+    });
+
+    describe('Regenerate button visibility and guards', () => {
+      it('shows Regenerate button for non-approved draft with completed generation', async () => {
+        // Non-approved readout (latestApproval: null is the default)
+        const mockReadout = createMockReadout();
+
+        mockUseReadoutDetail.mockReturnValue({
+          data: { data: mockReadout },
+          isLoading: false,
+          error: null,
+          refetch: mockRefetch,
+        });
+
+        // Has completed generation
+        mockUseGenerationHistory.mockReturnValue({
+          data: {
+            data: {
+              versions: [
+                {
+                  id: 1,
+                  versionNumber: 1,
+                  generationRequestId: 'gen-123',
+                  generationStatus: 'completed',
+                  generationStartedAt: '2026-10-15T10:00:00Z',
+                  generationCompletedAt: '2026-10-15T10:05:00Z',
+                  generationError: null,
+                  draftContentVersionAtStart: 1,
+                  evidenceSet: [
+                    { constructPublicId: 'c1', revisionPublicId: 'r1', revisionNumber: 1, displayId: 'IN-0001' },
+                  ],
+                  createdAt: '2026-10-15T10:00:00Z',
+                },
+              ],
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        renderPage();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Readout Title')).toBeInTheDocument();
+        });
+
+        // Regenerate button should be visible
+        expect(screen.getByRole('button', { name: /regenerate/i })).toBeInTheDocument();
+      });
+
+      it('hides Regenerate button for approved readouts', async () => {
+        const mockReadout = createMockReadout({
+          latestApproval: createMockApprovalDetail(),
+        });
+
+        mockUseReadoutDetail.mockReturnValue({
+          data: { data: mockReadout },
+          isLoading: false,
+          error: null,
+          refetch: mockRefetch,
+        });
+
+        mockUseGenerationHistory.mockReturnValue({
+          data: {
+            data: {
+              versions: [
+                {
+                  id: 1,
+                  versionNumber: 1,
+                  generationRequestId: 'gen-123',
+                  generationStatus: 'completed',
+                  generationStartedAt: '2026-10-15T10:00:00Z',
+                  generationCompletedAt: '2026-10-15T10:05:00Z',
+                  generationError: null,
+                  draftContentVersionAtStart: 1,
+                  evidenceSet: [],
+                  createdAt: '2026-10-15T10:00:00Z',
+                },
+              ],
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        renderPage();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Readout Title')).toBeInTheDocument();
+        });
+
+        // Regenerate button should NOT be visible for approved readouts
+        expect(screen.queryByRole('button', { name: /regenerate/i })).not.toBeInTheDocument();
+      });
+
+      it('disables Regenerate button when editor has unsaved changes', async () => {
+        const user = userEvent.setup();
+        const mockReadout = createMockReadout();
+
+        mockUseReadoutDetail.mockReturnValue({
+          data: { data: mockReadout },
+          isLoading: false,
+          error: null,
+          refetch: mockRefetch,
+        });
+
+        mockUseGenerationHistory.mockReturnValue({
+          data: {
+            data: {
+              versions: [
+                {
+                  id: 1,
+                  versionNumber: 1,
+                  generationRequestId: 'gen-123',
+                  generationStatus: 'completed',
+                  generationStartedAt: '2026-10-15T10:00:00Z',
+                  generationCompletedAt: '2026-10-15T10:05:00Z',
+                  generationError: null,
+                  draftContentVersionAtStart: 1,
+                  evidenceSet: [],
+                  createdAt: '2026-10-15T10:00:00Z',
+                },
+              ],
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        renderPage();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Readout Title')).toBeInTheDocument();
+        });
+
+        // Initially Regenerate should be enabled
+        expect(screen.getByRole('button', { name: /regenerate/i })).not.toBeDisabled();
+
+        // Make an edit to dirty the draft
+        const findingTextarea = screen.getByLabelText('Finding F1 text');
+        await user.type(findingTextarea, ' modified');
+
+        // Now Regenerate should be disabled
+        await waitFor(() => {
+          expect(screen.getByRole('button', { name: /regenerate/i })).toBeDisabled();
+        });
+      });
+
+      it('hides Regenerate button when generation is in progress', async () => {
+        const mockReadout = createMockReadout({
+          currentGenerationRequestId: 'gen-active-123',
+        });
+
+        mockUseReadoutDetail.mockReturnValue({
+          data: { data: mockReadout },
+          isLoading: false,
+          error: null,
+          refetch: mockRefetch,
+        });
+
+        mockUseGenerationHistory.mockReturnValue({
+          data: {
+            data: {
+              versions: [
+                {
+                  id: 1,
+                  versionNumber: 1,
+                  generationRequestId: 'gen-123',
+                  generationStatus: 'completed',
+                  generationStartedAt: '2026-10-15T10:00:00Z',
+                  generationCompletedAt: '2026-10-15T10:05:00Z',
+                  generationError: null,
+                  draftContentVersionAtStart: 1,
+                  evidenceSet: [],
+                  createdAt: '2026-10-15T10:00:00Z',
+                },
+              ],
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        mockUseGenerationStatus.mockReturnValue({
+          data: {
+            data: {
+              generationRequestId: 'gen-active-123',
+              status: 'generating',
+              hasContent: false,
+              generationError: null,
+            },
+          },
+          isLoading: false,
+          isError: false,
+          refetch: vi.fn(),
+        });
+
+        renderPage();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Readout Title')).toBeInTheDocument();
+        });
+
+        // Regenerate button should NOT be visible during active generation
+        expect(screen.queryByRole('button', { name: /regenerate/i })).not.toBeInTheDocument();
+      });
+
+      it('hides Regenerate button when user lacks review permission', async () => {
+        mockUseProjectPermissions.mockReturnValue({
+          canReview: false,
+          isLoading: false,
+          readOnlyReason: 'You do not have permission to review',
+        });
+
+        const mockReadout = createMockReadout();
+
+        mockUseReadoutDetail.mockReturnValue({
+          data: { data: mockReadout },
+          isLoading: false,
+          error: null,
+          refetch: mockRefetch,
+        });
+
+        mockUseGenerationHistory.mockReturnValue({
+          data: {
+            data: {
+              versions: [
+                {
+                  id: 1,
+                  versionNumber: 1,
+                  generationRequestId: 'gen-123',
+                  generationStatus: 'completed',
+                  generationStartedAt: '2026-10-15T10:00:00Z',
+                  generationCompletedAt: '2026-10-15T10:05:00Z',
+                  generationError: null,
+                  draftContentVersionAtStart: 1,
+                  evidenceSet: [],
+                  createdAt: '2026-10-15T10:00:00Z',
+                },
+              ],
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        renderPage();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Readout Title')).toBeInTheDocument();
+        });
+
+        // Regenerate button should NOT be visible without review permission
+        expect(screen.queryByRole('button', { name: /regenerate/i })).not.toBeInTheDocument();
+      });
+    });
+
+    describe('Regeneration confirmation flow', () => {
+      it('shows confirmation modal when Regenerate is clicked', async () => {
+        const user = userEvent.setup();
+        const mockReadout = createMockReadout();
+
+        mockUseReadoutDetail.mockReturnValue({
+          data: { data: mockReadout },
+          isLoading: false,
+          error: null,
+          refetch: mockRefetch,
+        });
+
+        mockUseGenerationHistory.mockReturnValue({
+          data: {
+            data: {
+              versions: [
+                {
+                  id: 1,
+                  versionNumber: 1,
+                  generationRequestId: 'gen-123',
+                  generationStatus: 'completed',
+                  generationStartedAt: '2026-10-15T10:00:00Z',
+                  generationCompletedAt: '2026-10-15T10:05:00Z',
+                  generationError: null,
+                  draftContentVersionAtStart: 1,
+                  evidenceSet: [
+                    { constructPublicId: 'c1', revisionPublicId: 'r1', revisionNumber: 1, displayId: 'IN-0001' },
+                  ],
+                  createdAt: '2026-10-15T10:00:00Z',
+                },
+              ],
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        mockUseEligibleEvidence.mockReturnValue({
+          data: {
+            data: {
+              insights: [createMockEligibleInsight()],
+              pagination: { total: 1, limit: 50, offset: 0 },
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        renderPage();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Readout Title')).toBeInTheDocument();
+        });
+
+        // Click Regenerate button
+        await user.click(screen.getByRole('button', { name: /regenerate/i }));
+
+        // Evidence selection should appear
+        await waitFor(() => {
+          expect(screen.getByText('Select Evidence')).toBeInTheDocument();
+        });
+
+        // Wait for evidence to load
+        await waitFor(() => {
+          expect(screen.getByText(/1 of 1 selected/i)).toBeInTheDocument();
+        });
+
+        // Click Generate Readout to proceed
+        await user.click(screen.getByRole('button', { name: /generate readout/i }));
+
+        // Confirmation modal should appear
+        await waitFor(() => {
+          expect(screen.getByRole('dialog', { name: /confirm regeneration/i })).toBeInTheDocument();
+        });
+
+        // Should have required warning content
+        expect(screen.getByText(/new generation version will be created/i)).toBeInTheDocument();
+      });
+
+      it('cancels regeneration when Cancel is clicked in confirmation modal', async () => {
+        const user = userEvent.setup();
+        const mockReadout = createMockReadout();
+
+        mockUseReadoutDetail.mockReturnValue({
+          data: { data: mockReadout },
+          isLoading: false,
+          error: null,
+          refetch: mockRefetch,
+        });
+
+        mockUseGenerationHistory.mockReturnValue({
+          data: {
+            data: {
+              versions: [
+                {
+                  id: 1,
+                  versionNumber: 1,
+                  generationRequestId: 'gen-123',
+                  generationStatus: 'completed',
+                  generationStartedAt: '2026-10-15T10:00:00Z',
+                  generationCompletedAt: '2026-10-15T10:05:00Z',
+                  generationError: null,
+                  draftContentVersionAtStart: 1,
+                  evidenceSet: [
+                    { constructPublicId: 'c1', revisionPublicId: 'r1', revisionNumber: 1, displayId: 'IN-0001' },
+                  ],
+                  createdAt: '2026-10-15T10:00:00Z',
+                },
+              ],
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        mockUseEligibleEvidence.mockReturnValue({
+          data: {
+            data: {
+              insights: [createMockEligibleInsight()],
+              pagination: { total: 1, limit: 50, offset: 0 },
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        renderPage();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Readout Title')).toBeInTheDocument();
+        });
+
+        // Start regeneration flow
+        await user.click(screen.getByRole('button', { name: /regenerate/i }));
+
+        await waitFor(() => {
+          expect(screen.getByText(/1 of 1 selected/i)).toBeInTheDocument();
+        });
+
+        await user.click(screen.getByRole('button', { name: /generate readout/i }));
+
+        await waitFor(() => {
+          expect(screen.getByRole('dialog', { name: /confirm regeneration/i })).toBeInTheDocument();
+        });
+
+        // Click Cancel in confirmation modal - use within() to scope to the dialog
+        const dialog = screen.getByRole('dialog', { name: /confirm regeneration/i });
+        const cancelButton = within(dialog).getByText('Cancel').closest('button') as HTMLButtonElement;
+        await user.click(cancelButton);
+
+        // Modal should close and evidence selection should also close (cancel aborts entire flow)
+        await waitFor(() => {
+          expect(screen.queryByRole('dialog', { name: /confirm regeneration/i })).not.toBeInTheDocument();
+          expect(screen.queryByText('Select Evidence')).not.toBeInTheDocument();
+        });
+      });
+    });
+
+    describe('READOUT_FINALIZED error handling', () => {
+      it('displays finalized error when regeneration is rejected by backend', async () => {
+        const user = userEvent.setup();
+        const mockReadout = createMockReadout();
+
+        const mockError = {
+          response: {
+            status: 422,
+            data: {
+              error: 'READOUT_FINALIZED',
+              message: 'This readout has been approved and cannot be regenerated',
+            },
+          },
+        };
+        const generateMutate = vi.fn().mockRejectedValue(mockError);
+
+        // Configure the error checker to return true for this error
+        mockIsReadoutFinalizedError.mockImplementation((err: unknown) => err === mockError);
+
+        mockUseReadoutDetail.mockReturnValue({
+          data: { data: mockReadout },
+          isLoading: false,
+          error: null,
+          refetch: mockRefetch,
+        });
+
+        mockUseGenerationHistory.mockReturnValue({
+          data: {
+            data: {
+              versions: [
+                {
+                  id: 1,
+                  versionNumber: 1,
+                  generationRequestId: 'gen-123',
+                  generationStatus: 'completed',
+                  generationStartedAt: '2026-10-15T10:00:00Z',
+                  generationCompletedAt: '2026-10-15T10:05:00Z',
+                  generationError: null,
+                  draftContentVersionAtStart: 1,
+                  evidenceSet: [
+                    { constructPublicId: 'c1', revisionPublicId: 'r1', revisionNumber: 1, displayId: 'IN-0001' },
+                  ],
+                  createdAt: '2026-10-15T10:00:00Z',
+                },
+              ],
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        mockUseInitiateGeneration.mockReturnValue({
+          mutateAsync: generateMutate,
+          isPending: false,
+          isError: false,
+        });
+
+        mockUseEligibleEvidence.mockReturnValue({
+          data: {
+            data: {
+              insights: [createMockEligibleInsight()],
+              pagination: { total: 1, limit: 50, offset: 0 },
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        renderPage();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Readout Title')).toBeInTheDocument();
+        });
+
+        // Start regeneration flow
+        await user.click(screen.getByRole('button', { name: /regenerate/i }));
+
+        await waitFor(() => {
+          expect(screen.getByText(/1 of 1 selected/i)).toBeInTheDocument();
+        });
+
+        await user.click(screen.getByRole('button', { name: /generate readout/i }));
+
+        await waitFor(() => {
+          expect(screen.getByRole('dialog', { name: /confirm regeneration/i })).toBeInTheDocument();
+        });
+
+        // Confirm regeneration - use within() to scope to the dialog
+        const dialog = screen.getByRole('dialog', { name: /confirm regeneration/i });
+        const regenerateButton = within(dialog).getByRole('button', { name: /^regenerate$/i });
+        await user.click(regenerateButton);
+
+        // Should show the finalized error
+        await waitFor(() => {
+          expect(screen.getByText(/readout has been approved/i)).toBeInTheDocument();
+        });
+      });
+    });
+
+    describe('Evidence preselection from historical version', () => {
+      it('preselects evidence from most recent completed generation', async () => {
+        const user = userEvent.setup();
+        const mockReadout = createMockReadout();
+
+        mockUseReadoutDetail.mockReturnValue({
+          data: { data: mockReadout },
+          isLoading: false,
+          error: null,
+          refetch: mockRefetch,
+        });
+
+        // Historical version has specific evidence
+        mockUseGenerationHistory.mockReturnValue({
+          data: {
+            data: {
+              versions: [
+                {
+                  id: 1,
+                  versionNumber: 1,
+                  generationRequestId: 'gen-123',
+                  generationStatus: 'completed',
+                  generationStartedAt: '2026-10-15T10:00:00Z',
+                  generationCompletedAt: '2026-10-15T10:05:00Z',
+                  generationError: null,
+                  draftContentVersionAtStart: 1,
+                  evidenceSet: [
+                    { constructPublicId: 'c1', revisionPublicId: 'historical-rev-1', revisionNumber: 1, displayId: 'IN-0001' },
+                    { constructPublicId: 'c2', revisionPublicId: 'historical-rev-2', revisionNumber: 2, displayId: 'IN-0002' },
+                  ],
+                  createdAt: '2026-10-15T10:00:00Z',
+                },
+              ],
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        // Current eligible evidence includes the historical ones
+        mockUseEligibleEvidence.mockReturnValue({
+          data: {
+            data: {
+              insights: [
+                createMockEligibleInsight({
+                  constructPublicId: 'c1',
+                  acceptedRevision: {
+                    revisionPublicId: 'historical-rev-1',
+                    revisionNumber: 1,
+                    acceptedAt: '2026-10-15T10:00:00Z',
+                  },
+                }),
+                createMockEligibleInsight({
+                  constructPublicId: 'c2',
+                  acceptedRevision: {
+                    revisionPublicId: 'historical-rev-2',
+                    revisionNumber: 2,
+                    acceptedAt: '2026-10-15T10:00:00Z',
+                  },
+                }),
+              ],
+              pagination: { total: 2, limit: 50, offset: 0 },
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        renderPage();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Readout Title')).toBeInTheDocument();
+        });
+
+        // Click Regenerate (not Generate with AI)
+        await user.click(screen.getByRole('button', { name: /regenerate/i }));
+
+        // Evidence selection should show with historical evidence preselected
+        await waitFor(() => {
+          expect(screen.getByText('Select Evidence')).toBeInTheDocument();
+        });
+
+        // Should show 2 of 2 selected (from historical preselection)
+        await waitFor(() => {
+          expect(screen.getByText(/2 of 2 selected/i)).toBeInTheDocument();
+        });
       });
     });
   });
