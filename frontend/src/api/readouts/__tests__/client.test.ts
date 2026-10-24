@@ -18,6 +18,7 @@ import {
   getEligibleEvidence,
   initiateGeneration,
   getGenerationStatus,
+  getVersionContent,
 } from '../client';
 import type { ReadoutDetail, DraftContent, ApprovalDetail } from '../types';
 
@@ -805,5 +806,196 @@ describe('getGenerationStatus', () => {
 
     expect(result.data.retryAfter).toBe('2026-10-15T10:10:00.000Z');
     expect(result.data.attemptCount).toBe(2);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GET VERSION CONTENT (DR-6b-5e-B)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('getVersionContent', () => {
+  it('fetches version content with correct endpoint', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        versionId: 42,
+        versionNumber: 3,
+        generationStatus: 'completed',
+        hasContent: true,
+        content: mockDraftContent,
+        evidenceSet: [
+          {
+            constructPublicId: 'ins-abc',
+            revisionPublicId: 'rev-123',
+            revisionNumber: 1,
+            displayId: 'IN-0001',
+          },
+        ],
+        draftContentVersionAtStart: 5,
+        generationCompletedAt: '2026-10-15T10:05:00.000Z',
+      },
+    });
+
+    const result = await getVersionContent('proj-1', 'study-1', 'ro-abc-123', 42);
+
+    expect(mockGet).toHaveBeenCalledWith(
+      'projects/proj-1/studies/study-1/readouts/ro-abc-123/versions/42/content',
+    );
+    expect(result.data.versionId).toBe(42);
+    expect(result.data.versionNumber).toBe(3);
+    expect(result.data.generationStatus).toBe('completed');
+    expect(result.data.hasContent).toBe(true);
+    expect(result.data.content).toEqual(mockDraftContent);
+    expect(result.data.evidenceSet).toHaveLength(1);
+    expect(result.data.draftContentVersionAtStart).toBe(5);
+    expect(result.data.generationCompletedAt).toBe('2026-10-15T10:05:00.000Z');
+  });
+
+  it('returns null content for failed generation', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        versionId: 15,
+        versionNumber: 2,
+        generationStatus: 'failed',
+        hasContent: false,
+        content: null,
+        evidenceSet: [
+          {
+            constructPublicId: 'ins-xyz',
+            revisionPublicId: 'rev-456',
+            revisionNumber: 2,
+            displayId: 'IN-0002',
+          },
+        ],
+        draftContentVersionAtStart: 3,
+        generationCompletedAt: '2026-10-15T09:30:00.000Z',
+      },
+    });
+
+    const result = await getVersionContent('proj-1', 'study-1', 'ro-abc-123', 15);
+
+    expect(result.data.generationStatus).toBe('failed');
+    expect(result.data.hasContent).toBe(false);
+    expect(result.data.content).toBeNull();
+    // Evidence set is still preserved even if generation failed
+    expect(result.data.evidenceSet).toHaveLength(1);
+  });
+
+  it('returns null content for superseded generation', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        versionId: 10,
+        versionNumber: 1,
+        generationStatus: 'superseded',
+        hasContent: false,
+        content: null,
+        evidenceSet: [],
+        draftContentVersionAtStart: 1,
+        generationCompletedAt: null,
+      },
+    });
+
+    const result = await getVersionContent('proj-1', 'study-1', 'ro-abc-123', 10);
+
+    expect(result.data.generationStatus).toBe('superseded');
+    expect(result.data.hasContent).toBe(false);
+    expect(result.data.content).toBeNull();
+    expect(result.data.generationCompletedAt).toBeNull();
+  });
+
+  it('preserves pinned evidence identity fields including displayId', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        versionId: 50,
+        versionNumber: 4,
+        generationStatus: 'completed',
+        hasContent: true,
+        content: { summary: { text: 'Summary', citations: [] } },
+        evidenceSet: [
+          {
+            constructPublicId: 'ins-construct-001',
+            revisionPublicId: 'rev-revision-001',
+            revisionNumber: 5,
+            displayId: 'IN-0015',
+          },
+          {
+            constructPublicId: 'ins-construct-002',
+            revisionPublicId: 'rev-revision-002',
+            revisionNumber: 3,
+            displayId: 'IN-0022',
+          },
+        ],
+        draftContentVersionAtStart: 10,
+        generationCompletedAt: '2026-10-15T12:00:00.000Z',
+      },
+    });
+
+    const result = await getVersionContent('proj-1', 'study-1', 'ro-abc-123', 50);
+
+    // Verify evidence snapshot preserves all identity fields
+    expect(result.data.evidenceSet).toHaveLength(2);
+    expect(result.data.evidenceSet[0]).toEqual({
+      constructPublicId: 'ins-construct-001',
+      revisionPublicId: 'rev-revision-001',
+      revisionNumber: 5,
+      displayId: 'IN-0015',
+    });
+    expect(result.data.evidenceSet[1]).toEqual({
+      constructPublicId: 'ins-construct-002',
+      revisionPublicId: 'rev-revision-002',
+      revisionNumber: 3,
+      displayId: 'IN-0022',
+    });
+  });
+
+  it('handles version without content (pending/generating)', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        versionId: 99,
+        versionNumber: 6,
+        generationStatus: 'generating',
+        hasContent: false,
+        content: null,
+        evidenceSet: [
+          {
+            constructPublicId: 'ins-pending',
+            revisionPublicId: 'rev-pending',
+            revisionNumber: 1,
+            displayId: 'IN-0001',
+          },
+        ],
+        draftContentVersionAtStart: 15,
+        generationCompletedAt: null,
+      },
+    });
+
+    const result = await getVersionContent('proj-1', 'study-1', 'ro-abc-123', 99);
+
+    expect(result.data.generationStatus).toBe('generating');
+    expect(result.data.hasContent).toBe(false);
+    expect(result.data.content).toBeNull();
+    // generationCompletedAt is null while still generating
+    expect(result.data.generationCompletedAt).toBeNull();
+  });
+
+  it('correctly scopes to readout ID for cross-readout isolation', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        versionId: 1,
+        versionNumber: 1,
+        generationStatus: 'completed',
+        hasContent: true,
+        content: {},
+        evidenceSet: [],
+        draftContentVersionAtStart: 1,
+        generationCompletedAt: '2026-10-15T10:00:00.000Z',
+      },
+    });
+
+    // Different readout ID
+    await getVersionContent('proj-1', 'study-1', 'different-readout', 1);
+
+    expect(mockGet).toHaveBeenCalledWith(
+      'projects/proj-1/studies/study-1/readouts/different-readout/versions/1/content',
+    );
   });
 });

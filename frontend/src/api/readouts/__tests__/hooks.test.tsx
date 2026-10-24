@@ -28,6 +28,7 @@ import {
   useApproveReadout,
   useInitiateGeneration,
   useGenerationStatus,
+  useVersionContent,
   isTerminalGenerationStatus,
 } from '../hooks';
 import type {
@@ -1785,5 +1786,293 @@ describe('useGenerationStatus', () => {
 
     expect(versionsInvalidation).toBeDefined();
     expect(detailInvalidation).toBeUndefined();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VERSION CONTENT HOOK TESTS (DR-6b-5e-B)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('useVersionContent', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('does not fetch when versionId is null', () => {
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useVersionContent('proj-1', 'study-1', 'ro-abc-123', null),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(mockGet).not.toHaveBeenCalled();
+  });
+
+  it('fetches version content when versionId is provided', async () => {
+    const mockVersionContent = {
+      versionId: 42,
+      versionNumber: 3,
+      generationStatus: 'completed',
+      hasContent: true,
+      content: { summary: { text: 'Generated summary', citations: [] } },
+      evidenceSet: [
+        {
+          constructPublicId: 'ins-abc',
+          revisionPublicId: 'rev-123',
+          revisionNumber: 1,
+          displayId: 'IN-0001',
+        },
+      ],
+      draftContentVersionAtStart: 5,
+      generationCompletedAt: '2026-10-15T10:05:00.000Z',
+    };
+
+    mockGet.mockResolvedValueOnce({ data: mockVersionContent });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useVersionContent('proj-1', 'study-1', 'ro-abc-123', 42),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockGet).toHaveBeenCalledWith(
+      'projects/proj-1/studies/study-1/readouts/ro-abc-123/versions/42/content',
+    );
+    expect(result.current.data?.data.versionId).toBe(42);
+    expect(result.current.data?.data.generationStatus).toBe('completed');
+    expect(result.current.data?.data.hasContent).toBe(true);
+    expect(result.current.data?.data.content?.summary?.text).toBe('Generated summary');
+  });
+
+  it('handles null content for failed generation', async () => {
+    const mockVersionContent = {
+      versionId: 15,
+      versionNumber: 2,
+      generationStatus: 'failed',
+      hasContent: false,
+      content: null,
+      evidenceSet: [],
+      draftContentVersionAtStart: 3,
+      generationCompletedAt: '2026-10-15T09:30:00.000Z',
+    };
+
+    mockGet.mockResolvedValueOnce({ data: mockVersionContent });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useVersionContent('proj-1', 'study-1', 'ro-abc-123', 15),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data?.data.generationStatus).toBe('failed');
+    expect(result.current.data?.data.hasContent).toBe(false);
+    expect(result.current.data?.data.content).toBeNull();
+  });
+
+  it('preserves pinned evidence identity fields', async () => {
+    const mockVersionContent = {
+      versionId: 50,
+      versionNumber: 4,
+      generationStatus: 'completed',
+      hasContent: true,
+      content: {},
+      evidenceSet: [
+        {
+          constructPublicId: 'ins-construct-001',
+          revisionPublicId: 'rev-revision-001',
+          revisionNumber: 5,
+          displayId: 'IN-0015',
+        },
+        {
+          constructPublicId: 'ins-construct-002',
+          revisionPublicId: 'rev-revision-002',
+          revisionNumber: 3,
+          displayId: 'IN-0022',
+        },
+      ],
+      draftContentVersionAtStart: 10,
+      generationCompletedAt: '2026-10-15T12:00:00.000Z',
+    };
+
+    mockGet.mockResolvedValueOnce({ data: mockVersionContent });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useVersionContent('proj-1', 'study-1', 'ro-abc-123', 50),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    // Verify all pinned evidence fields preserved
+    expect(result.current.data?.data.evidenceSet).toHaveLength(2);
+    expect(result.current.data?.data.evidenceSet[0].displayId).toBe('IN-0015');
+    expect(result.current.data?.data.evidenceSet[1].constructPublicId).toBe('ins-construct-002');
+  });
+
+  it('can be disabled via options', () => {
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useVersionContent('proj-1', 'study-1', 'ro-abc-123', 42, { enabled: false }),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(mockGet).not.toHaveBeenCalled();
+  });
+
+  it('uses Infinity staleTime for immutable version content', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        versionId: 42,
+        versionNumber: 3,
+        generationStatus: 'completed',
+        hasContent: true,
+        content: {},
+        evidenceSet: [],
+        draftContentVersionAtStart: 5,
+        generationCompletedAt: '2026-10-15T10:05:00.000Z',
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useVersionContent('proj-1', 'study-1', 'ro-abc-123', 42),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    // Data should never become stale (immutable)
+    expect(result.current.isStale).toBe(false);
+  });
+
+  it('has different cache key for different versions', async () => {
+    mockGet
+      .mockResolvedValueOnce({
+        data: {
+          versionId: 1,
+          versionNumber: 1,
+          generationStatus: 'completed',
+          hasContent: true,
+          content: { summary: { text: 'Version 1', citations: [] } },
+          evidenceSet: [],
+          draftContentVersionAtStart: 1,
+          generationCompletedAt: '2026-10-15T09:00:00.000Z',
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          versionId: 2,
+          versionNumber: 2,
+          generationStatus: 'completed',
+          hasContent: true,
+          content: { summary: { text: 'Version 2', citations: [] } },
+          evidenceSet: [],
+          draftContentVersionAtStart: 5,
+          generationCompletedAt: '2026-10-15T10:00:00.000Z',
+        },
+      });
+
+    const queryClient = createQueryClient();
+    const wrapper = createWrapper(queryClient);
+
+    // Fetch version 1
+    const { result: result1 } = renderHook(
+      () => useVersionContent('proj-1', 'study-1', 'ro-abc-123', 1),
+      { wrapper },
+    );
+    await waitFor(() => expect(result1.current.isSuccess).toBe(true));
+
+    // Fetch version 2
+    const { result: result2 } = renderHook(
+      () => useVersionContent('proj-1', 'study-1', 'ro-abc-123', 2),
+      { wrapper },
+    );
+    await waitFor(() => expect(result2.current.isSuccess).toBe(true));
+
+    // Different data in different caches
+    expect(result1.current.data?.data.content?.summary?.text).toBe('Version 1');
+    expect(result2.current.data?.data.content?.summary?.text).toBe('Version 2');
+  });
+
+  it('has different cache key for different readouts', async () => {
+    mockGet
+      .mockResolvedValueOnce({
+        data: {
+          versionId: 1,
+          versionNumber: 1,
+          generationStatus: 'completed',
+          hasContent: true,
+          content: { summary: { text: 'Readout A', citations: [] } },
+          evidenceSet: [],
+          draftContentVersionAtStart: 1,
+          generationCompletedAt: '2026-10-15T09:00:00.000Z',
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          versionId: 1,
+          versionNumber: 1,
+          generationStatus: 'completed',
+          hasContent: true,
+          content: { summary: { text: 'Readout B', citations: [] } },
+          evidenceSet: [],
+          draftContentVersionAtStart: 1,
+          generationCompletedAt: '2026-10-15T10:00:00.000Z',
+        },
+      });
+
+    const queryClient = createQueryClient();
+    const wrapper = createWrapper(queryClient);
+
+    // Fetch from readout A
+    const { result: resultA } = renderHook(
+      () => useVersionContent('proj-1', 'study-1', 'readout-A', 1),
+      { wrapper },
+    );
+    await waitFor(() => expect(resultA.current.isSuccess).toBe(true));
+
+    // Fetch from readout B (same version ID, different readout)
+    const { result: resultB } = renderHook(
+      () => useVersionContent('proj-1', 'study-1', 'readout-B', 1),
+      { wrapper },
+    );
+    await waitFor(() => expect(resultB.current.isSuccess).toBe(true));
+
+    // Cross-readout isolation
+    expect(resultA.current.data?.data.content?.summary?.text).toBe('Readout A');
+    expect(resultB.current.data?.data.content?.summary?.text).toBe('Readout B');
+  });
+
+  it('does not trigger draft mutations or generation POSTs', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        versionId: 42,
+        versionNumber: 3,
+        generationStatus: 'completed',
+        hasContent: true,
+        content: {},
+        evidenceSet: [],
+        draftContentVersionAtStart: 5,
+        generationCompletedAt: '2026-10-15T10:05:00.000Z',
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useVersionContent('proj-1', 'study-1', 'ro-abc-123', 42),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    // Only GET was called, no POST or PATCH
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    expect(mockPost).not.toHaveBeenCalled();
+    expect(mockPatch).not.toHaveBeenCalled();
   });
 });

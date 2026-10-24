@@ -12,6 +12,8 @@ import {
   isApprovalIneligibleError,
   isIdempotencyConflictError,
   isEvidenceSelectionError,
+  isReadoutFinalizedError,
+  isGenerationInProgressError,
   isNotFoundError,
   isAuthorizationError,
   isValidationError,
@@ -509,6 +511,186 @@ describe('parseReadoutError - 422 EVIDENCE_SELECTION_ERROR', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
+// READOUT FINALIZED ERROR (422) — DR-6b-5e
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('parseReadoutError - 422 READOUT_FINALIZED', () => {
+  it('parses 422 readout finalized error', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'READOUT_FINALIZED',
+          message: 'Readout has been approved and cannot be regenerated',
+        },
+      }),
+      { status: 422 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(error.code).toBe('READOUT_FINALIZED');
+    expect(error.status).toBe(422);
+    expect(isReadoutFinalizedError(error)).toBe(true);
+    expect(error.message).toBe('Readout has been approved and cannot be regenerated');
+  });
+
+  it('uses default message when not provided', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'READOUT_FINALIZED',
+        },
+      }),
+      { status: 422 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(isReadoutFinalizedError(error)).toBe(true);
+    expect(error.message).toBe('Readout has been approved and cannot be regenerated');
+  });
+
+  it('distinguishes from APPROVAL_INELIGIBLE', async () => {
+    const finalizedResponse = new Response(
+      JSON.stringify({
+        error: { code: 'READOUT_FINALIZED', message: 'Finalized' },
+      }),
+      { status: 422 },
+    );
+    const ineligibleResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'APPROVAL_INELIGIBLE',
+          message: 'Not eligible',
+          errors: ['Missing citations'],
+        },
+      }),
+      { status: 422 },
+    );
+
+    const finalizedError = await parseReadoutError({ response: finalizedResponse });
+    const ineligibleError = await parseReadoutError({ response: ineligibleResponse });
+
+    expect(isReadoutFinalizedError(finalizedError)).toBe(true);
+    expect(isApprovalIneligibleError(finalizedError)).toBe(false);
+
+    expect(isApprovalIneligibleError(ineligibleError)).toBe(true);
+    expect(isReadoutFinalizedError(ineligibleError)).toBe(false);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GENERATION IN PROGRESS ERROR (409) — DR-6b-5e
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('parseReadoutError - 409 GENERATION_IN_PROGRESS', () => {
+  it('parses 409 with generationRequestId', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'GENERATION_IN_PROGRESS',
+          message: 'Approval cannot proceed while generation is in progress',
+          generationRequestId: 'gen-req-active-123',
+        },
+      }),
+      { status: 409 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(error.code).toBe('GENERATION_IN_PROGRESS');
+    expect(error.status).toBe(409);
+    expect(isGenerationInProgressError(error)).toBe(true);
+
+    if (isGenerationInProgressError(error)) {
+      expect(error.generationRequestId).toBe('gen-req-active-123');
+    }
+  });
+
+  it('uses default message when not provided', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'GENERATION_IN_PROGRESS',
+          generationRequestId: 'gen-req-xyz',
+        },
+      }),
+      { status: 409 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(isGenerationInProgressError(error)).toBe(true);
+    expect(error.message).toBe('Approval cannot proceed while generation is in progress');
+  });
+
+  it('handles missing generationRequestId with empty string', async () => {
+    const mockResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'GENERATION_IN_PROGRESS',
+          message: 'Generation active',
+          // No generationRequestId
+        },
+      }),
+      { status: 409 },
+    );
+
+    const error = await parseReadoutError({ response: mockResponse });
+
+    expect(error.code).toBe('GENERATION_IN_PROGRESS');
+    // Still parses but with empty generationRequestId
+    if (isGenerationInProgressError(error)) {
+      expect(error.generationRequestId).toBe('');
+    }
+  });
+
+  it('distinguishes from CONCURRENCY_ERROR and IDEMPOTENCY_CONFLICT', async () => {
+    const generationResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'GENERATION_IN_PROGRESS',
+          message: 'Generation active',
+          generationRequestId: 'gen-123',
+        },
+      }),
+      { status: 409 },
+    );
+    const concurrencyResponse = new Response(
+      JSON.stringify({
+        error: {
+          code: 'CONCURRENCY_ERROR',
+          message: 'Version conflict',
+          currentVersion: 5,
+          submittedContent: {},
+        },
+      }),
+      { status: 409 },
+    );
+    const idempotencyResponse = new Response(
+      JSON.stringify({
+        error: { code: 'IDEMPOTENCY_CONFLICT', message: 'Key conflict' },
+      }),
+      { status: 409 },
+    );
+
+    const generationError = await parseReadoutError({ response: generationResponse });
+    const concurrencyError = await parseReadoutError({ response: concurrencyResponse });
+    const idempotencyError = await parseReadoutError({ response: idempotencyResponse });
+
+    expect(isGenerationInProgressError(generationError)).toBe(true);
+    expect(isConcurrencyError(generationError)).toBe(false);
+    expect(isIdempotencyConflictError(generationError)).toBe(false);
+
+    expect(isConcurrencyError(concurrencyError)).toBe(true);
+    expect(isGenerationInProgressError(concurrencyError)).toBe(false);
+
+    expect(isIdempotencyConflictError(idempotencyError)).toBe(true);
+    expect(isGenerationInProgressError(idempotencyError)).toBe(false);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 // STANDARD ERRORS (400, 403, 404)
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -812,6 +994,94 @@ describe('type guards', () => {
         message: '',
         status: 422,
         invalidRevisionIds: [],
+      } as any),
+    ).toBe(true);
+  });
+
+  // DR-6b-5e finality type guards
+  it('isReadoutFinalizedError checks both code and status', () => {
+    expect(
+      isReadoutFinalizedError({
+        code: 'READOUT_FINALIZED',
+        message: '',
+        status: 422,
+      }),
+    ).toBe(true);
+    expect(
+      isReadoutFinalizedError({
+        code: 'READOUT_FINALIZED',
+        message: '',
+        status: 400,
+      }),
+    ).toBe(false);
+    expect(
+      isReadoutFinalizedError({
+        code: 'APPROVAL_INELIGIBLE',
+        message: '',
+        status: 422,
+      }),
+    ).toBe(false);
+  });
+
+  it('isGenerationInProgressError checks code, status, and generationRequestId', () => {
+    // Valid case
+    expect(
+      isGenerationInProgressError({
+        code: 'GENERATION_IN_PROGRESS',
+        message: '',
+        status: 409,
+        generationRequestId: 'gen-123',
+      } as any),
+    ).toBe(true);
+
+    // Missing generationRequestId
+    expect(
+      isGenerationInProgressError({
+        code: 'GENERATION_IN_PROGRESS',
+        message: '',
+        status: 409,
+      }),
+    ).toBe(false);
+
+    // Wrong status
+    expect(
+      isGenerationInProgressError({
+        code: 'GENERATION_IN_PROGRESS',
+        message: '',
+        status: 422,
+        generationRequestId: 'gen-123',
+      } as any),
+    ).toBe(false);
+
+    // Wrong code
+    expect(
+      isGenerationInProgressError({
+        code: 'CONCURRENCY_ERROR',
+        message: '',
+        status: 409,
+        generationRequestId: 'gen-123',
+      } as any),
+    ).toBe(false);
+
+    // Non-string generationRequestId
+    expect(
+      isGenerationInProgressError({
+        code: 'GENERATION_IN_PROGRESS',
+        message: '',
+        status: 409,
+        generationRequestId: 123,
+      } as any),
+    ).toBe(false);
+  });
+
+  it('isGenerationInProgressError accepts empty string generationRequestId', () => {
+    // Empty string is valid (parsed from missing field)
+    expect(
+      isGenerationInProgressError({
+        code: 'GENERATION_IN_PROGRESS',
+        message: '',
+        status: 409,
+        generationRequestId: '',
       } as any),
     ).toBe(true);
   });
