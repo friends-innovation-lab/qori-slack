@@ -2055,3 +2055,198 @@
   margin: 0;
   max-width: 300px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * DR-6b-5e-B-3 REGENERATION UI STYLES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Modal Base (Shared) ──────────────────────────────────────────────────── */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modalContent {
+  width: 90%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-lg);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modalTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-h3-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.modalCloseButton {
+  padding: var(--space-2);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.modalCloseButton:hover:not(:disabled) {
+  background: var(--color-surface-muted);
+}
+
+.modalCloseButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modalBody {
+  padding: var(--space-4);
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ─── Regeneration Modal Specifics ─────────────────────────────────────────── */
+
+.warningIcon {
+  color: var(--color-warning);
+}
+
+.regenerationWarning {
+  font-size: var(--text-body-size);
+  color: var(--color-text);
+  margin: 0 0 var(--space-4);
+}
+
+.regenerationNotes {
+  padding: var(--space-3);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+}
+
+.regenerationNotesTitle {
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin: 0 0 var(--space-2);
+}
+
+.regenerationNotesList {
+  margin: 0;
+  padding-left: var(--space-4);
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+}
+
+.regenerationNotesList li {
+  margin-bottom: var(--space-2);
+}
+
+.regenerationNotesList li:last-child {
+  margin-bottom: 0;
+}
+
+.regenerationConfirmText {
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* ─── Generation History Button ────────────────────────────────────────────── */
+
+.generationHistoryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.generationHistoryButton:hover {
+  color: var(--color-text);
+  border-color: var(--color-brand);
+  background: var(--color-surface-muted);
+}
+
+.generationHistoryButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Regenerate Button Variant ────────────────────────────────────────────── */
+
+.regenerateButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ─── Finalized Error Notice ───────────────────────────────────────────────── */
+
+.finalizedError {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-error-surface, rgba(239, 68, 68, 0.1));
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+}
+
+.finalizedErrorIcon {
+  flex-shrink: 0;
+  color: var(--color-error);
+}
+
+.finalizedErrorContent {
+  flex: 1;
+}
+
+.finalizedErrorContent strong {
+  display: block;
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-error);
+  margin-bottom: var(--space-1);
+}
+
+.finalizedErrorContent p {
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+  margin: 0;
+}
