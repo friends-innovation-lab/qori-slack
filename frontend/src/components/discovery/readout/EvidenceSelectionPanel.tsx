@@ -2,9 +2,12 @@
  * EvidenceSelectionPanel — Evidence selection for readout generation
  *
  * DR-6b-5d-B: Initial generation UI
+ * DR-6b-5e-B-3: Regeneration preselection
+ *
  * - Loads eligible accepted insight revisions
- * - All eligible revisions pre-selected by default
- * - Allows individual deselection
+ * - Initial generation: all eligible revisions pre-selected by default
+ * - Regeneration: preselects only historical revisions that remain eligible
+ * - Allows individual selection/deselection
  * - Preserves user selection across refetches
  * - Submits exact acceptedRevision.revisionPublicId values
  */
@@ -14,6 +17,13 @@ import { Check, AlertCircle, Loader2 } from 'lucide-react';
 import { useEligibleEvidence, type EligibleInsight } from '@/api/readouts';
 import styles from './readout.module.css';
 
+/**
+ * Selection initialization mode:
+ * - 'all': Select all eligible evidence (default, for initial generation)
+ * - 'provided': Use provided selectedRevisionIds intersected with eligible (for regeneration)
+ */
+export type SelectionInitMode = 'all' | 'provided';
+
 interface EvidenceSelectionPanelProps {
   projectPublicId: string;
   studyPublicId: string;
@@ -21,6 +31,12 @@ interface EvidenceSelectionPanelProps {
   selectedRevisionIds: string[];
   onSelectionChange: (revisionIds: string[]) => void;
   disabled?: boolean;
+  /**
+   * How to initialize the selection when evidence first loads:
+   * - 'all': Select all eligible evidence (default, for initial generation)
+   * - 'provided': Use provided selectedRevisionIds intersected with eligible (for regeneration)
+   */
+  initialSelectionMode?: SelectionInitMode;
 }
 
 export function EvidenceSelectionPanel({
@@ -30,6 +46,7 @@ export function EvidenceSelectionPanel({
   selectedRevisionIds,
   onSelectionChange,
   disabled = false,
+  initialSelectionMode = 'all',
 }: EvidenceSelectionPanelProps) {
   // Track whether initial selection has been applied
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -53,18 +70,30 @@ export function EvidenceSelectionPanel({
     [insights],
   );
 
-  // Initialize selection with all eligible revisions on first load
+  // Initialize selection based on mode when evidence first loads
   useEffect(() => {
     if (!hasInitialized && insights.length > 0) {
-      const allRevisionIds = insights.map((i) => i.acceptedRevision.revisionPublicId);
-      onSelectionChange(allRevisionIds);
+      if (initialSelectionMode === 'all') {
+        // Initial generation: select all eligible revisions
+        const allRevisionIds = insights.map((i) => i.acceptedRevision.revisionPublicId);
+        onSelectionChange(allRevisionIds);
+      } else {
+        // Regeneration mode ('provided'): intersect provided IDs with eligible
+        // Only select historical revisions that are still eligible
+        // If none remain eligible, start with empty selection (requires manual selection)
+        const eligibleHistoricalIds = selectedRevisionIds.filter((id) =>
+          eligibleRevisionIds.has(id),
+        );
+        onSelectionChange(eligibleHistoricalIds);
+      }
       setHasInitialized(true);
     }
-  }, [insights, hasInitialized, onSelectionChange]);
+  }, [insights, hasInitialized, onSelectionChange, initialSelectionMode, selectedRevisionIds, eligibleRevisionIds]);
 
-  // When evidence refetches, reconcile selection:
+  // When evidence refetches (after initialization), reconcile selection:
   // - Keep user's existing selections that are still eligible
   // - Remove selections that became ineligible
+  // - Never automatically substitute newer revisions
   useEffect(() => {
     if (!hasInitialized || insights.length === 0) return;
 

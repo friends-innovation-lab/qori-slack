@@ -20,10 +20,13 @@ export { ApprovalHistoryPanel } from './ApprovalHistoryPanel';
 export { ApprovalStatusBanner } from './ApprovalStatusBanner';
 
 // Generation components (DR-6b-5d-B)
-export { EvidenceSelectionPanel } from './EvidenceSelectionPanel';
+export { EvidenceSelectionPanel, type SelectionInitMode } from './EvidenceSelectionPanel';
 export { GenerationProgress } from './GenerationProgress';
 export { GenerationFailure } from './GenerationFailure';
 
 // Generation history components (DR-6b-5e-B-2)
 export { VersionHistoryPanel } from './VersionHistoryPanel';
 export { VersionContentView } from './VersionContentView';
+
+// Regeneration components (DR-6b-5e-B-3)
+export { RegenerationConfirmationModal } from './RegenerationConfirmationModal';

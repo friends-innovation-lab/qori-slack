@@ -22,12 +22,18 @@
  * - Generate action with guards
  * - Status polling and reload recovery
  * - Clean/dirty draft handling on completion
+ *
+ * DR-6b-5e-B-3: Editor integration and regeneration
+ * - Generation History panel integration
+ * - Regenerate with confirmation and evidence preselection
+ * - READOUT_FINALIZED error handling
+ * - Fresh idempotency key per regeneration request
  */
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useParams, Link } from 'react-router';
 import { v4 as uuidv4 } from 'uuid';
-import { AlertCircle, ArrowLeft, FileEdit, Eye, History, CheckCircle, Info, Sparkles } from 'lucide-react';
+import { AlertCircle, ArrowLeft, FileEdit, Eye, History, CheckCircle, Info, Sparkles, RefreshCw } from 'lucide-react';
 import {
   useReadoutDetail,
   useSaveDraft,
@@ -41,8 +47,10 @@ import {
   isConcurrencyError,
   isApprovalIneligibleError,
   isAuthorizationError,
+  isReadoutFinalizedError,
   type ReadoutApiError,
   type GenerationStatus,
+  type GenerationVersion,
 } from '@/api/readouts';
 import { useStudyWorkspace, WorkspaceLayout } from '@/components/study/workspace';
 import { useProjectPermissions } from '@/hooks/useProjectPermissions';
@@ -59,6 +67,8 @@ import { ApprovalStatusBanner } from '@/components/discovery/readout/ApprovalSta
 import { EvidenceSelectionPanel } from '@/components/discovery/readout/EvidenceSelectionPanel';
 import { GenerationProgress } from '@/components/discovery/readout/GenerationProgress';
 import { GenerationFailure } from '@/components/discovery/readout/GenerationFailure';
+import { VersionHistoryPanel } from '@/components/discovery/readout/VersionHistoryPanel';
+import { RegenerationConfirmationModal } from '@/components/discovery/readout/RegenerationConfirmationModal';
 import styles from '@/components/discovery/readout/readout.module.css';
 
 type SaveState = 'saved' | 'dirty' | 'saving' | 'error';
@@ -171,6 +181,11 @@ export function ReadoutEditorPage() {
   const [showEvidenceSelection, setShowEvidenceSelection] = useState(false);
   const [generationCompletedWhileDirty, setGenerationCompletedWhileDirty] = useState(false);
 
+  // Generation history and regeneration (DR-6b-5e-B-3)
+  const [showGenerationHistoryPanel, setShowGenerationHistoryPanel] = useState(false);
+  const [showRegenerationConfirmation, setShowRegenerationConfirmation] = useState(false);
+  const [readoutFinalizedError, setReadoutFinalizedError] = useState<string | null>(null);
+
   // Stable idempotency key for current submission
   const idempotencyKeyRef = useRef<string | null>(null);
 
@@ -205,6 +220,14 @@ export function ReadoutEditorPage() {
   const hasCompletedGeneration = useMemo(() => {
     const versions = generationHistoryQuery.data?.data.versions ?? [];
     return versions.some((v) => v.generationStatus === 'completed');
+  }, [generationHistoryQuery.data]);
+
+  // Get the most recent completed generation version for evidence preselection
+  const mostRecentCompletedVersion = useMemo((): GenerationVersion | null => {
+    const versions = generationHistoryQuery.data?.data.versions ?? [];
+    // Versions are typically returned newest first, find the first completed one
+    const completed = versions.find((v) => v.generationStatus === 'completed');
+    return completed ?? null;
   }, [generationHistoryQuery.data]);
 
   // Current generation status from polling
@@ -497,6 +520,7 @@ export function ReadoutEditorPage() {
     }
 
     setGenerationError(null);
+    setReadoutFinalizedError(null);
 
     try {
       const result = await initiateGenerationMutation.mutateAsync({
@@ -516,6 +540,17 @@ export function ReadoutEditorPage() {
     } catch (error) {
       // Handle generation initiation errors
       const apiError = error as ReadoutApiError;
+
+      // Handle READOUT_FINALIZED error
+      if (isReadoutFinalizedError(apiError)) {
+        setReadoutFinalizedError(
+          apiError.message || 'This readout has been approved and cannot be regenerated.',
+        );
+        setShowEvidenceSelection(false);
+        idempotencyKeyRef.current = null;
+        return;
+      }
+
       setGenerationError(apiError.message || 'Failed to start generation.');
       // Clear idempotency key on error so user can retry
       idempotencyKeyRef.current = null;
@@ -532,14 +567,96 @@ export function ReadoutEditorPage() {
     setGenerationCompletedWhileDirty(false);
   }, []);
 
-  // Determine if Generate button should be shown and enabled
+  // Generation History Panel handlers (DR-6b-5e-B-3)
+  const handleOpenGenerationHistory = useCallback(() => {
+    generationHistoryQuery.refetch();
+    setShowGenerationHistoryPanel(true);
+  }, [generationHistoryQuery]);
+
+  const handleCloseGenerationHistory = useCallback(() => {
+    setShowGenerationHistoryPanel(false);
+  }, []);
+
+  // Regeneration handlers (DR-6b-5e-B-3)
+  const handleShowRegenerationConfirmation = useCallback(() => {
+    // Clear any previous finalized error
+    setReadoutFinalizedError(null);
+    setShowRegenerationConfirmation(true);
+    setShowEvidenceSelection(true);
+    setGenerationError(null);
+
+    // Generate a fresh idempotency key for this regeneration request
+    idempotencyKeyRef.current = uuidv4();
+
+    // Preselect evidence from the most recent completed generation
+    if (mostRecentCompletedVersion?.evidenceSet) {
+      const historicalRevisionIds = mostRecentCompletedVersion.evidenceSet.map(
+        (e) => e.revisionPublicId,
+      );
+      // The actual preselection will happen after eligible evidence is loaded
+      // and we filter out ineligible historical revisions
+      setSelectedRevisionIds(historicalRevisionIds);
+    }
+  }, [mostRecentCompletedVersion]);
+
+  const handleCancelRegeneration = useCallback(() => {
+    setShowRegenerationConfirmation(false);
+    setShowEvidenceSelection(false);
+    setSelectedRevisionIds([]);
+    idempotencyKeyRef.current = null;
+  }, []);
+
+  const handleConfirmRegeneration = useCallback(async () => {
+    if (selectedRevisionIds.length === 0) return;
+
+    // Ensure we have a fresh idempotency key
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current = uuidv4();
+    }
+
+    setGenerationError(null);
+    setReadoutFinalizedError(null);
+
+    try {
+      const result = await initiateGenerationMutation.mutateAsync({
+        idempotencyKey: idempotencyKeyRef.current,
+        selectedRevisionIds,
+      });
+
+      // Start polling the new generation request
+      setActiveGenerationRequestId(result.data.generationRequestId);
+      setShowRegenerationConfirmation(false);
+      setShowEvidenceSelection(false);
+    } catch (error) {
+      const apiError = error as ReadoutApiError;
+
+      // Handle READOUT_FINALIZED error
+      if (isReadoutFinalizedError(apiError)) {
+        setReadoutFinalizedError(
+          apiError.message || 'This readout has been approved and cannot be regenerated.',
+        );
+        setShowRegenerationConfirmation(false);
+        setShowEvidenceSelection(false);
+        idempotencyKeyRef.current = null;
+        return;
+      }
+
+      setGenerationError(apiError.message || 'Failed to start regeneration.');
+      // Clear idempotency key on error so user can retry with a new key
+      idempotencyKeyRef.current = null;
+    }
+  }, [selectedRevisionIds, initiateGenerationMutation]);
+
+  // Determine if Generate/Regenerate button should be shown
   const canShowGenerate = useMemo(() => {
     // Must have researcher+ permissions
     if (!permissions.canReview || permissions.isLoading) return false;
-    // Must not be read-only
+    // Must not be approved (approved readouts cannot regenerate)
+    // This check will be moved to canInitiateGenerate once we have readout data
     return true;
   }, [permissions]);
 
+  // Determine if generation/regeneration can be initiated
   const canInitiateGenerate = useMemo(() => {
     // All the conditions for showing Generate must be met
     if (!canShowGenerate) return false;
@@ -551,8 +668,6 @@ export function ReadoutEditorPage() {
     if (editor.conflictState !== null) return false;
     // No active generation
     if (activeGenerationRequestId !== null) return false;
-    // No completed generation (regeneration is out of scope for DR-6b-5d-B)
-    if (hasCompletedGeneration) return false;
     return true;
   }, [
     canShowGenerate,
@@ -561,7 +676,6 @@ export function ReadoutEditorPage() {
     saveState,
     editor.conflictState,
     activeGenerationRequestId,
-    hasCompletedGeneration,
   ]);
 
   // Render states
@@ -624,8 +738,11 @@ export function ReadoutEditorPage() {
   // Eligibility data for approval button state
   const eligibility = eligibilityQuery.data?.data;
 
-  // Determine if we should show the Generate button in toolbar
-  const showGenerateButton = canShowGenerate && !hasCompletedGeneration && !hasGenerationHistory;
+  // Determine if we should show the Generate button in toolbar (initial generation)
+  const showGenerateButton = canShowGenerate && !hasCompletedGeneration && !hasGenerationHistory && !hasLatestApproval;
+
+  // Determine if we should show the Regenerate button (has completed generation, not approved)
+  const showRegenerateButton = canShowGenerate && hasCompletedGeneration && !hasLatestApproval;
 
   return (
     <WorkspaceLayout header={<div className={styles.headerSpacer} />}>
@@ -687,8 +804,18 @@ export function ReadoutEditorPage() {
             onClick={handleOpenHistory}
           >
             <History size={14} style={{ marginRight: 'var(--space-1)' }} />
-            History
+            Approval History
           </button>
+          {hasGenerationHistory && (
+            <button
+              type="button"
+              className={styles.viewModeButton}
+              onClick={handleOpenGenerationHistory}
+            >
+              <Sparkles size={14} style={{ marginRight: 'var(--space-1)' }} />
+              Generation History
+            </button>
+          )}
         </div>
       )}
 
@@ -711,9 +838,30 @@ export function ReadoutEditorPage() {
         </div>
       )}
 
-      {/* Generation UI (DR-6b-5d-B) */}
+      {/* Generation UI (DR-6b-5d-B, DR-6b-5e-B-3) */}
       {viewMode === 'edit' && (
         <>
+          {/* READOUT_FINALIZED Error (DR-6b-5e-B-3) */}
+          {readoutFinalizedError && (
+            <div className={styles.finalizedError}>
+              <div className={styles.finalizedErrorIcon}>
+                <AlertCircle size={20} />
+              </div>
+              <div className={styles.finalizedErrorContent}>
+                <strong>Regeneration Unavailable</strong>
+                <p>{readoutFinalizedError}</p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setReadoutFinalizedError(null)}
+                style={{ marginLeft: 'auto', flexShrink: 0 }}
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
           {/* Generation Progress */}
           {(generationUIState === 'pending' || generationUIState === 'generating') && (
             <GenerationProgress
@@ -790,6 +938,7 @@ export function ReadoutEditorPage() {
                 selectedRevisionIds={selectedRevisionIds}
                 onSelectionChange={handleSelectionChange}
                 disabled={initiateGenerationMutation.isPending}
+                initialSelectionMode={showRegenerationConfirmation ? 'provided' : 'all'}
               />
               <div className={styles.generateToolbar}>
                 <button
@@ -883,6 +1032,78 @@ export function ReadoutEditorPage() {
                 </button>
               </div>
             )}
+
+          {/* Regenerate Button and Generation History (shown when has completed generation) */}
+          {showRegenerateButton &&
+            !showEvidenceSelection &&
+            !showRegenerationConfirmation &&
+            generationUIState === 'idle' && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 'var(--space-3)',
+                  padding: 'var(--space-4)',
+                  marginTop: 'var(--space-4)',
+                  borderTop: '1px solid var(--color-border)',
+                }}
+              >
+                <button
+                  type="button"
+                  className={styles.generationHistoryButton}
+                  onClick={handleOpenGenerationHistory}
+                >
+                  <History size={16} />
+                  Generation History
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleShowRegenerationConfirmation}
+                  disabled={!canInitiateGenerate}
+                  title={
+                    !canInitiateGenerate
+                      ? editor.isDirty
+                        ? 'Save changes before regenerating'
+                        : !editor.isInitialized
+                          ? 'Loading...'
+                          : 'Cannot regenerate at this time'
+                      : 'Regenerate readout content using AI'
+                  }
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)' }}
+                >
+                  <RefreshCw size={16} />
+                  Regenerate
+                </button>
+              </div>
+            )}
+
+          {/* Generation History button when no generation in progress (for viewing only) */}
+          {hasGenerationHistory &&
+            !showRegenerateButton &&
+            !hasLatestApproval &&
+            !showEvidenceSelection &&
+            generationUIState === 'idle' && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  padding: 'var(--space-4)',
+                  marginTop: 'var(--space-4)',
+                  borderTop: '1px solid var(--color-border)',
+                }}
+              >
+                <button
+                  type="button"
+                  className={styles.generationHistoryButton}
+                  onClick={handleOpenGenerationHistory}
+                >
+                  <History size={16} />
+                  Generation History
+                </button>
+              </div>
+            )}
         </>
       ) : (
         /* Approved View (Scope C: Immutable approved view) */
@@ -940,6 +1161,29 @@ export function ReadoutEditorPage() {
           isLoading={historyQuery.isLoading}
           error={historyQuery.error instanceof Error ? historyQuery.error.message : null}
           onClose={handleCloseHistory}
+        />
+      )}
+
+      {/* Generation history panel (DR-6b-5e-B-3) */}
+      {showGenerationHistoryPanel && (
+        <VersionHistoryPanel
+          versions={generationHistoryQuery.data?.data.versions ?? []}
+          isLoading={generationHistoryQuery.isLoading}
+          error={generationHistoryQuery.error instanceof Error ? generationHistoryQuery.error.message : null}
+          onClose={handleCloseGenerationHistory}
+          projectPublicId={projectPublicId}
+          studyPublicId={studyPublicId}
+          readoutPublicId={readoutPublicId}
+        />
+      )}
+
+      {/* Regeneration confirmation modal (DR-6b-5e-B-3) */}
+      {showRegenerationConfirmation && (
+        <RegenerationConfirmationModal
+          selectedCount={selectedRevisionIds.length}
+          isRegenerating={initiateGenerationMutation.isPending}
+          onConfirm={handleConfirmRegeneration}
+          onCancel={handleCancelRegeneration}
         />
       )}
     </WorkspaceLayout>
