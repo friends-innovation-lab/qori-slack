@@ -455,6 +455,278 @@ describe('EvidenceSelectionPanel', () => {
     });
   });
 
+  describe('initialSelectionMode="all" (initial generation)', () => {
+    it('selects all eligible evidence by default', async () => {
+      const mockOnSelectionChange = vi.fn();
+      const insights = [
+        createMockInsight({ acceptedRevision: { revisionPublicId: 'rev-1', revisionNumber: 1, acceptedAt: '2026-10-15T10:00:00Z' } }),
+        createMockInsight({ constructPublicId: 'in-def-456', displayId: 'IN-0002', acceptedRevision: { revisionPublicId: 'rev-2', revisionNumber: 1, acceptedAt: '2026-10-15T11:00:00Z' } }),
+        createMockInsight({ constructPublicId: 'in-ghi-789', displayId: 'IN-0003', acceptedRevision: { revisionPublicId: 'rev-3', revisionNumber: 1, acceptedAt: '2026-10-15T12:00:00Z' } }),
+      ];
+
+      mockUseEligibleEvidence.mockReturnValue({
+        data: {
+          data: {
+            insights,
+            pagination: { total: 3, limit: 100, offset: 0 },
+          },
+        },
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(
+        <EvidenceSelectionPanel
+          projectPublicId="proj-1"
+          studyPublicId="study-1"
+          readoutPublicId="ro-1"
+          selectedRevisionIds={[]}
+          onSelectionChange={mockOnSelectionChange}
+          initialSelectionMode="all"
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      await waitFor(() => {
+        expect(mockOnSelectionChange).toHaveBeenCalledWith(['rev-1', 'rev-2', 'rev-3']);
+      });
+    });
+
+    it('uses "all" mode by default when prop is omitted', async () => {
+      const mockOnSelectionChange = vi.fn();
+      const insights = [
+        createMockInsight({ acceptedRevision: { revisionPublicId: 'rev-1', revisionNumber: 1, acceptedAt: '2026-10-15T10:00:00Z' } }),
+        createMockInsight({ constructPublicId: 'in-def-456', displayId: 'IN-0002', acceptedRevision: { revisionPublicId: 'rev-2', revisionNumber: 1, acceptedAt: '2026-10-15T11:00:00Z' } }),
+      ];
+
+      mockUseEligibleEvidence.mockReturnValue({
+        data: {
+          data: {
+            insights,
+            pagination: { total: 2, limit: 100, offset: 0 },
+          },
+        },
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(
+        <EvidenceSelectionPanel
+          projectPublicId="proj-1"
+          studyPublicId="study-1"
+          readoutPublicId="ro-1"
+          selectedRevisionIds={[]}
+          onSelectionChange={mockOnSelectionChange}
+          // No initialSelectionMode prop - should default to 'all'
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      await waitFor(() => {
+        expect(mockOnSelectionChange).toHaveBeenCalledWith(['rev-1', 'rev-2']);
+      });
+    });
+  });
+
+  describe('initialSelectionMode="provided" (regeneration)', () => {
+    it('preselects only historical revisions that are still eligible', async () => {
+      const mockOnSelectionChange = vi.fn();
+      // Eligible revisions: rev-1, rev-2, rev-3
+      // Historical selection: rev-1, rev-2, rev-old (rev-old is no longer eligible)
+      // Expected result: rev-1, rev-2 (intersection)
+      const insights = [
+        createMockInsight({ acceptedRevision: { revisionPublicId: 'rev-1', revisionNumber: 2, acceptedAt: '2026-10-15T10:00:00Z' } }),
+        createMockInsight({ constructPublicId: 'in-def-456', displayId: 'IN-0002', acceptedRevision: { revisionPublicId: 'rev-2', revisionNumber: 1, acceptedAt: '2026-10-15T11:00:00Z' } }),
+        createMockInsight({ constructPublicId: 'in-ghi-789', displayId: 'IN-0003', acceptedRevision: { revisionPublicId: 'rev-3', revisionNumber: 1, acceptedAt: '2026-10-15T12:00:00Z' } }),
+      ];
+
+      mockUseEligibleEvidence.mockReturnValue({
+        data: {
+          data: {
+            insights,
+            pagination: { total: 3, limit: 100, offset: 0 },
+          },
+        },
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(
+        <EvidenceSelectionPanel
+          projectPublicId="proj-1"
+          studyPublicId="study-1"
+          readoutPublicId="ro-1"
+          selectedRevisionIds={['rev-1', 'rev-2', 'rev-old']}
+          onSelectionChange={mockOnSelectionChange}
+          initialSelectionMode="provided"
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      // Should filter to only eligible historical revisions
+      await waitFor(() => {
+        expect(mockOnSelectionChange).toHaveBeenCalledWith(['rev-1', 'rev-2']);
+      });
+    });
+
+    it('excludes ineligible historical revisions without substitution', async () => {
+      const mockOnSelectionChange = vi.fn();
+      // Historical selection included rev-old-1 and rev-old-2 which have new versions
+      // Should NOT auto-substitute with new revision IDs
+      const insights = [
+        createMockInsight({ acceptedRevision: { revisionPublicId: 'rev-new-1', revisionNumber: 2, acceptedAt: '2026-10-15T10:00:00Z' } }),
+        createMockInsight({ constructPublicId: 'in-def-456', displayId: 'IN-0002', acceptedRevision: { revisionPublicId: 'rev-new-2', revisionNumber: 2, acceptedAt: '2026-10-15T11:00:00Z' } }),
+      ];
+
+      mockUseEligibleEvidence.mockReturnValue({
+        data: {
+          data: {
+            insights,
+            pagination: { total: 2, limit: 100, offset: 0 },
+          },
+        },
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(
+        <EvidenceSelectionPanel
+          projectPublicId="proj-1"
+          studyPublicId="study-1"
+          readoutPublicId="ro-1"
+          selectedRevisionIds={['rev-old-1', 'rev-old-2']}
+          onSelectionChange={mockOnSelectionChange}
+          initialSelectionMode="provided"
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      // Should result in empty selection - no auto-substitution
+      await waitFor(() => {
+        expect(mockOnSelectionChange).toHaveBeenCalledWith([]);
+      });
+    });
+
+    it('starts with empty selection when no historical revisions remain eligible', async () => {
+      const mockOnSelectionChange = vi.fn();
+      // All historical revisions are no longer eligible
+      const insights = [
+        createMockInsight({ acceptedRevision: { revisionPublicId: 'rev-brand-new', revisionNumber: 1, acceptedAt: '2026-10-15T10:00:00Z' } }),
+      ];
+
+      mockUseEligibleEvidence.mockReturnValue({
+        data: {
+          data: {
+            insights,
+            pagination: { total: 1, limit: 100, offset: 0 },
+          },
+        },
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      const { rerender } = render(
+        <EvidenceSelectionPanel
+          projectPublicId="proj-1"
+          studyPublicId="study-1"
+          readoutPublicId="ro-1"
+          selectedRevisionIds={['rev-historical-1', 'rev-historical-2']}
+          onSelectionChange={mockOnSelectionChange}
+          initialSelectionMode="provided"
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      // Empty intersection - requires manual selection
+      await waitFor(() => {
+        expect(mockOnSelectionChange).toHaveBeenCalledWith([]);
+      });
+
+      // Rerender with empty selection (simulating parent state update)
+      rerender(
+        <QueryClientProvider client={createQueryClient()}>
+          <EvidenceSelectionPanel
+            projectPublicId="proj-1"
+            studyPublicId="study-1"
+            readoutPublicId="ro-1"
+            selectedRevisionIds={[]}
+            onSelectionChange={mockOnSelectionChange}
+            initialSelectionMode="provided"
+          />
+        </QueryClientProvider>,
+      );
+
+      // Warning should be shown for empty selection
+      expect(screen.getByText(/select at least one insight/i)).toBeInTheDocument();
+    });
+
+    it('preserves user selections after initial intersection calculation', async () => {
+      const mockOnSelectionChange = vi.fn();
+      const insights = [
+        createMockInsight({ acceptedRevision: { revisionPublicId: 'rev-1', revisionNumber: 1, acceptedAt: '2026-10-15T10:00:00Z' } }),
+        createMockInsight({ constructPublicId: 'in-def-456', displayId: 'IN-0002', acceptedRevision: { revisionPublicId: 'rev-2', revisionNumber: 1, acceptedAt: '2026-10-15T11:00:00Z' } }),
+      ];
+
+      mockUseEligibleEvidence.mockReturnValue({
+        data: {
+          data: {
+            insights,
+            pagination: { total: 2, limit: 100, offset: 0 },
+          },
+        },
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      const { rerender } = render(
+        <EvidenceSelectionPanel
+          projectPublicId="proj-1"
+          studyPublicId="study-1"
+          readoutPublicId="ro-1"
+          selectedRevisionIds={['rev-1', 'rev-2']}
+          onSelectionChange={mockOnSelectionChange}
+          initialSelectionMode="provided"
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      // Initial selection should be preserved (both are eligible)
+      await waitFor(() => {
+        expect(mockOnSelectionChange).toHaveBeenCalledWith(['rev-1', 'rev-2']);
+      });
+
+      mockOnSelectionChange.mockClear();
+
+      // Simulate user deselecting rev-2
+      rerender(
+        <QueryClientProvider client={createQueryClient()}>
+          <EvidenceSelectionPanel
+            projectPublicId="proj-1"
+            studyPublicId="study-1"
+            readoutPublicId="ro-1"
+            selectedRevisionIds={['rev-1']}
+            onSelectionChange={mockOnSelectionChange}
+            initialSelectionMode="provided"
+          />
+        </QueryClientProvider>,
+      );
+
+      // After initialization, user selections should be preserved
+      // No additional onSelectionChange call should force all selections
+      await waitFor(() => {
+        const checkboxes = screen.getAllByRole('checkbox');
+        expect(checkboxes[0]).toBeChecked(); // rev-1
+        expect(checkboxes[1]).not.toBeChecked(); // rev-2
+      });
+    });
+  });
+
   describe('display', () => {
     it('shows insight ID and revision number', () => {
       const insights = [

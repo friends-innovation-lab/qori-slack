@@ -20,7 +20,7 @@ export { ApprovalHistoryPanel } from './ApprovalHistoryPanel';
 export { ApprovalStatusBanner } from './ApprovalStatusBanner';
 
 // Generation components (DR-6b-5d-B)
-export { EvidenceSelectionPanel } from './EvidenceSelectionPanel';
+export { EvidenceSelectionPanel, type SelectionInitMode } from './EvidenceSelectionPanel';
 export { GenerationProgress } from './GenerationProgress';
 export { GenerationFailure } from './GenerationFailure';
 

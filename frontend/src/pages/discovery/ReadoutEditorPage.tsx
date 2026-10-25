@@ -938,6 +938,7 @@ export function ReadoutEditorPage() {
                 selectedRevisionIds={selectedRevisionIds}
                 onSelectionChange={handleSelectionChange}
                 disabled={initiateGenerationMutation.isPending}
+                initialSelectionMode={showRegenerationConfirmation ? 'provided' : 'all'}
               />
               <div className={styles.generateToolbar}>
                 <button

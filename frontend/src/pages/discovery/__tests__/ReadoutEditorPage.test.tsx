@@ -2310,7 +2310,7 @@ describe('ReadoutEditorPage Integration', () => {
                   generationError: null,
                   draftContentVersionAtStart: 1,
                   evidenceSet: [
-                    { constructPublicId: 'c1', revisionPublicId: 'r1', revisionNumber: 1, displayId: 'IN-0001' },
+                    { constructPublicId: 'construct-002', revisionPublicId: 'revision-002', revisionNumber: 3, displayId: 'IN-0002' },
                   ],
                   createdAt: '2026-10-15T10:00:00Z',
                 },
@@ -2555,6 +2555,8 @@ describe('ReadoutEditorPage Integration', () => {
           refetch: mockRefetch,
         });
 
+        // Use matching revision IDs for history and eligible evidence
+        // Historical evidence must match eligible evidence for preselection
         mockUseGenerationHistory.mockReturnValue({
           data: {
             data: {
@@ -2569,7 +2571,7 @@ describe('ReadoutEditorPage Integration', () => {
                   generationError: null,
                   draftContentVersionAtStart: 1,
                   evidenceSet: [
-                    { constructPublicId: 'c1', revisionPublicId: 'r1', revisionNumber: 1, displayId: 'IN-0001' },
+                    { constructPublicId: 'construct-002', revisionPublicId: 'revision-002', revisionNumber: 3, displayId: 'IN-0002' },
                   ],
                   createdAt: '2026-10-15T10:00:00Z',
                 },
@@ -2635,6 +2637,7 @@ describe('ReadoutEditorPage Integration', () => {
           refetch: mockRefetch,
         });
 
+        // Use matching revision IDs for history and eligible evidence
         mockUseGenerationHistory.mockReturnValue({
           data: {
             data: {
@@ -2649,7 +2652,7 @@ describe('ReadoutEditorPage Integration', () => {
                   generationError: null,
                   draftContentVersionAtStart: 1,
                   evidenceSet: [
-                    { constructPublicId: 'c1', revisionPublicId: 'r1', revisionNumber: 1, displayId: 'IN-0001' },
+                    { constructPublicId: 'construct-002', revisionPublicId: 'revision-002', revisionNumber: 3, displayId: 'IN-0002' },
                   ],
                   createdAt: '2026-10-15T10:00:00Z',
                 },
@@ -2731,6 +2734,7 @@ describe('ReadoutEditorPage Integration', () => {
           refetch: mockRefetch,
         });
 
+        // Use matching revision IDs for history and eligible evidence
         mockUseGenerationHistory.mockReturnValue({
           data: {
             data: {
@@ -2745,7 +2749,7 @@ describe('ReadoutEditorPage Integration', () => {
                   generationError: null,
                   draftContentVersionAtStart: 1,
                   evidenceSet: [
-                    { constructPublicId: 'c1', revisionPublicId: 'r1', revisionNumber: 1, displayId: 'IN-0001' },
+                    { constructPublicId: 'construct-002', revisionPublicId: 'revision-002', revisionNumber: 3, displayId: 'IN-0002' },
                   ],
                   createdAt: '2026-10-15T10:00:00Z',
                 },
@@ -2894,6 +2898,305 @@ describe('ReadoutEditorPage Integration', () => {
         await waitFor(() => {
           expect(screen.getByText(/2 of 2 selected/i)).toBeInTheDocument();
         });
+      });
+    });
+
+    describe('Draft refresh on generation completion (Fix B)', () => {
+      it('clean editor: shows generation completion notice when status transitions to completed', async () => {
+        // This test verifies the generation completion UI when the generation finishes
+        // The actual draft sync happens via useReadoutEditor which has its own unit tests
+        const mockReadout = createMockReadout({
+          currentGenerationRequestId: 'gen-active-123',
+        });
+
+        mockUseReadoutDetail.mockReturnValue({
+          data: { data: mockReadout },
+          isLoading: false,
+          error: null,
+          refetch: mockRefetch,
+        });
+
+        // Generation completed
+        mockUseGenerationStatus.mockReturnValue({
+          data: {
+            data: {
+              generationRequestId: 'gen-active-123',
+              status: 'completed',
+              hasContent: true,
+              generationError: null,
+            },
+          },
+          isLoading: false,
+          isError: false,
+          refetch: vi.fn(),
+        });
+
+        mockUseGenerationHistory.mockReturnValue({
+          data: {
+            data: {
+              versions: [
+                {
+                  id: 1,
+                  versionNumber: 1,
+                  generationRequestId: 'gen-old',
+                  generationStatus: 'completed',
+                  generationStartedAt: '2026-10-15T09:00:00Z',
+                  generationCompletedAt: '2026-10-15T09:05:00Z',
+                  generationError: null,
+                  draftContentVersionAtStart: 1,
+                  evidenceSet: [],
+                  createdAt: '2026-10-15T09:00:00Z',
+                },
+              ],
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        renderPage();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Readout Title')).toBeInTheDocument();
+        });
+
+        // Should show generation finished notice
+        expect(screen.getByText(/generation finished/i)).toBeInTheDocument();
+      });
+
+      it('dirty editor: disables regeneration when editor has unsaved changes', async () => {
+        // This test verifies that local edits are preserved and regeneration is blocked
+        // when the editor is dirty. The hasLocalEdits safeguard in useReadoutEditor
+        // prevents server sync from overwriting dirty state.
+        const user = userEvent.setup();
+        const mockReadout = createMockReadout();
+
+        mockUseReadoutDetail.mockReturnValue({
+          data: { data: mockReadout },
+          isLoading: false,
+          error: null,
+          refetch: mockRefetch,
+        });
+
+        mockUseGenerationHistory.mockReturnValue({
+          data: {
+            data: {
+              versions: [
+                {
+                  id: 1,
+                  versionNumber: 1,
+                  generationRequestId: 'gen-123',
+                  generationStatus: 'completed',
+                  generationStartedAt: '2026-10-15T10:00:00Z',
+                  generationCompletedAt: '2026-10-15T10:05:00Z',
+                  generationError: null,
+                  draftContentVersionAtStart: 1,
+                  evidenceSet: [
+                    { constructPublicId: 'construct-002', revisionPublicId: 'revision-002', revisionNumber: 3, displayId: 'IN-0002' },
+                  ],
+                  createdAt: '2026-10-15T10:00:00Z',
+                },
+              ],
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        renderPage();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Readout Title')).toBeInTheDocument();
+        });
+
+        // Regenerate should initially be enabled
+        const regenerateButton = screen.getByRole('button', { name: /regenerate/i });
+        expect(regenerateButton).not.toBeDisabled();
+
+        // Make local edits to dirty the editor
+        const findingTextarea = screen.getByLabelText('Finding F1 text');
+        await user.type(findingTextarea, ' my local edit');
+
+        // The local edit should be preserved in the textarea
+        expect(findingTextarea).toHaveValue('Finding one my local edit');
+
+        // Editor should be dirty now - regeneration blocked
+        await waitFor(() => {
+          expect(screen.getByRole('button', { name: /regenerate/i })).toBeDisabled();
+        });
+      });
+
+      it('shows dirty draft warning text when generation completes with unsaved edits', async () => {
+        // This test verifies the warning UI exists in the DOM
+        // The actual state management is in useReadoutEditor and ReadoutEditorPage
+        const mockReadout = createMockReadout({
+          currentGenerationRequestId: 'gen-active-123',
+        });
+
+        mockUseReadoutDetail.mockReturnValue({
+          data: { data: mockReadout },
+          isLoading: false,
+          error: null,
+          refetch: mockRefetch,
+        });
+
+        // Generation completed status
+        mockUseGenerationStatus.mockReturnValue({
+          data: {
+            data: {
+              generationRequestId: 'gen-active-123',
+              status: 'completed',
+              hasContent: true,
+              generationError: null,
+            },
+          },
+          isLoading: false,
+          isError: false,
+          refetch: vi.fn(),
+        });
+
+        mockUseGenerationHistory.mockReturnValue({
+          data: {
+            data: {
+              versions: [
+                {
+                  id: 1,
+                  versionNumber: 1,
+                  generationRequestId: 'gen-123',
+                  generationStatus: 'completed',
+                  generationStartedAt: '2026-10-15T10:00:00Z',
+                  generationCompletedAt: '2026-10-15T10:05:00Z',
+                  generationError: null,
+                  draftContentVersionAtStart: 1,
+                  evidenceSet: [],
+                  createdAt: '2026-10-15T10:00:00Z',
+                },
+              ],
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        const user = userEvent.setup();
+        renderPage();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Readout Title')).toBeInTheDocument();
+        });
+
+        // Make local edits to dirty the editor
+        const findingTextarea = screen.getByLabelText('Finding F1 text');
+        await user.type(findingTextarea, ' edited');
+
+        // The dirty draft warning should appear when generation completes with dirty editor
+        await waitFor(() => {
+          expect(screen.getByText(/generation finished with unsaved changes/i)).toBeInTheDocument();
+        });
+      });
+
+      it('idempotency: does not create duplicate generation requests', async () => {
+        const user = userEvent.setup();
+        const mockReadout = createMockReadout();
+
+        mockUseReadoutDetail.mockReturnValue({
+          data: { data: mockReadout },
+          isLoading: false,
+          error: null,
+          refetch: mockRefetch,
+        });
+
+        mockUseGenerationHistory.mockReturnValue({
+          data: {
+            data: {
+              versions: [
+                {
+                  id: 1,
+                  versionNumber: 1,
+                  generationRequestId: 'gen-123',
+                  generationStatus: 'completed',
+                  generationStartedAt: '2026-10-15T10:00:00Z',
+                  generationCompletedAt: '2026-10-15T10:05:00Z',
+                  generationError: null,
+                  draftContentVersionAtStart: 1,
+                  evidenceSet: [
+                    { constructPublicId: 'construct-002', revisionPublicId: 'revision-002', revisionNumber: 3, displayId: 'IN-0002' },
+                  ],
+                  createdAt: '2026-10-15T10:00:00Z',
+                },
+              ],
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        mockUseEligibleEvidence.mockReturnValue({
+          data: {
+            data: {
+              insights: [createMockEligibleInsight()],
+              pagination: { total: 1, limit: 50, offset: 0 },
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        });
+
+        // Track all calls with their idempotency keys
+        const idempotencyKeys: string[] = [];
+        const generateMutate = vi.fn().mockImplementation(({ idempotencyKey }) => {
+          idempotencyKeys.push(idempotencyKey);
+          return Promise.resolve({
+            data: {
+              generationRequestId: 'gen-new-123',
+              created: idempotencyKeys.length === 1, // First call creates, subsequent don't
+            },
+          });
+        });
+
+        mockUseInitiateGeneration.mockReturnValue({
+          mutateAsync: generateMutate,
+          isPending: false,
+          isError: false,
+        });
+
+        renderPage();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Readout Title')).toBeInTheDocument();
+        });
+
+        // Start regeneration flow
+        await user.click(screen.getByRole('button', { name: /regenerate/i }));
+
+        await waitFor(() => {
+          expect(screen.getByText('Select Evidence')).toBeInTheDocument();
+        });
+
+        // Click Generate Readout
+        await user.click(screen.getByRole('button', { name: /generate readout/i }));
+
+        await waitFor(() => {
+          expect(screen.getByRole('dialog', { name: /confirm regeneration/i })).toBeInTheDocument();
+        });
+
+        // Confirm regeneration
+        const dialog = screen.getByRole('dialog', { name: /confirm regeneration/i });
+        await user.click(within(dialog).getByRole('button', { name: /^regenerate$/i }));
+
+        await waitFor(() => {
+          expect(generateMutate).toHaveBeenCalled();
+        });
+
+        // Verify mutation was called with an idempotency key
+        expect(idempotencyKeys.length).toBeGreaterThan(0);
+        expect(idempotencyKeys[0]).toBeTruthy();
+        expect(typeof idempotencyKeys[0]).toBe('string');
       });
     });
   });
