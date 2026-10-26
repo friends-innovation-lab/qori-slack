@@ -77,6 +77,8 @@ import DeskResearchReadout from './models/desk_research_readout';
 import DeskResearchReadoutDraft from './models/desk_research_readout_draft';
 import DeskResearchReadoutVersion from './models/desk_research_readout_version';
 import DeskResearchReadoutApproval from './models/desk_research_readout_approval';
+// DISC-WEB-1: Extraction staging for Workspace uploads
+import ExtractionStaging from './models/extraction_staging';
 
 
 // Set environment and configuration
@@ -168,6 +170,8 @@ const modelDefiners = [
   DeskResearchReadoutDraft,
   DeskResearchReadoutVersion,
   DeskResearchReadoutApproval,
+  // DISC-WEB-1: Extraction staging (must be after DiscoveryRun due to consumed_by_run_id FK)
+  ExtractionStaging,
 ];
 
 // Register all models with Sequelize
