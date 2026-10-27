@@ -23,6 +23,7 @@ import discoveryRoutes from './discovery.routes';
 import deskInsightsRoutes from './desk-insights.routes';
 import evidenceSourcesRoutes from './evidence-sources.routes';
 import deskReadoutsRoutes from './desk-readouts.routes';
+import extractionRoutes from './extraction.routes';
 
 const v1Router = Router();
 
@@ -56,5 +57,8 @@ v1Router.use('/projects/:projectId/evidence-sources', evidenceSourcesRoutes);
 
 // DR-6b-3: Desk research readouts — study-scoped within project
 v1Router.use('/projects/:projectId/studies/:studyId/readouts', deskReadoutsRoutes);
+
+// DISC-WEB-1B: Document extraction — project-scoped
+v1Router.use('/projects/:projectId/extraction', extractionRoutes);
 
 export default v1Router;

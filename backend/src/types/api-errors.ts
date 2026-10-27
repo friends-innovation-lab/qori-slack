@@ -46,6 +46,14 @@ export enum ApiErrorCode {
   COACH_CONCURRENCY_LIMIT = 'COACH_CONCURRENCY_LIMIT',
   /** Coaching run is not in a retryable state — only failed runs can be retried (Coach M3C) */
   COACH_RUN_NOT_RETRYABLE = 'COACH_RUN_NOT_RETRYABLE',
+  /** Extraction service is overloaded — queue full (DISC-WEB-1B) */
+  EXTRACTION_OVERLOADED = 'EXTRACTION_OVERLOADED',
+  /** Upload aggregate size limit exceeded (DISC-WEB-1B) */
+  AGGREGATE_LIMIT_EXCEEDED = 'AGGREGATE_LIMIT_EXCEEDED',
+  /** File count limit exceeded (DISC-WEB-1B) */
+  FILE_LIMIT_EXCEEDED = 'FILE_LIMIT_EXCEEDED',
+  /** Feature is disabled via environment flag (DISC-WEB-1B) */
+  FEATURE_DISABLED = 'FEATURE_DISABLED',
   /** Unexpected server error — details intentionally omitted */
   INTERNAL_ERROR = 'INTERNAL_ERROR',
 }
@@ -180,4 +188,36 @@ export function coachConcurrencyLimit(message: string): AppError {
  */
 export function coachRunNotRetryable(message = 'Only failed coaching runs can be retried'): AppError {
   return new AppError(ApiErrorCode.COACH_RUN_NOT_RETRYABLE, message, 400);
+}
+
+/**
+ * Extraction service overloaded (DISC-WEB-1B).
+ * Returned when extraction queue is full.
+ */
+export function extractionOverloaded(message = 'Extraction service is temporarily overloaded'): AppError {
+  return new AppError(ApiErrorCode.EXTRACTION_OVERLOADED, message, 503);
+}
+
+/**
+ * Aggregate limit exceeded (DISC-WEB-1B).
+ * Returned when total upload size exceeds limit.
+ */
+export function aggregateLimitExceeded(message: string): AppError {
+  return new AppError(ApiErrorCode.AGGREGATE_LIMIT_EXCEEDED, message, 413);
+}
+
+/**
+ * File limit exceeded (DISC-WEB-1B).
+ * Returned when too many files are uploaded.
+ */
+export function fileLimitExceeded(message: string): AppError {
+  return new AppError(ApiErrorCode.FILE_LIMIT_EXCEEDED, message, 413);
+}
+
+/**
+ * Feature disabled (DISC-WEB-1B).
+ * Returned when a feature is disabled via environment flag.
+ */
+export function featureDisabled(message = 'This feature is not available'): AppError {
+  return new AppError(ApiErrorCode.FEATURE_DISABLED, message, 503);
 }
