@@ -38,6 +38,10 @@ export interface CreateDiscoveryRunInput {
   createdByIdentity: string;
   /** Survey-specific: initial stage */
   stage?: SurveyStage | null;
+  /** DISC-WEB-1: Client-provided idempotency key (required for REST sourceRefs path) */
+  idempotencyKey?: string | null;
+  /** DISC-WEB-1: SHA-256 of normalized request payload for conflict detection */
+  payloadFingerprint?: string | null;
 }
 
 export interface AssociateSourcesInput {
@@ -70,10 +74,22 @@ export class DiscoveryRunStateError extends Error {
  * DISC-3B: Allocates a stable marker_index at creation time.
  * Marker allocation is atomic to prevent duplicate markers under concurrency.
  */
+// UUID v4 pattern for validation
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function createDiscoveryRun(
   input: CreateDiscoveryRunInput,
   transaction?: Transaction,
 ): Promise<DiscoveryRun> {
+  // DISC-WEB-1B: Validate idempotency key format if provided (null allowed for legacy)
+  if (input.idempotencyKey !== null && input.idempotencyKey !== undefined) {
+    if (!UUID_PATTERN.test(input.idempotencyKey)) {
+      throw new Error(
+        `Invalid idempotency key format: expected UUID, got '${input.idempotencyKey}'`,
+      );
+    }
+  }
+
   // Use provided transaction or create a new one for atomic marker allocation
   const t = transaction ?? (await sequelize.transaction());
   const shouldCommit = !transaction;
@@ -99,6 +115,9 @@ export async function createDiscoveryRun(
         stage: input.stage ?? null,
         attempt_count: 1,
         marker_index: markerIndex,
+        // DISC-WEB-1: Idempotency (optional, null for legacy/Slack)
+        idempotency_key: input.idempotencyKey ?? null,
+        payload_fingerprint: input.payloadFingerprint ?? null,
       } as CreationAttributes<DiscoveryRun>,
       { transaction: t },
     );
@@ -379,6 +398,26 @@ export async function getDiscoveryRunByPublicId(
 ): Promise<DiscoveryRun | null> {
   return DiscoveryRunModel.findOne({
     where: { public_id: publicId },
+    transaction,
+  });
+}
+
+/**
+ * DISC-WEB-1: Find run by idempotency key within a project.
+ *
+ * Used for idempotent run creation — returns existing run if key matches.
+ * Returns null if no matching run found.
+ */
+export async function findByIdempotencyKey(
+  projectId: number,
+  idempotencyKey: string,
+  transaction?: Transaction,
+): Promise<DiscoveryRun | null> {
+  return DiscoveryRunModel.findOne({
+    where: {
+      project_id: projectId,
+      idempotency_key: idempotencyKey,
+    },
     transaction,
   });
 }

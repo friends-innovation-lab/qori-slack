@@ -270,6 +270,197 @@ export async function validateAndConsumeRefs(
   };
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// DISC-WEB-1B: SPLIT VALIDATION AND CONSUMPTION
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Validated staging refs ready for consumption.
+ * Passed from validateRefsForConsumption to consumeValidatedRefs.
+ */
+export interface ValidatedStagingRefs {
+  /** IDs of staging rows that passed validation (in ready status) */
+  validatedIds: number[];
+  /** Full staging rows for creating EvidenceSources */
+  stagingRows: ExtractionStaging[];
+}
+
+/**
+ * Result of validation-only check.
+ */
+export interface ValidationResult {
+  success: boolean;
+  validated?: ValidatedStagingRefs;
+  errors: Array<{ refToken: string; reason: string }>;
+}
+
+/**
+ * DISC-WEB-1B: Validate refs for consumption WITHOUT marking them consumed.
+ *
+ * This is the first half of the split validation/consumption pattern.
+ * Rows are locked FOR UPDATE to prevent concurrent consumption.
+ *
+ * Caller MUST:
+ * 1. Call this within a transaction
+ * 2. Call consumeValidatedRefs with the result in the SAME transaction
+ * 3. Commit or rollback the transaction
+ *
+ * @param refTokens - Array of ref tokens to validate
+ * @param projectId - Project scope for validation
+ * @param actorId - Actor scope for validation
+ * @param transaction - REQUIRED transaction for row locking
+ * @returns ValidationResult with validated IDs or errors
+ */
+export async function validateRefsForConsumption(
+  refTokens: string[],
+  projectId: number,
+  actorId: number,
+  transaction: Transaction,
+): Promise<ValidationResult> {
+  // DISC-WEB-1B: Reject duplicate tokens before any database operations
+  const uniqueTokens = new Set(refTokens);
+  if (uniqueTokens.size !== refTokens.length) {
+    const seen = new Set<string>();
+    const duplicates: string[] = [];
+    for (const token of refTokens) {
+      if (seen.has(token)) {
+        duplicates.push(token);
+      }
+      seen.add(token);
+    }
+    return {
+      success: false,
+      errors: duplicates.map((token) => ({ refToken: token, reason: 'duplicate' })),
+    };
+  }
+
+  // Lock rows for update to prevent race conditions
+  const stagingRows = await ExtractionStagingModel.findAll({
+    where: { ref_token: { [Op.in]: refTokens } },
+    lock: transaction.LOCK.UPDATE,
+    transaction,
+  });
+
+  const errors: Array<{ refToken: string; reason: string }> = [];
+  const validRefs: ExtractionStaging[] = [];
+
+  for (const refToken of refTokens) {
+    const staging = stagingRows.find((r) => r.ref_token === refToken);
+
+    if (!staging) {
+      errors.push({ refToken, reason: 'not_found' });
+      continue;
+    }
+
+    if (staging.project_id !== projectId) {
+      errors.push({ refToken, reason: 'wrong_project' });
+      continue;
+    }
+
+    if (staging.actor_id !== actorId) {
+      errors.push({ refToken, reason: 'wrong_actor' });
+      continue;
+    }
+
+    // DISC-WEB-1B: Consumed refs are NOT replayable via ref tokens
+    // Replay must use idempotency key at the run level
+    if (staging.status === 'consumed') {
+      errors.push({ refToken, reason: 'consumed' });
+      continue;
+    }
+
+    if (staging.status === 'expired') {
+      errors.push({ refToken, reason: 'expired' });
+      continue;
+    }
+
+    if (staging.status === 'failed') {
+      errors.push({ refToken, reason: 'failed' });
+      continue;
+    }
+
+    // Check TTL
+    if (new Date() > staging.expires_at) {
+      await staging.update({ status: 'expired' }, { transaction });
+      errors.push({ refToken, reason: 'expired' });
+      continue;
+    }
+
+    validRefs.push(staging);
+  }
+
+  // All-or-nothing: any error fails the entire validation
+  if (errors.length > 0) {
+    return {
+      success: false,
+      errors,
+    };
+  }
+
+  return {
+    success: true,
+    validated: {
+      validatedIds: validRefs.map((r) => r.id),
+      stagingRows: validRefs,
+    },
+    errors: [],
+  };
+}
+
+/**
+ * DISC-WEB-1B: Consume previously validated refs.
+ *
+ * Uses conditional UPDATE with affected-row verification to ensure
+ * rows are still in 'ready' status. This prevents TOCTOU races
+ * even within the same transaction if isolation allows anomalies.
+ *
+ * @param validated - Result from validateRefsForConsumption
+ * @param runId - Discovery run ID to associate with consumption
+ * @param transaction - SAME transaction used in validation
+ * @returns Number of rows consumed (must equal validatedIds.length)
+ * @throws Error if affected rows don't match expected (race condition)
+ */
+export async function consumeValidatedRefs(
+  validated: ValidatedStagingRefs,
+  runId: number,
+  transaction: Transaction,
+): Promise<number> {
+  if (validated.validatedIds.length === 0) {
+    return 0;
+  }
+
+  const now = new Date();
+
+  // Conditional UPDATE: only update rows still in 'ready' status
+  // This catches any TOCTOU race (however unlikely within transaction)
+  // Use Op.in with Sequelize model for proper array handling
+  const [affectedCount] = await ExtractionStagingModel.update(
+    {
+      status: 'consumed',
+      consumed_by_run_id: runId,
+      consumed_at: now,
+    },
+    {
+      where: {
+        id: { [Op.in]: validated.validatedIds },
+        status: 'ready',
+      },
+      transaction,
+    },
+  );
+
+  // affectedCount is the number of rows updated
+
+  if (affectedCount !== validated.validatedIds.length) {
+    throw new Error(
+      `Staging consumption race: expected ${validated.validatedIds.length} rows, ` +
+      `updated ${affectedCount}. Some refs were consumed or expired concurrently.`,
+    );
+  }
+
+  return affectedCount;
+}
+
 /**
  * Get staging row by ref token.
  */
