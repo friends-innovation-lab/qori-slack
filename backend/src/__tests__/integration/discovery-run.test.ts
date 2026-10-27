@@ -1283,3 +1283,201 @@ describe('variable lineage', () => {
   // and tested at DB level. The SET NULL constraint on discovery_artifact_fk_id
   // is enforced by the database, not application code.
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 12. DISC-WEB-1B: IDEMPOTENCY
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('DISC-WEB-1B: idempotency', () => {
+  it('creates run with idempotency key and payload fingerprint', async () => {
+    const idempotencyKey = '550e8400-e29b-41d4-a716-446655440000';
+    const payloadFingerprint = 'a'.repeat(64);
+
+    const run = await runService.createDiscoveryRun({
+      projectId,
+      discoveryType: 'desk_research',
+      topic: 'Idempotent Test',
+      topicSlug: 'idempotent-test',
+      sourceIntent: 'Test idempotency',
+      actorId,
+      createdByIdentity: 'rest:actor:123',
+      idempotencyKey,
+      payloadFingerprint,
+    });
+
+    expect(run.idempotency_key).toBe(idempotencyKey);
+    expect(run.payload_fingerprint).toBe(payloadFingerprint);
+  });
+
+  it('finds run by idempotency key', async () => {
+    const idempotencyKey = '660e8400-e29b-41d4-a716-446655440001';
+
+    const created = await runService.createDiscoveryRun({
+      projectId,
+      discoveryType: 'desk_research',
+      topic: 'Findable Run',
+      topicSlug: 'findable-run',
+      sourceIntent: null,
+      actorId,
+      createdByIdentity: 'rest:actor:123',
+      idempotencyKey,
+      payloadFingerprint: 'b'.repeat(64),
+    });
+
+    const found = await runService.findByIdempotencyKey(projectId, idempotencyKey);
+
+    expect(found).not.toBeNull();
+    expect(found!.id).toBe(created.id);
+    expect(found!.public_id).toBe(created.public_id);
+  });
+
+  it('returns null for non-existent idempotency key', async () => {
+    const found = await runService.findByIdempotencyKey(
+      projectId,
+      '770e8400-e29b-41d4-a716-446655440002',
+    );
+
+    expect(found).toBeNull();
+  });
+
+  it('enforces unique partial index on (project_id, idempotency_key)', async () => {
+    const idempotencyKey = '880e8400-e29b-41d4-a716-446655440003';
+
+    await runService.createDiscoveryRun({
+      projectId,
+      discoveryType: 'desk_research',
+      topic: 'First Run',
+      topicSlug: 'first-run',
+      sourceIntent: null,
+      actorId,
+      createdByIdentity: 'rest:actor:123',
+      idempotencyKey,
+      payloadFingerprint: 'c'.repeat(64),
+    });
+
+    // Attempting to create with same idempotency key should fail
+    await expect(
+      runService.createDiscoveryRun({
+        projectId,
+        discoveryType: 'desk_research',
+        topic: 'Second Run',
+        topicSlug: 'second-run',
+        sourceIntent: null,
+        actorId,
+        createdByIdentity: 'rest:actor:123',
+        idempotencyKey, // Same key
+        payloadFingerprint: 'd'.repeat(64),
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('allows same idempotency key in different projects', async () => {
+    const idempotencyKey = '990e8400-e29b-41d4-a716-446655440004';
+
+    // Create second project
+    const project2 = await ProjectModel.create({
+      name: 'Second Project',
+      slug: 'second-project',
+      status: 'active',
+      created_by: 'U_TEST',
+      organization_id: TEST_ORG_ID,
+    });
+    const project2Id = (project2 as any).id;
+
+    // Create run in first project
+    const run1 = await runService.createDiscoveryRun({
+      projectId,
+      discoveryType: 'desk_research',
+      topic: 'Project 1 Run',
+      topicSlug: 'project1-run',
+      sourceIntent: null,
+      actorId,
+      createdByIdentity: 'rest:actor:123',
+      idempotencyKey,
+      payloadFingerprint: 'e'.repeat(64),
+    });
+
+    // Create run in second project with same key - should succeed
+    const run2 = await runService.createDiscoveryRun({
+      projectId: project2Id,
+      discoveryType: 'desk_research',
+      topic: 'Project 2 Run',
+      topicSlug: 'project2-run',
+      sourceIntent: null,
+      actorId,
+      createdByIdentity: 'rest:actor:123',
+      idempotencyKey, // Same key, different project
+      payloadFingerprint: 'f'.repeat(64),
+    });
+
+    expect(run1.id).not.toBe(run2.id);
+    expect(run1.idempotency_key).toBe(run2.idempotency_key);
+    expect(run1.project_id).not.toBe(run2.project_id);
+  });
+
+  it('allows null idempotency key for legacy/Slack flows', async () => {
+    // Create multiple runs without idempotency key
+    const run1 = await runService.createDiscoveryRun({
+      projectId,
+      discoveryType: 'desk_research',
+      topic: 'Legacy Run 1',
+      topicSlug: 'legacy-run-1',
+      sourceIntent: null,
+      actorId,
+      createdByIdentity: 'slack:U_TEST',
+      // No idempotencyKey - should default to null
+    });
+
+    const run2 = await runService.createDiscoveryRun({
+      projectId,
+      discoveryType: 'desk_research',
+      topic: 'Legacy Run 2',
+      topicSlug: 'legacy-run-2',
+      sourceIntent: null,
+      actorId,
+      createdByIdentity: 'slack:U_TEST',
+      // No idempotencyKey - should default to null
+    });
+
+    // Both should succeed with null idempotency_key
+    expect(run1.idempotency_key).toBeNull();
+    expect(run2.idempotency_key).toBeNull();
+    expect(run1.id).not.toBe(run2.id);
+  });
+
+  it('scopes findByIdempotencyKey to project', async () => {
+    const idempotencyKey = 'aa0e8400-e29b-41d4-a716-446655440005';
+
+    // Create second project
+    const project2 = await ProjectModel.create({
+      name: 'Scoped Project',
+      slug: 'scoped-project',
+      status: 'active',
+      created_by: 'U_TEST',
+      organization_id: TEST_ORG_ID,
+    });
+    const project2Id = (project2 as any).id;
+
+    // Create run in second project
+    await runService.createDiscoveryRun({
+      projectId: project2Id,
+      discoveryType: 'desk_research',
+      topic: 'Other Project Run',
+      topicSlug: 'other-project-run',
+      sourceIntent: null,
+      actorId,
+      createdByIdentity: 'rest:actor:123',
+      idempotencyKey,
+      payloadFingerprint: 'g'.repeat(64),
+    });
+
+    // Search in first project - should not find it
+    const notFound = await runService.findByIdempotencyKey(projectId, idempotencyKey);
+    expect(notFound).toBeNull();
+
+    // Search in second project - should find it
+    const found = await runService.findByIdempotencyKey(project2Id, idempotencyKey);
+    expect(found).not.toBeNull();
+    expect(found!.project_id).toBe(project2Id);
+  });
+});

@@ -193,6 +193,99 @@ function computeContentHash(content: string): string {
   return createHash('sha256').update(content).digest('hex').substring(0, 32);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// DISC-WEB-1B: REST API HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * DISC-WEB-1B: Compute payload fingerprint for idempotency conflict detection.
+ *
+ * Normalizes request body to canonical JSON form and computes SHA-256 hash.
+ * Used to detect payload changes on idempotent retry.
+ */
+export function computePayloadFingerprint(payload: {
+  discoveryType: string;
+  topic: string;
+  sourceIntent: string | null;
+  sourceRefs: string[];
+}): string {
+  const { createHash } = require('crypto');
+
+  // Canonical form: sorted keys, trimmed strings, sorted arrays
+  const canonical = {
+    discoveryType: payload.discoveryType,
+    sourceIntent: payload.sourceIntent?.trim() || null,
+    sourceRefs: [...payload.sourceRefs].sort(),
+    topic: payload.topic.trim(),
+  };
+
+  return createHash('sha256')
+    .update(JSON.stringify(canonical))
+    .digest('hex');
+}
+
+/**
+ * DISC-WEB-1B: Resolve unique topic slug with collision handling.
+ *
+ * Reuses existing pattern from createPendingDiscoveryRun:
+ * - Check if expected filename exists on GitHub
+ * - If exists, append time suffix (HHmm)
+ *
+ * @param baseTopic - Raw topic string
+ * @param projectSlug - Project slug for path construction
+ * @param typeConfig - Discovery type configuration
+ * @returns Unique topic slug
+ */
+export async function resolveUniqueTopicSlug(
+  baseTopic: string,
+  projectSlug: string,
+  typeConfig: { fileSlug: string },
+): Promise<string> {
+  let topicSlug = slugifyTopic(baseTopic);
+
+  // Check for duplicate filename
+  const dateIso = format(new Date(), 'yyyy-MM-dd');
+  const expectedFilename = `${topicSlug}-${typeConfig.fileSlug}-${dateIso}.md`;
+  const expectedPath = `${projectSlug}/00-discovery/${expectedFilename}`;
+
+  try {
+    await fetchFileFromRepoByPath(process.env.GITHUB_REPO!, expectedPath);
+    // File exists — append time suffix
+    const timeSuffix = format(new Date(), 'HHmm');
+    topicSlug = `${topicSlug}-${timeSuffix}`;
+  } catch (error) {
+    // Only treat HTTP 404 as "file doesn't exist"
+    const status = (error as Record<string, unknown>)?.status;
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (status === 404 || message?.includes('Not Found') || message?.includes('Could not fetch file')) {
+      // File doesn't exist — proceed with original slug
+    } else {
+      // Unexpected error — propagate
+      throw error;
+    }
+  }
+
+  return topicSlug;
+}
+
+/**
+ * DISC-WEB-1B: Export slugifyTopic for use in route handlers.
+ */
+export { slugifyTopic };
+
+/**
+ * DISC-WEB-1B: Get discovery type configuration.
+ */
+export function getDiscoveryTypeConfig(discoveryType: DiscoveryTypeKey): {
+  yaml: string;
+  type: string;
+  fileSlug: string;
+  label: string;
+} | null {
+  return DISCOVERY_TYPES[discoveryType] || null;
+}
+
 // ─── List Discovery Artifacts (Legacy GitHub-based) ─────────────
 
 export async function listDiscoveryArtifacts(

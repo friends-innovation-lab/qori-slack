@@ -87,6 +87,10 @@ class DiscoveryRun extends Model<
   // Marker identity (DISC-3B)
   declare marker_index: number | null;
 
+  // DISC-WEB-1: Idempotency for REST API
+  declare idempotency_key: string | null;
+  declare payload_fingerprint: string | null;
+
   // Association mixins
   declare getProject: BelongsToGetAssociationMixin<Project>;
   declare project?: NonAttribute<Project>;
@@ -241,6 +245,15 @@ export default (sequelize: Sequelize) => {
       marker_index: {
         type: DataTypes.INTEGER,
         allowNull: true, // Nullable for historical runs
+      },
+      // DISC-WEB-1: Idempotency for REST API
+      idempotency_key: {
+        type: DataTypes.UUID,
+        allowNull: true, // Nullable for legacy/Slack runs
+      },
+      payload_fingerprint: {
+        type: DataTypes.CHAR(64),
+        allowNull: true,
       },
     },
     {

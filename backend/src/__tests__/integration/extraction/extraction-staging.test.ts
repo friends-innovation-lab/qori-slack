@@ -6,6 +6,12 @@
 
 import { getTestDb, truncateAll, TEST_ORG_ID } from '../setup/testDb';
 import type { Transaction } from 'sequelize';
+import {
+  validateRefsForConsumption,
+  consumeValidatedRefs,
+  type ValidatedStagingRefs,
+  type ValidationResult,
+} from '../../../services/extraction/extraction-staging.service';
 
 const sequelize = getTestDb();
 
@@ -468,6 +474,520 @@ describe('evidence preservation (staging deletion safety)', () => {
       where: { discovery_run_id: runId },
     });
     expect(remainingLinks).toHaveLength(3);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DISC-WEB-1B: SPLIT VALIDATION AND CONSUMPTION TESTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('DISC-WEB-1B: validateRefsForConsumption', () => {
+  const ExtractionStaging = () => sequelize.models.ExtractionStaging;
+  const DiscoveryRun = () => sequelize.models.DiscoveryRun;
+
+  async function createTestRun(): Promise<{ id: number; public_id: string }> {
+    const run = await DiscoveryRun().create({
+      project_id: testProjectId,
+      discovery_type: 'desk_research',
+      topic: 'Test topic',
+      topic_slug: 'test-topic',
+      created_by_identity: 'test:user',
+      status: 'pending',
+    });
+    return {
+      id: (run as unknown as { id: number }).id,
+      public_id: (run as unknown as { public_id: string }).public_id,
+    };
+  }
+
+  it('validates ready refs successfully', async () => {
+    const staging = await ExtractionStaging().create({
+      project_id: testProjectId,
+      actor_id: testActorId,
+      filename: 'valid.txt',
+      mime_type: 'text/plain',
+      file_size_bytes: 100,
+      file_hash: 'a'.repeat(64),
+      content_hash: 'b'.repeat(64),
+      extracted_text: 'Content for validation test with sufficient characters.',
+      char_count: 55,
+      status: 'ready',
+    });
+    const refToken = staging.get('ref_token') as string;
+
+    const t = await sequelize.transaction();
+    try {
+      const result = await validateRefsForConsumption(
+        [refToken],
+        testProjectId,
+        testActorId,
+        t,
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.validated).toBeDefined();
+      expect(result.validated!.validatedIds).toHaveLength(1);
+      expect(result.validated!.stagingRows).toHaveLength(1);
+      expect(result.errors).toHaveLength(0);
+    } finally {
+      await t.rollback();
+    }
+  });
+
+  it('rejects consumed refs (no token replay)', async () => {
+    const run = await createTestRun();
+
+    const staging = await ExtractionStaging().create({
+      project_id: testProjectId,
+      actor_id: testActorId,
+      filename: 'consumed.txt',
+      mime_type: 'text/plain',
+      file_size_bytes: 100,
+      file_hash: 'a'.repeat(64),
+      content_hash: 'b'.repeat(64),
+      extracted_text: 'Content that was already consumed by another run.',
+      char_count: 49,
+      status: 'consumed',
+      consumed_by_run_id: run.id,
+      consumed_at: new Date(),
+    });
+    const refToken = staging.get('ref_token') as string;
+
+    const t = await sequelize.transaction();
+    try {
+      const result = await validateRefsForConsumption(
+        [refToken],
+        testProjectId,
+        testActorId,
+        t,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toEqual({ refToken, reason: 'consumed' });
+    } finally {
+      await t.rollback();
+    }
+  });
+
+  it('rejects wrong project refs', async () => {
+    // Create a second project
+    const Project = sequelize.models.Project;
+    const otherProject = await Project.create({
+      name: 'Other Project',
+      slug: 'other-project',
+      status: 'active',
+      created_by: 'U_TEST',
+      organization_id: TEST_ORG_ID,
+    });
+    const otherProjectId = (otherProject as unknown as { id: number }).id;
+
+    const staging = await ExtractionStaging().create({
+      project_id: otherProjectId,
+      actor_id: testActorId,
+      filename: 'other-project.txt',
+      mime_type: 'text/plain',
+      file_size_bytes: 100,
+      file_hash: 'a'.repeat(64),
+      content_hash: 'b'.repeat(64),
+      extracted_text: 'Content belonging to a different project entirely.',
+      char_count: 50,
+      status: 'ready',
+    });
+    const refToken = staging.get('ref_token') as string;
+
+    const t = await sequelize.transaction();
+    try {
+      const result = await validateRefsForConsumption(
+        [refToken],
+        testProjectId, // Different from staging's project
+        testActorId,
+        t,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toEqual({ refToken, reason: 'wrong_project' });
+    } finally {
+      await t.rollback();
+    }
+  });
+
+  it('rejects wrong actor refs', async () => {
+    // Create a second actor
+    const Actor = sequelize.models.Actor;
+    const otherActor = await Actor.create({
+      display_name: 'Other User',
+      status: 'active',
+      organization_id: TEST_ORG_ID,
+    });
+    const otherActorId = (otherActor as unknown as { id: number }).id;
+
+    const staging = await ExtractionStaging().create({
+      project_id: testProjectId,
+      actor_id: testActorId,
+      filename: 'other-actor.txt',
+      mime_type: 'text/plain',
+      file_size_bytes: 100,
+      file_hash: 'a'.repeat(64),
+      content_hash: 'b'.repeat(64),
+      extracted_text: 'Content uploaded by a different actor entirely.',
+      char_count: 47,
+      status: 'ready',
+    });
+    const refToken = staging.get('ref_token') as string;
+
+    const t = await sequelize.transaction();
+    try {
+      const result = await validateRefsForConsumption(
+        [refToken],
+        testProjectId,
+        otherActorId, // Different from staging's actor
+        t,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toEqual({ refToken, reason: 'wrong_actor' });
+    } finally {
+      await t.rollback();
+    }
+  });
+
+  it('fails all-or-nothing when any ref is invalid', async () => {
+    const validStaging = await ExtractionStaging().create({
+      project_id: testProjectId,
+      actor_id: testActorId,
+      filename: 'valid.txt',
+      mime_type: 'text/plain',
+      file_size_bytes: 100,
+      file_hash: 'a'.repeat(64),
+      content_hash: 'b'.repeat(64),
+      extracted_text: 'Valid content that should pass validation check.',
+      char_count: 48,
+      status: 'ready',
+    });
+    const validToken = validStaging.get('ref_token') as string;
+
+    const invalidStaging = await ExtractionStaging().create({
+      project_id: testProjectId,
+      actor_id: testActorId,
+      filename: 'expired.txt',
+      mime_type: 'text/plain',
+      file_size_bytes: 100,
+      file_hash: 'c'.repeat(64),
+      content_hash: 'd'.repeat(64),
+      extracted_text: 'Expired content that should fail validation check.',
+      char_count: 50,
+      status: 'expired',
+    });
+    const expiredToken = invalidStaging.get('ref_token') as string;
+
+    const t = await sequelize.transaction();
+    try {
+      const result = await validateRefsForConsumption(
+        [validToken, expiredToken],
+        testProjectId,
+        testActorId,
+        t,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toEqual({ refToken: expiredToken, reason: 'expired' });
+      // validated should be undefined on failure
+      expect(result.validated).toBeUndefined();
+    } finally {
+      await t.rollback();
+    }
+  });
+
+  it('rejects expired refs (TTL check)', async () => {
+    const staging = await ExtractionStaging().create({
+      project_id: testProjectId,
+      actor_id: testActorId,
+      filename: 'ttl-expired.txt',
+      mime_type: 'text/plain',
+      file_size_bytes: 100,
+      file_hash: 'a'.repeat(64),
+      content_hash: 'b'.repeat(64),
+      extracted_text: 'Content with expired TTL should fail validation.',
+      char_count: 48,
+      status: 'ready',
+    });
+    const refToken = staging.get('ref_token') as string;
+
+    // Force past expiration by updating after creation
+    await staging.update({ expires_at: new Date(Date.now() - 1000) });
+
+    const t = await sequelize.transaction();
+    try {
+      const result = await validateRefsForConsumption(
+        [refToken],
+        testProjectId,
+        testActorId,
+        t,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toEqual({ refToken, reason: 'expired' });
+    } finally {
+      await t.rollback();
+    }
+  });
+
+  it('rejects not found refs', async () => {
+    const fakeToken = '00000000-0000-0000-0000-000000000000';
+
+    const t = await sequelize.transaction();
+    try {
+      const result = await validateRefsForConsumption(
+        [fakeToken],
+        testProjectId,
+        testActorId,
+        t,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toEqual({ refToken: fakeToken, reason: 'not_found' });
+    } finally {
+      await t.rollback();
+    }
+  });
+});
+
+describe('DISC-WEB-1B: consumeValidatedRefs', () => {
+  const ExtractionStaging = () => sequelize.models.ExtractionStaging;
+  const DiscoveryRun = () => sequelize.models.DiscoveryRun;
+
+  async function createTestRun(): Promise<{ id: number; public_id: string }> {
+    const run = await DiscoveryRun().create({
+      project_id: testProjectId,
+      discovery_type: 'desk_research',
+      topic: 'Test topic',
+      topic_slug: 'test-topic',
+      created_by_identity: 'test:user',
+      status: 'pending',
+    });
+    return {
+      id: (run as unknown as { id: number }).id,
+      public_id: (run as unknown as { public_id: string }).public_id,
+    };
+  }
+
+  it('consumes validated refs atomically', async () => {
+    const run = await createTestRun();
+
+    const staging1 = await ExtractionStaging().create({
+      project_id: testProjectId,
+      actor_id: testActorId,
+      filename: 'file1.txt',
+      mime_type: 'text/plain',
+      file_size_bytes: 100,
+      file_hash: 'a'.repeat(64),
+      content_hash: 'b'.repeat(64),
+      extracted_text: 'First file content for atomic consumption test.',
+      char_count: 47,
+      status: 'ready',
+    });
+
+    const staging2 = await ExtractionStaging().create({
+      project_id: testProjectId,
+      actor_id: testActorId,
+      filename: 'file2.txt',
+      mime_type: 'text/plain',
+      file_size_bytes: 100,
+      file_hash: 'c'.repeat(64),
+      content_hash: 'd'.repeat(64),
+      extracted_text: 'Second file content for atomic consumption test.',
+      char_count: 48,
+      status: 'ready',
+    });
+
+    const refTokens = [
+      staging1.get('ref_token') as string,
+      staging2.get('ref_token') as string,
+    ];
+
+    const t = await sequelize.transaction();
+    try {
+      const validation = await validateRefsForConsumption(
+        refTokens,
+        testProjectId,
+        testActorId,
+        t,
+      );
+
+      expect(validation.success).toBe(true);
+
+      const consumed = await consumeValidatedRefs(
+        validation.validated!,
+        run.id,
+        t,
+      );
+
+      expect(consumed).toBe(2);
+      await t.commit();
+    } catch (e) {
+      await t.rollback();
+      throw e;
+    }
+
+    // Verify status changed to consumed
+    const s1 = await ExtractionStaging().findByPk(staging1.get('id') as number);
+    const s2 = await ExtractionStaging().findByPk(staging2.get('id') as number);
+
+    expect(s1!.get('status')).toBe('consumed');
+    expect(s1!.get('consumed_by_run_id')).toBe(run.id);
+    expect(s2!.get('status')).toBe('consumed');
+    expect(s2!.get('consumed_by_run_id')).toBe(run.id);
+  });
+
+  it('handles empty validated array', async () => {
+    const run = await createTestRun();
+
+    const t = await sequelize.transaction();
+    try {
+      const consumed = await consumeValidatedRefs(
+        { validatedIds: [], stagingRows: [] },
+        run.id,
+        t,
+      );
+
+      expect(consumed).toBe(0);
+    } finally {
+      await t.rollback();
+    }
+  });
+
+  it('throws on consumption race condition', async () => {
+    const run = await createTestRun();
+
+    const staging = await ExtractionStaging().create({
+      project_id: testProjectId,
+      actor_id: testActorId,
+      filename: 'race.txt',
+      mime_type: 'text/plain',
+      file_size_bytes: 100,
+      file_hash: 'a'.repeat(64),
+      content_hash: 'b'.repeat(64),
+      extracted_text: 'Content for race condition detection test case.',
+      char_count: 47,
+      status: 'ready',
+    });
+    const stagingId = staging.get('id') as number;
+    const refToken = staging.get('ref_token') as string;
+
+    const t = await sequelize.transaction();
+    try {
+      const validation = await validateRefsForConsumption(
+        [refToken],
+        testProjectId,
+        testActorId,
+        t,
+      );
+
+      expect(validation.success).toBe(true);
+
+      // Simulate race: update status outside the transaction
+      // This creates a scenario where the conditional UPDATE won't find ready rows
+      await sequelize.query(
+        `UPDATE extraction_staging SET status = 'expired' WHERE id = :id`,
+        { replacements: { id: stagingId } },
+      );
+
+      // Attempt consumption should fail
+      await expect(
+        consumeValidatedRefs(validation.validated!, run.id, t),
+      ).rejects.toThrow(/consumption race/i);
+    } finally {
+      await t.rollback();
+    }
+  });
+});
+
+describe('DISC-WEB-1B: concurrent consumption with PostgreSQL locking', () => {
+  const ExtractionStaging = () => sequelize.models.ExtractionStaging;
+  const DiscoveryRun = () => sequelize.models.DiscoveryRun;
+
+  async function createTestRun(): Promise<{ id: number; public_id: string }> {
+    const run = await DiscoveryRun().create({
+      project_id: testProjectId,
+      discovery_type: 'desk_research',
+      topic: 'Concurrent test',
+      topic_slug: 'concurrent-test',
+      created_by_identity: 'test:user',
+      status: 'pending',
+    });
+    return {
+      id: (run as unknown as { id: number }).id,
+      public_id: (run as unknown as { public_id: string }).public_id,
+    };
+  }
+
+  it('prevents double consumption via sequential transaction commits', async () => {
+    // This test verifies that once a ref is consumed by one transaction,
+    // a second attempt will see it as 'consumed' and fail validation.
+    const run1 = await createTestRun();
+    const run2 = await createTestRun();
+
+    const staging = await ExtractionStaging().create({
+      project_id: testProjectId,
+      actor_id: testActorId,
+      filename: 'lock-test.txt',
+      mime_type: 'text/plain',
+      file_size_bytes: 100,
+      file_hash: 'a'.repeat(64),
+      content_hash: 'b'.repeat(64),
+      extracted_text: 'Content for PostgreSQL FOR UPDATE lock testing.',
+      char_count: 47,
+      status: 'ready',
+    });
+    const refToken = staging.get('ref_token') as string;
+
+    // First transaction: validate and consume
+    const t1 = await sequelize.transaction();
+    try {
+      const validation1 = await validateRefsForConsumption(
+        [refToken],
+        testProjectId,
+        testActorId,
+        t1,
+      );
+      expect(validation1.success).toBe(true);
+
+      const consumed = await consumeValidatedRefs(validation1.validated!, run1.id, t1);
+      expect(consumed).toBe(1);
+
+      await t1.commit();
+    } catch (e) {
+      await t1.rollback();
+      throw e;
+    }
+
+    // Verify staging was consumed
+    const s = await ExtractionStaging().findByPk(staging.get('id') as number);
+    expect(s!.get('status')).toBe('consumed');
+    expect(s!.get('consumed_by_run_id')).toBe(run1.id);
+
+    // Second transaction: attempt to validate same ref - should fail
+    const t2 = await sequelize.transaction();
+    try {
+      const validation2 = await validateRefsForConsumption(
+        [refToken],
+        testProjectId,
+        testActorId,
+        t2,
+      );
+
+      expect(validation2.success).toBe(false);
+      expect(validation2.errors).toHaveLength(1);
+      expect(validation2.errors[0].reason).toBe('consumed');
+    } finally {
+      await t2.rollback();
+    }
   });
 });
 
