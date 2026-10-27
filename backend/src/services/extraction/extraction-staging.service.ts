@@ -317,6 +317,23 @@ export async function validateRefsForConsumption(
   actorId: number,
   transaction: Transaction,
 ): Promise<ValidationResult> {
+  // DISC-WEB-1B: Reject duplicate tokens before any database operations
+  const uniqueTokens = new Set(refTokens);
+  if (uniqueTokens.size !== refTokens.length) {
+    const seen = new Set<string>();
+    const duplicates: string[] = [];
+    for (const token of refTokens) {
+      if (seen.has(token)) {
+        duplicates.push(token);
+      }
+      seen.add(token);
+    }
+    return {
+      success: false,
+      errors: duplicates.map((token) => ({ refToken: token, reason: 'duplicate' })),
+    };
+  }
+
   // Lock rows for update to prevent race conditions
   const stagingRows = await ExtractionStagingModel.findAll({
     where: { ref_token: { [Op.in]: refTokens } },
@@ -416,26 +433,23 @@ export async function consumeValidatedRefs(
 
   // Conditional UPDATE: only update rows still in 'ready' status
   // This catches any TOCTOU race (however unlikely within transaction)
-  // Use bind array ($1, $2, etc.) for PostgreSQL array handling
-  const [result] = await sequelize.query(
-    `
-    UPDATE extraction_staging
-    SET status = 'consumed',
-        consumed_by_run_id = $1,
-        consumed_at = $2,
-        updated_at = $2
-    WHERE id = ANY($3::int[])
-      AND status = 'ready'
-    RETURNING id
-    `,
+  // Use Op.in with Sequelize model for proper array handling
+  const [affectedCount] = await ExtractionStagingModel.update(
     {
-      bind: [runId, now, validated.validatedIds],
+      status: 'consumed',
+      consumed_by_run_id: runId,
+      consumed_at: now,
+    },
+    {
+      where: {
+        id: { [Op.in]: validated.validatedIds },
+        status: 'ready',
+      },
       transaction,
     },
   );
 
-  // Verify affected row count matches expected
-  const affectedCount = Array.isArray(result) ? result.length : 0;
+  // affectedCount is the number of rows updated
 
   if (affectedCount !== validated.validatedIds.length) {
     throw new Error(

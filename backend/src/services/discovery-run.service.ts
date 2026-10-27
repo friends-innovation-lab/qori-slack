@@ -74,10 +74,22 @@ export class DiscoveryRunStateError extends Error {
  * DISC-3B: Allocates a stable marker_index at creation time.
  * Marker allocation is atomic to prevent duplicate markers under concurrency.
  */
+// UUID v4 pattern for validation
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function createDiscoveryRun(
   input: CreateDiscoveryRunInput,
   transaction?: Transaction,
 ): Promise<DiscoveryRun> {
+  // DISC-WEB-1B: Validate idempotency key format if provided (null allowed for legacy)
+  if (input.idempotencyKey !== null && input.idempotencyKey !== undefined) {
+    if (!UUID_PATTERN.test(input.idempotencyKey)) {
+      throw new Error(
+        `Invalid idempotency key format: expected UUID, got '${input.idempotencyKey}'`,
+      );
+    }
+  }
+
   // Use provided transaction or create a new one for atomic marker allocation
   const t = transaction ?? (await sequelize.transaction());
   const shouldCommit = !transaction;

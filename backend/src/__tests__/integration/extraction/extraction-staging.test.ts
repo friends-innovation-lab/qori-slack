@@ -703,6 +703,11 @@ describe('DISC-WEB-1B: validateRefsForConsumption', () => {
   });
 
   it('rejects expired refs (TTL check)', async () => {
+    // Create with both created_at and expires_at in the past
+    // expires_at > created_at satisfies CHECK constraint, but both are past
+    const pastCreated = new Date(Date.now() - 60000); // 1 minute ago
+    const pastExpired = new Date(Date.now() - 30000); // 30 seconds ago (still > created)
+
     const staging = await ExtractionStaging().create({
       project_id: testProjectId,
       actor_id: testActorId,
@@ -714,11 +719,10 @@ describe('DISC-WEB-1B: validateRefsForConsumption', () => {
       extracted_text: 'Content with expired TTL should fail validation.',
       char_count: 48,
       status: 'ready',
+      created_at: pastCreated,
+      expires_at: pastExpired,
     });
     const refToken = staging.get('ref_token') as string;
-
-    // Force past expiration by updating after creation
-    await staging.update({ expires_at: new Date(Date.now() - 1000) });
 
     const t = await sequelize.transaction();
     try {
@@ -752,6 +756,39 @@ describe('DISC-WEB-1B: validateRefsForConsumption', () => {
       expect(result.success).toBe(false);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0]).toEqual({ refToken: fakeToken, reason: 'not_found' });
+    } finally {
+      await t.rollback();
+    }
+  });
+
+  it('rejects duplicate ref tokens', async () => {
+    const staging = await ExtractionStaging().create({
+      project_id: testProjectId,
+      actor_id: testActorId,
+      filename: 'duplicate-test.txt',
+      mime_type: 'text/plain',
+      file_size_bytes: 100,
+      file_hash: 'a'.repeat(64),
+      content_hash: 'b'.repeat(64),
+      extracted_text: 'Content for duplicate token rejection test case.',
+      char_count: 49,
+      status: 'ready',
+    });
+    const refToken = staging.get('ref_token') as string;
+
+    const t = await sequelize.transaction();
+    try {
+      // Same token twice should fail
+      const result = await validateRefsForConsumption(
+        [refToken, refToken],
+        testProjectId,
+        testActorId,
+        t,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toEqual({ refToken, reason: 'duplicate' });
     } finally {
       await t.rollback();
     }
@@ -865,6 +902,8 @@ describe('DISC-WEB-1B: consumeValidatedRefs', () => {
   it('throws on consumption race condition', async () => {
     const run = await createTestRun();
 
+    // Create a staging row that's already expired (simulating a race where
+    // another process changed the status between validation and consumption)
     const staging = await ExtractionStaging().create({
       project_id: testProjectId,
       actor_id: testActorId,
@@ -875,32 +914,22 @@ describe('DISC-WEB-1B: consumeValidatedRefs', () => {
       content_hash: 'b'.repeat(64),
       extracted_text: 'Content for race condition detection test case.',
       char_count: 47,
-      status: 'ready',
+      status: 'expired', // Already not 'ready'
     });
     const stagingId = staging.get('id') as number;
-    const refToken = staging.get('ref_token') as string;
+
+    // Fabricate a validated object that claims this row is valid
+    // This simulates TOCTOU: validation passed but status changed before consumption
+    const fakeValidated: ValidatedStagingRefs = {
+      validatedIds: [stagingId],
+      stagingRows: [], // Empty - we only need IDs for consumption
+    };
 
     const t = await sequelize.transaction();
     try {
-      const validation = await validateRefsForConsumption(
-        [refToken],
-        testProjectId,
-        testActorId,
-        t,
-      );
-
-      expect(validation.success).toBe(true);
-
-      // Simulate race: update status outside the transaction
-      // This creates a scenario where the conditional UPDATE won't find ready rows
-      await sequelize.query(
-        `UPDATE extraction_staging SET status = 'expired' WHERE id = :id`,
-        { replacements: { id: stagingId } },
-      );
-
-      // Attempt consumption should fail
+      // Attempt consumption should fail because WHERE status='ready' won't match
       await expect(
-        consumeValidatedRefs(validation.validated!, run.id, t),
+        consumeValidatedRefs(fakeValidated, run.id, t),
       ).rejects.toThrow(/consumption race/i);
     } finally {
       await t.rollback();
