@@ -54,6 +54,10 @@ export enum ApiErrorCode {
   FILE_LIMIT_EXCEEDED = 'FILE_LIMIT_EXCEEDED',
   /** Feature is disabled via environment flag (DISC-WEB-1B) */
   FEATURE_DISABLED = 'FEATURE_DISABLED',
+  /** One or more source references are unavailable (DISC-WEB-1B-2b) */
+  SOURCE_REF_UNAVAILABLE = 'SOURCE_REF_UNAVAILABLE',
+  /** Idempotency key reused with different payload (DISC-WEB-1B-2b) */
+  IDEMPOTENCY_CONFLICT = 'IDEMPOTENCY_CONFLICT',
   /** Unexpected server error — details intentionally omitted */
   INTERNAL_ERROR = 'INTERNAL_ERROR',
 }
@@ -220,4 +224,28 @@ export function fileLimitExceeded(message: string): AppError {
  */
 export function featureDisabled(message = 'This feature is not available'): AppError {
   return new AppError(ApiErrorCode.FEATURE_DISABLED, message, 503);
+}
+
+/**
+ * Source ref unavailable (DISC-WEB-1B-2b).
+ * Returned when one or more source references are no longer available.
+ * Generic error — does not expose specific reasons (security).
+ */
+export function sourceRefUnavailable(unavailableCount: number): AppError {
+  return new AppError(
+    ApiErrorCode.SOURCE_REF_UNAVAILABLE,
+    'One or more source references are no longer available',
+    410,
+    { unavailableCount },
+  );
+}
+
+/**
+ * Idempotency conflict (DISC-WEB-1B-2b).
+ * Returned when idempotency key is reused with a different payload.
+ */
+export function idempotencyConflict(
+  message = 'Idempotency key was already used with a different request',
+): AppError {
+  return new AppError(ApiErrorCode.IDEMPOTENCY_CONFLICT, message, 409);
 }

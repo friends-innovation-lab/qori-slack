@@ -306,6 +306,298 @@ export async function listDiscoveryArtifacts(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// DISC-WEB-1B-2b: SOURCE REF ORCHESTRATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+import {
+  validateRefsForConsumption,
+  consumeValidatedRefs,
+  type ValidatedStagingRefs,
+} from '../services/extraction';
+import { sourceRefUnavailable, idempotencyConflict } from '../types/api-errors';
+
+/**
+ * Hash string to 32-bit signed integer for pg_advisory_lock.
+ */
+function hashToInt32(str: string): number {
+  const crypto = require('crypto');
+  const hash = crypto.createHash('md5').update(str).digest();
+  return hash.readInt32LE(0);
+}
+
+/**
+ * Result of createPendingDiscoveryRunFromRefs.
+ */
+export interface SourceRefsRunResult {
+  /** Created or replayed run */
+  run: DiscoveryRun;
+  /** True if this was an idempotent replay (existing run returned) */
+  isReplay: boolean;
+  /** Number of sources created (0 if replay) */
+  sourceCount: number;
+}
+
+/**
+ * DISC-WEB-1B-2b: Create a pending Discovery run from extraction staging refs.
+ *
+ * Atomic orchestration:
+ * 1. Preliminary idempotency check (read-only, before GitHub)
+ * 2. Resolve unique topic slug (GitHub check)
+ * 3. Transaction with advisory lock
+ * 4. Authoritative idempotency check (under lock)
+ * 5. Validate staging refs (FOR UPDATE)
+ * 6. Create DiscoveryRun
+ * 7. Create EvidenceSources from staging
+ * 8. Associate sources with run
+ * 9. Consume staging refs
+ * 10. Commit
+ *
+ * Returns:
+ * - 201: New run created (isReplay: false)
+ * - 200: Existing run replayed (isReplay: true)
+ * - 409: Idempotency conflict (different payload)
+ * - 410: Source refs unavailable
+ *
+ * @throws AppError with SOURCE_REF_UNAVAILABLE if any ref is invalid
+ * @throws AppError with IDEMPOTENCY_CONFLICT if key reused with different payload
+ */
+export async function createPendingDiscoveryRunFromRefs(params: {
+  projectId: number;
+  projectSlug: string;
+  actorId: number;
+  discoveryType: DiscoveryTypeKey;
+  topic: string;
+  sourceIntent: string | null;
+  sourceRefs: string[];
+  idempotencyKey: string;
+  createdByIdentity: string;
+}): Promise<SourceRefsRunResult> {
+  const {
+    projectId,
+    projectSlug,
+    actorId,
+    discoveryType,
+    topic,
+    sourceIntent,
+    sourceRefs,
+    idempotencyKey,
+    createdByIdentity,
+  } = params;
+
+  const typeConfig = DISCOVERY_TYPES[discoveryType];
+  if (!typeConfig) {
+    throw new Error(`Unknown discovery type: ${discoveryType}`);
+  }
+
+  if (!topic || !slugifyTopic(topic)) {
+    throw new Error('Topic must contain alphanumeric characters');
+  }
+
+  if (sourceRefs.length === 0) {
+    throw new Error('At least one source ref is required');
+  }
+
+  // Compute payload fingerprint for conflict detection
+  const payloadFingerprint = computePayloadFingerprint({
+    discoveryType,
+    topic,
+    sourceIntent,
+    sourceRefs,
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Phase 1: Preliminary idempotency check (read-only, before GitHub)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const existingRun = await runService.findByIdempotencyKey(projectId, idempotencyKey);
+
+  if (existingRun) {
+    // Check fingerprint match
+    if (existingRun.payload_fingerprint !== payloadFingerprint) {
+      throw idempotencyConflict(
+        'Idempotency key was already used with a different request payload',
+      );
+    }
+
+    // Idempotent replay — return existing run
+    console.log(
+      `[DISC-WEB-1B-2b] Idempotent replay: run ${existingRun.public_id} for key ${idempotencyKey}`,
+    );
+
+    return {
+      run: existingRun,
+      isReplay: true,
+      sourceCount: 0,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Phase 2: Resolve unique topic slug (GitHub check, before transaction)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const topicSlug = await resolveUniqueTopicSlug(topic, projectSlug, typeConfig);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Phase 3: Transaction with advisory lock
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const lockId = hashToInt32(`discovery:idempotency:${projectId}:${idempotencyKey}`);
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Acquire advisory lock (blocking)
+    await sequelize.query('SELECT pg_advisory_xact_lock($1)', {
+      bind: [lockId],
+      transaction,
+    });
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 4: Authoritative idempotency check (under lock)
+    // ═════════════════════════════════════════════════════════════════════════
+
+    const authoritativeRun = await runService.findByIdempotencyKey(
+      projectId,
+      idempotencyKey,
+      transaction,
+    );
+
+    if (authoritativeRun) {
+      // Race: another request created the run while we were in GitHub check
+      if (authoritativeRun.payload_fingerprint !== payloadFingerprint) {
+        await transaction.rollback();
+        throw idempotencyConflict(
+          'Idempotency key was already used with a different request payload',
+        );
+      }
+
+      // Idempotent replay
+      await transaction.rollback();
+      console.log(
+        `[DISC-WEB-1B-2b] Idempotent replay (authoritative): run ${authoritativeRun.public_id}`,
+      );
+
+      return {
+        run: authoritativeRun,
+        isReplay: true,
+        sourceCount: 0,
+      };
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 5: Validate staging refs (FOR UPDATE lock)
+    // ═════════════════════════════════════════════════════════════════════════
+
+    const validationResult = await validateRefsForConsumption(
+      sourceRefs,
+      projectId,
+      actorId,
+      transaction,
+    );
+
+    if (!validationResult.success) {
+      await transaction.rollback();
+      // Generic error — do not leak specific reasons (security)
+      throw sourceRefUnavailable(validationResult.errors.length);
+    }
+
+    const validated = validationResult.validated as ValidatedStagingRefs;
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 6: Create DiscoveryRun
+    // ═════════════════════════════════════════════════════════════════════════
+
+    const run = await runService.createDiscoveryRun(
+      {
+        projectId,
+        discoveryType: discoveryType as import('../database/models/discovery_run').DiscoveryType,
+        topic,
+        topicSlug,
+        sourceIntent,
+        actorId,
+        createdByIdentity,
+        idempotencyKey,
+        payloadFingerprint,
+      },
+      transaction,
+    );
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 7: Create EvidenceSources from staging rows
+    // ═════════════════════════════════════════════════════════════════════════
+
+    const evidenceSources = await evidenceService.createDiscoverySources(
+      projectId,
+      validated.stagingRows.map((staging) => ({
+        filename: staging.filename,
+        extractedText: staging.extracted_text,
+        contentHash: staging.content_hash,
+        mimeType: staging.mime_type,
+        sizeBytes: staging.file_size_bytes,
+        // DISC-WEB-1B-2b: Full file hash for provenance
+        fileHash: staging.file_hash,
+        metadata: {
+          uploadSessionId: undefined,
+          source: 'extraction' as const,
+        },
+      })),
+      createdByIdentity,
+      transaction,
+    );
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 8: Associate sources with run
+    // ═════════════════════════════════════════════════════════════════════════
+
+    await runService.associateSources(
+      {
+        runId: run.id,
+        sourceIds: evidenceSources.map((s) => s.id),
+      },
+      transaction,
+    );
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 9: Consume staging refs (atomic with row count verification)
+    // ═════════════════════════════════════════════════════════════════════════
+
+    const consumedCount = await consumeValidatedRefs(validated, run.id, transaction);
+
+    if (consumedCount !== sourceRefs.length) {
+      // Should not happen — consumeValidatedRefs throws on mismatch
+      await transaction.rollback();
+      throw new Error(
+        `Staging consumption verification failed: expected ${sourceRefs.length}, consumed ${consumedCount}`,
+      );
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 10: Commit
+    // ═════════════════════════════════════════════════════════════════════════
+
+    await transaction.commit();
+
+    console.log(
+      `[DISC-WEB-1B-2b] Created run ${run.public_id} from ${sourceRefs.length} refs ` +
+      `(key: ${idempotencyKey})`,
+    );
+
+    return {
+      run,
+      isReplay: false,
+      sourceCount: evidenceSources.length,
+    };
+  } catch (error) {
+    // Ensure rollback on any error
+    try {
+      await transaction.rollback();
+    } catch {
+      // Ignore rollback error if transaction already rolled back
+    }
+    throw error;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // DISC-2: SPLIT EXECUTION — CREATE PENDING RUN
 // ═══════════════════════════════════════════════════════════════════════════
 
