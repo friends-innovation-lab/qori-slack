@@ -42,10 +42,12 @@ export interface DiscoverySourceInput {
   contentHash: string;
   mimeType: string;
   sizeBytes: number;
+  /** DISC-WEB-1B-2b: Full file hash for provenance (64-char SHA-256) */
+  fileHash?: string;
   sourceMetadata?: {
     slackFileId?: string;
     uploadSessionId?: string;
-    source: 'slack' | 'rest' | 'test';
+    source: 'slack' | 'rest' | 'test' | 'extraction';
   };
   createdBy: string;
 }
@@ -186,19 +188,27 @@ export async function createDiscoverySource(
     ? 'uploaded_document'
     : 'uploaded_document';
 
+  // DISC-WEB-1B-2b: Build artifact_ref with optional file_hash for provenance
+  const artifactRef: Record<string, unknown> = {
+    filename: input.filename,
+    content_hash: input.contentHash,
+    slack_file_id: input.sourceMetadata?.slackFileId,
+    mime_type: input.mimeType,
+    size_bytes: input.sizeBytes,
+  };
+
+  // Include full file hash when provided (extraction path)
+  if (input.fileHash) {
+    artifactRef.file_hash = input.fileHash;
+  }
+
   const source = await EvidenceSourceModel.create(
     {
       project_id: input.projectId,
       study_id: null, // Discovery is project-scoped
       source_type: sourceType,
       label: input.filename,
-      artifact_ref: {
-        filename: input.filename,
-        content_hash: input.contentHash,
-        slack_file_id: input.sourceMetadata?.slackFileId,
-        mime_type: input.mimeType,
-        size_bytes: input.sizeBytes,
-      },
+      artifact_ref: artifactRef,
       metadata: {
         // DISC-2: Store extracted text for worker access
         extracted_text: input.extractedText,
@@ -225,10 +235,12 @@ export async function createDiscoverySources(
     contentHash: string;
     mimeType: string;
     sizeBytes: number;
+    /** DISC-WEB-1B-2b: Full file hash for provenance */
+    fileHash?: string;
     metadata?: {
       slackFileId?: string;
       uploadSessionId?: string;
-      source: 'slack' | 'rest' | 'test';
+      source: 'slack' | 'rest' | 'test' | 'extraction';
     };
   }>,
   createdBy: string,
@@ -245,6 +257,7 @@ export async function createDiscoverySources(
         contentHash: source.contentHash,
         mimeType: source.mimeType,
         sizeBytes: source.sizeBytes,
+        fileHash: source.fileHash,
         sourceMetadata: source.metadata,
         createdBy,
       },

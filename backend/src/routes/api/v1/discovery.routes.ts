@@ -14,6 +14,7 @@ import { getProjectById } from '../../../services/project.service';
 import type { PreparedDiscoverySource, DiscoveryTypeKey } from '../../../types/discovery';
 import type { Project } from '../../../database/models/project';
 import sequelize from '../../../database';
+import { AppError, ApiErrorCode } from '../../../types/api-errors';
 
 const router = Router({ mergeParams: true });
 
@@ -155,11 +156,25 @@ router.get('/runs/:runId', requireAuth, async (req, res, next) => {
  * Create a new Discovery run (desk_research or stakeholder_synthesis).
  * Returns pending run immediately. Worker will execute asynchronously.
  *
- * Body:
+ * Body (legacy sources[] path):
  * - discoveryType: 'desk_research' | 'stakeholder_synthesis'
  * - topic: string
  * - sourceIntent?: string
  * - sources: PreparedDiscoverySource[]
+ *
+ * Body (DISC-WEB-1B-2b sourceRefs[] path):
+ * - discoveryType: 'desk_research' | 'stakeholder_synthesis'
+ * - topic: string
+ * - sourceIntent?: string
+ * - sourceRefs: string[] (ref_token from extraction staging)
+ * + Header: Idempotency-Key: <UUID v4> (REQUIRED)
+ *
+ * Returns:
+ * - 201: New run created
+ * - 200: Idempotent replay (existing run returned)
+ * - 400: Validation error (invalid input)
+ * - 409: Idempotency conflict (key reused with different payload)
+ * - 410: Source refs unavailable (expired, consumed, or invalid)
  */
 router.post('/runs', requireAuth, async (req, res, next) => {
   try {
@@ -171,7 +186,7 @@ router.post('/runs', requireAuth, async (req, res, next) => {
       return;
     }
 
-    const { discoveryType, topic, sourceIntent, sources } = req.body;
+    const { discoveryType, topic, sourceIntent, sources, sourceRefs } = req.body;
 
     // Validate discovery type
     if (!discoveryType || !['desk_research', 'stakeholder_synthesis'].includes(discoveryType)) {
@@ -191,6 +206,114 @@ router.post('/runs', requireAuth, async (req, res, next) => {
       });
       return;
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DISC-WEB-1B-2b: sourceRefs[] path (atomic extraction staging consumption)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    if (Array.isArray(sourceRefs)) {
+      // ─── Feature Flag Check (BEFORE any validation or mutation) ────────────
+      if (process.env.DISC_WEB1_ENABLED !== 'true') {
+        res.status(503).json({
+          error: {
+            code: ApiErrorCode.FEATURE_DISABLED,
+            message: 'Source reference consumption is not available',
+          },
+        });
+        return;
+      }
+
+      // Validate sourceRefs array
+      if (sourceRefs.length === 0) {
+        res.status(400).json({
+          error: { code: 'VALIDATION_ERROR', message: 'sourceRefs must not be empty' },
+        });
+        return;
+      }
+
+      // Validate all refs are strings
+      for (let i = 0; i < sourceRefs.length; i++) {
+        if (typeof sourceRefs[i] !== 'string' || sourceRefs[i].length === 0) {
+          res.status(400).json({
+            error: { code: 'VALIDATION_ERROR', message: `sourceRefs[${i}] must be a non-empty string` },
+          });
+          return;
+        }
+      }
+
+      // Require Idempotency-Key header (case-insensitive per HTTP spec)
+      const idempotencyKey = req.headers['idempotency-key'] as string | undefined;
+      if (!idempotencyKey || typeof idempotencyKey !== 'string') {
+        res.status(400).json({
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Idempotency-Key header is required when using sourceRefs',
+          },
+        });
+        return;
+      }
+
+      // Validate UUID v4 format
+      if (!UUID_PATTERN.test(idempotencyKey)) {
+        res.status(400).json({
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Idempotency-Key must be a valid UUID v4',
+          },
+        });
+        return;
+      }
+
+      // Get project for slug
+      const project = await getProjectById(projectId);
+      if (!project) {
+        res.status(404).json({
+          error: { code: 'NOT_FOUND', message: 'Project not found' },
+        });
+        return;
+      }
+
+      // Create run from sourceRefs (atomic orchestration)
+      const result = await discoveryAppService.createPendingDiscoveryRunFromRefs({
+        projectId,
+        projectSlug: project.slug,
+        actorId: req.ctx!.actor.id,
+        discoveryType: discoveryType as DiscoveryTypeKey,
+        topic: topic.trim(),
+        sourceIntent: sourceIntent?.trim() || null,
+        sourceRefs,
+        idempotencyKey,
+        createdByIdentity: `api:${req.ctx!.actor.publicId}`,
+      });
+
+      // Return run summary
+      const runSummary = await discoveryAppService.getDiscoveryRunByPublicId(
+        req.ctx!,
+        projectId,
+        result.run.public_id,
+      );
+
+      // Status: 200 for replay, 201 for new creation
+      const statusCode = result.isReplay ? 200 : 201;
+      const message = result.isReplay
+        ? 'Idempotent replay: returning existing run.'
+        : 'Discovery run created. Worker will process asynchronously.';
+
+      res.status(statusCode).json({
+        data: runSummary,
+        meta: {
+          message,
+          isReplay: result.isReplay,
+          pollUrl: `/api/v1/projects/${projectId}/discovery/runs/${result.run.public_id}`,
+          recommendedPollInterval: '2000ms',
+        },
+      });
+      return;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Legacy sources[] path (existing behavior preserved)
+    // ═══════════════════════════════════════════════════════════════════════════
 
     // Validate sources
     if (!Array.isArray(sources) || sources.length === 0) {
@@ -289,6 +412,28 @@ router.post('/runs', requireAuth, async (req, res, next) => {
       },
     });
   } catch (error) {
+    // Handle AppError with specific codes
+    if (error instanceof AppError) {
+      if (error.code === ApiErrorCode.SOURCE_REF_UNAVAILABLE) {
+        res.status(410).json({
+          error: {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+          },
+        });
+        return;
+      }
+      if (error.code === ApiErrorCode.IDEMPOTENCY_CONFLICT) {
+        res.status(409).json({
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+        return;
+      }
+    }
     next(error);
   }
 });

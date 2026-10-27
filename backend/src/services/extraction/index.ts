@@ -30,8 +30,13 @@ export {
   deleteOldTerminalRefs,
   getStagingStats,
   runCleanupJob,
+  // DISC-WEB-1B-2b: Split validation/consumption for atomic run creation
+  validateRefsForConsumption,
+  consumeValidatedRefs,
   type RefValidationResult,
   type ConsumeRefsResult,
+  type ValidatedStagingRefs,
+  type ValidationResult,
 } from './extraction-staging.service';
 
 // Streaming multipart parser
