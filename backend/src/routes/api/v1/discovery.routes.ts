@@ -212,6 +212,17 @@ router.post('/runs', requireAuth, async (req, res, next) => {
     // ═══════════════════════════════════════════════════════════════════════════
 
     if (Array.isArray(sourceRefs)) {
+      // ─── Feature Flag Check (BEFORE any validation or mutation) ────────────
+      if (process.env.DISC_WEB1_ENABLED !== 'true') {
+        res.status(503).json({
+          error: {
+            code: ApiErrorCode.FEATURE_DISABLED,
+            message: 'Source reference consumption is not available',
+          },
+        });
+        return;
+      }
+
       // Validate sourceRefs array
       if (sourceRefs.length === 0) {
         res.status(400).json({
