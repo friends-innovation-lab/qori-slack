@@ -125,7 +125,14 @@ async function seedCodingRun(sourceId: number, codebookId: number, projectId: nu
   return (rows as any[])[0].id;
 }
 
-/** Expect a raw SQL statement to be rejected by PostgreSQL */
+/**
+ * Expect a raw SQL statement to be rejected by PostgreSQL.
+ *
+ * @param sql - The SQL statement to execute
+ * @param constraintName - Optional constraint name to verify. If prefixed with '~',
+ *   treated as a prefix pattern (e.g., '~semantic_key_key' matches 'semantic_key_key',
+ *   'semantic_key_key1', etc.)
+ */
 async function expectRejected(sql: string, constraintName?: string): Promise<void> {
   try {
     await sequelize.query(sql);
@@ -142,7 +149,14 @@ async function expectRejected(sql: string, constraintName?: string): Promise<voi
       throw new Error(`Expected constraint violation but got ${err.original?.code}: ${err.message}`);
     }
     if (constraintName && err.original?.constraint) {
-      expect(err.original.constraint).toBe(constraintName);
+      if (constraintName.startsWith('~')) {
+        // Prefix pattern match: '~foo' matches 'foo', 'foo1', 'foo12', etc.
+        const prefix = constraintName.slice(1);
+        expect(err.original.constraint.startsWith(prefix)).toBe(true);
+      } else {
+        // Exact match
+        expect(err.original.constraint).toBe(constraintName);
+      }
     }
   }
 }
@@ -421,7 +435,8 @@ describe('GOV-3A Database Integrity Hardening', () => {
       await expectRejected(
         `INSERT INTO research_artifacts (public_id, project_id, template_id, template_version, artifact_type, repo, status, semantic_key, created_by, created_at, updated_at)
          VALUES (gen_random_uuid(), ${projId}, 'tmpl', '1.0', 'synthesis', 'r/r', 'pending', 'dup-key', 'U_TEST', NOW(), NOW())`,
-        'research_artifacts_semantic_key_key'
+        // Use prefix pattern to handle auto-numbered constraint suffixes (key, key1, key2, ...)
+        '~research_artifacts_semantic_key_key'
       );
     });
   });
