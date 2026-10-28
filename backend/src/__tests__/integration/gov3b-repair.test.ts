@@ -9,7 +9,7 @@
  * - Incorrect same-named constraint (must fail safely)
  */
 
-import { getTestDb, truncateAll, TEST_ORG_ID } from '../setup/testDb';
+import { getTestDb, truncateAll, TEST_ORG_ID } from './setup/testDb';
 import type { Sequelize } from 'sequelize';
 
 const sequelize: Sequelize = getTestDb();
