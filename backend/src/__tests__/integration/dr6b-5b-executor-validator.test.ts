@@ -301,7 +301,10 @@ describe('DR-6b-5b Database Integration', () => {
   let testReadout: Model;
 
   beforeAll(async () => {
-    await sequelize.sync({ force: false });
+    // Do NOT call sequelize.sync() — rely on migrations only.
+    // sync() modifies schema based on model definitions, removing database-level
+    // constraints (e.g., composite FKs from GOV-3B) that aren't in Sequelize models.
+    await sequelize.authenticate();
   });
 
   beforeEach(async () => {
