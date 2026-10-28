@@ -21,6 +21,7 @@
 
 import { fork, type ChildProcess } from 'child_process';
 import { createHash } from 'crypto';
+import { existsSync } from 'fs';
 import path from 'path';
 import type {
   ExtractRequest,
@@ -29,12 +30,12 @@ import type {
 } from './extraction-worker';
 
 // Worker configuration
-// Handle both production (running from dist/) and test (running from src/ with ts-jest)
-// When ts-jest runs tests from src/, __dirname is src/services/extraction/
-// but the compiled worker only exists in dist/services/extraction/
-const WORKER_SCRIPT = __dirname.includes('/src/')
-  ? path.resolve(__dirname, '../../../dist/services/extraction/extraction-worker.js')
-  : path.join(__dirname, 'extraction-worker.js');
+// Deterministic path resolution: check for compiled sibling first, fallback to dist.
+// Production (dist/): sibling extraction-worker.js exists → use it.
+// Test (ts-jest from src/): sibling doesn't exist → fallback to dist/services/extraction/.
+const siblingWorker = path.join(__dirname, 'extraction-worker.js');
+const distWorker = path.resolve(__dirname, '../../../dist/services/extraction/extraction-worker.js');
+const WORKER_SCRIPT = existsSync(siblingWorker) ? siblingWorker : distWorker;
 const WORKER_TIMEOUT_MS = 30_000; // 30 seconds
 const WORKER_HEAP_SIZE_MB = 256;
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
