@@ -43,6 +43,10 @@ jobs:
         run: |
           cd packages/api-contracts && npm run build
 
+      - name: Build backend
+        working-directory: backend
+        run: npm run build
+
       - name: Type check
         working-directory: backend
         run: npm run typecheck
