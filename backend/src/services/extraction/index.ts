@@ -14,6 +14,8 @@ export {
   type ExtractionResult,
   type ExtractionError,
   type ExtractionOutcome,
+  // Test helper (internal use only)
+  __createTestSemaphore,
 } from './extraction.service';
 
 // Error codes

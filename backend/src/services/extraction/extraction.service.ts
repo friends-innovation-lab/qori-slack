@@ -21,6 +21,7 @@
 
 import { fork, type ChildProcess } from 'child_process';
 import { createHash } from 'crypto';
+import { existsSync } from 'fs';
 import path from 'path';
 import type {
   ExtractRequest,
@@ -29,7 +30,12 @@ import type {
 } from './extraction-worker';
 
 // Worker configuration
-const WORKER_SCRIPT = path.join(__dirname, 'extraction-worker.js');
+// Deterministic path resolution: check for compiled sibling first, fallback to dist.
+// Production (dist/): sibling extraction-worker.js exists → use it.
+// Test (ts-jest from src/): sibling doesn't exist → fallback to dist/services/extraction/.
+const siblingWorker = path.join(__dirname, 'extraction-worker.js');
+const distWorker = path.resolve(__dirname, '../../../dist/services/extraction/extraction-worker.js');
+const WORKER_SCRIPT = existsSync(siblingWorker) ? siblingWorker : distWorker;
 const WORKER_TIMEOUT_MS = 30_000; // 30 seconds
 const WORKER_HEAP_SIZE_MB = 256;
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
@@ -327,3 +333,25 @@ export const EXTRACTION_LIMITS = {
   WORKER_TIMEOUT_MS,
   WORKER_HEAP_SIZE_MB,
 } as const;
+
+/**
+ * Test helper: Create a new BoundedSemaphore instance for testing.
+ * This allows tests to exercise semaphore behavior with controlled limits
+ * without affecting the global production semaphore.
+ *
+ * @internal - For testing only
+ */
+export function __createTestSemaphore(permits: number, maxQueued: number): {
+  acquire: () => Promise<void>;
+  release: () => void;
+  available: number;
+  queueLength: number;
+} {
+  const sem = new BoundedSemaphore(permits, maxQueued);
+  return {
+    acquire: () => sem.acquire(),
+    release: () => sem.release(),
+    get available() { return sem.available; },
+    get queueLength() { return sem.queueLength; },
+  };
+}
