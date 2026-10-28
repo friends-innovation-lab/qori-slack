@@ -333,3 +333,25 @@ export const EXTRACTION_LIMITS = {
   WORKER_TIMEOUT_MS,
   WORKER_HEAP_SIZE_MB,
 } as const;
+
+/**
+ * Test helper: Create a new BoundedSemaphore instance for testing.
+ * This allows tests to exercise semaphore behavior with controlled limits
+ * without affecting the global production semaphore.
+ *
+ * @internal - For testing only
+ */
+export function __createTestSemaphore(permits: number, maxQueued: number): {
+  acquire: () => Promise<void>;
+  release: () => void;
+  available: number;
+  queueLength: number;
+} {
+  const sem = new BoundedSemaphore(permits, maxQueued);
+  return {
+    acquire: () => sem.acquire(),
+    release: () => sem.release(),
+    get available() { return sem.available; },
+    get queueLength() { return sem.queueLength; },
+  };
+}
