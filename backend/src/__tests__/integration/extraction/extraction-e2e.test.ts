@@ -32,6 +32,24 @@ jest.mock('../../../helpers/github', () => ({
 // Save original env value for restoration
 const ORIGINAL_FLAG_VALUE = process.env.DISC_WEB1_ENABLED;
 
+/**
+ * Helper to extract ref from upload response with better error messages.
+ * Throws descriptive error if refs array is empty (e.g., extraction failed).
+ */
+function expectRefsAndGetFirst(uploadRes: any, context: string = 'upload'): any {
+  const refs = uploadRes.body?.data?.refs;
+  if (!refs || refs.length === 0) {
+    const rejected = uploadRes.body?.data?.rejected || [];
+    throw new Error(
+      `${context}: Expected refs array with at least 1 element, got ${refs?.length || 0}. ` +
+      `Response status: ${uploadRes.status}. ` +
+      `Rejected files: ${JSON.stringify(rejected)}. ` +
+      `Full body: ${JSON.stringify(uploadRes.body)}`
+    );
+  }
+  return refs[0];
+}
+
 describe('Category D: End-to-End Integration', () => {
   let app: Express;
   let sequelize: Sequelize;
@@ -202,7 +220,8 @@ describe('Category D: End-to-End Integration', () => {
         .attach('file', Buffer.from(STANDARD_TEXT), { filename: 'cleanup-test.txt', contentType: 'text/plain' })
         .expect(201);
 
-      const refToken = uploadRes.body.data.refs[0].refToken;
+      const ref = expectRefsAndGetFirst(uploadRes, 'cleanup test');
+      const refToken = ref.refToken;
       const idempotencyKey = randomUUID();
 
       const createRes = await request(app)
@@ -292,7 +311,8 @@ describe('Category D: End-to-End Integration', () => {
         .attach('file', Buffer.from(STANDARD_TEXT), { filename: 'rollback.txt', contentType: 'text/plain' })
         .expect(201);
 
-      const validRefToken = uploadRes.body.data.refs[0].refToken;
+      const ref = expectRefsAndGetFirst(uploadRes, 'rollback test');
+      const validRefToken = ref.refToken;
       const fakeRefToken = randomUUID();
 
       // Try to create run with valid + invalid ref
@@ -348,7 +368,8 @@ describe('Category D: End-to-End Integration', () => {
         .attach('file', Buffer.from(STANDARD_TEXT), { filename: 'project1.txt', contentType: 'text/plain' })
         .expect(201);
 
-      const refToken = uploadRes.body.data.refs[0].refToken;
+      const ref = expectRefsAndGetFirst(uploadRes, 'project isolation');
+      const refToken = ref.refToken;
 
       // Try to use ref in different project
       await request(app)
@@ -391,7 +412,8 @@ describe('Category D: End-to-End Integration', () => {
         .attach('file', Buffer.from(STANDARD_TEXT), { filename: 'actor1.txt', contentType: 'text/plain' })
         .expect(201);
 
-      const refToken = uploadRes.body.data.refs[0].refToken;
+      const ref = expectRefsAndGetFirst(uploadRes, 'actor isolation');
+      const refToken = ref.refToken;
 
       // Try to use ref as different actor
       await request(app)
@@ -420,7 +442,8 @@ describe('Category D: End-to-End Integration', () => {
         .attach('file', Buffer.from(STANDARD_TEXT), { filename: 'first.txt', contentType: 'text/plain' })
         .expect(201);
 
-      const refToken1 = uploadRes1.body.data.refs[0].refToken;
+      const ref1 = expectRefsAndGetFirst(uploadRes1, 'idempotency conflict - first');
+      const refToken1 = ref1.refToken;
       const idempotencyKey = randomUUID();
 
       // Create run
@@ -442,7 +465,8 @@ describe('Category D: End-to-End Integration', () => {
         .attach('file', Buffer.from(STANDARD_TEXT + ' different'), { filename: 'second.txt', contentType: 'text/plain' })
         .expect(201);
 
-      const refToken2 = uploadRes2.body.data.refs[0].refToken;
+      const ref2 = expectRefsAndGetFirst(uploadRes2, 'idempotency conflict - second');
+      const refToken2 = ref2.refToken;
 
       // Try same key with different topic
       const conflictRes = await request(app)
@@ -476,9 +500,10 @@ describe('Category D: End-to-End Integration', () => {
         .attach('file', Buffer.from(STANDARD_TEXT), { filename: 'provenance.txt', contentType: 'text/plain' })
         .expect(201);
 
-      const expectedFileHash = uploadRes.body.data.refs[0].fileHash;
-      const expectedContentHash = uploadRes.body.data.refs[0].contentHash;
-      const refToken = uploadRes.body.data.refs[0].refToken;
+      const ref = expectRefsAndGetFirst(uploadRes, 'provenance');
+      const expectedFileHash = ref.fileHash;
+      const expectedContentHash = ref.contentHash;
+      const refToken = ref.refToken;
 
       const createRes = await request(app)
         .post(`/api/v1/projects/${testProjectPublicId}/discovery/runs`)
