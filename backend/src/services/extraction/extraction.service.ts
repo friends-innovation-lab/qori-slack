@@ -48,6 +48,18 @@ const DEFAULT_MAX_QUEUED = 5;
 const MAX_CONCURRENT = parseInt(process.env.EXTRACTION_MAX_CONCURRENT ?? '', 10) || DEFAULT_MAX_CONCURRENT;
 const MAX_QUEUED = parseInt(process.env.EXTRACTION_MAX_QUEUED ?? '', 10) || DEFAULT_MAX_QUEUED;
 
+// HTTP upload admission control — bounds memory before multipart parsing
+// 2 concurrent uploads × 50 MB max each = 100 MB maximum buffered
+// No queue: reject immediately if both slots busy (returns 503 before buffering)
+const DEFAULT_MAX_UPLOAD_REQUESTS = 2;
+const DEFAULT_MAX_UPLOAD_QUEUED = 0;
+const MAX_UPLOAD_REQUESTS = parseInt(process.env.EXTRACTION_MAX_UPLOAD_REQUESTS ?? '', 10) || DEFAULT_MAX_UPLOAD_REQUESTS;
+const MAX_UPLOAD_QUEUED = parseInt(process.env.EXTRACTION_MAX_UPLOAD_QUEUED ?? '', 10) || DEFAULT_MAX_UPLOAD_QUEUED;
+
+// Upload request timeout — maximum time from admission to response
+const DEFAULT_UPLOAD_TIMEOUT_MS = 120_000; // 2 minutes
+const UPLOAD_TIMEOUT_MS = parseInt(process.env.EXTRACTION_UPLOAD_TIMEOUT_MS ?? '', 10) || DEFAULT_UPLOAD_TIMEOUT_MS;
+
 /**
  * Bounded semaphore with queue limit.
  * Rejects with overload error when queue is full.
@@ -110,8 +122,37 @@ export class ExtractionOverloadError extends Error {
   }
 }
 
+/**
+ * Error thrown when upload admission is rejected (no capacity for buffering).
+ * This error is thrown BEFORE any request body is consumed.
+ */
+export class UploadBusyError extends Error {
+  readonly code = 'EXTRACTION_UPLOAD_BUSY';
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'UploadBusyError';
+  }
+}
+
+/**
+ * Error thrown when upload request times out.
+ */
+export class UploadTimeoutError extends Error {
+  readonly code = 'EXTRACTION_UPLOAD_TIMEOUT';
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'UploadTimeoutError';
+  }
+}
+
 // Global semaphore (1 concurrent by default, queue of 5)
 const globalSemaphore = new BoundedSemaphore(MAX_CONCURRENT, MAX_QUEUED);
+
+// Upload admission semaphore (2 concurrent, no queue by default)
+// This bounds total memory from multipart buffering
+const uploadAdmissionSemaphore = new BoundedSemaphore(MAX_UPLOAD_REQUESTS, MAX_UPLOAD_QUEUED);
 
 /**
  * Extraction result with computed hashes.
@@ -332,7 +373,58 @@ export const EXTRACTION_LIMITS = {
   MAX_QUEUED,
   WORKER_TIMEOUT_MS,
   WORKER_HEAP_SIZE_MB,
+  MAX_UPLOAD_REQUESTS,
+  MAX_UPLOAD_QUEUED,
+  UPLOAD_TIMEOUT_MS,
 } as const;
+
+/**
+ * Acquire upload admission permit.
+ * Must be called BEFORE consuming request body (multipart parsing).
+ * Returns a release function that MUST be called exactly once.
+ *
+ * @throws UploadBusyError if no capacity available
+ */
+export async function acquireUploadAdmission(): Promise<() => void> {
+  try {
+    await uploadAdmissionSemaphore.acquire();
+  } catch (error) {
+    if (error instanceof ExtractionOverloadError) {
+      // Remap to upload-specific error
+      throw new UploadBusyError(
+        `Upload service busy (${uploadAdmissionSemaphore.queueLength} queued, max ${MAX_UPLOAD_QUEUED})`,
+      );
+    }
+    throw error;
+  }
+
+  let released = false;
+  return () => {
+    if (released) {
+      // Prevent double-release
+      return;
+    }
+    released = true;
+    uploadAdmissionSemaphore.release();
+  };
+}
+
+/**
+ * Get current upload admission status.
+ */
+export function getUploadAdmissionStatus(): {
+  available: number;
+  max: number;
+  queueLength: number;
+  maxQueued: number;
+} {
+  return {
+    available: uploadAdmissionSemaphore.available,
+    max: MAX_UPLOAD_REQUESTS,
+    queueLength: uploadAdmissionSemaphore.queueLength,
+    maxQueued: MAX_UPLOAD_QUEUED,
+  };
+}
 
 /**
  * Test helper: Create a new BoundedSemaphore instance for testing.
