@@ -15,10 +15,12 @@
  */
 
 import request from 'supertest';
+import http from 'http';
 import { getTestDb, truncateAll, TEST_ORG_ID } from '../setup/testDb';
 import { getTestApp } from '../setup/testApp';
 import type { Sequelize } from 'sequelize';
 import type { Express } from 'express';
+import type { AddressInfo } from 'net';
 
 import {
   getUploadAdmissionStatus,
@@ -454,6 +456,102 @@ describe('Upload Admission Control — DISC-WEB-1B-2d', () => {
 
         // After each request, capacity should be back to initial
         expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+      }
+    });
+
+    it('mid-upload client disconnect releases permit and creates no staging rows', async () => {
+      const initialAvailable = getUploadAdmissionStatus().available;
+      expect(initialAvailable).toBe(2);
+
+      const ExtractionStagingModel = sequelize.models.ExtractionStaging;
+      const countBefore = await ExtractionStagingModel.count();
+
+      // Start HTTP server with the Express app
+      const server = http.createServer(app);
+      await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+      const { port } = server.address() as AddressInfo;
+
+      try {
+        // Create multipart boundary and headers
+        const boundary = '----TestBoundary' + Date.now();
+        const partialBody = [
+          `--${boundary}`,
+          'Content-Disposition: form-data; name="file"; filename="disconnect-test.txt"',
+          'Content-Type: text/plain',
+          '',
+          'This is partial content that will be cut off mid-stream...',
+          // Intentionally NOT closing the boundary - simulating incomplete upload
+        ].join('\r\n');
+
+        // Track whether server processed the disconnect
+        let serverProcessed = false;
+
+        await new Promise<void>((resolve, reject) => {
+          const req = http.request({
+            hostname: '127.0.0.1',
+            port,
+            path: `/api/v1/projects/${testProjectPublicId}/extraction/documents`,
+            method: 'POST',
+            headers: {
+              'Content-Type': `multipart/form-data; boundary=${boundary}`,
+              'X-Test-Actor-PublicId': testActorPublicId,
+              // Declare a large content length but send less
+              'Content-Length': '10000',
+            },
+          });
+
+          req.on('error', (err) => {
+            // Expected - we destroyed the socket
+            if ((err as NodeJS.ErrnoException).code === 'ECONNRESET' ||
+                (err as NodeJS.ErrnoException).code === 'ERR_STREAM_DESTROYED') {
+              serverProcessed = true;
+              resolve();
+            } else {
+              reject(err);
+            }
+          });
+
+          // Send partial body
+          req.write(partialBody);
+
+          // Wait a tick to ensure server receives partial data, then abort
+          setImmediate(() => {
+            req.destroy();
+            // Give server time to detect disconnect and clean up
+            setTimeout(() => {
+              serverProcessed = true;
+              resolve();
+            }, 100);
+          });
+        });
+
+        expect(serverProcessed).toBe(true);
+
+        // Wait for server to fully process the disconnect
+        // Use bounded wait with polling instead of long sleep
+        const maxWaitMs = 2000;
+        const pollIntervalMs = 50;
+        let elapsed = 0;
+
+        while (elapsed < maxWaitMs) {
+          const currentAvailable = getUploadAdmissionStatus().available;
+          if (currentAvailable === initialAvailable) {
+            break;
+          }
+          await new Promise(r => setTimeout(r, pollIntervalMs));
+          elapsed += pollIntervalMs;
+        }
+
+        // Verify admission capacity returned to initial value
+        expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+
+        // Verify no staging rows were created
+        const countAfter = await ExtractionStagingModel.count();
+        expect(countAfter).toBe(countBefore);
+
+      } finally {
+        // Clean up server
+        await new Promise<void>((resolve) => server.close(() => resolve()));
       }
     });
   });
