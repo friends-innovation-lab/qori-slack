@@ -335,4 +335,126 @@ describe('Upload Admission Control — DISC-WEB-1B-2d', () => {
       expect(EXTRACTION_LIMITS.UPLOAD_TIMEOUT_MS).toBe(120_000);
     });
   });
+
+  describe('client disconnect handling', () => {
+    /**
+     * This test verifies the contract for client disconnect during upload:
+     * - Permit is released via finally block after any exit path
+     * - No staging rows created on incomplete requests
+     * - Capacity returns to initial value
+     *
+     * Note: Actual socket disconnection mid-stream is difficult to simulate
+     * in supertest. The route handler's socket close detection is verified by:
+     * 1. Guard conditions: `!res.headersSent && !processingComplete`
+     * 2. Explicit cleanup in finally block
+     * 3. This test verifies the observable contract (capacity recovery)
+     */
+    it('capacity returns to 2 after successful request completion', async () => {
+      const initialAvailable = getUploadAdmissionStatus().available;
+      expect(initialAvailable).toBe(2);
+
+      const ExtractionStagingModel = sequelize.models.ExtractionStaging;
+      const countBefore = await ExtractionStagingModel.count();
+
+      // Make a successful request
+      const testContent = 'Test content that is long enough to pass minimum character threshold for extraction validation purposes.';
+      const res = await request(app)
+        .post(`/api/v1/projects/${testProjectPublicId}/extraction/documents`)
+        .set('X-Test-Actor-PublicId', testActorPublicId)
+        .attach('file', Buffer.from(testContent), {
+          filename: 'disconnect-test.txt',
+          contentType: 'text/plain',
+        });
+
+      expect(res.status).toBe(201);
+
+      // Verify staging row created
+      const countAfter = await ExtractionStagingModel.count();
+      expect(countAfter).toBe(countBefore + 1);
+
+      // Verify capacity returned to initial value (permit released in finally)
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+    });
+
+    it('capacity returns to 2 after request with extraction failure', async () => {
+      const initialAvailable = getUploadAdmissionStatus().available;
+      expect(initialAvailable).toBe(2);
+
+      const ExtractionStagingModel = sequelize.models.ExtractionStaging;
+      const countBefore = await ExtractionStagingModel.count();
+
+      // Make request with content too short (will be rejected by extraction)
+      const res = await request(app)
+        .post(`/api/v1/projects/${testProjectPublicId}/extraction/documents`)
+        .set('X-Test-Actor-PublicId', testActorPublicId)
+        .attach('file', Buffer.from('too short'), {
+          filename: 'short.txt',
+          contentType: 'text/plain',
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.refs).toHaveLength(0);
+      expect(res.body.data.rejected).toHaveLength(1);
+
+      // No staging row created for rejected file
+      const countAfter = await ExtractionStagingModel.count();
+      expect(countAfter).toBe(countBefore);
+
+      // Verify capacity returned to initial value
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+    });
+
+    it('capacity returns to 2 after request with unsupported MIME type', async () => {
+      const initialAvailable = getUploadAdmissionStatus().available;
+      expect(initialAvailable).toBe(2);
+
+      const ExtractionStagingModel = sequelize.models.ExtractionStaging;
+      const countBefore = await ExtractionStagingModel.count();
+
+      // Make request with unsupported file type
+      const res = await request(app)
+        .post(`/api/v1/projects/${testProjectPublicId}/extraction/documents`)
+        .set('X-Test-Actor-PublicId', testActorPublicId)
+        .attach('file', Buffer.from('fake image data'), {
+          filename: 'image.jpg',
+          contentType: 'image/jpeg',
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.refs).toHaveLength(0);
+      expect(res.body.data.rejected).toHaveLength(1);
+      expect(res.body.data.rejected[0].errorCode).toBe('UNSUPPORTED_FILE_TYPE');
+
+      // No staging row created
+      const countAfter = await ExtractionStagingModel.count();
+      expect(countAfter).toBe(countBefore);
+
+      // Verify capacity returned to initial value
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+    });
+
+    it('sequential requests on same connection release permits correctly', async () => {
+      const initialAvailable = getUploadAdmissionStatus().available;
+      expect(initialAvailable).toBe(2);
+
+      const testContent = 'Test content that is long enough to pass minimum character threshold for extraction validation purposes.';
+
+      // Make 3 sequential requests (simulates keep-alive connection reuse)
+      for (let i = 0; i < 3; i++) {
+        const res = await request(app)
+          .post(`/api/v1/projects/${testProjectPublicId}/extraction/documents`)
+          .set('X-Test-Actor-PublicId', testActorPublicId)
+          .attach('file', Buffer.from(`${testContent} Request ${i}`), {
+            filename: `sequential-${i}.txt`,
+            contentType: 'text/plain',
+          });
+
+        expect(res.status).toBe(201);
+        expect(res.body.data.refs).toHaveLength(1);
+
+        // After each request, capacity should be back to initial
+        expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+      }
+    });
+  });
 });

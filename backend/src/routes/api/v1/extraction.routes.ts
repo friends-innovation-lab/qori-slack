@@ -108,6 +108,10 @@ router.post(
     let deadlineTimer: ReturnType<typeof setTimeout> | null = null;
     let processingComplete = false;
 
+    // Track socket listener for explicit cleanup (don't rely on once() for keep-alive)
+    let socketRef: typeof req.socket | null = null;
+    let socketCloseHandler: (() => void) | null = null;
+
     // Cleanup function to abort parsing and release resources
     const abortProcessing = (reason: string) => {
       if (processingComplete) return;
@@ -194,8 +198,9 @@ router.post(
       // Note: We use socket-level detection instead of req 'close' event
       // because the 'close' event fires when body stream finishes (normal)
       // not just on actual disconnects.
-      const socket = req.socket;
-      const onSocketClose = () => {
+      // We explicitly remove this listener in finally to support keep-alive connections.
+      socketRef = req.socket;
+      socketCloseHandler = () => {
         // Socket closed before response sent = actual disconnect
         if (!res.headersSent && !processingComplete) {
           clientDisconnected = true;
@@ -203,8 +208,8 @@ router.post(
         }
       };
       // Only listen if socket exists and is still connected
-      if (socket && !socket.destroyed) {
-        socket.once('close', onSocketClose);
+      if (socketRef && !socketRef.destroyed) {
+        socketRef.on('close', socketCloseHandler);
       }
 
       // ─── Check for Early Abort ─────────────────────────────────────────
@@ -445,6 +450,13 @@ router.post(
       }
       next(error);
     } finally {
+      // ─── Remove Socket Close Listener ─────────────────────────────────
+      // Explicitly remove to support keep-alive connections (don't rely on once())
+      if (socketRef && socketCloseHandler) {
+        socketRef.removeListener('close', socketCloseHandler);
+        socketRef = null;
+        socketCloseHandler = null;
+      }
       // ─── Release Upload Admission (exactly once) ───────────────────────
       // This MUST happen after all processing stops, including:
       // - Multipart parsing complete/aborted
