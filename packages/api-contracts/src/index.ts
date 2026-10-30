@@ -6,3 +6,4 @@ export * from './coaching';
 export * from './discovery';
 export * from './insights';
 export * from './evidence';
+export * from './extraction';
