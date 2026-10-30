@@ -65,6 +65,15 @@
   margin-top: var(--space-1);
 }
 
+.readOnlyValue {
+  font: 15px/24px var(--font-serif);
+  color: var(--color-text);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-md);
+}
+
 /* Drop zone */
 .dropZone {
   display: flex;
@@ -83,6 +92,12 @@
 .dropZoneActive {
   border-color: var(--color-brand);
   background: var(--color-brand-wash);
+}
+
+.dropZoneDisabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .dropIcon {
@@ -149,6 +164,14 @@
 }
 
 .fileSize {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.fileDetail {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
   color: var(--color-text-muted);
   font-size: 12px;
 }

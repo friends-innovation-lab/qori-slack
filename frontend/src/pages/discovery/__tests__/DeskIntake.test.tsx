@@ -1,111 +1,65 @@
 /**
- * DISC-3: DeskIntake form tests.
+ * DeskIntake Component Tests — DISC-WEB-1C
  *
- * Tests for:
- * - Form rendering with all fields
- * - Basic form validation
+ * Tests for upload-only verification flow.
+ * CRITICAL: Proves zero Discovery run (useCreateDiscoveryRun) calls.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@/test/utils';
 import { DeskIntake } from '../DeskIntake';
 
-// Mock all the API hooks
-vi.mock('@/api/queries/useStudy', () => ({
-  useStudy: vi.fn(),
+// Mock the workspace context
+vi.mock('@/components/study/workspace', () => ({
+  WorkspaceLayout: ({ children, header }: { children: React.ReactNode; header: React.ReactNode }) => (
+    <div>
+      <div data-testid="workspace-header">{header}</div>
+      <div data-testid="workspace-content">{children}</div>
+    </div>
+  ),
+  useStudyWorkspace: () => ({
+    studyPublicId: 'study-123',
+    projectPublicId: 'proj-456',
+  }),
 }));
 
-vi.mock('@/api/queries/useDiscovery', () => ({
-  useDiscoveryCounts: vi.fn(),
+// Track ALL mutation calls
+const uploadMutateAsyncMock = vi.fn();
+const createRunMutateAsyncMock = vi.fn();
+
+// Mock useUploadDocuments
+vi.mock('@/api/mutations/useUploadDocuments', () => ({
+  useUploadDocuments: () => ({
+    mutateAsync: uploadMutateAsyncMock,
+    isLoading: false,
+  }),
+  ERROR_FEATURE_DISABLED: 'FEATURE_DISABLED',
 }));
 
+// Mock useCreateDiscoveryRun — MUST verify zero calls
 vi.mock('@/api/mutations/useCreateDiscoveryRun', () => ({
-  useCreateDiscoveryRun: vi.fn(),
+  useCreateDiscoveryRun: () => ({
+    mutateAsync: createRunMutateAsyncMock,
+    isLoading: false,
+  }),
 }));
 
+// Mock useNavigate
+const navigateMock = vi.fn();
 vi.mock('react-router', async () => {
   const actual = await vi.importActual('react-router');
   return {
     ...actual,
-    useParams: () => ({ studyPublicId: 'study-123' }),
-    useNavigate: () => vi.fn(),
+    useNavigate: () => navigateMock,
   };
 });
 
-// NAV-1a: Mock workspace context (provides nav state)
-vi.mock('@/components/study/workspace', async () => {
-  const actual = await vi.importActual('@/components/study/workspace');
-  return {
-    ...actual,
-    useStudyWorkspace: () => ({
-      studyPublicId: 'study-123',
-      projectPublicId: 'proj-456',
-      studyName: 'Test Study',
-      briefStatus: null,
-      lifecycleNodes: [],
-      discoveryCounts: undefined,
-      navOpen: false,
-      openNav: vi.fn(),
-      closeNav: vi.fn(),
-      toggleNav: vi.fn(),
-      isLoading: false,
-      error: null,
-    }),
-  };
-});
-
-import { useStudy } from '@/api/queries/useStudy';
-import { useDiscoveryCounts } from '@/api/queries/useDiscovery';
-import { useCreateDiscoveryRun } from '@/api/mutations/useCreateDiscoveryRun';
-
-const mockedUseStudy = vi.mocked(useStudy);
-const mockedUseDiscoveryCounts = vi.mocked(useDiscoveryCounts);
-const mockedUseCreateDiscoveryRun = vi.mocked(useCreateDiscoveryRun);
-
-const mockStudy = {
-  public_id: 'study-123',
-  name: 'Test Study',
-  project_public_id: 'proj-456',
-  status: 'active',
-};
-
-function setupMocks(overrides: {
-  study?: typeof mockStudy | null;
-  studyLoading?: boolean;
-  studyError?: Error | null;
-} = {}) {
-  mockedUseStudy.mockReturnValue({
-    data: 'study' in overrides ? overrides.study : mockStudy,
-    isLoading: overrides.studyLoading ?? false,
-    error: overrides.studyError ?? null,
-    refetch: vi.fn(),
-  } as unknown as ReturnType<typeof useStudy>);
-
-  mockedUseDiscoveryCounts.mockReturnValue({
-    data: {
-      desk: 0,
-      stakeholder: 0,
-      survey: 0,
-      needsReview: { desk: false, stakeholder: false, survey: false },
-    },
-    isLoading: false,
-    error: null,
-  } as unknown as ReturnType<typeof useDiscoveryCounts>);
-
-  const mutateAsync = vi.fn().mockResolvedValue({
-    data: { publicId: 'run-new-1' },
-  });
-
-  mockedUseCreateDiscoveryRun.mockReturnValue({
-    mutateAsync,
-    isPending: false,
-    isError: false,
-    error: null,
-  } as unknown as ReturnType<typeof useCreateDiscoveryRun>);
-
-  return { mutateAsync };
+// Helper to create mock File
+function createMockFile(name: string, type: string, size = 1024): File {
+  const blob = new Blob(['x'.repeat(size)], { type });
+  return new File([blob], name, { type });
 }
 
 describe('DeskIntake', () => {
@@ -113,88 +67,390 @@ describe('DeskIntake', () => {
     vi.clearAllMocks();
   });
 
-  // NAV-1a: Study loading errors are now handled by StudyWorkspaceLayout
-  // DeskIntake uses workspace context which provides already-loaded study data
-
-  describe('form rendering', () => {
-    it('renders page header with eyebrow', () => {
-      setupMocks();
-      renderWithProviders(<DeskIntake />);
-
-      // "Desk Research" appears in eyebrow and nav - check for heading instead
-      expect(screen.getByRole('heading', { name: 'Add documents' })).toBeInTheDocument();
-    });
-
-    it('renders topic input field', () => {
-      setupMocks();
-      renderWithProviders(<DeskIntake />);
-
-      expect(screen.getByLabelText(/What topic are you exploring/i)).toBeInTheDocument();
-    });
-
-    it('renders source intent textarea', () => {
-      setupMocks();
-      renderWithProviders(<DeskIntake />);
-
-      expect(screen.getByLabelText(/What do you need this source to tell you/i)).toBeInTheDocument();
-    });
-
-    it('renders file drop zone', () => {
-      setupMocks();
-      renderWithProviders(<DeskIntake />);
-
-      expect(screen.getByText(/Drag files here or/i)).toBeInTheDocument();
-      expect(screen.getByText('browse')).toBeInTheDocument();
-    });
-
-    it('renders Cancel and Start analysis buttons', () => {
-      setupMocks();
-      renderWithProviders(<DeskIntake />);
-
-      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Start analysis' })).toBeInTheDocument();
-    });
-
-    it('Start analysis button is disabled initially', () => {
-      setupMocks();
-      renderWithProviders(<DeskIntake />);
-
-      expect(screen.getByRole('button', { name: 'Start analysis' })).toBeDisabled();
-    });
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
-  describe('form validation', () => {
-    it('requires topic to enable submit', async () => {
+  describe('file selection', () => {
+    it('renders file upload form', () => {
+      renderWithProviders(<DeskIntake />);
+
+      expect(screen.getByText('Add documents')).toBeInTheDocument();
+      expect(screen.getByText(/What topic are you exploring/)).toBeInTheDocument();
+      expect(screen.getByText(/Upload files/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Verify files/i })).toBeInTheDocument();
+    });
+
+    it('shows .doc rejection notice in UI hints', () => {
+      renderWithProviders(<DeskIntake />);
+
+      // The hint text explicitly states .doc is not supported
+      expect(screen.getByText(/Legacy .doc not supported/)).toBeInTheDocument();
+
+      // The file input accept attribute should NOT include .doc
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      expect(input.accept).not.toContain('.doc,');
+      expect(input.accept).not.toMatch(/\.doc$/);
+      expect(input.accept).toContain('.pdf');
+      expect(input.accept).toContain('.docx');
+      expect(input.accept).toContain('.txt');
+      expect(input.accept).toContain('.md');
+    });
+
+    it('allows PDF, DOCX, TXT, MD files', async () => {
+      renderWithProviders(<DeskIntake />);
       const user = userEvent.setup();
-      setupMocks();
-      renderWithProviders(<DeskIntake />);
 
-      // Submit button should be disabled without topic
-      const submitButton = screen.getByRole('button', { name: 'Start analysis' });
-      expect(submitButton).toBeDisabled();
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const pdfFile = createMockFile('report.pdf', 'application/pdf');
+      const txtFile = createMockFile('notes.txt', 'text/plain');
 
-      // Fill topic
-      const topicInput = screen.getByLabelText(/What topic are you exploring/i);
-      await user.type(topicInput, 'Test topic');
+      await user.upload(input, [pdfFile, txtFile]);
 
-      // Still disabled because no files
-      expect(submitButton).toBeDisabled();
+      // Files should be listed without errors
+      expect(screen.getByText('report.pdf')).toBeInTheDocument();
+      expect(screen.getByText('notes.txt')).toBeInTheDocument();
     });
   });
 
-  describe('file drop zone', () => {
-    it('shows file type hints', () => {
-      setupMocks();
-      renderWithProviders(<DeskIntake />);
+  describe('upload verification flow', () => {
+    it('calls upload mutation on Verify files click', async () => {
+      uploadMutateAsyncMock.mockResolvedValue({
+        success: true,
+        response: {
+          data: {
+            refs: [
+              {
+                refToken: 'ref-1',
+                filename: 'test.pdf',
+                mimeType: 'application/pdf',
+                sizeBytes: 1024,
+                charCount: 500,
+                fileHash: 'abc',
+                contentHash: 'def',
+                expiresAt: '2024-01-01T00:00:00Z',
+              },
+            ],
+            rejected: [],
+          },
+          meta: { expiresInMs: 1800000, consumeEndpoint: '/api/v1/projects/proj-456/discovery/runs' },
+        },
+      });
 
-      expect(screen.getByText(/PDF, DOCX, DOC, TXT, MD/i)).toBeInTheDocument();
+      renderWithProviders(<DeskIntake />);
+      const user = userEvent.setup();
+
+      // Add a file
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, createMockFile('test.pdf', 'application/pdf'));
+
+      // Click verify
+      const verifyButton = screen.getByRole('button', { name: /Verify files/i });
+      await user.click(verifyButton);
+
+      // Should have called upload mutation
+      await waitFor(() => {
+        expect(uploadMutateAsyncMock).toHaveBeenCalledTimes(1);
+      });
+
+      // Should show results
+      await waitFor(() => {
+        expect(screen.getByText('Verification results')).toBeInTheDocument();
+        expect(screen.getByText('test.pdf')).toBeInTheDocument();
+        expect(screen.getByText(/500 chars/)).toBeInTheDocument();
+      });
     });
 
-    it('shows max file count', () => {
-      setupMocks();
-      renderWithProviders(<DeskIntake />);
+    it('shows rejected files in results', async () => {
+      uploadMutateAsyncMock.mockResolvedValue({
+        success: true,
+        response: {
+          data: {
+            refs: [],
+            rejected: [
+              {
+                filename: 'scanned.pdf',
+                mimeType: 'application/pdf',
+                errorCode: 'SCANNED_PDF',
+                errorMessage: 'PDF appears to be scanned (no text layer)',
+              },
+            ],
+          },
+          meta: { expiresInMs: 1800000, consumeEndpoint: '/api/v1/projects/proj-456/discovery/runs' },
+        },
+      });
 
-      expect(screen.getByText(/Up to 10 files/i)).toBeInTheDocument();
+      renderWithProviders(<DeskIntake />);
+      const user = userEvent.setup();
+
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, createMockFile('scanned.pdf', 'application/pdf'));
+
+      const verifyButton = screen.getByRole('button', { name: /Verify files/i });
+      await user.click(verifyButton);
+
+      await waitFor(() => {
+        expect(screen.getByText(/All files were rejected/)).toBeInTheDocument();
+        expect(screen.getByText(/PDF appears to be scanned/)).toBeInTheDocument();
+      });
+    });
+
+    it('shows partial success with both refs and rejected', async () => {
+      uploadMutateAsyncMock.mockResolvedValue({
+        success: true,
+        response: {
+          data: {
+            refs: [
+              { refToken: 'ref-1', filename: 'good.txt', mimeType: 'text/plain', sizeBytes: 100, charCount: 80, fileHash: 'a', contentHash: 'b', expiresAt: '2024-01-01T00:00:00Z' },
+            ],
+            rejected: [
+              { filename: 'bad.pdf', mimeType: 'application/pdf', errorCode: 'ENCRYPTED_PDF', errorMessage: 'PDF is password-protected' },
+            ],
+          },
+          meta: { expiresInMs: 1800000, consumeEndpoint: '/api/v1/projects/proj-456/discovery/runs' },
+        },
+      });
+
+      renderWithProviders(<DeskIntake />);
+      const user = userEvent.setup();
+
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, [
+        createMockFile('good.txt', 'text/plain'),
+        createMockFile('bad.pdf', 'application/pdf'),
+      ]);
+
+      await user.click(screen.getByRole('button', { name: /Verify files/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Some files were extracted successfully/)).toBeInTheDocument();
+        expect(screen.getByText('good.txt')).toBeInTheDocument();
+        expect(screen.getByText(/PDF is password-protected/)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('503 FEATURE_DISABLED handling', () => {
+    it('shows feature unavailable message when feature is disabled', async () => {
+      uploadMutateAsyncMock.mockResolvedValue({
+        success: false,
+        code: 'FEATURE_DISABLED',
+        message: 'Document extraction is not available',
+        transient: false,
+      });
+
+      renderWithProviders(<DeskIntake />);
+      const user = userEvent.setup();
+
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, createMockFile('test.txt', 'text/plain'));
+
+      await user.click(screen.getByRole('button', { name: /Verify files/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('Feature unavailable')).toBeInTheDocument();
+        expect(screen.getByText(/Document extraction is not currently available/)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('transient error handling', () => {
+    it('shows retry button for transient errors', async () => {
+      uploadMutateAsyncMock.mockResolvedValue({
+        success: false,
+        code: 'EXTRACTION_UPLOAD_BUSY',
+        message: 'Upload service is busy',
+        transient: true,
+      });
+
+      renderWithProviders(<DeskIntake />);
+      const user = userEvent.setup();
+
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, createMockFile('test.txt', 'text/plain'));
+
+      await user.click(screen.getByRole('button', { name: /Verify files/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('Upload failed')).toBeInTheDocument();
+        expect(screen.getByText(/temporary/)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Try again/i })).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('CRITICAL: zero Discovery run calls', () => {
+    it('does NOT call useCreateDiscoveryRun during file selection', async () => {
+      renderWithProviders(<DeskIntake />);
+      const user = userEvent.setup();
+
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, createMockFile('test.pdf', 'application/pdf'));
+
+      // Wait for any async operations
+      await waitFor(() => {
+        expect(screen.getByText('test.pdf')).toBeInTheDocument();
+      });
+
+      // CRITICAL: No Discovery run calls
+      expect(createRunMutateAsyncMock).not.toHaveBeenCalled();
+    });
+
+    it('does NOT call useCreateDiscoveryRun during verify action', async () => {
+      uploadMutateAsyncMock.mockResolvedValue({
+        success: true,
+        response: {
+          data: {
+            refs: [{ refToken: 'ref-1', filename: 'test.pdf', mimeType: 'application/pdf', sizeBytes: 1024, charCount: 500, fileHash: 'a', contentHash: 'b', expiresAt: '2024-01-01T00:00:00Z' }],
+            rejected: [],
+          },
+          meta: { expiresInMs: 1800000, consumeEndpoint: '/api/v1/projects/proj-456/discovery/runs' },
+        },
+      });
+
+      renderWithProviders(<DeskIntake />);
+      const user = userEvent.setup();
+
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, createMockFile('test.pdf', 'application/pdf'));
+      await user.click(screen.getByRole('button', { name: /Verify files/i }));
+
+      // Wait for results to show
+      await waitFor(() => {
+        expect(screen.getByText('Verification results')).toBeInTheDocument();
+      });
+
+      // CRITICAL: No Discovery run calls
+      expect(createRunMutateAsyncMock).not.toHaveBeenCalled();
+    });
+
+    it('does NOT call useCreateDiscoveryRun when clicking disabled Start analysis button', async () => {
+      uploadMutateAsyncMock.mockResolvedValue({
+        success: true,
+        response: {
+          data: {
+            refs: [{ refToken: 'ref-1', filename: 'test.pdf', mimeType: 'application/pdf', sizeBytes: 1024, charCount: 500, fileHash: 'a', contentHash: 'b', expiresAt: '2024-01-01T00:00:00Z' }],
+            rejected: [],
+          },
+          meta: { expiresInMs: 1800000, consumeEndpoint: '/api/v1/projects/proj-456/discovery/runs' },
+        },
+      });
+
+      renderWithProviders(<DeskIntake />);
+      const user = userEvent.setup();
+
+      // Complete verification
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, createMockFile('test.pdf', 'application/pdf'));
+      await user.click(screen.getByRole('button', { name: /Verify files/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('Verification results')).toBeInTheDocument();
+      });
+
+      // Find and verify Start analysis button is disabled
+      const startButton = screen.getByRole('button', { name: /Start analysis/i });
+      expect(startButton).toBeDisabled();
+
+      // Try to click it anyway (should be no-op)
+      await user.click(startButton);
+
+      // CRITICAL: Still no Discovery run calls
+      expect(createRunMutateAsyncMock).not.toHaveBeenCalled();
+    });
+
+    it('does NOT call useCreateDiscoveryRun through entire upload flow', async () => {
+      // Simulate complete flow: select files → verify → view results → reset → select again
+      uploadMutateAsyncMock.mockResolvedValue({
+        success: true,
+        response: {
+          data: {
+            refs: [{ refToken: 'ref-1', filename: 'test.pdf', mimeType: 'application/pdf', sizeBytes: 1024, charCount: 500, fileHash: 'a', contentHash: 'b', expiresAt: '2024-01-01T00:00:00Z' }],
+            rejected: [],
+          },
+          meta: { expiresInMs: 1800000, consumeEndpoint: '/api/v1/projects/proj-456/discovery/runs' },
+        },
+      });
+
+      renderWithProviders(<DeskIntake />);
+      const user = userEvent.setup();
+
+      // First upload flow
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, createMockFile('test.pdf', 'application/pdf'));
+      await user.click(screen.getByRole('button', { name: /Verify files/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('Verification results')).toBeInTheDocument();
+      });
+
+      // Reset and try again
+      await user.click(screen.getByRole('button', { name: /Upload different files/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('Add documents')).toBeInTheDocument();
+      });
+
+      // CRITICAL: No Discovery run calls at any point
+      expect(createRunMutateAsyncMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Start analysis button state', () => {
+    it('shows disabled Start analysis button after successful verification', async () => {
+      uploadMutateAsyncMock.mockResolvedValue({
+        success: true,
+        response: {
+          data: {
+            refs: [{ refToken: 'ref-1', filename: 'test.pdf', mimeType: 'application/pdf', sizeBytes: 1024, charCount: 500, fileHash: 'a', contentHash: 'b', expiresAt: '2024-01-01T00:00:00Z' }],
+            rejected: [],
+          },
+          meta: { expiresInMs: 1800000, consumeEndpoint: '/api/v1/projects/proj-456/discovery/runs' },
+        },
+      });
+
+      renderWithProviders(<DeskIntake />);
+      const user = userEvent.setup();
+
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, createMockFile('test.pdf', 'application/pdf'));
+      await user.click(screen.getByRole('button', { name: /Verify files/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('Verification results')).toBeInTheDocument();
+      });
+
+      // Start analysis button should be present but disabled
+      const startButton = screen.getByRole('button', { name: /Start analysis/i });
+      expect(startButton).toBeDisabled();
+      expect(startButton).toHaveTextContent(/coming soon/i);
+    });
+
+    it('does NOT show Start analysis button when all files rejected', async () => {
+      uploadMutateAsyncMock.mockResolvedValue({
+        success: true,
+        response: {
+          data: {
+            refs: [],
+            rejected: [{ filename: 'bad.pdf', mimeType: 'application/pdf', errorCode: 'SCANNED_PDF', errorMessage: 'No text layer' }],
+          },
+          meta: { expiresInMs: 1800000, consumeEndpoint: '/api/v1/projects/proj-456/discovery/runs' },
+        },
+      });
+
+      renderWithProviders(<DeskIntake />);
+      const user = userEvent.setup();
+
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, createMockFile('bad.pdf', 'application/pdf'));
+      await user.click(screen.getByRole('button', { name: /Verify files/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/All files were rejected/)).toBeInTheDocument();
+      });
+
+      // No Start analysis button when all rejected
+      expect(screen.queryByRole('button', { name: /Start analysis/i })).not.toBeInTheDocument();
     });
   });
 });
