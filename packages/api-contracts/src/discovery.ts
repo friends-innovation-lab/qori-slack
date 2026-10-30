@@ -300,7 +300,10 @@ export interface DiscoveryArtifactsResponse {
 
 // ─── Create Run Input ──────────────────────────────────────────────
 
-export interface CreateDiscoveryRunInput {
+/**
+ * Base fields for Discovery run creation.
+ */
+interface CreateDiscoveryRunBase {
   /** Discovery type */
   discoveryType: 'desk_research' | 'stakeholder_synthesis';
 
@@ -309,9 +312,56 @@ export interface CreateDiscoveryRunInput {
 
   /** Optional description / source intent */
   sourceIntent?: string | null;
+}
 
-  /** Prepared source documents */
+/**
+ * Legacy input: full source documents with extracted text in request body.
+ * Used by StakeholderIntake and Slack workflows.
+ */
+export interface CreateDiscoveryRunLegacyInput extends CreateDiscoveryRunBase {
+  /** Prepared source documents (legacy path) */
   sources: PreparedDiscoverySource[];
+}
+
+/**
+ * New input: reference tokens from extraction staging.
+ * DISC-WEB-1C: Uses pre-staged content from /extraction/documents endpoint.
+ * Requires Idempotency-Key header for replay protection.
+ */
+export interface CreateDiscoveryRunFromRefsInput extends CreateDiscoveryRunBase {
+  /**
+   * Staging reference tokens from POST /extraction/documents.
+   * Each refToken represents pre-extracted content with 30-minute TTL.
+   * Backend consumes refs atomically during run creation.
+   */
+  sourceRefs: string[];
+}
+
+/**
+ * Union type for Discovery run creation.
+ * Use `sources` for legacy path or `sourceRefs` for extraction staging path.
+ * The two paths are mutually exclusive at runtime (backend rejects both).
+ */
+export type CreateDiscoveryRunInput =
+  | CreateDiscoveryRunLegacyInput
+  | CreateDiscoveryRunFromRefsInput;
+
+/**
+ * Type guard to check if input uses sourceRefs path.
+ */
+export function isSourceRefsInput(
+  input: CreateDiscoveryRunInput,
+): input is CreateDiscoveryRunFromRefsInput {
+  return 'sourceRefs' in input && Array.isArray(input.sourceRefs);
+}
+
+/**
+ * Type guard to check if input uses legacy sources path.
+ */
+export function isLegacySourcesInput(
+  input: CreateDiscoveryRunInput,
+): input is CreateDiscoveryRunLegacyInput {
+  return 'sources' in input && Array.isArray(input.sources);
 }
 
 export interface PreparedDiscoverySource {
