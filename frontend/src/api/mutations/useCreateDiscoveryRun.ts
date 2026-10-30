@@ -19,8 +19,23 @@ import type {
   DiscoveryRunSummary,
   CreateDiscoveryRunLegacyInput,
   CreateDiscoveryRunFromRefsInput,
+  CreateDiscoveryRunInput,
 } from '@qori/api-contracts';
-import { isSourceRefsInput } from '@qori/api-contracts';
+
+// ─── Local Type Guards ─────────────────────────────────────────────
+// NOTE: These are defined locally to avoid ESM/CJS interop issues.
+// The api-contracts package compiles to CommonJS and Vite's ESM loader
+// cannot resolve runtime function exports re-exported via __exportStar.
+// See: DISC-WEB-1C-2a-R1 fix for details.
+
+/**
+ * Type guard to check if input uses sourceRefs path.
+ */
+function isSourceRefsInput(
+  input: CreateDiscoveryRunInput,
+): input is CreateDiscoveryRunFromRefsInput {
+  return 'sourceRefs' in input && Array.isArray((input as CreateDiscoveryRunFromRefsInput).sourceRefs);
+}
 
 // ─── Response Types ────────────────────────────────────────────────
 

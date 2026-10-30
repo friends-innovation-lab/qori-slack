@@ -24,10 +24,24 @@ import {
   ERROR_IDEMPOTENCY_CONFLICT,
   ERROR_SOURCE_REF_UNAVAILABLE,
 } from '../useCreateDiscoveryRun';
-import {
-  isSourceRefsInput,
-  isLegacySourcesInput,
+import type {
+  CreateDiscoveryRunInput,
+  CreateDiscoveryRunFromRefsInput,
+  CreateDiscoveryRunLegacyInput,
 } from '@qori/api-contracts';
+
+// Local type guards for testing (avoid ESM/CJS interop issues with api-contracts)
+function isSourceRefsInput(
+  input: CreateDiscoveryRunInput,
+): input is CreateDiscoveryRunFromRefsInput {
+  return 'sourceRefs' in input && Array.isArray((input as CreateDiscoveryRunFromRefsInput).sourceRefs);
+}
+
+function isLegacySourcesInput(
+  input: CreateDiscoveryRunInput,
+): input is CreateDiscoveryRunLegacyInput {
+  return 'sources' in input && Array.isArray((input as CreateDiscoveryRunLegacyInput).sources);
+}
 
 // Mock the API client
 vi.mock('@/api/client', () => ({
