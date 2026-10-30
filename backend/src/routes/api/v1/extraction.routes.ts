@@ -191,11 +191,21 @@ router.post(
       }, EXTRACTION_LIMITS.UPLOAD_TIMEOUT_MS);
 
       // ─── Register Client Disconnect Handler ────────────────────────────
-      const onClose = () => {
-        clientDisconnected = true;
-        abortProcessing('disconnect');
+      // Note: We use socket-level detection instead of req 'close' event
+      // because the 'close' event fires when body stream finishes (normal)
+      // not just on actual disconnects.
+      const socket = req.socket;
+      const onSocketClose = () => {
+        // Socket closed before response sent = actual disconnect
+        if (!res.headersSent && !processingComplete) {
+          clientDisconnected = true;
+          abortProcessing('disconnect');
+        }
       };
-      req.on('close', onClose);
+      // Only listen if socket exists and is still connected
+      if (socket && !socket.destroyed) {
+        socket.once('close', onSocketClose);
+      }
 
       // ─── Check for Early Abort ─────────────────────────────────────────
       if (uploadTimedOut || clientDisconnected) {

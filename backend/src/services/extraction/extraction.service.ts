@@ -152,7 +152,7 @@ const globalSemaphore = new BoundedSemaphore(MAX_CONCURRENT, MAX_QUEUED);
 
 // Upload admission semaphore (2 concurrent, no queue by default)
 // This bounds total memory from multipart buffering
-const uploadAdmissionSemaphore = new BoundedSemaphore(MAX_UPLOAD_REQUESTS, MAX_UPLOAD_QUEUED);
+let uploadAdmissionSemaphore = new BoundedSemaphore(MAX_UPLOAD_REQUESTS, MAX_UPLOAD_QUEUED);
 
 /**
  * Extraction result with computed hashes.
@@ -446,4 +446,15 @@ export function __createTestSemaphore(permits: number, maxQueued: number): {
     get available() { return sem.available; },
     get queueLength() { return sem.queueLength; },
   };
+}
+
+/**
+ * Test helper: Reset the upload admission semaphore to initial state.
+ * This must be called between tests to prevent permit leaks from affecting
+ * subsequent tests.
+ *
+ * @internal - For testing only
+ */
+export function __resetUploadAdmissionForTesting(): void {
+  uploadAdmissionSemaphore = new BoundedSemaphore(MAX_UPLOAD_REQUESTS, MAX_UPLOAD_QUEUED);
 }

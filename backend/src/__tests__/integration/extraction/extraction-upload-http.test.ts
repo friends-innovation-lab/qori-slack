@@ -26,7 +26,7 @@ import {
   BELOW_MINIMUM_TEXT,
   createValidDocxBufferAsync,
 } from '../../__fixtures__/documents/fixture-helper';
-import { ExtractionOverloadError } from '../../../services/extraction';
+import { ExtractionOverloadError, __resetUploadAdmissionForTesting } from '../../../services/extraction';
 
 // Save original env value for restoration
 const ORIGINAL_FLAG_VALUE = process.env.DISC_WEB1_ENABLED;
@@ -88,6 +88,9 @@ describe('Category C: HTTP Upload Integration', () => {
   });
 
   afterEach(() => {
+    // Reset upload admission semaphore to prevent permit leaks between tests
+    __resetUploadAdmissionForTesting();
+
     // Restore original flag value after each test
     if (ORIGINAL_FLAG_VALUE === undefined) {
       delete process.env.DISC_WEB1_ENABLED;

@@ -25,6 +25,7 @@ import {
   acquireUploadAdmission,
   UploadBusyError,
   EXTRACTION_LIMITS,
+  __resetUploadAdmissionForTesting,
 } from '../../../services/extraction';
 
 // Save original env values
@@ -79,6 +80,9 @@ describe('Upload Admission Control — DISC-WEB-1B-2d', () => {
   });
 
   afterEach(() => {
+    // Reset upload admission semaphore to prevent permit leaks between tests
+    __resetUploadAdmissionForTesting();
+
     if (ORIGINAL_FLAG_VALUE === undefined) {
       delete process.env.DISC_WEB1_ENABLED;
     } else {
