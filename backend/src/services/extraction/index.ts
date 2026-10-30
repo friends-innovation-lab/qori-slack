@@ -14,8 +14,14 @@ export {
   type ExtractionResult,
   type ExtractionError,
   type ExtractionOutcome,
-  // Test helper (internal use only)
+  // Test helpers (internal use only)
   __createTestSemaphore,
+  __resetUploadAdmissionForTesting,
+  // Upload admission control (DISC-WEB-1B-2d)
+  acquireUploadAdmission,
+  getUploadAdmissionStatus,
+  UploadBusyError,
+  UploadTimeoutError,
 } from './extraction.service';
 
 // Error codes

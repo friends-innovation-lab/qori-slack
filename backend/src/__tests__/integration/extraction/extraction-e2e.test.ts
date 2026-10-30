@@ -19,6 +19,7 @@ import { randomUUID } from 'crypto';
 import type { Sequelize } from 'sequelize';
 import type { Express } from 'express';
 import { STANDARD_TEXT } from '../../__fixtures__/documents/fixture-helper';
+import { __resetUploadAdmissionForTesting } from '../../../services/extraction';
 
 // Mock GitHub to prevent API calls
 jest.mock('../../../helpers/github', () => ({
@@ -110,6 +111,9 @@ describe('Category D: End-to-End Integration', () => {
   });
 
   afterEach(() => {
+    // Reset upload admission semaphore to prevent permit leaks between tests
+    __resetUploadAdmissionForTesting();
+
     if (ORIGINAL_FLAG_VALUE === undefined) {
       delete process.env.DISC_WEB1_ENABLED;
     } else {

@@ -1,0 +1,558 @@
+/**
+ * Upload Admission Control Tests — DISC-WEB-1B-2d
+ *
+ * Deterministic tests for HTTP request admission control.
+ *
+ * These tests verify:
+ * - Admission limit (2 active, 0 queued by default)
+ * - 503 rejection BEFORE body parsing for excess requests
+ * - Permit release guarantees
+ * - No staging rows on rejected requests
+ * - Double release safety
+ *
+ * Note: Full extraction flow tests are in extraction-routes.test.ts.
+ * This suite focuses on admission control behavior in isolation.
+ */
+
+import request from 'supertest';
+import http from 'http';
+import { getTestDb, truncateAll, TEST_ORG_ID } from '../setup/testDb';
+import { getTestApp } from '../setup/testApp';
+import type { Sequelize } from 'sequelize';
+import type { Express } from 'express';
+import type { AddressInfo } from 'net';
+
+import {
+  getUploadAdmissionStatus,
+  acquireUploadAdmission,
+  UploadBusyError,
+  EXTRACTION_LIMITS,
+  __resetUploadAdmissionForTesting,
+} from '../../../services/extraction';
+
+// Save original env values
+const ORIGINAL_FLAG_VALUE = process.env.DISC_WEB1_ENABLED;
+
+describe('Upload Admission Control — DISC-WEB-1B-2d', () => {
+  let sequelize: Sequelize;
+  let app: Express;
+  let testProjectPublicId: string;
+  let testActorPublicId: string;
+
+  beforeAll(async () => {
+    sequelize = getTestDb();
+    app = getTestApp();
+    await sequelize.authenticate();
+  });
+
+  beforeEach(async () => {
+    await truncateAll();
+
+    const OrganizationModel = sequelize.models.Organization;
+    const ProjectModel = sequelize.models.Project;
+    const ActorModel = sequelize.models.Actor;
+    const ProjectMembershipModel = sequelize.models.ProjectMembership;
+
+    const testOrg = await OrganizationModel.findOne({ where: { slug: 'test-org' } });
+
+    const actor = await ActorModel.create({
+      display_name: 'Upload Test Researcher',
+      organization_id: (testOrg as any).id,
+      status: 'active',
+    });
+    testActorPublicId = (actor as any).public_id;
+
+    const project = await ProjectModel.create({
+      name: 'Upload Test Project',
+      slug: 'upload-test',
+      created_by: testActorPublicId,
+      organization_id: (testOrg as any).id,
+      status: 'active',
+    });
+    testProjectPublicId = (project as any).public_id;
+
+    await ProjectMembershipModel.create({
+      project_id: (project as any).id,
+      actor_id: (actor as any).id,
+      role: 'researcher',
+      membership_source: 'explicit',
+    });
+
+    process.env.DISC_WEB1_ENABLED = 'true';
+  });
+
+  afterEach(() => {
+    // Reset upload admission semaphore to prevent permit leaks between tests
+    __resetUploadAdmissionForTesting();
+
+    if (ORIGINAL_FLAG_VALUE === undefined) {
+      delete process.env.DISC_WEB1_ENABLED;
+    } else {
+      process.env.DISC_WEB1_ENABLED = ORIGINAL_FLAG_VALUE;
+    }
+  });
+
+  afterAll(async () => {
+    await sequelize.close();
+  });
+
+  describe('admission semaphore behavior', () => {
+    it('default capacity is 2 active, 0 queued', () => {
+      const status = getUploadAdmissionStatus();
+      expect(status.max).toBe(2);
+      expect(status.maxQueued).toBe(0);
+      expect(status.available).toBeLessThanOrEqual(status.max);
+    });
+
+    it('acquire and release work correctly', async () => {
+      const status1 = getUploadAdmissionStatus();
+      const initialAvailable = status1.available;
+
+      const release1 = await acquireUploadAdmission();
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable - 1);
+
+      const release2 = await acquireUploadAdmission();
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable - 2);
+
+      // Third acquire should throw (no queue allowed)
+      await expect(acquireUploadAdmission()).rejects.toThrow(UploadBusyError);
+
+      // Release permits
+      release1();
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable - 1);
+
+      release2();
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+    });
+
+    it('double release is safely ignored', async () => {
+      const initialAvailable = getUploadAdmissionStatus().available;
+
+      const release = await acquireUploadAdmission();
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable - 1);
+
+      // First release
+      release();
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+
+      // Second release (should be no-op)
+      release();
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+
+      // Third release (should be no-op)
+      release();
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+    });
+
+    it('UploadBusyError has correct code', async () => {
+      const release1 = await acquireUploadAdmission();
+      const release2 = await acquireUploadAdmission();
+
+      try {
+        await acquireUploadAdmission();
+        fail('Should have thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(UploadBusyError);
+        expect((error as UploadBusyError).code).toBe('EXTRACTION_UPLOAD_BUSY');
+      } finally {
+        release1();
+        release2();
+      }
+    });
+
+    it('permits recovered after exception in usage', async () => {
+      const initialAvailable = getUploadAdmissionStatus().available;
+
+      const release = await acquireUploadAdmission();
+
+      // Simulate usage pattern with error - error is caught but permit is released
+      try {
+        try {
+          throw new Error('Simulated error');
+        } finally {
+          release();
+        }
+      } catch {
+        // Expected - error was thrown
+      }
+
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+    });
+  });
+
+  describe('HTTP admission rejection', () => {
+    it('third concurrent request receives 503 EXTRACTION_UPLOAD_BUSY', async () => {
+      // Acquire both permits manually to simulate busy state
+      const release1 = await acquireUploadAdmission();
+      const release2 = await acquireUploadAdmission();
+
+      try {
+        // Now an HTTP request should be rejected immediately
+        const res = await request(app)
+          .post(`/api/v1/projects/${testProjectPublicId}/extraction/documents`)
+          .set('X-Test-Actor-PublicId', testActorPublicId)
+          .set('Content-Type', 'multipart/form-data; boundary=test')
+          .send('--test\r\nContent-Disposition: form-data; name="file"; filename="test.txt"\r\nContent-Type: text/plain\r\n\r\ntest\r\n--test--');
+
+        expect(res.status).toBe(503);
+        expect(res.body.error.code).toBe('EXTRACTION_UPLOAD_BUSY');
+        expect(res.body.error.message).toContain('busy');
+      } finally {
+        release1();
+        release2();
+      }
+    });
+
+    it('rejection happens BEFORE body is consumed', async () => {
+      const release1 = await acquireUploadAdmission();
+      const release2 = await acquireUploadAdmission();
+
+      const ExtractionStagingModel = sequelize.models.ExtractionStaging;
+      const countBefore = await ExtractionStagingModel.count();
+
+      try {
+        // Large payload that would be rejected before parsing
+        const largeContent = 'x'.repeat(10000);
+        const res = await request(app)
+          .post(`/api/v1/projects/${testProjectPublicId}/extraction/documents`)
+          .set('X-Test-Actor-PublicId', testActorPublicId)
+          .attach('file', Buffer.from(largeContent), {
+            filename: 'should-not-be-parsed.txt',
+            contentType: 'text/plain',
+          });
+
+        expect(res.status).toBe(503);
+        expect(res.body.error.code).toBe('EXTRACTION_UPLOAD_BUSY');
+
+        // No staging rows created (body never parsed)
+        const countAfter = await ExtractionStagingModel.count();
+        expect(countAfter).toBe(countBefore);
+      } finally {
+        release1();
+        release2();
+      }
+    });
+
+    it('rejection does not leak permits', async () => {
+      const initialAvailable = getUploadAdmissionStatus().available;
+
+      // Acquire both permits
+      const release1 = await acquireUploadAdmission();
+      const release2 = await acquireUploadAdmission();
+
+      try {
+        // Make request that will be rejected
+        await request(app)
+          .post(`/api/v1/projects/${testProjectPublicId}/extraction/documents`)
+          .set('X-Test-Actor-PublicId', testActorPublicId)
+          .set('Content-Type', 'multipart/form-data; boundary=test')
+          .send('--test--');
+
+        // Permit count unchanged (rejected request didn't acquire)
+        expect(getUploadAdmissionStatus().available).toBe(0);
+      } finally {
+        release1();
+        release2();
+      }
+
+      // All permits recovered after manual releases
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+    });
+  });
+
+  describe('no staging rows on rejection', () => {
+    it('no staging rows created when admission rejected', async () => {
+      const ExtractionStagingModel = sequelize.models.ExtractionStaging;
+      const countBefore = await ExtractionStagingModel.count();
+
+      const release1 = await acquireUploadAdmission();
+      const release2 = await acquireUploadAdmission();
+
+      try {
+        const testContent = 'This content should never be staged because admission was rejected.';
+        const res = await request(app)
+          .post(`/api/v1/projects/${testProjectPublicId}/extraction/documents`)
+          .set('X-Test-Actor-PublicId', testActorPublicId)
+          .attach('file', Buffer.from(testContent), {
+            filename: 'never-staged.txt',
+            contentType: 'text/plain',
+          });
+
+        expect(res.status).toBe(503);
+
+        const countAfter = await ExtractionStagingModel.count();
+        expect(countAfter).toBe(countBefore);
+      } finally {
+        release1();
+        release2();
+      }
+    });
+  });
+
+  describe('pre-admission errors do not consume permits', () => {
+    it('feature disabled error does not consume permit', async () => {
+      const initialAvailable = getUploadAdmissionStatus().available;
+
+      process.env.DISC_WEB1_ENABLED = 'false';
+
+      const res = await request(app)
+        .post(`/api/v1/projects/${testProjectPublicId}/extraction/documents`)
+        .set('X-Test-Actor-PublicId', testActorPublicId)
+        .set('Content-Type', 'multipart/form-data; boundary=test')
+        .send('--test--');
+
+      process.env.DISC_WEB1_ENABLED = 'true';
+
+      expect(res.status).toBe(503);
+      expect(res.body.error.code).toBe('FEATURE_DISABLED');
+
+      // No permit consumed
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+    });
+
+    it('invalid content type error does not consume permit', async () => {
+      const initialAvailable = getUploadAdmissionStatus().available;
+
+      const res = await request(app)
+        .post(`/api/v1/projects/${testProjectPublicId}/extraction/documents`)
+        .set('X-Test-Actor-PublicId', testActorPublicId)
+        .set('Content-Type', 'application/json')
+        .send('{}');
+
+      expect(res.status).toBe(400);
+
+      // No permit consumed
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+    });
+  });
+
+  describe('configuration', () => {
+    it('EXTRACTION_LIMITS includes upload settings', () => {
+      expect(EXTRACTION_LIMITS.MAX_UPLOAD_REQUESTS).toBe(2);
+      expect(EXTRACTION_LIMITS.MAX_UPLOAD_QUEUED).toBe(0);
+      expect(EXTRACTION_LIMITS.UPLOAD_TIMEOUT_MS).toBe(120000);
+    });
+
+    it('upload timeout is 2 minutes by default', () => {
+      expect(EXTRACTION_LIMITS.UPLOAD_TIMEOUT_MS).toBe(120_000);
+    });
+  });
+
+  describe('client disconnect handling', () => {
+    /**
+     * This test verifies the contract for client disconnect during upload:
+     * - Permit is released via finally block after any exit path
+     * - No staging rows created on incomplete requests
+     * - Capacity returns to initial value
+     *
+     * Note: Actual socket disconnection mid-stream is difficult to simulate
+     * in supertest. The route handler's socket close detection is verified by:
+     * 1. Guard conditions: `!res.headersSent && !processingComplete`
+     * 2. Explicit cleanup in finally block
+     * 3. This test verifies the observable contract (capacity recovery)
+     */
+    it('capacity returns to 2 after successful request completion', async () => {
+      const initialAvailable = getUploadAdmissionStatus().available;
+      expect(initialAvailable).toBe(2);
+
+      const ExtractionStagingModel = sequelize.models.ExtractionStaging;
+      const countBefore = await ExtractionStagingModel.count();
+
+      // Make a successful request
+      const testContent = 'Test content that is long enough to pass minimum character threshold for extraction validation purposes.';
+      const res = await request(app)
+        .post(`/api/v1/projects/${testProjectPublicId}/extraction/documents`)
+        .set('X-Test-Actor-PublicId', testActorPublicId)
+        .attach('file', Buffer.from(testContent), {
+          filename: 'disconnect-test.txt',
+          contentType: 'text/plain',
+        });
+
+      expect(res.status).toBe(201);
+
+      // Verify staging row created
+      const countAfter = await ExtractionStagingModel.count();
+      expect(countAfter).toBe(countBefore + 1);
+
+      // Verify capacity returned to initial value (permit released in finally)
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+    });
+
+    it('capacity returns to 2 after request with extraction failure', async () => {
+      const initialAvailable = getUploadAdmissionStatus().available;
+      expect(initialAvailable).toBe(2);
+
+      const ExtractionStagingModel = sequelize.models.ExtractionStaging;
+      const countBefore = await ExtractionStagingModel.count();
+
+      // Make request with content too short (will be rejected by extraction)
+      const res = await request(app)
+        .post(`/api/v1/projects/${testProjectPublicId}/extraction/documents`)
+        .set('X-Test-Actor-PublicId', testActorPublicId)
+        .attach('file', Buffer.from('too short'), {
+          filename: 'short.txt',
+          contentType: 'text/plain',
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.refs).toHaveLength(0);
+      expect(res.body.data.rejected).toHaveLength(1);
+
+      // No staging row created for rejected file
+      const countAfter = await ExtractionStagingModel.count();
+      expect(countAfter).toBe(countBefore);
+
+      // Verify capacity returned to initial value
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+    });
+
+    it('capacity returns to 2 after request with unsupported MIME type', async () => {
+      const initialAvailable = getUploadAdmissionStatus().available;
+      expect(initialAvailable).toBe(2);
+
+      const ExtractionStagingModel = sequelize.models.ExtractionStaging;
+      const countBefore = await ExtractionStagingModel.count();
+
+      // Make request with unsupported file type
+      const res = await request(app)
+        .post(`/api/v1/projects/${testProjectPublicId}/extraction/documents`)
+        .set('X-Test-Actor-PublicId', testActorPublicId)
+        .attach('file', Buffer.from('fake image data'), {
+          filename: 'image.jpg',
+          contentType: 'image/jpeg',
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.refs).toHaveLength(0);
+      expect(res.body.data.rejected).toHaveLength(1);
+      expect(res.body.data.rejected[0].errorCode).toBe('UNSUPPORTED_FILE_TYPE');
+
+      // No staging row created
+      const countAfter = await ExtractionStagingModel.count();
+      expect(countAfter).toBe(countBefore);
+
+      // Verify capacity returned to initial value
+      expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+    });
+
+    it('sequential requests on same connection release permits correctly', async () => {
+      const initialAvailable = getUploadAdmissionStatus().available;
+      expect(initialAvailable).toBe(2);
+
+      const testContent = 'Test content that is long enough to pass minimum character threshold for extraction validation purposes.';
+
+      // Make 3 sequential requests (simulates keep-alive connection reuse)
+      for (let i = 0; i < 3; i++) {
+        const res = await request(app)
+          .post(`/api/v1/projects/${testProjectPublicId}/extraction/documents`)
+          .set('X-Test-Actor-PublicId', testActorPublicId)
+          .attach('file', Buffer.from(`${testContent} Request ${i}`), {
+            filename: `sequential-${i}.txt`,
+            contentType: 'text/plain',
+          });
+
+        expect(res.status).toBe(201);
+        expect(res.body.data.refs).toHaveLength(1);
+
+        // After each request, capacity should be back to initial
+        expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+      }
+    });
+
+    it('mid-upload client disconnect releases permit and creates no staging rows', async () => {
+      const initialAvailable = getUploadAdmissionStatus().available;
+      expect(initialAvailable).toBe(2);
+
+      const ExtractionStagingModel = sequelize.models.ExtractionStaging;
+      const countBefore = await ExtractionStagingModel.count();
+
+      // Start HTTP server with the Express app
+      const server = http.createServer(app);
+      await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+      const { port } = server.address() as AddressInfo;
+
+      try {
+        // Create multipart boundary and headers
+        const boundary = '----TestBoundary' + Date.now();
+        const partialBody = [
+          `--${boundary}`,
+          'Content-Disposition: form-data; name="file"; filename="disconnect-test.txt"',
+          'Content-Type: text/plain',
+          '',
+          'This is partial content that will be cut off mid-stream...',
+          // Intentionally NOT closing the boundary - simulating incomplete upload
+        ].join('\r\n');
+
+        // Track whether server processed the disconnect
+        let serverProcessed = false;
+
+        await new Promise<void>((resolve, reject) => {
+          const req = http.request({
+            hostname: '127.0.0.1',
+            port,
+            path: `/api/v1/projects/${testProjectPublicId}/extraction/documents`,
+            method: 'POST',
+            headers: {
+              'Content-Type': `multipart/form-data; boundary=${boundary}`,
+              'X-Test-Actor-PublicId': testActorPublicId,
+              // Declare a large content length but send less
+              'Content-Length': '10000',
+            },
+          });
+
+          req.on('error', (err) => {
+            // Expected - we destroyed the socket
+            if ((err as NodeJS.ErrnoException).code === 'ECONNRESET' ||
+                (err as NodeJS.ErrnoException).code === 'ERR_STREAM_DESTROYED') {
+              serverProcessed = true;
+              resolve();
+            } else {
+              reject(err);
+            }
+          });
+
+          // Send partial body
+          req.write(partialBody);
+
+          // Wait a tick to ensure server receives partial data, then abort
+          setImmediate(() => {
+            req.destroy();
+            // Give server time to detect disconnect and clean up
+            setTimeout(() => {
+              serverProcessed = true;
+              resolve();
+            }, 100);
+          });
+        });
+
+        expect(serverProcessed).toBe(true);
+
+        // Wait for server to fully process the disconnect
+        // Use bounded wait with polling instead of long sleep
+        const maxWaitMs = 2000;
+        const pollIntervalMs = 50;
+        let elapsed = 0;
+
+        while (elapsed < maxWaitMs) {
+          const currentAvailable = getUploadAdmissionStatus().available;
+          if (currentAvailable === initialAvailable) {
+            break;
+          }
+          await new Promise(r => setTimeout(r, pollIntervalMs));
+          elapsed += pollIntervalMs;
+        }
+
+        // Verify admission capacity returned to initial value
+        expect(getUploadAdmissionStatus().available).toBe(initialAvailable);
+
+        // Verify no staging rows were created
+        const countAfter = await ExtractionStagingModel.count();
+        expect(countAfter).toBe(countBefore);
+
+      } finally {
+        // Clean up server
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+      }
+    });
+  });
+});

@@ -19,6 +19,7 @@ import type { Express } from 'express';
 
 import {
   __createTestSemaphore,
+  __resetUploadAdmissionForTesting,
   ExtractionOverloadError,
   getConcurrencyStatus,
 } from '../../../services/extraction';
@@ -206,6 +207,9 @@ describe('Queue Saturation — HTTP Integration', () => {
   });
 
   afterEach(() => {
+    // Reset upload admission semaphore to prevent permit leaks between tests
+    __resetUploadAdmissionForTesting();
+
     if (ORIGINAL_FLAG_VALUE === undefined) {
       delete process.env.DISC_WEB1_ENABLED;
     } else {
