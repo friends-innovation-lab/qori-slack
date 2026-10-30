@@ -183,16 +183,22 @@ export function StakeholderIntake() {
         }),
       );
 
-      // Create the run
-      const result = await createRun.mutateAsync({
-        discoveryType: 'stakeholder_synthesis',
-        topic: topic.trim(),
-        sourceIntent: sourceIntent.trim() || null,
-        sources,
+      // Create the run (legacy sources[] path)
+      const outcome = await createRun.mutateAsync({
+        input: {
+          discoveryType: 'stakeholder_synthesis',
+          topic: topic.trim(),
+          sourceIntent: sourceIntent.trim() || null,
+          sources,
+        },
       });
 
       // Navigate to the run page
-      navigate(`/studies/${studyPublicId}/discovery/runs/${result.data.publicId}`);
+      if (outcome.success) {
+        navigate(`/studies/${studyPublicId}/discovery/runs/${outcome.response.data.publicId}`);
+      } else {
+        throw new Error(outcome.message);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create Discovery run');
       setSubmitting(false);
