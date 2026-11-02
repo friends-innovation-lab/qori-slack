@@ -191,9 +191,9 @@ Qori is a deployable, channel-independent research operating system for public-s
 
 | State | Status | Date | Notes |
 |-------|--------|------|-------|
-| **Architecture approved** | YES | 2026-11-02 | M1-M3 authorized, later milestones pending |
-| **Implementation authorized** | M1-M3 | 2026-11-02 | M4-M8 require separate authorization |
-| **Implementation completed** | M1-M3 | 2026-11-02 | Database + service + model factory + budgeted invoke |
+| **Architecture approved** | YES | 2026-11-02 | M1-M4 authorized, later milestones pending |
+| **Implementation authorized** | M1-M4 | 2026-11-02 | M5-M8 require separate authorization |
+| **Implementation completed** | M1-M4 | 2026-11-02 | Database + service + model factory + budgeted invoke + context |
 
 **M1 Implementation Details** (completed 2026-11-02):
 
@@ -401,12 +401,12 @@ const newUsedOutputTokens = Math.max(0, session.used_output_tokens - toRelease);
 **Purpose**: Enable safe execution of exactly ONE controlled Discovery AI run in the dev environment with hard budget enforcement.
 
 **Architecture Summary**:
-- Disable LangChain/Anthropic SDK retries (`clientOptions: { maxRetries: 0 }`)
-- Atomic budget reservation before each AI invoke
-- Token measurement via LangChain `getNumTokens()` before dispatch
-- Model output capped at 4,096 tokens (API-enforced)
-- Run-scoped guard via AsyncLocalStorage context
-- Serial task execution for controlled run only
+- Disable LangChain/Anthropic SDK retries (`clientOptions: { maxRetries: 0 }`) — M2
+- Atomic budget reservation before each AI invoke — M3
+- Token measurement via LangChain `getNumTokens()` before dispatch — M3
+- Model output capped at 4,096 tokens (API-enforced) — M2
+- Run-scoped guard via AsyncLocalStorage context — **M4 implemented**
+- Serial task execution for controlled run only — M5+ (not yet implemented)
 
 **Mandatory Implementation Safeguards**:
 
@@ -414,11 +414,87 @@ const newUsedOutputTokens = Math.max(0, session.used_output_tokens - toRelease);
 
 2. **Transaction rollback ownership**: Implementation MUST use a single rollback owner—prefer Sequelize managed transaction (`sequelize.transaction()`)—without double rollback. The v2.2 design specifies the algorithm but the sample code does NOT yet demonstrate correct Sequelize rollback handling; implementation must verify this.
 
-**Outstanding Blockers**:
-- M4-M8 require explicit authorization before implementation
-- No AI invocation paths wired in M1-M3 (budgetedInvoke exists but is not called by any workflow)
+**M4 Implementation Details** (completed 2026-11-02):
 
-**Next Step**: Await M4 authorization (AsyncLocalStorage context propagation)
+| File | Type | Purpose |
+|------|------|---------|
+| `src/context/controlledExecutionContext.ts` | New | AsyncLocalStorage-based controlled execution context |
+| `src/__tests__/unit/controlledExecutionContext.test.ts` | New | 48 unit tests covering all context invariants |
+
+**Context API**:
+- `runInControlledContext(input, callback)` — Run async callback in controlled context
+- `runInControlledContextSync(input, callback)` — Run sync callback in controlled context
+- `getControlledContext()` — Get current context (undefined if not controlled)
+- `isInControlledContext()` — Fast path check for controlled execution
+- `getControlledSessionId()` — Get current session ID (convenience)
+- `getControlledRunId()` — Get current run ID if bound
+- `runWithBoundRun(runId, callback)` — Update context with bound run ID
+
+**Context Structure**:
+```typescript
+interface ControlledExecutionContext {
+  readonly sessionId: number;       // Controlled test session ID
+  readonly discoveryRunId: number | null; // Run ID when bound
+  readonly isControlled: true;      // Explicit marker
+  readonly createdAt: string;       // ISO 8601 timestamp
+  readonly purpose?: string;        // Human-readable purpose
+}
+```
+
+**Key Invariants**:
+1. Context is immutable (Object.freeze)
+2. Context is isolated across concurrent async tasks
+3. Context never leaks into normal Slack/REST execution
+4. Errors do not leave context active (AsyncLocalStorage handles cleanup)
+5. Nested context entry is explicitly rejected (NestedControlledContextError)
+6. Invalid session/run IDs are rejected (InvalidContextParameterError)
+
+**Provider Invocation Points Identified** (for M5 routing):
+
+| File | Line(s) | Invocation |
+|------|---------|------------|
+| `langchain.ts` | 153, 196 | `createModel()` for YAML task generation |
+| `langchain.ts` | 198, 212 | `taskLlm.invoke()` main call + claim guard retry |
+| `variableExtractor.ts` | 616, 628 | `createModel()` + `llm.invoke()` per extraction tier |
+| `codebookGenerator.ts` | 76, 83 | Survey codebook generation |
+| `assignmentGenerator.ts` | 90, 97 | Survey assignment generation |
+| `readout-generation-executor.service.ts` | 467, 474 | Readout generation |
+| `askHandler.ts` | 54, 94 | Ask command (haiku + sonnet) |
+| `anthropic-adapter.ts` | 56 | Coaching provider |
+
+**Future Provider Routing Contract** (M5+):
+```typescript
+// At each invocation point:
+const ctx = getControlledContext();
+if (ctx) {
+  // Controlled execution → route to budgetedInvoke()
+  return await budgetedInvoke({ sessionId: ctx.sessionId, prompt, model });
+} else {
+  // Normal execution → existing createModel().invoke() path
+  return await llm.invoke(prompt);
+}
+```
+
+**M4 Test Coverage** (48 unit tests):
+- Context available inside sync/async callbacks
+- Context preserved across awaited promises (single, multiple, Promise.all, nested)
+- Context isolated across concurrent controlled sessions
+- Normal execution sees no controlled context
+- Context does not leak after callback completion
+- Nested context entry rejected with error
+- Errors do not leave context active
+- Invalid session/run identifiers rejected
+- Context immutability (frozen, no modification)
+- runWithBoundRun updates context correctly
+- Return value passthrough
+
+**No execution path changes**: M4 adds context infrastructure only. No production invocation paths were modified. The routing contract is documented but NOT yet implemented.
+
+**Outstanding Blockers**:
+- M5-M8 require explicit authorization before implementation
+- No AI invocation paths wired in M1-M4 (context + budgetedInvoke exist but are not called)
+
+**Next Step**: Await M5 authorization (run binding in `createPendingDiscoveryRunFromRefs()`)
 
 **M1 Follow-up Findings** (from architecture review):
 
@@ -444,6 +520,37 @@ const newUsedOutputTokens = Math.max(0, session.used_output_tokens - toRelease);
 | 5 | Info | `model.getNumTokens()` returns an ESTIMATE; actual provider billing may differ slightly | Documented in code; acceptable for budget enforcement |
 | 6 | Medium | `budgetedInvoke` is not yet wired into any workflow; requires M4 (AsyncLocalStorage) and M5 (run binding) | Resolve during M4-M5 integration |
 | 7 | Info | `ReservationSessionMismatchError` class defined but unused | **Technical debt** — Reservation-based design enforces session ownership implicitly; explicit validation unnecessary in current design. Do not remove. |
+
+**M4 Follow-up Findings** (from architecture review, 2026-11-02):
+
+| # | Priority | Finding | Status |
+|---|----------|---------|--------|
+| F1 | **Medium** | Detached async descendants (setTimeout, setImmediate created inside `runInControlledContext`) can still read context after callback returns | **M5 INTEGRATION REQUIREMENT** — Add lifecycle marker validation before provider routing |
+
+**M5 Integration Requirements** (from M4 audit):
+
+1. **Detached-descendant mitigation**: Add `_lifecycleId` counter to context; track active lifecycles in module-level `Set`; validate lifecycle is still active before routing to `budgetedInvoke()`. This prevents detached callbacks from executing budgeted invocations after their parent context has exited.
+
+2. **Provider routing boundaries**: The following Discovery invocations must be intercepted when context is active:
+
+   | Location | Function | Model | Retry | Adapter |
+   |----------|----------|-------|-------|---------|
+   | `langchain.ts:198` | `taskLlm.invoke(prompt)` | sonnet | None | Extract `result.content` |
+   | `langchain.ts:212` | `taskLlm.invoke(retryPrompt)` | sonnet | Claim-guard | Use `budgetedInvokeWithRetry` |
+   | `variableExtractor.ts:628` | `llm.invoke(prompt)` | haiku/sonnet | 2 attempts | Use `budgetedInvokeWithRetry` |
+
+3. **Paths that MUST remain unchanged** (not controlled execution):
+
+   | Path | Entry Point | Reason |
+   |------|-------------|--------|
+   | Slack `/qori-brief` | `briefHandler.ts` | Production workflow |
+   | Slack `/qori-plan` | `planHandler.ts` | Production workflow |
+   | Slack `/qori-discover` | `discoverHandler.ts` | Legacy path, not sourceRefs |
+   | Survey synthesis | `surveySubmissionHandler.ts` | Production workflow |
+   | Codebook generation | `codebookGenerator.ts` | Survey workflow |
+   | Coaching | `anthropic-adapter.ts` | Coaching workflow |
+   | Ask command | `askHandler.ts` | Slack command |
+   | Readout generation | `readout-generation-executor.service.ts` | Production workflow |
 
 ### 4.2 Safety Gates (Currently Active)
 
@@ -626,28 +733,28 @@ Tests:       1466 passed, 2 failed, 1468 total
 
 **Branch**: `dev`
 **Application Baseline**: `314994df` (DISC-WEB-1C-2b)
-**Backend Tests**: 1152 passing (verified post-M3)
+**Backend Tests**: 1200 passing (verified post-M4: 1152 base + 48 M4 context tests)
 **Frontend Tests**: 1466 passing, 2 failing (reported; identities unknown—requires baseline run)
 
-**Active Work**: DISC-WEB-1D-2 M1-M3 complete, M4 pending architecture review.
+**Active Work**: DISC-WEB-1D-2 M1-M4 complete, M5 pending architecture review.
 
 **Safety Gates**: The Web UI submission path is gated off (`ENABLE_LIVE_RUN_CREATION=false`, `DISC_WEB1_ENABLED` unset). Legacy REST `sources[]` and Slack `/qori-discover` paths remain operational and are NOT gated.
 
 ### 10.2 Next Task
 
-**DISC-WEB-1D-2 M4** — Pending architecture review and authorization.
+**DISC-WEB-1D-2 M5** — Pending architecture review and authorization.
 
 Completed milestones:
-- ✅ M1: Database migration + service (29 integration tests)
+- ✅ M1: Database migration + service (49 integration tests)
 - ✅ M2: `createControlledTestModel()` with `maxRetries: 0` (16 unit tests)
-- ✅ M3: `budgetedInvoke()` with atomic reservation (34 unit tests)
+- ✅ M3: `budgetedInvoke()` with atomic reservation (41 unit tests)
+- ✅ M4: AsyncLocalStorage context propagation (48 unit tests)
 
 Remaining milestones (require separate authorization):
-1. M4: AsyncLocalStorage context propagation
-2. M5: Run binding in `createPendingDiscoveryRunFromRefs()`
-3. M6: Admin API endpoints
-4. M7: Unit tests
-5. M8: Integration + Slack regression tests
+1. M5: Run binding in `createPendingDiscoveryRunFromRefs()`
+2. M6: Admin API endpoints
+3. M7: Unit tests
+4. M8: Integration + Slack regression tests
 
 ### 10.3 Prohibited Changes
 
@@ -685,3 +792,4 @@ Remaining milestones (require separate authorization):
 | 2026-11-02 | 1.4 | Claude Code | M2 correction: Explicit model allowlist, independence from production env overrides, fail-closed validation, 16 unit tests |
 | 2026-11-02 | 1.5 | Claude Code | M3 implementation: `budgetedInvoke()` with atomic reservation, token measurement, usage reconciliation, 34 unit tests |
 | 2026-11-02 | 1.6 | Claude Code | M3 commit: Corrected service contract docs (reservationId-based reconciliation); added unused ReservationSessionMismatchError as tech debt; 41 unit + 46 integration tests |
+| 2026-11-02 | 1.7 | Claude Code | M4 implementation: AsyncLocalStorage context for controlled execution; identified provider invocation points for M5 routing; 48 unit tests |
