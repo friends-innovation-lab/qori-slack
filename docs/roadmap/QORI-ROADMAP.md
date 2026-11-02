@@ -191,9 +191,9 @@ Qori is a deployable, channel-independent research operating system for public-s
 
 | State | Status | Date | Notes |
 |-------|--------|------|-------|
-| **Architecture approved** | YES | 2026-11-02 | M1-M4 authorized, later milestones pending |
-| **Implementation authorized** | M1-M4 | 2026-11-02 | M5-M8 require separate authorization |
-| **Implementation completed** | M1-M4 | 2026-11-02 | Database + service + model factory + budgeted invoke + context |
+| **Architecture approved** | YES | 2026-11-02 | M1-M5c authorized, later milestones pending |
+| **Implementation authorized** | M1-M5c | 2026-11-02 | M5d-M8 require separate authorization |
+| **Implementation completed** | M1-M5c | 2026-11-02 | Database + service + model factory + budgeted invoke + context + auth gate |
 
 **M1 Implementation Details** (completed 2026-11-02):
 
@@ -514,11 +514,93 @@ try {
 
 **No execution path changes**: M4/M5b adds context infrastructure only. No production invocation paths were modified. The routing contract is documented but NOT yet implemented.
 
-**Outstanding Blockers**:
-- M5c-M8 require explicit authorization before implementation
-- No AI invocation paths wired in M1-M5b (context + budgetedInvoke exist but are not called)
+**M5a Implementation Details** (completed 2026-11-02):
 
-**Next Step**: Await M5c authorization (provider routing integration)
+| File | Type | Purpose |
+|------|------|---------|
+| `src/database/migrations/20261103000000-disc-web-1d-5a-immutable-session-binding.js` | Migration | Changes FK from ON DELETE SET NULL to ON DELETE RESTRICT |
+
+**M5a Migration Safety**:
+- Transaction-wrapped (atomic commit/rollback)
+- Prerequisite verification (FK must exist with SET NULL, unique index must exist)
+- Idempotent (early return if already RESTRICT)
+- Tested: RESTRICT violation returns `violates RESTRICT setting.*foreign key constraint`
+
+**M5c Implementation Details** (completed 2026-11-02):
+
+| File | Type | Purpose |
+|------|------|---------|
+| `src/services/controlled-session-authorization.service.ts` | New | Capability gate + authorization validation functions |
+| `src/__tests__/unit/controlled-session-authorization.test.ts` | New | 64 unit tests covering gate, validation, and state checks |
+
+**Capability Gate**:
+```typescript
+export const CONTROLLED_EXECUTION_GATE = 'DISC_WEB1D_ENABLED';
+
+export function isControlledExecutionEnabled(): boolean {
+  return process.env[CONTROLLED_EXECUTION_GATE] === 'true';
+}
+```
+
+**Gate Semantics**:
+- Default: DISABLED (fail closed)
+- Only exact string `'true'` enables the gate
+- Case-sensitive: `'TRUE'`, `'1'`, `'yes'` are all disabled
+- Empty string is disabled
+- Gate check is FIRST check in all authorization functions (short-circuit)
+
+**Authorization Functions**:
+
+| Function | Purpose | Actor Required | Session Check |
+|----------|---------|----------------|---------------|
+| `checkNewRunEligibility` | Preflight for new controlled run | Yes (ownership) | Active + unbound |
+| `checkExecutionEligibility` | Poller execution check | No (internal) | Active + bound to run |
+| `checkReplayEligibility` | Idempotent replay check | Yes (ownership) | Bound to matching run |
+
+**AuthorizationFailureReason** (13 distinct failure codes):
+- `gate_disabled` — Gate not enabled
+- `missing_actor_id`, `invalid_actor_id` — Actor validation
+- `missing_session_id`, `invalid_session_id` — Session ID validation
+- `missing_run_id`, `invalid_run_id` — Run ID validation
+- `session_not_found` — Session does not exist
+- `actor_mismatch` — Actor does not own session
+- `session_not_active` — Session in terminal state
+- `session_already_bound` — Session already bound (new run)
+- `session_not_bound` — Session not bound (replay)
+- `run_mismatch` — Session bound to different run
+
+**Replay Eligibility**:
+- Active sessions: `readOnly=false` (eligible for execution replay)
+- Terminal sessions: `readOnly=true` (read-only data return, no new execution)
+
+**Utility Functions**:
+- `isIdentifierError(reason)` — Check if error is input validation
+- `isGateError(reason)` — Check if error is gate disabled
+- `isAuthorizationError(reason)` — Check if error is access control
+- `getSafeErrorMessage(reason)` — Get user-safe error message (no internal details)
+
+**Key Invariants** (M5c):
+1. Gate check is FIRST (fail closed when disabled)
+2. Actor ownership is mandatory for API-facing operations
+3. Authorization failures are distinguished from missing records
+4. Terminal sessions are eligible for read-only replay but NEVER execution
+5. Session-run binding is immutable (enforced by M5a FK constraint)
+6. Preflight checks only — final binding must be atomic in later milestones
+
+**M5c Test Coverage** (64 unit tests):
+- Capability gate (8 tests): default disabled, exact string match, case sensitivity
+- New run eligibility (25 tests): gate, input validation, session state
+- Execution eligibility (12 tests): gate, input validation, session state
+- Replay eligibility (15 tests): gate, input validation, binding match, readOnly flag
+- Utility functions (4 tests): error categorization, safe messages
+
+**No execution path changes**: M5c adds authorization service only. No production invocation paths were modified. The poller and routes do NOT yet call these functions.
+
+**Outstanding Blockers**:
+- M5d-M8 require explicit authorization before implementation
+- No AI invocation paths wired in M1-M5c (context + budgetedInvoke + authorization exist but are not called)
+
+**Next Step**: Await M5d authorization (provider routing integration)
 
 **M1 Follow-up Findings** (from architecture review):
 
@@ -731,16 +813,17 @@ These corrections are REQUIRED before M5 implementation:
 
 ### 9.1 Current Test Status
 
-**Backend Unit Tests** (as of 2026-11-02, post-M3):
+**Backend Unit Tests** (as of 2026-11-02, post-M5c):
 ```
-Test Suites: 59 passed, 59 total
-Tests:       1152 passed, 1152 total
+Test Suites: 60 passed, 60 total
+Tests:       1216 passed, 1216 total
 ```
+(+64 tests: M5c authorization service)
 
-**Backend Integration Tests** (M1 only):
+**Backend Integration Tests** (M1 with F1-F3 corrections):
 ```
 Test Suites: 1 passed, 1 total
-Tests:       29 passed, 29 total (controlled-test-budget.service.test.ts)
+Tests:       58 passed, 58 total (controlled-test-budget.service.test.ts)
 ```
 
 **Frontend Unit Tests** (as of 2026-10-31, unchanged):
@@ -773,25 +856,28 @@ Tests:       1466 passed, 2 failed, 1468 total
 
 **Branch**: `dev`
 **Application Baseline**: `314994df` (DISC-WEB-1C-2b)
-**Backend Tests**: 1200 passing (verified post-M4: 1152 base + 48 M4 context tests)
+**Backend Unit Tests**: 1216 passing (verified post-M5c: M2=27, M3=41, M4/M5b=80, M5c=64, plus base)
+**Backend Integration Tests**: 58 passing (M1 with F1-F3 corrections)
 **Frontend Tests**: 1466 passing, 2 failing (reported; identities unknown—requires baseline run)
 
-**Active Work**: DISC-WEB-1D-2 M1-M4 complete, M5 pending architecture review.
+**Active Work**: DISC-WEB-1D-2 M1-M5c complete, M5d pending authorization.
 
 **Safety Gates**: The Web UI submission path is gated off (`ENABLE_LIVE_RUN_CREATION=false`, `DISC_WEB1_ENABLED` unset). Legacy REST `sources[]` and Slack `/qori-discover` paths remain operational and are NOT gated.
 
 ### 10.2 Next Task
 
-**DISC-WEB-1D-2 M5** — Pending architecture review and authorization.
+**DISC-WEB-1D-2 M5d** — Pending authorization (provider routing integration).
 
 Completed milestones:
-- ✅ M1: Database migration + service (49 integration tests)
-- ✅ M2: `createControlledTestModel()` with `maxRetries: 0` (16 unit tests)
+- ✅ M1: Database migration + service (58 integration tests)
+- ✅ M2: `createControlledTestModel()` with `maxRetries: 0` (27 unit tests)
 - ✅ M3: `budgetedInvoke()` with atomic reservation (41 unit tests)
-- ✅ M4: AsyncLocalStorage context propagation (48 unit tests)
+- ✅ M4/M5b: AsyncLocalStorage context propagation + lifecycle safety (80 unit tests)
+- ✅ M5a: FK constraint ON DELETE RESTRICT migration
+- ✅ M5c: Authorization service + capability gate (64 unit tests)
 
 Remaining milestones (require separate authorization):
-1. M5: Run binding in `createPendingDiscoveryRunFromRefs()`
+1. M5d: Provider routing integration
 2. M6: Admin API endpoints
 3. M7: Unit tests
 4. M8: Integration + Slack regression tests
@@ -833,3 +919,4 @@ Remaining milestones (require separate authorization):
 | 2026-11-02 | 1.5 | Claude Code | M3 implementation: `budgetedInvoke()` with atomic reservation, token measurement, usage reconciliation, 34 unit tests |
 | 2026-11-02 | 1.6 | Claude Code | M3 commit: Corrected service contract docs (reservationId-based reconciliation); added unused ReservationSessionMismatchError as tech debt; 41 unit + 46 integration tests |
 | 2026-11-02 | 1.7 | Claude Code | M4 implementation: AsyncLocalStorage context for controlled execution; identified provider invocation points for M5 routing; 48 unit tests |
+| 2026-11-02 | 1.8 | Claude Code | M5a: FK constraint ON DELETE RESTRICT migration; M5b: Lifecycle tracking with 80 unit tests; M5c: Authorization service with capability gate, 64 unit tests |
