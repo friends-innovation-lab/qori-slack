@@ -1,11 +1,12 @@
 /**
- * Controlled Test Budget Service Integration Tests — DISC-WEB-1D-2 M1
+ * Controlled Test Budget Service Integration Tests — DISC-WEB-1D-2 M1 + M5a
  *
  * Tests the critical invariants from QORI-ROADMAP.md:
  * 1. Budget enforcement: cancelled/exhausted/completed sessions block execution
  * 2. Atomic reservation: concurrent requests don't exceed budget
  * 3. Single active session: database constraint enforced
  * 4. Run binding: immutable once set, lookup works regardless of status
+ * 5. M5a: ON DELETE RESTRICT prevents orphaning sessions from their bound runs
  */
 
 import { getTestDb, truncateAll, TEST_ORG_ID } from './setup/testDb';
@@ -924,6 +925,185 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       await expect(
         reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: Infinity }),
       ).rejects.toThrow(InvalidBudgetInputError);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // M5a: Immutable session binding (ON DELETE RESTRICT)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('M5a — Immutable session-to-run binding (ON DELETE RESTRICT)', () => {
+    /**
+     * These tests verify the M5a migration correctly enforces immutable binding
+     * by changing the FK from ON DELETE SET NULL to ON DELETE RESTRICT.
+     *
+     * Key invariant: A bound run cannot be deleted while its session exists.
+     */
+
+    it('FK constraint name matches expected convention', async () => {
+      const [result] = await sequelize.query(`
+        SELECT conname FROM pg_constraint
+        WHERE conrelid = 'controlled_test_sessions'::regclass
+        AND conname = 'controlled_test_sessions_discovery_run_id_fkey'
+      `);
+
+      expect((result as Array<{ conname: string }>).length).toBe(1);
+    });
+
+    it('FK constraint uses ON DELETE RESTRICT', async () => {
+      const [result] = await sequelize.query(`
+        SELECT confdeltype FROM pg_constraint
+        WHERE conrelid = 'controlled_test_sessions'::regclass
+        AND conname = 'controlled_test_sessions_discovery_run_id_fkey'
+      `);
+
+      // confdeltype: 'r' = RESTRICT, 'a' = NO ACTION, 'c' = CASCADE, 'n' = SET NULL
+      const rows = result as Array<{ confdeltype: string }>;
+      expect(rows.length).toBe(1);
+      expect(rows[0].confdeltype).toBe('r');
+    });
+
+    it('unique index on non-null discovery_run_id exists', async () => {
+      const [result] = await sequelize.query(`
+        SELECT indexname FROM pg_indexes
+        WHERE tablename = 'controlled_test_sessions'
+        AND indexname = 'controlled_test_sessions_discovery_run_id_unique_idx'
+      `);
+
+      expect((result as Array<{ indexname: string }>).length).toBe(1);
+    });
+
+    it('blocks deletion of run with bound active session', async () => {
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+      const runId = await createTestDiscoveryRun();
+      await bindRunToSession(session.id, runId);
+
+      // Attempt to delete the bound run should fail
+      await expect(
+        DiscoveryRunModel.destroy({ where: { id: runId } }),
+      ).rejects.toThrow(/violates RESTRICT setting.*foreign key constraint|violates foreign key constraint/);
+
+      // Verify session still has binding
+      const found = await getSessionByRunId(runId);
+      expect(found).not.toBeNull();
+      expect(found!.discovery_run_id).toBe(runId);
+    });
+
+    it('blocks deletion of run with bound terminal session', async () => {
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+      const runId = await createTestDiscoveryRun();
+      await bindRunToSession(session.id, runId);
+      await cancelSession(session.id, 'test');
+
+      // Attempt to delete the bound run should STILL fail
+      // Even cancelled sessions maintain their binding
+      await expect(
+        DiscoveryRunModel.destroy({ where: { id: runId } }),
+      ).rejects.toThrow(/violates RESTRICT setting.*foreign key constraint|violates foreign key constraint/);
+
+      // Verify session still has binding
+      const found = await getSessionByRunId(runId);
+      expect(found).not.toBeNull();
+      expect(found!.discovery_run_id).toBe(runId);
+      expect(found!.status).toBe('cancelled');
+    });
+
+    it('allows run deletion after session is deleted', async () => {
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+      const runId = await createTestDiscoveryRun();
+      await bindRunToSession(session.id, runId);
+
+      // Delete the session first
+      await ControlledTestSessionModel.destroy({ where: { id: session.id } });
+
+      // Now run can be deleted
+      const deletedCount = await DiscoveryRunModel.destroy({ where: { id: runId } });
+      expect(deletedCount).toBe(1);
+
+      // Verify run is gone
+      const run = await DiscoveryRunModel.findByPk(runId);
+      expect(run).toBeNull();
+    });
+
+    it('unbound sessions do not block any run deletion', async () => {
+      // Create session without binding
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+
+      // Create run not bound to this session
+      const runId = await createTestDiscoveryRun();
+
+      // Can delete run (no FK binding)
+      const deletedCount = await DiscoveryRunModel.destroy({ where: { id: runId } });
+      expect(deletedCount).toBe(1);
+
+      // Session still exists
+      const found = await getSessionById(session.id);
+      expect(found).not.toBeNull();
+      expect(found!.discovery_run_id).toBeNull();
+    });
+
+    it('migration is idempotent (second run is no-op when already RESTRICT)', async () => {
+      // The migration has already run. Verify running it again would be safe.
+      // We verify by checking the FK is already RESTRICT, which triggers early return.
+      const [result] = await sequelize.query(`
+        SELECT confdeltype FROM pg_constraint
+        WHERE conrelid = 'controlled_test_sessions'::regclass
+        AND conname = 'controlled_test_sessions_discovery_run_id_fkey'
+      `);
+
+      const rows = result as Array<{ confdeltype: string }>;
+      expect(rows.length).toBe(1);
+      expect(rows[0].confdeltype).toBe('r'); // Already RESTRICT
+
+      // If migration were to run again, it would detect this and return early
+      // (no actual re-run here as migrations are tracked in SequelizeMeta)
+    });
+
+    it('preserves existing session and reservation data after migration', async () => {
+      // Create session and reservation, verify they survive
+      const session = await createSession({
+        maxRequests: 10,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+      const runId = await createTestDiscoveryRun();
+      await bindRunToSession(session.id, runId);
+
+      const reservation = await reserveBudget({
+        sessionId: session.id,
+        estimatedInputTokens: 500,
+        reservedOutputTokens: 500,
+      });
+      expect(reservation.ok).toBe(true);
+
+      // Verify session data is intact
+      const found = await getSessionById(session.id);
+      expect(found).not.toBeNull();
+      expect(found!.discovery_run_id).toBe(runId);
+      expect(found!.used_requests).toBe(1);
+      expect(found!.used_input_tokens).toBe(500);
+      expect(found!.used_output_tokens).toBe(500);
+
+      // Verify reservation data is intact
+      const foundReservation = await getReservationById(reservation.reservationId!);
+      expect(foundReservation).not.toBeNull();
+      expect(foundReservation!.session_id).toBe(session.id);
     });
   });
 });

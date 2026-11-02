@@ -500,7 +500,7 @@ if (ctx) {
 
 | # | Priority | Finding | Resolution Milestone |
 |---|----------|---------|---------------------|
-| 1 | Medium | `ON DELETE SET NULL` on `discovery_run_id` could orphan session from run if run deleted before session completion | Resolve before M5 (run binding) |
+| 1 | Medium | `ON DELETE SET NULL` on `discovery_run_id` could orphan session from run if run deleted before session completion | **M5a migration** (ON DELETE RESTRICT) |
 | 2 | Low | `actualInputTokens` param in `reconcileUsage` is accepted but unused | **Reviewed M3**: Input tokens reserved at request time; actual input only for logging. No change needed. |
 | 3 | Low | Test database uses separate Sequelize instance from service; connection pool cleanup at scale | Technical debt backlog |
 
@@ -526,6 +526,22 @@ if (ctx) {
 | # | Priority | Finding | Status |
 |---|----------|---------|--------|
 | F1 | **Medium** | Detached async descendants (setTimeout, setImmediate created inside `runInControlledContext`) can still read context after callback returns | **M5 INTEGRATION REQUIREMENT** — Add lifecycle marker validation before provider routing |
+
+**M5 Mandatory Design Corrections** (from F5-F8 review, 2026-11-02):
+
+These corrections are REQUIRED before M5 implementation:
+
+1. **Transactional replay must close its transaction before returning**. The transaction pattern must have a single rollback owner (Sequelize managed transaction). The v2.2 design's `needsRollback` flag pattern is incorrect — Sequelize throws on double rollback. Implementation must commit or rollback the managed transaction before returning, never both.
+
+2. **Authorization contract distinguishes new run from idempotent replay**:
+
+   - **New run**: Authenticated actor owns an active, unbound session (`discovery_run_id IS NULL`). The session is bound atomically to the newly created run within the same transaction.
+
+   - **Idempotent replay**: Authenticated actor owns the session, AND the session's immutable binding (`discovery_run_id`) matches the existing run returned by the replay. Verification must occur after transaction acquisition.
+
+   A replay request for run A CANNOT execute under a session bound to run B.
+
+3. **Controlled execution must have a dedicated default-off backend capability gate** (`DISC_WEB1D_ENABLED` or similar). This gate must be checked before any controlled execution path is entered, ensuring the feature remains disabled until explicit production enablement.
 
 **M5 Integration Requirements** (from M4 audit):
 
