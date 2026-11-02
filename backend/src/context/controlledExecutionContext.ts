@@ -1,5 +1,5 @@
 /**
- * Controlled Execution Context — DISC-WEB-1D-2 M4
+ * Controlled Execution Context — DISC-WEB-1D-2 M4/M5b
  *
  * AsyncLocalStorage-based context for controlled Discovery AI execution.
  * Allows controlled test sessions to propagate their identity through
@@ -9,16 +9,38 @@
  * 1. Context is immutable for the duration of an execution
  * 2. Context is isolated across concurrent asynchronous tasks
  * 3. Context never leaks into normal Slack/REST execution
- * 4. Errors do not leave context active (AsyncLocalStorage handles this)
+ * 4. Errors do not leave context active (finally cleanup)
  * 5. No implicit fallback when controlled context is active
+ * 6. Detached async descendants fail lifecycle validation (M5b)
  *
- * Future provider routing contract (M5+):
- * - Controlled context active → route to M3 budgetedInvoke()
- * - Normal context (undefined) → existing provider behavior
- * - Invalid/terminal controlled context → fail closed
+ * Three execution states:
+ * - No context (undefined): Normal execution, eligible for production routing
+ * - Active context (lifecycleId in activeLifecycles): Eligible for controlled routing
+ * - Expired context (lifecycleId NOT in activeLifecycles): Fail closed, never fallback
+ *
+ * Provider routing contract (M5+):
+ * - No context → existing createModel() path
+ * - Active context → route to budgetedInvoke()
+ * - Expired context → throw, never fall back to production
  */
 
 import { AsyncLocalStorage } from 'async_hooks';
+
+// ─── Lifecycle Tracking ──────────────────────────────────────────────────────
+
+/**
+ * Monotonically increasing lifecycle counter.
+ * Each controlled context gets a unique ID.
+ */
+let lifecycleCounter = 0;
+
+/**
+ * Set of currently active lifecycle IDs.
+ * A lifecycle is active from context creation until the callback completes.
+ * Detached async descendants retain the context but fail validation after
+ * the parent lifecycle ends.
+ */
+const activeLifecycles = new Set<number>();
 
 // ─── Context Types ────────────────────────────────────────────────────────────
 
@@ -34,11 +56,16 @@ export interface ControlledExecutionContext {
   readonly sessionId: number;
 
   /**
-   * Discovery run ID when available.
-   * Null before run binding (during session setup).
-   * Immutable once set.
+   * Discovery run ID (required since M5b).
+   * Must be bound at context creation.
    */
-  readonly discoveryRunId: number | null;
+  readonly discoveryRunId: number;
+
+  /**
+   * Unique lifecycle identifier for this context execution.
+   * Used to detect detached async descendants after parent completes.
+   */
+  readonly lifecycleId: number;
 
   /**
    * Explicit controlled execution marker.
@@ -65,15 +92,15 @@ export interface ControlledExecutionContext {
 export interface CreateControlledContextInput {
   /**
    * Controlled test session ID.
-   * Must be a positive integer.
+   * Must be a positive safe integer.
    */
   sessionId: number;
 
   /**
-   * Discovery run ID (optional).
-   * Set to null if run binding hasn't occurred yet.
+   * Discovery run ID (required since M5b).
+   * Must be a positive safe integer.
    */
-  discoveryRunId?: number | null;
+  discoveryRunId: number;
 
   /**
    * Human-readable purpose for logging.
@@ -100,9 +127,50 @@ export class NestedControlledContextError extends Error {
   constructor(existingSessionId: number, attemptedSessionId: number) {
     super(
       `Cannot nest controlled contexts: already in session ${existingSessionId}, ` +
-      `attempted to enter session ${attemptedSessionId}`,
+        `attempted to enter session ${attemptedSessionId}`,
     );
     this.name = 'NestedControlledContextError';
+  }
+}
+
+/**
+ * Thrown when requireValidControlledContext() is called with an expired context.
+ * This indicates a detached async descendant attempted to use controlled execution
+ * after the parent lifecycle completed.
+ */
+export class ExpiredControlledContextError extends Error {
+  constructor(lifecycleId: number, sessionId: number, discoveryRunId: number) {
+    super(
+      `Controlled context lifecycle ${lifecycleId} has expired ` +
+        `(session=${sessionId}, run=${discoveryRunId}). ` +
+        `Detached async descendants cannot perform controlled execution.`,
+    );
+    this.name = 'ExpiredControlledContextError';
+  }
+}
+
+/**
+ * Thrown when requireValidControlledContext() is called outside of any context.
+ * This is a programming error — the caller expected controlled execution.
+ */
+export class NoControlledContextError extends Error {
+  constructor() {
+    super('No controlled execution context active. This call requires controlled context.');
+    this.name = 'NoControlledContextError';
+  }
+}
+
+/**
+ * Thrown when runInControlledContextSync() receives a callback that returns
+ * a Promise or thenable. Use runInControlledContext() for async callbacks.
+ */
+export class AsyncCallbackInSyncContextError extends Error {
+  constructor() {
+    super(
+      'runInControlledContextSync() callback returned a Promise or thenable. ' +
+        'Use runInControlledContext() for async callbacks.',
+    );
+    this.name = 'AsyncCallbackInSyncContextError';
   }
 }
 
@@ -120,40 +188,41 @@ const controlledContextStorage = new AsyncLocalStorage<ControlledExecutionContex
 // ─── Validation ───────────────────────────────────────────────────────────────
 
 /**
- * Validate session ID is a positive integer.
+ * Validate a positive safe integer.
+ * Used for sessionId and discoveryRunId.
  */
-function validateSessionId(sessionId: unknown): void {
-  if (typeof sessionId !== 'number') {
-    throw new InvalidContextParameterError('sessionId', sessionId, 'must be a number');
+function validatePositiveSafeInteger(field: string, value: unknown): void {
+  if (typeof value !== 'number') {
+    throw new InvalidContextParameterError(field, value, 'must be a number');
   }
-  if (!Number.isFinite(sessionId)) {
-    throw new InvalidContextParameterError('sessionId', sessionId, 'must be finite');
+  if (!Number.isFinite(value)) {
+    throw new InvalidContextParameterError(field, value, 'must be finite');
   }
-  if (!Number.isInteger(sessionId)) {
-    throw new InvalidContextParameterError('sessionId', sessionId, 'must be an integer');
+  if (!Number.isInteger(value)) {
+    throw new InvalidContextParameterError(field, value, 'must be an integer');
   }
-  if (sessionId <= 0) {
-    throw new InvalidContextParameterError('sessionId', sessionId, 'must be positive');
+  if (value <= 0) {
+    throw new InvalidContextParameterError(field, value, 'must be positive');
+  }
+  if (!Number.isSafeInteger(value)) {
+    throw new InvalidContextParameterError(field, value, 'must be a safe integer');
   }
 }
 
 /**
- * Validate discovery run ID if provided.
+ * Check if a value is a Promise or thenable.
+ * Used to detect async callbacks passed to the sync wrapper.
  */
-function validateDiscoveryRunId(runId: unknown): void {
-  if (runId === null || runId === undefined) return;
-  if (typeof runId !== 'number') {
-    throw new InvalidContextParameterError('discoveryRunId', runId, 'must be a number or null');
+function isPromiseLike(value: unknown): boolean {
+  if (value instanceof Promise) {
+    return true;
   }
-  if (!Number.isFinite(runId)) {
-    throw new InvalidContextParameterError('discoveryRunId', runId, 'must be finite');
-  }
-  if (!Number.isInteger(runId)) {
-    throw new InvalidContextParameterError('discoveryRunId', runId, 'must be an integer');
-  }
-  if (runId <= 0) {
-    throw new InvalidContextParameterError('discoveryRunId', runId, 'must be positive');
-  }
+  // Check for thenable (duck typing)
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    typeof (value as { then?: unknown }).then === 'function'
+  );
 }
 
 // ─── Context Access ───────────────────────────────────────────────────────────
@@ -161,6 +230,9 @@ function validateDiscoveryRunId(runId: unknown): void {
 /**
  * Get the current controlled execution context.
  * Returns undefined if not in a controlled execution.
+ *
+ * NOTE: This does NOT validate lifecycle. Use requireValidControlledContext()
+ * before performing controlled operations.
  *
  * @returns The current context or undefined
  */
@@ -170,7 +242,10 @@ export function getControlledContext(): ControlledExecutionContext | undefined {
 
 /**
  * Check if currently executing in a controlled context.
- * Use this for fast path checks before calling getControlledContext().
+ * Use this for fast path checks.
+ *
+ * NOTE: This does NOT validate lifecycle. A detached async descendant
+ * may still see context even after the lifecycle has ended.
  *
  * @returns true if in controlled context, false otherwise
  */
@@ -182,7 +257,7 @@ export function isInControlledContext(): boolean {
  * Get the current controlled session ID.
  * Returns undefined if not in a controlled execution.
  *
- * Convenience function for budget reservation calls.
+ * NOTE: This does NOT validate lifecycle.
  */
 export function getControlledSessionId(): number | undefined {
   return controlledContextStorage.getStore()?.sessionId;
@@ -190,10 +265,83 @@ export function getControlledSessionId(): number | undefined {
 
 /**
  * Get the current discovery run ID.
- * Returns undefined if not in a controlled execution or run not yet bound.
+ * Returns undefined if not in a controlled execution.
+ *
+ * NOTE: This does NOT validate lifecycle.
  */
 export function getControlledRunId(): number | undefined {
-  return controlledContextStorage.getStore()?.discoveryRunId ?? undefined;
+  return controlledContextStorage.getStore()?.discoveryRunId;
+}
+
+/**
+ * Check if a specific lifecycle is currently active.
+ * Used for debugging and testing.
+ */
+export function isLifecycleActive(lifecycleId: number): boolean {
+  return activeLifecycles.has(lifecycleId);
+}
+
+/**
+ * Get the count of currently active lifecycles.
+ * Used for debugging and testing leak detection.
+ */
+export function getActiveLifecycleCount(): number {
+  return activeLifecycles.size;
+}
+
+// ─── Lifecycle Validation ─────────────────────────────────────────────────────
+
+/**
+ * Require a valid controlled execution context.
+ *
+ * This is the FAIL-CLOSED helper for controlled execution routing.
+ * Use this before any operation that should only occur in controlled mode.
+ *
+ * @returns The validated context
+ *
+ * @throws NoControlledContextError if no context is present
+ * @throws ExpiredControlledContextError if lifecycle has ended (detached descendant)
+ *
+ * @example
+ * ```typescript
+ * // In provider routing code:
+ * try {
+ *   const ctx = requireValidControlledContext();
+ *   // Route to budgetedInvoke with ctx.sessionId
+ * } catch (e) {
+ *   if (e instanceof NoControlledContextError) {
+ *     // Normal execution path
+ *   } else {
+ *     // ExpiredControlledContextError — fail closed, do not fall back
+ *     throw e;
+ *   }
+ * }
+ * ```
+ */
+export function requireValidControlledContext(): ControlledExecutionContext {
+  const ctx = controlledContextStorage.getStore();
+
+  if (!ctx) {
+    throw new NoControlledContextError();
+  }
+
+  if (!activeLifecycles.has(ctx.lifecycleId)) {
+    throw new ExpiredControlledContextError(ctx.lifecycleId, ctx.sessionId, ctx.discoveryRunId);
+  }
+
+  return ctx;
+}
+
+/**
+ * Check if the current context is valid (active lifecycle).
+ * Returns false if no context or if lifecycle has expired.
+ *
+ * Use this for conditional routing without throwing.
+ */
+export function hasValidControlledContext(): boolean {
+  const ctx = controlledContextStorage.getStore();
+  if (!ctx) return false;
+  return activeLifecycles.has(ctx.lifecycleId);
 }
 
 // ─── Context Execution ────────────────────────────────────────────────────────
@@ -204,12 +352,17 @@ export function getControlledRunId(): number | undefined {
  * The context is:
  * - Immutable for the duration of the callback
  * - Isolated from other concurrent executions
+ * - Tracked via lifecycle ID in process memory
  * - Automatically cleaned up when the callback completes (success or error)
  *
- * Nested calls are explicitly rejected to prevent confusion.
- * If you need to modify context (e.g., add run ID), exit and re-enter.
+ * Lifecycle tracking:
+ * - On entry: assigns unique lifecycleId, adds to activeLifecycles
+ * - On exit (finally): removes from activeLifecycles
+ * - Detached async descendants retain context but fail requireValidControlledContext()
  *
- * @param input - Context creation parameters
+ * Nested calls are explicitly rejected to prevent confusion.
+ *
+ * @param input - Context creation parameters (sessionId and discoveryRunId required)
  * @param callback - Async function to execute in context
  * @returns The callback's return value
  *
@@ -219,11 +372,11 @@ export function getControlledRunId(): number | undefined {
  * @example
  * ```typescript
  * const result = await runInControlledContext(
- *   { sessionId: 42, purpose: 'desk-research-test' },
+ *   { sessionId: 42, discoveryRunId: 100, purpose: 'desk-research-test' },
  *   async () => {
- *     // All async operations here see the controlled context
- *     const ctx = getControlledContext();
- *     console.log(ctx?.sessionId); // 42
+ *     const ctx = requireValidControlledContext();
+ *     console.log(ctx.sessionId); // 42
+ *     console.log(ctx.discoveryRunId); // 100
  *     return await someAsyncOperation();
  *   },
  * );
@@ -239,30 +392,45 @@ export async function runInControlledContext<T>(
     throw new NestedControlledContextError(existing.sessionId, input.sessionId);
   }
 
-  // Validate parameters
-  validateSessionId(input.sessionId);
-  validateDiscoveryRunId(input.discoveryRunId);
+  // Validate parameters (both required)
+  validatePositiveSafeInteger('sessionId', input.sessionId);
+  validatePositiveSafeInteger('discoveryRunId', input.discoveryRunId);
+
+  // Assign unique lifecycle ID
+  const lifecycleId = ++lifecycleCounter;
 
   // Create immutable context
   const context: ControlledExecutionContext = Object.freeze({
     sessionId: input.sessionId,
-    discoveryRunId: input.discoveryRunId ?? null,
+    discoveryRunId: input.discoveryRunId,
+    lifecycleId,
     isControlled: true,
     createdAt: new Date().toISOString(),
     purpose: input.purpose,
   });
 
-  // Run callback in context
-  // AsyncLocalStorage.run() ensures cleanup on both success and error
-  return controlledContextStorage.run(context, callback);
+  // Track lifecycle
+  activeLifecycles.add(lifecycleId);
+
+  try {
+    // Run callback in context
+    return await controlledContextStorage.run(context, callback);
+  } finally {
+    // Always deactivate lifecycle on exit
+    activeLifecycles.delete(lifecycleId);
+  }
 }
 
 /**
  * Synchronous version of runInControlledContext.
  * Use for callbacks that don't need to be async.
  *
+ * IMPORTANT: This function rejects callbacks that return Promises or thenables.
+ * If your callback is async, use runInControlledContext() instead.
+ *
  * @throws InvalidContextParameterError if parameters are invalid
  * @throws NestedControlledContextError if already in controlled context
+ * @throws AsyncCallbackInSyncContextError if callback returns a Promise or thenable
  */
 export function runInControlledContextSync<T>(
   input: CreateControlledContextInput,
@@ -274,88 +442,52 @@ export function runInControlledContextSync<T>(
     throw new NestedControlledContextError(existing.sessionId, input.sessionId);
   }
 
-  // Validate parameters
-  validateSessionId(input.sessionId);
-  validateDiscoveryRunId(input.discoveryRunId);
+  // Validate parameters (both required)
+  validatePositiveSafeInteger('sessionId', input.sessionId);
+  validatePositiveSafeInteger('discoveryRunId', input.discoveryRunId);
+
+  // Assign unique lifecycle ID
+  const lifecycleId = ++lifecycleCounter;
 
   // Create immutable context
   const context: ControlledExecutionContext = Object.freeze({
     sessionId: input.sessionId,
-    discoveryRunId: input.discoveryRunId ?? null,
+    discoveryRunId: input.discoveryRunId,
+    lifecycleId,
     isControlled: true,
     createdAt: new Date().toISOString(),
     purpose: input.purpose,
   });
 
-  // Run callback in context
-  return controlledContextStorage.run(context, callback);
-}
+  // Track lifecycle
+  activeLifecycles.add(lifecycleId);
 
-// ─── Context Update (for run binding) ─────────────────────────────────────────
+  try {
+    // Run callback in context
+    const result = controlledContextStorage.run(context, callback);
 
-/**
- * Run a callback with an updated context that includes the discovery run ID.
- *
- * Use this when binding a run to a session during controlled execution.
- * The original context is replaced with a new one containing the run ID.
- *
- * @param runId - The discovery run ID to add to context
- * @param callback - Async function to execute with updated context
- * @returns The callback's return value
- *
- * @throws InvalidContextParameterError if runId is invalid
- * @throws Error if not currently in controlled context
- */
-export async function runWithBoundRun<T>(
-  runId: number,
-  callback: () => Promise<T>,
-): Promise<T> {
-  const existing = controlledContextStorage.getStore();
-  if (!existing) {
-    throw new Error('runWithBoundRun called outside of controlled context');
+    // Reject Promise or thenable return values
+    // This prevents accidental misuse with async callbacks
+    if (isPromiseLike(result)) {
+      throw new AsyncCallbackInSyncContextError();
+    }
+
+    return result;
+  } finally {
+    // Always deactivate lifecycle on exit
+    activeLifecycles.delete(lifecycleId);
   }
-
-  // Validate run ID
-  validateDiscoveryRunId(runId);
-
-  // Create new context with run ID
-  const updatedContext: ControlledExecutionContext = Object.freeze({
-    ...existing,
-    discoveryRunId: runId,
-  });
-
-  // Run callback in updated context
-  return controlledContextStorage.run(updatedContext, callback);
 }
 
-// ─── Provider Routing Contract (Documentation for M5) ────────────────────────
+// ─── Testing Utilities ────────────────────────────────────────────────────────
 
 /**
- * FUTURE PROVIDER ROUTING CONTRACT (M5+)
+ * Reset lifecycle tracking state.
+ * ONLY for testing — do not use in production code.
  *
- * When this context system is wired into provider invocation paths:
- *
- * 1. CHECK CONTEXT:
- *    ```typescript
- *    const ctx = getControlledContext();
- *    ```
- *
- * 2. ROUTE BASED ON CONTEXT:
- *    - If `ctx === undefined`: Use existing `createModel()` path
- *    - If `ctx !== undefined`: Route to `budgetedInvoke()`
- *
- * 3. FAIL CLOSED ON INVALID STATE:
- *    - Session terminal → throw, do not fall back to production
- *    - Budget exceeded → throw, do not fall back to production
- *    - Missing session → throw, do not fall back to production
- *
- * 4. INTEGRATION POINTS:
- *    - `langchain.ts:executeAiGenerationTasks()` — YAML task generation
- *    - `variableExtractor.ts:extractVariables()` — Variable extraction
- *    - Direct `createModel().invoke()` calls in utilities
- *
- * This contract ensures:
- * - Controlled execution NEVER bypasses budget enforcement
- * - Normal execution NEVER accidentally enters controlled mode
- * - Failures are explicit, not silent fallbacks
+ * @internal
  */
+export function _resetLifecycleState(): void {
+  activeLifecycles.clear();
+  lifecycleCounter = 0;
+}

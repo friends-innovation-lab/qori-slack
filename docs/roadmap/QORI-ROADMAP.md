@@ -414,40 +414,56 @@ const newUsedOutputTokens = Math.max(0, session.used_output_tokens - toRelease);
 
 2. **Transaction rollback ownership**: Implementation MUST use a single rollback owner—prefer Sequelize managed transaction (`sequelize.transaction()`)—without double rollback. The v2.2 design specifies the algorithm but the sample code does NOT yet demonstrate correct Sequelize rollback handling; implementation must verify this.
 
-**M4 Implementation Details** (completed 2026-11-02):
+**M4 Implementation Details** (completed 2026-11-02, updated M5b 2026-11-02):
 
 | File | Type | Purpose |
 |------|------|---------|
-| `src/context/controlledExecutionContext.ts` | New | AsyncLocalStorage-based controlled execution context |
-| `src/__tests__/unit/controlledExecutionContext.test.ts` | New | 48 unit tests covering all context invariants |
+| `src/context/controlledExecutionContext.ts` | Modified | AsyncLocalStorage-based controlled execution context with lifecycle tracking |
+| `src/__tests__/unit/controlledExecutionContext.test.ts` | Modified | 69 unit tests covering all context and lifecycle invariants |
 
-**Context API**:
-- `runInControlledContext(input, callback)` — Run async callback in controlled context
+**Context API** (M5b updated):
+- `runInControlledContext(input, callback)` — Run async callback in controlled context (sessionId + discoveryRunId required)
 - `runInControlledContextSync(input, callback)` — Run sync callback in controlled context
-- `getControlledContext()` — Get current context (undefined if not controlled)
-- `isInControlledContext()` — Fast path check for controlled execution
+- `getControlledContext()` — Get current context (undefined if not controlled; does NOT validate lifecycle)
+- `isInControlledContext()` — Fast path check for controlled execution (does NOT validate lifecycle)
 - `getControlledSessionId()` — Get current session ID (convenience)
-- `getControlledRunId()` — Get current run ID if bound
-- `runWithBoundRun(runId, callback)` — Update context with bound run ID
+- `getControlledRunId()` — Get current run ID
+- `requireValidControlledContext()` — **FAIL-CLOSED**: Returns validated context or throws
+- `hasValidControlledContext()` — Check if context exists AND lifecycle is active
+- `isLifecycleActive(lifecycleId)` — Check if specific lifecycle is active (testing/debugging)
+- `getActiveLifecycleCount()` — Get count of active lifecycles (testing/debugging)
 
-**Context Structure**:
+**Retired** (M5b): `runWithBoundRun()` — No longer needed since `discoveryRunId` is required at context creation.
+
+**Context Structure** (M5b updated):
 ```typescript
 interface ControlledExecutionContext {
-  readonly sessionId: number;       // Controlled test session ID
-  readonly discoveryRunId: number | null; // Run ID when bound
+  readonly sessionId: number;       // Controlled test session ID (required)
+  readonly discoveryRunId: number;  // Discovery run ID (required since M5b)
+  readonly lifecycleId: number;     // Unique lifecycle identifier (M5b)
   readonly isControlled: true;      // Explicit marker
   readonly createdAt: string;       // ISO 8601 timestamp
   readonly purpose?: string;        // Human-readable purpose
 }
 ```
 
-**Key Invariants**:
+**Three Execution States** (M5b):
+1. **No context** (`undefined`): Normal execution, eligible for production routing
+2. **Active context** (lifecycleId in activeLifecycles): Eligible for controlled routing
+3. **Expired context** (lifecycleId NOT in activeLifecycles): Fail closed, NEVER fall back
+
+**Key Invariants** (M5b updated):
 1. Context is immutable (Object.freeze)
 2. Context is isolated across concurrent async tasks
 3. Context never leaks into normal Slack/REST execution
-4. Errors do not leave context active (AsyncLocalStorage handles cleanup)
+4. Errors do not leave context active (finally cleanup)
 5. Nested context entry is explicitly rejected (NestedControlledContextError)
 6. Invalid session/run IDs are rejected (InvalidContextParameterError)
+7. **M5b**: Both sessionId and discoveryRunId are required positive safe integers
+8. **M5b**: Lifecycle is active only during the awaited callback, inactive in finally
+9. **M5b**: Detached async descendants fail `requireValidControlledContext()` with `ExpiredControlledContextError`
+10. **M5b**: One lifecycle ending does not affect another concurrent lifecycle
+11. **M5b**: `runInControlledContextSync()` rejects callbacks returning Promises or thenables (`AsyncCallbackInSyncContextError`)
 
 **Provider Invocation Points Identified** (for M5 routing):
 
@@ -462,39 +478,47 @@ interface ControlledExecutionContext {
 | `askHandler.ts` | 54, 94 | Ask command (haiku + sonnet) |
 | `anthropic-adapter.ts` | 56 | Coaching provider |
 
-**Future Provider Routing Contract** (M5+):
+**Provider Routing Contract** (M5b updated):
 ```typescript
-// At each invocation point:
-const ctx = getControlledContext();
-if (ctx) {
-  // Controlled execution → route to budgetedInvoke()
-  return await budgetedInvoke({ sessionId: ctx.sessionId, prompt, model });
-} else {
-  // Normal execution → existing createModel().invoke() path
-  return await llm.invoke(prompt);
+// At each invocation point — fail-closed pattern:
+try {
+  const ctx = requireValidControlledContext();
+  // Active controlled execution → route to budgetedInvoke()
+  return await budgetedInvoke({ sessionId: ctx.sessionId, prompt });
+} catch (e) {
+  if (e instanceof NoControlledContextError) {
+    // Normal execution → existing createModel().invoke() path
+    return await llm.invoke(prompt);
+  }
+  // ExpiredControlledContextError → fail closed, do NOT fall back
+  throw e;
 }
 ```
 
-**M4 Test Coverage** (48 unit tests):
-- Context available inside sync/async callbacks
-- Context preserved across awaited promises (single, multiple, Promise.all, nested)
-- Context isolated across concurrent controlled sessions
-- Normal execution sees no controlled context
-- Context does not leak after callback completion
-- Nested context entry rejected with error
-- Errors do not leave context active
-- Invalid session/run identifiers rejected
-- Context immutability (frozen, no modification)
-- runWithBoundRun updates context correctly
-- Return value passthrough
+**M4/M5b Test Coverage** (80 unit tests):
+- Normal execution (no context) — 7 tests
+- Context available inside callbacks — 8 tests
+- Lifecycle tracking (active/inactive, no leaks) — 8 tests
+- requireValidControlledContext() behavior — 4 tests
+- Detached async descendants (setTimeout, setImmediate) — 4 tests
+- Context preserved across awaited promises — 4 tests
+- Context isolated across concurrent sessions — 4 tests
+- Synchronous wrapper async callback rejection — 11 tests
+- Context cleanup after callback — 3 tests
+- Nested context rejection — 3 tests
+- Error handling (cleanup, propagation) — 5 tests
+- Invalid identifier rejection (sessionId, discoveryRunId) — 13 tests
+- Context immutability — 5 tests
+- Return value passthrough — 2 tests
+- ExpiredControlledContextError details — 1 test
 
-**No execution path changes**: M4 adds context infrastructure only. No production invocation paths were modified. The routing contract is documented but NOT yet implemented.
+**No execution path changes**: M4/M5b adds context infrastructure only. No production invocation paths were modified. The routing contract is documented but NOT yet implemented.
 
 **Outstanding Blockers**:
-- M5-M8 require explicit authorization before implementation
-- No AI invocation paths wired in M1-M4 (context + budgetedInvoke exist but are not called)
+- M5c-M8 require explicit authorization before implementation
+- No AI invocation paths wired in M1-M5b (context + budgetedInvoke exist but are not called)
 
-**Next Step**: Await M5 authorization (run binding in `createPendingDiscoveryRunFromRefs()`)
+**Next Step**: Await M5c authorization (provider routing integration)
 
 **M1 Follow-up Findings** (from architecture review):
 
