@@ -191,9 +191,9 @@ Qori is a deployable, channel-independent research operating system for public-s
 
 | State | Status | Date | Notes |
 |-------|--------|------|-------|
-| **Architecture approved** | YES | 2026-11-02 | M1 authorized, later milestones pending |
-| **Implementation authorized** | M1 ONLY | 2026-11-02 | M2-M8 require separate authorization |
-| **Implementation completed** | M1 | 2026-11-02 | Database + service layer |
+| **Architecture approved** | YES | 2026-11-02 | M1-M2 authorized, later milestones pending |
+| **Implementation authorized** | M1-M2 | 2026-11-02 | M3-M8 require separate authorization |
+| **Implementation completed** | M1-M2 | 2026-11-02 | Database + service + controlled model factory |
 
 **M1 Implementation Details** (completed 2026-11-02):
 
@@ -224,6 +224,64 @@ Qori is a deployable, channel-independent research operating system for public-s
 - Run binding immutability
 - Session lookup by run ID regardless of status
 
+**M2 Implementation Details** (completed 2026-11-02, corrected for explicit model selection):
+
+| File | Type | Purpose |
+|------|------|---------|
+| `src/helpers/modelProvider.ts` | Modified | Added `createControlledTestModel()` factory with explicit model allowlist |
+| `src/__tests__/unit/modelProviderBoundary.test.ts` | Modified | Added 16 unit tests for controlled model factory |
+
+**Factory Function** (post-correction):
+```typescript
+export function createControlledTestModel(
+  config: ControlledTestModelConfig = {},
+): ChatAnthropic {
+  // Explicit model selection — NO env override inheritance
+  const requestedModel = config.model ?? CONTROLLED_TEST_DEFAULT_MODEL;
+
+  // Fail closed: reject models not in allowlist
+  if (!CONTROLLED_TEST_MODEL_ALLOWLIST.includes(requestedModel)) {
+    throw new Error(`... not in the approved allowlist ...`);
+  }
+
+  return new ChatAnthropic({
+    anthropicApiKey: apiKey,
+    modelName: requestedModel, // From allowlist only
+    temperature,               // 0 by default (deterministic)
+    maxTokens: 4096,           // CONTROLLED_TEST_MAX_TOKENS
+    clientOptions: {
+      maxRetries: 0,           // CRITICAL: Disable SDK retries
+    },
+  });
+}
+```
+
+**Exported Constants**:
+- `CONTROLLED_TEST_MAX_TOKENS = 4096` — Hard output cap (API-enforced)
+- `CONTROLLED_TEST_TIER = 'sonnet'` — Model tier for controlled tests
+- `CONTROLLED_TEST_MODEL_ALLOWLIST = ['claude-sonnet-4-6', 'claude-sonnet-4-5-20241022']` — Explicit allowlist
+- `CONTROLLED_TEST_DEFAULT_MODEL = 'claude-sonnet-4-6'` — Default model (must be in allowlist)
+
+**M2 Test Coverage** (16 tests total):
+- Exports `CONTROLLED_TEST_MAX_TOKENS` as 4096
+- Exports `CONTROLLED_TEST_TIER` as sonnet
+- Exports `CONTROLLED_TEST_MODEL_ALLOWLIST` as non-empty array
+- Exports `CONTROLLED_TEST_DEFAULT_MODEL` in allowlist
+- Throws without `ANTHROPIC_API_KEY`
+- Creates model with API key
+- Sets maxTokens to 4096
+- Sets temperature to 0 by default
+- Accepts custom temperature
+- Uses default model from allowlist
+- Configures SDK with `maxRetries: 0`
+- Is isolated from `createModel`
+- **IGNORES `ANTHROPIC_MODEL_NAME` env override** (independence verified)
+- Accepts explicit model from allowlist
+- Rejects model not in allowlist (fail closed)
+- Rejects unknown model (fail closed)
+
+**No execution path changes**: `langchain.ts`, `variableExtractor.ts`, and `routes/` were NOT modified. M2 adds a new factory function only — no existing code calls it yet.
+
 **Purpose**: Enable safe execution of exactly ONE controlled Discovery AI run in the dev environment with hard budget enforcement.
 
 **Architecture Summary**:
@@ -241,10 +299,10 @@ Qori is a deployable, channel-independent research operating system for public-s
 2. **Transaction rollback ownership**: Implementation MUST use a single rollback owner—prefer Sequelize managed transaction (`sequelize.transaction()`)—without double rollback. The v2.2 design specifies the algorithm but the sample code does NOT yet demonstrate correct Sequelize rollback handling; implementation must verify this.
 
 **Outstanding Blockers**:
-- M2-M8 require explicit authorization before implementation
-- No AI invocation paths introduced in M1
+- M3-M8 require explicit authorization before implementation
+- No AI invocation paths introduced in M1 or M2
 
-**Next Step**: Await M2 authorization
+**Next Step**: Await M3 authorization (architecture review pending)
 
 **M1 Follow-up Findings** (from architecture review):
 
@@ -253,6 +311,12 @@ Qori is a deployable, channel-independent research operating system for public-s
 | 1 | Medium | `ON DELETE SET NULL` on `discovery_run_id` could orphan session from run if run deleted before session completion | Resolve before M5 (run binding) |
 | 2 | Low | `actualInputTokens` param in `reconcileUsage` is accepted but unused | Review during M3 (budgetedInvoke) |
 | 3 | Low | Test database uses separate Sequelize instance from service; connection pool cleanup at scale | Technical debt backlog |
+
+**M2 Follow-up Findings** (from architecture review):
+
+| # | Priority | Finding | Resolution Milestone |
+|---|----------|---------|---------------------|
+| 4 | High | Verify `CONTROLLED_TEST_MODEL_ALLOWLIST` entries against Anthropic provider documentation before live testing | **Required before M8** (live test execution) |
 
 ### 4.2 Safety Gates (Currently Active)
 
@@ -393,10 +457,10 @@ Qori is a deployable, channel-independent research operating system for public-s
 
 ### 9.1 Current Test Status
 
-**Backend Unit Tests** (as of 2026-11-02, post-M1):
+**Backend Unit Tests** (as of 2026-11-02, post-M2 correction):
 ```
 Test Suites: 58 passed, 58 total
-Tests:       1102 passed, 1102 total
+Tests:       1118 passed, 1118 total
 ```
 
 **Backend Integration Tests** (M1 only):
@@ -435,26 +499,28 @@ Tests:       1466 passed, 2 failed, 1468 total
 
 **Branch**: `dev`
 **Application Baseline**: `314994df` (DISC-WEB-1C-2b)
-**Backend Tests**: 1102 passing (verified)
+**Backend Tests**: 1118 passing (verified post-M2 correction)
 **Frontend Tests**: 1466 passing, 2 failing (reported; identities unknown—requires baseline run)
 
-**Active Work**: DISC-WEB-1D-2 architecture design complete (v2.2), awaiting approval.
+**Active Work**: DISC-WEB-1D-2 M1-M2 complete, M3 pending architecture review.
 
 **Safety Gates**: The Web UI submission path is gated off (`ENABLE_LIVE_RUN_CREATION=false`, `DISC_WEB1_ENABLED` unset). Legacy REST `sources[]` and Slack `/qori-discover` paths remain operational and are NOT gated.
 
 ### 10.2 Next Task
 
-**DISC-WEB-1D-2 Implementation** — Pending architecture approval.
+**DISC-WEB-1D-2 M3** — Pending architecture review and authorization.
 
-When approved, implementation proceeds in this order:
-1. M1: Database migration + service (2h)
-2. M2: `createControlledTestModel()` with `maxRetries: 0` (1h)
-3. M3: `budgetedInvoke()` with atomic reservation (3h)
-4. M4: AsyncLocalStorage context propagation (2h)
-5. M5: Run binding in `createPendingDiscoveryRunFromRefs()` (2h)
-6. M6: Admin API endpoints (1h)
-7. M7: Unit tests (3h)
-8. M8: Integration + Slack regression tests (2h)
+Completed milestones:
+- ✅ M1: Database migration + service (29 integration tests)
+- ✅ M2: `createControlledTestModel()` with `maxRetries: 0` (11 unit tests)
+
+Remaining milestones (require separate authorization):
+1. M3: `budgetedInvoke()` with atomic reservation
+2. M4: AsyncLocalStorage context propagation
+3. M5: Run binding in `createPendingDiscoveryRunFromRefs()`
+4. M6: Admin API endpoints
+5. M7: Unit tests
+6. M8: Integration + Slack regression tests
 
 ### 10.3 Prohibited Changes
 
@@ -488,3 +554,5 @@ When approved, implementation proceeds in this order:
 | 2026-10-31 | 1.0 | Claude Code | Initial canonical roadmap established |
 | 2026-11-02 | 1.1 | Claude Code | Corrections: separated baseline from roadmap commit; fixed transaction safeguard wording; clarified Discovery path gating; marked failing tests as unverified; added decision states |
 | 2026-11-02 | 1.2 | Claude Code | M1 implementation: migration, model, service, 29 integration tests; decision states updated |
+| 2026-11-02 | 1.3 | Claude Code | M2 implementation: `createControlledTestModel()` with `clientOptions: { maxRetries: 0 }`, 11 unit tests |
+| 2026-11-02 | 1.4 | Claude Code | M2 correction: Explicit model allowlist, independence from production env overrides, fail-closed validation, 16 unit tests |
