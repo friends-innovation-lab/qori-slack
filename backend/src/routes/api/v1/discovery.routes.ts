@@ -15,6 +15,7 @@ import type { PreparedDiscoverySource, DiscoveryTypeKey } from '../../../types/d
 import type { Project } from '../../../database/models/project';
 import sequelize from '../../../database';
 import { AppError, ApiErrorCode } from '../../../types/api-errors';
+import { isControlledExecutionEnabled } from '../../../services/controlled-session-authorization.service';
 
 const router = Router({ mergeParams: true });
 
@@ -186,7 +187,7 @@ router.post('/runs', requireAuth, async (req, res, next) => {
       return;
     }
 
-    const { discoveryType, topic, sourceIntent, sources, sourceRefs } = req.body;
+    const { discoveryType, topic, sourceIntent, sources, sourceRefs, controlledSessionPublicId } = req.body;
 
     // Validate discovery type
     if (!discoveryType || !['desk_research', 'stakeholder_synthesis'].includes(discoveryType)) {
@@ -273,6 +274,89 @@ router.post('/runs', requireAuth, async (req, res, next) => {
         return;
       }
 
+      // ═══════════════════════════════════════════════════════════════════════════
+      // DISC-WEB-1D-2 M5d: Controlled session selector routing
+      // ═══════════════════════════════════════════════════════════════════════════
+
+      // Explicit null is a validation error (not the same as undefined/omitted)
+      if (controlledSessionPublicId === null) {
+        res.status(400).json({
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'controlledSessionPublicId cannot be null; omit the field for ordinary runs',
+          },
+        });
+        return;
+      }
+
+      // If controlledSessionPublicId is provided, route to controlled path
+      if (typeof controlledSessionPublicId === 'string') {
+        // Validate UUID format
+        if (!UUID_PATTERN.test(controlledSessionPublicId)) {
+          res.status(400).json({
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'controlledSessionPublicId must be a valid UUID',
+            },
+          });
+          return;
+        }
+
+        // Check controlled execution gate
+        if (!isControlledExecutionEnabled()) {
+          res.status(503).json({
+            error: {
+              code: ApiErrorCode.CONTROLLED_EXECUTION_DISABLED,
+              message: 'Controlled execution is not enabled',
+            },
+          });
+          return;
+        }
+
+        // Create controlled run from sourceRefs
+        const result = await discoveryAppService.createControlledDiscoveryRunFromRefs({
+          projectId,
+          projectSlug: project.slug,
+          actorId: req.ctx!.actor.id,
+          discoveryType: discoveryType as DiscoveryTypeKey,
+          topic: topic.trim(),
+          sourceIntent: sourceIntent?.trim() || null,
+          sourceRefs,
+          idempotencyKey,
+          createdByIdentity: `api:${req.ctx!.actor.publicId}`,
+          controlledSessionPublicId,
+        });
+
+        // Return run summary
+        const runSummary = await discoveryAppService.getDiscoveryRunByPublicId(
+          req.ctx!,
+          projectId,
+          result.run.public_id,
+        );
+
+        // Status: 200 for replay, 201 for new creation
+        const statusCode = result.isReplay ? 200 : 201;
+        const message = result.isReplay
+          ? 'Idempotent replay: returning existing controlled run.'
+          : 'Controlled Discovery run created. Worker will process asynchronously.';
+
+        res.status(statusCode).json({
+          data: runSummary,
+          meta: {
+            message,
+            isReplay: result.isReplay,
+            isControlled: true,
+            pollUrl: `/api/v1/projects/${projectId}/discovery/runs/${result.run.public_id}`,
+            recommendedPollInterval: '2000ms',
+          },
+        });
+        return;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // Ordinary sourceRefs path (controlledSessionPublicId is undefined)
+      // ═══════════════════════════════════════════════════════════════════════════
+
       // Create run from sourceRefs (atomic orchestration)
       const result = await discoveryAppService.createPendingDiscoveryRunFromRefs({
         projectId,
@@ -285,6 +369,17 @@ router.post('/runs', requireAuth, async (req, res, next) => {
         idempotencyKey,
         createdByIdentity: `api:${req.ctx!.actor.publicId}`,
       });
+
+      // DISC-WEB-1D-2: Guard against replaying controlled runs on ordinary path
+      if (result.isReplay && result.run.is_controlled) {
+        res.status(409).json({
+          error: {
+            code: ApiErrorCode.IDEMPOTENCY_CONFLICT,
+            message: 'Idempotency key was used for a controlled run; include controlledSessionPublicId to replay',
+          },
+        });
+        return;
+      }
 
       // Return run summary
       const runSummary = await discoveryAppService.getDiscoveryRunByPublicId(
@@ -426,6 +521,52 @@ router.post('/runs', requireAuth, async (req, res, next) => {
       }
       if (error.code === ApiErrorCode.IDEMPOTENCY_CONFLICT) {
         res.status(409).json({
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+        return;
+      }
+      // DISC-WEB-1D-2: Controlled session errors
+      if (error.code === ApiErrorCode.CONTROLLED_SESSION_NOT_FOUND) {
+        res.status(404).json({
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+        return;
+      }
+      if (error.code === ApiErrorCode.CONTROLLED_SESSION_ACTOR_MISMATCH) {
+        res.status(403).json({
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+        return;
+      }
+      if (error.code === ApiErrorCode.CONTROLLED_SESSION_NOT_ACTIVE) {
+        res.status(409).json({
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+        return;
+      }
+      if (error.code === ApiErrorCode.CONTROLLED_SESSION_ALREADY_BOUND) {
+        res.status(409).json({
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+        return;
+      }
+      if (error.code === ApiErrorCode.CONTROLLED_EXECUTION_DISABLED) {
+        res.status(503).json({
           error: {
             code: error.code,
             message: error.message,

@@ -58,6 +58,16 @@ export enum ApiErrorCode {
   SOURCE_REF_UNAVAILABLE = 'SOURCE_REF_UNAVAILABLE',
   /** Idempotency key reused with different payload (DISC-WEB-1B-2b) */
   IDEMPOTENCY_CONFLICT = 'IDEMPOTENCY_CONFLICT',
+  /** Controlled session not found (DISC-WEB-1D-2) */
+  CONTROLLED_SESSION_NOT_FOUND = 'CONTROLLED_SESSION_NOT_FOUND',
+  /** Controlled session is not active (DISC-WEB-1D-2) */
+  CONTROLLED_SESSION_NOT_ACTIVE = 'CONTROLLED_SESSION_NOT_ACTIVE',
+  /** Controlled session already bound to another run (DISC-WEB-1D-2) */
+  CONTROLLED_SESSION_ALREADY_BOUND = 'CONTROLLED_SESSION_ALREADY_BOUND',
+  /** Actor does not own controlled session (DISC-WEB-1D-2) */
+  CONTROLLED_SESSION_ACTOR_MISMATCH = 'CONTROLLED_SESSION_ACTOR_MISMATCH',
+  /** Controlled execution feature is disabled (DISC-WEB-1D-2) */
+  CONTROLLED_EXECUTION_DISABLED = 'CONTROLLED_EXECUTION_DISABLED',
   /** Unexpected server error — details intentionally omitted */
   INTERNAL_ERROR = 'INTERNAL_ERROR',
 }
@@ -248,4 +258,54 @@ export function idempotencyConflict(
   message = 'Idempotency key was already used with a different request',
 ): AppError {
   return new AppError(ApiErrorCode.IDEMPOTENCY_CONFLICT, message, 409);
+}
+
+/**
+ * Controlled session not found (DISC-WEB-1D-2).
+ * Returned when specified controlled session does not exist.
+ */
+export function controlledSessionNotFound(
+  message = 'Controlled session not found',
+): AppError {
+  return new AppError(ApiErrorCode.CONTROLLED_SESSION_NOT_FOUND, message, 404);
+}
+
+/**
+ * Controlled session not active (DISC-WEB-1D-2).
+ * Returned when session is in terminal state (cancelled, exhausted, completed).
+ */
+export function controlledSessionNotActive(
+  message = 'Controlled session is not active',
+): AppError {
+  return new AppError(ApiErrorCode.CONTROLLED_SESSION_NOT_ACTIVE, message, 409);
+}
+
+/**
+ * Controlled session already bound (DISC-WEB-1D-2).
+ * Returned when session is already bound to another run.
+ */
+export function controlledSessionAlreadyBound(
+  message = 'Controlled session is already bound to a run',
+): AppError {
+  return new AppError(ApiErrorCode.CONTROLLED_SESSION_ALREADY_BOUND, message, 409);
+}
+
+/**
+ * Controlled session actor mismatch (DISC-WEB-1D-2).
+ * Returned when the requesting actor does not own the session.
+ */
+export function controlledSessionActorMismatch(
+  message = 'Not authorized for this controlled session',
+): AppError {
+  return new AppError(ApiErrorCode.CONTROLLED_SESSION_ACTOR_MISMATCH, message, 403);
+}
+
+/**
+ * Controlled execution disabled (DISC-WEB-1D-2).
+ * Returned when DISC_WEB1D_ENABLED !== 'true'.
+ */
+export function controlledExecutionDisabled(
+  message = 'Controlled execution is not enabled',
+): AppError {
+  return new AppError(ApiErrorCode.CONTROLLED_EXECUTION_DISABLED, message, 503);
 }

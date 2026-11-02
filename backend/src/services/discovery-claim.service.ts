@@ -79,6 +79,7 @@ export async function claimNextPendingRun(
       SELECT id FROM discovery_runs
       WHERE status = 'pending'
         AND discovery_type IN ('desk_research', 'stakeholder_synthesis')
+        AND is_controlled = FALSE
       ORDER BY created_at ASC
       FOR UPDATE SKIP LOCKED
       LIMIT 1
@@ -136,6 +137,7 @@ export async function recoverStaleRun(
         AND discovery_type IN ('desk_research', 'stakeholder_synthesis')
         AND heartbeat_at < :staleThreshold
         AND attempt_count < :maxAttempts
+        AND is_controlled = FALSE
       ORDER BY heartbeat_at ASC
       FOR UPDATE SKIP LOCKED
       LIMIT 1
@@ -191,6 +193,7 @@ export async function failExceededAttemptRuns(workerId: string): Promise<number>
       AND discovery_type IN ('desk_research', 'stakeholder_synthesis')
       AND heartbeat_at < :staleThreshold
       AND attempt_count >= :maxAttempts
+      AND is_controlled = FALSE
     FOR UPDATE SKIP LOCKED
     `,
     {
@@ -459,6 +462,7 @@ export async function countPendingRuns(): Promise<number> {
     where: {
       status: 'pending',
       discovery_type: { [Op.in]: ['desk_research', 'stakeholder_synthesis'] },
+      is_controlled: false,
     },
   });
   return count;
@@ -472,6 +476,7 @@ export async function countProcessingRuns(): Promise<number> {
     where: {
       status: 'processing',
       discovery_type: { [Op.in]: ['desk_research', 'stakeholder_synthesis'] },
+      is_controlled: false,
     },
   });
   return count;

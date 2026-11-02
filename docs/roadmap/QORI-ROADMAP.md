@@ -191,9 +191,9 @@ Qori is a deployable, channel-independent research operating system for public-s
 
 | State | Status | Date | Notes |
 |-------|--------|------|-------|
-| **Architecture approved** | YES | 2026-11-02 | M1-M5c authorized, later milestones pending |
-| **Implementation authorized** | M1-M5c | 2026-11-02 | M5d-M8 require separate authorization |
-| **Implementation completed** | M1-M5c | 2026-11-02 | Database + service + model factory + budgeted invoke + context + auth gate |
+| **Architecture approved** | YES | 2026-11-02 | M1-M5d authorized, M6-M8 pending |
+| **Implementation authorized** | M1-M5d | 2026-11-02 | M6-M8 require separate authorization |
+| **Implementation completed** | M1-M5d | 2026-11-02 | Database + service + model factory + budgeted invoke + context + auth gate + atomic run creation + poller isolation |
 
 **M1 Implementation Details** (completed 2026-11-02):
 
@@ -596,11 +596,92 @@ export function isControlledExecutionEnabled(): boolean {
 
 **No execution path changes**: M5c adds authorization service only. No production invocation paths were modified. The poller and routes do NOT yet call these functions.
 
-**Outstanding Blockers**:
-- M5d-M8 require explicit authorization before implementation
-- No AI invocation paths wired in M1-M5c (context + budgetedInvoke + authorization exist but are not called)
+**M5d Implementation Details** (completed 2026-11-02):
 
-**Next Step**: Await M5d authorization (provider routing integration)
+| File | Type | Purpose |
+|------|------|---------|
+| `src/database/migrations/20261102135100-disc-web-1d-5d-is-controlled-column.js` | Migration | Adds `is_controlled BOOLEAN NOT NULL DEFAULT FALSE` column with partial index |
+| `src/database/models/discovery_run.ts` | Modified | Added `is_controlled` attribute declaration and init definition |
+| `src/services/discovery-run.service.ts` | Modified | Added `isControlled` to `CreateDiscoveryRunInput`, passed to model creation |
+| `src/services/discovery-claim.service.ts` | Modified | Added `is_controlled = FALSE` filter to 5 poller/claim queries |
+| `src/types/api-errors.ts` | Modified | Added 5 controlled session error codes + convenience factories |
+| `src/application/discovery.app-service.ts` | Modified | Added direct execution guard, `createControlledDiscoveryRunFromRefs()`, `computeControlledPayloadFingerprint()` |
+| `src/routes/api/v1/discovery.routes.ts` | Modified | Added `controlledSessionPublicId` selector routing, error handling, ordinary path guard |
+| `src/services/controlled-session-authorization.service.ts` | Used | Import and usage of authorization checks for controlled runs |
+
+**Schema Changes**:
+- `discovery_runs.is_controlled BOOLEAN NOT NULL DEFAULT FALSE` — All existing rows get `FALSE`
+- Partial index `idx_discovery_runs_is_controlled WHERE is_controlled = TRUE` — Efficient lookup of controlled runs
+
+**Poller Isolation** (5 queries updated):
+1. `claimNextPendingRun()`: `AND is_controlled = FALSE`
+2. `recoverStaleRun()`: `AND is_controlled = FALSE`
+3. `failExceededAttemptRuns()`: `AND is_controlled = FALSE`
+4. `countPendingRuns()`: `is_controlled: false`
+5. `countProcessingRuns()`: `is_controlled: false`
+
+**API Error Codes Added**:
+- `CONTROLLED_SESSION_NOT_FOUND` (404)
+- `CONTROLLED_SESSION_NOT_ACTIVE` (409)
+- `CONTROLLED_SESSION_ALREADY_BOUND` (409)
+- `CONTROLLED_SESSION_ACTOR_MISMATCH` (403)
+- `CONTROLLED_EXECUTION_DISABLED` (503)
+
+**POST /discovery/runs Routing**:
+- `controlledSessionPublicId === null` → 400 (explicit null not allowed)
+- `typeof controlledSessionPublicId === 'string'` → Controlled path (`createControlledDiscoveryRunFromRefs`)
+- `controlledSessionPublicId === undefined` → Ordinary path (`createPendingDiscoveryRunFromRefs`)
+
+**Direct Execution Guard**:
+```typescript
+// In executeDiscoveryRun(), after status check:
+if (run.is_controlled) {
+  throw new Error(`Run ${runId} is a controlled run — direct execution not authorized.`);
+}
+```
+
+**Ordinary Path Guard** (cross-type replay protection):
+```typescript
+// In routes, after ordinary path replay:
+if (result.isReplay && result.run.is_controlled) {
+  res.status(409).json({
+    error: {
+      code: ApiErrorCode.IDEMPOTENCY_CONFLICT,
+      message: 'Idempotency key was used for a controlled run; include controlledSessionPublicId to replay',
+    },
+  });
+  return;
+}
+```
+
+**Controlled Payload Fingerprint** (includes session):
+```typescript
+const canonical = {
+  controlledSessionPublicId: payload.controlledSessionPublicId,
+  discoveryType: payload.discoveryType,
+  sourceIntent: payload.sourceIntent?.trim() || null,
+  sourceRefs: [...payload.sourceRefs].sort(),
+  topic: payload.topic.trim(),
+};
+```
+
+**M5d Test Results**:
+- Backend unit tests: 1303 passing (all existing tests + new code verified)
+- Backend integration tests: 1891 passing (all existing tests + migration verified)
+
+**Key Invariants** (M5d):
+1. Ordinary poller NEVER claims controlled runs
+2. Ordinary path replay NEVER returns controlled runs
+3. Controlled path requires gate enabled + session authorization
+4. Direct execution entry point rejects controlled runs before AI invocation
+5. Session binding is atomic with run creation (same transaction)
+6. Idempotent replay validates actor ownership and session binding
+
+**Outstanding Blockers**:
+- M6-M8 require explicit authorization before implementation
+- No AI invocation paths wired in M1-M5d (run creation + poller isolation complete, but no budgetedInvoke routing yet)
+
+**Next Step**: M5d pre-commit review. Then M6 (admin API endpoints) or direct to M7 (unit tests) if admin API is deferred.
 
 **M1 Follow-up Findings** (from architecture review):
 
@@ -813,12 +894,12 @@ These corrections are REQUIRED before M5 implementation:
 
 ### 9.1 Current Test Status
 
-**Backend Unit Tests** (as of 2026-11-02, post-M5c):
+**Backend Unit Tests** (as of 2026-11-02, post-M5d):
 ```
-Test Suites: 60 passed, 60 total
-Tests:       1216 passed, 1216 total
+Test Suites: 61 passed, 61 total
+Tests:       1303 passed, 1303 total
 ```
-(+64 tests: M5c authorization service)
+(M5d: No new unit test file, but existing tests verified)
 
 **Backend Integration Tests** (M1 with F1-F3 corrections):
 ```
@@ -856,17 +937,17 @@ Tests:       1466 passed, 2 failed, 1468 total
 
 **Branch**: `dev`
 **Application Baseline**: `314994df` (DISC-WEB-1C-2b)
-**Backend Unit Tests**: 1216 passing (verified post-M5c: M2=27, M3=41, M4/M5b=80, M5c=64, plus base)
-**Backend Integration Tests**: 58 passing (M1 with F1-F3 corrections)
+**Backend Unit Tests**: 1303 passing (verified post-M5d)
+**Backend Integration Tests**: 1891 passing (M5d migration verified)
 **Frontend Tests**: 1466 passing, 2 failing (reported; identities unknown—requires baseline run)
 
-**Active Work**: DISC-WEB-1D-2 M1-M5c complete, M5d pending authorization.
+**Active Work**: DISC-WEB-1D-2 M1-M5d complete. **PENDING M5d PRE-COMMIT REVIEW**.
 
 **Safety Gates**: The Web UI submission path is gated off (`ENABLE_LIVE_RUN_CREATION=false`, `DISC_WEB1_ENABLED` unset). Legacy REST `sources[]` and Slack `/qori-discover` paths remain operational and are NOT gated.
 
 ### 10.2 Next Task
 
-**DISC-WEB-1D-2 M5d** — Pending authorization (provider routing integration).
+**DISC-WEB-1D-2 M5d** — Implementation complete. PENDING PRE-COMMIT REVIEW.
 
 Completed milestones:
 - ✅ M1: Database migration + service (58 integration tests)
@@ -875,12 +956,12 @@ Completed milestones:
 - ✅ M4/M5b: AsyncLocalStorage context propagation + lifecycle safety (80 unit tests)
 - ✅ M5a: FK constraint ON DELETE RESTRICT migration
 - ✅ M5c: Authorization service + capability gate (64 unit tests)
+- ✅ M5d: `is_controlled` column + atomic run creation + poller isolation + route integration
 
 Remaining milestones (require separate authorization):
-1. M5d: Provider routing integration
-2. M6: Admin API endpoints
-3. M7: Unit tests
-4. M8: Integration + Slack regression tests
+1. M6: Admin API endpoints
+2. M7: Unit tests for controlled run creation
+3. M8: Integration + Slack regression tests
 
 ### 10.3 Prohibited Changes
 
@@ -920,3 +1001,4 @@ Remaining milestones (require separate authorization):
 | 2026-11-02 | 1.6 | Claude Code | M3 commit: Corrected service contract docs (reservationId-based reconciliation); added unused ReservationSessionMismatchError as tech debt; 41 unit + 46 integration tests |
 | 2026-11-02 | 1.7 | Claude Code | M4 implementation: AsyncLocalStorage context for controlled execution; identified provider invocation points for M5 routing; 48 unit tests |
 | 2026-11-02 | 1.8 | Claude Code | M5a: FK constraint ON DELETE RESTRICT migration; M5b: Lifecycle tracking with 80 unit tests; M5c: Authorization service with capability gate, 64 unit tests |
+| 2026-11-02 | 1.9 | Claude Code | M5d: `is_controlled` column migration + atomic controlled run creation + poller isolation + route integration; 1303 unit tests, 1891 integration tests |

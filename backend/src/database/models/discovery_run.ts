@@ -91,6 +91,9 @@ class DiscoveryRun extends Model<
   declare idempotency_key: string | null;
   declare payload_fingerprint: string | null;
 
+  // DISC-WEB-1D-2: Controlled test execution
+  declare is_controlled: CreationOptional<boolean>;
+
   // Association mixins
   declare getProject: BelongsToGetAssociationMixin<Project>;
   declare project?: NonAttribute<Project>;
@@ -254,6 +257,12 @@ export default (sequelize: Sequelize) => {
       payload_fingerprint: {
         type: DataTypes.CHAR(64),
         allowNull: true,
+      },
+      // DISC-WEB-1D-2: Controlled test execution
+      is_controlled: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
       },
     },
     {

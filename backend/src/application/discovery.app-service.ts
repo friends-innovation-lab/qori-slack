@@ -314,7 +314,29 @@ import {
   consumeValidatedRefs,
   type ValidatedStagingRefs,
 } from '../services/extraction';
-import { sourceRefUnavailable, idempotencyConflict } from '../types/api-errors';
+import {
+  sourceRefUnavailable,
+  idempotencyConflict,
+  controlledSessionNotFound,
+  controlledSessionNotActive,
+  controlledSessionAlreadyBound,
+  controlledSessionActorMismatch,
+  controlledExecutionDisabled,
+  featureDisabled,
+} from '../types/api-errors';
+import {
+  getSessionByPublicId,
+  bindRunToSession,
+  getSessionByRunId,
+  SessionNotFoundError,
+  SessionTerminalError,
+  RunAlreadyBoundError,
+} from '../services/controlled-test-budget.service';
+import {
+  isControlledExecutionEnabled,
+  checkNewRunEligibility,
+  checkReplayEligibility,
+} from '../services/controlled-session-authorization.service';
 
 /**
  * Hash string to 32-bit signed integer for pg_advisory_lock.
@@ -598,6 +620,519 @@ export async function createPendingDiscoveryRunFromRefs(params: {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// DISC-WEB-1D-2: CONTROLLED RUN CREATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * DISC-WEB-1D-2: Compute payload fingerprint for controlled run idempotency.
+ *
+ * Includes controlledSessionPublicId to ensure different sessions produce
+ * different fingerprints even with same topic/sources.
+ */
+export function computeControlledPayloadFingerprint(payload: {
+  discoveryType: string;
+  topic: string;
+  sourceIntent: string | null;
+  sourceRefs: string[];
+  controlledSessionPublicId: string;
+}): string {
+  const { createHash } = require('crypto');
+
+  // Canonical form: sorted keys, trimmed strings, sorted arrays
+  // Includes controlledSessionPublicId to distinguish from ordinary runs
+  const canonical = {
+    controlledSessionPublicId: payload.controlledSessionPublicId,
+    discoveryType: payload.discoveryType,
+    sourceIntent: payload.sourceIntent?.trim() || null,
+    sourceRefs: [...payload.sourceRefs].sort(),
+    topic: payload.topic.trim(),
+  };
+
+  return createHash('sha256')
+    .update(JSON.stringify(canonical))
+    .digest('hex');
+}
+
+/**
+ * Result of createControlledDiscoveryRunFromRefs.
+ */
+export interface ControlledSourceRefsRunResult {
+  /** Created or replayed run */
+  run: DiscoveryRun;
+  /** True if this was an idempotent replay (existing run returned) */
+  isReplay: boolean;
+  /** Number of sources created (0 if replay) */
+  sourceCount: number;
+  /** Session ID bound to the run */
+  sessionId: number;
+}
+
+/**
+ * DISC-WEB-1D-2 M5d: Create a controlled Discovery run from extraction staging refs.
+ *
+ * Atomic orchestration with session binding:
+ * 1. Validate controlled execution gate
+ * 2. Preliminary idempotency check (read-only)
+ * 3. Resolve session by public ID
+ * 4. Validate new-run eligibility (preflight)
+ * 5. Resolve unique topic slug (GitHub check)
+ * 6. Transaction with advisory lock
+ * 7. Authoritative idempotency check (under lock)
+ *    - If replay: validate replay eligibility with actor check
+ * 8. Validate staging refs (FOR UPDATE)
+ * 9. Create DiscoveryRun with is_controlled: true
+ * 10. Bind session to run (atomic)
+ * 11. Create EvidenceSources from staging
+ * 12. Associate sources with run
+ * 13. Consume staging refs
+ * 14. Commit
+ *
+ * Returns:
+ * - 201: New run created (isReplay: false)
+ * - 200: Existing run replayed (isReplay: true)
+ * - 400: Invalid session ID
+ * - 403: Actor mismatch
+ * - 404: Session not found
+ * - 409: Session already bound, idempotency conflict, or session not active
+ * - 410: Source refs unavailable
+ * - 503: Controlled execution disabled
+ *
+ * @throws AppError with CONTROLLED_EXECUTION_DISABLED if gate is off
+ * @throws AppError with CONTROLLED_SESSION_NOT_FOUND if session doesn't exist
+ * @throws AppError with CONTROLLED_SESSION_ACTOR_MISMATCH if actor doesn't own session
+ * @throws AppError with CONTROLLED_SESSION_NOT_ACTIVE if session is terminal
+ * @throws AppError with CONTROLLED_SESSION_ALREADY_BOUND if session already bound
+ * @throws AppError with SOURCE_REF_UNAVAILABLE if any ref is invalid
+ * @throws AppError with IDEMPOTENCY_CONFLICT if key reused with different payload
+ */
+export async function createControlledDiscoveryRunFromRefs(params: {
+  projectId: number;
+  projectSlug: string;
+  actorId: number;
+  discoveryType: DiscoveryTypeKey;
+  topic: string;
+  sourceIntent: string | null;
+  sourceRefs: string[];
+  idempotencyKey: string;
+  createdByIdentity: string;
+  controlledSessionPublicId: string;
+}): Promise<ControlledSourceRefsRunResult> {
+  const {
+    projectId,
+    projectSlug,
+    actorId,
+    discoveryType,
+    topic,
+    sourceIntent,
+    sourceRefs,
+    idempotencyKey,
+    createdByIdentity,
+    controlledSessionPublicId,
+  } = params;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Phase 1: Validate both feature gates (fail closed)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // DISC_WEB1_ENABLED: sourceRefs path must be enabled
+  if (process.env.DISC_WEB1_ENABLED !== 'true') {
+    throw featureDisabled('Source reference consumption is not available');
+  }
+
+  // DISC_WEB1D_ENABLED: controlled execution must be enabled
+  if (!isControlledExecutionEnabled()) {
+    throw controlledExecutionDisabled();
+  }
+
+  // Validate actor identity is provided (required for controlled execution)
+  if (!actorId || typeof actorId !== 'number' || !Number.isFinite(actorId) || actorId <= 0) {
+    throw controlledSessionActorMismatch('Valid actor identity is required for controlled execution');
+  }
+
+  const typeConfig = DISCOVERY_TYPES[discoveryType];
+  if (!typeConfig) {
+    throw new Error(`Unknown discovery type: ${discoveryType}`);
+  }
+
+  if (!topic || !slugifyTopic(topic)) {
+    throw new Error('Topic must contain alphanumeric characters');
+  }
+
+  if (sourceRefs.length === 0) {
+    throw new Error('At least one source ref is required');
+  }
+
+  // Compute payload fingerprint including session ID
+  const payloadFingerprint = computeControlledPayloadFingerprint({
+    discoveryType,
+    topic,
+    sourceIntent,
+    sourceRefs,
+    controlledSessionPublicId,
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Phase 2: Preliminary idempotency check (read-only, before session validation)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const existingRun = await runService.findByIdempotencyKey(projectId, idempotencyKey);
+
+  if (existingRun) {
+    // ─── Full replay validation (9-point checklist) ───────────────────────────
+
+    // 1. Verify run belongs to the requested project
+    if (existingRun.project_id !== projectId) {
+      throw idempotencyConflict(
+        'Idempotency key was used in a different project',
+      );
+    }
+
+    // 2. Verify this is a controlled run (cross-type replay protection)
+    if (!existingRun.is_controlled) {
+      throw idempotencyConflict(
+        'Idempotency key was already used for an ordinary (non-controlled) run',
+      );
+    }
+
+    // 3. Verify exact idempotency key match (implicit via findByIdempotencyKey)
+
+    // 4. Verify exact canonical payload fingerprint
+    if (existingRun.payload_fingerprint !== payloadFingerprint) {
+      throw idempotencyConflict(
+        'Idempotency key was already used with a different request payload',
+      );
+    }
+
+    // 5. Get bound session for replay authorization
+    const boundSession = await getSessionByRunId(existingRun.id);
+    if (!boundSession) {
+      // Invariant violation: controlled run must have bound session
+      throw controlledSessionNotFound('Run has no bound session');
+    }
+
+    // 6. Verify session's discovery_run_id exactly matches the existing run ID
+    if (boundSession.discovery_run_id !== existingRun.id) {
+      // This should not happen if binding is immutable, but check defensively
+      throw idempotencyConflict('Session binding mismatch');
+    }
+
+    // 7. Validate actor owns the controlled session
+    if (boundSession.created_by_actor_id !== actorId) {
+      throw controlledSessionActorMismatch();
+    }
+
+    // 8. Validate replay eligibility (includes session status check)
+    const replayResult = await checkReplayEligibility({
+      actorId,
+      sessionId: boundSession.id,
+      runId: existingRun.id,
+    });
+
+    // 9. Terminal sessions can replay read-only but not create new runs
+    // (Already handled by returning existing run below)
+
+    if (!replayResult.authorized && replayResult.reason !== 'session_not_active') {
+      // Authorization failure (not just terminal session)
+      switch (replayResult.reason) {
+        case 'actor_mismatch':
+          throw controlledSessionActorMismatch();
+        case 'session_not_found':
+          throw controlledSessionNotFound();
+        case 'run_mismatch':
+          throw idempotencyConflict('Session is bound to a different run');
+        case 'gate_disabled':
+          throw controlledExecutionDisabled();
+        default:
+          throw controlledSessionNotActive();
+      }
+    }
+
+    // Idempotent replay — return existing run (read-only for terminal sessions)
+    console.log(
+      `[DISC-WEB-1D-2] Idempotent replay: controlled run ${existingRun.public_id} ` +
+      `for key ${idempotencyKey} (readOnly: ${replayResult.readOnly})`,
+    );
+
+    return {
+      run: existingRun,
+      isReplay: true,
+      sourceCount: 0,
+      sessionId: boundSession.id,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Phase 3: Resolve session by public ID
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const session = await getSessionByPublicId(controlledSessionPublicId);
+  if (!session) {
+    throw controlledSessionNotFound();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Phase 4: Validate new-run eligibility (preflight)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const eligibility = await checkNewRunEligibility({
+    actorId,
+    sessionId: session.id,
+  });
+
+  if (!eligibility.authorized) {
+    switch (eligibility.reason) {
+      case 'actor_mismatch':
+        throw controlledSessionActorMismatch();
+      case 'session_not_active':
+        throw controlledSessionNotActive();
+      case 'session_already_bound':
+        throw controlledSessionAlreadyBound();
+      case 'session_not_found':
+        throw controlledSessionNotFound();
+      default:
+        throw controlledExecutionDisabled();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Phase 5: Resolve unique topic slug (GitHub check, before transaction)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const topicSlug = await resolveUniqueTopicSlug(topic, projectSlug, typeConfig);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Phase 6: Transaction with advisory lock
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const lockId = hashToInt32(`discovery:idempotency:${projectId}:${idempotencyKey}`);
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Acquire advisory lock (blocking)
+    await sequelize.query('SELECT pg_advisory_xact_lock($1)', {
+      bind: [lockId],
+      transaction,
+    });
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 7: Authoritative idempotency check (under lock)
+    // ═════════════════════════════════════════════════════════════════════════
+
+    const authoritativeRun = await runService.findByIdempotencyKey(
+      projectId,
+      idempotencyKey,
+      transaction,
+    );
+
+    if (authoritativeRun) {
+      // ─── Authoritative replay validation (9-point checklist under lock) ─────
+
+      // 1. Verify run belongs to the requested project
+      if (authoritativeRun.project_id !== projectId) {
+        await transaction.rollback();
+        throw idempotencyConflict(
+          'Idempotency key was used in a different project',
+        );
+      }
+
+      // 2. Verify this is a controlled run (cross-type replay protection)
+      if (!authoritativeRun.is_controlled) {
+        await transaction.rollback();
+        throw idempotencyConflict(
+          'Idempotency key was already used for an ordinary (non-controlled) run',
+        );
+      }
+
+      // 3. Verify exact idempotency key match (implicit via findByIdempotencyKey)
+
+      // 4. Verify exact canonical payload fingerprint
+      if (authoritativeRun.payload_fingerprint !== payloadFingerprint) {
+        await transaction.rollback();
+        throw idempotencyConflict(
+          'Idempotency key was already used with a different request payload',
+        );
+      }
+
+      // 5. Get bound session for replay authorization
+      const boundSession = await getSessionByRunId(authoritativeRun.id);
+      if (!boundSession) {
+        await transaction.rollback();
+        throw controlledSessionNotFound('Run has no bound session');
+      }
+
+      // 6. Verify session's discovery_run_id exactly matches the existing run ID
+      if (boundSession.discovery_run_id !== authoritativeRun.id) {
+        await transaction.rollback();
+        throw idempotencyConflict('Session binding mismatch');
+      }
+
+      // 7. Validate actor owns the controlled session
+      if (boundSession.created_by_actor_id !== actorId) {
+        await transaction.rollback();
+        throw controlledSessionActorMismatch();
+      }
+
+      // 8-9. Recheck gates at transaction boundary (fail closed)
+      if (process.env.DISC_WEB1_ENABLED !== 'true') {
+        await transaction.rollback();
+        throw featureDisabled('Source reference consumption is not available');
+      }
+      if (!isControlledExecutionEnabled()) {
+        await transaction.rollback();
+        throw controlledExecutionDisabled();
+      }
+
+      // Idempotent replay (read-only for terminal sessions, but we return the run regardless)
+      await transaction.rollback();
+      console.log(
+        `[DISC-WEB-1D-2] Idempotent replay (authoritative): controlled run ${authoritativeRun.public_id}`,
+      );
+
+      return {
+        run: authoritativeRun,
+        isReplay: true,
+        sourceCount: 0,
+        sessionId: boundSession.id,
+      };
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 8: Validate staging refs (FOR UPDATE lock)
+    // ═════════════════════════════════════════════════════════════════════════
+
+    const validationResult = await validateRefsForConsumption(
+      sourceRefs,
+      projectId,
+      actorId,
+      transaction,
+    );
+
+    if (!validationResult.success) {
+      await transaction.rollback();
+      throw sourceRefUnavailable(validationResult.errors.length);
+    }
+
+    const validated = validationResult.validated as ValidatedStagingRefs;
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 9: Create DiscoveryRun with is_controlled: true
+    // ═════════════════════════════════════════════════════════════════════════
+
+    const run = await runService.createDiscoveryRun(
+      {
+        projectId,
+        discoveryType: discoveryType as import('../database/models/discovery_run').DiscoveryType,
+        topic,
+        topicSlug,
+        sourceIntent,
+        actorId,
+        createdByIdentity,
+        idempotencyKey,
+        payloadFingerprint,
+        isControlled: true, // DISC-WEB-1D-2: Mark as controlled run
+      },
+      transaction,
+    );
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 10: Bind session to run (atomic, same transaction)
+    // ═════════════════════════════════════════════════════════════════════════
+
+    try {
+      await bindRunToSession(session.id, run.id, transaction);
+    } catch (error) {
+      if (error instanceof SessionTerminalError) {
+        await transaction.rollback();
+        throw controlledSessionNotActive();
+      }
+      if (error instanceof RunAlreadyBoundError) {
+        await transaction.rollback();
+        throw controlledSessionAlreadyBound();
+      }
+      if (error instanceof SessionNotFoundError) {
+        await transaction.rollback();
+        throw controlledSessionNotFound();
+      }
+      throw error;
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 11: Create EvidenceSources from staging rows
+    // ═════════════════════════════════════════════════════════════════════════
+
+    const evidenceSources = await evidenceService.createDiscoverySources(
+      projectId,
+      validated.stagingRows.map((staging) => ({
+        filename: staging.filename,
+        extractedText: staging.extracted_text,
+        contentHash: staging.content_hash,
+        mimeType: staging.mime_type,
+        sizeBytes: staging.file_size_bytes,
+        fileHash: staging.file_hash,
+        metadata: {
+          uploadSessionId: undefined,
+          source: 'extraction' as const,
+          controlledSessionId: session.id,
+        },
+      })),
+      createdByIdentity,
+      transaction,
+    );
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 12: Associate sources with run
+    // ═════════════════════════════════════════════════════════════════════════
+
+    await runService.associateSources(
+      {
+        runId: run.id,
+        sourceIds: evidenceSources.map((s) => s.id),
+      },
+      transaction,
+    );
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 13: Consume staging refs
+    // ═════════════════════════════════════════════════════════════════════════
+
+    const consumedCount = await consumeValidatedRefs(validated, run.id, transaction);
+
+    if (consumedCount !== sourceRefs.length) {
+      await transaction.rollback();
+      throw new Error(
+        `Staging consumption verification failed: expected ${sourceRefs.length}, consumed ${consumedCount}`,
+      );
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // Phase 14: Commit
+    // ═════════════════════════════════════════════════════════════════════════
+
+    await transaction.commit();
+
+    console.log(
+      `[DISC-WEB-1D-2] Created controlled run ${run.public_id} from ${sourceRefs.length} refs ` +
+      `(key: ${idempotencyKey}, session: ${session.public_id})`,
+    );
+
+    return {
+      run,
+      isReplay: false,
+      sourceCount: evidenceSources.length,
+      sessionId: session.id,
+    };
+  } catch (error) {
+    // Ensure rollback on any error
+    try {
+      await transaction.rollback();
+    } catch {
+      // Ignore rollback error if transaction already rolled back
+    }
+    throw error;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // DISC-2: SPLIT EXECUTION — CREATE PENDING RUN
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -717,6 +1252,15 @@ export async function executeDiscoveryRun(
 
   if (run.status !== 'processing') {
     throw new Error(`Run ${runId} is not in processing status (is ${run.status})`);
+  }
+
+  // DISC-WEB-1D-2 M5d: Guard against controlled runs until controlled execution routing is implemented
+  // Controlled runs must go through dedicated execution path with budget enforcement
+  if (run.is_controlled) {
+    throw new Error(
+      `Run ${runId} is a controlled run — direct execution not authorized. ` +
+      `Controlled runs require budget enforcement via controlled execution path.`,
+    );
   }
 
   const typeConfig = DISCOVERY_TYPES[run.discovery_type as DiscoveryTypeKey];

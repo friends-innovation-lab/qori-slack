@@ -42,6 +42,8 @@ export interface CreateDiscoveryRunInput {
   idempotencyKey?: string | null;
   /** DISC-WEB-1: SHA-256 of normalized request payload for conflict detection */
   payloadFingerprint?: string | null;
+  /** DISC-WEB-1D-2: True for controlled test runs (excluded from ordinary poller) */
+  isControlled?: boolean;
 }
 
 export interface AssociateSourcesInput {
@@ -118,6 +120,8 @@ export async function createDiscoveryRun(
         // DISC-WEB-1: Idempotency (optional, null for legacy/Slack)
         idempotency_key: input.idempotencyKey ?? null,
         payload_fingerprint: input.payloadFingerprint ?? null,
+        // DISC-WEB-1D-2: Controlled test execution (default false for ordinary runs)
+        is_controlled: input.isControlled ?? false,
       } as CreationAttributes<DiscoveryRun>,
       { transaction: t },
     );
