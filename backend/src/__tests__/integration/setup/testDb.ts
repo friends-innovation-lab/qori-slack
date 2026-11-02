@@ -88,6 +88,8 @@ import DeskResearchReadoutVersion from '../../../database/models/desk_research_r
 import DeskResearchReadoutApproval from '../../../database/models/desk_research_readout_approval';
 // DISC-WEB-1: Extraction staging
 import ExtractionStaging from '../../../database/models/extraction_staging';
+// DISC-WEB-1D-2: Controlled test session
+import ControlledTestSession from '../../../database/models/controlled_test_session';
 
 let instance: Sequelize | null = null;
 
@@ -139,6 +141,8 @@ export function getTestDb(): Sequelize {
     DeskResearchReadoutVersion, DeskResearchReadoutApproval,
     // DISC-WEB-1: Extraction staging
     ExtractionStaging,
+    // DISC-WEB-1D-2: Controlled test session
+    ControlledTestSession,
   ];
 
   for (const defineModel of modelDefiners) {

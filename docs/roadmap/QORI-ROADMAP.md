@@ -191,9 +191,38 @@ Qori is a deployable, channel-independent research operating system for public-s
 
 | State | Status | Date | Notes |
 |-------|--------|------|-------|
-| **Architecture approved** | NO | — | v2.2 conditionally accepted pending corrections |
-| **Implementation authorized** | NO | — | Requires architecture approval first |
-| **Implementation completed** | NO | — | — |
+| **Architecture approved** | YES | 2026-11-02 | M1 authorized, later milestones pending |
+| **Implementation authorized** | M1 ONLY | 2026-11-02 | M2-M8 require separate authorization |
+| **Implementation completed** | M1 | 2026-11-02 | Database + service layer |
+
+**M1 Implementation Details** (completed 2026-11-02):
+
+| File | Type | Purpose |
+|------|------|---------|
+| `src/database/migrations/20261102000000-disc-web-1d-create-controlled-test-sessions.js` | Migration | Creates `controlled_test_sessions` table with CHECK constraints and partial unique indexes |
+| `src/database/models/controlled_test_session.ts` | Model | Sequelize model with InferAttributes pattern |
+| `src/services/controlled-test-budget.service.ts` | Service | Budget reservation, reconciliation, session lifecycle |
+| `src/__tests__/integration/controlled-test-budget.service.test.ts` | Tests | 29 integration tests covering all invariants |
+| `src/__tests__/integration/setup/testDb.ts` | Test setup | Added ControlledTestSession to model registry |
+| `src/database/index.ts` | Model registry | Added ControlledTestSession registration |
+
+**Service API**:
+- `createSession(input)` — Create session with budget limits (max requests, input/output tokens)
+- `getActiveSession()` — Get current active session (at most one)
+- `getSessionById(id)` / `getSessionByPublicId(publicId)` — Lookup by ID
+- `getSessionByRunId(runId)` — Lookup by bound run ID (critical for budget enforcement)
+- `bindRunToSession(sessionId, runId)` — Bind discovery run to session (immutable once set)
+- `reserveBudget(input)` — Atomic budget reservation with preconditions
+- `reconcileUsage(input)` — Update actual token usage after AI call
+- `cancelSession(sessionId, reason?)` — Transition to cancelled state
+- `completeSession(sessionId)` — Transition to completed state
+
+**Test Coverage**:
+- Single active session constraint
+- Atomic budget reservation under concurrency (5 concurrent requests)
+- Budget enforcement on terminal sessions (cancelled, exhausted, completed)
+- Run binding immutability
+- Session lookup by run ID regardless of status
 
 **Purpose**: Enable safe execution of exactly ONE controlled Discovery AI run in the dev environment with hard budget enforcement.
 
@@ -212,10 +241,18 @@ Qori is a deployable, channel-independent research operating system for public-s
 2. **Transaction rollback ownership**: Implementation MUST use a single rollback owner—prefer Sequelize managed transaction (`sequelize.transaction()`)—without double rollback. The v2.2 design specifies the algorithm but the sample code does NOT yet demonstrate correct Sequelize rollback handling; implementation must verify this.
 
 **Outstanding Blockers**:
-- Architecture approval required before implementation
-- No implementation work authorized
+- M2-M8 require explicit authorization before implementation
+- No AI invocation paths introduced in M1
 
-**Next Step**: Await explicit architecture approval for v2.2
+**Next Step**: Await M2 authorization
+
+**M1 Follow-up Findings** (from architecture review):
+
+| # | Priority | Finding | Resolution Milestone |
+|---|----------|---------|---------------------|
+| 1 | Medium | `ON DELETE SET NULL` on `discovery_run_id` could orphan session from run if run deleted before session completion | Resolve before M5 (run binding) |
+| 2 | Low | `actualInputTokens` param in `reconcileUsage` is accepted but unused | Review during M3 (budgetedInvoke) |
+| 3 | Low | Test database uses separate Sequelize instance from service; connection pool cleanup at scale | Technical debt backlog |
 
 ### 4.2 Safety Gates (Currently Active)
 
@@ -356,13 +393,19 @@ Qori is a deployable, channel-independent research operating system for public-s
 
 ### 9.1 Current Test Status
 
-**Backend Unit Tests** (as of 2026-10-31):
+**Backend Unit Tests** (as of 2026-11-02, post-M1):
 ```
 Test Suites: 58 passed, 58 total
 Tests:       1102 passed, 1102 total
 ```
 
-**Frontend Unit Tests** (as of 2026-10-31):
+**Backend Integration Tests** (M1 only):
+```
+Test Suites: 1 passed, 1 total
+Tests:       29 passed, 29 total (controlled-test-budget.service.test.ts)
+```
+
+**Frontend Unit Tests** (as of 2026-10-31, unchanged):
 ```
 Test Suites: 78 passed, 2 failed, 81 total
 Tests:       1466 passed, 2 failed, 1468 total
@@ -444,3 +487,4 @@ When approved, implementation proceeds in this order:
 |------|---------|--------|---------|
 | 2026-10-31 | 1.0 | Claude Code | Initial canonical roadmap established |
 | 2026-11-02 | 1.1 | Claude Code | Corrections: separated baseline from roadmap commit; fixed transaction safeguard wording; clarified Discovery path gating; marked failing tests as unverified; added decision states |
+| 2026-11-02 | 1.2 | Claude Code | M1 implementation: migration, model, service, 29 integration tests; decision states updated |

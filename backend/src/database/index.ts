@@ -79,6 +79,8 @@ import DeskResearchReadoutVersion from './models/desk_research_readout_version';
 import DeskResearchReadoutApproval from './models/desk_research_readout_approval';
 // DISC-WEB-1: Extraction staging for Workspace uploads
 import ExtractionStaging from './models/extraction_staging';
+// DISC-WEB-1D-2: Controlled test session for AI execution budgeting
+import ControlledTestSession from './models/controlled_test_session';
 
 
 // Set environment and configuration
@@ -172,6 +174,8 @@ const modelDefiners = [
   DeskResearchReadoutApproval,
   // DISC-WEB-1: Extraction staging (must be after DiscoveryRun due to consumed_by_run_id FK)
   ExtractionStaging,
+  // DISC-WEB-1D-2: Controlled test session (must be after DiscoveryRun and Actor due to FK deps)
+  ControlledTestSession,
 ];
 
 // Register all models with Sequelize
