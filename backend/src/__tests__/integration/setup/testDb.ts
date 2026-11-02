@@ -90,6 +90,8 @@ import DeskResearchReadoutApproval from '../../../database/models/desk_research_
 import ExtractionStaging from '../../../database/models/extraction_staging';
 // DISC-WEB-1D-2: Controlled test session
 import ControlledTestSession from '../../../database/models/controlled_test_session';
+// DISC-WEB-1D-2 M3: Reservation tracking for idempotent reconciliation
+import ControlledTestReservation from '../../../database/models/controlled_test_reservation';
 
 let instance: Sequelize | null = null;
 
@@ -143,6 +145,8 @@ export function getTestDb(): Sequelize {
     ExtractionStaging,
     // DISC-WEB-1D-2: Controlled test session
     ControlledTestSession,
+    // DISC-WEB-1D-2 M3: Reservation tracking
+    ControlledTestReservation,
   ];
 
   for (const defineModel of modelDefiners) {

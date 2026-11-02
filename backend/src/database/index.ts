@@ -81,6 +81,8 @@ import DeskResearchReadoutApproval from './models/desk_research_readout_approval
 import ExtractionStaging from './models/extraction_staging';
 // DISC-WEB-1D-2: Controlled test session for AI execution budgeting
 import ControlledTestSession from './models/controlled_test_session';
+// DISC-WEB-1D-2 M3: Reservation tracking for idempotent reconciliation
+import ControlledTestReservation from './models/controlled_test_reservation';
 
 
 // Set environment and configuration
@@ -176,6 +178,8 @@ const modelDefiners = [
   ExtractionStaging,
   // DISC-WEB-1D-2: Controlled test session (must be after DiscoveryRun and Actor due to FK deps)
   ControlledTestSession,
+  // DISC-WEB-1D-2 M3: Reservation tracking (must be after ControlledTestSession due to FK dep)
+  ControlledTestReservation,
 ];
 
 // Register all models with Sequelize

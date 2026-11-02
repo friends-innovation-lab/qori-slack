@@ -191,9 +191,9 @@ Qori is a deployable, channel-independent research operating system for public-s
 
 | State | Status | Date | Notes |
 |-------|--------|------|-------|
-| **Architecture approved** | YES | 2026-11-02 | M1-M2 authorized, later milestones pending |
-| **Implementation authorized** | M1-M2 | 2026-11-02 | M3-M8 require separate authorization |
-| **Implementation completed** | M1-M2 | 2026-11-02 | Database + service + controlled model factory |
+| **Architecture approved** | YES | 2026-11-02 | M1-M3 authorized, later milestones pending |
+| **Implementation authorized** | M1-M3 | 2026-11-02 | M4-M8 require separate authorization |
+| **Implementation completed** | M1-M3 | 2026-11-02 | Database + service + model factory + budgeted invoke |
 
 **M1 Implementation Details** (completed 2026-11-02):
 
@@ -202,7 +202,7 @@ Qori is a deployable, channel-independent research operating system for public-s
 | `src/database/migrations/20261102000000-disc-web-1d-create-controlled-test-sessions.js` | Migration | Creates `controlled_test_sessions` table with CHECK constraints and partial unique indexes |
 | `src/database/models/controlled_test_session.ts` | Model | Sequelize model with InferAttributes pattern |
 | `src/services/controlled-test-budget.service.ts` | Service | Budget reservation, reconciliation, session lifecycle |
-| `src/__tests__/integration/controlled-test-budget.service.test.ts` | Tests | 29 integration tests covering all invariants |
+| `src/__tests__/integration/controlled-test-budget.service.test.ts` | Tests | 46 integration tests covering all invariants (expanded for F1-F3) |
 | `src/__tests__/integration/setup/testDb.ts` | Test setup | Added ControlledTestSession to model registry |
 | `src/database/index.ts` | Model registry | Added ControlledTestSession registration |
 
@@ -282,6 +282,122 @@ export function createControlledTestModel(
 
 **No execution path changes**: `langchain.ts`, `variableExtractor.ts`, and `routes/` were NOT modified. M2 adds a new factory function only — no existing code calls it yet.
 
+**M3 Implementation Details** (completed 2026-11-02, corrected 2026-11-02):
+
+| File | Type | Purpose |
+|------|------|---------|
+| `src/helpers/budgetedInvoke.ts` | New | Fail-closed invocation wrapper with atomic budget enforcement |
+| `src/__tests__/unit/budgetedInvoke.test.ts` | New | 41 unit tests with mocks (no network requests) |
+| `src/services/controlled-test-budget.service.ts` | Modified | Extended for F1-F3 corrections (atomic output reservation, validation, conservative reconciliation) |
+| `src/__tests__/integration/controlled-test-budget.service.test.ts` | Modified | Extended from 29 to 46 tests for F1-F3 coverage |
+
+**M3 Architecture Review Findings (corrected 2026-11-02)**:
+
+| # | Priority | Finding | Resolution |
+|---|----------|---------|------------|
+| F1 | **Medium** | Output tokens not pre-reserved in atomic UPDATE — only request+input reserved; output tracked post-hoc | **CORRECTED**: Extended `reserveBudget()` to atomically reserve request count + input tokens + output tokens in single SQL UPDATE |
+| F2 | **Low** | No validation for positive token count before reservation — could pass zero/negative/NaN/Infinity | **CORRECTED**: Added `validateTokenCount()` helper; wrapper validates before service call; service validates at boundary |
+| F3 | **N/A** | Conservative reconciliation needed to release unused output allocation | **IMPLEMENTED**: `reconcileUsage()` releases `max(0, reserved - actual)` output tokens; never releases more than reserved; never allows negative counters |
+
+**Revised Service Contract**:
+
+```typescript
+// BEFORE (M3 initial)
+reserveBudget({ sessionId, estimatedInputTokens })
+reconcileUsage({ sessionId, actualInputTokens, actualOutputTokens })
+
+// AFTER (F1-F3 corrected + idempotent reconciliation)
+reserveBudget({ sessionId, estimatedInputTokens, reservedOutputTokens })
+  // Returns { ok, reservationId, ... } — reservationId required for reconciliation
+reconcileUsage({ reservationId, actualInputTokens, actualOutputTokens })
+  // Uses reservationId to ensure idempotent reconciliation and session ownership
+```
+
+**F1 Atomic Reservation SQL**:
+```sql
+UPDATE controlled_test_sessions
+SET
+  used_requests = used_requests + 1,
+  used_input_tokens = used_input_tokens + :estimatedInputTokens,
+  used_output_tokens = used_output_tokens + :reservedOutputTokens,
+  updated_at = CURRENT_TIMESTAMP
+WHERE
+  id = :sessionId
+  AND status = 'active'
+  AND used_requests < max_requests
+  AND used_input_tokens + :estimatedInputTokens <= max_input_tokens
+  AND used_output_tokens + :reservedOutputTokens <= max_output_tokens
+RETURNING id
+```
+
+**F2 Token Validation**:
+- Rejects: zero, negative, fractional, NaN, Infinity, -Infinity
+- `InvalidBudgetInputError` thrown at service boundary
+- `invalid_token_estimate` error code returned from wrapper
+
+**F3 Conservative Reconciliation**:
+```typescript
+// Calculate unused output tokens to release
+const toRelease = Math.max(0, reservedOutput - actualOutput);
+// Never go negative
+const newUsedOutputTokens = Math.max(0, session.used_output_tokens - toRelease);
+// NOTE: Input tokens are NOT reconciled (see ReconcileUsageInput docs)
+```
+
+**Exported Functions**:
+- `budgetedInvoke(input)` — Single invocation with reservation → dispatch → reconcile cycle
+- `budgetedInvokeWithRetry(input, maxAttempts)` — Retry helper requiring fresh reservation per attempt
+
+**Fail-Closed Invariants**:
+1. Never dispatch if session is terminal (cancelled, exhausted, completed)
+2. Never dispatch if any budget would be exceeded (request, input, OR output)
+3. Never dispatch if token measurement fails
+4. Never dispatch if token estimate is invalid (zero, negative, fractional, NaN, Infinity)
+5. Never dispatch if reservation fails
+6. Never assume an unsuccessful request was free — retain conservative reservation
+7. No automatic SDK retries (M2 factory disables them)
+8. Explicit retry must repeat full reservation process
+
+**Input Token Measurement**:
+- Uses `model.getNumTokens(prompt)` from LangChain base model
+- NOTE: This is an ESTIMATE, not guaranteed to match provider billing
+- Validated before reservation (must be finite positive integer)
+- Input tokens are NOT reconciled — estimate retained for conservative accounting
+
+**Output Token Handling**:
+- Reserved at full max allocation (`CONTROLLED_TEST_MAX_TOKENS = 4096`) before dispatch
+- Reconciled after successful response — unused allocation released
+- On failure/timeout/missing metadata — full reservation retained
+
+**M3 Test Coverage** (41 unit tests + 46 integration tests):
+
+*Unit tests (budgetedInvoke.test.ts)*:
+- Successful reservation → invoke → reconcile cycle
+- Session not found / terminal / exhausted
+- Budget exceeded (request, input, output limits)
+- Token measurement failure
+- Invalid token estimate (zero, negative, fractional, NaN, Infinity)
+- Service-level InvalidBudgetInputError handling
+- Provider error and timeout detection
+- Missing/malformed usage metadata
+- Successful output reconciliation with reservedOutputTokens
+- Retry requiring fresh reservation per attempt
+- Non-retryable error types (invalid_token_estimate included)
+- Concurrent attempts respecting shared budget
+- No unguarded fallback to production model
+
+*Integration tests (controlled-test-budget.service.test.ts)*:
+- Atomic reservation of request + input + output budgets
+- Concurrent requests competing for limited OUTPUT budget
+- Output budget exhaustion preventing reservation
+- Invalid tokenizer values (zero, negative, fractional, NaN, Infinity)
+- validateTokenCount helper function
+- Conservative reconciliation releasing unused output
+- Input tokens NOT reconciled (conservative estimate retained)
+- Terminal sessions blocking subsequent attempts
+
+**No execution path changes**: `langchain.ts`, `variableExtractor.ts`, `routes/`, Discovery poller, and Slack handlers were NOT modified. M3 adds a new helper function only — no existing code calls it yet.
+
 **Purpose**: Enable safe execution of exactly ONE controlled Discovery AI run in the dev environment with hard budget enforcement.
 
 **Architecture Summary**:
@@ -299,17 +415,17 @@ export function createControlledTestModel(
 2. **Transaction rollback ownership**: Implementation MUST use a single rollback owner—prefer Sequelize managed transaction (`sequelize.transaction()`)—without double rollback. The v2.2 design specifies the algorithm but the sample code does NOT yet demonstrate correct Sequelize rollback handling; implementation must verify this.
 
 **Outstanding Blockers**:
-- M3-M8 require explicit authorization before implementation
-- No AI invocation paths introduced in M1 or M2
+- M4-M8 require explicit authorization before implementation
+- No AI invocation paths wired in M1-M3 (budgetedInvoke exists but is not called by any workflow)
 
-**Next Step**: Await M3 authorization (architecture review pending)
+**Next Step**: Await M4 authorization (AsyncLocalStorage context propagation)
 
 **M1 Follow-up Findings** (from architecture review):
 
 | # | Priority | Finding | Resolution Milestone |
 |---|----------|---------|---------------------|
 | 1 | Medium | `ON DELETE SET NULL` on `discovery_run_id` could orphan session from run if run deleted before session completion | Resolve before M5 (run binding) |
-| 2 | Low | `actualInputTokens` param in `reconcileUsage` is accepted but unused | Review during M3 (budgetedInvoke) |
+| 2 | Low | `actualInputTokens` param in `reconcileUsage` is accepted but unused | **Reviewed M3**: Input tokens reserved at request time; actual input only for logging. No change needed. |
 | 3 | Low | Test database uses separate Sequelize instance from service; connection pool cleanup at scale | Technical debt backlog |
 
 **M2 Follow-up Findings** (from architecture review):
@@ -317,6 +433,17 @@ export function createControlledTestModel(
 | # | Priority | Finding | Resolution Milestone |
 |---|----------|---------|---------------------|
 | 4 | High | Verify `CONTROLLED_TEST_MODEL_ALLOWLIST` entries against Anthropic provider documentation before live testing | **Required before M8** (live test execution) |
+
+**M3 Follow-up Findings** (from architecture review, 2026-11-02):
+
+| # | Priority | Finding | Status |
+|---|----------|---------|--------|
+| F1 | Medium | Output tokens not pre-reserved in atomic UPDATE | **RESOLVED** — Extended `reserveBudget()` to include `reservedOutputTokens` |
+| F2 | Low | No validation for positive token count before reservation | **RESOLVED** — Added `validateTokenCount()` and wrapper-level validation |
+| F3 | N/A | Conservative reconciliation needed for output allocation | **RESOLVED** — `reconcileUsage()` releases unused output; guards against negative |
+| 5 | Info | `model.getNumTokens()` returns an ESTIMATE; actual provider billing may differ slightly | Documented in code; acceptable for budget enforcement |
+| 6 | Medium | `budgetedInvoke` is not yet wired into any workflow; requires M4 (AsyncLocalStorage) and M5 (run binding) | Resolve during M4-M5 integration |
+| 7 | Info | `ReservationSessionMismatchError` class defined but unused | **Technical debt** — Reservation-based design enforces session ownership implicitly; explicit validation unnecessary in current design. Do not remove. |
 
 ### 4.2 Safety Gates (Currently Active)
 
@@ -457,10 +584,10 @@ export function createControlledTestModel(
 
 ### 9.1 Current Test Status
 
-**Backend Unit Tests** (as of 2026-11-02, post-M2 correction):
+**Backend Unit Tests** (as of 2026-11-02, post-M3):
 ```
-Test Suites: 58 passed, 58 total
-Tests:       1118 passed, 1118 total
+Test Suites: 59 passed, 59 total
+Tests:       1152 passed, 1152 total
 ```
 
 **Backend Integration Tests** (M1 only):
@@ -499,28 +626,28 @@ Tests:       1466 passed, 2 failed, 1468 total
 
 **Branch**: `dev`
 **Application Baseline**: `314994df` (DISC-WEB-1C-2b)
-**Backend Tests**: 1118 passing (verified post-M2 correction)
+**Backend Tests**: 1152 passing (verified post-M3)
 **Frontend Tests**: 1466 passing, 2 failing (reported; identities unknown—requires baseline run)
 
-**Active Work**: DISC-WEB-1D-2 M1-M2 complete, M3 pending architecture review.
+**Active Work**: DISC-WEB-1D-2 M1-M3 complete, M4 pending architecture review.
 
 **Safety Gates**: The Web UI submission path is gated off (`ENABLE_LIVE_RUN_CREATION=false`, `DISC_WEB1_ENABLED` unset). Legacy REST `sources[]` and Slack `/qori-discover` paths remain operational and are NOT gated.
 
 ### 10.2 Next Task
 
-**DISC-WEB-1D-2 M3** — Pending architecture review and authorization.
+**DISC-WEB-1D-2 M4** — Pending architecture review and authorization.
 
 Completed milestones:
 - ✅ M1: Database migration + service (29 integration tests)
-- ✅ M2: `createControlledTestModel()` with `maxRetries: 0` (11 unit tests)
+- ✅ M2: `createControlledTestModel()` with `maxRetries: 0` (16 unit tests)
+- ✅ M3: `budgetedInvoke()` with atomic reservation (34 unit tests)
 
 Remaining milestones (require separate authorization):
-1. M3: `budgetedInvoke()` with atomic reservation
-2. M4: AsyncLocalStorage context propagation
-3. M5: Run binding in `createPendingDiscoveryRunFromRefs()`
-4. M6: Admin API endpoints
-5. M7: Unit tests
-6. M8: Integration + Slack regression tests
+1. M4: AsyncLocalStorage context propagation
+2. M5: Run binding in `createPendingDiscoveryRunFromRefs()`
+3. M6: Admin API endpoints
+4. M7: Unit tests
+5. M8: Integration + Slack regression tests
 
 ### 10.3 Prohibited Changes
 
@@ -556,3 +683,5 @@ Remaining milestones (require separate authorization):
 | 2026-11-02 | 1.2 | Claude Code | M1 implementation: migration, model, service, 29 integration tests; decision states updated |
 | 2026-11-02 | 1.3 | Claude Code | M2 implementation: `createControlledTestModel()` with `clientOptions: { maxRetries: 0 }`, 11 unit tests |
 | 2026-11-02 | 1.4 | Claude Code | M2 correction: Explicit model allowlist, independence from production env overrides, fail-closed validation, 16 unit tests |
+| 2026-11-02 | 1.5 | Claude Code | M3 implementation: `budgetedInvoke()` with atomic reservation, token measurement, usage reconciliation, 34 unit tests |
+| 2026-11-02 | 1.6 | Claude Code | M3 commit: Corrected service contract docs (reservationId-based reconciliation); added unused ReservationSessionMismatchError as tech debt; 41 unit + 46 integration tests |

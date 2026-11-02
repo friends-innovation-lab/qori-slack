@@ -18,17 +18,22 @@ import {
   getActiveSession,
   getSessionById,
   getSessionByRunId,
+  getReservationById,
   bindRunToSession,
   reserveBudget,
   reconcileUsage,
   cancelSession,
   completeSession,
   toSessionSummary,
+  validateTokenCount,
   SessionAlreadyExistsError,
   SessionNotFoundError,
   SessionTerminalError,
   RunAlreadyBoundError,
+  InvalidBudgetInputError,
   type CreateSessionInput,
+  type ReserveBudgetResult,
+  type ReconcileUsageResult,
 } from '../../services/controlled-test-budget.service';
 
 const sequelize = getTestDb();
@@ -246,8 +251,8 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       await bindRunToSession(session.id, runId);
 
       // Exhaust the budget
-      await reserveBudget({ sessionId: session.id, estimatedInputTokens: 50 });
-      await reconcileUsage({ sessionId: session.id, actualInputTokens: 50, actualOutputTokens: 50 });
+      const reservation = await reserveBudget({ sessionId: session.id, estimatedInputTokens: 50, reservedOutputTokens: 50 });
+      await reconcileUsage({ reservationId: reservation.reservationId!, actualInputTokens: 50, actualOutputTokens: 50 });
 
       const found = await getSessionByRunId(runId);
       expect(found).not.toBeNull();
@@ -273,7 +278,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
   });
 
   describe('reserveBudget — atomic budget enforcement', () => {
-    it('reserves budget atomically', async () => {
+    it('reserves budget atomically and returns reservation ID', async () => {
       const session = await createSession({
         maxRequests: 10,
         maxInputTokens: 10000,
@@ -283,12 +288,27 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       const result = await reserveBudget({
         sessionId: session.id,
         estimatedInputTokens: 1000,
+        reservedOutputTokens: 500,
       });
 
       expect(result.ok).toBe(true);
+      expect(result.reservationId).toBeDefined();
       expect(result.sessionStatus).toBe('active');
       expect(result.remainingRequests).toBe(9);
       expect(result.remainingInputTokens).toBe(9000);
+      expect(result.remainingOutputTokens).toBe(4500);
+
+      // Verify reservation was created
+      const reservation = await getReservationById(result.reservationId!);
+      expect(reservation).not.toBeNull();
+      expect(reservation!.session_id).toBe(session.id);
+      expect(reservation!.reserved_input_tokens).toBe(1000);
+      expect(reservation!.reserved_output_tokens).toBe(500);
+      expect(reservation!.state).toBe('reserved');
+
+      // Verify used_output_tokens was incremented
+      const updated = await getSessionById(session.id);
+      expect(updated!.used_output_tokens).toBe(500);
     });
 
     it('rejects reservation when requests exhausted', async () => {
@@ -299,12 +319,13 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       });
 
       // Use the single request
-      await reserveBudget({ sessionId: session.id, estimatedInputTokens: 100 });
+      await reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: 100 });
 
       // Try to reserve another
       const result = await reserveBudget({
         sessionId: session.id,
         estimatedInputTokens: 100,
+        reservedOutputTokens: 100,
       });
 
       expect(result.ok).toBe(false);
@@ -322,6 +343,25 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       const result = await reserveBudget({
         sessionId: session.id,
         estimatedInputTokens: 1001,
+        reservedOutputTokens: 100,
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.reason).toBe('budget_exceeded');
+    });
+
+    it('rejects reservation when output tokens would exceed', async () => {
+      const session = await createSession({
+        maxRequests: 10,
+        maxInputTokens: 10000,
+        maxOutputTokens: 1000,
+      });
+
+      // Try to reserve more output than available
+      const result = await reserveBudget({
+        sessionId: session.id,
+        estimatedInputTokens: 100,
+        reservedOutputTokens: 1001,
       });
 
       expect(result.ok).toBe(false);
@@ -339,6 +379,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       const result = await reserveBudget({
         sessionId: session.id,
         estimatedInputTokens: 100,
+        reservedOutputTokens: 100,
       });
 
       expect(result.ok).toBe(false);
@@ -350,6 +391,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       const result = await reserveBudget({
         sessionId: 999999,
         estimatedInputTokens: 100,
+        reservedOutputTokens: 100,
       });
 
       expect(result.ok).toBe(false);
@@ -358,23 +400,23 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
   });
 
   describe('concurrent reservation — race condition prevention', () => {
-    it('handles concurrent reservations atomically', async () => {
+    it('handles concurrent reservations atomically (all three limits)', async () => {
       const session = await createSession({
         maxRequests: 5,
         maxInputTokens: 5000,
-        maxOutputTokens: 2000,
+        maxOutputTokens: 2500,
       });
 
       // Simulate concurrent reservations
       const reservations = await Promise.all([
-        reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000 }),
-        reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000 }),
-        reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000 }),
-        reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000 }),
-        reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000 }),
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000, reservedOutputTokens: 500 }),
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000, reservedOutputTokens: 500 }),
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000, reservedOutputTokens: 500 }),
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000, reservedOutputTokens: 500 }),
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000, reservedOutputTokens: 500 }),
       ]);
 
-      // All 5 should succeed (we have exactly 5 requests)
+      // All 5 should succeed (we have exactly 5 requests and exactly enough tokens)
       const successes = reservations.filter((r) => r.ok);
       expect(successes.length).toBe(5);
 
@@ -382,9 +424,10 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       const updated = await getSessionById(session.id);
       expect(updated!.used_requests).toBe(5);
       expect(updated!.used_input_tokens).toBe(5000);
+      expect(updated!.used_output_tokens).toBe(2500);
     });
 
-    it('rejects excess concurrent reservations', async () => {
+    it('rejects excess concurrent reservations (request limit)', async () => {
       const session = await createSession({
         maxRequests: 3,
         maxInputTokens: 10000,
@@ -393,11 +436,11 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
 
       // Try to make 5 concurrent reservations when only 3 allowed
       const reservations = await Promise.all([
-        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100 }),
-        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100 }),
-        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100 }),
-        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100 }),
-        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100 }),
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: 100 }),
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: 100 }),
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: 100 }),
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: 100 }),
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: 100 }),
       ]);
 
       const successes = reservations.filter((r) => r.ok);
@@ -411,42 +454,252 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       const updated = await getSessionById(session.id);
       expect(updated!.used_requests).toBe(3);
     });
+
+    it('rejects excess concurrent reservations (output limit)', async () => {
+      const session = await createSession({
+        maxRequests: 10,
+        maxInputTokens: 10000,
+        maxOutputTokens: 1500, // Only enough for 3 requests at 500 each
+      });
+
+      // Try to make 5 concurrent reservations when output budget only allows 3
+      const reservations = await Promise.all([
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: 500 }),
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: 500 }),
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: 500 }),
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: 500 }),
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: 500 }),
+      ]);
+
+      const successes = reservations.filter((r) => r.ok);
+      const failures = reservations.filter((r) => !r.ok);
+
+      expect(successes.length).toBe(3);
+      expect(failures.length).toBe(2);
+      expect(failures.every((r) => r.reason === 'budget_exceeded')).toBe(true);
+
+      // Verify final state
+      const updated = await getSessionById(session.id);
+      expect(updated!.used_requests).toBe(3);
+      expect(updated!.used_output_tokens).toBe(1500);
+    });
   });
 
-  describe('reconcileUsage', () => {
-    it('updates output tokens', async () => {
+  describe('reconcileUsage — idempotent reconciliation', () => {
+    it('releases unused output allocation on first reconciliation', async () => {
       const session = await createSession({
         maxRequests: 10,
         maxInputTokens: 10000,
         maxOutputTokens: 5000,
       });
 
-      await reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000 });
-      const reconciled = await reconcileUsage({
-        sessionId: session.id,
+      // Reserve 1000 output tokens
+      const reservation = await reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000, reservedOutputTokens: 1000 });
+      expect(reservation.ok).toBe(true);
+
+      // Verify reservation
+      const afterReserve = await getSessionById(session.id);
+      expect(afterReserve!.used_output_tokens).toBe(1000);
+
+      // Reconcile with only 400 actual (release 600)
+      const result = await reconcileUsage({
+        reservationId: reservation.reservationId!,
         actualInputTokens: 1000,
-        actualOutputTokens: 500,
+        actualOutputTokens: 400,
       });
 
-      expect(reconciled.used_output_tokens).toBe(500);
+      expect(result.ok).toBe(true);
+      expect(result.alreadyReconciled).toBe(false);
+      expect(result.tokensReleased).toBe(600);
+      expect(result.session!.used_output_tokens).toBe(400);
     });
 
-    it('transitions to exhausted when output tokens reach limit', async () => {
+    it('returns alreadyReconciled=true on duplicate reconciliation', async () => {
+      const session = await createSession({
+        maxRequests: 10,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+
+      const reservation = await reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000, reservedOutputTokens: 1000 });
+
+      // First reconciliation
+      const result1 = await reconcileUsage({
+        reservationId: reservation.reservationId!,
+        actualInputTokens: 1000,
+        actualOutputTokens: 400,
+      });
+      expect(result1.ok).toBe(true);
+      expect(result1.alreadyReconciled).toBe(false);
+      expect(result1.tokensReleased).toBe(600);
+
+      // Second reconciliation — should be idempotent
+      const result2 = await reconcileUsage({
+        reservationId: reservation.reservationId!,
+        actualInputTokens: 1000,
+        actualOutputTokens: 400,
+      });
+      expect(result2.ok).toBe(true);
+      expect(result2.alreadyReconciled).toBe(true);
+      expect(result2.tokensReleased).toBe(0);
+
+      // Verify session counters were not changed
+      const updated = await getSessionById(session.id);
+      expect(updated!.used_output_tokens).toBe(400);
+    });
+
+    it('two concurrent reconciliations produce exactly one release', async () => {
+      const session = await createSession({
+        maxRequests: 10,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+
+      const reservation = await reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000, reservedOutputTokens: 1000 });
+
+      // Two concurrent reconciliations
+      const [result1, result2] = await Promise.all([
+        reconcileUsage({
+          reservationId: reservation.reservationId!,
+          actualInputTokens: 1000,
+          actualOutputTokens: 300,
+        }),
+        reconcileUsage({
+          reservationId: reservation.reservationId!,
+          actualInputTokens: 1000,
+          actualOutputTokens: 300,
+        }),
+      ]);
+
+      // Both should succeed
+      expect(result1.ok).toBe(true);
+      expect(result2.ok).toBe(true);
+
+      // Exactly one should be alreadyReconciled=false
+      const firstReconciliations = [result1, result2].filter((r) => !r.alreadyReconciled);
+      const duplicateReconciliations = [result1, result2].filter((r) => r.alreadyReconciled);
+
+      expect(firstReconciliations.length).toBe(1);
+      expect(duplicateReconciliations.length).toBe(1);
+
+      // Verify exactly 700 tokens were released (1000 - 300)
+      const updated = await getSessionById(session.id);
+      expect(updated!.used_output_tokens).toBe(300);
+    });
+
+    it('concurrent reconciliations of different reservations preserve correct totals', async () => {
+      const session = await createSession({
+        maxRequests: 10,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+
+      // Create two reservations
+      const res1 = await reserveBudget({ sessionId: session.id, estimatedInputTokens: 500, reservedOutputTokens: 1000 });
+      const res2 = await reserveBudget({ sessionId: session.id, estimatedInputTokens: 500, reservedOutputTokens: 1000 });
+
+      expect(res1.ok).toBe(true);
+      expect(res2.ok).toBe(true);
+
+      // After two reservations: 2000 output tokens reserved
+      const afterReserve = await getSessionById(session.id);
+      expect(afterReserve!.used_output_tokens).toBe(2000);
+
+      // Concurrent reconciliations with different actuals
+      const [result1, result2] = await Promise.all([
+        reconcileUsage({
+          reservationId: res1.reservationId!,
+          actualInputTokens: 500,
+          actualOutputTokens: 400, // Release 600
+        }),
+        reconcileUsage({
+          reservationId: res2.reservationId!,
+          actualInputTokens: 500,
+          actualOutputTokens: 200, // Release 800
+        }),
+      ]);
+
+      expect(result1.ok).toBe(true);
+      expect(result2.ok).toBe(true);
+
+      // Total released: 600 + 800 = 1400
+      // Final: 2000 - 1400 = 600
+      const updated = await getSessionById(session.id);
+      expect(updated!.used_output_tokens).toBe(600);
+    });
+
+    it('rejects reconciliation for unknown reservation ID', async () => {
+      const result = await reconcileUsage({
+        reservationId: 999999,
+        actualInputTokens: 100,
+        actualOutputTokens: 50,
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.alreadyReconciled).toBe(false);
+      expect(result.reason).toBe('reservation_not_found');
+    });
+
+    it('never allows negative usage counters', async () => {
+      const session = await createSession({
+        maxRequests: 10,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+
+      // Reserve 100 output tokens
+      const reservation = await reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: 100 });
+
+      // Reconcile with actualOutputTokens=0 (would release all 100)
+      const result = await reconcileUsage({
+        reservationId: reservation.reservationId!,
+        actualInputTokens: 100,
+        actualOutputTokens: 0,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.session!.used_output_tokens).toBeGreaterThanOrEqual(0);
+    });
+
+    it('transitions to exhausted when output tokens reach limit after reconciliation', async () => {
       const session = await createSession({
         maxRequests: 10,
         maxInputTokens: 10000,
         maxOutputTokens: 100,
       });
 
-      await reserveBudget({ sessionId: session.id, estimatedInputTokens: 100 });
-      const reconciled = await reconcileUsage({
-        sessionId: session.id,
+      const reservation = await reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: 100 });
+      const result = await reconcileUsage({
+        reservationId: reservation.reservationId!,
         actualInputTokens: 100,
         actualOutputTokens: 100, // Reaches limit exactly
       });
 
-      expect(reconciled.status).toBe('exhausted');
-      expect(reconciled.exhausted_at).not.toBeNull();
+      expect(result.ok).toBe(true);
+      expect(result.session!.status).toBe('exhausted');
+      expect(result.session!.exhausted_at).not.toBeNull();
+    });
+
+    it('does NOT reconcile input tokens (retains conservative estimate)', async () => {
+      const session = await createSession({
+        maxRequests: 10,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+
+      // Reserve 1000 input tokens
+      const reservation = await reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000, reservedOutputTokens: 500 });
+
+      // Reconcile with actualInputTokens=500 (less than estimated)
+      await reconcileUsage({
+        reservationId: reservation.reservationId!,
+        actualInputTokens: 500, // Less than estimated
+        actualOutputTokens: 400,
+      });
+
+      const updated = await getSessionById(session.id);
+      // Input tokens should NOT be adjusted — retains the estimated 1000
+      expect(updated!.used_input_tokens).toBe(1000);
     });
   });
 
@@ -514,7 +767,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         maxInputTokens: 10000,
         maxOutputTokens: 5000,
       });
-      await reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000 });
+      await reserveBudget({ sessionId: session.id, estimatedInputTokens: 1000, reservedOutputTokens: 500 });
       const updated = await getSessionById(session.id);
 
       const summary = toSessionSummary(updated!);
@@ -527,6 +780,8 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       expect(summary.budget.remainingRequests).toBe(9);
       expect(summary.budget.usedInputTokens).toBe(1000);
       expect(summary.budget.remainingInputTokens).toBe(9000);
+      expect(summary.budget.usedOutputTokens).toBe(500);
+      expect(summary.budget.remainingOutputTokens).toBe(4500);
     });
   });
 
@@ -545,7 +800,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       await bindRunToSession(session.id, runId);
 
       // Use some budget
-      await reserveBudget({ sessionId: session.id, estimatedInputTokens: 500 });
+      await reserveBudget({ sessionId: session.id, estimatedInputTokens: 500, reservedOutputTokens: 200 });
 
       // Cancel the session
       await cancelSession(session.id, 'test');
@@ -559,11 +814,116 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       const result = await reserveBudget({
         sessionId: foundSession!.id,
         estimatedInputTokens: 100,
+        reservedOutputTokens: 100,
       });
 
       expect(result.ok).toBe(false);
       expect(result.reason).toBe('session_terminal');
       expect(result.sessionStatus).toBe('cancelled');
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // F2: Token validation tests
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('validateTokenCount — F2 token validation', () => {
+    it('rejects zero', () => {
+      expect(() => validateTokenCount('test', 0)).toThrow(InvalidBudgetInputError);
+      expect(() => validateTokenCount('test', 0)).toThrow('must be positive');
+    });
+
+    it('rejects negative numbers', () => {
+      expect(() => validateTokenCount('test', -1)).toThrow(InvalidBudgetInputError);
+      expect(() => validateTokenCount('test', -100)).toThrow('must be positive');
+    });
+
+    it('rejects fractional numbers', () => {
+      expect(() => validateTokenCount('test', 1.5)).toThrow(InvalidBudgetInputError);
+      expect(() => validateTokenCount('test', 100.001)).toThrow('must be an integer');
+    });
+
+    it('rejects NaN', () => {
+      expect(() => validateTokenCount('test', NaN)).toThrow(InvalidBudgetInputError);
+      expect(() => validateTokenCount('test', NaN)).toThrow('must be finite');
+    });
+
+    it('rejects Infinity', () => {
+      expect(() => validateTokenCount('test', Infinity)).toThrow(InvalidBudgetInputError);
+      expect(() => validateTokenCount('test', Infinity)).toThrow('must be finite');
+    });
+
+    it('rejects -Infinity', () => {
+      expect(() => validateTokenCount('test', -Infinity)).toThrow(InvalidBudgetInputError);
+      expect(() => validateTokenCount('test', -Infinity)).toThrow('must be finite');
+    });
+
+    it('accepts valid positive integers', () => {
+      expect(() => validateTokenCount('test', 1)).not.toThrow();
+      expect(() => validateTokenCount('test', 100)).not.toThrow();
+      expect(() => validateTokenCount('test', 1000000)).not.toThrow();
+    });
+  });
+
+  describe('reserveBudget — F2 input validation', () => {
+    it('throws InvalidBudgetInputError for zero estimatedInputTokens', async () => {
+      const session = await createSession({
+        maxRequests: 10,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+
+      await expect(
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 0, reservedOutputTokens: 100 }),
+      ).rejects.toThrow(InvalidBudgetInputError);
+    });
+
+    it('throws InvalidBudgetInputError for negative estimatedInputTokens', async () => {
+      const session = await createSession({
+        maxRequests: 10,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+
+      await expect(
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: -100, reservedOutputTokens: 100 }),
+      ).rejects.toThrow(InvalidBudgetInputError);
+    });
+
+    it('throws InvalidBudgetInputError for NaN estimatedInputTokens', async () => {
+      const session = await createSession({
+        maxRequests: 10,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+
+      await expect(
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: NaN, reservedOutputTokens: 100 }),
+      ).rejects.toThrow(InvalidBudgetInputError);
+    });
+
+    it('throws InvalidBudgetInputError for zero reservedOutputTokens', async () => {
+      const session = await createSession({
+        maxRequests: 10,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+
+      await expect(
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: 0 }),
+      ).rejects.toThrow(InvalidBudgetInputError);
+    });
+
+    it('throws InvalidBudgetInputError for Infinity reservedOutputTokens', async () => {
+      const session = await createSession({
+        maxRequests: 10,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+
+      await expect(
+        reserveBudget({ sessionId: session.id, estimatedInputTokens: 100, reservedOutputTokens: Infinity }),
+      ).rejects.toThrow(InvalidBudgetInputError);
     });
   });
 });

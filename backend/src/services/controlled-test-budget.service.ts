@@ -13,6 +13,10 @@
  * 2. Transaction rollback ownership: Uses Sequelize managed transactions
  *    (`sequelize.transaction()`) as the single rollback owner. No double rollback.
  *
+ * 3. Idempotent reconciliation (M3 safety fix): Each budget reservation creates
+ *    a persistent reservation record. Reconciliation uses the reservation ID,
+ *    ensuring that duplicate reconciliation cannot release budget twice.
+ *
  * M1 scope: Database and service layer only. No AI invocation paths.
  */
 
@@ -22,8 +26,13 @@ import type {
   ControlledTestSession,
   ControlledTestSessionStatus,
 } from '../database/models/controlled_test_session';
+import type {
+  ControlledTestReservation,
+  ControlledTestReservationState,
+} from '../database/models/controlled_test_reservation';
 
 const ControlledTestSessionModel = sequelize.models.ControlledTestSession as typeof ControlledTestSession;
+const ControlledTestReservationModel = sequelize.models.ControlledTestReservation as typeof ControlledTestReservation;
 
 // ─── Input Types ─────────────────────────────────────────────────────────────
 
@@ -41,16 +50,30 @@ export interface CreateSessionInput {
 export interface ReserveBudgetInput {
   /** Session ID (internal) */
   sessionId: number;
-  /** Estimated input tokens for this request */
+  /** Estimated input tokens for this request (must be finite positive integer) */
   estimatedInputTokens: number;
+  /** Reserved output tokens for this request (must be finite positive integer) */
+  reservedOutputTokens: number;
+  /** Human-readable purpose for logging/provenance (optional) */
+  purpose?: string;
 }
 
 export interface ReconcileUsageInput {
-  /** Session ID (internal) */
-  sessionId: number;
-  /** Actual input tokens consumed */
+  /** Reservation ID (internal) returned from reserveBudget */
+  reservationId: number;
+  /**
+   * Actual input tokens consumed (from provider metadata).
+   *
+   * DECISION (M3 F3): We do NOT reconcile input tokens for the following reasons:
+   * 1. Input tokens were estimated before dispatch and reserved atomically
+   * 2. Provider-reported input may differ from estimate due to tokenizer differences
+   * 3. Releasing input budget based on provider metadata could allow budget undercount
+   * 4. For controlled tests, conservative input reservation is acceptable
+   *
+   * This field is retained for logging/provenance but NOT used to adjust used_input_tokens.
+   */
   actualInputTokens: number;
-  /** Actual output tokens consumed */
+  /** Actual output tokens consumed (from provider metadata) */
   actualOutputTokens: number;
 }
 
@@ -59,6 +82,8 @@ export interface ReconcileUsageInput {
 export interface ReserveBudgetResult {
   /** Whether reservation was successful */
   ok: boolean;
+  /** Reservation ID (if ok=true) — required for reconciliation */
+  reservationId?: number;
   /** Reason for failure (if ok=false) */
   reason?: 'session_not_found' | 'session_terminal' | 'budget_exceeded';
   /** Session status at time of check */
@@ -69,6 +94,21 @@ export interface ReserveBudgetResult {
   remainingInputTokens?: number;
   /** Remaining output tokens after reservation (if ok=true) */
   remainingOutputTokens?: number;
+}
+
+export interface ReconcileUsageResult {
+  /** Whether reconciliation was performed */
+  ok: boolean;
+  /** Whether this was a duplicate reconciliation (already_reconciled) */
+  alreadyReconciled: boolean;
+  /** Reason for failure (if ok=false and not alreadyReconciled) */
+  reason?: 'reservation_not_found' | 'session_mismatch';
+  /** Session after reconciliation (if ok=true or alreadyReconciled) */
+  session?: ControlledTestSession;
+  /** Reserved output tokens from the reservation */
+  reservedOutputTokens?: number;
+  /** Output tokens released (0 if alreadyReconciled) */
+  tokensReleased?: number;
 }
 
 export interface SessionSummary {
@@ -130,6 +170,50 @@ export class RunBoundToOtherSessionError extends Error {
   constructor(runId: number, existingSessionId: number) {
     super(`Run ${runId} already bound to session ${existingSessionId}`);
     this.name = 'RunBoundToOtherSessionError';
+  }
+}
+
+export class InvalidBudgetInputError extends Error {
+  constructor(field: string, value: unknown, reason: string) {
+    super(`Invalid budget input: ${field}=${value} (${reason})`);
+    this.name = 'InvalidBudgetInputError';
+  }
+}
+
+export class ReservationNotFoundError extends Error {
+  constructor(reservationId: number) {
+    super(`Reservation not found: ${reservationId}`);
+    this.name = 'ReservationNotFoundError';
+  }
+}
+
+export class ReservationSessionMismatchError extends Error {
+  constructor(reservationId: number, expectedSessionId: number, actualSessionId: number) {
+    super(`Reservation ${reservationId} belongs to session ${actualSessionId}, not ${expectedSessionId}`);
+    this.name = 'ReservationSessionMismatchError';
+  }
+}
+
+// ─── Validation Helpers ───────────────────────────────────────────────────────
+
+/**
+ * Validate that a token count is a finite positive integer.
+ * Rejects: zero, negative, fractional, NaN, Infinity, -Infinity.
+ *
+ * @throws InvalidBudgetInputError if validation fails
+ */
+export function validateTokenCount(field: string, value: number): void {
+  if (typeof value !== 'number') {
+    throw new InvalidBudgetInputError(field, value, 'must be a number');
+  }
+  if (!Number.isFinite(value)) {
+    throw new InvalidBudgetInputError(field, value, 'must be finite (not NaN or Infinity)');
+  }
+  if (!Number.isInteger(value)) {
+    throw new InvalidBudgetInputError(field, value, 'must be an integer (no fractions)');
+  }
+  if (value <= 0) {
+    throw new InvalidBudgetInputError(field, value, 'must be positive (greater than zero)');
   }
 }
 
@@ -243,6 +327,16 @@ export async function getSessionByRunId(
 }
 
 /**
+ * Get reservation by internal ID.
+ */
+export async function getReservationById(
+  id: number,
+  transaction?: Transaction,
+): Promise<ControlledTestReservation | null> {
+  return ControlledTestReservationModel.findByPk(id, { transaction });
+}
+
+/**
  * Convert session to summary format.
  */
 export function toSessionSummary(session: ControlledTestSession): SessionSummary {
@@ -347,50 +441,65 @@ export async function bindRunToSession(
  * Atomically reserve budget for one AI request.
  * This is the critical path for budget enforcement.
  *
- * Uses atomic UPDATE with preconditions to prevent race conditions.
- * Session status is checked atomically with the budget update.
+ * Creates a persistent reservation record AND increments session counters
+ * in a single database transaction. If either fails, both are rolled back.
+ *
+ * Reserves ALL THREE limits atomically:
+ * - 1 request
+ * - Estimated input tokens
+ * - Reserved output tokens (typically the full max output allocation)
+ *
+ * Returns a reservation ID that MUST be used for reconciliation.
  *
  * Returns immediately if:
+ * - Input validation fails (non-positive, non-finite, non-integer)
  * - Session not found
  * - Session is in terminal state (cancelled, exhausted, completed)
- * - Budget would be exceeded
+ * - ANY budget would be exceeded (request, input, OR output)
+ *
+ * @throws InvalidBudgetInputError if token counts are invalid
  */
 export async function reserveBudget(
   input: ReserveBudgetInput,
   transaction?: Transaction,
 ): Promise<ReserveBudgetResult> {
+  // F2: Validate token counts at service boundary
+  validateTokenCount('estimatedInputTokens', input.estimatedInputTokens);
+  validateTokenCount('reservedOutputTokens', input.reservedOutputTokens);
+
   const t = transaction ?? (await sequelize.transaction());
   const shouldCommit = !transaction;
 
   try {
-    // Atomic UPDATE with preconditions
+    // Step 1: Atomic UPDATE with preconditions for ALL THREE limits
     // This is the definitive algorithm per QORI-ROADMAP.md
-    // Note: Sequelize query() returns [results, metadata] for raw queries
     const [results] = (await sequelize.query(
       `
       UPDATE controlled_test_sessions
       SET
         used_requests = used_requests + 1,
         used_input_tokens = used_input_tokens + :estimatedInputTokens,
+        used_output_tokens = used_output_tokens + :reservedOutputTokens,
         updated_at = CURRENT_TIMESTAMP
       WHERE
         id = :sessionId
         AND status = 'active'
         AND used_requests < max_requests
         AND used_input_tokens + :estimatedInputTokens <= max_input_tokens
+        AND used_output_tokens + :reservedOutputTokens <= max_output_tokens
       RETURNING id
       `,
       {
         replacements: {
           sessionId: input.sessionId,
           estimatedInputTokens: input.estimatedInputTokens,
+          reservedOutputTokens: input.reservedOutputTokens,
         },
         raw: true,
         transaction: t,
       },
     )) as [Array<{ id: number }>, unknown];
 
-    // results is an array of returned rows; empty means no rows matched
     const affectedCount = results.length;
 
     if (affectedCount === 0) {
@@ -427,7 +536,19 @@ export async function reserveBudget(
       };
     }
 
-    // Reservation succeeded — fetch updated session for remaining budgets
+    // Step 2: Create reservation record (same transaction)
+    const reservation = await ControlledTestReservationModel.create(
+      {
+        session_id: input.sessionId,
+        reserved_input_tokens: input.estimatedInputTokens,
+        reserved_output_tokens: input.reservedOutputTokens,
+        purpose: input.purpose ?? null,
+        state: 'reserved',
+      },
+      { transaction: t },
+    );
+
+    // Step 3: Fetch updated session for remaining budgets
     const updatedSession = await ControlledTestSessionModel.findByPk(input.sessionId, {
       transaction: t,
     });
@@ -447,6 +568,7 @@ export async function reserveBudget(
 
     return {
       ok: true,
+      reservationId: reservation.id,
       sessionStatus: updatedSession.status,
       remainingRequests: updatedSession.max_requests - updatedSession.used_requests,
       remainingInputTokens: updatedSession.max_input_tokens - updatedSession.used_input_tokens,
@@ -464,33 +586,113 @@ export async function reserveBudget(
 
 /**
  * Reconcile actual token usage after AI request completes.
- * Updates input/output token counts and checks for budget exhaustion.
  *
- * If any budget limit is reached, transitions session to 'exhausted'.
+ * IDEMPOTENT: If the reservation has already been reconciled, returns
+ * `{ ok: true, alreadyReconciled: true }` without modifying any counters.
+ *
+ * Uses the reservation ID to:
+ * 1. Verify the reservation exists and belongs to the expected session
+ * 2. Lock the reservation row to prevent concurrent reconciliation
+ * 3. Check if already reconciled (return idempotent result)
+ * 4. Calculate and release unused output allocation
+ * 5. Atomically update reservation state and session counters
+ *
+ * Conservative reconciliation:
+ * - Releases unused output allocation (reserved - actual)
+ * - Never releases more than was reserved
+ * - Never allows negative usage counters
+ * - Does NOT reconcile input tokens (conservative estimate retained)
+ *
+ * If any budget limit is reached after reconciliation, transitions session to 'exhausted'.
+ *
+ * @throws InvalidBudgetInputError if actualOutputTokens is invalid
  */
 export async function reconcileUsage(
   input: ReconcileUsageInput,
   transaction?: Transaction,
-): Promise<ControlledTestSession> {
+): Promise<ReconcileUsageResult> {
+  // Validate output token values
+  // actualOutputTokens can be 0 if the model returned empty response
+  if (typeof input.actualOutputTokens !== 'number' || !Number.isFinite(input.actualOutputTokens)) {
+    throw new InvalidBudgetInputError('actualOutputTokens', input.actualOutputTokens, 'must be a finite number');
+  }
+  if (input.actualOutputTokens < 0) {
+    throw new InvalidBudgetInputError('actualOutputTokens', input.actualOutputTokens, 'cannot be negative');
+  }
+
   const t = transaction ?? (await sequelize.transaction());
   const shouldCommit = !transaction;
 
   try {
-    const session = await ControlledTestSessionModel.findByPk(input.sessionId, {
+    // Step 1: Lock and fetch the reservation
+    const reservation = await ControlledTestReservationModel.findByPk(input.reservationId, {
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+
+    if (!reservation) {
+      if (shouldCommit) {
+        await t.rollback();
+      }
+      return {
+        ok: false,
+        alreadyReconciled: false,
+        reason: 'reservation_not_found',
+      };
+    }
+
+    // Step 2: Check if already reconciled (IDEMPOTENT)
+    if (reservation.state === 'reconciled') {
+      // Fetch session for return value
+      const session = await ControlledTestSessionModel.findByPk(reservation.session_id, {
+        transaction: t,
+      });
+
+      if (shouldCommit) {
+        await t.commit(); // No changes, but commit the read
+      }
+
+      return {
+        ok: true,
+        alreadyReconciled: true,
+        session: session ?? undefined,
+        reservedOutputTokens: reservation.reserved_output_tokens,
+        tokensReleased: 0,
+      };
+    }
+
+    // Step 3: Lock and fetch the session
+    const session = await ControlledTestSessionModel.findByPk(reservation.session_id, {
       transaction: t,
       lock: t.LOCK.UPDATE,
     });
 
     if (!session) {
-      throw new SessionNotFoundError(input.sessionId);
+      if (shouldCommit) {
+        await t.rollback();
+      }
+      return {
+        ok: false,
+        alreadyReconciled: false,
+        reason: 'reservation_not_found', // Session deleted, treat as not found
+      };
     }
 
-    // Update output tokens (input tokens were already reserved)
-    // Note: We allow going slightly over on output tokens since we can't predict exact output
-    session.used_output_tokens = session.used_output_tokens + input.actualOutputTokens;
+    // Step 4: Calculate tokens to release
+    const actualOutput = Math.floor(input.actualOutputTokens);
+    const reservedOutput = reservation.reserved_output_tokens;
+
+    // Calculate how much to release: reserved - actual, but capped
+    const toRelease = Math.max(0, reservedOutput - actualOutput);
+
+    // Ensure we never go negative
+    const newUsedOutputTokens = Math.max(0, session.used_output_tokens - toRelease);
+
+    // Step 5: Update session counters
+    session.used_output_tokens = newUsedOutputTokens;
     session.updated_at = new Date();
 
-    // Check for budget exhaustion
+    // Check for budget exhaustion (after reconciliation)
     const requestsExhausted = session.used_requests >= session.max_requests;
     const inputTokensExhausted = session.used_input_tokens >= session.max_input_tokens;
     const outputTokensExhausted = session.used_output_tokens >= session.max_output_tokens;
@@ -505,11 +707,25 @@ export async function reconcileUsage(
 
     await session.save({ transaction: t });
 
+    // Step 6: Update reservation state
+    reservation.state = 'reconciled';
+    reservation.actual_input_tokens = input.actualInputTokens;
+    reservation.actual_output_tokens = actualOutput;
+    reservation.reconciled_at = new Date();
+
+    await reservation.save({ transaction: t });
+
     if (shouldCommit) {
       await t.commit();
     }
 
-    return session;
+    return {
+      ok: true,
+      alreadyReconciled: false,
+      session,
+      reservedOutputTokens: reservedOutput,
+      tokensReleased: toRelease,
+    };
   } catch (error) {
     if (shouldCommit) {
       await t.rollback();
