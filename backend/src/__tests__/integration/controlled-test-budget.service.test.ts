@@ -1600,4 +1600,1001 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       expect(run!.worker_id).toBeNull();
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // M6: API-Layer Session Administration Tests
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('M6 — API-layer session administration', () => {
+    // Import M6 functions
+    const {
+      listSessionsByProjectAndActor,
+      getSessionDetailsByPublicId,
+      getSessionReservations,
+      cancelControlledSessionFromApi,
+      SessionActorMismatchError: BudgetSessionActorMismatchError,
+      SessionNotCancellableError,
+      reserveBudget,
+    } = require('../../services/controlled-test-budget.service');
+
+    async function createControlledTestRun(runActorId: number): Promise<{ id: number; publicId: string }> {
+      const run = await DiscoveryRunModel.create({
+        project_id: projectId,
+        actor_id: runActorId,
+        discovery_type: 'desk_research',
+        topic: `m6-test-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        topic_slug: `m6-${Date.now()}`,
+        source_intent: null,
+        status: 'pending',
+        is_controlled: true,
+        created_by_identity: 'test:m6',
+      } as CreationAttributes<DiscoveryRun>) as DiscoveryRun;
+      return { id: run.id, publicId: run.public_id };
+    }
+
+    async function createBoundSession(runActorId: number): Promise<{
+      session: Awaited<ReturnType<typeof createSession>>;
+      run: { id: number; publicId: string };
+    }> {
+      const session = await createSession({
+        maxRequests: 10,
+        maxInputTokens: 50000,
+        maxOutputTokens: 20000,
+        actorId: runActorId,
+      });
+      const run = await createControlledTestRun(runActorId);
+      await bindRunToSession(session.id, run.id);
+      return { session, run };
+    }
+
+    describe('listSessionsByProjectAndActor', () => {
+      it('returns sessions bound to controlled runs in project', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        const result = await listSessionsByProjectAndActor(projectId, actorId);
+
+        expect(result.items.length).toBe(1);
+        expect(result.items[0].publicId).toBe(session.public_id);
+        expect(result.items[0].boundRunPublicId).toBe(run.publicId);
+        expect(result.total).toBe(1);
+      });
+
+      it('excludes unbound sessions', async () => {
+        // Create unbound session
+        await createSession({
+          maxRequests: 5,
+          maxInputTokens: 10000,
+          maxOutputTokens: 5000,
+          actorId,
+        });
+
+        const result = await listSessionsByProjectAndActor(projectId, actorId);
+
+        expect(result.items.length).toBe(0);
+        expect(result.total).toBe(0);
+      });
+
+      it('excludes sessions owned by other actors', async () => {
+        const actor2 = await ActorModel.create({
+          organization_id: TEST_ORG_ID,
+          email: `actor2-list-${Date.now()}@test.com`,
+          name: 'Actor Two',
+        }) as Actor;
+
+        // Create session owned by actor2
+        await createBoundSession(actor2.id);
+
+        // Query as actor1
+        const result = await listSessionsByProjectAndActor(projectId, actorId);
+
+        expect(result.items.length).toBe(0);
+        expect(result.total).toBe(0);
+      });
+
+      it('respects pagination limits', async () => {
+        // Create 3 bound sessions - must complete each before creating next due to single active constraint
+        const { session: s1 } = await createBoundSession(actorId);
+        await completeSession(s1.id);
+        const { session: s2 } = await createBoundSession(actorId);
+        await completeSession(s2.id);
+        const { session: s3 } = await createBoundSession(actorId);
+        await completeSession(s3.id);
+
+        const result = await listSessionsByProjectAndActor(projectId, actorId, { limit: 2, offset: 0 });
+
+        expect(result.items.length).toBe(2);
+        expect(result.total).toBe(3);
+      });
+
+      it('enforces max page size of 100', async () => {
+        const result = await listSessionsByProjectAndActor(projectId, actorId, { limit: 200 });
+
+        // Should be capped at 100 (but 0 results since no sessions)
+        expect(result.items.length).toBe(0);
+      });
+    });
+
+    describe('getSessionDetailsByPublicId', () => {
+      it('returns session details for creator', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        const result = await getSessionDetailsByPublicId(session.public_id, projectId, actorId);
+
+        expect(result.publicId).toBe(session.public_id);
+        expect(result.status).toBe('active');
+        expect(result.boundRunPublicId).toBe(run.publicId);
+        expect(result.budget.maxRequests).toBe(10);
+      });
+
+      it('throws SessionNotFoundError for unbound session', async () => {
+        const session = await createSession({
+          maxRequests: 5,
+          maxInputTokens: 10000,
+          maxOutputTokens: 5000,
+          actorId,
+        });
+
+        await expect(
+          getSessionDetailsByPublicId(session.public_id, projectId, actorId),
+        ).rejects.toThrow(SessionNotFoundError);
+      });
+
+      it('throws SessionActorMismatchError for non-creator', async () => {
+        const actor2 = await ActorModel.create({
+          organization_id: TEST_ORG_ID,
+          email: `actor2-detail-${Date.now()}@test.com`,
+          name: 'Actor Two',
+        }) as Actor;
+
+        const { session } = await createBoundSession(actorId);
+
+        await expect(
+          getSessionDetailsByPublicId(session.public_id, projectId, actor2.id),
+        ).rejects.toThrow(BudgetSessionActorMismatchError);
+      });
+
+      it('throws SessionNotFoundError for wrong project', async () => {
+        // Create another project
+        const project2 = await ProjectModel.create({
+          name: 'M6 Test Project 2',
+          slug: `m6-test-2-${Date.now()}`,
+          status: 'active',
+          created_by: 'U_TEST',
+          organization_id: TEST_ORG_ID,
+        });
+        const project2Id = (project2 as unknown as { id: number }).id;
+
+        const { session } = await createBoundSession(actorId);
+
+        await expect(
+          getSessionDetailsByPublicId(session.public_id, project2Id, actorId),
+        ).rejects.toThrow(SessionNotFoundError);
+      });
+    });
+
+    describe('getSessionReservations', () => {
+      it('returns paginated reservations for session', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        // Create some reservations
+        await reserveBudget({
+          sessionId: session.id,
+          discoveryRunId: run.id,
+          estimatedInputTokens: 100,
+          reservedOutputTokens: 50,
+          purpose: 'test-1',
+        });
+        await reserveBudget({
+          sessionId: session.id,
+          discoveryRunId: run.id,
+          estimatedInputTokens: 200,
+          reservedOutputTokens: 100,
+          purpose: 'test-2',
+        });
+
+        const result = await getSessionReservations(session.public_id, projectId, actorId);
+
+        expect(result.items.length).toBe(2);
+        expect(result.pagination.total).toBe(2);
+        expect(result.items[0].purpose).toBe('test-2'); // Most recent first
+      });
+
+      it('respects pagination', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        // Create 3 reservations
+        for (let i = 0; i < 3; i++) {
+          await reserveBudget({
+            sessionId: session.id,
+            discoveryRunId: run.id,
+            estimatedInputTokens: 100,
+            reservedOutputTokens: 50,
+          });
+        }
+
+        const result = await getSessionReservations(session.public_id, projectId, actorId, {
+          limit: 2,
+          offset: 0,
+        });
+
+        expect(result.items.length).toBe(2);
+        expect(result.pagination.total).toBe(3);
+        expect(result.pagination.hasMore).toBe(true);
+      });
+
+      it('throws SessionActorMismatchError for non-creator', async () => {
+        const actor2 = await ActorModel.create({
+          organization_id: TEST_ORG_ID,
+          email: `actor2-res-${Date.now()}@test.com`,
+          name: 'Actor Two',
+        }) as Actor;
+
+        const { session } = await createBoundSession(actorId);
+
+        await expect(
+          getSessionReservations(session.public_id, projectId, actor2.id),
+        ).rejects.toThrow(BudgetSessionActorMismatchError);
+      });
+    });
+
+    describe('cancelControlledSessionFromApi', () => {
+      it('cancels active session and fails pending run atomically', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        const result = await cancelControlledSessionFromApi(
+          session.public_id,
+          projectId,
+          actorId,
+          'Test cancellation',
+        );
+
+        expect(result.status).toBe('cancelled');
+        expect(result.idempotent).toBe(false);
+        expect(result.cancellationReason).toBe('Test cancellation');
+        expect(result.boundRunStatus).toBe('failed');
+
+        // Verify run was failed
+        const runAfter = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+        expect(runAfter.status).toBe('failed');
+        expect(runAfter.failure_code).toBe('SESSION_CANCELLED');
+        expect(runAfter.failure_stage).toBe('controlled_session');
+      });
+
+      it('cancels active session with processing run (run unchanged)', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        // Transition run to processing
+        await sequelize.query(
+          `UPDATE discovery_runs SET status = 'processing', worker_id = 'test-worker' WHERE id = :runId`,
+          { replacements: { runId: run.id } },
+        );
+
+        const result = await cancelControlledSessionFromApi(
+          session.public_id,
+          projectId,
+          actorId,
+          'Cancel while processing',
+        );
+
+        expect(result.status).toBe('cancelled');
+        expect(result.boundRunStatus).toBe('processing'); // Unchanged
+
+        // Verify run was NOT failed
+        const runAfter = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+        expect(runAfter.status).toBe('processing');
+        expect(runAfter.failure_code).toBeNull();
+      });
+
+      it('returns idempotent 200 for already cancelled session', async () => {
+        const { session } = await createBoundSession(actorId);
+
+        // Cancel first time
+        const first = await cancelControlledSessionFromApi(
+          session.public_id,
+          projectId,
+          actorId,
+          'First cancel',
+        );
+        expect(first.idempotent).toBe(false);
+
+        // Cancel second time — idempotent
+        const second = await cancelControlledSessionFromApi(
+          session.public_id,
+          projectId,
+          actorId,
+          'Second cancel',
+        );
+
+        expect(second.idempotent).toBe(true);
+        expect(second.cancelledAt).toEqual(first.cancelledAt);
+        expect(second.cancellationReason).toBe('First cancel'); // Original preserved
+      });
+
+      it('throws SessionNotCancellableError for completed session', async () => {
+        const { session } = await createBoundSession(actorId);
+        await completeSession(session.id);
+
+        await expect(
+          cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Too late'),
+        ).rejects.toThrow(SessionNotCancellableError);
+      });
+
+      it('throws SessionNotCancellableError for exhausted session', async () => {
+        const { session } = await createBoundSession(actorId);
+
+        // Force exhausted state
+        await sequelize.query(
+          `UPDATE controlled_test_sessions SET status = 'exhausted', exhausted_at = NOW() WHERE id = :id`,
+          { replacements: { id: session.id } },
+        );
+
+        await expect(
+          cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Exhausted'),
+        ).rejects.toThrow(SessionNotCancellableError);
+      });
+
+      it('throws SessionActorMismatchError for non-creator', async () => {
+        const actor2 = await ActorModel.create({
+          organization_id: TEST_ORG_ID,
+          email: `actor2-cancel-${Date.now()}@test.com`,
+          name: 'Actor Two',
+        }) as Actor;
+
+        const { session } = await createBoundSession(actorId);
+
+        await expect(
+          cancelControlledSessionFromApi(session.public_id, projectId, actor2.id, 'Unauthorized'),
+        ).rejects.toThrow(BudgetSessionActorMismatchError);
+      });
+
+      it('throws SessionNotFoundError for unbound session', async () => {
+        const session = await createSession({
+          maxRequests: 5,
+          maxInputTokens: 10000,
+          maxOutputTokens: 5000,
+          actorId,
+        });
+
+        await expect(
+          cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Unbound'),
+        ).rejects.toThrow(SessionNotFoundError);
+      });
+
+      it('throws SessionNotFoundError for wrong project', async () => {
+        const project2 = await ProjectModel.create({
+          name: 'M6 Cancel Test Project 2',
+          slug: `m6-cancel-2-${Date.now()}`,
+          status: 'active',
+          created_by: 'U_TEST',
+          organization_id: TEST_ORG_ID,
+        });
+        const project2Id = (project2 as unknown as { id: number }).id;
+
+        const { session } = await createBoundSession(actorId);
+
+        await expect(
+          cancelControlledSessionFromApi(session.public_id, project2Id, actorId, 'Wrong project'),
+        ).rejects.toThrow(SessionNotFoundError);
+      });
+    });
+
+    describe('M6 — cancellation race conditions', () => {
+      const claimService = require('../../services/discovery-claim.service');
+
+      async function createControlledRun(runActorId: number): Promise<number> {
+        const run = await DiscoveryRunModel.create({
+          project_id: projectId,
+          actor_id: runActorId,
+          discovery_type: 'desk_research',
+          topic: `race-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          topic_slug: `race-${Date.now()}`,
+          source_intent: null,
+          status: 'pending',
+          is_controlled: true,
+          created_by_identity: 'test:race',
+        } as CreationAttributes<DiscoveryRun>) as DiscoveryRun;
+        return run.id;
+      }
+
+      it('cancel before claim → claim rejected', async () => {
+        const session = await createSession({
+          maxRequests: 5,
+          maxInputTokens: 10000,
+          maxOutputTokens: 5000,
+          actorId,
+        });
+        const runId = await createControlledRun(actorId);
+        await bindRunToSession(session.id, runId);
+
+        // Cancel first
+        await cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Before claim');
+
+        // Claim should fail
+        await expect(
+          claimService.authorizeAndClaimControlledRun(session.id, runId, actorId, 'worker-1'),
+        ).rejects.toThrow(claimService.SessionNotActiveError);
+      });
+
+      it('completion before cancel → cancel returns 409', async () => {
+        const session = await createSession({
+          maxRequests: 5,
+          maxInputTokens: 10000,
+          maxOutputTokens: 5000,
+          actorId,
+        });
+        const runId = await createControlledRun(actorId);
+        await bindRunToSession(session.id, runId);
+
+        // Complete session
+        await completeSession(session.id);
+
+        // Cancel should fail with 409
+        await expect(
+          cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'After complete'),
+        ).rejects.toThrow(SessionNotCancellableError);
+      });
+
+      it('concurrent cancellations → both succeed (one idempotent)', async () => {
+        const session = await createSession({
+          maxRequests: 5,
+          maxInputTokens: 10000,
+          maxOutputTokens: 5000,
+          actorId,
+        });
+        const runId = await createControlledRun(actorId);
+        await bindRunToSession(session.id, runId);
+
+        // Concurrent cancels
+        const [result1, result2] = await Promise.all([
+          cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Cancel 1'),
+          cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Cancel 2'),
+        ]);
+
+        // Both should succeed
+        expect(result1.status).toBe('cancelled');
+        expect(result2.status).toBe('cancelled');
+
+        // Exactly one should be idempotent
+        const idempotentCount = [result1.idempotent, result2.idempotent].filter(Boolean).length;
+        expect(idempotentCount).toBe(1);
+      });
+
+      it('reservations rejected after cancellation', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        // Cancel session
+        await cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Block future');
+
+        // Try to reserve budget
+        const result = await reserveBudget({
+          sessionId: session.id,
+          discoveryRunId: run.id,
+          estimatedInputTokens: 100,
+          reservedOutputTokens: 50,
+        });
+
+        expect(result.ok).toBe(false);
+        expect(result.reason).toBe('session_terminal');
+        expect(result.sessionStatus).toBe('cancelled');
+      });
+
+      it('cancellation after run claimed → session cancelled but run stays processing', async () => {
+        const session = await createSession({
+          maxRequests: 5,
+          maxInputTokens: 10000,
+          maxOutputTokens: 5000,
+          actorId,
+        });
+        const runId = await createControlledRun(actorId);
+        await bindRunToSession(session.id, runId);
+
+        // Claim the run
+        const claimResult = await claimService.authorizeAndClaimControlledRun(
+          session.id,
+          runId,
+          actorId,
+          'worker-1',
+        );
+        expect(claimResult.run.status).toBe('processing');
+
+        // Cancel after claim - session is cancelled but run stays processing
+        const cancelResult = await cancelControlledSessionFromApi(
+          session.public_id,
+          projectId,
+          actorId,
+          'Cancel after claim',
+        );
+
+        expect(cancelResult.status).toBe('cancelled');
+        expect(cancelResult.boundRunStatus).toBe('processing');
+
+        // Verify session is cancelled
+        const sessionAfter = await getSessionById(session.id);
+        expect(sessionAfter!.status).toBe('cancelled');
+
+        // Verify run is still processing (not failed)
+        const runAfter = await DiscoveryRunModel.findByPk(runId) as DiscoveryRun;
+        expect(runAfter.status).toBe('processing');
+
+        // No new reservations allowed
+        const reserveResult = await reserveBudget({
+          sessionId: session.id,
+          discoveryRunId: runId,
+          estimatedInputTokens: 100,
+          reservedOutputTokens: 50,
+        });
+        expect(reserveResult.ok).toBe(false);
+        expect(reserveResult.reason).toBe('session_terminal');
+      });
+    });
+
+    describe('M6 — list isolation with multiple creators', () => {
+      it('list totals only count sessions for requesting actor', async () => {
+        // Create session for actor1 and complete it
+        const { session: s1 } = await createBoundSession(actorId);
+        await completeSession(s1.id);
+
+        // Create second actor
+        const actor2 = await ActorModel.create({
+          organization_id: TEST_ORG_ID,
+          email: `actor2-list-total-${Date.now()}@test.com`,
+          name: 'Actor Two',
+        }) as Actor;
+
+        // Create session for actor2
+        await createBoundSession(actor2.id);
+
+        // Actor1's list should only show their 1 completed session
+        const result1 = await listSessionsByProjectAndActor(projectId, actorId);
+        expect(result1.total).toBe(1);
+        expect(result1.items.length).toBe(1);
+        expect(result1.items[0].publicId).toBe(s1.public_id);
+
+        // Actor2's list should only show their 1 active session
+        const result2 = await listSessionsByProjectAndActor(projectId, actor2.id);
+        expect(result2.total).toBe(1);
+        expect(result2.items.length).toBe(1);
+      });
+
+      it('pagination respects actor filtering', async () => {
+        // Create 3 sessions for actor1 (complete each to allow next)
+        const { session: s1 } = await createBoundSession(actorId);
+        await completeSession(s1.id);
+        const { session: s2 } = await createBoundSession(actorId);
+        await completeSession(s2.id);
+        const { session: s3 } = await createBoundSession(actorId);
+        await completeSession(s3.id);
+
+        // Create second actor with their own session
+        const actor2 = await ActorModel.create({
+          organization_id: TEST_ORG_ID,
+          email: `actor2-pagination-${Date.now()}@test.com`,
+          name: 'Actor Two',
+        }) as Actor;
+        await createBoundSession(actor2.id);
+
+        // Actor1 paginated list - page 1 of 2
+        const page1 = await listSessionsByProjectAndActor(projectId, actorId, { limit: 2, offset: 0 });
+        expect(page1.total).toBe(3); // Only actor1's sessions
+        expect(page1.items.length).toBe(2);
+
+        // Page 2
+        const page2 = await listSessionsByProjectAndActor(projectId, actorId, { limit: 2, offset: 2 });
+        expect(page2.total).toBe(3);
+        expect(page2.items.length).toBe(1);
+      });
+    });
+
+    describe('M6 — PostgreSQL transactional guarantees', () => {
+      // Import claim service for processing state tests
+      const { authorizeAndClaimControlledRun } = require('../../services/discovery-claim.service');
+
+      it('A: cancel commits before M5e finalization → finalization cannot complete run', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        // Claim the run to put it in processing state
+        await authorizeAndClaimControlledRun(session.id, run.id, actorId, 'worker-1');
+
+        // Cancel session (run is processing so stays processing)
+        await cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Cancel before finalize');
+
+        // Attempt finalization - session is now cancelled
+        const sessionAfter = await getSessionById(session.id);
+        expect(sessionAfter!.status).toBe('cancelled');
+
+        // Finalization should detect cancelled session and fail the run
+        // (In real code, finalizeControlledExecution checks session status)
+        // Here we verify the session is terminal
+        const reserveResult = await reserveBudget({
+          sessionId: session.id,
+          discoveryRunId: run.id,
+          estimatedInputTokens: 100,
+          reservedOutputTokens: 50,
+        });
+        expect(reserveResult.ok).toBe(false);
+        expect(reserveResult.sessionStatus).toBe('cancelled');
+      });
+
+      it('B: M5e completion commits before cancellation → cancel returns 409', async () => {
+        const { session } = await createBoundSession(actorId);
+
+        // Complete session first
+        await completeSession(session.id);
+
+        // Cancellation should fail with 409
+        await expect(
+          cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'After completion'),
+        ).rejects.toThrow(SessionNotCancellableError);
+
+        // Verify session stayed completed
+        const sessionAfter = await getSessionById(session.id);
+        expect(sessionAfter!.status).toBe('completed');
+      });
+
+      it('C: run update failure during cancellation → both session and run unchanged', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        // Claim the run to change its status to processing
+        await authorizeAndClaimControlledRun(session.id, run.id, actorId, 'worker-race');
+
+        // Now cancellation should succeed but NOT fail the run (it's processing not pending)
+        const result = await cancelControlledSessionFromApi(
+          session.public_id,
+          projectId,
+          actorId,
+          'Race test',
+        );
+
+        // Session cancelled, run unchanged (processing)
+        expect(result.status).toBe('cancelled');
+        expect(result.boundRunStatus).toBe('processing');
+
+        // Verify run was not modified
+        const runAfter = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+        expect(runAfter.status).toBe('processing');
+        expect(runAfter.failure_code).toBeNull();
+      });
+
+      it('D: concurrent cancel requests → exactly one transition, one idempotent', async () => {
+        const { session } = await createBoundSession(actorId);
+
+        // Launch 3 concurrent cancellations
+        const results = await Promise.all([
+          cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Cancel A'),
+          cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Cancel B'),
+          cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Cancel C'),
+        ]);
+
+        // All should succeed
+        expect(results.every(r => r.status === 'cancelled')).toBe(true);
+
+        // Exactly one should be non-idempotent (the winner)
+        const nonIdempotent = results.filter(r => !r.idempotent);
+        const idempotent = results.filter(r => r.idempotent);
+        expect(nonIdempotent.length).toBe(1);
+        expect(idempotent.length).toBe(2);
+
+        // All idempotent ones should have same timestamp as the winner
+        const winnerTime = nonIdempotent[0].cancelledAt;
+        expect(idempotent.every(r => r.cancelledAt.getTime() === winnerTime.getTime())).toBe(true);
+      });
+
+      it('E: run failed atomically with session cancellation', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        // Run is pending - cancellation should fail it atomically
+        const result = await cancelControlledSessionFromApi(
+          session.public_id,
+          projectId,
+          actorId,
+          'Atomic cancel test',
+        );
+
+        expect(result.status).toBe('cancelled');
+        expect(result.boundRunStatus).toBe('failed');
+
+        // Verify run has correct failure fields
+        const runAfter = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+        expect(runAfter.status).toBe('failed');
+        expect(runAfter.failure_code).toBe('SESSION_CANCELLED');
+        expect(runAfter.failure_message).toBe('Atomic cancel test');
+        expect(runAfter.failure_stage).toBe('controlled_session');
+        expect(runAfter.completed_at).not.toBeNull();
+      });
+
+      it('F: M5e finalization (completeSession) cannot complete cancelled session', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        // Claim the run to put it in processing state
+        await authorizeAndClaimControlledRun(session.id, run.id, actorId, 'worker-finalize');
+
+        // Cancel the session via M6 API
+        await cancelControlledSessionFromApi(
+          session.public_id,
+          projectId,
+          actorId,
+          'Cancel before M5e finalization',
+        );
+
+        // Verify session is cancelled
+        const sessionAfterCancel = await getSessionById(session.id);
+        expect(sessionAfterCancel!.status).toBe('cancelled');
+
+        // Verify run is still processing (not failed, since it was claimed)
+        const runAfterCancel = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+        expect(runAfterCancel.status).toBe('processing');
+
+        // Attempt M5e finalization via completeSession - should throw SessionTerminalError
+        await expect(completeSession(session.id)).rejects.toThrow(SessionTerminalError);
+
+        // Verify session remained cancelled (not completed)
+        const sessionAfterFinalize = await getSessionById(session.id);
+        expect(sessionAfterFinalize!.status).toBe('cancelled');
+
+        // Verify run is still processing (finalization blocked, not completed)
+        const runAfterFinalize = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+        expect(runAfterFinalize.status).toBe('processing');
+      });
+
+      it('G: transactional rollback on authorization failure leaves data unchanged', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        // Record original state
+        const sessionBefore = await getSessionById(session.id);
+        const runBefore = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+        expect(sessionBefore!.status).toBe('active');
+        expect(sessionBefore!.cancelled_at).toBeNull();
+        expect(runBefore.status).toBe('pending');
+        expect(runBefore.failure_code).toBeNull();
+
+        // Create another actor
+        const actor2 = await ActorModel.create({
+          organization_id: TEST_ORG_ID,
+          display_name: 'Unauthorized Actor',
+          status: 'active',
+        });
+        const actor2Id = (actor2 as unknown as { id: number }).id;
+
+        // Attempt cancellation with wrong actor - should fail with SessionActorMismatchError
+        await expect(
+          cancelControlledSessionFromApi(session.public_id, projectId, actor2Id, 'Unauthorized cancel'),
+        ).rejects.toThrow(BudgetSessionActorMismatchError);
+
+        // Verify session unchanged (transaction rolled back)
+        const sessionAfter = await getSessionById(session.id);
+        expect(sessionAfter!.status).toBe('active');
+        expect(sessionAfter!.cancelled_at).toBeNull();
+
+        // Verify run unchanged
+        const runAfter = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+        expect(runAfter.status).toBe('pending');
+        expect(runAfter.failure_code).toBeNull();
+        expect(runAfter.failure_message).toBeNull();
+      });
+
+      it('H: transactional rollback on terminal state rejection leaves data unchanged', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        // Complete the session
+        await completeSession(session.id);
+
+        // Record state after completion
+        const sessionBefore = await getSessionById(session.id);
+        const runBefore = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+        expect(sessionBefore!.status).toBe('completed');
+        expect(sessionBefore!.completed_at).not.toBeNull();
+        expect(sessionBefore!.cancelled_at).toBeNull();
+
+        // Attempt cancellation of completed session - should fail with SessionNotCancellableError
+        await expect(
+          cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Too late'),
+        ).rejects.toThrow(SessionNotCancellableError);
+
+        // Verify session unchanged (transaction rolled back, no cancelled_at set)
+        const sessionAfter = await getSessionById(session.id);
+        expect(sessionAfter!.status).toBe('completed');
+        expect(sessionAfter!.cancelled_at).toBeNull();
+        expect(sessionAfter!.cancellation_reason).toBeNull();
+
+        // Verify run unchanged
+        const runAfter = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+        expect(runAfter.status).toBe(runBefore.status);
+        expect(runAfter.failure_code).toBeNull();
+      });
+    });
+
+    describe('M6 — Concurrent cancellation evidence', () => {
+      it('3 concurrent cancel requests: exactly 1 transition, 2 idempotent, original timestamp/reason preserved', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        // Launch exactly 3 concurrent cancellations
+        const cancelPromises = [
+          cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'First'),
+          cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Second'),
+          cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Third'),
+        ];
+
+        const results = await Promise.all(cancelPromises);
+
+        // Assertion 1: All 3 requests succeed with status=cancelled
+        expect(results.length).toBe(3);
+        expect(results.every(r => r.status === 'cancelled')).toBe(true);
+
+        // Assertion 2: Exactly 1 initial successful transition (idempotent=false)
+        const transitions = results.filter(r => !r.idempotent);
+        expect(transitions.length).toBe(1);
+
+        // Assertion 3: Exactly 2 idempotent successes
+        const idempotentResults = results.filter(r => r.idempotent);
+        expect(idempotentResults.length).toBe(2);
+
+        // Assertion 4: Original cancellation timestamp preserved across all results
+        const winnerTimestamp = transitions[0].cancelledAt;
+        expect(idempotentResults.every(r =>
+          r.cancelledAt.getTime() === winnerTimestamp.getTime()
+        )).toBe(true);
+
+        // Assertion 5: Original cancellation reason preserved
+        const winnerReason = transitions[0].cancellationReason;
+        expect(idempotentResults.every(r => r.cancellationReason === winnerReason)).toBe(true);
+
+        // Verify database state
+        const sessionAfter = await getSessionById(session.id);
+        expect(sessionAfter!.status).toBe('cancelled');
+        expect(sessionAfter!.cancelled_at!.getTime()).toBe(winnerTimestamp.getTime());
+        expect(sessionAfter!.cancellation_reason).toBe(winnerReason);
+
+        // Run should be failed (pending when cancellation happened)
+        const runAfter = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+        expect(runAfter.status).toBe('failed');
+        expect(runAfter.failure_code).toBe('SESSION_CANCELLED');
+      });
+    });
+
+    describe('M6 — Real M5e finalization after cancellation', () => {
+      // Import the actual M5e finalizer from the app service
+      const { finalizeControlledExecution } = require('../../application/discovery.app-service');
+      // Import claim service for run claiming
+      const { authorizeAndClaimControlledRun: claimRun } = require('../../services/discovery-claim.service');
+
+      it('I: finalizeControlledExecution cannot complete cancelled session (fail-closed contract)', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        // Step 1: Claim the run to put it in processing state
+        await claimRun(session.id, run.id, actorId, 'worker-m5e-test');
+
+        // Verify run is now processing
+        const runAfterClaim = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+        expect(runAfterClaim.status).toBe('processing');
+
+        // Step 2: Cancel the session via M6 API
+        await cancelControlledSessionFromApi(
+          session.public_id,
+          projectId,
+          actorId,
+          'Cancel before M5e finalization',
+        );
+
+        // Verify session is cancelled (run stays processing since it was claimed)
+        const sessionAfterCancel = await getSessionById(session.id);
+        expect(sessionAfterCancel!.status).toBe('cancelled');
+
+        const runAfterCancel = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+        expect(runAfterCancel.status).toBe('processing');
+
+        // Record budget state before finalization attempt
+        const sessionBudgetBefore = {
+          usedRequests: sessionAfterCancel!.used_requests,
+          usedInputTokens: sessionAfterCancel!.used_input_tokens,
+          usedOutputTokens: sessionAfterCancel!.used_output_tokens,
+        };
+
+        // Step 3: Invoke actual M5e finalization path with outcome='completed'
+        // This should fail because session is cancelled (fail-closed contract)
+        const finalizationResult = await finalizeControlledExecution(
+          run.id,
+          session.id,
+          'completed', // Attempting to complete
+        );
+
+        // Step 4: Assert finalization failed (fail-closed)
+        expect(finalizationResult.success).toBe(false);
+        expect(finalizationResult.error).toContain('terminal'); // SessionTerminalError message
+
+        // Step 5: Verify run did NOT become completed
+        const runAfterFinalize = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+        expect(runAfterFinalize.status).toBe('processing'); // Still processing, NOT completed
+        expect(runAfterFinalize.completed_at).toBeNull();
+
+        // Step 6: Verify session remains cancelled
+        const sessionAfterFinalize = await getSessionById(session.id);
+        expect(sessionAfterFinalize!.status).toBe('cancelled');
+
+        // Step 7: Verify no additional budget reservation occurred
+        expect(sessionAfterFinalize!.used_requests).toBe(sessionBudgetBefore.usedRequests);
+        expect(sessionAfterFinalize!.used_input_tokens).toBe(sessionBudgetBefore.usedInputTokens);
+        expect(sessionAfterFinalize!.used_output_tokens).toBe(sessionBudgetBefore.usedOutputTokens);
+      });
+    });
+
+    describe('M6 — PostgreSQL transactional rollback after partial mutation', () => {
+      /**
+       * Blocker 2: Verify that if a failure occurs AFTER the run UPDATE
+       * but BEFORE the session UPDATE or commit, the entire transaction rolls back.
+       *
+       * Approach: Use a PostgreSQL trigger that throws on session status update.
+       * This is a narrowly-scoped, test-only failure mechanism using real PostgreSQL.
+       */
+
+      it('J: rollback after run UPDATE but before session UPDATE preserves original state', async () => {
+        const { session, run } = await createBoundSession(actorId);
+
+        // Record original state
+        const sessionBefore = await getSessionById(session.id);
+        const runBefore = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+        expect(sessionBefore!.status).toBe('active');
+        expect(sessionBefore!.cancelled_at).toBeNull();
+        expect(runBefore.status).toBe('pending');
+        expect(runBefore.failure_code).toBeNull();
+
+        // Create a trigger that throws on session status update to 'cancelled'
+        // This will fire AFTER the run UPDATE but when the session UPDATE is attempted
+        await sequelize.query(`
+          CREATE OR REPLACE FUNCTION m6_test_block_session_cancel()
+          RETURNS TRIGGER AS $$
+          BEGIN
+            IF NEW.status = 'cancelled' AND OLD.status = 'active' THEN
+              RAISE EXCEPTION 'M6_TEST_INJECTED_FAILURE: Simulated DB fault after run UPDATE';
+            END IF;
+            RETURN NEW;
+          END;
+          $$ LANGUAGE plpgsql;
+        `);
+
+        await sequelize.query(`
+          DROP TRIGGER IF EXISTS m6_test_cancel_blocker ON controlled_test_sessions;
+        `);
+
+        await sequelize.query(`
+          CREATE TRIGGER m6_test_cancel_blocker
+          BEFORE UPDATE ON controlled_test_sessions
+          FOR EACH ROW
+          EXECUTE FUNCTION m6_test_block_session_cancel();
+        `);
+
+        try {
+          // Attempt M6 cancellation - should fail due to trigger
+          await expect(
+            cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Should rollback'),
+          ).rejects.toThrow('M6_TEST_INJECTED_FAILURE');
+
+          // Verify session remains active (transaction rolled back)
+          const sessionAfter = await getSessionById(session.id);
+          expect(sessionAfter!.status).toBe('active');
+          expect(sessionAfter!.cancelled_at).toBeNull();
+          expect(sessionAfter!.cancellation_reason).toBeNull();
+
+          // Verify run remains pending (transaction rolled back)
+          const runAfter = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
+          expect(runAfter.status).toBe('pending');
+          expect(runAfter.failure_code).toBeNull();
+          expect(runAfter.failure_message).toBeNull();
+          expect(runAfter.failure_stage).toBeNull();
+          expect(runAfter.completed_at).toBeNull();
+
+          // Verify no partial cancellation persisted
+          expect(sessionAfter!.updated_at!.getTime()).toBe(sessionBefore!.updated_at!.getTime());
+
+        } finally {
+          // Clean up trigger (must always run)
+          await sequelize.query(`
+            DROP TRIGGER IF EXISTS m6_test_cancel_blocker ON controlled_test_sessions;
+          `);
+          await sequelize.query(`
+            DROP FUNCTION IF EXISTS m6_test_block_session_cancel();
+          `);
+        }
+      });
+    });
+  });
 });

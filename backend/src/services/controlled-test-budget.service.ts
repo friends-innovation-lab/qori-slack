@@ -202,6 +202,129 @@ export class ReservationSessionMismatchError extends Error {
   }
 }
 
+// ─── M6: API-Layer Error Types ───────────────────────────────────────────────
+
+/**
+ * Error thrown when actor does not own the session (API authorization).
+ */
+export class SessionActorMismatchError extends Error {
+  constructor(sessionPublicId: string, actorId: number) {
+    super(`Actor ${actorId} does not own session ${sessionPublicId}`);
+    this.name = 'SessionActorMismatchError';
+  }
+}
+
+/**
+ * Error thrown when session is in a non-cancellable terminal state (completed/exhausted).
+ */
+export class SessionNotCancellableError extends Error {
+  constructor(sessionPublicId: string, status: ControlledTestSessionStatus) {
+    super(`Session ${sessionPublicId} cannot be cancelled (status: ${status})`);
+    this.name = 'SessionNotCancellableError';
+    this.status = status;
+  }
+  public readonly status: ControlledTestSessionStatus;
+}
+
+/**
+ * Error thrown when session/run binding validation fails.
+ */
+export class SessionBindingValidationError extends Error {
+  constructor(sessionPublicId: string, reason: string) {
+    super(`Session ${sessionPublicId} binding validation failed: ${reason}`);
+    this.name = 'SessionBindingValidationError';
+  }
+}
+
+// ─── M6: API Result Types ────────────────────────────────────────────────────
+
+export interface CancelSessionFromApiResult {
+  /** Session public ID */
+  sessionPublicId: string;
+  /** Final session status */
+  status: ControlledTestSessionStatus;
+  /** Timestamp of cancellation */
+  cancelledAt: Date;
+  /** Cancellation reason */
+  cancellationReason: string | null;
+  /** Whether this was an idempotent return (already cancelled) */
+  idempotent: boolean;
+  /** Bound run public ID (if any) */
+  boundRunPublicId: string | null;
+  /** Bound run final status (if any) */
+  boundRunStatus: string | null;
+}
+
+export interface SessionListItem {
+  publicId: string;
+  status: ControlledTestSessionStatus;
+  boundRunPublicId: string | null;
+  boundRunStatus: string | null;
+  budget: {
+    maxRequests: number;
+    usedRequests: number;
+    remainingRequests: number;
+    maxInputTokens: number;
+    usedInputTokens: number;
+    remainingInputTokens: number;
+    maxOutputTokens: number;
+    usedOutputTokens: number;
+    remainingOutputTokens: number;
+  };
+  createdAt: Date;
+  cancelledAt: Date | null;
+  exhaustedAt: Date | null;
+  completedAt: Date | null;
+}
+
+export interface SessionDetailResult {
+  publicId: string;
+  status: ControlledTestSessionStatus;
+  boundRunPublicId: string | null;
+  boundRunStatus: string | null;
+  budget: {
+    maxRequests: number;
+    usedRequests: number;
+    remainingRequests: number;
+    maxInputTokens: number;
+    usedInputTokens: number;
+    remainingInputTokens: number;
+    maxOutputTokens: number;
+    usedOutputTokens: number;
+    remainingOutputTokens: number;
+  };
+  timestamps: {
+    createdAt: Date;
+    updatedAt: Date;
+    cancelledAt: Date | null;
+    exhaustedAt: Date | null;
+    completedAt: Date | null;
+  };
+  cancellationReason: string | null;
+}
+
+export interface ReservationListItem {
+  publicId: string;
+  state: ControlledTestReservationState;
+  reservedInputTokens: number;
+  reservedOutputTokens: number;
+  actualInputTokens: number | null;
+  actualOutputTokens: number | null;
+  purpose: string | null;
+  createdAt: Date;
+  reconciledAt: Date | null;
+}
+
+export interface PaginatedReservationsResult {
+  items: ReservationListItem[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+}
+
 // ─── Validation Helpers ───────────────────────────────────────────────────────
 
 /**
@@ -855,6 +978,566 @@ export async function completeSession(
   } catch (error) {
     if (shouldCommit) {
       await t.rollback();
+    }
+    throw error;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// M6: API-Layer Session Administration
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Model reference for DiscoveryRun
+import type { DiscoveryRun } from '../database/models/discovery_run';
+const DiscoveryRunModel = sequelize.models.DiscoveryRun as typeof DiscoveryRun;
+
+/**
+ * List controlled sessions for a project, filtered by creator actor.
+ * Only returns sessions bound to runs in the specified project.
+ *
+ * M6: Unbound sessions are excluded from project-scoped queries.
+ */
+export async function listSessionsByProjectAndActor(
+  projectId: number,
+  actorId: number,
+  options: { limit?: number; offset?: number } = {},
+): Promise<{ items: SessionListItem[]; total: number }> {
+  const limit = Math.min(options.limit ?? 50, 100);
+  const offset = options.offset ?? 0;
+
+  // Query sessions with bound runs in the project, owned by actor
+  const [countResult] = await sequelize.query(
+    `
+    SELECT COUNT(*) as count
+    FROM controlled_test_sessions s
+    INNER JOIN discovery_runs r ON s.discovery_run_id = r.id
+    WHERE r.project_id = :projectId
+      AND s.created_by_actor_id = :actorId
+      AND r.is_controlled = TRUE
+    `,
+    {
+      replacements: { projectId, actorId },
+    },
+  );
+  const total = parseInt((countResult as Array<{ count: string }>)[0]?.count ?? '0', 10);
+
+  const [rows] = await sequelize.query(
+    `
+    SELECT
+      s.public_id as session_public_id,
+      s.status,
+      s.max_requests,
+      s.max_input_tokens,
+      s.max_output_tokens,
+      s.used_requests,
+      s.used_input_tokens,
+      s.used_output_tokens,
+      s.created_at,
+      s.cancelled_at,
+      s.exhausted_at,
+      s.completed_at,
+      r.public_id as run_public_id,
+      r.status as run_status
+    FROM controlled_test_sessions s
+    INNER JOIN discovery_runs r ON s.discovery_run_id = r.id
+    WHERE r.project_id = :projectId
+      AND s.created_by_actor_id = :actorId
+      AND r.is_controlled = TRUE
+    ORDER BY s.created_at DESC
+    LIMIT :limit
+    OFFSET :offset
+    `,
+    {
+      replacements: { projectId, actorId, limit, offset },
+    },
+  );
+
+  const items: SessionListItem[] = (rows as Array<{
+    session_public_id: string;
+    status: ControlledTestSessionStatus;
+    max_requests: number;
+    max_input_tokens: number;
+    max_output_tokens: number;
+    used_requests: number;
+    used_input_tokens: number;
+    used_output_tokens: number;
+    created_at: Date;
+    cancelled_at: Date | null;
+    exhausted_at: Date | null;
+    completed_at: Date | null;
+    run_public_id: string;
+    run_status: string;
+  }>).map(row => ({
+    publicId: row.session_public_id,
+    status: row.status,
+    boundRunPublicId: row.run_public_id,
+    boundRunStatus: row.run_status,
+    budget: {
+      maxRequests: row.max_requests,
+      usedRequests: row.used_requests,
+      remainingRequests: row.max_requests - row.used_requests,
+      maxInputTokens: row.max_input_tokens,
+      usedInputTokens: row.used_input_tokens,
+      remainingInputTokens: row.max_input_tokens - row.used_input_tokens,
+      maxOutputTokens: row.max_output_tokens,
+      usedOutputTokens: row.used_output_tokens,
+      remainingOutputTokens: row.max_output_tokens - row.used_output_tokens,
+    },
+    createdAt: new Date(row.created_at),
+    cancelledAt: row.cancelled_at ? new Date(row.cancelled_at) : null,
+    exhaustedAt: row.exhausted_at ? new Date(row.exhausted_at) : null,
+    completedAt: row.completed_at ? new Date(row.completed_at) : null,
+  }));
+
+  return { items, total };
+}
+
+/**
+ * Get session details by public ID, verifying project and actor ownership.
+ *
+ * @throws SessionNotFoundError if session not found, unbound, or wrong project
+ * @throws SessionActorMismatchError if actor doesn't own the session
+ */
+export async function getSessionDetailsByPublicId(
+  sessionPublicId: string,
+  projectId: number,
+  actorId: number,
+): Promise<SessionDetailResult> {
+  const [rows] = await sequelize.query(
+    `
+    SELECT
+      s.id,
+      s.public_id as session_public_id,
+      s.status,
+      s.created_by_actor_id,
+      s.max_requests,
+      s.max_input_tokens,
+      s.max_output_tokens,
+      s.used_requests,
+      s.used_input_tokens,
+      s.used_output_tokens,
+      s.created_at,
+      s.updated_at,
+      s.cancelled_at,
+      s.exhausted_at,
+      s.completed_at,
+      s.cancellation_reason,
+      r.public_id as run_public_id,
+      r.status as run_status,
+      r.project_id,
+      r.is_controlled
+    FROM controlled_test_sessions s
+    INNER JOIN discovery_runs r ON s.discovery_run_id = r.id
+    WHERE s.public_id = :sessionPublicId
+    `,
+    {
+      replacements: { sessionPublicId },
+    },
+  );
+
+  const row = (rows as Array<{
+    id: number;
+    session_public_id: string;
+    status: ControlledTestSessionStatus;
+    created_by_actor_id: number | null;
+    max_requests: number;
+    max_input_tokens: number;
+    max_output_tokens: number;
+    used_requests: number;
+    used_input_tokens: number;
+    used_output_tokens: number;
+    created_at: Date;
+    updated_at: Date;
+    cancelled_at: Date | null;
+    exhausted_at: Date | null;
+    completed_at: Date | null;
+    cancellation_reason: string | null;
+    run_public_id: string;
+    run_status: string;
+    project_id: number;
+    is_controlled: boolean;
+  }>)[0];
+
+  // Not found OR unbound (no join match)
+  if (!row) {
+    throw new SessionNotFoundError(sessionPublicId);
+  }
+
+  // Project mismatch
+  if (row.project_id !== projectId) {
+    throw new SessionNotFoundError(sessionPublicId);
+  }
+
+  // Not a controlled run
+  if (!row.is_controlled) {
+    throw new SessionNotFoundError(sessionPublicId);
+  }
+
+  // Actor mismatch
+  if (row.created_by_actor_id !== actorId) {
+    throw new SessionActorMismatchError(sessionPublicId, actorId);
+  }
+
+  return {
+    publicId: row.session_public_id,
+    status: row.status,
+    boundRunPublicId: row.run_public_id,
+    boundRunStatus: row.run_status,
+    budget: {
+      maxRequests: row.max_requests,
+      usedRequests: row.used_requests,
+      remainingRequests: row.max_requests - row.used_requests,
+      maxInputTokens: row.max_input_tokens,
+      usedInputTokens: row.used_input_tokens,
+      remainingInputTokens: row.max_input_tokens - row.used_input_tokens,
+      maxOutputTokens: row.max_output_tokens,
+      usedOutputTokens: row.used_output_tokens,
+      remainingOutputTokens: row.max_output_tokens - row.used_output_tokens,
+    },
+    timestamps: {
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
+      cancelledAt: row.cancelled_at ? new Date(row.cancelled_at) : null,
+      exhaustedAt: row.exhausted_at ? new Date(row.exhausted_at) : null,
+      completedAt: row.completed_at ? new Date(row.completed_at) : null,
+    },
+    cancellationReason: row.cancellation_reason,
+  };
+}
+
+/**
+ * Get paginated reservations for a session.
+ *
+ * @throws SessionNotFoundError if session not found, unbound, or wrong project
+ * @throws SessionActorMismatchError if actor doesn't own the session
+ */
+export async function getSessionReservations(
+  sessionPublicId: string,
+  projectId: number,
+  actorId: number,
+  options: { limit?: number; offset?: number } = {},
+): Promise<PaginatedReservationsResult> {
+  const limit = Math.min(options.limit ?? 50, 100);
+  const offset = options.offset ?? 0;
+
+  // First verify session access (will throw if invalid)
+  const [sessionRows] = await sequelize.query(
+    `
+    SELECT s.id, s.created_by_actor_id, r.project_id, r.is_controlled
+    FROM controlled_test_sessions s
+    INNER JOIN discovery_runs r ON s.discovery_run_id = r.id
+    WHERE s.public_id = :sessionPublicId
+    `,
+    {
+      replacements: { sessionPublicId },
+    },
+  );
+
+  const sessionRow = (sessionRows as Array<{
+    id: number;
+    created_by_actor_id: number | null;
+    project_id: number;
+    is_controlled: boolean;
+  }>)[0];
+
+  if (!sessionRow) {
+    throw new SessionNotFoundError(sessionPublicId);
+  }
+
+  if (sessionRow.project_id !== projectId || !sessionRow.is_controlled) {
+    throw new SessionNotFoundError(sessionPublicId);
+  }
+
+  if (sessionRow.created_by_actor_id !== actorId) {
+    throw new SessionActorMismatchError(sessionPublicId, actorId);
+  }
+
+  const sessionId = sessionRow.id;
+
+  // Count total reservations
+  const [countResult] = await sequelize.query(
+    `SELECT COUNT(*) as count FROM controlled_test_reservations WHERE session_id = :sessionId`,
+    { replacements: { sessionId } },
+  );
+  const total = parseInt((countResult as Array<{ count: string }>)[0]?.count ?? '0', 10);
+
+  // Get paginated reservations
+  const [rows] = await sequelize.query(
+    `
+    SELECT
+      public_id,
+      state,
+      reserved_input_tokens,
+      reserved_output_tokens,
+      actual_input_tokens,
+      actual_output_tokens,
+      purpose,
+      created_at,
+      reconciled_at
+    FROM controlled_test_reservations
+    WHERE session_id = :sessionId
+    ORDER BY created_at DESC
+    LIMIT :limit
+    OFFSET :offset
+    `,
+    {
+      replacements: { sessionId, limit, offset },
+    },
+  );
+
+  const items: ReservationListItem[] = (rows as Array<{
+    public_id: string;
+    state: ControlledTestReservationState;
+    reserved_input_tokens: number;
+    reserved_output_tokens: number;
+    actual_input_tokens: number | null;
+    actual_output_tokens: number | null;
+    purpose: string | null;
+    created_at: Date;
+    reconciled_at: Date | null;
+  }>).map(row => ({
+    publicId: row.public_id,
+    state: row.state,
+    reservedInputTokens: row.reserved_input_tokens,
+    reservedOutputTokens: row.reserved_output_tokens,
+    actualInputTokens: row.actual_input_tokens,
+    actualOutputTokens: row.actual_output_tokens,
+    purpose: row.purpose,
+    createdAt: new Date(row.created_at),
+    reconciledAt: row.reconciled_at ? new Date(row.reconciled_at) : null,
+  }));
+
+  return {
+    items,
+    pagination: {
+      total,
+      limit,
+      offset,
+      hasMore: offset + items.length < total,
+    },
+  };
+}
+
+/**
+ * Cancel a controlled session from API.
+ *
+ * Atomic transaction that:
+ * 1. Locks session FOR UPDATE
+ * 2. Verifies actor ownership and project binding
+ * 3. Handles idempotent cancellation (already cancelled → 200)
+ * 4. Rejects non-cancellable states (completed/exhausted → 409)
+ * 5. Fails bound pending run atomically
+ * 6. Transitions session to cancelled
+ *
+ * Lock order: session first, then run (matches authorizeAndClaimControlledRun).
+ *
+ * @throws SessionNotFoundError if session not found, unbound, or wrong project
+ * @throws SessionActorMismatchError if actor doesn't own the session
+ * @throws SessionNotCancellableError if session is completed or exhausted
+ */
+export async function cancelControlledSessionFromApi(
+  sessionPublicId: string,
+  projectId: number,
+  actorId: number,
+  reason?: string,
+): Promise<CancelSessionFromApiResult> {
+  const t = await sequelize.transaction();
+
+  try {
+    // Step 1: Lock session FOR UPDATE
+    const [sessionRows] = await sequelize.query(
+      `
+      SELECT
+        s.id,
+        s.public_id,
+        s.status,
+        s.created_by_actor_id,
+        s.discovery_run_id,
+        s.cancelled_at,
+        s.cancellation_reason
+      FROM controlled_test_sessions s
+      WHERE s.public_id = :sessionPublicId
+      FOR UPDATE
+      `,
+      {
+        replacements: { sessionPublicId },
+        transaction: t,
+      },
+    );
+
+    const session = (sessionRows as Array<{
+      id: number;
+      public_id: string;
+      status: ControlledTestSessionStatus;
+      created_by_actor_id: number | null;
+      discovery_run_id: number | null;
+      cancelled_at: Date | null;
+      cancellation_reason: string | null;
+    }>)[0];
+
+    if (!session) {
+      await t.rollback();
+      throw new SessionNotFoundError(sessionPublicId);
+    }
+
+    // Step 2: Verify bound run exists and belongs to project
+    if (session.discovery_run_id === null) {
+      await t.rollback();
+      throw new SessionNotFoundError(sessionPublicId); // Unbound = not project-routable
+    }
+
+    // Step 3: Lock bound run FOR UPDATE (lock order: run second)
+    const [runRows] = await sequelize.query(
+      `
+      SELECT id, public_id, status, project_id, is_controlled
+      FROM discovery_runs
+      WHERE id = :runId
+      FOR UPDATE
+      `,
+      {
+        replacements: { runId: session.discovery_run_id },
+        transaction: t,
+      },
+    );
+
+    const run = (runRows as Array<{
+      id: number;
+      public_id: string;
+      status: string;
+      project_id: number;
+      is_controlled: boolean;
+    }>)[0];
+
+    if (!run || run.project_id !== projectId) {
+      await t.rollback();
+      throw new SessionNotFoundError(sessionPublicId); // Project mismatch
+    }
+
+    if (!run.is_controlled) {
+      await t.rollback();
+      throw new SessionNotFoundError(sessionPublicId); // Not a controlled run
+    }
+
+    // Step 4: Actor authorization
+    if (session.created_by_actor_id !== actorId) {
+      await t.rollback();
+      throw new SessionActorMismatchError(sessionPublicId, actorId);
+    }
+
+    // Step 5: Terminal state handling
+    if (session.status === 'cancelled') {
+      // Idempotent success: return original timestamp
+      await t.rollback(); // No changes needed
+      return {
+        sessionPublicId: session.public_id,
+        status: 'cancelled',
+        cancelledAt: session.cancelled_at!,
+        cancellationReason: session.cancellation_reason,
+        idempotent: true,
+        boundRunPublicId: run.public_id,
+        boundRunStatus: run.status,
+      };
+    }
+
+    if (session.status === 'completed' || session.status === 'exhausted') {
+      await t.rollback();
+      throw new SessionNotCancellableError(sessionPublicId, session.status);
+    }
+
+    // Step 6: Fail bound pending run (single cancellation invariant)
+    let finalRunStatus = run.status;
+    if (run.status === 'pending') {
+      const now = new Date();
+      const cancellationMessage = reason || 'Controlled session cancelled by creator';
+
+      const [, metadata] = await sequelize.query(
+        `
+        UPDATE discovery_runs
+        SET
+          status = 'failed',
+          failure_code = 'SESSION_CANCELLED',
+          failure_message = :failureMessage,
+          failure_stage = 'controlled_session',
+          completed_at = :now,
+          updated_at = :now
+        WHERE id = :runId
+          AND status = 'pending'
+        `,
+        {
+          replacements: {
+            runId: run.id,
+            failureMessage: cancellationMessage,
+            now,
+          },
+          transaction: t,
+        },
+      );
+
+      // Verify row was updated
+      const rowCount = (metadata as { rowCount?: number })?.rowCount ?? 0;
+      if (rowCount !== 1) {
+        // Race condition: run status changed between SELECT and UPDATE
+        await t.rollback();
+        throw new SessionBindingValidationError(
+          sessionPublicId,
+          'Run status changed during cancellation',
+        );
+      }
+
+      finalRunStatus = 'failed';
+    }
+
+    // Step 7: Transition session to cancelled
+    const now = new Date();
+    const [, sessionMetadata] = await sequelize.query(
+      `
+      UPDATE controlled_test_sessions
+      SET
+        status = 'cancelled',
+        cancelled_at = :now,
+        cancellation_reason = :reason,
+        updated_at = :now
+      WHERE id = :sessionId
+        AND status = 'active'
+      `,
+      {
+        replacements: {
+          sessionId: session.id,
+          now,
+          reason: reason ?? null,
+        },
+        transaction: t,
+      },
+    );
+
+    // Verify row was updated
+    const sessionRowCount = (sessionMetadata as { rowCount?: number })?.rowCount ?? 0;
+    if (sessionRowCount !== 1) {
+      // Race condition: session status changed
+      await t.rollback();
+      throw new SessionBindingValidationError(
+        sessionPublicId,
+        'Session status changed during cancellation',
+      );
+    }
+
+    await t.commit();
+
+    return {
+      sessionPublicId: session.public_id,
+      status: 'cancelled',
+      cancelledAt: now,
+      cancellationReason: reason ?? null,
+      idempotent: false,
+      boundRunPublicId: run.public_id,
+      boundRunStatus: finalRunStatus,
+    };
+  } catch (error) {
+    // Rollback if not already done
+    try {
+      await t.rollback();
+    } catch {
+      // Already rolled back
     }
     throw error;
   }

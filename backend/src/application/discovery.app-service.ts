@@ -1670,24 +1670,45 @@ export async function finalizeControlledExecution(
     }
 
     // Finalize based on outcome
+    // IMPORTANT: Session update FIRST to enforce fail-closed contract.
+    // If session is terminal (cancelled), we throw before touching the run.
+    // Both operations use the same transaction for atomicity.
     if (outcome === 'completed') {
-      // Complete run
-      await claimService.completeRun(runId, run.worker_id || 'controlled-finalization');
-
-      // Complete session
+      // Complete session first (throws SessionTerminalError if cancelled)
       await completeSession(sessionId, t);
-    } else {
-      // Fail run
-      await claimService.failRun(
-        runId,
-        run.worker_id || 'controlled-finalization',
-        'CONTROLLED_EXECUTION_FAILURE',
-        failureReason || 'Controlled execution failed',
-        'controlled_execution',
-      );
 
-      // Cancel session (preserves budget audit trail)
+      // Complete run within transaction
+      const workerId = run.worker_id || 'controlled-finalization';
+      const now = new Date();
+      const [, metadata] = await sequelize.query(
+        `
+        UPDATE discovery_runs
+        SET status = 'completed', completed_at = :now, updated_at = :now
+        WHERE id = :runId AND worker_id = :workerId AND status = 'processing'
+        `,
+        { replacements: { runId, workerId, now }, transaction: t },
+      );
+      if ((metadata as { rowCount?: number })?.rowCount === 0) {
+        throw new Error(`Run ${runId} not in expected state for completion`);
+      }
+    } else {
+      // Cancel session first (preserves budget audit trail)
       await cancelSession(sessionId, failureReason, t);
+
+      // Fail run within transaction
+      const workerId = run.worker_id || 'controlled-finalization';
+      const now = new Date();
+      const sanitizedReason = (failureReason || 'Controlled execution failed').slice(0, 1000);
+      await sequelize.query(
+        `
+        UPDATE discovery_runs
+        SET status = 'failed', failure_code = 'CONTROLLED_EXECUTION_FAILURE',
+            failure_message = :failureMessage, failure_stage = 'controlled_execution',
+            completed_at = :now, updated_at = :now
+        WHERE id = :runId AND worker_id = :workerId AND status = 'processing'
+        `,
+        { replacements: { runId, workerId, failureMessage: sanitizedReason, now }, transaction: t },
+      );
     }
 
     await t.commit();

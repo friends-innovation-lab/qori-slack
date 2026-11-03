@@ -16,6 +16,15 @@ import type { Project } from '../../../database/models/project';
 import sequelize from '../../../database';
 import { AppError, ApiErrorCode } from '../../../types/api-errors';
 import { isControlledExecutionEnabled } from '../../../services/controlled-session-authorization.service';
+import {
+  listSessionsByProjectAndActor,
+  getSessionDetailsByPublicId,
+  getSessionReservations,
+  cancelControlledSessionFromApi,
+  SessionNotFoundError,
+  SessionActorMismatchError,
+  SessionNotCancellableError,
+} from '../../../services/controlled-test-budget.service';
 
 const router = Router({ mergeParams: true });
 
@@ -866,5 +875,305 @@ router.get('/knowledge-gaps', requireAuth, async (req, res, next) => {
     next(error);
   }
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CONTROLLED SESSIONS — M6 Admin API
+// ═══════════════════════════════════════════════════════════════════════════
+
+// UUID pattern for session public_id validation
+const SESSION_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Feature gate middleware for M6 controlled session endpoints.
+ * Returns 503 if either DISC_WEB1_ENABLED or isControlledExecutionEnabled() is false.
+ */
+function requireControlledExecutionEnabled(
+  req: Parameters<typeof requireAuth>[0],
+  res: Parameters<typeof requireAuth>[1],
+  next: Parameters<typeof requireAuth>[2],
+) {
+  if (process.env.DISC_WEB1_ENABLED !== 'true') {
+    res.status(503).json({
+      error: {
+        code: ApiErrorCode.CONTROLLED_EXECUTION_DISABLED,
+        message: 'Controlled execution feature is not available',
+      },
+    });
+    return;
+  }
+
+  if (!isControlledExecutionEnabled()) {
+    res.status(503).json({
+      error: {
+        code: ApiErrorCode.CONTROLLED_EXECUTION_DISABLED,
+        message: 'Controlled execution feature is not available',
+      },
+    });
+    return;
+  }
+
+  next();
+}
+
+/**
+ * GET /api/v1/projects/:projectId/discovery/controlled-sessions
+ *
+ * M6: List controlled sessions for the current actor in this project.
+ * Only returns sessions bound to controlled runs in this project.
+ */
+router.get(
+  '/controlled-sessions',
+  requireAuth,
+  requireControlledExecutionEnabled,
+  async (req, res, next) => {
+    try {
+      const projectId = await resolveProjectId(req.params.projectId, req.ctx!.organization.id);
+      if (projectId === null) {
+        res.status(400).json({
+          error: { code: 'VALIDATION_ERROR', message: 'Invalid or unknown project identifier' },
+        });
+        return;
+      }
+
+      const actorId = req.ctx!.actor.id;
+      const limit = Math.min(parseInt(req.query.limit as string, 10) || 50, 100);
+      const offset = parseInt(req.query.offset as string, 10) || 0;
+
+      if (offset < 0 || !Number.isInteger(offset)) {
+        res.status(400).json({
+          error: { code: 'VALIDATION_ERROR', message: 'Invalid offset parameter' },
+        });
+        return;
+      }
+
+      const result = await listSessionsByProjectAndActor(projectId, actorId, { limit, offset });
+
+      res.json({
+        data: result.items,
+        pagination: {
+          total: result.total,
+          limit,
+          offset,
+          hasMore: offset + result.items.length < result.total,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+/**
+ * GET /api/v1/projects/:projectId/discovery/controlled-sessions/:sessionPublicId
+ *
+ * M6: Get details of a specific controlled session.
+ * Requires creator ownership and project binding.
+ */
+router.get(
+  '/controlled-sessions/:sessionPublicId',
+  requireAuth,
+  requireControlledExecutionEnabled,
+  async (req, res, next) => {
+    try {
+      const projectId = await resolveProjectId(req.params.projectId, req.ctx!.organization.id);
+      if (projectId === null) {
+        res.status(400).json({
+          error: { code: 'VALIDATION_ERROR', message: 'Invalid or unknown project identifier' },
+        });
+        return;
+      }
+
+      const sessionPublicId = req.params.sessionPublicId as string | undefined;
+      if (!sessionPublicId || typeof sessionPublicId !== 'string' || !SESSION_UUID_PATTERN.test(sessionPublicId)) {
+        res.status(400).json({
+          error: { code: 'VALIDATION_ERROR', message: 'Invalid session identifier format' },
+        });
+        return;
+      }
+
+      const actorId = req.ctx!.actor.id;
+
+      const session = await getSessionDetailsByPublicId(
+        sessionPublicId.toLowerCase(),
+        projectId,
+        actorId,
+      );
+
+      res.json({ data: session });
+    } catch (error) {
+      if (error instanceof SessionNotFoundError) {
+        res.status(404).json({
+          error: {
+            code: ApiErrorCode.CONTROLLED_SESSION_NOT_FOUND,
+            message: 'Controlled session not found',
+          },
+        });
+        return;
+      }
+      if (error instanceof SessionActorMismatchError) {
+        res.status(403).json({
+          error: {
+            code: ApiErrorCode.CONTROLLED_SESSION_ACTOR_MISMATCH,
+            message: 'Not authorized to access this session',
+          },
+        });
+        return;
+      }
+      next(error);
+    }
+  },
+);
+
+/**
+ * GET /api/v1/projects/:projectId/discovery/controlled-sessions/:sessionPublicId/reservations
+ *
+ * M6: Get paginated reservation history for a controlled session.
+ * Requires creator ownership and project binding.
+ */
+router.get(
+  '/controlled-sessions/:sessionPublicId/reservations',
+  requireAuth,
+  requireControlledExecutionEnabled,
+  async (req, res, next) => {
+    try {
+      const projectId = await resolveProjectId(req.params.projectId, req.ctx!.organization.id);
+      if (projectId === null) {
+        res.status(400).json({
+          error: { code: 'VALIDATION_ERROR', message: 'Invalid or unknown project identifier' },
+        });
+        return;
+      }
+
+      const sessionPublicId = req.params.sessionPublicId as string | undefined;
+      if (!sessionPublicId || typeof sessionPublicId !== 'string' || !SESSION_UUID_PATTERN.test(sessionPublicId)) {
+        res.status(400).json({
+          error: { code: 'VALIDATION_ERROR', message: 'Invalid session identifier format' },
+        });
+        return;
+      }
+
+      const actorId = req.ctx!.actor.id;
+      const limit = Math.min(parseInt(req.query.limit as string, 10) || 50, 100);
+      const offset = parseInt(req.query.offset as string, 10) || 0;
+
+      if (offset < 0 || !Number.isInteger(offset)) {
+        res.status(400).json({
+          error: { code: 'VALIDATION_ERROR', message: 'Invalid offset parameter' },
+        });
+        return;
+      }
+
+      const result = await getSessionReservations(
+        sessionPublicId.toLowerCase(),
+        projectId,
+        actorId,
+        { limit, offset },
+      );
+
+      res.json({
+        data: result.items,
+        pagination: result.pagination,
+      });
+    } catch (error) {
+      if (error instanceof SessionNotFoundError) {
+        res.status(404).json({
+          error: {
+            code: ApiErrorCode.CONTROLLED_SESSION_NOT_FOUND,
+            message: 'Controlled session not found',
+          },
+        });
+        return;
+      }
+      if (error instanceof SessionActorMismatchError) {
+        res.status(403).json({
+          error: {
+            code: ApiErrorCode.CONTROLLED_SESSION_ACTOR_MISMATCH,
+            message: 'Not authorized to access this session',
+          },
+        });
+        return;
+      }
+      next(error);
+    }
+  },
+);
+
+/**
+ * POST /api/v1/projects/:projectId/discovery/controlled-sessions/:sessionPublicId/cancel
+ *
+ * M6: Cancel a controlled session.
+ *
+ * State transitions:
+ * - active → cancelled (200, atomic with bound pending run failure)
+ * - cancelled → idempotent 200 (preserves original timestamp)
+ * - completed/exhausted → 409 (not cancellable)
+ *
+ * Lock order: session first, then run (matches authorizeAndClaimControlledRun).
+ */
+router.post(
+  '/controlled-sessions/:sessionPublicId/cancel',
+  requireAuth,
+  requireControlledExecutionEnabled,
+  async (req, res, next) => {
+    try {
+      const projectId = await resolveProjectId(req.params.projectId, req.ctx!.organization.id);
+      if (projectId === null) {
+        res.status(400).json({
+          error: { code: 'VALIDATION_ERROR', message: 'Invalid or unknown project identifier' },
+        });
+        return;
+      }
+
+      const sessionPublicId = req.params.sessionPublicId as string | undefined;
+      if (!sessionPublicId || typeof sessionPublicId !== 'string' || !SESSION_UUID_PATTERN.test(sessionPublicId)) {
+        res.status(400).json({
+          error: { code: 'VALIDATION_ERROR', message: 'Invalid session identifier format' },
+        });
+        return;
+      }
+
+      const actorId = req.ctx!.actor.id;
+      const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+
+      const result = await cancelControlledSessionFromApi(
+        sessionPublicId.toLowerCase(),
+        projectId,
+        actorId,
+        reason,
+      );
+
+      res.status(200).json({ data: result });
+    } catch (error) {
+      if (error instanceof SessionNotFoundError) {
+        res.status(404).json({
+          error: {
+            code: ApiErrorCode.CONTROLLED_SESSION_NOT_FOUND,
+            message: 'Controlled session not found',
+          },
+        });
+        return;
+      }
+      if (error instanceof SessionActorMismatchError) {
+        res.status(403).json({
+          error: {
+            code: ApiErrorCode.CONTROLLED_SESSION_ACTOR_MISMATCH,
+            message: 'Not authorized to cancel this session',
+          },
+        });
+        return;
+      }
+      if (error instanceof SessionNotCancellableError) {
+        res.status(409).json({
+          error: {
+            code: ApiErrorCode.CONTROLLED_SESSION_NOT_ACTIVE,
+            message: `Session cannot be cancelled (status: ${error.status})`,
+          },
+        });
+        return;
+      }
+      next(error);
+    }
+  },
+);
 
 export default router;

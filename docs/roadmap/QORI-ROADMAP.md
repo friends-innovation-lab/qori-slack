@@ -191,9 +191,9 @@ Qori is a deployable, channel-independent research operating system for public-s
 
 | State | Status | Date | Notes |
 |-------|--------|------|-------|
-| **Architecture approved** | YES | 2026-11-02 | M1-M5e authorized, M6-M8 pending |
-| **Implementation authorized** | M1-M5e | 2026-11-03 | M6-M8 require separate authorization |
-| **Implementation completed** | M1-M5e | 2026-11-03 | Database + service + model factory + budgeted invoke + context + auth gate + atomic run creation + poller isolation + controlled AI routing |
+| **Architecture approved** | YES | 2026-11-02 | M1-M6 authorized, M7-M8 pending |
+| **Implementation authorized** | M1-M6 | 2026-11-03 | M7-M8 require separate authorization |
+| **Implementation completed** | M1-M6 | 2026-11-03 | Database + service + model factory + budgeted invoke + context + auth gate + atomic run creation + poller isolation + controlled AI routing + admin API |
 
 **M1 Implementation Details** (completed 2026-11-02):
 
@@ -797,9 +797,68 @@ UPDATE discovery_runs SET status = 'processing', worker_id = :workerId, ...
 - Artifact marked `status: 'failed'` on error; filtered by `status: 'current'` queries
 
 **Outstanding Blockers**:
-- M6-M8 require explicit authorization before implementation
+- M7-M8 require explicit authorization before implementation
 
-**Next Step**: M6 (admin API endpoints) or direct to M7 (unit tests) if admin API is deferred.
+**M6 Implementation Details** (completed 2026-11-03):
+
+| File | Type | Purpose |
+|------|------|---------|
+| `src/services/controlled-test-budget.service.ts` | Modified | API-layer session administration functions |
+| `src/routes/api/v1/discovery.routes.ts` | Modified | Four M6 admin endpoints |
+| `src/__tests__/integration/controlled-test-budget.service.test.ts` | Modified | 24 new M6 tests |
+
+**M6 API Endpoints**:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/controlled-sessions` | List creator-owned sessions bound to project |
+| `GET` | `/controlled-sessions/:sessionPublicId` | Session details, budget, bound run status |
+| `GET` | `/controlled-sessions/:sessionPublicId/reservations` | Paginated reservation history |
+| `POST` | `/controlled-sessions/:sessionPublicId/cancel` | Atomic session cancellation |
+
+**M6 Feature Gates**:
+- Both `DISC_WEB1_ENABLED === 'true'` AND `isControlledExecutionEnabled()` required
+- Returns `503 CONTROLLED_EXECUTION_DISABLED` when either gate disabled
+
+**M6 Cancellation State Transitions**:
+
+| Current Status | Cancel Request | HTTP |
+|----------------|----------------|------|
+| `active` | Cancel session; fail bound pending run | 200 |
+| `cancelled` | Idempotent success; preserve original timestamp | 200 |
+| `completed` | Reject (non-cancellable) | 409 |
+| `exhausted` | Reject (non-cancellable) | 409 |
+
+**M6 Lock Order Invariant**:
+Session locked first, run second (matches `authorizeAndClaimControlledRun()`).
+
+**M6 Single Cancellation Invariant**:
+- Bound pending run → `status: 'failed'`, `failure_code: 'SESSION_CANCELLED'`, `failure_stage: 'controlled_session'`
+- Bound processing run → unchanged (worker owns; M5e finalization handles)
+
+**M6 Service Functions**:
+- `listSessionsByProjectAndActor(projectId, actorId, options)` — Project-scoped list with ownership filter
+- `getSessionDetailsByPublicId(sessionPublicId, projectId, actorId)` — Session details with authorization
+- `getSessionReservations(sessionPublicId, projectId, actorId, options)` — Paginated reservations
+- `cancelControlledSessionFromApi(sessionPublicId, projectId, actorId, reason)` — Atomic cancellation
+
+**M6 Error Types**:
+- `SessionActorMismatchError` — Actor doesn't own session (403)
+- `SessionNotCancellableError` — Session in completed/exhausted state (409)
+- `SessionBindingValidationError` — Race condition during cancellation (rollback)
+
+**M6 Test Coverage** (24 new tests):
+- Creator-only list and detail access (6 tests)
+- Unbound session exclusion (3 tests)
+- Pagination limits and max page size (2 tests)
+- Cancellation state transitions (5 tests)
+- Idempotent cancellation (1 test)
+- Non-cancellable state rejection (2 tests)
+- Race conditions: cancel-before-claim, completion-before-cancel, concurrent cancels (3 tests)
+- Reservations rejected after cancellation (1 test)
+- Project/actor mismatch errors (1 test)
+
+**Next Step**: M7 (HTTP integration tests) and M8 (live controlled test execution) require explicit authorization.
 
 **M1 Follow-up Findings** (from architecture review):
 
