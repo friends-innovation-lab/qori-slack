@@ -194,7 +194,9 @@ describe('pattern: as-any budget enforcement', () => {
     // Sequelize categories).
     // Budget raised 485 → 495 by DR-6b-3 getEligibleEvidence() service function (EvidenceConstruct/
     // Revision/Source model findAll, attribute access — same bounded Sequelize categories).
-    expect(total).toBeLessThanOrEqual(495);
+    // Budget raised 495 → 497 by M5e executeControlledDiscoveryRunInner (DiscoveryRunSource model
+    // findAll, attribute access — mirrors existing executeDiscoveryRun pattern).
+    expect(total).toBeLessThanOrEqual(497);
   });
 
   it('events.ts has no more than 1 as-any cast (excluding comments)', () => {

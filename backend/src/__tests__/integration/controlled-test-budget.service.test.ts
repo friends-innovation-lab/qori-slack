@@ -251,8 +251,13 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       const runId = await createTestDiscoveryRun();
       await bindRunToSession(session.id, runId);
 
-      // Exhaust the budget
-      const reservation = await reserveBudget({ sessionId: session.id, estimatedInputTokens: 50, reservedOutputTokens: 50 });
+      // Exhaust the budget — must pass discoveryRunId since session is bound
+      const reservation = await reserveBudget({
+        sessionId: session.id,
+        discoveryRunId: runId,
+        estimatedInputTokens: 50,
+        reservedOutputTokens: 50,
+      });
       await reconcileUsage({ reservationId: reservation.reservationId!, actualInputTokens: 50, actualOutputTokens: 50 });
 
       const found = await getSessionByRunId(runId);
@@ -800,8 +805,13 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       const runId = await createTestDiscoveryRun();
       await bindRunToSession(session.id, runId);
 
-      // Use some budget
-      await reserveBudget({ sessionId: session.id, estimatedInputTokens: 500, reservedOutputTokens: 200 });
+      // Use some budget — must pass discoveryRunId since session is bound
+      await reserveBudget({
+        sessionId: session.id,
+        discoveryRunId: runId,
+        estimatedInputTokens: 500,
+        reservedOutputTokens: 200,
+      });
 
       // Cancel the session
       await cancelSession(session.id, 'test');
@@ -811,9 +821,10 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       expect(foundSession).not.toBeNull();
       expect(foundSession!.status).toBe('cancelled');
 
-      // Try to reserve budget — should fail
+      // Try to reserve budget — should fail (session is terminal)
       const result = await reserveBudget({
         sessionId: foundSession!.id,
+        discoveryRunId: runId,
         estimatedInputTokens: 100,
         reservedOutputTokens: 100,
       });
@@ -1085,8 +1096,10 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       const runId = await createTestDiscoveryRun();
       await bindRunToSession(session.id, runId);
 
+      // Must pass discoveryRunId since session is bound
       const reservation = await reserveBudget({
         sessionId: session.id,
+        discoveryRunId: runId,
         estimatedInputTokens: 500,
         reservedOutputTokens: 500,
       });
@@ -1104,6 +1117,487 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       const foundReservation = await getReservationById(reservation.reservationId!);
       expect(foundReservation).not.toBeNull();
       expect(foundReservation!.session_id).toBe(session.id);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // M5e: Session finalization (completeSession, cancelSession)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('M5e — session finalization atomicity', () => {
+    it('completeSession transitions active session to completed', async () => {
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+
+      await completeSession(session.id);
+
+      const found = await getSessionById(session.id);
+      expect(found!.status).toBe('completed');
+      expect(found!.completed_at).not.toBeNull();
+    });
+
+    it('cancelSession transitions active session to cancelled', async () => {
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+
+      await cancelSession(session.id, 'test cancellation');
+
+      const found = await getSessionById(session.id);
+      expect(found!.status).toBe('cancelled');
+      expect(found!.cancelled_at).not.toBeNull();
+      expect(found!.cancellation_reason).toBe('test cancellation');
+    });
+
+    it('cancelled session cannot be completed', async () => {
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+      await cancelSession(session.id, 'test');
+
+      await expect(completeSession(session.id)).rejects.toThrow(SessionTerminalError);
+
+      const found = await getSessionById(session.id);
+      expect(found!.status).toBe('cancelled');
+    });
+
+    it('exhausted session cannot be completed (stays exhausted)', async () => {
+      const session = await createSession({
+        maxRequests: 1,
+        maxInputTokens: 100,
+        maxOutputTokens: 50,
+      });
+      const runId = await createTestDiscoveryRun();
+      await bindRunToSession(session.id, runId);
+
+      // Exhaust the session
+      await reserveBudget({
+        sessionId: session.id,
+        discoveryRunId: runId,
+        estimatedInputTokens: 50,
+        reservedOutputTokens: 50,
+      });
+
+      // Find the session to verify exhausted status
+      const exhausted = await getSessionById(session.id);
+      if (exhausted!.status !== 'exhausted') {
+        // Force exhausted state for test (edge case: might still be active if budget not fully consumed)
+        await sequelize.query(
+          `UPDATE controlled_test_sessions SET status = 'exhausted', exhausted_at = NOW() WHERE id = :id`,
+          { replacements: { id: session.id } },
+        );
+      }
+
+      // Attempt complete on exhausted session
+      await expect(completeSession(session.id)).rejects.toThrow(SessionTerminalError);
+
+      const found = await getSessionById(session.id);
+      expect(found!.status).toBe('exhausted');
+    });
+
+    it('completed session cannot be cancelled', async () => {
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+      await completeSession(session.id);
+
+      await expect(cancelSession(session.id, 'too late')).rejects.toThrow(SessionTerminalError);
+
+      const found = await getSessionById(session.id);
+      expect(found!.status).toBe('completed');
+    });
+
+    it('concurrent complete and cancel — first wins, second fails', async () => {
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+
+      // Concurrent finalization attempts
+      const results = await Promise.allSettled([
+        completeSession(session.id),
+        cancelSession(session.id, 'concurrent cancel'),
+      ]);
+
+      // Exactly one should succeed
+      const successes = results.filter(r => r.status === 'fulfilled');
+      const failures = results.filter(r => r.status === 'rejected');
+
+      expect(successes.length).toBe(1);
+      expect(failures.length).toBe(1);
+
+      // Session should be in a terminal state
+      const found = await getSessionById(session.id);
+      expect(['completed', 'cancelled']).toContain(found!.status);
+    });
+
+    it('session not found throws SessionNotFoundError', async () => {
+      await expect(completeSession(999999)).rejects.toThrow(SessionNotFoundError);
+      await expect(cancelSession(999999, 'test')).rejects.toThrow(SessionNotFoundError);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // M5e: Bound vs unbound reservation isolation
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('M5e — bound/unbound reservation isolation', () => {
+    it('unbound reservation cannot consume bound session budget', async () => {
+      // Create and bind session to a run
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+      const runId = await createTestDiscoveryRun();
+      await bindRunToSession(session.id, runId);
+
+      // Attempt unbound reservation (no discoveryRunId) — should fail
+      const result = await reserveBudget({
+        sessionId: session.id,
+        estimatedInputTokens: 100,
+        reservedOutputTokens: 100,
+      });
+
+      expect(result.ok).toBe(false);
+      // Session exists and is active, but binding mismatch
+      // The unbound path requires IS NULL, but session is bound
+      expect(result.reason).toBe('budget_exceeded'); // Falls through to budget check
+      expect(result.sessionStatus).toBe('active');
+
+      // Verify no budget was consumed
+      const found = await getSessionById(session.id);
+      expect(found!.used_requests).toBe(0);
+      expect(found!.used_input_tokens).toBe(0);
+      expect(found!.used_output_tokens).toBe(0);
+    });
+
+    it('bound reservation with wrong run ID cannot consume budget', async () => {
+      // Create and bind session to run1
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+      const runId1 = await createTestDiscoveryRun();
+      const runId2 = await createTestDiscoveryRun();
+      await bindRunToSession(session.id, runId1);
+
+      // Attempt bound reservation with wrong run ID — should fail
+      const result = await reserveBudget({
+        sessionId: session.id,
+        discoveryRunId: runId2, // Wrong run!
+        estimatedInputTokens: 100,
+        reservedOutputTokens: 100,
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.reason).toBe('run_binding_mismatch');
+      expect(result.sessionStatus).toBe('active');
+
+      // Verify no budget was consumed
+      const found = await getSessionById(session.id);
+      expect(found!.used_requests).toBe(0);
+      expect(found!.used_input_tokens).toBe(0);
+      expect(found!.used_output_tokens).toBe(0);
+    });
+
+    it('bound reservation with correct run ID succeeds', async () => {
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+      const runId = await createTestDiscoveryRun();
+      await bindRunToSession(session.id, runId);
+
+      // Bound reservation with correct run ID
+      const result = await reserveBudget({
+        sessionId: session.id,
+        discoveryRunId: runId,
+        estimatedInputTokens: 100,
+        reservedOutputTokens: 100,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.reservationId).toBeDefined();
+
+      // Verify budget was consumed
+      const found = await getSessionById(session.id);
+      expect(found!.used_requests).toBe(1);
+      expect(found!.used_input_tokens).toBe(100);
+      expect(found!.used_output_tokens).toBe(100);
+    });
+
+    it('unbound reservation on unbound session succeeds (M3 compatibility)', async () => {
+      // Create session WITHOUT binding
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+
+      // Unbound reservation (no discoveryRunId) on unbound session
+      const result = await reserveBudget({
+        sessionId: session.id,
+        estimatedInputTokens: 100,
+        reservedOutputTokens: 100,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.reservationId).toBeDefined();
+
+      // Verify budget was consumed
+      const found = await getSessionById(session.id);
+      expect(found!.used_requests).toBe(1);
+      expect(found!.discovery_run_id).toBeNull(); // Still unbound
+    });
+
+    it('concurrent unbound attempt on bound session fails while correct bound succeeds', async () => {
+      // Single session bound to a run
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+      });
+      const runId = await createTestDiscoveryRun();
+      await bindRunToSession(session.id, runId);
+
+      // Concurrent reservations: one correct (bound), one incorrect (unbound)
+      const [boundResult, unboundResult] = await Promise.all([
+        // Correct bound reservation
+        reserveBudget({
+          sessionId: session.id,
+          discoveryRunId: runId,
+          estimatedInputTokens: 100,
+          reservedOutputTokens: 100,
+        }),
+        // Incorrect unbound reservation on bound session
+        reserveBudget({
+          sessionId: session.id,
+          estimatedInputTokens: 100,
+          reservedOutputTokens: 100,
+        }),
+      ]);
+
+      // Bound should succeed, unbound should fail
+      expect(boundResult.ok).toBe(true);
+      expect(unboundResult.ok).toBe(false);
+      expect(unboundResult.reason).toBe('budget_exceeded'); // Falls through to budget check
+
+      // Verify only one request consumed budget
+      const found = await getSessionById(session.id);
+      expect(found!.used_requests).toBe(1);
+      expect(found!.used_input_tokens).toBe(100);
+      expect(found!.used_output_tokens).toBe(100);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // M5e: Atomic authorization and claim race tests
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('M5e — atomic authorization/claim race conditions', () => {
+    // Import claim service for authorizeAndClaimControlledRun
+    const claimService = require('../../services/discovery-claim.service');
+
+    async function createControlledTestRun(runActorId: number): Promise<number> {
+      const run = await DiscoveryRunModel.create({
+        project_id: projectId,
+        actor_id: runActorId,
+        discovery_type: 'desk_research',
+        topic: `race-test-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        topic_slug: `race-${Date.now()}`,
+        source_intent: null,
+        status: 'pending',
+        is_controlled: true,
+        created_by_identity: 'test:race',
+      } as CreationAttributes<DiscoveryRun>) as DiscoveryRun;
+      return run.id;
+    }
+
+    async function getRunById(runId: number): Promise<DiscoveryRun | null> {
+      return await DiscoveryRunModel.findByPk(runId) as DiscoveryRun | null;
+    }
+
+    it('cancellation commits before claim → claim rejected; run stays pending', async () => {
+      // Create session bound to controlled run
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+        actorId,
+      });
+      const runId = await createControlledTestRun(actorId);
+      await bindRunToSession(session.id, runId);
+
+      // Cancel session first
+      await cancelSession(session.id, 'cancelled before claim');
+
+      // Attempt to claim — should fail due to terminal session
+      await expect(
+        claimService.authorizeAndClaimControlledRun(session.id, runId, actorId, 'worker-1'),
+      ).rejects.toThrow(claimService.SessionNotActiveError);
+
+      // Verify run stays pending (not mutated)
+      const run = await getRunById(runId);
+      expect(run!.status).toBe('pending');
+      expect(run!.worker_id).toBeNull();
+    });
+
+    it('claim commits before cancellation → claim succeeds; cancellation still succeeds', async () => {
+      // Create session bound to controlled run
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+        actorId,
+      });
+      const runId = await createControlledTestRun(actorId);
+      await bindRunToSession(session.id, runId);
+
+      // Claim first
+      const result = await claimService.authorizeAndClaimControlledRun(
+        session.id,
+        runId,
+        actorId,
+        'worker-1',
+      );
+
+      expect(result.run.status).toBe('processing');
+      expect(result.run.worker_id).toBe('worker-1');
+
+      // Session cancellation still succeeds (session is still active)
+      // But this would prevent successful finalization later
+      await cancelSession(session.id, 'cancelled after claim');
+
+      // Session is now cancelled
+      const sessionAfter = await getSessionById(session.id);
+      expect(sessionAfter!.status).toBe('cancelled');
+    });
+
+    it('two concurrent claims → exactly one succeeds', async () => {
+      // Create session bound to controlled run
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+        actorId,
+      });
+      const runId = await createControlledTestRun(actorId);
+      await bindRunToSession(session.id, runId);
+
+      // Concurrent claims from same actor (different workers)
+      const results = await Promise.allSettled([
+        claimService.authorizeAndClaimControlledRun(session.id, runId, actorId, 'worker-1'),
+        claimService.authorizeAndClaimControlledRun(session.id, runId, actorId, 'worker-2'),
+      ]);
+
+      const successes = results.filter(r => r.status === 'fulfilled');
+      const failures = results.filter(r => r.status === 'rejected');
+
+      // Exactly one should succeed
+      expect(successes.length).toBe(1);
+      expect(failures.length).toBe(1);
+
+      // The failure should be RunAlreadyClaimedError or RunNotPendingError
+      const failedResult = failures[0] as PromiseRejectedResult;
+      expect(
+        failedResult.reason instanceof claimService.RunAlreadyClaimedError ||
+        failedResult.reason instanceof claimService.RunNotPendingError,
+      ).toBe(true);
+
+      // Run should be processing with exactly one worker
+      const run = await getRunById(runId);
+      expect(run!.status).toBe('processing');
+      expect(['worker-1', 'worker-2']).toContain(run!.worker_id);
+    });
+
+    it('wrong actor → claim rejected without run mutation', async () => {
+      // Create second actor
+      const actor2 = await ActorModel.create({
+        organization_id: TEST_ORG_ID,
+        email: `actor2-${Date.now()}@test.com`,
+        name: 'Actor Two',
+      }) as Actor;
+
+      // Create session owned by actor1, bound to controlled run
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+        actorId, // actor1 owns session
+      });
+      const runId = await createControlledTestRun(actorId);
+      await bindRunToSession(session.id, runId);
+
+      // Attempt claim by actor2 — should fail
+      await expect(
+        claimService.authorizeAndClaimControlledRun(session.id, runId, actor2.id, 'worker-wrong'),
+      ).rejects.toThrow(claimService.SessionActorMismatchError);
+
+      // Verify run was NOT mutated
+      const run = await getRunById(runId);
+      expect(run!.status).toBe('pending');
+      expect(run!.worker_id).toBeNull();
+    });
+
+    it('wrong session/run binding → claim rejected without run mutation', async () => {
+      // Create session bound to run1, then try to claim run2
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+        actorId,
+      });
+      const runId1 = await createControlledTestRun(actorId);
+      const runId2 = await createControlledTestRun(actorId);
+
+      // Bind session to run1 (not run2)
+      await bindRunToSession(session.id, runId1);
+
+      // Attempt to claim run2 using session bound to run1 — should fail due to binding mismatch
+      await expect(
+        claimService.authorizeAndClaimControlledRun(session.id, runId2, actorId, 'worker-wrong'),
+      ).rejects.toThrow(claimService.SessionRunBindingMismatchError);
+
+      // Verify run2 was NOT mutated
+      const run = await getRunById(runId2);
+      expect(run!.status).toBe('pending');
+      expect(run!.worker_id).toBeNull();
+    });
+
+    it('terminal session → claim rejected without run mutation', async () => {
+      // Create and bind session, then complete it
+      const session = await createSession({
+        maxRequests: 5,
+        maxInputTokens: 10000,
+        maxOutputTokens: 5000,
+        actorId,
+      });
+      const runId = await createControlledTestRun(actorId);
+      await bindRunToSession(session.id, runId);
+      await completeSession(session.id);
+
+      // Attempt claim on completed session — should fail
+      await expect(
+        claimService.authorizeAndClaimControlledRun(session.id, runId, actorId, 'worker-late'),
+      ).rejects.toThrow(claimService.SessionNotActiveError);
+
+      // Verify run was NOT mutated
+      const run = await getRunById(runId);
+      expect(run!.status).toBe('pending');
+      expect(run!.worker_id).toBeNull();
     });
   });
 });

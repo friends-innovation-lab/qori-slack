@@ -1,6 +1,12 @@
 import nunjucks from 'nunjucks';
 import { createModel, resolveModelTier } from './modelProvider';
 import { assertKnownNamesRedacted } from './piiRedaction';
+import {
+  getControlledContext,
+  requireValidControlledContext,
+  NoControlledContextError,
+} from '../context/controlledExecutionContext';
+import { budgetedInvoke, type BudgetedInvokeResult } from './budgetedInvoke';
 
 // Default environment for prompt rendering — tolerates undefined variables
 // because templates use {% if upstream_foo %} guards against optional data.
@@ -94,6 +100,56 @@ export interface PostGenerationValidation {
 }
 
 type AiResponses = Record<string, string>;
+
+// ─── Controlled AI Routing (M5e) ───────────────────────────────────────────────
+
+/**
+ * Route AI invocation through controlled or ordinary path.
+ *
+ * FAIL-CLOSED: If controlled context exists, we MUST route through budgetedInvoke.
+ * If context is expired (detached async descendant), throws immediately — never falls back.
+ *
+ * @param prompt - The prompt to send to the model
+ * @param taskId - Task identifier for logging/purpose
+ * @param llm - The LLM instance to use for ordinary execution
+ * @returns Generated content
+ * @throws If controlled context is expired (fail-closed)
+ * @throws If budgetedInvoke fails with non-retryable error
+ */
+async function routeAiInvocation(
+  prompt: string,
+  taskId: string,
+  llm: ReturnType<typeof createModel>,
+): Promise<string> {
+  // Check for controlled context
+  const ctx = getControlledContext();
+
+  if (!ctx) {
+    // No context — ordinary execution path
+    const response = await llm.invoke(prompt);
+    return response.content as string;
+  }
+
+  // Context exists — validate lifecycle (fail-closed on expiry)
+  // This throws ExpiredControlledContextError if lifecycle has ended
+  requireValidControlledContext();
+
+  // Route through budgetedInvoke
+  const result: BudgetedInvokeResult = await budgetedInvoke({
+    sessionId: ctx.sessionId,
+    prompt,
+    purpose: `langchain-task-${taskId}`,
+  });
+
+  if (!result.ok) {
+    // Convert budget errors to thrown exceptions for fail-closed behavior
+    const errorMsg = `[M5e] Controlled AI invocation failed: ${result.error} - ${result.errorMessage}`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+
+  return result.content ?? '';
+}
 
 // Convert Handlebars-style conditionals to Nunjucks syntax
 // This allows templates to use either Handlebars {{#if}} or Nunjucks {% if %} syntax
@@ -192,11 +248,11 @@ export async function executeAiGenerationTasks(
       }
 
       // Per-task model override (P4 ruling: trivial transforms on Haiku)
+      // M5e: routeAiInvocation handles controlled vs ordinary routing
       const taskLlm = task.model
         ? createModel({ tier: resolveModelTier(task.model), temperature, maxTokens, purpose: `task-${task.task_id}` })
         : llm;
-      const response = await taskLlm.invoke(finalPrompt);
-      let responseText = response.content as string;
+      let responseText = await routeAiInvocation(finalPrompt, task.task_id, taskLlm);
 
       // Post-generation claim guard: validate + bounded retry
       if (postValidation?.taskIds.has(task.task_id)) {
@@ -207,10 +263,10 @@ export async function executeAiGenerationTasks(
             violations.map(v => `[${v.class}] ${v.evidence}`).join(', '),
           );
           // Bounded retry: prepend guidance and re-invoke once
+          // M5e: retry also routes through controlled path if in context
           const guidance = postValidation.buildRetryGuidance(violations);
           const retryPrompt = `${guidance}\n\n---\n\n${finalPrompt}`;
-          const retryResponse = await taskLlm.invoke(retryPrompt);
-          const retryText = retryResponse.content as string;
+          const retryText = await routeAiInvocation(retryPrompt, `${task.task_id}-retry`, taskLlm);
 
           const retryViolations = postValidation.validate(task.task_id, retryText);
           if (retryViolations.length > 0) {

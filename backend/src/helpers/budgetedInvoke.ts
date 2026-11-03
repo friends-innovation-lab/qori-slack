@@ -35,6 +35,7 @@ import {
   type ReconcileUsageInput,
   type ReconcileUsageResult,
 } from '../services/controlled-test-budget.service';
+import { getControlledContext } from '../context/controlledExecutionContext';
 
 // ─── Input/Output Types ───────────────────────────────────────────────────────
 
@@ -59,6 +60,7 @@ export interface BudgetedInvokeResult {
     | 'session_not_found'
     | 'session_terminal'
     | 'budget_exceeded'
+    | 'run_binding_mismatch'
     | 'token_measurement_failed'
     | 'invalid_token_estimate'
     | 'reservation_failed'
@@ -221,9 +223,15 @@ export async function budgetedInvoke(
   // - Estimated input tokens
   // - Full max output allocation (CONTROLLED_TEST_MAX_TOKENS)
   // Also creates a persistent reservation record for idempotent reconciliation
+  //
+  // M5e: Extract discoveryRunId from controlled context for binding verification.
+  // If context is present, the atomic UPDATE will enforce `discovery_run_id = :discoveryRunId`.
+  // If context is absent (M3 compatibility path), uses unbound-session path.
+  const controlledCtx = getControlledContext();
   const reservedOutputTokens = CONTROLLED_TEST_MAX_TOKENS;
   const reservationInput: ReserveBudgetInput = {
     sessionId,
+    discoveryRunId: controlledCtx?.discoveryRunId,
     estimatedInputTokens,
     reservedOutputTokens,
     purpose,
@@ -397,6 +405,7 @@ export async function budgetedInvokeWithRetry(
       lastResult.error === 'session_not_found' ||
       lastResult.error === 'session_terminal' ||
       lastResult.error === 'budget_exceeded' ||
+      lastResult.error === 'run_binding_mismatch' || // M5e: binding verification failure
       lastResult.error === 'token_measurement_failed' ||
       lastResult.error === 'invalid_token_estimate'
     ) {

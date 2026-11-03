@@ -55,6 +55,11 @@ import type { DiscoveryType, DiscoveryRun } from '../database/models/discovery_r
 import type { EvidenceSource } from '../database/models/evidence_source';
 import sequelize from '../database';
 import { Op } from 'sequelize';
+import {
+  runInControlledContext,
+  type ControlledExecutionContext,
+} from '../context/controlledExecutionContext';
+import { ApiErrorCode } from '../types/api-errors';
 
 // Re-export types for external consumers
 export type { DiscoveryTypeKey, PreparedDiscoverySource, CreateDiscoveryRunInput };
@@ -328,6 +333,8 @@ import {
   getSessionByPublicId,
   bindRunToSession,
   getSessionByRunId,
+  completeSession,
+  cancelSession,
   SessionNotFoundError,
   SessionTerminalError,
   RunAlreadyBoundError,
@@ -1585,6 +1592,789 @@ export async function executeDiscoveryRun(
     );
 
     throw error;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DISC-WEB-1D-2 M5e: CONTROLLED AI EXECUTION
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Result of controlled execution finalization.
+ */
+export interface ControlledFinalizationResult {
+  success: boolean;
+  runId: number;
+  sessionId: number;
+  outcome: 'completed' | 'failed';
+  runStatus: string;
+  sessionStatus: string;
+  error?: string;
+}
+
+/**
+ * Atomic finalization of controlled execution.
+ *
+ * Single authoritative finalization path for both success and failure outcomes.
+ * Uses database transaction to ensure run and session are finalized atomically.
+ *
+ * Key invariants:
+ * - Run and session finalize together or not at all
+ * - Idempotent: re-finalization with same outcome is safe
+ * - Fail-closed: any error preserves pre-finalization state
+ *
+ * @param runId - Discovery run ID
+ * @param sessionId - Controlled test session ID
+ * @param outcome - 'completed' or 'failed'
+ * @param failureReason - Required if outcome is 'failed'
+ */
+export async function finalizeControlledExecution(
+  runId: number,
+  sessionId: number,
+  outcome: 'completed' | 'failed',
+  failureReason?: string,
+): Promise<ControlledFinalizationResult> {
+  const t = await sequelize.transaction();
+
+  try {
+    // Load run for status check
+    const run = await runService.getDiscoveryRunById(runId);
+    if (!run) {
+      await t.rollback();
+      return {
+        success: false,
+        runId,
+        sessionId,
+        outcome,
+        runStatus: 'not_found',
+        sessionStatus: 'unknown',
+        error: `Run ${runId} not found`,
+      };
+    }
+
+    // Idempotency: if already in terminal state, verify consistency
+    if (run.status === 'completed' || run.status === 'failed') {
+      // Already finalized — verify session is also terminal
+      const session = await getSessionByRunId(runId);
+      const sessionStatus = session?.status ?? 'not_found';
+
+      await t.commit(); // No changes, commit read
+      return {
+        success: true,
+        runId,
+        sessionId,
+        outcome,
+        runStatus: run.status,
+        sessionStatus,
+      };
+    }
+
+    // Finalize based on outcome
+    if (outcome === 'completed') {
+      // Complete run
+      await claimService.completeRun(runId, run.worker_id || 'controlled-finalization');
+
+      // Complete session
+      await completeSession(sessionId, t);
+    } else {
+      // Fail run
+      await claimService.failRun(
+        runId,
+        run.worker_id || 'controlled-finalization',
+        'CONTROLLED_EXECUTION_FAILURE',
+        failureReason || 'Controlled execution failed',
+        'controlled_execution',
+      );
+
+      // Cancel session (preserves budget audit trail)
+      await cancelSession(sessionId, failureReason, t);
+    }
+
+    await t.commit();
+
+    // Reload for final status
+    const finalRun = await runService.getDiscoveryRunById(runId);
+    const finalSession = await getSessionByRunId(runId);
+
+    return {
+      success: true,
+      runId,
+      sessionId,
+      outcome,
+      runStatus: finalRun?.status ?? 'unknown',
+      sessionStatus: finalSession?.status ?? 'unknown',
+    };
+
+  } catch (error) {
+    await t.rollback();
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error(`[M5e] Controlled finalization failed: ${errMsg}`);
+
+    return {
+      success: false,
+      runId,
+      sessionId,
+      outcome,
+      runStatus: 'rollback',
+      sessionStatus: 'rollback',
+      error: errMsg,
+    };
+  }
+}
+
+/**
+ * Execute a controlled Discovery run with budget enforcement.
+ *
+ * DISC-WEB-1D-2 M5e entry point. Wraps execution in AsyncLocalStorage context
+ * so all downstream AI calls route through budgetedInvoke().
+ *
+ * Key invariants:
+ * - Run must be bound to session before execution
+ * - All AI calls go through budgetedInvoke (context-based routing)
+ * - Single finalization transaction for both success and failure
+ * - Fail-closed: any error triggers failure finalization
+ *
+ * @param runId - Discovery run ID (must be controlled)
+ * @param sessionId - Controlled test session ID (bound to run)
+ * @param workerId - Worker ID claiming the run
+ */
+export async function executeControlledDiscoveryRun(
+  runId: number,
+  sessionId: number,
+  workerId: string,
+): Promise<DiscoveryExecutionResult> {
+  // Load run to verify it's controlled and session binding
+  const run = await runService.getDiscoveryRunById(runId);
+  if (!run) {
+    throw new Error(`Discovery run ${runId} not found`);
+  }
+
+  if (!run.is_controlled) {
+    throw new Error(
+      `Run ${runId} is not a controlled run — use executeDiscoveryRun() instead`,
+    );
+  }
+
+  // Verify session binding (defense in depth — budget reservation will also check)
+  const session = await getSessionByRunId(runId);
+  if (!session) {
+    throw new Error(
+      `No session bound to run ${runId} — controlled runs require budget enforcement`,
+    );
+  }
+
+  if (session.id !== sessionId) {
+    throw new Error(
+      `Session mismatch: expected ${sessionId}, found ${session.id} bound to run ${runId}`,
+    );
+  }
+
+  if (session.status !== 'active') {
+    throw new Error(
+      `Session ${sessionId} is ${session.status} — cannot execute controlled run`,
+    );
+  }
+
+  console.log(
+    `[M5e] Starting controlled execution: run=${runId}, session=${sessionId}, worker=${workerId}`,
+  );
+
+  try {
+    // Execute within controlled context
+    // All downstream AI calls will route through budgetedInvoke()
+    const result = await runInControlledContext(
+      {
+        sessionId,
+        discoveryRunId: runId,
+        purpose: `controlled-discovery-${run.topic_slug}`,
+      },
+      async () => {
+        // Remove the M5d guard — we ARE the controlled execution path
+        // Update run to remove the is_controlled flag check in executeDiscoveryRun
+        // Actually, we need to use a modified execution path that doesn't check is_controlled
+
+        // For M5e, we inline the execution logic without the M5d guard
+        // This is intentional — controlled execution IS authorized here
+        return await executeControlledDiscoveryRunInner(runId, workerId);
+      },
+    );
+
+    // Success — finalize atomically
+    const finalization = await finalizeControlledExecution(
+      runId,
+      sessionId,
+      'completed',
+    );
+
+    if (!finalization.success) {
+      console.error(
+        `[M5e] Finalization failed after successful execution: ${finalization.error}`,
+      );
+      // Execution succeeded but finalization failed — log but return result
+      // The run will be in an inconsistent state that requires manual intervention
+    }
+
+    console.log(
+      `[M5e] Controlled execution completed: run=${runId}, session=${sessionId}`,
+    );
+
+    return result;
+
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error(`[M5e] Controlled execution failed: ${errMsg}`);
+
+    // Failure — finalize atomically
+    const finalization = await finalizeControlledExecution(
+      runId,
+      sessionId,
+      'failed',
+      errMsg.substring(0, 500),
+    );
+
+    if (!finalization.success) {
+      console.error(
+        `[M5e] Finalization also failed: ${finalization.error}`,
+      );
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * Inner execution logic for controlled runs.
+ * Mirrors executeDiscoveryRun but without the M5d guard.
+ *
+ * This is separated to allow controlled context to wrap the execution
+ * while reusing the core execution logic.
+ */
+async function executeControlledDiscoveryRunInner(
+  runId: number,
+  workerId: string,
+): Promise<DiscoveryExecutionResult> {
+  // Load run with associations
+  const run = await runService.getDiscoveryRunById(runId);
+  if (!run) {
+    throw new Error(`Discovery run ${runId} not found`);
+  }
+
+  // Validate worker ownership
+  if (run.worker_id !== workerId) {
+    throw new claimService.NotOwnerError(runId, workerId);
+  }
+
+  if (run.status !== 'processing') {
+    throw new Error(`Run ${runId} is not in processing status (is ${run.status})`);
+  }
+
+  // NOTE: No M5d guard here — this IS the controlled execution path
+
+  const typeConfig = DISCOVERY_TYPES[run.discovery_type as DiscoveryTypeKey];
+  if (!typeConfig) {
+    throw new Error(`Unknown discovery type: ${run.discovery_type}`);
+  }
+
+  // Load associated sources
+  const DiscoveryRunSourceModelInner = sequelize.models.DiscoveryRunSource;
+  const EvidenceSourceModelInner = sequelize.models.EvidenceSource;
+
+  const runSources = await DiscoveryRunSourceModelInner.findAll({
+    where: { discovery_run_id: run.id },
+    order: [['source_order', 'ASC']],
+  });
+
+  const sourceIds = runSources.map((rs: any) => rs.evidence_source_id);
+  const evidenceSources = await EvidenceSourceModelInner.findAll({
+    where: { id: { [Op.in]: sourceIds } },
+  }) as EvidenceSource[];
+
+  // Order sources by run source order
+  const sourceMap = new Map(evidenceSources.map(s => [s.id, s]));
+  const orderedSources = sourceIds.map(id => sourceMap.get(id)).filter(Boolean) as EvidenceSource[];
+
+  if (orderedSources.length === 0) {
+    throw new Error(`Run ${runId} has no associated sources`);
+  }
+
+  // Load project for context
+  const project = await getProjectById(run.project_id);
+  if (!project) {
+    throw new Error(`Project ${run.project_id} not found`);
+  }
+
+  const projectSlug = project.slug;
+  const projectProblemStatement = project.problem_statement || null;
+
+  // Scaffold discovery folders
+  await scaffoldDiscoveryFolders(projectSlug);
+
+  // Build documents from sources
+  const documents: DocumentInput[] = [];
+  for (const source of orderedSources) {
+    const artifactRef = source.artifact_ref as {
+      filename?: string;
+      content_hash?: string;
+      mime_type?: string;
+      size_bytes?: number;
+      extracted_text?: string;
+    } | null;
+
+    const metadata = source.metadata as {
+      content_length?: number;
+      extracted_text?: string;
+    } | null;
+
+    const extractedText = metadata?.extracted_text || artifactRef?.extracted_text;
+
+    if (!extractedText) {
+      throw new Error(
+        `Source ${source.id} has no extracted text available. ` +
+        `This indicates a content storage issue.`
+      );
+    }
+
+    documents.push({
+      name: source.label,
+      content: extractedText,
+      type: artifactRef?.mime_type || 'application/octet-stream',
+      size: artifactRef?.size_bytes || 0,
+    });
+  }
+
+  // Parse documents
+  const parsedDocuments = parseDocuments(documents);
+  const formattedDocumentContent: string = parsedDocuments.structured_format;
+
+  const MIME_LABELS: Record<string, string> = {
+    'application/pdf': 'PDF',
+    'text/plain': 'Text',
+    'text/markdown': 'Markdown',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word',
+    'application/msword': 'Word',
+  };
+
+  const documentNames = documents.map(d => d.name);
+  const documentTypes = documents.map(d => MIME_LABELS[d.type] || d.type);
+
+  // Privacy gate
+  const privacyResult = authorizeForModel(
+    formattedDocumentContent,
+    'DISCOVERY_UPLOAD',
+    { projectId: run.project_id, sourceId: `discovery:${run.discovery_type}:${run.topic_slug}` },
+  );
+
+  if (privacyResult.status === 'pending_review') {
+    const piiFindings = scanForPii(formattedDocumentContent);
+    await claimService.failRun(run.id, workerId, 'PRIVACY_VIOLATION', 'PII detected in documents', 'privacy_scan');
+    throw new PrivacyError(
+      'Privacy scan detected potential PII in uploaded files',
+      piiFindings.map((f: { label: string; snippet: string }) => ({ label: f.label, snippet: f.snippet })),
+    );
+  }
+
+  if (privacyResult.status === 'denied') {
+    await claimService.failRun(run.id, workerId, 'CONTENT_DENIED', privacyResult.reason || 'Unknown', 'content_auth');
+    throw new Error(`Content authorization failed: ${privacyResult.reason}`);
+  }
+
+  // Build template data
+  const contentFingerprint = computeContentHash(privacyResult.modelSafeContent!).substring(0, 16);
+
+  const data: Record<string, unknown> = {
+    topic: run.topic,
+    effective_topic: run.topic,
+    topic_slug: run.topic_slug,
+    project_slug: projectSlug,
+    project_problem_statement: projectProblemStatement,
+    source_intent: run.source_intent,
+    description: run.source_intent || run.topic,
+    document_content: privacyResult.modelSafeContent!,
+    combined_file_content: privacyResult.modelSafeContent!,
+    _discovery_type: typeConfig.type,
+    selected_study: `discovery-${run.topic_slug}`,
+    study_name: run.topic,
+    document_count: documents.length,
+    document_names: documentNames,
+    document_types: documentTypes,
+  };
+
+  // Stakeholder-specific fields
+  if (run.discovery_type === 'stakeholder_synthesis') {
+    data.researcher_contact = run.created_by_identity;
+    data.detected_files = documents.map(d => d.name).join('\n- ');
+    data.file_list = documents.map(d => d.name);
+  }
+
+  // Artifact identity context
+  data.__artifactContext = {
+    projectId: run.project_id,
+    studyId: null,
+    artifactType: 'discovery',
+    title: `${run.discovery_type.replace(/_/g, ' ')} — ${run.topic}`,
+    canonicalUpstreamInputs: [`content:${contentFingerprint}`],
+    createdBy: run.created_by_identity,
+  };
+
+  // Execute YAML template processing
+  let artifact;
+  try {
+    // Fetch and parse YAML template
+    const file = await fetchFileFromRepo(getConfigRepo(), YAML_TEMPLATE_PATH, typeConfig.yaml);
+    const yamlConfig = yaml.load(file.content) as {
+      id?: string;
+      version?: string;
+      emits?: EmitSpec[];
+    } | null;
+
+    if (!yamlConfig) {
+      throw new Error(`Failed to parse YAML template: ${typeConfig.yaml}`);
+    }
+
+    const templateVersion = yamlConfig.version || null;
+    const emitsSpec: EmitSpec[] = yamlConfig.emits || [];
+
+    // Process YAML with dryRun=true
+    const variableContext: VariableContext = {
+      projectId: run.project_id,
+    };
+
+    // Update heartbeat before long-running AI call
+    await claimService.updateHeartbeat(run.id, workerId);
+
+    // AI calls within this block route through budgetedInvoke via controlled context
+    const dryRunResult = await processYamlTemplate(
+      file.content, data, '', '', false, variableContext, undefined, true,
+    );
+
+    // Update heartbeat after AI call
+    await claimService.updateHeartbeat(run.id, workerId);
+
+    // Create DiscoveryArtifact (no AI call)
+    artifact = await artifactService.createDiscoveryArtifact({
+      projectId: run.project_id,
+      discoveryRunId: run.id,
+      artifactType: run.discovery_type as 'desk_research' | 'stakeholder_synthesis' | 'survey_synthesis' | 'cross_source_synthesis',
+      title: `${typeConfig.label}: ${run.topic}`,
+      topicSlug: run.topic_slug,
+      canonicalContent: dryRunResult.outputTemplate || null,
+      templateName: typeConfig.yaml.replace('.yaml', ''),
+      templateVersion,
+      derivationFingerprint: contentFingerprint,
+      actorId: run.actor_id,
+      generatedByIdentity: run.created_by_identity,
+    });
+
+    // GitHub projection (no AI call)
+    let githubResult: { path: string; sha: string; url: string };
+    try {
+      githubResult = await createOrUpdateFileOnGitHub(dryRunResult.path, dryRunResult.content);
+      await artifactService.recordProjection(artifact.id, {
+        githubPath: githubResult.path,
+        githubSha: githubResult.sha,
+      });
+    } catch (githubError) {
+      const githubMsg = githubError instanceof Error ? githubError.message : String(githubError);
+      console.warn(`⚠️ GitHub projection failed (non-blocking): ${githubMsg}`);
+      await artifactService.recordProjectionError(artifact.id, githubMsg);
+      githubResult = {
+        path: dryRunResult.path,
+        sha: 'projection-failed',
+        url: `https://github.com/${process.env.GITHUB_OWNER}/${process.env.GITHUB_REPO}/blob/main/${dryRunResult.path}`,
+      };
+    }
+
+    // Variable extraction with artifact FK (has AI calls)
+    let extractionSuccess = true;
+    let extractionVariableCount = 0;
+
+    if (emitsSpec.length > 0) {
+      // Update heartbeat before extraction AI calls
+      await claimService.updateHeartbeat(run.id, workerId);
+
+      const extractResult = await extractAndPersistDiscoveryVariables({
+        templateId: yamlConfig.id || typeConfig.yaml.replace('.yaml', ''),
+        templateVersion: templateVersion || '',
+        emitsSpec,
+        outputTemplate: dryRunResult.outputTemplate,
+        inputValues: data,
+        variableContext,
+        discoveryArtifactFkId: artifact.id,
+      });
+
+      extractionSuccess = extractResult.success;
+      extractionVariableCount = extractResult.variableCount || 0;
+
+      // M5e: Controlled runs FAIL on extraction failure (not best-effort like ordinary runs)
+      if (!extractResult.success) {
+        throw new Error(`Controlled extraction failed: ${extractResult.error}`);
+      }
+    }
+
+    // DR-2: Insight extraction (has AI calls) — skip for controlled runs
+    // Insight extraction is not part of controlled test scope
+    console.log(`[M5e] Skipping insight extraction for controlled run ${runId}`);
+
+    // Finalize artifact
+    await artifactService.finalizeArtifactSupersession(artifact.id);
+
+    // NOTE: Run completion happens in finalizeControlledExecution, not here
+
+    console.log(`[M5e] Controlled run ${run.public_id} execution completed (pending finalization)`);
+
+    return {
+      runPublicId: run.public_id,
+      artifactPublicId: artifact.public_id,
+      topicSlug: run.topic_slug,
+      typeLabel: typeConfig.label,
+      githubUrl: githubResult.url,
+      extractionSuccess,
+      extractionVariableCount,
+      // Controlled runs don't do insight extraction
+      insightExtractionSuccess: undefined,
+      insightsCreated: undefined,
+      insightsSkipped: undefined,
+    };
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    // Mark artifact as failed if it was created
+    if (artifact) {
+      await artifactService.markArtifactFailed(artifact.id);
+    }
+
+    // NOTE: Run failure happens in finalizeControlledExecution, not here
+    // We just rethrow — the outer handler will finalize
+
+    throw error;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DISC-WEB-1D-2 M5e: API-DRIVEN CONTROLLED EXECUTION
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Result of API-driven controlled execution.
+ */
+export interface ControlledExecutionApiResult {
+  success: boolean;
+  run?: DiscoveryRun;
+  artifactPublicId?: string;
+  githubUrl?: string;
+  extractionSuccess?: boolean;
+  extractionVariableCount?: number;
+  statusCode?: number;
+  errorCode?: string;
+  errorMessage?: string;
+}
+
+/**
+ * Execute a controlled Discovery run from API request.
+ *
+ * DISC-WEB-1D-2 M5e: API entry point for controlled execution.
+ *
+ * Orchestrates:
+ * 1. Resolve run by public ID
+ * 2. Validate run is controlled and pending
+ * 3. Lookup bound session and verify actor ownership
+ * 4. Verify session is active
+ * 5. Atomically claim the run
+ * 6. Execute within controlled context
+ * 7. Return result with final run status
+ *
+ * @param input - API execution input
+ * @returns Execution result with final status
+ */
+export async function executeControlledDiscoveryRunFromApi(input: {
+  projectId: number;
+  runPublicId: string;
+  actorId: number;
+  actorPublicId: string;
+}): Promise<ControlledExecutionApiResult> {
+  const { projectId, runPublicId, actorId, actorPublicId } = input;
+
+  // Step 1: Resolve run by public ID
+  const run = await runService.getDiscoveryRunByPublicId(runPublicId);
+  if (!run) {
+    return {
+      success: false,
+      statusCode: 404,
+      errorCode: 'NOT_FOUND',
+      errorMessage: `Discovery run ${runPublicId} not found`,
+    };
+  }
+
+  // Verify project match
+  if (run.project_id !== projectId) {
+    return {
+      success: false,
+      statusCode: 404,
+      errorCode: 'NOT_FOUND',
+      errorMessage: `Discovery run ${runPublicId} not found in this project`,
+    };
+  }
+
+  // Step 2: Lookup bound session (to get session ID for atomic claim)
+  // Note: Actual authorization happens atomically in authorizeAndClaimControlledRun
+  const session = await getSessionByRunId(run.id);
+  if (!session) {
+    return {
+      success: false,
+      run,
+      statusCode: 409,
+      errorCode: 'SESSION_NOT_BOUND',
+      errorMessage: 'No session is bound to this controlled run',
+    };
+  }
+
+  // Generate unique worker ID for this API execution
+  const workerId = `api:${actorPublicId}:${Date.now()}`;
+
+  // Step 3: Atomically authorize and claim the run
+  // This single transaction verifies:
+  // - Actor owns session (created_by_actor_id === actorId)
+  // - Session is active
+  // - Session is bound to this run
+  // - Run is controlled
+  // - Run is pending
+  // - Then transitions run to processing
+  let claimedRun: DiscoveryRun;
+  let claimSessionId: number;
+  try {
+    const claimResult = await claimService.authorizeAndClaimControlledRun(
+      session.id,
+      run.id,
+      actorId,
+      workerId,
+    );
+    claimedRun = claimResult.run;
+    claimSessionId = claimResult.sessionId;
+  } catch (error) {
+    if (error instanceof claimService.SessionNotFoundError) {
+      return {
+        success: false,
+        run,
+        statusCode: 409,
+        errorCode: 'SESSION_NOT_BOUND',
+        errorMessage: error.message,
+      };
+    }
+    if (error instanceof claimService.SessionActorMismatchError) {
+      return {
+        success: false,
+        run,
+        statusCode: 403,
+        errorCode: ApiErrorCode.CONTROLLED_SESSION_ACTOR_MISMATCH,
+        errorMessage: 'Actor does not own the session bound to this run',
+      };
+    }
+    if (error instanceof claimService.SessionNotActiveError) {
+      return {
+        success: false,
+        run,
+        statusCode: 409,
+        errorCode: ApiErrorCode.CONTROLLED_SESSION_NOT_ACTIVE,
+        errorMessage: error.message,
+      };
+    }
+    if (error instanceof claimService.SessionRunBindingMismatchError) {
+      return {
+        success: false,
+        run,
+        statusCode: 409,
+        errorCode: 'SESSION_RUN_BINDING_MISMATCH',
+        errorMessage: error.message,
+      };
+    }
+    if (error instanceof claimService.RunNotControlledError) {
+      return {
+        success: false,
+        run,
+        statusCode: 400,
+        errorCode: 'RUN_NOT_CONTROLLED',
+        errorMessage: 'Run is not a controlled run — cannot execute via this endpoint',
+      };
+    }
+    if (error instanceof claimService.RunAlreadyClaimedError) {
+      return {
+        success: false,
+        run,
+        statusCode: 409,
+        errorCode: 'RUN_ALREADY_CLAIMED',
+        errorMessage: error.message,
+      };
+    }
+    if (error instanceof claimService.RunNotPendingError) {
+      return {
+        success: false,
+        run,
+        statusCode: 409,
+        errorCode: 'RUN_NOT_PENDING',
+        errorMessage: error.message,
+      };
+    }
+    throw error;
+  }
+
+  // Step 4: Execute within controlled context
+  console.log(
+    `[M5e-API] Starting controlled execution: run=${run.id}, session=${claimSessionId}, worker=${workerId}`,
+  );
+
+  try {
+    const result = await executeControlledDiscoveryRun(
+      claimedRun.id,
+      claimSessionId,
+      workerId,
+    );
+
+    // Reload run for final status
+    const finalRun = await runService.getDiscoveryRunById(run.id);
+    if (!finalRun) {
+      return {
+        success: false,
+        statusCode: 500,
+        errorCode: 'RUN_DISAPPEARED',
+        errorMessage: 'Run no longer exists after execution',
+      };
+    }
+
+    // Verify final status is completed (not failed due to finalization race)
+    if (finalRun.status !== 'completed') {
+      return {
+        success: false,
+        run: finalRun,
+        statusCode: 500,
+        errorCode: 'FINALIZATION_FAILED',
+        errorMessage: `Run ended with status ${finalRun.status} instead of completed`,
+      };
+    }
+
+    return {
+      success: true,
+      run: finalRun,
+      artifactPublicId: result.artifactPublicId,
+      githubUrl: result.githubUrl,
+      extractionSuccess: result.extractionSuccess,
+      extractionVariableCount: result.extractionVariableCount,
+    };
+
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error(`[M5e-API] Controlled execution failed: ${errMsg}`);
+
+    // Reload run for final status
+    const finalRun = await runService.getDiscoveryRunById(run.id);
+
+    return {
+      success: false,
+      run: finalRun ?? run,
+      statusCode: 500,
+      errorCode: 'EXECUTION_FAILED',
+      errorMessage: errMsg,
+    };
   }
 }
 

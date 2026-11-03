@@ -580,6 +580,138 @@ router.post('/runs', requireAuth, async (req, res, next) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
+// DISC-WEB-1D-2 M5e: CONTROLLED EXECUTION
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/v1/projects/:projectId/discovery/runs/:runId/execute
+ *
+ * Execute a pending controlled Discovery run.
+ *
+ * DISC-WEB-1D-2 M5e: Authorized controlled execution endpoint.
+ *
+ * Requirements:
+ * - DISC_WEB1_ENABLED === 'true' (sourceRefs feature)
+ * - DISC_WEB1D_ENABLED === 'true' (controlled execution feature)
+ * - Authenticated actor must own the bound session
+ * - Session must be active
+ * - Run must be pending and controlled
+ * - Run must be bound to the session
+ *
+ * Returns:
+ * - 200: Execution completed successfully
+ * - 400: Validation error
+ * - 403: Actor does not own session
+ * - 404: Run or session not found
+ * - 409: Run not pending, session not active, or already claimed
+ * - 503: Feature not enabled
+ */
+router.post('/runs/:runId/execute', requireAuth, async (req, res, next) => {
+  try {
+    const projectId = await resolveProjectId(req.params.projectId, req.ctx!.organization.id);
+    if (projectId === null) {
+      res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid or unknown project identifier' },
+      });
+      return;
+    }
+
+    const runPublicId = req.params.runId;
+    if (!runPublicId || typeof runPublicId !== 'string') {
+      res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid run ID' },
+      });
+      return;
+    }
+
+    // ─── Feature Gate: DISC_WEB1_ENABLED ─────────────────────────────────
+    if (process.env.DISC_WEB1_ENABLED !== 'true') {
+      res.status(503).json({
+        error: {
+          code: ApiErrorCode.FEATURE_DISABLED,
+          message: 'Discovery source consumption is not available',
+        },
+      });
+      return;
+    }
+
+    // ─── Feature Gate: DISC_WEB1D_ENABLED (controlled execution) ─────────
+    if (!isControlledExecutionEnabled()) {
+      res.status(503).json({
+        error: {
+          code: ApiErrorCode.CONTROLLED_EXECUTION_DISABLED,
+          message: 'Controlled execution is not enabled',
+        },
+      });
+      return;
+    }
+
+    // Execute controlled run
+    const result = await discoveryAppService.executeControlledDiscoveryRunFromApi({
+      projectId,
+      runPublicId,
+      actorId: req.ctx!.actor.id,
+      actorPublicId: req.ctx!.actor.publicId,
+    });
+
+    // Check final run status — do not return success for failed runs
+    if (!result.success) {
+      res.status(result.statusCode || 500).json({
+        error: {
+          code: result.errorCode || 'EXECUTION_FAILED',
+          message: result.errorMessage || 'Controlled execution failed',
+        },
+        data: result.run ? {
+          runPublicId: result.run.public_id,
+          status: result.run.status,
+          failureCode: result.run.failure_code,
+          failureMessage: result.run.failure_message,
+        } : undefined,
+      });
+      return;
+    }
+
+    res.status(200).json({
+      data: {
+        runPublicId: result.run!.public_id,
+        status: result.run!.status,
+        artifactPublicId: result.artifactPublicId,
+        githubUrl: result.githubUrl,
+        extractionSuccess: result.extractionSuccess,
+        extractionVariableCount: result.extractionVariableCount,
+      },
+      meta: {
+        message: 'Controlled execution completed successfully.',
+        isControlled: true,
+      },
+    });
+  } catch (error) {
+    // Handle specific error types
+    if (error instanceof AppError) {
+      if (error.code === ApiErrorCode.CONTROLLED_SESSION_NOT_FOUND) {
+        res.status(404).json({
+          error: { code: error.code, message: error.message },
+        });
+        return;
+      }
+      if (error.code === ApiErrorCode.CONTROLLED_SESSION_ACTOR_MISMATCH) {
+        res.status(403).json({
+          error: { code: error.code, message: error.message },
+        });
+        return;
+      }
+      if (error.code === ApiErrorCode.CONTROLLED_SESSION_NOT_ACTIVE) {
+        res.status(409).json({
+          error: { code: error.code, message: error.message },
+        });
+        return;
+      }
+    }
+    next(error);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 // ARTIFACTS
 // ═══════════════════════════════════════════════════════════════════════════
 

@@ -50,6 +50,14 @@ export interface CreateSessionInput {
 export interface ReserveBudgetInput {
   /** Session ID (internal) */
   sessionId: number;
+  /**
+   * Discovery run ID for binding verification (optional).
+   * - If provided: atomic UPDATE includes `discovery_run_id = :discoveryRunId` precondition
+   * - If undefined: uses unbound-session path (`discovery_run_id IS NULL`)
+   *
+   * M5e: Controlled execution MUST provide this. Unbound path is for M3 compatibility only.
+   */
+  discoveryRunId?: number;
   /** Estimated input tokens for this request (must be finite positive integer) */
   estimatedInputTokens: number;
   /** Reserved output tokens for this request (must be finite positive integer) */
@@ -85,7 +93,7 @@ export interface ReserveBudgetResult {
   /** Reservation ID (if ok=true) — required for reconciliation */
   reservationId?: number;
   /** Reason for failure (if ok=false) */
-  reason?: 'session_not_found' | 'session_terminal' | 'budget_exceeded';
+  reason?: 'session_not_found' | 'session_terminal' | 'budget_exceeded' | 'run_binding_mismatch';
   /** Session status at time of check */
   sessionStatus: ControlledTestSessionStatus;
   /** Remaining requests after reservation (if ok=true) */
@@ -471,8 +479,18 @@ export async function reserveBudget(
   const shouldCommit = !transaction;
 
   try {
-    // Step 1: Atomic UPDATE with preconditions for ALL THREE limits
+    // Step 1: Atomic UPDATE with preconditions for ALL THREE limits + run binding
     // This is the definitive algorithm per QORI-ROADMAP.md
+    //
+    // M5e: Strict isolation between bound and unbound reservations:
+    // - Bound reservation (discoveryRunId provided): enforce exact binding `discovery_run_id = :discoveryRunId`
+    // - Unbound reservation (M3 compatibility): enforce `discovery_run_id IS NULL`
+    //
+    // This prevents an unbound reservation from consuming a bound session's budget.
+    const bindingClause = input.discoveryRunId !== undefined
+      ? 'AND discovery_run_id = :discoveryRunId'
+      : 'AND discovery_run_id IS NULL';
+
     const [results] = (await sequelize.query(
       `
       UPDATE controlled_test_sessions
@@ -484,6 +502,7 @@ export async function reserveBudget(
       WHERE
         id = :sessionId
         AND status = 'active'
+        ${bindingClause}
         AND used_requests < max_requests
         AND used_input_tokens + :estimatedInputTokens <= max_input_tokens
         AND used_output_tokens + :reservedOutputTokens <= max_output_tokens
@@ -492,6 +511,7 @@ export async function reserveBudget(
       {
         replacements: {
           sessionId: input.sessionId,
+          discoveryRunId: input.discoveryRunId ?? null,
           estimatedInputTokens: input.estimatedInputTokens,
           reservedOutputTokens: input.reservedOutputTokens,
         },
@@ -524,6 +544,15 @@ export async function reserveBudget(
         return {
           ok: false,
           reason: 'session_terminal',
+          sessionStatus: session.status,
+        };
+      }
+
+      // M5e: Check run binding mismatch
+      if (input.discoveryRunId !== undefined && session.discovery_run_id !== input.discoveryRunId) {
+        return {
+          ok: false,
+          reason: 'run_binding_mismatch',
           sessionStatus: session.status,
         };
       }

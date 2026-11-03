@@ -5,6 +5,11 @@ import fs from 'fs';
 import path from 'path';
 
 import type { CascadeVariableKey, CascadeVariableMap } from '../types/cascade';
+import {
+  getControlledContext,
+  requireValidControlledContext,
+} from '../context/controlledExecutionContext';
+import { budgetedInvoke, type BudgetedInvokeResult } from './budgetedInvoke';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -561,6 +566,56 @@ function isCascadeVariableKey(key: string): key is CascadeVariableKey {
   return true; // Accept any key — runtime schema validation is the real gate
 }
 
+// ─── Controlled AI Routing (M5e) ───────────────────────────────────────────────
+
+/**
+ * Route extraction AI invocation through controlled or ordinary path.
+ *
+ * FAIL-CLOSED: If controlled context exists, we MUST route through budgetedInvoke.
+ * If context is expired (detached async descendant), throws immediately — never falls back.
+ *
+ * @param prompt - The extraction prompt
+ * @param tier - The model tier (for logging/purpose)
+ * @param llm - The LLM instance to use for ordinary execution
+ * @returns Generated content
+ * @throws If controlled context is expired (fail-closed)
+ * @throws If budgetedInvoke fails with any error (fail-closed for extraction)
+ */
+async function routeExtractionInvocation(
+  prompt: string,
+  tier: string,
+  llm: ReturnType<typeof createModel>,
+): Promise<string> {
+  // Check for controlled context
+  const ctx = getControlledContext();
+
+  if (!ctx) {
+    // No context — ordinary execution path
+    const response = await llm.invoke(prompt);
+    return typeof response.content === 'string' ? response.content : JSON.stringify(response.content);
+  }
+
+  // Context exists — validate lifecycle (fail-closed on expiry)
+  // This throws ExpiredControlledContextError if lifecycle has ended
+  requireValidControlledContext();
+
+  // Route through budgetedInvoke
+  const result: BudgetedInvokeResult = await budgetedInvoke({
+    sessionId: ctx.sessionId,
+    prompt,
+    purpose: `extraction-${tier}`,
+  });
+
+  if (!result.ok) {
+    // M5e: Fail-closed for extraction — any error terminates the extraction
+    const errorMsg = `[M5e] Controlled extraction invocation failed: ${result.error} - ${result.errorMessage}`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+
+  return result.content ?? '';
+}
+
 // ─── Main extraction ─────────────────────────────────────────────────
 
 /**
@@ -625,8 +680,9 @@ async function extractVariables(
       try {
         const currentPrompt = attempts === 1 ? prompt : prompt + `\n\nCRITICAL RETRY INSTRUCTION: Your previous response returned flat strings instead of structured objects. You MUST return JSON matching the exact schema above. Do not return strings or summaries — return objects with ALL specified fields. Every pool variable must be an array of objects, not an array of strings. Use null for missing optional fields.`;
 
-        const response = await llm.invoke(currentPrompt);
-        const parsed = parseExtractionResponse(typeof response.content === 'string' ? response.content : JSON.stringify(response.content));
+        // M5e: Route through controlled or ordinary path
+        const responseText = await routeExtractionInvocation(currentPrompt, tier, llm);
+        const parsed = parseExtractionResponse(responseText);
 
         if (!parsed) {
           console.warn(`⚠️ [${tier}] Extraction attempt ${attempts}/${maxAttempts}: JSON parse failed`);

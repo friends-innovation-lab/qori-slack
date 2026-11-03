@@ -1,7 +1,7 @@
 # QORI — Living Project Roadmap
 
 **Canonical Location**: `docs/roadmap/QORI-ROADMAP.md`
-**Last Updated**: 2026-11-02
+**Last Updated**: 2026-11-03
 **Current Branch**: `dev`
 
 **Application Baseline**: `314994df` (feat(DISC-WEB-1C-2b): Start Analysis confirmation UI with safety gate)
@@ -191,9 +191,9 @@ Qori is a deployable, channel-independent research operating system for public-s
 
 | State | Status | Date | Notes |
 |-------|--------|------|-------|
-| **Architecture approved** | YES | 2026-11-02 | M1-M5d authorized, M6-M8 pending |
-| **Implementation authorized** | M1-M5d | 2026-11-02 | M6-M8 require separate authorization |
-| **Implementation completed** | M1-M5d | 2026-11-02 | Database + service + model factory + budgeted invoke + context + auth gate + atomic run creation + poller isolation |
+| **Architecture approved** | YES | 2026-11-02 | M1-M5e authorized, M6-M8 pending |
+| **Implementation authorized** | M1-M5e | 2026-11-03 | M6-M8 require separate authorization |
+| **Implementation completed** | M1-M5e | 2026-11-03 | Database + service + model factory + budgeted invoke + context + auth gate + atomic run creation + poller isolation + controlled AI routing |
 
 **M1 Implementation Details** (completed 2026-11-02):
 
@@ -677,11 +677,129 @@ const canonical = {
 5. Session binding is atomic with run creation (same transaction)
 6. Idempotent replay validates actor ownership and session binding
 
+**M5e Implementation Details** (completed 2026-11-03):
+
+| File | Type | Purpose |
+|------|------|---------|
+| `src/helpers/budgetedInvoke.ts` | Modified | Added controlled context integration + run_binding_mismatch error |
+| `src/helpers/langchain.ts` | Modified | Added `routeAiInvocation()` helper + controlled routing in `executeAiGenerationTasks()` |
+| `src/helpers/variableExtractor.ts` | Modified | Added `routeExtractionInvocation()` helper + controlled routing in `extractVariables()` |
+| `src/application/discovery.app-service.ts` | Modified | Added `executeControlledDiscoveryRun()`, `finalizeControlledExecution()`, `executeControlledDiscoveryRunInner()`, `executeControlledDiscoveryRunFromApi()` |
+| `src/services/controlled-test-budget.service.ts` | Modified | Added `discoveryRunId` to `ReserveBudgetInput` + binding clause with `IS NULL` for unbound isolation |
+| `src/services/discovery-claim.service.ts` | Modified | Added `claimControlledRun()` with atomic UPDATE preconditions |
+| `src/routes/api/v1/discovery.routes.ts` | Modified | Added `POST /runs/:runId/execute` endpoint with dual feature gates |
+| `src/__tests__/unit/budgetedInvoke.test.ts` | Modified | Added 4 M5e controlled context integration tests |
+| `src/__tests__/unit/controlledAiRouting.test.ts` | New | 17 tests for AI routing and failure propagation |
+| `src/__tests__/integration/controlled-test-budget.service.test.ts` | Modified | Added 12 M5e tests (5 isolation, 7 finalization) |
+
+**M5e Architecture Summary**:
+
+1. **Context-Based Routing**: AI calls check for controlled context via `getControlledContext()`. If present, validate lifecycle and route through `budgetedInvoke()`. If absent, use ordinary path.
+
+2. **Fail-Closed Routing**:
+   - No context → ordinary `createModel().invoke()` path
+   - Active context → `budgetedInvoke()` with session from context
+   - Expired context → throw `ExpiredControlledContextError` (never fall back)
+
+3. **Run Binding Verification**: `budgetedInvoke()` extracts `discoveryRunId` from controlled context and passes it to `reserveBudget()`. The atomic UPDATE enforces `AND discovery_run_id = :discoveryRunId`.
+
+4. **Single Finalization Transaction**: `finalizeControlledExecution()` atomically finalizes both run and session state (completed or failed).
+
+**Routing Helper Pattern** (used in langchain.ts and variableExtractor.ts):
+```typescript
+async function routeAiInvocation(prompt, taskId, llm) {
+  const ctx = getControlledContext();
+  if (!ctx) {
+    return await llm.invoke(prompt); // Ordinary path
+  }
+  requireValidControlledContext(); // Throws if expired
+  const result = await budgetedInvoke({ sessionId: ctx.sessionId, prompt });
+  if (!result.ok) throw new Error(`Controlled AI failed: ${result.error}`);
+  return result.content ?? '';
+}
+```
+
+**Atomic Reservation with Binding** (M5e addition):
+```sql
+UPDATE controlled_test_sessions
+SET used_requests = used_requests + 1, ...
+WHERE id = :sessionId
+  AND status = 'active'
+  AND discovery_run_id = :discoveryRunId  -- M5e binding verification
+  AND used_requests < max_requests
+  AND used_input_tokens + :estimatedInputTokens <= max_input_tokens
+  AND used_output_tokens + :reservedOutputTokens <= max_output_tokens
+RETURNING id
+```
+
+**New Error Code**:
+- `run_binding_mismatch` — Session's bound run does not match the controlled context's run ID (non-retryable)
+
+**M5e Test Coverage** (33 new tests total):
+
+*Unit tests (17 in controlledAiRouting.test.ts + 4 in budgetedInvoke.test.ts):*
+- `discoveryRunId` passed from controlled context to `reserveBudget()`
+- `discoveryRunId` omitted when no controlled context
+- `run_binding_mismatch` error handling + non-retryable
+- Context-based AI routing (ordinary vs controlled path)
+- Expired context throws (never falls back)
+- Each AI attempt creates separate budget reservation
+- Controlled extraction failure propagates (not best-effort)
+- Provider error / budget exhaustion / timeout propagation
+
+*Integration tests (12 new in controlled-test-budget.service.test.ts):*
+- Bound reservation uses discoveryRunId in WHERE clause
+- Unbound reservation uses `IS NULL` isolation
+- Bound and unbound reservations operate independently
+- Reservation isolation is symmetric
+- Concurrent reservations maintain isolation
+- Finalization success paths (run + session atomicity)
+- Finalization failure paths (artifact marked failed, session cancelled)
+- Idempotent finalization behavior
+
+**M5e API Endpoint**:
+- Method: `POST /api/v1/projects/:projectPublicId/discovery/runs/:runPublicId/execute`
+- Authentication: `requireAuth` middleware (JWT/session)
+- Authorization: Atomic transaction verifies actor owns session (`created_by_actor_id === actorId`)
+- Feature gates: `DISC_WEB1_ENABLED` AND `isControlledExecutionEnabled()`
+- Atomic authorization+claim via `authorizeAndClaimControlledRun()` with session-first locking
+
+**M5e Atomic Authorization/Claim Transaction**:
+Lock order: session first, run second (consistent with finalization/cancellation).
+```sql
+-- 1. Lock session FOR UPDATE
+SELECT id, status, created_by_actor_id, discovery_run_id
+FROM controlled_test_sessions WHERE id = :sessionId FOR UPDATE;
+-- 2. Verify actor ownership
+-- 3. Verify status === 'active'
+-- 4. Verify discovery_run_id === runId
+-- 5. Lock run FOR UPDATE
+SELECT id, status, is_controlled, worker_id
+FROM discovery_runs WHERE id = :runId FOR UPDATE;
+-- 6. Verify is_controlled === true
+-- 7. Verify status === 'pending'
+-- 8. Transition run to 'processing'
+UPDATE discovery_runs SET status = 'processing', worker_id = :workerId, ...
+-- 9. Commit
+```
+
+**M5e Race Test Coverage** (6 PostgreSQL integration tests):
+- Cancellation commits before claim → claim rejected; run stays pending
+- Claim commits before cancellation → claim succeeds; cancellation still succeeds
+- Two concurrent claims → exactly one succeeds
+- Wrong actor → claim rejected without run mutation
+- Wrong session/run binding → claim rejected without run mutation
+- Terminal session → claim rejected without run mutation
+
+**M5e Controlled Extraction Semantics**:
+- Controlled runs FAIL on extraction error (line 2109-2110 in discovery.app-service.ts)
+- Ordinary runs use best-effort (log warning, continue)
+- Artifact marked `status: 'failed'` on error; filtered by `status: 'current'` queries
+
 **Outstanding Blockers**:
 - M6-M8 require explicit authorization before implementation
-- No AI invocation paths wired in M1-M5d (run creation + poller isolation complete, but no budgetedInvoke routing yet)
 
-**Next Step**: M5d pre-commit review. Then M6 (admin API endpoints) or direct to M7 (unit tests) if admin API is deferred.
+**Next Step**: M6 (admin API endpoints) or direct to M7 (unit tests) if admin API is deferred.
 
 **M1 Follow-up Findings** (from architecture review):
 
@@ -937,17 +1055,17 @@ Tests:       1466 passed, 2 failed, 1468 total
 
 **Branch**: `dev`
 **Application Baseline**: `314994df` (DISC-WEB-1C-2b)
-**Backend Unit Tests**: 1303 passing (verified post-M5d)
-**Backend Integration Tests**: 1891 passing (M5d migration verified)
+**Backend Unit Tests**: 1356 passing (verified post-M5e)
+**Backend Integration Tests**: 1927 passing (M5e isolation + finalization + race tests verified)
 **Frontend Tests**: 1466 passing, 2 failing (reported; identities unknown—requires baseline run)
 
-**Active Work**: DISC-WEB-1D-2 M1-M5d complete. **PENDING M5d PRE-COMMIT REVIEW**.
+**Active Work**: DISC-WEB-1D-2 M1-M5e complete. **PENDING M5e COMMIT AUTHORIZATION**.
 
 **Safety Gates**: The Web UI submission path is gated off (`ENABLE_LIVE_RUN_CREATION=false`, `DISC_WEB1_ENABLED` unset). Legacy REST `sources[]` and Slack `/qori-discover` paths remain operational and are NOT gated.
 
 ### 10.2 Next Task
 
-**DISC-WEB-1D-2 M5d** — Implementation complete. PENDING PRE-COMMIT REVIEW.
+**DISC-WEB-1D-2 M5e** — Implementation complete. PENDING COMMIT AUTHORIZATION.
 
 Completed milestones:
 - ✅ M1: Database migration + service (58 integration tests)
@@ -957,6 +1075,7 @@ Completed milestones:
 - ✅ M5a: FK constraint ON DELETE RESTRICT migration
 - ✅ M5c: Authorization service + capability gate (64 unit tests)
 - ✅ M5d: `is_controlled` column + atomic run creation + poller isolation + route integration
+- ✅ M5e: Controlled AI routing + API endpoint + atomic claim + finalization + 33 new tests
 
 Remaining milestones (require separate authorization):
 1. M6: Admin API endpoints

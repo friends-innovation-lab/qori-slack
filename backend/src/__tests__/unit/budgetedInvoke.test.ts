@@ -871,11 +871,146 @@ describe('DISC-WEB-1D-2 M3: Budgeted Invoke With Retry', () => {
 // Concurrent access tests
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// M5e: Controlled Context Integration
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Mock the controlled execution context
+jest.mock('../../context/controlledExecutionContext');
+
+import { getControlledContext } from '../../context/controlledExecutionContext';
+
+const mockGetControlledContext = getControlledContext as jest.MockedFunction<typeof getControlledContext>;
+
+describe('DISC-WEB-1D-2 M5e: Controlled Context Integration', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockBudgetService.getSessionById.mockResolvedValue(createMockSession());
+    mockBudgetService.reserveBudget.mockResolvedValue(createSuccessfulReservation());
+    mockBudgetService.reconcileUsage.mockResolvedValue(createSuccessfulReconciliation());
+    // Default: no controlled context
+    mockGetControlledContext.mockReturnValue(undefined);
+  });
+
+  it('passes discoveryRunId from controlled context to reserveBudget', async () => {
+    // Simulate controlled context with sessionId=1, discoveryRunId=42
+    mockGetControlledContext.mockReturnValue({
+      sessionId: 1,
+      discoveryRunId: 42,
+      lifecycleId: 1,
+      isControlled: true,
+      createdAt: new Date().toISOString(),
+      purpose: 'test-controlled',
+    });
+
+    const mockModel = createMockModel();
+    mockModelProvider.createControlledTestModel.mockReturnValue(mockModel as any);
+
+    await budgetedInvoke({
+      sessionId: 1,
+      prompt: 'Test controlled prompt',
+      purpose: 'test',
+    });
+
+    // Verify reserveBudget was called with discoveryRunId
+    expect(mockBudgetService.reserveBudget).toHaveBeenCalledWith({
+      sessionId: 1,
+      discoveryRunId: 42, // From controlled context
+      estimatedInputTokens: 100,
+      reservedOutputTokens: CONTROLLED_TEST_MAX_TOKENS,
+      purpose: 'test',
+    });
+  });
+
+  it('omits discoveryRunId when no controlled context is present', async () => {
+    mockGetControlledContext.mockReturnValue(undefined);
+
+    const mockModel = createMockModel();
+    mockModelProvider.createControlledTestModel.mockReturnValue(mockModel as any);
+
+    await budgetedInvoke({
+      sessionId: 1,
+      prompt: 'Test ordinary prompt',
+      purpose: 'test',
+    });
+
+    // Verify reserveBudget was called without discoveryRunId
+    expect(mockBudgetService.reserveBudget).toHaveBeenCalledWith({
+      sessionId: 1,
+      discoveryRunId: undefined, // No context
+      estimatedInputTokens: 100,
+      reservedOutputTokens: CONTROLLED_TEST_MAX_TOKENS,
+      purpose: 'test',
+    });
+  });
+
+  it('fails with run_binding_mismatch when context run does not match session binding', async () => {
+    mockGetControlledContext.mockReturnValue({
+      sessionId: 1,
+      discoveryRunId: 42,
+      lifecycleId: 1,
+      isControlled: true,
+      createdAt: new Date().toISOString(),
+    });
+
+    // Session is bound to different run
+    mockBudgetService.reserveBudget.mockResolvedValue({
+      ok: false,
+      reason: 'run_binding_mismatch',
+      sessionStatus: 'active',
+    });
+
+    const mockModel = createMockModel();
+    mockModelProvider.createControlledTestModel.mockReturnValue(mockModel as any);
+
+    const result = await budgetedInvoke({
+      sessionId: 1,
+      prompt: 'Test',
+      purpose: 'test',
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe('run_binding_mismatch');
+    expect(result.errorMessage).toContain('run_binding_mismatch');
+  });
+
+  it('does not retry on run_binding_mismatch', async () => {
+    mockGetControlledContext.mockReturnValue({
+      sessionId: 1,
+      discoveryRunId: 42,
+      lifecycleId: 1,
+      isControlled: true,
+      createdAt: new Date().toISOString(),
+    });
+
+    mockBudgetService.reserveBudget.mockResolvedValue({
+      ok: false,
+      reason: 'run_binding_mismatch',
+      sessionStatus: 'active',
+    });
+
+    const mockModel = createMockModel();
+    mockModelProvider.createControlledTestModel.mockReturnValue(mockModel as any);
+
+    const result = await budgetedInvokeWithRetry(
+      { sessionId: 1, prompt: 'Test' },
+      3,
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe('run_binding_mismatch');
+    // Should not retry — binding mismatch is non-retryable
+    expect(mockBudgetService.reserveBudget).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('DISC-WEB-1D-2 M3: Concurrent Budget Access', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockBudgetService.getSessionById.mockResolvedValue(createMockSession());
     mockBudgetService.reconcileUsage.mockResolvedValue(createSuccessfulReconciliation());
+    // Reset context mock for non-M5e tests
+    mockGetControlledContext.mockReturnValue(undefined);
   });
 
   it('concurrent attempts respect shared budget', async () => {
