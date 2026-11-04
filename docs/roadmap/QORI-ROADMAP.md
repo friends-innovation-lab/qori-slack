@@ -858,6 +858,22 @@ Session locked first, run second (matches `authorizeAndClaimControlledRun()`).
 - Reservations rejected after cancellation (1 test)
 - Project/actor mismatch errors (1 test)
 
+**M7b Implementation Details** (completed 2026-11-04):
+
+| File | Type | Purpose |
+|------|------|---------|
+| `src/helpers/studyVariables.ts` | Modified | D1 containment fix: `readDiscoveryVariablesByProject()` excludes variables from non-current artifacts |
+| `src/__tests__/integration/m7b-variable-containment.test.ts` | New | 11 tests: artifact status containment, project/template isolation, downstream consumption |
+| `src/__tests__/integration/m7b-budget-metadata.test.ts` | New | 9 tests: malformed usage metadata rejection (NaN, Infinity, negative, string), fractional floor'ing, idempotency |
+
+**M7b D1 Resolution** — Variable Containment:
+- **Issue**: Variables from failed/generating/superseded artifacts were consumable via `readDiscoveryVariablesByProject()`
+- **Fix**: Added artifact status subquery — variables only returned when linked artifact has `status='current'` OR `discovery_artifact_fk_id IS NULL` (legacy)
+- **Impact**: Downstream templates cannot consume variables from failed controlled runs
+
+**M7b GitHub Persistence Note**:
+> Controlled Discovery runs write persistent GitHub files via `createOrUpdateFileOnGitHub()`. When a controlled run fails after GitHub projection but before artifact finalization, the GitHub file persists but the database artifact is marked `failed`. Failed artifacts are excluded from all canonical application readers (`getCurrentArtifactForRun`, `listCurrentArtifactsByProject`, `listCanonicalDiscoveryArtifacts`). Operational cleanup of orphaned GitHub files, if required, is manual and separately authorized. No automatic cleanup or dry-run mode is provided.
+
 **Next Step**: M7 (HTTP integration tests) and M8 (live controlled test execution) require explicit authorization.
 
 **M1 Follow-up Findings** (from architecture review):

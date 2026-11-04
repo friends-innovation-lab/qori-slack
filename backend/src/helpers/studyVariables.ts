@@ -550,6 +550,11 @@ export async function readUpstreamVariables(_studyBasePath: string, _consumesSpe
 /**
  * Read discovery variables by project ID (study_id = NULL for discovery scope).
  * Preferred method for new code.
+ *
+ * M7b CONTAINMENT (DISC-WEB-1D-2):
+ * - Artifact-linked variables are returned only when their artifact status = 'current'
+ * - Legacy variables with discovery_artifact_fk_id IS NULL retain existing behavior
+ * - Variables from 'generating', 'failed', or 'superseded' artifacts are EXCLUDED
  */
 export async function readDiscoveryVariablesByProject(projectId: number, discoveryType: string): Promise<DiscoveryVariablesStructure> {
   const StudyVariable = getStudyVariableModel();
@@ -564,12 +569,27 @@ export async function readDiscoveryVariablesByProject(projectId: number, discove
         return createEmptyDiscoveryVariablesFile(`project-${projectId}`, discoveryType);
       }
 
+      // M7b: Containment filter — only include variables where:
+      // 1. discovery_artifact_fk_id IS NULL (legacy variables), OR
+      // 2. The linked artifact has status = 'current' AND belongs to the same project
+      //    (project_id check is defensive — FK doesn't enforce project ownership)
+      const artifactStatusSubquery = literal(`(
+        "StudyVariable"."discovery_artifact_fk_id" IS NULL
+        OR EXISTS (
+          SELECT 1 FROM "discovery_artifacts" AS "da"
+          WHERE "da"."id" = "StudyVariable"."discovery_artifact_fk_id"
+          AND "da"."project_id" = "StudyVariable"."project_id"
+          AND "da"."status" = 'current'
+        )
+      )`);
+
       const rows = await StudyVariable.findAll({
         where: {
           project_id: projectId,
           study_id: null,
           scope: 'discovery',
           source_template: sourceTemplate,
+          [Op.and]: [artifactStatusSubquery],
         },
       });
 
