@@ -317,4 +317,21 @@ describe('DISC-WEB-1D-2 M2: Controlled test model factory', () => {
       /not in the approved allowlist/,
     );
   });
+
+  // M8a: Verify former fallback model is now rejected
+  it('createControlledTestModel rejects former invalid fallback model (M8a)', () => {
+    process.env.ANTHROPIC_API_KEY = 'test-key-for-unit-test';
+    jest.resetModules();
+    const { createControlledTestModel } = require('../../helpers/modelProvider');
+    // claude-sonnet-4-5-20241022 was removed in M8a — invalid date format
+    expect(() => createControlledTestModel({ model: 'claude-sonnet-4-5-20241022' })).toThrow(
+      /not in the approved allowlist/,
+    );
+  });
+
+  // M8a: Verify allowlist contains exactly one model
+  it('CONTROLLED_TEST_MODEL_ALLOWLIST contains exactly Sonnet 4.6 (M8a)', () => {
+    const { CONTROLLED_TEST_MODEL_ALLOWLIST } = require('../../helpers/modelProvider');
+    expect(CONTROLLED_TEST_MODEL_ALLOWLIST).toEqual(['claude-sonnet-4-6']);
+  });
 });

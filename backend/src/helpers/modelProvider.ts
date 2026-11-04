@@ -138,8 +138,7 @@ export const CONTROLLED_TEST_TIER: ModelTier = 'sonnet';
  * To add a model: verify it with the team, add to this array, and update tests.
  */
 export const CONTROLLED_TEST_MODEL_ALLOWLIST: readonly string[] = [
-  'claude-sonnet-4-6',        // Current production sonnet
-  'claude-sonnet-4-5-20241022', // Previous sonnet version (fallback)
+  'claude-sonnet-4-6',  // M8a: Single known-valid model for controlled execution
 ] as const;
 
 /**
