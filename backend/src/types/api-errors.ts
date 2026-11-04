@@ -66,6 +66,8 @@ export enum ApiErrorCode {
   CONTROLLED_SESSION_ALREADY_BOUND = 'CONTROLLED_SESSION_ALREADY_BOUND',
   /** Actor does not own controlled session (DISC-WEB-1D-2) */
   CONTROLLED_SESSION_ACTOR_MISMATCH = 'CONTROLLED_SESSION_ACTOR_MISMATCH',
+  /** An active controlled session already exists (M9a) */
+  CONTROLLED_SESSION_ACTIVE = 'CONTROLLED_SESSION_ACTIVE',
   /** Controlled execution feature is disabled (DISC-WEB-1D-2) */
   CONTROLLED_EXECUTION_DISABLED = 'CONTROLLED_EXECUTION_DISABLED',
   /** Unexpected server error — details intentionally omitted */
@@ -298,6 +300,17 @@ export function controlledSessionActorMismatch(
   message = 'Not authorized for this controlled session',
 ): AppError {
   return new AppError(ApiErrorCode.CONTROLLED_SESSION_ACTOR_MISMATCH, message, 403);
+}
+
+/**
+ * Controlled session already active (M9a).
+ * Returned when attempting to create a session but one already exists.
+ * Zero-information-leak: does not expose existing session details.
+ */
+export function controlledSessionActive(
+  message = 'A controlled session is already active',
+): AppError {
+  return new AppError(ApiErrorCode.CONTROLLED_SESSION_ACTIVE, message, 409);
 }
 
 /**

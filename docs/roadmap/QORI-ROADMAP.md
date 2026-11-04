@@ -1,7 +1,7 @@
 # QORI — Living Project Roadmap
 
 **Canonical Location**: `docs/roadmap/QORI-ROADMAP.md`
-**Last Updated**: 2026-11-03
+**Last Updated**: 2026-11-04
 **Current Branch**: `dev`
 
 **Application Baseline**: `314994df` (feat(DISC-WEB-1C-2b): Start Analysis confirmation UI with safety gate)
@@ -1129,18 +1129,18 @@ Tests:       1466 passed, 2 failed, 1468 total
 ### 10.1 Current State
 
 **Branch**: `dev`
-**Application Baseline**: `314994df` (DISC-WEB-1C-2b)
-**Backend Unit Tests**: 1356 passing (verified post-M5e)
-**Backend Integration Tests**: 1927 passing (M5e isolation + finalization + race tests verified)
+**Application Baseline**: `db7c1dd6` (feat(discovery): add isolated controlled AI model factory)
+**Backend Unit Tests**: 1358 passing (verified post-M9a)
+**Backend Integration Tests**: 2073 passing (M9a session creation API + all prior milestones)
 **Frontend Tests**: 1466 passing, 2 failing (reported; identities unknown—requires baseline run)
 
-**Active Work**: DISC-WEB-1D-2 M1-M5e complete. **PENDING M5e COMMIT AUTHORIZATION**.
+**Active Work**: DISC-WEB-1D-2 M1-M9a complete. M9a pending commit.
 
-**Safety Gates**: The Web UI submission path is gated off (`ENABLE_LIVE_RUN_CREATION=false`, `DISC_WEB1_ENABLED` unset). Legacy REST `sources[]` and Slack `/qori-discover` paths remain operational and are NOT gated.
+**Safety Gates**: The Web UI submission path is gated off (`ENABLE_LIVE_RUN_CREATION=false`, `DISC_WEB1_ENABLED` unset, `DISC_WEB1D_ENABLED` unset). Legacy REST `sources[]` and Slack `/qori-discover` paths remain operational and are NOT gated.
 
 ### 10.2 Next Task
 
-**DISC-WEB-1D-2 M5e** — Implementation complete. PENDING COMMIT AUTHORIZATION.
+**DISC-WEB-1D-2 M9a** — Controlled Session Creation API. Implementation and tests complete, pending commit.
 
 Completed milestones:
 - ✅ M1: Database migration + service (58 integration tests)
@@ -1151,22 +1151,29 @@ Completed milestones:
 - ✅ M5c: Authorization service + capability gate (64 unit tests)
 - ✅ M5d: `is_controlled` column + atomic run creation + poller isolation + route integration
 - ✅ M5e: Controlled AI routing + API endpoint + atomic claim + finalization + 33 new tests
+- ✅ M6: Admin API endpoints (29 integration tests)
+- ✅ M7: Unit tests for controlled run creation (16 pipeline tests + 41 budget metadata tests)
+- ✅ M8a: Isolated controlled AI model factory
+- ✅ M9a: Controlled Session Creation API (36 integration tests)
+  - POST `/controlled-sessions` with idempotency, project binding, budget validation
+  - Advisory lock serialization, payload hash comparison
+  - Global single-active-session rule, zero-information-leak errors
+  - Budget ceilings: maxRequests=4, maxInputTokens=40000, maxOutputTokens=16384
 
-Remaining milestones (require separate authorization):
-1. M6: Admin API endpoints
-2. M7: Unit tests for controlled run creation
-3. M8: Integration + Slack regression tests
+Remaining milestones:
+1. M9b: Controlled session binding to discovery runs (atomic project validation)
+2. M10: Full controlled test execution integration
 
 ### 10.3 Prohibited Changes
 
 **Until explicit authorization**:
-- Do NOT implement DISC-WEB-1D-2
-- Do NOT modify application code, migrations, or tests
+- Do NOT enable feature gates (`DISC_WEB1_ENABLED`, `DISC_WEB1D_ENABLED`)
 - Do NOT change environment variables or Railway settings
 - Do NOT run Discovery or invoke AI
 - Do NOT modify Claude Design-owned files
 - Do NOT apply, drop, or modify protected stashes
 - Do NOT merge to `main` or deploy
+- Do NOT push M9a commit to remote
 
 ---
 

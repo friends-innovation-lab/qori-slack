@@ -180,7 +180,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       });
 
       const runId = await createTestDiscoveryRun();
-      const bound = await bindRunToSession(session.id, runId);
+      const bound = await bindRunToSession(session.id, runId, projectId);
 
       expect(bound.discovery_run_id).toBe(runId);
     });
@@ -194,7 +194,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       await cancelSession(session.id);
 
       const runId = await createTestDiscoveryRun();
-      await expect(bindRunToSession(session.id, runId)).rejects.toThrow(SessionTerminalError);
+      await expect(bindRunToSession(session.id, runId, projectId)).rejects.toThrow(SessionTerminalError);
     });
 
     it('rejects binding second run to same session', async () => {
@@ -204,10 +204,10 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         maxOutputTokens: 5000,
       });
       const runId1 = await createTestDiscoveryRun();
-      await bindRunToSession(session.id, runId1);
+      await bindRunToSession(session.id, runId1, projectId);
 
       const runId2 = await createTestDiscoveryRun();
-      await expect(bindRunToSession(session.id, runId2)).rejects.toThrow(RunAlreadyBoundError);
+      await expect(bindRunToSession(session.id, runId2, projectId)).rejects.toThrow(RunAlreadyBoundError);
     });
   });
 
@@ -219,7 +219,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         maxOutputTokens: 5000,
       });
       const runId = await createTestDiscoveryRun();
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       const found = await getSessionByRunId(runId);
       expect(found).not.toBeNull();
@@ -233,7 +233,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         maxOutputTokens: 5000,
       });
       const runId = await createTestDiscoveryRun();
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
       await cancelSession(session.id, 'test');
 
       const found = await getSessionByRunId(runId);
@@ -249,7 +249,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         maxOutputTokens: 50,
       });
       const runId = await createTestDiscoveryRun();
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       // Exhaust the budget — must pass discoveryRunId since session is bound
       const reservation = await reserveBudget({
@@ -273,7 +273,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         maxOutputTokens: 5000,
       });
       const runId = await createTestDiscoveryRun();
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
       await completeSession(session.id);
 
       const found = await getSessionByRunId(runId);
@@ -803,7 +803,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         maxOutputTokens: 5000,
       });
       const runId = await createTestDiscoveryRun();
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       // Use some budget — must pass discoveryRunId since session is bound
       await reserveBudget({
@@ -991,7 +991,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         maxOutputTokens: 5000,
       });
       const runId = await createTestDiscoveryRun();
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       // Attempt to delete the bound run should fail
       await expect(
@@ -1011,7 +1011,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         maxOutputTokens: 5000,
       });
       const runId = await createTestDiscoveryRun();
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
       await cancelSession(session.id, 'test');
 
       // Attempt to delete the bound run should STILL fail
@@ -1034,7 +1034,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         maxOutputTokens: 5000,
       });
       const runId = await createTestDiscoveryRun();
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       // Delete the session first
       await ControlledTestSessionModel.destroy({ where: { id: session.id } });
@@ -1094,7 +1094,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         maxOutputTokens: 5000,
       });
       const runId = await createTestDiscoveryRun();
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       // Must pass discoveryRunId since session is bound
       const reservation = await reserveBudget({
@@ -1175,7 +1175,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         maxOutputTokens: 50,
       });
       const runId = await createTestDiscoveryRun();
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       // Exhaust the session
       await reserveBudget({
@@ -1260,7 +1260,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         maxOutputTokens: 5000,
       });
       const runId = await createTestDiscoveryRun();
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       // Attempt unbound reservation (no discoveryRunId) — should fail
       const result = await reserveBudget({
@@ -1291,7 +1291,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       });
       const runId1 = await createTestDiscoveryRun();
       const runId2 = await createTestDiscoveryRun();
-      await bindRunToSession(session.id, runId1);
+      await bindRunToSession(session.id, runId1, projectId);
 
       // Attempt bound reservation with wrong run ID — should fail
       const result = await reserveBudget({
@@ -1319,7 +1319,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         maxOutputTokens: 5000,
       });
       const runId = await createTestDiscoveryRun();
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       // Bound reservation with correct run ID
       const result = await reserveBudget({
@@ -1371,7 +1371,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         maxOutputTokens: 5000,
       });
       const runId = await createTestDiscoveryRun();
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       // Concurrent reservations: one correct (bound), one incorrect (unbound)
       const [boundResult, unboundResult] = await Promise.all([
@@ -1439,7 +1439,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         actorId,
       });
       const runId = await createControlledTestRun(actorId);
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       // Cancel session first
       await cancelSession(session.id, 'cancelled before claim');
@@ -1464,7 +1464,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         actorId,
       });
       const runId = await createControlledTestRun(actorId);
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       // Claim first
       const result = await claimService.authorizeAndClaimControlledRun(
@@ -1495,7 +1495,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         actorId,
       });
       const runId = await createControlledTestRun(actorId);
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       // Concurrent claims from same actor (different workers)
       const results = await Promise.allSettled([
@@ -1539,7 +1539,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         actorId, // actor1 owns session
       });
       const runId = await createControlledTestRun(actorId);
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       // Attempt claim by actor2 — should fail
       await expect(
@@ -1564,7 +1564,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
       const runId2 = await createControlledTestRun(actorId);
 
       // Bind session to run1 (not run2)
-      await bindRunToSession(session.id, runId1);
+      await bindRunToSession(session.id, runId1, projectId);
 
       // Attempt to claim run2 using session bound to run1 — should fail due to binding mismatch
       await expect(
@@ -1586,7 +1586,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         actorId,
       });
       const runId = await createControlledTestRun(actorId);
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
       await completeSession(session.id);
 
       // Attempt claim on completed session — should fail
@@ -1643,7 +1643,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
         actorId: runActorId,
       });
       const run = await createControlledTestRun(runActorId);
-      await bindRunToSession(session.id, run.id);
+      await bindRunToSession(session.id, run.id, projectId);
       return { session, run };
     }
 
@@ -2004,7 +2004,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
           actorId,
         });
         const runId = await createControlledRun(actorId);
-        await bindRunToSession(session.id, runId);
+        await bindRunToSession(session.id, runId, projectId);
 
         // Cancel first
         await cancelControlledSessionFromApi(session.public_id, projectId, actorId, 'Before claim');
@@ -2023,7 +2023,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
           actorId,
         });
         const runId = await createControlledRun(actorId);
-        await bindRunToSession(session.id, runId);
+        await bindRunToSession(session.id, runId, projectId);
 
         // Complete session
         await completeSession(session.id);
@@ -2042,7 +2042,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
           actorId,
         });
         const runId = await createControlledRun(actorId);
-        await bindRunToSession(session.id, runId);
+        await bindRunToSession(session.id, runId, projectId);
 
         // Concurrent cancels
         const [result1, result2] = await Promise.all([
@@ -2086,7 +2086,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
           actorId,
         });
         const runId = await createControlledRun(actorId);
-        await bindRunToSession(session.id, runId);
+        await bindRunToSession(session.id, runId, projectId);
 
         // Claim the run
         const claimResult = await claimService.authorizeAndClaimControlledRun(

@@ -21,10 +21,18 @@ import {
   getSessionDetailsByPublicId,
   getSessionReservations,
   cancelControlledSessionFromApi,
+  createSessionForApi,
   SessionNotFoundError,
   SessionActorMismatchError,
   SessionNotCancellableError,
+  SessionAlreadyExistsError,
+  IdempotencyConflictError,
+  ConcurrencyRetryableError,
+  SESSION_BUDGET_CEILINGS,
+  SESSION_BUDGET_DEFAULTS,
 } from '../../../services/controlled-test-budget.service';
+import { assertProjectAccessByActor } from '../../../services/authorization.service';
+import { getDiscoveryRunById } from '../../../services/discovery-run.service';
 
 const router = Router({ mergeParams: true });
 
@@ -914,6 +922,271 @@ function requireControlledExecutionEnabled(
 
   next();
 }
+
+// UUID v4 pattern for Idempotency-Key validation
+const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * POST /api/v1/projects/:projectId/discovery/controlled-sessions
+ *
+ * M9a: Create a new controlled session for AI execution budget enforcement.
+ *
+ * Headers:
+ * - Authorization: Bearer OIDC token (required)
+ * - Idempotency-Key: UUID v4 (required)
+ *
+ * Body (optional):
+ * - maxRequests: number (default: 4, ceiling: 4)
+ * - maxInputTokens: number (default: 40000, ceiling: 40000)
+ * - maxOutputTokens: number (default: 16384, ceiling: 16384)
+ *
+ * Returns:
+ * - 201: New session created
+ * - 200: Idempotent replay (same actor/project/key/payload)
+ * - 400: Validation error
+ * - 401: Missing/invalid auth
+ * - 403: Actor lacks project access
+ * - 404: Project not found
+ * - 409: Idempotency conflict or active session exists
+ * - 503: Feature disabled
+ */
+router.post(
+  '/controlled-sessions',
+  requireAuth,
+  requireControlledExecutionEnabled,
+  async (req, res, next) => {
+    try {
+      const ctx = req.ctx!;
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // Step 1: Validate Idempotency-Key header
+      // ═══════════════════════════════════════════════════════════════════════
+      const idempotencyKey = req.headers['idempotency-key'];
+      if (!idempotencyKey || typeof idempotencyKey !== 'string') {
+        res.status(400).json({
+          error: {
+            code: ApiErrorCode.VALIDATION_ERROR,
+            message: 'Idempotency-Key header is required',
+          },
+        });
+        return;
+      }
+
+      if (!UUID_V4_PATTERN.test(idempotencyKey)) {
+        res.status(400).json({
+          error: {
+            code: ApiErrorCode.VALIDATION_ERROR,
+            message: 'Idempotency-Key must be a valid UUID v4',
+          },
+        });
+        return;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // Step 2: Resolve and validate project
+      // ═══════════════════════════════════════════════════════════════════════
+      const projectId = await resolveProjectId(req.params.projectId, ctx.organization.id);
+      if (projectId === null) {
+        res.status(404).json({
+          error: { code: ApiErrorCode.RESOURCE_NOT_FOUND, message: 'Project not found' },
+        });
+        return;
+      }
+
+      // Project authorization is enforced by service layer (assertProjectAccessByActor)
+      // but we do a quick check here for better error messages
+      try {
+        await assertProjectAccessByActor(ctx.actor.id, projectId, ctx.organization.id);
+      } catch {
+        res.status(403).json({
+          error: { code: ApiErrorCode.AUTHORIZATION_DENIED, message: 'Access denied: not a project member' },
+        });
+        return;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // Step 3: Validate and apply budget values
+      // ═══════════════════════════════════════════════════════════════════════
+      const body = req.body || {};
+      const allowedFields = ['maxRequests', 'maxInputTokens', 'maxOutputTokens'];
+      const unknownFields = Object.keys(body).filter((k) => !allowedFields.includes(k));
+
+      if (unknownFields.length > 0) {
+        res.status(400).json({
+          error: {
+            code: ApiErrorCode.VALIDATION_ERROR,
+            message: `Unknown budget field(s): ${unknownFields.join(', ')}`,
+          },
+        });
+        return;
+      }
+
+      // Validate and apply each budget field
+      const budgetErrors: string[] = [];
+
+      function validateBudgetField(
+        name: string,
+        value: unknown,
+        ceiling: number,
+        defaultValue: number,
+      ): number {
+        if (value === undefined || value === null) {
+          return defaultValue;
+        }
+
+        // Type check
+        if (typeof value !== 'number') {
+          budgetErrors.push(`${name} must be a number`);
+          return defaultValue;
+        }
+
+        // Finite check (rejects NaN, Infinity, -Infinity)
+        if (!Number.isFinite(value)) {
+          budgetErrors.push(`${name} must be finite (not NaN or Infinity)`);
+          return defaultValue;
+        }
+
+        // Integer check
+        if (!Number.isInteger(value)) {
+          budgetErrors.push(`${name} must be an integer`);
+          return defaultValue;
+        }
+
+        // Positive check
+        if (value <= 0) {
+          budgetErrors.push(`${name} must be positive`);
+          return defaultValue;
+        }
+
+        // Ceiling check
+        if (value > ceiling) {
+          budgetErrors.push(`${name} cannot exceed ${ceiling}`);
+          return defaultValue;
+        }
+
+        return value;
+      }
+
+      const maxRequests = validateBudgetField(
+        'maxRequests',
+        body.maxRequests,
+        SESSION_BUDGET_CEILINGS.maxRequests,
+        SESSION_BUDGET_DEFAULTS.maxRequests,
+      );
+      const maxInputTokens = validateBudgetField(
+        'maxInputTokens',
+        body.maxInputTokens,
+        SESSION_BUDGET_CEILINGS.maxInputTokens,
+        SESSION_BUDGET_DEFAULTS.maxInputTokens,
+      );
+      const maxOutputTokens = validateBudgetField(
+        'maxOutputTokens',
+        body.maxOutputTokens,
+        SESSION_BUDGET_CEILINGS.maxOutputTokens,
+        SESSION_BUDGET_DEFAULTS.maxOutputTokens,
+      );
+
+      if (budgetErrors.length > 0) {
+        res.status(400).json({
+          error: {
+            code: ApiErrorCode.VALIDATION_ERROR,
+            message: budgetErrors.join('; '),
+          },
+        });
+        return;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // Step 4: Create session
+      // ═══════════════════════════════════════════════════════════════════════
+      const result = await createSessionForApi({
+        actorId: ctx.actor.id,
+        projectId,
+        idempotencyKey,
+        maxRequests,
+        maxInputTokens,
+        maxOutputTokens,
+      });
+
+      const session = result.session;
+      const statusCode = result.isReplay ? 200 : 201;
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // Step 5: Build response (never expose internal IDs)
+      // ═══════════════════════════════════════════════════════════════════════
+      // Look up project public_id for response
+      const projectRecord = await ProjectModel.findByPk(projectId, {
+        attributes: ['public_id'],
+      });
+
+      const responseData = {
+        sessionPublicId: session.public_id,
+        projectId: projectRecord?.public_id || null,
+        status: session.status,
+        budget: {
+          maxRequests: session.max_requests,
+          maxInputTokens: session.max_input_tokens,
+          maxOutputTokens: session.max_output_tokens,
+          usedRequests: session.used_requests,
+          usedInputTokens: session.used_input_tokens,
+          usedOutputTokens: session.used_output_tokens,
+        },
+        createdAt: session.created_at,
+        ...(session.cancelled_at && { cancelledAt: session.cancelled_at }),
+        ...(session.completed_at && { completedAt: session.completed_at }),
+        ...(session.exhausted_at && { exhaustedAt: session.exhausted_at }),
+        ...(session.discovery_run_id && {
+          // Fetch run public_id if bound
+          boundRunPublicId: await (async () => {
+            const run = await getDiscoveryRunById(session.discovery_run_id!);
+            return run?.public_id || null;
+          })(),
+        }),
+      };
+
+      res.status(statusCode).json({
+        data: responseData,
+        meta: {
+          idempotent: result.isReplay,
+        },
+      });
+    } catch (error) {
+      // Handle specific errors with appropriate status codes
+      if (error instanceof SessionAlreadyExistsError) {
+        // M9a: Zero-information-leak — do not expose session details
+        res.status(409).json({
+          error: {
+            code: 'CONTROLLED_SESSION_ACTIVE',
+            message: 'A controlled session is already active',
+          },
+        });
+        return;
+      }
+
+      if (error instanceof IdempotencyConflictError) {
+        res.status(409).json({
+          error: {
+            code: 'IDEMPOTENCY_CONFLICT',
+            message: 'Idempotency-Key already used with different payload',
+          },
+        });
+        return;
+      }
+
+      if (error instanceof ConcurrencyRetryableError) {
+        res.status(503).json({
+          error: {
+            code: 'CONCURRENCY_ERROR',
+            message: 'Concurrent modification detected, please retry',
+          },
+        });
+        return;
+      }
+
+      next(error);
+    }
+  },
+);
 
 /**
  * GET /api/v1/projects/:projectId/discovery/controlled-sessions

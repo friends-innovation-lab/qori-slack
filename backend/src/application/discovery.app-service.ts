@@ -338,6 +338,7 @@ import {
   SessionNotFoundError,
   SessionTerminalError,
   RunAlreadyBoundError,
+  SessionProjectMismatchError,
 } from '../services/controlled-test-budget.service';
 import {
   isControlledExecutionEnabled,
@@ -1046,7 +1047,7 @@ export async function createControlledDiscoveryRunFromRefs(params: {
     // ═════════════════════════════════════════════════════════════════════════
 
     try {
-      await bindRunToSession(session.id, run.id, transaction);
+      await bindRunToSession(session.id, run.id, projectId, transaction);
     } catch (error) {
       if (error instanceof SessionTerminalError) {
         await transaction.rollback();
@@ -1059,6 +1060,10 @@ export async function createControlledDiscoveryRunFromRefs(params: {
       if (error instanceof SessionNotFoundError) {
         await transaction.rollback();
         throw controlledSessionNotFound();
+      }
+      if (error instanceof SessionProjectMismatchError) {
+        await transaction.rollback();
+        throw controlledSessionActorMismatch(); // M9a: Project mismatch is an authorization error
       }
       throw error;
     }

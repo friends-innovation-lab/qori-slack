@@ -236,6 +236,40 @@ export class SessionBindingValidationError extends Error {
   }
 }
 
+// ─── M9a: Idempotency Error Types ─────────────────────────────────────────────
+
+/**
+ * Error thrown when idempotency key is reused with different payload.
+ */
+export class IdempotencyConflictError extends Error {
+  constructor() {
+    super('Idempotency-Key already used with different payload');
+    this.name = 'IdempotencyConflictError';
+  }
+}
+
+/**
+ * Error thrown when a concurrent operation should be retried.
+ */
+export class ConcurrencyRetryableError extends Error {
+  constructor() {
+    super('Concurrent modification detected, please retry');
+    this.name = 'ConcurrencyRetryableError';
+  }
+}
+
+/**
+ * Error thrown when session project_id does not match run project.
+ */
+export class SessionProjectMismatchError extends Error {
+  constructor(sessionPublicId: string, sessionProjectId: number, runProjectId: number) {
+    super(
+      `Session ${sessionPublicId} project (${sessionProjectId}) does not match run project (${runProjectId})`,
+    );
+    this.name = 'SessionProjectMismatchError';
+  }
+}
+
 // ─── M6: API Result Types ────────────────────────────────────────────────────
 
 export interface CancelSessionFromApiResult {
@@ -325,6 +359,49 @@ export interface PaginatedReservationsResult {
   };
 }
 
+// ─── M9a: API Session Creation Types ──────────────────────────────────────────
+
+/**
+ * Server-side budget ceilings for controlled sessions.
+ * These are hard limits that cannot be exceeded via API.
+ */
+export const SESSION_BUDGET_CEILINGS = {
+  maxRequests: 4,
+  maxInputTokens: 40_000,
+  maxOutputTokens: 16_384,
+} as const;
+
+/**
+ * Default budget values when omitted from API request.
+ */
+export const SESSION_BUDGET_DEFAULTS = {
+  maxRequests: 4,
+  maxInputTokens: 40_000,
+  maxOutputTokens: 16_384,
+} as const;
+
+export interface CreateSessionForApiInput {
+  /** Actor ID (internal) */
+  actorId: number;
+  /** Project ID (internal) */
+  projectId: number;
+  /** Client-provided idempotency key (UUID v4) */
+  idempotencyKey: string;
+  /** Maximum AI requests allowed */
+  maxRequests: number;
+  /** Maximum input tokens allowed */
+  maxInputTokens: number;
+  /** Maximum output tokens allowed */
+  maxOutputTokens: number;
+}
+
+export interface CreateSessionForApiResult {
+  /** Created or replayed session */
+  session: ControlledTestSession;
+  /** Whether this was an idempotent replay */
+  isReplay: boolean;
+}
+
 // ─── Validation Helpers ───────────────────────────────────────────────────────
 
 /**
@@ -345,6 +422,209 @@ export function validateTokenCount(field: string, value: number): void {
   }
   if (value <= 0) {
     throw new InvalidBudgetInputError(field, value, 'must be positive (greater than zero)');
+  }
+}
+
+// ─── M9a: Session Creation with Idempotency ───────────────────────────────────
+
+/**
+ * Compute SHA-256 hash of canonical budget payload for idempotency comparison.
+ */
+function computeSessionPayloadHash(input: {
+  maxRequests: number;
+  maxInputTokens: number;
+  maxOutputTokens: number;
+}): string {
+  const crypto = require('crypto');
+  // Canonical form: sorted keys, consistent serialization
+  const canonical = JSON.stringify({
+    maxInputTokens: input.maxInputTokens,
+    maxOutputTokens: input.maxOutputTokens,
+    maxRequests: input.maxRequests,
+  });
+  return crypto.createHash('sha256').update(canonical).digest('hex');
+}
+
+/**
+ * Compute advisory lock ID for session creation.
+ * All API session-creation requests share this lock.
+ */
+function computeSessionCreationLockId(): number {
+  const crypto = require('crypto');
+  const hash = crypto.createHash('md5').update('controlled_session_creation_m9a').digest();
+  return hash.readInt32LE(0);
+}
+
+const SESSION_CREATION_LOCK_ID = computeSessionCreationLockId();
+
+/**
+ * Check if error is a PostgreSQL unique constraint violation.
+ */
+function isUniqueConstraintError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const original = (error as { original?: { code?: string } }).original;
+  // PostgreSQL error code 23505 = unique_violation
+  return original?.code === '23505' || error.name === 'SequelizeUniqueConstraintError';
+}
+
+/**
+ * Get constraint name from PostgreSQL error.
+ */
+function getConstraintName(error: unknown): string | undefined {
+  if (!(error instanceof Error)) return undefined;
+  const original = (error as { original?: { constraint?: string } }).original;
+  return original?.constraint;
+}
+
+/**
+ * Check if error is a PostgreSQL serialization failure.
+ */
+function isSerializationError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const original = (error as { original?: { code?: string } }).original;
+  // PostgreSQL error code 40001 = serialization_failure
+  // PostgreSQL error code 40P01 = deadlock_detected
+  return original?.code === '40001' || original?.code === '40P01';
+}
+
+/**
+ * Create a controlled test session via API with idempotency support.
+ *
+ * M9a: Transaction-scoped advisory lock serializes all session creation.
+ * Idempotency is scoped to (actor_id, project_id, idempotency_key).
+ *
+ * @throws SessionAlreadyExistsError if another active session exists
+ * @throws IdempotencyConflictError if key reused with different payload
+ * @throws ConcurrencyRetryableError if serialization failure
+ */
+export async function createSessionForApi(
+  input: CreateSessionForApiInput,
+): Promise<CreateSessionForApiResult> {
+  const { QueryTypes } = require('sequelize');
+
+  const payloadHash = computeSessionPayloadHash({
+    maxRequests: input.maxRequests,
+    maxInputTokens: input.maxInputTokens,
+    maxOutputTokens: input.maxOutputTokens,
+  });
+
+  const transaction = await sequelize.transaction();
+
+  try {
+    // ═══════════════════════════════════════════════════════════════════════
+    // Step 1: Acquire transaction-scoped advisory lock
+    // ═══════════════════════════════════════════════════════════════════════
+    // This serializes ALL session creation attempts across the system.
+    // Lock is automatically released on commit or rollback.
+    await sequelize.query('SELECT pg_advisory_xact_lock($1)', {
+      bind: [SESSION_CREATION_LOCK_ID],
+      type: QueryTypes.SELECT,
+      transaction,
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Step 2: Exact idempotency lookup
+    // ═══════════════════════════════════════════════════════════════════════
+    const existing = await ControlledTestSessionModel.findOne({
+      where: {
+        created_by_actor_id: input.actorId,
+        project_id: input.projectId,
+        idempotency_key: input.idempotencyKey,
+      },
+      transaction,
+    });
+
+    if (existing) {
+      // ═══════════════════════════════════════════════════════════════════════
+      // Step 3a: Payload-hash comparison for replay vs conflict
+      // ═══════════════════════════════════════════════════════════════════════
+      if (existing.idempotency_payload_hash !== payloadHash) {
+        await transaction.commit(); // Release lock cleanly
+        throw new IdempotencyConflictError();
+      }
+
+      // Replay: return existing session (no state change)
+      await transaction.commit();
+      return { session: existing, isReplay: true };
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Step 4: Global active-session check
+    // ═══════════════════════════════════════════════════════════════════════
+    const activeSession = await ControlledTestSessionModel.findOne({
+      where: { status: 'active' },
+      transaction,
+    });
+
+    if (activeSession) {
+      await transaction.commit(); // Release lock cleanly
+      throw new SessionAlreadyExistsError();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Step 5: Create new session
+    // ═══════════════════════════════════════════════════════════════════════
+    const session = await ControlledTestSessionModel.create(
+      {
+        project_id: input.projectId,
+        created_by_actor_id: input.actorId,
+        idempotency_key: input.idempotencyKey,
+        idempotency_payload_hash: payloadHash,
+        max_requests: input.maxRequests,
+        max_input_tokens: input.maxInputTokens,
+        max_output_tokens: input.maxOutputTokens,
+        status: 'active',
+      },
+      { transaction },
+    );
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Step 6: Commit
+    // ═══════════════════════════════════════════════════════════════════════
+    await transaction.commit();
+    return { session, isReplay: false };
+  } catch (error) {
+    // Single rollback point — transaction may already be committed above
+    if (!(transaction as { finished?: string }).finished) {
+      await transaction.rollback();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Step 7: Handle PostgreSQL constraint violations by error code
+    // ═══════════════════════════════════════════════════════════════════════
+    if (isUniqueConstraintError(error)) {
+      const constraintName = getConstraintName(error);
+
+      // Global single-active-session constraint (database backstop)
+      if (constraintName === 'controlled_test_sessions_single_active_idx') {
+        throw new SessionAlreadyExistsError();
+      }
+
+      // Idempotency constraint — concurrent duplicate
+      if (constraintName === 'controlled_test_sessions_actor_project_idempotency_key_idx') {
+        // Race condition: concurrent request with same key won
+        // Fetch the winner's session to determine replay vs conflict
+        const concurrentSession = await ControlledTestSessionModel.findOne({
+          where: {
+            created_by_actor_id: input.actorId,
+            project_id: input.projectId,
+            idempotency_key: input.idempotencyKey,
+          },
+        });
+
+        if (concurrentSession?.idempotency_payload_hash === payloadHash) {
+          return { session: concurrentSession, isReplay: true };
+        }
+        throw new IdempotencyConflictError();
+      }
+    }
+
+    // Serialization failure (rare with advisory lock, but possible)
+    if (isSerializationError(error)) {
+      throw new ConcurrencyRetryableError();
+    }
+
+    throw error;
   }
 }
 
@@ -503,14 +783,19 @@ export function toSessionSummary(session: ControlledTestSession): SessionSummary
  * Bind a discovery run to a session.
  * Once bound, the binding is immutable.
  *
+ * M9a: If session has project_id, it must match the run's project.
+ * Legacy sessions with null project_id retain previous behavior.
+ *
  * @throws SessionNotFoundError if session doesn't exist
  * @throws SessionTerminalError if session is not active
  * @throws RunAlreadyBoundError if session already has a run
  * @throws RunBoundToOtherSessionError if run is bound to another session
+ * @throws SessionProjectMismatchError if session.project_id !== run.project_id
  */
 export async function bindRunToSession(
   sessionId: number,
   runId: number,
+  runProjectId: number,
   transaction?: Transaction,
 ): Promise<ControlledTestSession> {
   const t = transaction ?? (await sequelize.transaction());
@@ -529,6 +814,12 @@ export async function bindRunToSession(
 
     if (session.status !== 'active') {
       throw new SessionTerminalError(session.status);
+    }
+
+    // M9a: Validate project binding if session has project_id
+    // Legacy sessions with null project_id skip this check
+    if (session.project_id !== null && session.project_id !== runProjectId) {
+      throw new SessionProjectMismatchError(session.public_id, session.project_id, runProjectId);
     }
 
     if (session.discovery_run_id !== null) {

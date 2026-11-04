@@ -94,7 +94,7 @@ async function createBoundSession(runId: number): Promise<ControlledTestSession>
     maxOutputTokens: 50000,
     actorId: actorId,
   });
-  await bindRunToSession(session.id, runId);
+  await bindRunToSession(session.id, runId, projectId);
   // Reload to get updated session
   const reloaded = await getSessionById(session.id);
   return reloaded!;
@@ -245,7 +245,7 @@ describe('DISC-WEB-1D-2 M7a: Controlled Pipeline Verification (P0)', () => {
         maxOutputTokens: 50000,
         actorId: actorId,
       });
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       const fakeModel = createDeterministicModel({
         responses: [
@@ -289,7 +289,7 @@ describe('DISC-WEB-1D-2 M7a: Controlled Pipeline Verification (P0)', () => {
         maxOutputTokens: 50000,
         actorId: actorId,
       });
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       const fakeModel = createDeterministicModel({
         tokenEstimate: 100, // Each task measures 100 input tokens
@@ -696,7 +696,7 @@ describe('DISC-WEB-1D-2 M7a: Controlled Pipeline Verification (P0)', () => {
         maxOutputTokens: 50000,
         actorId: actorId,
       });
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       // First response invalid (would trigger retry, but budget exhausted)
       const fakeModel = createDeterministicModel({
@@ -757,7 +757,7 @@ describe('DISC-WEB-1D-2 M7a: Controlled Pipeline Verification (P0)', () => {
         maxOutputTokens: 50000,
         actorId: actorId,
       });
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       // Model errors on first invocation
       const fakeModel = createDeterministicModel({
@@ -837,7 +837,7 @@ describe('DISC-WEB-1D-2 M7a: Controlled Pipeline Verification (P0)', () => {
         maxOutputTokens: 50000,
         actorId: actorId,
       });
-      await bindRunToSession(session.id, runId);
+      await bindRunToSession(session.id, runId, projectId);
 
       const fakeModel = createDeterministicModel({
         responses: [

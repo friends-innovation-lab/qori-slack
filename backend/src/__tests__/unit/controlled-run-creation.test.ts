@@ -606,7 +606,7 @@ describe('DISC-WEB-1D-2 M5d: Controlled Run Creation', () => {
       const result = await createControlledDiscoveryRunFromRefs(baseParams);
 
       expect(result.sessionId).toBe(1);
-      expect(mockBindRunToSession).toHaveBeenCalledWith(1, 500, mockTransaction);
+      expect(mockBindRunToSession).toHaveBeenCalledWith(1, 500, 1, mockTransaction);
     });
 
     it('rolls back on binding failure (SessionTerminalError)', async () => {

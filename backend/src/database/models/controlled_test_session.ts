@@ -30,6 +30,7 @@ import {
 import { randomUUID } from 'crypto';
 import type { Actor } from './actor';
 import type { DiscoveryRun } from './discovery_run';
+import type { Project } from './project';
 
 export type ControlledTestSessionStatus = 'active' | 'cancelled' | 'exhausted' | 'completed';
 
@@ -46,6 +47,13 @@ class ControlledTestSession extends Model<
 
   // Run binding
   declare discovery_run_id: ForeignKey<number> | null;
+
+  // Project binding (M9a: required for API-created sessions)
+  declare project_id: ForeignKey<number> | null;
+
+  // Idempotency (M9a: for duplicate detection)
+  declare idempotency_key: string | null;
+  declare idempotency_payload_hash: string | null;
 
   // Budget limits (immutable after creation)
   declare max_requests: number;
@@ -75,6 +83,8 @@ class ControlledTestSession extends Model<
   declare discoveryRun?: NonAttribute<DiscoveryRun>;
   declare getCreatedByActor: BelongsToGetAssociationMixin<Actor>;
   declare createdByActor?: NonAttribute<Actor>;
+  declare getProject: BelongsToGetAssociationMixin<Project>;
+  declare project?: NonAttribute<Project>;
 
   // Computed helpers (non-persisted)
   get remainingRequests(): NonAttribute<number> {
@@ -105,6 +115,12 @@ class ControlledTestSession extends Model<
       as: 'createdByActor',
       onDelete: 'SET NULL',
     });
+
+    this.belongsTo(models.Project as typeof Project, {
+      foreignKey: 'project_id',
+      as: 'project',
+      onDelete: 'RESTRICT',
+    });
   }
 }
 
@@ -134,6 +150,19 @@ export default (sequelize: Sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: { model: 'discovery_runs', key: 'id' },
+      },
+      project_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: { model: 'projects', key: 'id' },
+      },
+      idempotency_key: {
+        type: DataTypes.UUID,
+        allowNull: true,
+      },
+      idempotency_payload_hash: {
+        type: DataTypes.STRING(64),
+        allowNull: true,
       },
       max_requests: {
         type: DataTypes.INTEGER,
