@@ -220,7 +220,8 @@ async function runRemediation(): Promise<void> {
     // ─── Invoke Application Finalizer ──────────────────────────────────────
     console.log('Calling finalizeControlledExecution(runId, sessionId, "completed")...\n');
 
-    const result = await finalizeControlledExecution(runId, sessionId, 'completed');
+    // TypeScript: runId and sessionId are guaranteed non-null here due to precondition checks
+    const result = await finalizeControlledExecution(runId!, sessionId!, 'completed');
 
     console.log('FINALIZER RESULT:');
     console.log(JSON.stringify(result, null, 2));
