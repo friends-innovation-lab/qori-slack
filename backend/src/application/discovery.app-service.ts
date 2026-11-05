@@ -1624,9 +1624,16 @@ export interface ControlledFinalizationResult {
  * Uses database transaction to ensure run and session are finalized atomically.
  *
  * Key invariants:
- * - Run and session finalize together or not at all
+ * - Session locked first, then run verified
+ * - Binding, controlled flag, processing status, and worker ownership verified
+ * - Exhausted sessions (budget depleted at finish line) allow run completion
+ * - Cancelled sessions always fail the run (cancellation precedence)
  * - Idempotent: re-finalization with same outcome is safe
  * - Fail-closed: any error preserves pre-finalization state
+ *
+ * M10 Fix: Handle exhausted-at-finish-line case where session exhausts its
+ * budget during the final reconciliation but all work completed successfully.
+ * The session stays 'exhausted' and the run transitions to 'completed'.
  *
  * @param runId - Discovery run ID
  * @param sessionId - Controlled test session ID
@@ -1642,9 +1649,70 @@ export async function finalizeControlledExecution(
   const t = await sequelize.transaction();
 
   try {
-    // Load run for status check
-    const run = await runService.getDiscoveryRunById(runId);
-    if (!run) {
+    // ─── Step 1: Lock session first (enforces lock ordering) ─────────────────
+    const [sessionRows] = await sequelize.query(
+      `
+      SELECT id, public_id, status, discovery_run_id, cancelled_at
+      FROM controlled_test_sessions
+      WHERE id = :sessionId
+      FOR UPDATE
+      `,
+      { replacements: { sessionId }, transaction: t, raw: true },
+    ) as [Array<{
+      id: number;
+      public_id: string;
+      status: string;
+      discovery_run_id: number | null;
+      cancelled_at: Date | null;
+    }>, unknown];
+
+    if (sessionRows.length === 0) {
+      await t.rollback();
+      return {
+        success: false,
+        runId,
+        sessionId,
+        outcome,
+        runStatus: 'unknown',
+        sessionStatus: 'not_found',
+        error: `Session ${sessionId} not found`,
+      };
+    }
+
+    const session = sessionRows[0];
+
+    // ─── Step 2: Verify session-run binding ──────────────────────────────────
+    if (session.discovery_run_id !== runId) {
+      await t.rollback();
+      return {
+        success: false,
+        runId,
+        sessionId,
+        outcome,
+        runStatus: 'unknown',
+        sessionStatus: session.status,
+        error: `Session ${sessionId} is not bound to run ${runId} (bound to ${session.discovery_run_id})`,
+      };
+    }
+
+    // ─── Step 3: Lock and verify run ─────────────────────────────────────────
+    const [runRows] = await sequelize.query(
+      `
+      SELECT id, public_id, status, is_controlled, worker_id
+      FROM discovery_runs
+      WHERE id = :runId
+      FOR UPDATE
+      `,
+      { replacements: { runId }, transaction: t, raw: true },
+    ) as [Array<{
+      id: number;
+      public_id: string;
+      status: string;
+      is_controlled: boolean;
+      worker_id: string | null;
+    }>, unknown];
+
+    if (runRows.length === 0) {
       await t.rollback();
       return {
         success: false,
@@ -1652,17 +1720,29 @@ export async function finalizeControlledExecution(
         sessionId,
         outcome,
         runStatus: 'not_found',
-        sessionStatus: 'unknown',
+        sessionStatus: session.status,
         error: `Run ${runId} not found`,
       };
     }
 
-    // Idempotency: if already in terminal state, verify consistency
-    if (run.status === 'completed' || run.status === 'failed') {
-      // Already finalized — verify session is also terminal
-      const session = await getSessionByRunId(runId);
-      const sessionStatus = session?.status ?? 'not_found';
+    const run = runRows[0];
 
+    // ─── Step 4: Verify controlled flag ──────────────────────────────────────
+    if (!run.is_controlled) {
+      await t.rollback();
+      return {
+        success: false,
+        runId,
+        sessionId,
+        outcome,
+        runStatus: run.status,
+        sessionStatus: session.status,
+        error: `Run ${runId} is not a controlled run`,
+      };
+    }
+
+    // ─── Step 5: Idempotency — already finalized? ────────────────────────────
+    if (run.status === 'completed' || run.status === 'failed') {
       await t.commit(); // No changes, commit read
       return {
         success: true,
@@ -1670,39 +1750,125 @@ export async function finalizeControlledExecution(
         sessionId,
         outcome,
         runStatus: run.status,
-        sessionStatus,
+        sessionStatus: session.status,
       };
     }
 
-    // Finalize based on outcome
-    // IMPORTANT: Session update FIRST to enforce fail-closed contract.
-    // If session is terminal (cancelled), we throw before touching the run.
-    // Both operations use the same transaction for atomicity.
-    if (outcome === 'completed') {
-      // Complete session first (throws SessionTerminalError if cancelled)
-      await completeSession(sessionId, t);
+    // ─── Step 6: Verify run is in expected state ─────────────────────────────
+    if (run.status !== 'processing') {
+      await t.rollback();
+      return {
+        success: false,
+        runId,
+        sessionId,
+        outcome,
+        runStatus: run.status,
+        sessionStatus: session.status,
+        error: `Run ${runId} is in status '${run.status}', expected 'processing'`,
+      };
+    }
 
-      // Complete run within transaction
-      const workerId = run.worker_id || 'controlled-finalization';
-      const now = new Date();
-      const [, metadata] = await sequelize.query(
-        `
-        UPDATE discovery_runs
-        SET status = 'completed', completed_at = :now, updated_at = :now
-        WHERE id = :runId AND worker_id = :workerId AND status = 'processing'
-        `,
-        { replacements: { runId, workerId, now }, transaction: t },
-      );
-      if ((metadata as { rowCount?: number })?.rowCount === 0) {
-        throw new Error(`Run ${runId} not in expected state for completion`);
+    const workerId = run.worker_id || 'controlled-finalization';
+    const now = new Date();
+
+    // ─── Step 7: Finalize based on outcome and session state ─────────────────
+    if (outcome === 'completed') {
+      // ─── Completion path ───────────────────────────────────────────────────
+      // Check session status to determine how to finalize
+      if (session.status === 'cancelled') {
+        // Cancellation takes precedence — cannot complete a cancelled execution
+        await t.rollback();
+        return {
+          success: false,
+          runId,
+          sessionId,
+          outcome,
+          runStatus: run.status,
+          sessionStatus: session.status,
+          error: `Cannot complete run: session was cancelled at ${session.cancelled_at}`,
+        };
+      }
+
+      if (session.status === 'exhausted') {
+        // M10 Fix: Exhausted-at-finish-line case.
+        // Session exhausted its budget during the final reconciliation,
+        // but all work completed successfully. The session stays 'exhausted'
+        // and the run transitions to 'completed'.
+        //
+        // This is valid because:
+        // - All provider calls completed (no call rejected for budget)
+        // - Artifact and variables were successfully persisted
+        // - The exhaustion happened AFTER the last successful reconciliation
+        console.log(
+          `[M5e] Session ${sessionId} exhausted at finish line — completing run ${runId}`,
+        );
+
+        // Complete run (session stays exhausted)
+        const [, runMetadata] = await sequelize.query(
+          `
+          UPDATE discovery_runs
+          SET status = 'completed', completed_at = :now, updated_at = :now
+          WHERE id = :runId AND worker_id = :workerId AND status = 'processing'
+          `,
+          { replacements: { runId, workerId, now }, transaction: t },
+        );
+
+        if ((runMetadata as { rowCount?: number })?.rowCount === 0) {
+          throw new Error(`Run ${runId} not in expected state for completion`);
+        }
+      } else if (session.status === 'active') {
+        // Normal path: session is active, transition both
+        await completeSession(sessionId, t);
+
+        const [, runMetadata] = await sequelize.query(
+          `
+          UPDATE discovery_runs
+          SET status = 'completed', completed_at = :now, updated_at = :now
+          WHERE id = :runId AND worker_id = :workerId AND status = 'processing'
+          `,
+          { replacements: { runId, workerId, now }, transaction: t },
+        );
+
+        if ((runMetadata as { rowCount?: number })?.rowCount === 0) {
+          throw new Error(`Run ${runId} not in expected state for completion`);
+        }
+      } else if (session.status === 'completed') {
+        // Session already completed (idempotent case for session)
+        // Just complete the run
+        const [, runMetadata] = await sequelize.query(
+          `
+          UPDATE discovery_runs
+          SET status = 'completed', completed_at = :now, updated_at = :now
+          WHERE id = :runId AND worker_id = :workerId AND status = 'processing'
+          `,
+          { replacements: { runId, workerId, now }, transaction: t },
+        );
+
+        if ((runMetadata as { rowCount?: number })?.rowCount === 0) {
+          throw new Error(`Run ${runId} not in expected state for completion`);
+        }
+      } else {
+        // Unknown session status
+        await t.rollback();
+        return {
+          success: false,
+          runId,
+          sessionId,
+          outcome,
+          runStatus: run.status,
+          sessionStatus: session.status,
+          error: `Unexpected session status: ${session.status}`,
+        };
       }
     } else {
-      // Cancel session first (preserves budget audit trail)
-      await cancelSession(sessionId, failureReason, t);
+      // ─── Failure path ──────────────────────────────────────────────────────
+      // Cancel session first (unless already terminal)
+      if (session.status === 'active') {
+        await cancelSession(sessionId, failureReason, t);
+      }
+      // If session is already exhausted/cancelled/completed, leave it as-is
 
-      // Fail run within transaction
-      const workerId = run.worker_id || 'controlled-finalization';
-      const now = new Date();
+      // Fail the run
       const sanitizedReason = (failureReason || 'Controlled execution failed').slice(0, 1000);
       await sequelize.query(
         `

@@ -83,6 +83,7 @@ async function createTestDiscoveryRun(): Promise<number> {
     actor_id: actorId,
     created_by_identity: 'U_TEST',
     status: 'pending',
+    is_controlled: true,
   } as CreationAttributes<DiscoveryRun>);
   return (run as unknown as { id: number }).id;
 }

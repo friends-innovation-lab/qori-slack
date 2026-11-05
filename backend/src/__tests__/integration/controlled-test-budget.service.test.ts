@@ -2499,7 +2499,7 @@ describe('Controlled Test Budget Service — DISC-WEB-1D-2', () => {
 
         // Step 4: Assert finalization failed (fail-closed)
         expect(finalizationResult.success).toBe(false);
-        expect(finalizationResult.error).toContain('terminal'); // SessionTerminalError message
+        expect(finalizationResult.error).toContain('cancelled'); // Session was cancelled
 
         // Step 5: Verify run did NOT become completed
         const runAfterFinalize = await DiscoveryRunModel.findByPk(run.id) as DiscoveryRun;
