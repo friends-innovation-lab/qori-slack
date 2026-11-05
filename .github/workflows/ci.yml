@@ -124,6 +124,9 @@ jobs:
           TEST_DB_USER: qori_test
           TEST_DB_PASSWORD: test
           TEST_DB_NAME: qori_test
+          # Placeholder key for tests that check env before mocked invocations.
+          # All model calls are intercepted by deterministic fakes — no real API access.
+          ANTHROPIC_API_KEY: test-ci-placeholder
         run: npm run test:integration
 
   # DR-4f: Browser E2E tests
