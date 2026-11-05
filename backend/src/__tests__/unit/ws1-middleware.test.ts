@@ -36,6 +36,11 @@ describe('CORS configuration', () => {
     expect(config.allowedHeaders).toContain('Authorization');
   });
 
+  it('includes Idempotency-Key in allowedHeaders', () => {
+    const config = loadCorsConfig();
+    expect(config.allowedHeaders).toContain('Idempotency-Key');
+  });
+
   it('uses explicit origin from CORS_ALLOWED_ORIGIN', () => {
     process.env.CORS_ALLOWED_ORIGIN = 'https://workspace.example.com';
     delete process.env.CORS_ALLOWED_ORIGINS;

@@ -23,7 +23,7 @@ const origins = parseOrigins();
 module.exports = {
   origin: origins,
   optionsSuccessStatus: 200,
-  allowedHeaders: ['Content-Type', 'Authorization', 'RefreshToken', 'X-CSRF-Token'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'RefreshToken', 'X-CSRF-Token', 'Idempotency-Key'],
   exposedHeaders: ['Content-Length', 'Content-Type', 'RefreshToken', 'Token'],
   credentials: true,
 };
