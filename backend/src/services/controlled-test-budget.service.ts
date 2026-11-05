@@ -1617,12 +1617,16 @@ export async function getSessionReservations(
  * 2. Verifies actor ownership and project binding
  * 3. Handles idempotent cancellation (already cancelled → 200)
  * 4. Rejects non-cancellable states (completed/exhausted → 409)
- * 5. Fails bound pending run atomically
+ * 5. For bound sessions: fails pending run atomically
  * 6. Transitions session to cancelled
  *
- * Lock order: session first, then run (matches authorizeAndClaimControlledRun).
+ * M10 extension: Unbound sessions (discovery_run_id IS NULL) can be cancelled
+ * if the session's project_id matches the requested project. This allows recovery
+ * when run creation fails after session creation.
  *
- * @throws SessionNotFoundError if session not found, unbound, or wrong project
+ * Lock order: session first, then run if bound (matches authorizeAndClaimControlledRun).
+ *
+ * @throws SessionNotFoundError if session not found or wrong project
  * @throws SessionActorMismatchError if actor doesn't own the session
  * @throws SessionNotCancellableError if session is completed or exhausted
  */
@@ -1644,6 +1648,7 @@ export async function cancelControlledSessionFromApi(
         s.status,
         s.created_by_actor_id,
         s.discovery_run_id,
+        s.project_id,
         s.cancelled_at,
         s.cancellation_reason
       FROM controlled_test_sessions s
@@ -1662,6 +1667,7 @@ export async function cancelControlledSessionFromApi(
       status: ControlledTestSessionStatus;
       created_by_actor_id: number | null;
       discovery_run_id: number | null;
+      project_id: number | null;
       cancelled_at: Date | null;
       cancellation_reason: string | null;
     }>)[0];
@@ -1671,11 +1677,89 @@ export async function cancelControlledSessionFromApi(
       throw new SessionNotFoundError(sessionPublicId);
     }
 
-    // Step 2: Verify bound run exists and belongs to project
-    if (session.discovery_run_id === null) {
+    // Step 2: Actor authorization (applies to both bound and unbound)
+    if (session.created_by_actor_id !== actorId) {
       await t.rollback();
-      throw new SessionNotFoundError(sessionPublicId); // Unbound = not project-routable
+      throw new SessionActorMismatchError(sessionPublicId, actorId);
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Path A: Unbound session (M10 extension)
+    // ═══════════════════════════════════════════════════════════════════════════
+    if (session.discovery_run_id === null) {
+      // Verify project authorization via session's project_id
+      if (session.project_id !== projectId) {
+        await t.rollback();
+        throw new SessionNotFoundError(sessionPublicId); // Project mismatch
+      }
+
+      // Terminal state handling
+      if (session.status === 'cancelled') {
+        await t.rollback();
+        return {
+          sessionPublicId: session.public_id,
+          status: 'cancelled',
+          cancelledAt: session.cancelled_at!,
+          cancellationReason: session.cancellation_reason,
+          idempotent: true,
+          boundRunPublicId: null,
+          boundRunStatus: null,
+        };
+      }
+
+      if (session.status === 'completed' || session.status === 'exhausted') {
+        await t.rollback();
+        throw new SessionNotCancellableError(sessionPublicId, session.status);
+      }
+
+      // Transition unbound session to cancelled (no run to fail)
+      const now = new Date();
+      const [, sessionMetadata] = await sequelize.query(
+        `
+        UPDATE controlled_test_sessions
+        SET
+          status = 'cancelled',
+          cancelled_at = :now,
+          cancellation_reason = :reason,
+          updated_at = :now
+        WHERE id = :sessionId
+          AND status = 'active'
+        `,
+        {
+          replacements: {
+            sessionId: session.id,
+            now,
+            reason: reason ?? null,
+          },
+          transaction: t,
+        },
+      );
+
+      const sessionRowCount = (sessionMetadata as { rowCount?: number })?.rowCount ?? 0;
+      if (sessionRowCount !== 1) {
+        await t.rollback();
+        throw new SessionBindingValidationError(
+          sessionPublicId,
+          'Session status changed during cancellation',
+        );
+      }
+
+      await t.commit();
+
+      return {
+        sessionPublicId: session.public_id,
+        status: 'cancelled',
+        cancelledAt: now,
+        cancellationReason: reason ?? null,
+        idempotent: false,
+        boundRunPublicId: null,
+        boundRunStatus: null,
+      };
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Path B: Bound session (existing M6 behavior)
+    // ═══════════════════════════════════════════════════════════════════════════
 
     // Step 3: Lock bound run FOR UPDATE (lock order: run second)
     const [runRows] = await sequelize.query(
@@ -1709,13 +1793,7 @@ export async function cancelControlledSessionFromApi(
       throw new SessionNotFoundError(sessionPublicId); // Not a controlled run
     }
 
-    // Step 4: Actor authorization
-    if (session.created_by_actor_id !== actorId) {
-      await t.rollback();
-      throw new SessionActorMismatchError(sessionPublicId, actorId);
-    }
-
-    // Step 5: Terminal state handling
+    // Step 4: Terminal state handling
     if (session.status === 'cancelled') {
       // Idempotent success: return original timestamp
       await t.rollback(); // No changes needed
@@ -1735,7 +1813,7 @@ export async function cancelControlledSessionFromApi(
       throw new SessionNotCancellableError(sessionPublicId, session.status);
     }
 
-    // Step 6: Fail bound pending run (single cancellation invariant)
+    // Step 5: Fail bound pending run (single cancellation invariant)
     let finalRunStatus = run.status;
     if (run.status === 'pending') {
       const now = new Date();
@@ -1778,7 +1856,7 @@ export async function cancelControlledSessionFromApi(
       finalRunStatus = 'failed';
     }
 
-    // Step 7: Transition session to cancelled
+    // Step 6: Transition session to cancelled
     const now = new Date();
     const [, sessionMetadata] = await sequelize.query(
       `
