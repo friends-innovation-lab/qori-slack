@@ -20,6 +20,7 @@ import {
   assertProjectResearcherByActor,
   AuthorizationError,
 } from '../../../services/authorization.service';
+import { ApiErrorCode } from '../../../types/api-errors';
 import type { Project } from '../../../database/models/project';
 import type { ResearchStudy } from '../../../database/models/research_study';
 import sequelize from '../../../database';
@@ -32,6 +33,23 @@ const StudyModel = sequelize.models.ResearchStudy as typeof ResearchStudy;
 
 // UUID pattern for identifier detection
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FEATURE GATE
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Check if Readout AI generation is enabled.
+ *
+ * READOUT_AI_ENABLED must be explicitly set to 'true' to enable AI generation.
+ * Default is false (disabled) for safety.
+ *
+ * This gate controls the POST /generate endpoint only.
+ * The generation worker is independently controlled by READOUT_GEN_POLLER_ENABLED.
+ */
+function isReadoutAiEnabled(): boolean {
+  return process.env.READOUT_AI_ENABLED === 'true';
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // RESOLUTION HELPERS
@@ -591,7 +609,6 @@ router.get('/:readoutId/approvals', requireAuth, async (req, res, next) => {
  * GET /api/v1/projects/:projectId/studies/:studyId/readouts/:readoutId/versions
  *
  * Retrieve generation history for a readout.
- * Note: POST /generate is deferred until AI worker implementation.
  */
 router.get('/:readoutId/versions', requireAuth, async (req, res, next) => {
   try {
@@ -657,6 +674,7 @@ router.get('/:readoutId/evidence-eligibility', requireAuth, async (req, res, nex
  * Initiate asynchronous AI generation for a readout.
  * Creates a pending generation job for the background poller.
  *
+ * - Requires READOUT_AI_ENABLED=true (returns 503 FEATURE_DISABLED otherwise).
  * - Requires researcher role.
  * - Requires idempotency key (8-64 chars) and at least one selected revision ID.
  * - Supersedes any existing pending/generating requests for this readout.
@@ -667,6 +685,18 @@ router.get('/:readoutId/evidence-eligibility', requireAuth, async (req, res, nex
  */
 router.post('/:readoutId/generate', requireAuth, async (req, res, next) => {
   try {
+    // ─── Feature Gate: READOUT_AI_ENABLED ─────────────────────────────────
+    // Must be explicitly enabled; default is disabled for safety.
+    if (!isReadoutAiEnabled()) {
+      res.status(503).json({
+        error: {
+          code: ApiErrorCode.FEATURE_DISABLED,
+          message: 'Readout AI generation is not available',
+        },
+      });
+      return;
+    }
+
     const resolved = await resolveAllResources(req, res);
     if (!resolved) return;
 

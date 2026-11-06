@@ -986,6 +986,19 @@ describe('DR-6b-3 Readout HTTP API', () => {
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe('[GENERATION] POST /generate validation', () => {
+    // Enable the feature for generation validation tests
+    const originalFlag = process.env.READOUT_AI_ENABLED;
+    beforeAll(() => {
+      process.env.READOUT_AI_ENABLED = 'true';
+    });
+    afterAll(() => {
+      if (originalFlag === undefined) {
+        delete process.env.READOUT_AI_ENABLED;
+      } else {
+        process.env.READOUT_AI_ENABLED = originalFlag;
+      }
+    });
+
     it('POST /generate rejects invalid idempotency key', async () => {
       const created = await createReadout(researcherPublicId);
       const readoutId = created.body.data.id;
