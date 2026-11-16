@@ -270,6 +270,28 @@ export class SessionProjectMismatchError extends Error {
   }
 }
 
+// ─── DISC-WEB-2: Researcher Session Error Types ──────────────────────────────
+
+/**
+ * Error thrown when actor already has an active researcher session.
+ */
+export class ResearcherSessionActiveError extends Error {
+  constructor(actorId: number) {
+    super(`Actor ${actorId} already has an active researcher session`);
+    this.name = 'ResearcherSessionActiveError';
+  }
+}
+
+/**
+ * Error thrown when researcher execution feature is disabled.
+ */
+export class ResearcherExecutionDisabledError extends Error {
+  constructor() {
+    super('Researcher execution is not available');
+    this.name = 'ResearcherExecutionDisabledError';
+  }
+}
+
 // ─── M6: API Result Types ────────────────────────────────────────────────────
 
 export interface CancelSessionFromApiResult {
@@ -379,6 +401,25 @@ export const SESSION_BUDGET_DEFAULTS = {
   maxInputTokens: 40_000,
   maxOutputTokens: 16_384,
 } as const;
+
+// ─── DISC-WEB-2: Researcher Session Budget ────────────────────────────────────
+
+/**
+ * Fixed server-side budget for researcher sessions.
+ * These values are not configurable via API — all researcher sessions use these limits.
+ */
+export const RESEARCHER_SESSION_BUDGET = {
+  maxRequests: 4,
+  maxInputTokens: 40_000,
+  maxOutputTokens: 16_384,
+} as const;
+
+/**
+ * Check if researcher execution is enabled via feature gate.
+ */
+export function isResearcherExecutionEnabled(): boolean {
+  return process.env.DISC_WEB2_RESEARCHER_ENABLED === 'true';
+}
 
 export interface CreateSessionForApiInput {
   /** Actor ID (internal) */
@@ -549,10 +590,11 @@ export async function createSessionForApi(
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // Step 4: Global active-session check
+    // Step 4: Global active supervised session check (M10 singleton)
+    // DISC-WEB-2: Only check for supervised sessions (researcher sessions have per-actor constraint)
     // ═══════════════════════════════════════════════════════════════════════
     const activeSession = await ControlledTestSessionModel.findOne({
-      where: { status: 'active' },
+      where: { status: 'active', session_type: 'supervised' },
       transaction,
     });
 
@@ -562,10 +604,12 @@ export async function createSessionForApi(
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // Step 5: Create new session
+    // Step 5: Create new supervised session (M10 path)
+    // DISC-WEB-2: Explicitly mark as supervised session
     // ═══════════════════════════════════════════════════════════════════════
     const session = await ControlledTestSessionModel.create(
       {
+        session_type: 'supervised', // DISC-WEB-2: Explicit supervised type
         project_id: input.projectId,
         created_by_actor_id: input.actorId,
         idempotency_key: input.idempotencyKey,
@@ -595,8 +639,12 @@ export async function createSessionForApi(
     if (isUniqueConstraintError(error)) {
       const constraintName = getConstraintName(error);
 
-      // Global single-active-session constraint (database backstop)
-      if (constraintName === 'controlled_test_sessions_single_active_idx') {
+      // Global single-active supervised session constraint (database backstop)
+      // DISC-WEB-2: Handle both old and new index names for backward compatibility during migration
+      if (
+        constraintName === 'controlled_test_sessions_single_active_idx' ||
+        constraintName === 'controlled_test_sessions_single_active_supervised_idx'
+      ) {
         throw new SessionAlreadyExistsError();
       }
 
@@ -631,10 +679,13 @@ export async function createSessionForApi(
 // ─── Create Session ──────────────────────────────────────────────────────────
 
 /**
- * Create a new controlled test session.
- * Only one active session can exist at a time (enforced by database constraint).
+ * Create a new supervised controlled test session (M10 path).
+ * Only one active supervised session can exist at a time (enforced by database constraint).
  *
- * @throws SessionAlreadyExistsError if an active session already exists
+ * DISC-WEB-2: This function creates supervised sessions only.
+ * For researcher sessions, use createResearcherSession().
+ *
+ * @throws SessionAlreadyExistsError if an active supervised session already exists
  */
 export async function createSession(
   input: CreateSessionInput,
@@ -644,9 +695,10 @@ export async function createSession(
   const shouldCommit = !transaction;
 
   try {
-    // Check for existing active session (belt-and-suspenders; DB constraint is authoritative)
+    // Check for existing active supervised session (belt-and-suspenders; DB constraint is authoritative)
+    // DISC-WEB-2: Only check supervised sessions
     const existing = await ControlledTestSessionModel.findOne({
-      where: { status: 'active' },
+      where: { status: 'active', session_type: 'supervised' },
       transaction: t,
     });
 
@@ -656,6 +708,7 @@ export async function createSession(
 
     const session = await ControlledTestSessionModel.create(
       {
+        session_type: 'supervised', // DISC-WEB-2: Explicit supervised type
         max_requests: input.maxRequests,
         max_input_tokens: input.maxInputTokens,
         max_output_tokens: input.maxOutputTokens,
@@ -675,15 +728,83 @@ export async function createSession(
       await t.rollback();
     }
     // Re-throw unique constraint violation as SessionAlreadyExistsError
+    // DISC-WEB-2: Handle both old and new index names
     if (
       error instanceof Error &&
       error.name === 'SequelizeUniqueConstraintError' &&
-      error.message.includes('controlled_test_sessions_single_active_idx')
+      (error.message.includes('controlled_test_sessions_single_active_idx') ||
+       error.message.includes('controlled_test_sessions_single_active_supervised_idx'))
     ) {
       throw new SessionAlreadyExistsError();
     }
     throw error;
   }
+}
+
+// ─── DISC-WEB-2: Researcher Session Creation ──────────────────────────────────
+
+/**
+ * Create a researcher session with fixed server-side budget.
+ *
+ * DISC-WEB-2: Researcher sessions have per-actor constraint (one active per actor).
+ * Budget is server-selected and not configurable via API.
+ *
+ * @throws ResearcherSessionActiveError if actor already has an active researcher session
+ * @throws ResearcherExecutionDisabledError if feature gate is off
+ */
+export async function createResearcherSession(
+  input: {
+    actorId: number;
+    projectId: number;
+  },
+  transaction: Transaction,
+): Promise<ControlledTestSession> {
+  // Check for existing active researcher session for this actor
+  const existing = await ControlledTestSessionModel.findOne({
+    where: {
+      status: 'active',
+      session_type: 'researcher',
+      created_by_actor_id: input.actorId,
+    },
+    transaction,
+  });
+
+  if (existing) {
+    throw new ResearcherSessionActiveError(input.actorId);
+  }
+
+  // Create researcher session with fixed budget
+  const session = await ControlledTestSessionModel.create(
+    {
+      session_type: 'researcher',
+      project_id: input.projectId,
+      created_by_actor_id: input.actorId,
+      max_requests: RESEARCHER_SESSION_BUDGET.maxRequests,
+      max_input_tokens: RESEARCHER_SESSION_BUDGET.maxInputTokens,
+      max_output_tokens: RESEARCHER_SESSION_BUDGET.maxOutputTokens,
+      status: 'active',
+    },
+    { transaction },
+  );
+
+  return session;
+}
+
+/**
+ * Get active researcher session for a specific actor.
+ */
+export async function getActiveResearcherSession(
+  actorId: number,
+  transaction?: Transaction,
+): Promise<ControlledTestSession | null> {
+  return ControlledTestSessionModel.findOne({
+    where: {
+      status: 'active',
+      session_type: 'researcher',
+      created_by_actor_id: actorId,
+    },
+    transaction,
+  });
 }
 
 // ─── Read Operations ─────────────────────────────────────────────────────────

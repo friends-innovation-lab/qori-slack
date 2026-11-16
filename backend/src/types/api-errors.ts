@@ -70,6 +70,10 @@ export enum ApiErrorCode {
   CONTROLLED_SESSION_ACTIVE = 'CONTROLLED_SESSION_ACTIVE',
   /** Controlled execution feature is disabled (DISC-WEB-1D-2) */
   CONTROLLED_EXECUTION_DISABLED = 'CONTROLLED_EXECUTION_DISABLED',
+  /** Researcher execution feature is disabled (DISC-WEB-2) */
+  RESEARCHER_EXECUTION_DISABLED = 'RESEARCHER_EXECUTION_DISABLED',
+  /** Actor already has an active researcher session (DISC-WEB-2) */
+  RESEARCHER_SESSION_ACTIVE = 'RESEARCHER_SESSION_ACTIVE',
   /** Unexpected server error — details intentionally omitted */
   INTERNAL_ERROR = 'INTERNAL_ERROR',
 }
@@ -321,4 +325,25 @@ export function controlledExecutionDisabled(
   message = 'Controlled execution is not enabled',
 ): AppError {
   return new AppError(ApiErrorCode.CONTROLLED_EXECUTION_DISABLED, message, 503);
+}
+
+/**
+ * Researcher execution disabled (DISC-WEB-2).
+ * Returned when DISC_WEB2_RESEARCHER_ENABLED !== 'true'.
+ */
+export function researcherExecutionDisabled(
+  message = 'Researcher execution is not available',
+): AppError {
+  return new AppError(ApiErrorCode.RESEARCHER_EXECUTION_DISABLED, message, 503);
+}
+
+/**
+ * Researcher session already active (DISC-WEB-2).
+ * Returned when actor already has an active researcher session.
+ * Zero-information-leak: does not expose existing session details.
+ */
+export function researcherSessionActive(
+  message = 'You already have an active researcher session',
+): AppError {
+  return new AppError(ApiErrorCode.RESEARCHER_SESSION_ACTIVE, message, 409);
 }

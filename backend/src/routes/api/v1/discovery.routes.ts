@@ -17,6 +17,10 @@ import sequelize from '../../../database';
 import { AppError, ApiErrorCode } from '../../../types/api-errors';
 import { isControlledExecutionEnabled } from '../../../services/controlled-session-authorization.service';
 import {
+  isResearcherExecutionEnabled,
+  ResearcherSessionActiveError,
+} from '../../../services/controlled-test-budget.service';
+import {
   listSessionsByProjectAndActor,
   getSessionDetailsByPublicId,
   getSessionReservations,
@@ -1444,6 +1448,288 @@ router.post(
         });
         return;
       }
+      next(error);
+    }
+  },
+);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DISC-WEB-2: RESEARCHER CONTROLLED RUNS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Feature gate middleware for DISC-WEB-2 researcher execution endpoints.
+ * Returns 503 if DISC_WEB2_RESEARCHER_ENABLED !== 'true'.
+ */
+function requireResearcherExecutionEnabled(
+  req: Parameters<typeof requireAuth>[0],
+  res: Parameters<typeof requireAuth>[1],
+  next: Parameters<typeof requireAuth>[2],
+) {
+  if (!isResearcherExecutionEnabled()) {
+    res.status(503).json({
+      error: {
+        code: ApiErrorCode.RESEARCHER_EXECUTION_DISABLED,
+        message: 'Researcher execution is not available',
+      },
+    });
+    return;
+  }
+
+  // Also requires sourceRefs feature
+  if (process.env.DISC_WEB1_ENABLED !== 'true') {
+    res.status(503).json({
+      error: {
+        code: ApiErrorCode.FEATURE_DISABLED,
+        message: 'Source reference consumption is not available',
+      },
+    });
+    return;
+  }
+
+  next();
+}
+
+/**
+ * POST /api/v1/projects/:projectId/discovery/controlled-runs
+ *
+ * DISC-WEB-2: Create a researcher-controlled Discovery run.
+ *
+ * Creates both a researcher session (fixed server-side budget) and a controlled
+ * Discovery run in a single atomic transaction. This is the entry point for
+ * Web researcher background execution.
+ *
+ * Headers:
+ * - Authorization: Bearer OIDC token (required)
+ * - Idempotency-Key: UUID v4 (required)
+ *
+ * Body:
+ * - discoveryType: 'desk_research' | 'stakeholder_synthesis' (required)
+ * - topic: string (required)
+ * - sourceIntent?: string (optional)
+ * - sourceRefs: string[] (required, ref_token from extraction staging)
+ *
+ * Returns:
+ * - 201: New researcher run created
+ * - 200: Idempotent replay (same key/payload, returns existing run)
+ * - 400: Validation error
+ * - 401: Missing/invalid auth
+ * - 403: Actor lacks project access
+ * - 404: Project not found
+ * - 409: Actor already has active researcher session, idempotency conflict
+ * - 410: Source refs unavailable
+ * - 503: Researcher execution disabled
+ */
+router.post(
+  '/controlled-runs',
+  requireAuth,
+  requireResearcherExecutionEnabled,
+  async (req, res, next) => {
+    try {
+      const ctx = req.ctx!;
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // Step 1: Resolve and validate project
+      // ═══════════════════════════════════════════════════════════════════════
+      const projectId = await resolveProjectId(req.params.projectId, ctx.organization.id);
+      if (projectId === null) {
+        res.status(404).json({
+          error: { code: ApiErrorCode.RESOURCE_NOT_FOUND, message: 'Project not found' },
+        });
+        return;
+      }
+
+      // Project authorization
+      try {
+        await assertProjectAccessByActor(ctx.actor.id, projectId, ctx.organization.id);
+      } catch {
+        res.status(403).json({
+          error: { code: ApiErrorCode.AUTHORIZATION_DENIED, message: 'Access denied: not a project member' },
+        });
+        return;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // Step 2: Validate Idempotency-Key header
+      // ═══════════════════════════════════════════════════════════════════════
+      const idempotencyKey = req.headers['idempotency-key'] as string | undefined;
+      if (!idempotencyKey || typeof idempotencyKey !== 'string') {
+        res.status(400).json({
+          error: {
+            code: ApiErrorCode.VALIDATION_ERROR,
+            message: 'Idempotency-Key header is required',
+          },
+        });
+        return;
+      }
+
+      if (!UUID_V4_PATTERN.test(idempotencyKey)) {
+        res.status(400).json({
+          error: {
+            code: ApiErrorCode.VALIDATION_ERROR,
+            message: 'Idempotency-Key must be a valid UUID v4',
+          },
+        });
+        return;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // Step 3: Validate request body
+      // ═══════════════════════════════════════════════════════════════════════
+      const { discoveryType, topic, sourceIntent, sourceRefs } = req.body;
+
+      // Validate discovery type
+      if (!discoveryType || !['desk_research', 'stakeholder_synthesis'].includes(discoveryType)) {
+        res.status(400).json({
+          error: {
+            code: ApiErrorCode.VALIDATION_ERROR,
+            message: 'discoveryType must be "desk_research" or "stakeholder_synthesis"',
+          },
+        });
+        return;
+      }
+
+      // Validate topic
+      if (!topic || typeof topic !== 'string' || topic.trim().length === 0) {
+        res.status(400).json({
+          error: { code: ApiErrorCode.VALIDATION_ERROR, message: 'topic is required' },
+        });
+        return;
+      }
+
+      // Validate sourceRefs
+      if (!Array.isArray(sourceRefs) || sourceRefs.length === 0) {
+        res.status(400).json({
+          error: { code: ApiErrorCode.VALIDATION_ERROR, message: 'sourceRefs must be a non-empty array' },
+        });
+        return;
+      }
+
+      // Validate all refs are non-empty strings
+      for (let i = 0; i < sourceRefs.length; i++) {
+        if (typeof sourceRefs[i] !== 'string' || sourceRefs[i].length === 0) {
+          res.status(400).json({
+            error: { code: ApiErrorCode.VALIDATION_ERROR, message: `sourceRefs[${i}] must be a non-empty string` },
+          });
+          return;
+        }
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // Step 4: Get project for slug
+      // ═══════════════════════════════════════════════════════════════════════
+      const project = await getProjectById(projectId);
+      if (!project) {
+        res.status(404).json({
+          error: { code: ApiErrorCode.RESOURCE_NOT_FOUND, message: 'Project not found' },
+        });
+        return;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // Step 5: Create researcher controlled run
+      // ═══════════════════════════════════════════════════════════════════════
+      const result = await discoveryAppService.createResearcherControlledRun({
+        projectId,
+        projectSlug: project.slug,
+        actorId: ctx.actor.id,
+        discoveryType: discoveryType as DiscoveryTypeKey,
+        topic: topic.trim(),
+        sourceIntent: sourceIntent?.trim() || null,
+        sourceRefs,
+        idempotencyKey,
+        createdByIdentity: `api:${ctx.actor.publicId}`,
+      });
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // Step 6: Build response
+      // ═══════════════════════════════════════════════════════════════════════
+      const runSummary = await discoveryAppService.getDiscoveryRunByPublicId(
+        ctx,
+        projectId,
+        result.run.public_id,
+      );
+
+      const statusCode = result.isReplay ? 200 : 201;
+      const message = result.isReplay
+        ? 'Idempotent replay: returning existing researcher run.'
+        : 'Researcher-controlled Discovery run created. Worker will process asynchronously.';
+
+      res.status(statusCode).json({
+        data: {
+          ...runSummary,
+          session: {
+            publicId: result.sessionPublicId,
+            budget: result.budget,
+          },
+        },
+        meta: {
+          message,
+          isReplay: result.isReplay,
+          isControlled: true,
+          sessionType: 'researcher',
+          pollUrl: `/api/v1/projects/${req.params.projectId}/discovery/runs/${result.run.public_id}`,
+          recommendedPollInterval: '2000ms',
+        },
+      });
+    } catch (error) {
+      // Handle specific error types
+      if (error instanceof AppError) {
+        if (error.code === ApiErrorCode.RESEARCHER_EXECUTION_DISABLED) {
+          res.status(503).json({
+            error: { code: error.code, message: error.message },
+          });
+          return;
+        }
+        if (error.code === ApiErrorCode.RESEARCHER_SESSION_ACTIVE) {
+          res.status(409).json({
+            error: { code: error.code, message: error.message },
+          });
+          return;
+        }
+        if (error.code === ApiErrorCode.SOURCE_REF_UNAVAILABLE) {
+          res.status(410).json({
+            error: { code: error.code, message: error.message, details: error.details },
+          });
+          return;
+        }
+        if (error.code === ApiErrorCode.IDEMPOTENCY_CONFLICT) {
+          res.status(409).json({
+            error: { code: error.code, message: error.message },
+          });
+          return;
+        }
+        if (error.code === ApiErrorCode.CONTROLLED_SESSION_NOT_FOUND) {
+          res.status(404).json({
+            error: { code: error.code, message: error.message },
+          });
+          return;
+        }
+        if (error.code === ApiErrorCode.CONTROLLED_SESSION_ACTOR_MISMATCH) {
+          res.status(403).json({
+            error: { code: error.code, message: error.message },
+          });
+          return;
+        }
+        if (error.code === ApiErrorCode.FEATURE_DISABLED) {
+          res.status(503).json({
+            error: { code: error.code, message: error.message },
+          });
+          return;
+        }
+      }
+
+      // Handle service-layer errors
+      if (error instanceof ResearcherSessionActiveError) {
+        res.status(409).json({
+          error: {
+            code: ApiErrorCode.RESEARCHER_SESSION_ACTIVE,
+            message: 'You already have an active researcher session',
+          },
+        });
+        return;
+      }
+
       next(error);
     }
   },

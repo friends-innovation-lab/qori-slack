@@ -797,6 +797,302 @@ function sanitizeFailureMessage(message: string): string {
     .replace(/\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}/g, '[CARD]');
 }
 
+// ─── DISC-WEB-2: Researcher Run Claims ─────────────────────────────
+
+/**
+ * Feature gate for researcher worker execution.
+ * Default OFF — must be explicitly enabled.
+ */
+export function isResearcherWorkerEnabled(): boolean {
+  return process.env.DISC_WEB2_WORKER_ENABLED === 'true';
+}
+
+/**
+ * Error thrown when a researcher run cannot be claimed because it's stale
+ * and may have already dispatched an AI provider request.
+ *
+ * DISC-WEB-2 Crash Safety: Never automatically re-execute stale processing
+ * runs if an AI provider request may already have been dispatched.
+ */
+export class ResearcherRunStaleError extends Error {
+  constructor(runId: number, heartbeatAge: number) {
+    super(
+      `Researcher run ${runId} is stale (heartbeat ${heartbeatAge}ms old) ` +
+      `— quarantined to prevent duplicate AI calls`,
+    );
+    this.name = 'ResearcherRunStaleError';
+  }
+}
+
+/**
+ * Error thrown when researcher worker execution is disabled.
+ */
+export class ResearcherWorkerDisabledError extends Error {
+  constructor() {
+    super('Researcher worker execution is disabled (DISC_WEB2_WORKER_ENABLED !== true)');
+    this.name = 'ResearcherWorkerDisabledError';
+  }
+}
+
+/**
+ * Result of claiming a researcher run.
+ */
+export interface ResearcherClaimResult {
+  run: DiscoveryRun;
+  sessionId: number;
+  sessionPublicId: string;
+}
+
+/**
+ * Atomically claim the next pending researcher-controlled Discovery run.
+ *
+ * DISC-WEB-2: Background worker claim for researcher sessions.
+ *
+ * Uses FOR UPDATE SKIP LOCKED to prevent duplicate claims.
+ * Only claims runs that:
+ * - is_controlled = TRUE
+ * - session_type = 'researcher' (on bound session)
+ * - Session is active
+ * - Run status = 'pending'
+ *
+ * Does NOT require actor authorization — worker executes on behalf of
+ * the actor who created the session.
+ *
+ * Returns null if no pending researcher runs available.
+ *
+ * @throws ResearcherWorkerDisabledError if DISC_WEB2_WORKER_ENABLED !== 'true'
+ */
+export async function claimNextResearcherRun(
+  workerId: string,
+): Promise<ResearcherClaimResult | null> {
+  // Feature gate check — fail closed
+  if (!isResearcherWorkerEnabled()) {
+    throw new ResearcherWorkerDisabledError();
+  }
+
+  const now = new Date();
+  const t = await sequelize.transaction();
+
+  try {
+    // Step 1: Find pending researcher run with active session
+    // Uses subquery join to verify session conditions
+    const [runRows] = await sequelize.query(
+      `
+      SELECT r.id as run_id, s.id as session_id, s.public_id as session_public_id
+      FROM discovery_runs r
+      INNER JOIN controlled_test_sessions s ON s.discovery_run_id = r.id
+      WHERE r.status = 'pending'
+        AND r.is_controlled = TRUE
+        AND r.discovery_type IN ('desk_research', 'stakeholder_synthesis')
+        AND s.session_type = 'researcher'
+        AND s.status = 'active'
+      ORDER BY r.created_at ASC
+      FOR UPDATE OF r SKIP LOCKED
+      LIMIT 1
+      `,
+      {
+        transaction: t,
+      },
+    ) as [Array<{ run_id: number; session_id: number; session_public_id: string }>, unknown];
+
+    if (!runRows || runRows.length === 0) {
+      await t.rollback();
+      return null;
+    }
+
+    const { run_id: runId, session_id: sessionId, session_public_id: sessionPublicId } = runRows[0];
+
+    // Step 2: Atomically transition run to processing
+    await sequelize.query(
+      `
+      UPDATE discovery_runs
+      SET
+        status = 'processing',
+        worker_id = :workerId,
+        claimed_at = :now,
+        heartbeat_at = :now,
+        started_at = COALESCE(started_at, :now),
+        updated_at = :now
+      WHERE id = :runId
+        AND status = 'pending'
+      `,
+      {
+        replacements: { runId, workerId, now },
+        transaction: t,
+      },
+    );
+
+    await t.commit();
+
+    console.log(
+      `[DISC-WEB-2] Claimed researcher run ${runId} (session=${sessionId}, worker=${workerId})`,
+    );
+
+    const run = await DiscoveryRunModel.findByPk(runId);
+    if (!run) {
+      throw new Error(`Run ${runId} not found after claim`);
+    }
+
+    return { run, sessionId, sessionPublicId };
+
+  } catch (error) {
+    try {
+      await t.rollback();
+    } catch {
+      // Already rolled back or committed
+    }
+    throw error;
+  }
+}
+
+/**
+ * Quarantine a stale researcher run.
+ *
+ * DISC-WEB-2 Crash Safety: When a researcher run is stale (heartbeat expired)
+ * and may have already dispatched an AI provider request, we quarantine it
+ * with an explicit failure code instead of re-executing.
+ *
+ * This prevents duplicate paid AI calls after network failures or worker restarts.
+ */
+export async function quarantineStaleResearcherRun(
+  runId: number,
+  workerId: string,
+  reason: string,
+): Promise<DiscoveryRun | null> {
+  const now = new Date();
+
+  const [, metadata] = await sequelize.query(
+    `
+    UPDATE discovery_runs
+    SET
+      status = 'failed',
+      failure_code = 'RESEARCHER_STALE_QUARANTINE',
+      failure_message = :reason,
+      failure_stage = 'worker_recovery',
+      worker_id = :workerId,
+      completed_at = :now,
+      updated_at = :now
+    WHERE id = :runId
+      AND status = 'processing'
+      AND is_controlled = TRUE
+    `,
+    {
+      replacements: { runId, workerId, reason, now },
+    },
+  );
+
+  if ((metadata as { rowCount?: number })?.rowCount === 0) {
+    return null;
+  }
+
+  console.log(`[DISC-WEB-2] Quarantined stale researcher run ${runId}: ${reason}`);
+
+  return DiscoveryRunModel.findByPk(runId);
+}
+
+/**
+ * Count pending researcher runs (for metrics/health checks).
+ */
+export async function countPendingResearcherRuns(): Promise<number> {
+  // Use raw query to join with sessions
+  const [results] = await sequelize.query(
+    `
+    SELECT COUNT(*) as count
+    FROM discovery_runs r
+    INNER JOIN controlled_test_sessions s ON s.discovery_run_id = r.id
+    WHERE r.status = 'pending'
+      AND r.is_controlled = TRUE
+      AND s.session_type = 'researcher'
+      AND s.status = 'active'
+    `,
+  ) as [Array<{ count: string }>, unknown];
+
+  return parseInt(results[0]?.count || '0', 10);
+}
+
+/**
+ * Find and quarantine stale researcher processing runs.
+ *
+ * DISC-WEB-2 Crash Safety: Identifies researcher runs that are in 'processing'
+ * state with expired heartbeats. Instead of re-executing (which risks duplicate
+ * AI calls), we quarantine them with explicit failure codes.
+ *
+ * Returns count of quarantined runs.
+ */
+export async function quarantineStaleResearcherRuns(workerId: string): Promise<number> {
+  if (!isResearcherWorkerEnabled()) {
+    return 0;
+  }
+
+  const staleThreshold = new Date(Date.now() - DISCOVERY_STALE_TIMEOUT_MS);
+  const now = new Date();
+
+  // Find stale researcher runs
+  const [staleRows] = await sequelize.query(
+    `
+    SELECT r.id
+    FROM discovery_runs r
+    INNER JOIN controlled_test_sessions s ON s.discovery_run_id = r.id
+    WHERE r.status = 'processing'
+      AND r.is_controlled = TRUE
+      AND r.heartbeat_at < :staleThreshold
+      AND s.session_type = 'researcher'
+    FOR UPDATE SKIP LOCKED
+    `,
+    {
+      replacements: { staleThreshold },
+    },
+  ) as [Array<{ id: number }>, unknown];
+
+  if (!staleRows || staleRows.length === 0) {
+    return 0;
+  }
+
+  // Quarantine each stale run
+  // We don't re-execute because AI calls may already have been dispatched
+  const runIds = staleRows.map(r => r.id);
+
+  await sequelize.query(
+    `
+    UPDATE discovery_runs
+    SET
+      status = 'failed',
+      failure_code = 'RESEARCHER_STALE_QUARANTINE',
+      failure_message = 'Run was in processing state with expired heartbeat — quarantined to prevent duplicate AI calls',
+      failure_stage = 'worker_recovery',
+      worker_id = :workerId,
+      completed_at = :now,
+      updated_at = :now
+    WHERE id IN (:runIds)
+    `,
+    {
+      replacements: { runIds, workerId, now },
+    },
+  );
+
+  // Also cancel the associated sessions to prevent stranded active sessions
+  // Use direct model update to avoid circular dependency with budget service
+  await sequelize.query(
+    `
+    UPDATE controlled_test_sessions
+    SET
+      status = 'cancelled',
+      cancelled_at = :now,
+      cancellation_reason = 'Bound run quarantined due to stale heartbeat — possible worker crash',
+      updated_at = :now
+    WHERE discovery_run_id IN (:runIds)
+      AND status = 'active'
+    `,
+    {
+      replacements: { runIds, now },
+    },
+  );
+
+  console.log(`[DISC-WEB-2] Quarantined ${runIds.length} stale researcher runs: ${runIds.join(', ')}`);
+
+  return runIds.length;
+}
+
 // ─── Query Helpers ─────────────────────────────────────────────────
 
 /**

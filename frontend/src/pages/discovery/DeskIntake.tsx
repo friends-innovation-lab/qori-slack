@@ -33,6 +33,12 @@ import {
   ERROR_SOURCE_REF_UNAVAILABLE,
   ERROR_FEATURE_DISABLED as RUN_FEATURE_DISABLED,
 } from '@/api/mutations/useCreateDiscoveryRun';
+import {
+  useCreateResearcherControlledRun,
+  ERROR_RESEARCHER_EXECUTION_DISABLED,
+  ERROR_RESEARCHER_SESSION_ACTIVE,
+  ERROR_AUTHORIZATION_DENIED,
+} from '@/api/mutations/useCreateResearcherControlledRun';
 import type { ExtractedRef, RejectedFile } from '@qori/api-contracts';
 import { WorkspaceLayout, useStudyWorkspace } from '@/components/study/workspace';
 import { Button } from '@/components/ui/Button';
@@ -42,17 +48,22 @@ import { Alert } from '@/components/ui/Alert';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import styles from './IntakeForm.module.css';
 import docStyles from '@/components/study/document/document.module.css';
+import {
+  isLiveRunCreationEnabled,
+  isResearcherControlledExecutionEnabled,
+  isAnyRunCreationEnabled,
+} from '@/config/featureFlags';
 
-// ─── Safety Gate ─────────────────────────────────────────────────────
+// ─── Backward Compatibility Exports ──────────────────────────────────
 //
-// DISC-WEB-1C-2b: This constant MUST be false in deployed code.
-// When false, the Start Analysis button shows "Coming soon" and no API call is made.
-// When true (only in tests with mocked APIs), the full flow is exercised.
+// These exports maintain backward compatibility with existing tests.
+// New code should import from @/config/featureFlags instead.
 //
-// DO NOT set this to true without explicit architecture approval.
-// This is separate from DISC_WEB1_ENABLED backend flag — double protection.
+// IMPORTANT: Both flags MUST be false in deployed code.
+// See @/config/featureFlags.ts for documentation.
 //
-export const ENABLE_LIVE_RUN_CREATION = false;
+export const ENABLE_LIVE_RUN_CREATION = isLiveRunCreationEnabled();
+export const ENABLE_RESEARCHER_CONTROLLED_EXECUTION = isResearcherControlledExecutionEnabled();
 
 // ─── Constants ──────────────────────────────────────────────────────
 
@@ -107,6 +118,7 @@ export function DeskIntake() {
   // Mutations
   const uploadMutation = useUploadDocuments(projectPublicId);
   const createRunMutation = useCreateDiscoveryRun(projectPublicId);
+  const createResearcherRunMutation = useCreateResearcherControlledRun(projectPublicId);
 
   // ─── File Handling ─────────────────────────────────────────────────
 
@@ -278,12 +290,17 @@ export function DeskIntake() {
   /**
    * Confirm and create Discovery run.
    * Uses the existing idempotency key (never generates a new one after 409).
+   *
+   * DISC-WEB-2: When researcher-controlled execution is enabled,
+   * uses the researcher-controlled execution path with server-side budget.
+   * This is INDEPENDENT of standard run creation — researcher path can be
+   * enabled without enabling the standard path.
    */
   const handleConfirmSubmit = useCallback(async () => {
-    // Safety gate check
-    if (!ENABLE_LIVE_RUN_CREATION) {
+    // Safety gate check — either path must be enabled
+    if (!isAnyRunCreationEnabled()) {
       // This should never happen in deployed code because the button is disabled
-      console.error('[DeskIntake] ENABLE_LIVE_RUN_CREATION is false - submission blocked');
+      console.error('[DeskIntake] No run creation path is enabled - submission blocked');
       setRunCreationState({
         phase: 'error',
         code: 'SAFETY_GATE',
@@ -313,6 +330,84 @@ export function DeskIntake() {
 
     const sourceRefs = uploadState.refs.map((ref) => ref.refToken);
 
+    // DISC-WEB-2: Use researcher-controlled path when enabled
+    if (isResearcherControlledExecutionEnabled()) {
+      const outcome = await createResearcherRunMutation.mutateAsync({
+        input: {
+          discoveryType: 'desk_research',
+          topic: topic.trim() || 'Untitled research',
+          sourceIntent: sourceIntent.trim() || null,
+          sourceRefs,
+        },
+        idempotencyKey,
+      });
+
+      if (outcome.success) {
+        setRunCreationState({
+          phase: 'success',
+          runPublicId: outcome.response.data.publicId,
+          isReplay: outcome.isReplay,
+        });
+
+        // Navigate to run page
+        navigate(`/studies/${studyPublicId}/discovery/runs/${outcome.response.data.publicId}`);
+      } else {
+        // Handle researcher-specific error codes
+        let canRetry = false;
+        let message = outcome.message;
+
+        switch (outcome.code) {
+          case ERROR_RESEARCHER_EXECUTION_DISABLED:
+            // 503: Researcher execution feature flag off
+            message = 'Researcher analysis is not currently available. Please try again later.';
+            canRetry = false;
+            break;
+
+          case ERROR_RESEARCHER_SESSION_ACTIVE:
+            // 409: Actor already has an active researcher session
+            message = 'You already have an active analysis running. Please wait for it to complete.';
+            canRetry = false;
+            break;
+
+          case ERROR_IDEMPOTENCY_CONFLICT:
+            // 409: Different payload sent with same key. This is a client bug.
+            message = 'Request conflict. Please start a new upload.';
+            canRetry = false;
+            break;
+
+          case ERROR_SOURCE_REF_UNAVAILABLE:
+            // 410: Refs expired or consumed. Must re-upload.
+            message = 'Files have expired or are no longer available. Please upload files again.';
+            canRetry = false;
+            break;
+
+          case ERROR_AUTHORIZATION_DENIED:
+            // 403: Actor not project member
+            message = 'You do not have access to this project.';
+            canRetry = false;
+            break;
+
+          case 'NETWORK_ERROR':
+            // Network error: user can retry with same idempotency key
+            canRetry = true;
+            break;
+
+          default:
+            // Other errors: check status
+            canRetry = outcome.status === undefined || outcome.status >= 500;
+        }
+
+        setRunCreationState({
+          phase: 'error',
+          code: outcome.code,
+          message,
+          canRetry,
+        });
+      }
+      return;
+    }
+
+    // Legacy path: regular Discovery run creation
     const outcome = await createRunMutation.mutateAsync({
       input: {
         discoveryType: 'desk_research',
@@ -381,6 +476,7 @@ export function DeskIntake() {
     sourceIntent,
     checkExpiredRefs,
     createRunMutation,
+    createResearcherRunMutation,
     navigate,
     studyPublicId,
   ]);
@@ -589,7 +685,7 @@ export function DeskIntake() {
                 Upload different files
               </Button>
               {hasRefs && !allRefsExpired && (
-                ENABLE_LIVE_RUN_CREATION ? (
+                isAnyRunCreationEnabled() ? (
                   <Button
                     type="button"
                     onClick={handleOpenConfirmation}

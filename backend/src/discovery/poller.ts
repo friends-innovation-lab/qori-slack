@@ -15,7 +15,12 @@
 import { randomUUID } from 'crypto';
 import * as claimService from '../services/discovery-claim.service';
 import * as extractionRetryService from '../services/extraction-retry.service';
-import { executeDiscoveryRun, PrivacyError } from '../application/discovery.app-service';
+import {
+  executeDiscoveryRun,
+  executeControlledDiscoveryRun,
+  PrivacyError,
+} from '../application/discovery.app-service';
+import { getSessionByRunId } from '../services/controlled-test-budget.service';
 
 // ─── Configuration ─────────────────────────────────────────────────
 
@@ -32,6 +37,12 @@ const HEARTBEAT_INTERVAL_MS = parseInt(
 const POLLER_ENABLED = process.env.DISCOVERY_POLLER_ENABLED !== 'false' &&
   process.env.NODE_ENV !== 'test';
 
+// DISC-WEB-2: Researcher worker poll interval (separate from ordinary poller)
+const RESEARCHER_POLL_INTERVAL_MS = parseInt(
+  process.env.RESEARCHER_POLL_INTERVAL_MS || '3000',
+  10,
+);
+
 // ─── State ─────────────────────────────────────────────────────────
 
 let isRunning = false;
@@ -40,6 +51,11 @@ let pollTimeout: NodeJS.Timeout | null = null;
 let currentWorkerId: string | null = null;
 let currentRunId: number | null = null;
 let heartbeatInterval: NodeJS.Timeout | null = null;
+
+// DISC-WEB-2: Researcher poller state (separate from ordinary poller)
+let researcherPollTimeout: NodeJS.Timeout | null = null;
+let researcherCurrentRunId: number | null = null;
+let researcherHeartbeatInterval: NodeJS.Timeout | null = null;
 
 // ─── Lifecycle ─────────────────────────────────────────────────────
 
@@ -66,6 +82,14 @@ export function startDiscoveryPoller(): void {
 
   // Start poll loop
   schedulePoll();
+
+  // DISC-WEB-2: Start researcher poller if enabled
+  if (claimService.isResearcherWorkerEnabled()) {
+    console.log(`[DISC-WEB-2] Researcher worker enabled (poll interval: ${RESEARCHER_POLL_INTERVAL_MS}ms)`);
+    scheduleResearcherPoll();
+  } else {
+    console.log('[DISC-WEB-2] Researcher worker disabled (DISC_WEB2_WORKER_ENABLED !== true)');
+  }
 }
 
 /**
@@ -102,6 +126,22 @@ export async function stopDiscoveryPoller(): Promise<void> {
       console.error('[DISC-2] Error releasing claim during shutdown:', error);
     }
   }
+
+  // DISC-WEB-2: Stop researcher poller
+  if (researcherPollTimeout) {
+    clearTimeout(researcherPollTimeout);
+    researcherPollTimeout = null;
+  }
+
+  if (researcherHeartbeatInterval) {
+    clearInterval(researcherHeartbeatInterval);
+    researcherHeartbeatInterval = null;
+  }
+
+  // Note: We do NOT release researcher claims on shutdown
+  // Controlled runs should fail atomically, not be released to be re-claimed
+  // This prevents duplicate AI calls after restart
+  researcherCurrentRunId = null;
 
   currentRunId = null;
   isRunning = false;
@@ -211,6 +251,119 @@ async function executeClaimedRun(runId: number): Promise<void> {
   currentRunId = null;
 }
 
+// ─── DISC-WEB-2: Researcher Poll Loop ─────────────────────────────────
+
+function scheduleResearcherPoll(): void {
+  if (isShuttingDown || !isRunning) {
+    return;
+  }
+
+  // Double-check feature gate on each schedule
+  if (!claimService.isResearcherWorkerEnabled()) {
+    return;
+  }
+
+  researcherPollTimeout = setTimeout(researcherPollCycle, RESEARCHER_POLL_INTERVAL_MS);
+}
+
+async function researcherPollCycle(): Promise<void> {
+  if (isShuttingDown || !isRunning || !currentWorkerId) {
+    return;
+  }
+
+  // Feature gate check — fail closed
+  if (!claimService.isResearcherWorkerEnabled()) {
+    return;
+  }
+
+  try {
+    // Priority 1: Quarantine stale researcher runs (crash safety)
+    // DISC-WEB-2: Never re-execute stale runs — quarantine them instead
+    const quarantinedCount = await claimService.quarantineStaleResearcherRuns(currentWorkerId);
+    if (quarantinedCount > 0) {
+      console.log(`[DISC-WEB-2] Quarantined ${quarantinedCount} stale researcher runs`);
+    }
+
+    // Priority 2: Claim next pending researcher run
+    const claimResult = await claimService.claimNextResearcherRun(currentWorkerId);
+
+    if (claimResult) {
+      console.log(
+        `[DISC-WEB-2] Claimed researcher run ${claimResult.run.id} ` +
+        `(${claimResult.run.discovery_type}: ${claimResult.run.topic})`
+      );
+      await executeResearcherRun(claimResult.run.id, claimResult.sessionId);
+    }
+
+  } catch (error) {
+    if (error instanceof claimService.ResearcherWorkerDisabledError) {
+      // Gate was disabled mid-cycle — stop polling
+      console.log('[DISC-WEB-2] Researcher worker disabled mid-cycle — stopping');
+      return;
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[DISC-WEB-2] Researcher poll cycle error:', message);
+  }
+
+  // Schedule next poll
+  scheduleResearcherPoll();
+}
+
+/**
+ * Execute a researcher-controlled Discovery run.
+ *
+ * DISC-WEB-2: Uses the existing M10 controlled execution path with budget enforcement.
+ * - Heartbeat maintained during execution
+ * - Budget reserved before each AI call
+ * - Session finalized atomically with run
+ */
+async function executeResearcherRun(runId: number, sessionId: number): Promise<void> {
+  if (!currentWorkerId || isShuttingDown) {
+    return;
+  }
+
+  researcherCurrentRunId = runId;
+
+  // Start heartbeat for researcher run
+  researcherHeartbeatInterval = setInterval(async () => {
+    if (researcherCurrentRunId && currentWorkerId) {
+      try {
+        await claimService.updateHeartbeat(researcherCurrentRunId, currentWorkerId);
+      } catch (error) {
+        console.warn(`[DISC-WEB-2] Heartbeat failed for researcher run ${researcherCurrentRunId}:`, error);
+        // Don't stop execution — let it continue and finalize properly
+      }
+    }
+  }, HEARTBEAT_INTERVAL_MS);
+
+  try {
+    // Use the existing M10 controlled execution path
+    // This ensures budget enforcement, reservation/reconciliation, and atomic finalization
+    const result = await executeControlledDiscoveryRun(runId, sessionId, currentWorkerId);
+    console.log(
+      `[DISC-WEB-2] Researcher run ${runId} completed → artifact ${result.artifactPublicId}`
+    );
+
+  } catch (error) {
+    if (error instanceof PrivacyError) {
+      console.warn(`[DISC-WEB-2] Researcher run ${runId} failed: Privacy violation`);
+    } else {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`[DISC-WEB-2] Researcher run ${runId} failed:`, message);
+    }
+    // Run and session are already finalized as failed by executeControlledDiscoveryRun
+  }
+
+  // Stop heartbeat
+  if (researcherHeartbeatInterval) {
+    clearInterval(researcherHeartbeatInterval);
+    researcherHeartbeatInterval = null;
+  }
+
+  researcherCurrentRunId = null;
+}
+
 // ─── Status ────────────────────────────────────────────────────────
 
 export function getPollerStatus(): {
@@ -218,12 +371,16 @@ export function getPollerStatus(): {
   shuttingDown: boolean;
   workerId: string | null;
   currentRunId: number | null;
+  researcherWorkerEnabled: boolean;
+  researcherCurrentRunId: number | null;
 } {
   return {
     running: isRunning,
     shuttingDown: isShuttingDown,
     workerId: currentWorkerId,
     currentRunId,
+    researcherWorkerEnabled: claimService.isResearcherWorkerEnabled(),
+    researcherCurrentRunId,
   };
 }
 

@@ -1,11 +1,16 @@
 /**
- * ControlledTestSession Model — DISC-WEB-1D-2
+ * ControlledTestSession Model — DISC-WEB-1D-2 + DISC-WEB-2
  *
  * Tracks AI execution budgets for controlled testing in dev environments.
  * Each session enforces hard limits on requests and tokens for exactly ONE discovery run.
  *
+ * Session types (DISC-WEB-2):
+ * - 'supervised': M10 controlled test sessions (global singleton)
+ * - 'researcher': Web researcher sessions (one active per actor)
+ *
  * Key invariants:
- * - At most one active session at any time (database constraint)
+ * - Supervised: at most one active session globally (database constraint)
+ * - Researcher: at most one active session per actor (database constraint)
  * - Once a run is bound, the binding is immutable
  * - A cancelled/exhausted/completed session still identifies its bound run
  * - Budget reservation is atomic (service layer handles UPDATE with preconditions)
@@ -33,6 +38,7 @@ import type { DiscoveryRun } from './discovery_run';
 import type { Project } from './project';
 
 export type ControlledTestSessionStatus = 'active' | 'cancelled' | 'exhausted' | 'completed';
+export type ControlledTestSessionType = 'supervised' | 'researcher';
 
 class ControlledTestSession extends Model<
   InferAttributes<ControlledTestSession>,
@@ -44,6 +50,9 @@ class ControlledTestSession extends Model<
 
   // Status
   declare status: CreationOptional<ControlledTestSessionStatus>;
+
+  // Session type (DISC-WEB-2)
+  declare session_type: CreationOptional<ControlledTestSessionType>;
 
   // Run binding
   declare discovery_run_id: ForeignKey<number> | null;
@@ -144,6 +153,14 @@ export default (sequelize: Sequelize) => {
         defaultValue: 'active',
         validate: {
           isIn: [['active', 'cancelled', 'exhausted', 'completed']],
+        },
+      },
+      session_type: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        defaultValue: 'supervised',
+        validate: {
+          isIn: [['supervised', 'researcher']],
         },
       },
       discovery_run_id: {
