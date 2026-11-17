@@ -51,6 +51,12 @@ input_variables:
       required: false
       description: "Project-level research problem. Knowledge gaps are derived against this."
 
+  - is_controlled_run:
+      type: "boolean"
+      required: false
+      default: false
+      description: "Backend-only flag. True when run is budget-controlled. Skips knowledge_gaps_prose to stay within 4-request limit. Not exposed to client input."
+
   - source_intent:
       type: "textarea"
       required: true
@@ -224,12 +230,14 @@ ai_generation_tasks:
       handles all document structure.
 
   # Knowledge gaps — derived against the project problem statement
+  # DISC-WEB-2: Also skip for controlled runs to stay within 4-request budget
   - task_id: "knowledge_gaps_prose"
-    skip_when: "not project_problem_statement"
+    skip_when: "not project_problem_statement or is_controlled_run"
     skip_output: |
-      > **Knowledge gaps require a project problem statement.**
+      > **Knowledge gaps not included in this run.**
       >
-      > Run `/qori-start` to set a problem statement for this project, then re-run discovery.
+      > Either no project problem statement is set, or this is a budget-controlled test run.
+      > For full analysis including knowledge gaps, run standard desk research with `/qori-start` to set a problem statement.
     prompt: |
       Identify knowledge gaps from the desk research.
 

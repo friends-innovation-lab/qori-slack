@@ -2647,6 +2647,7 @@ async function executeControlledDiscoveryRunInner(
     document_count: documents.length,
     document_names: documentNames,
     document_types: documentTypes,
+    is_controlled_run: true, // DISC-WEB-2: Skip knowledge_gaps_prose to stay within 4-request budget
   };
 
   // Stakeholder-specific fields
