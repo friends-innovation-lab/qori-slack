@@ -35,8 +35,13 @@ RUN npm run build --workspace=packages/api-contracts 2>/dev/null || true
 RUN npm run build --workspace=packages/artifact-contracts 2>/dev/null || true
 
 # Build frontend (Vite production build)
+# VITE_* env vars must be declared as ARG to be available at build time.
+# Railway passes env vars as build args when ARG is declared.
 ARG VITE_API_BASE_URL
+ARG VITE_ENABLE_RESEARCHER_CONTROLLED=false
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV VITE_ENABLE_RESEARCHER_CONTROLLED=${VITE_ENABLE_RESEARCHER_CONTROLLED}
+# Build trigger: 2026-11-17 (change to bust Docker layer cache)
 RUN cd frontend && npm run build
 
 # ─── Serve stage ───────────────────────────────────────────────────
@@ -61,4 +66,4 @@ COPY --from=builder /app/frontend/dist /usr/share/nginx/html
 EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]
-# Last deploy trigger: 2026-09-10
+# Last deploy trigger: 2026-11-17-b
