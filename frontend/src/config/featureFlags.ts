@@ -6,12 +6,17 @@
  * These flags are UI-only safety gates. Backend authorization gates
  * (DISC_WEB1_ENABLED, DISC_WEB2_RESEARCHER_ENABLED) remain authoritative.
  *
- * IMPORTANT: Both flags MUST be false in deployed code.
- * DO NOT set to true without explicit architecture approval.
+ * Configuration:
+ * - VITE_ENABLE_RESEARCHER_CONTROLLED: Set to 'true' to enable researcher-controlled
+ *   execution. Any other value (including unset) defaults to disabled.
+ *
+ * IMPORTANT: Production builds should NOT set VITE_ENABLE_RESEARCHER_CONTROLLED=true
+ * without explicit architecture approval.
  *
  * To test features with flags enabled:
- * - Mock this module in tests: vi.mock('@/config/featureFlags')
- * - Set the desired flag values in your mock
+ * - Set VITE_ENABLE_RESEARCHER_CONTROLLED=true in environment
+ * - Or mock this module in tests: vi.mock('@/config/featureFlags')
+ * - Or use __testSetFlags() for unit tests
  */
 
 // ─── Flag Definitions ────────────────────────────────────────────────
@@ -29,6 +34,9 @@ let _enableLiveRunCreation = false;
 /**
  * DISC-WEB-2: Enable researcher-controlled execution via POST /controlled-runs.
  *
+ * Configured via VITE_ENABLE_RESEARCHER_CONTROLLED environment variable.
+ * Defaults to false (disabled) when unset or any value other than 'true'.
+ *
  * When true: Start Analysis uses researcher-controlled path with server-side budget.
  * When false: Falls through to standard path check (ENABLE_LIVE_RUN_CREATION).
  *
@@ -40,7 +48,9 @@ let _enableLiveRunCreation = false;
  *
  * Backend authorization (DISC_WEB2_RESEARCHER_ENABLED) remains authoritative.
  */
-let _enableResearcherControlledExecution = false;
+const _researcherControlledDefault =
+  import.meta.env.VITE_ENABLE_RESEARCHER_CONTROLLED === 'true';
+let _enableResearcherControlledExecution = _researcherControlledDefault;
 
 // ─── Getters (for testability) ───────────────────────────────────────
 
@@ -87,10 +97,11 @@ export function __testSetFlags(flags: {
 }
 
 /**
- * Reset flags to production defaults. ONLY use in test cleanup.
+ * Reset flags to their configured defaults. ONLY use in test cleanup.
+ * Researcher flag resets to VITE_ENABLE_RESEARCHER_CONTROLLED value.
  * @internal
  */
 export function __testResetFlags(): void {
   _enableLiveRunCreation = false;
-  _enableResearcherControlledExecution = false;
+  _enableResearcherControlledExecution = _researcherControlledDefault;
 }
