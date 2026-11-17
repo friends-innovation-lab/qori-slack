@@ -3,6 +3,8 @@
  *
  * Centralized feature flag module for testability.
  *
+ * Build cache buster: 2026-11-17T20:50:00Z
+ *
  * These flags are UI-only safety gates. Backend authorization gates
  * (DISC_WEB1_ENABLED, DISC_WEB2_RESEARCHER_ENABLED) remain authoritative.
  *
